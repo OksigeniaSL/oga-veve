@@ -37,6 +37,19 @@ export interface FormaDeArbol {
   readonly tronco: { readonly radio: number; readonly alto: number };
 }
 
+/** Un árbol de la arboleda, en el mundo: su pie y su copa entera. Ver `Arboleda.arbolEn`. */
+export interface ArbolDeLaArboleda {
+  /** El pie del tronco, m. */
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** El radio de lado de la copa y su semialto, m. */
+  readonly radio: number;
+  readonly semialto: number;
+  /** La altura del centro de la copa sobre el pie, m. */
+  readonly centro: number;
+}
+
 /** Lo más que se encoge una copa por la holgura, en parte de su semieje. Ver `toca`. */
 const PIEL = 0.4;
 
@@ -97,10 +110,38 @@ export class Arboleda {
    * tronco no se roza.
    */
   toca(px: number, py: number, pz: number, holgura = 0): boolean {
+    return this.cual(px, py, pz, holgura) >= 0;
+  }
+
+  /**
+   * **El árbol que tiene dentro este punto**, entero y sin holgura: dónde
+   * está su pie y cómo es su copa. Es para apuntarle a uno desde el banco
+   * (`scripts/verificar-arboles.mjs`), que tiene que meter el avión por el
+   * centro de la copa: por el borde, la piel que se perdona en Guyrami deja
+   * pasar al avión rozando, y eso no es lo que el banco quiere comprobar.
+   * Devuelve un objeto nuevo: no es para preguntar en cada fotograma.
+   */
+  arbolEn(px: number, py: number, pz: number): ArbolDeLaArboleda | null {
+    const i = this.cual(px, py, pz, 0);
+    if (i < 0) return null;
+    const d = this.datos;
+    const b = i * CAMPOS;
+    return {
+      x: d[b]!,
+      y: d[b + 1]!,
+      z: d[b + 2]!,
+      radio: d[b + 5]!,
+      semialto: d[b + 6]!,
+      centro: d[b + 7]!,
+    };
+  }
+
+  /** El número del árbol que tiene dentro el punto, o −1. Ver `toca`. */
+  private cual(px: number, py: number, pz: number, holgura: number): number {
     const k = clave(Math.floor(px / CELDA), Math.floor(pz / CELDA));
-    if (py > (this.techos.get(k) ?? -Infinity)) return false;
+    if (py > (this.techos.get(k) ?? -Infinity)) return -1;
     const lista = this.celdas.get(k);
-    if (!lista) return false;
+    if (!lista) return -1;
     const d = this.datos;
     for (let n = 0; n < lista.length; n++) {
       const b = lista[n]! * CAMPOS;
@@ -108,7 +149,7 @@ export class Arboleda {
       const dy = py - d[b + 1]!;
       const dz = pz - d[b + 2]!;
       // El tronco.
-      if (dy >= 0 && dy <= d[b + 9]! && dx * dx + dz * dz <= d[b + 8]! * d[b + 8]!) return true;
+      if (dy >= 0 && dy <= d[b + 9]! && dx * dx + dz * dz <= d[b + 8]! * d[b + 8]!) return lista[n]!;
       /*
        * **La piel, y nunca más de dos quintos de la copa.** Con los dos metros
        * de Tukã enteros, un naranjo o un karanday de la granja, con menos de
@@ -124,10 +165,10 @@ export class Arboleda {
         const se = d[b + 4]!;
         const lx = co * dx - se * dz;
         const lz = se * dx + co * dz;
-        if ((Math.abs(lx) + Math.abs(lz)) / r + v <= 1) return true;
-      } else if ((dx * dx + dz * dz) / (r * r) + v * v <= 1) return true;
+        if ((Math.abs(lx) + Math.abs(lz)) / r + v <= 1) return lista[n]!;
+      } else if ((dx * dx + dz * dz) / (r * r) + v * v <= 1) return lista[n]!;
     }
-    return false;
+    return -1;
   }
 }
 
