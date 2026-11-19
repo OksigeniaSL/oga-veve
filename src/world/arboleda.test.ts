@@ -55,6 +55,33 @@ describe("una copa pequeña no se queda sin copa", () => {
   });
 });
 
+describe("a qué árbol se le apunta", () => {
+  /*
+   * El banco de los árboles (H35c) mete el avión por el centro de la copa:
+   * por el borde, Guyrami perdona la piel y el avión pasa rozando. Lo que
+   * dice `arbolEn` es lo mismo que mira `toca`.
+   */
+  const naranjo = { copa: { tipo: "elipsoide", radio: 1.7, semialto: 1.5, centro: 2.3 }, tronco: { radio: 0.17, alto: 1.1 } } as const;
+
+  it("da el pie y la copa entera del árbol que tiene dentro el punto, y nada fuera de él", () => {
+    const a = new Arboleda();
+    a.plantar(0, 100, 0, 2, 0, naranjo);
+    a.plantar(40, 100, 0, 1, 0, naranjo);
+    expect(a.arbolEn(1, 104.6, 0)).toEqual({ x: 0, y: 100, z: 0, radio: 3.4, semialto: 3, centro: 4.6 });
+    expect(a.arbolEn(40, 101.5, 0.1)?.x).toBe(40);
+    expect(a.arbolEn(20, 103, 0)).toBeNull();
+    expect(a.arbolEn(0, 108, 0)).toBeNull();
+  });
+
+  it("el centro de la copa se toca con la holgura de los cuatro peldaños, y el borde no", () => {
+    const a = new Arboleda();
+    a.plantar(0, 100, 0, 2, 0, naranjo);
+    const arbol = a.arbolEn(3, 104.6, 0)!;
+    expect(a.toca(arbol.x, arbol.y + arbol.centro, arbol.z, holguraDeLaCopa(1))).toBe(true);
+    expect(a.toca(3, 104.6, 0, holguraDeLaCopa(1))).toBe(false);
+  });
+});
+
 describe("lo que se perdona de la copa, por peldaño", () => {
   it("nada sin ayudas, dos metros con la tolerancia entera, y en medio, a proporción", () => {
     expect(holguraDeLaCopa(0)).toBe(0);
