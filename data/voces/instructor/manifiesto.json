@@ -523,6 +523,34 @@
       "ms": 4107,
       "h": "85601ec6e8"
     },
+    "ejercicio.gps.antes": {
+      "ms": 6007,
+      "h": "3a6d3b4fc9"
+    },
+    "ejercicio.gps.centrada": {
+      "ms": 3107,
+      "h": "f845edb36d"
+    },
+    "ejercicio.gps.cierre": {
+      "ms": 14007,
+      "h": "d889e0229e"
+    },
+    "ejercicio.gps.pasada": {
+      "ms": 4607,
+      "h": "f742fa80ca"
+    },
+    "ejercicio.gps.planB": {
+      "ms": 4007,
+      "h": "141bbf4a0b"
+    },
+    "ejercicio.gps.seFue": {
+      "ms": 4307,
+      "h": "cdc2b703ad"
+    },
+    "ejercicio.gps.sintonizar": {
+      "ms": 1931,
+      "h": "f7c65044c6"
+    },
     "ejercicio.ils.aTope": {
       "ms": 6907,
       "h": "7ce9b30138"
@@ -6166,6 +6194,27 @@
     ],
     "ejercicio.cruzado.cierreAlAire": [
       "ejercicio.cruzado.cierreAlAire"
+    ],
+    "ejercicio.gps.antes": [
+      "ejercicio.gps.antes"
+    ],
+    "ejercicio.gps.seFue": [
+      "ejercicio.gps.seFue"
+    ],
+    "ejercicio.gps.planB": [
+      "ejercicio.gps.planB"
+    ],
+    "ejercicio.gps.sintonizar": [
+      "ejercicio.gps.sintonizar"
+    ],
+    "ejercicio.gps.centrada": [
+      "ejercicio.gps.centrada"
+    ],
+    "ejercicio.gps.pasada": [
+      "ejercicio.gps.pasada"
+    ],
+    "ejercicio.gps.cierre": [
+      "ejercicio.gps.cierre"
     ]
   }
 }
