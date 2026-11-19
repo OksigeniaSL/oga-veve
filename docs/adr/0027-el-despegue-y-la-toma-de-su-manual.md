@@ -4901,6 +4901,19 @@ del modelo no se enseña.
   avión de hélice de la flota, en ningún campo del juego, remonta por el
   calor solo de una tarde de 38 grados; con viento de cola, sí. La prueba de
   `remontar-por-tipo.test.ts` dice ahora lo que pasa.
+- **En Asunción, por la 19, sale desde una calle** y no desde la cabecera: es
+  el único puesto de salida de toda la flota que cambia
+  (`puesto-de-salida-de-cada-campo.json`, rehecho).
+- **Con un motor sube más, y en molinete ya sube.** A su línea azul, 1,72 m/s
+  (340 ft/min) en bandera y 0,72 (140) en molinete, donde la tabla del ADR 0014
+  decía 0,9 y −0,2. La diferencia entre las dos, 200 ft/min, sigue siendo la
+  de la FAA. El Seneca III sube unos 385 ft/min en bandera a 4.300 lb, al
+  nivel del mar y con los 220 hp de despegue (VB-1110, figura 5-33); el II
+  tiene veinte caballos menos en el motor bueno y no hay cifra suya leída.
+  **«En molinete no sube» ya no es verdad en el modelo**, y no es la hélice:
+  es que el modelo no cuenta lo que frena volar con un motor —el pie y el
+  alabeo que sujetan el bueno—, que la recta escondía quitándole empuje. Queda
+  por hacer.
 
 ### La pista corta, no
 

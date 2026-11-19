@@ -2104,8 +2104,17 @@ export const PANAMBI: AircraftConfig = {
    * un motor parado en un bimotor de pistón. Treinta y cinco decímetros
    * cuadrados en molinete son los doscientos pies por minuto que cuenta el
    * manual de la FAA a su velocidad de mejor subida con un motor —y a este
-   * avión, con uno, le sobran unos ciento setenta—; en bandera, una décima
-   * parte. O sea: en molinete no sube, en bandera sí.
+   * avión, con uno, le sobraban unos ciento setenta—; en bandera, una décima
+   * parte. O sea: en molinete no subía, en bandera sí.
+   *
+   * **Con su hélice de paso variable (H37a) sube con uno 340 ft/min en
+   * bandera y 140 en molinete**: la diferencia sigue siendo la de la FAA, pero
+   * en molinete ya sube. El manual del Seneca III da unos 385 en bandera, a
+   * 4.300 lb, al nivel del mar y con sus 220 hp de despegue (VB-1110, figura
+   * 5-33); el II tiene veinte caballos menos en el motor bueno, y del suyo no
+   * hay cifra leída. Lo que el modelo no cuenta es lo que frena volar con el
+   * pie y el alabeo sujetando el motor bueno: con él, en molinete apenas
+   * subiría. ADR 0027, enmienda H37a.
    */
   motorParado: { molinete: 0.35, bandera: 0.03, autoBandera: false },
   /*
