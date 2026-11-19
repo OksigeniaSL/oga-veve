@@ -11307,8 +11307,14 @@ export class Game {
     const s = this.flight.state;
     if (Math.hypot(s.groundSpeed, s.verticalSpeed) <= ROCE) return;
     const holgura = holguraDeLaCopa(this.tier.assists.crashTolerance);
+    /*
+     * Con la fotografía 3D puesta, la vegetación se apaga
+     * (`apagarElMundoDeMentira`), y un árbol que no se ve no se toca: con
+     * ella se apartan también los de la granja, que van en la misma arboleda.
+     */
+    const delMundo = this.vegetacion?.visible !== false;
     const toca = (x: number, y: number, z: number): boolean =>
-      this.arboleda.toca(x, y, z, holgura) || this.arboledaDelMonte.toca(x, y, z, holgura);
+      (delMundo && this.arboleda.toca(x, y, z, holgura)) || this.arboledaDelMonte.toca(x, y, z, holgura);
     const a = this.antesDelPaso;
     const p = s.position;
     const tren = this.aircraft.gearHeight;
