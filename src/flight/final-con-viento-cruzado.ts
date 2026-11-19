@@ -386,12 +386,13 @@ export class FinalConViento {
        * **Se juzga la media de esos cinco segundos con el camino por el eje, y
        * se mide la media**: la medida y lo que pide, del mismo rato y con la
        * misma verdadera, que en la final va bajando y con ella sube el
-       * cangrejo que hace falta. Con el alisio de Los Rodeos, sobre el relieve,
-       * la racha de costado llega a quince nudos (`rafagas.ts`): en un instante
-       * suelto el morro o el ala caen donde los deje ella, y cinco segundos
-       * seguidos sin que ninguna los saque de su raya no llegaban con el JAZ 40
-       * por encima de los 25 m. Lo que se enseña es lo que se sostiene, y una
-       * racha que mece el ala un segundo no deshace el ala baja (H32b).
+       * cangrejo que hace falta. Con el alisio de Los Rodeos la racha de
+       * costado va y viene hasta siete u ocho nudos (`rafagas.ts`), y quien vuela
+       * corrige a bandazos: en un instante suelto el morro o el ala caen donde
+       * los dejen la racha o el bandazo, y con el JAZ 40 cinco segundos
+       * seguidos sin que ninguno los sacara de su raya no siempre llegaban
+       * por encima de los 25 m. Lo que se enseña es lo que se sostiene, y lo
+       * que mece el ala un segundo no deshace el ala baja (H32b).
        */
       const t = this.sostenido;
       const medio = { morro: this.morroSumado / t, cangrejo: this.cangrejoSumado / t, ala: this.alaSumada / t, pide: this.pideSumado / t };
