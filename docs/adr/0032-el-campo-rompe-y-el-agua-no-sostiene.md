@@ -145,3 +145,101 @@ solo. No se dramatiza: se ve la consecuencia y se vuelve a intentar.
   Yvytu Rape, y el agua del aire y sin venir de él.
 - Si un día se quiere un campo que rompa según su terreno —un rastrojo no es
   un pedregal—, el sitio es `PENDIENTE_DEL_CAMPO`, que hoy es uno para todo.
+
+## Enmienda H35b (19-11-2026): los árboles se tocan
+
+### Contexto
+
+El despegue de pista corta (ADR 0027, enmienda H35a) pone tres filas de
+lapachos de quince metros a ciento veinte del final de Yvytu Rape, y la
+lección entera es pasarlos por encima. Pasar por debajo de las copas se
+contaba —«justo», y otra vez— pero **el avión las atravesaba**. Y no solo
+esas: ningún árbol del juego se tocaba. Un monte que se atraviesa enseña que
+los árboles del final de la pista dan igual, que es lo contrario de lo que
+cuenta toda tabla de despegue, cuyo obstáculo de cincuenta pies es
+precisamente una fila de árboles.
+
+### Decisión
+
+**Meterse en un árbol con velocidad es un percance, `arbol`**, con su dibujo
+—un árbol de copa redonda con la avioneta de frente metida en ella y unas
+hojas cayendo—, su frase (`percance.arbol`, en `es-PY` y en `en`) y el mismo
+botón y la misma red de volver solo que los demás. En un ejercicio, como todo
+percance, lo cuenta el «otra vez» del ejercicio.
+
+**Qué árboles: todos los que se dibujan.** Los de la vegetación del mundo
+(`world/vegetation.ts`, hasta siete mil por escenario), los de la granja de
+Yvytu Rape (`world/granja.ts`) y los del monte de la pista corta. Se apuntan
+al plantarlos en una `Arboleda` (`world/arboleda.ts`) y la forma que se toca es
+**la que se dibuja**: el octaedro achatado de la copa, girado como el dibujo, y
+el tronco, en los de la vegetación y el monte; la bola principal de la copa, en
+los de la granja. Si la forma fuera mayor que el dibujo, el avión chocaría con
+el aire; si fuera menor, se vería pasar por dentro.
+
+**Por qué todos y no solo los del ejercicio: porque sale barato de verdad.**
+Medido en `arboleda.test.ts` con la vegetación entera de Yvytu Rape (siete mil
+árboles): montar la rejilla con la vegetación, 54 ms una vez por partida; una
+pregunta a la altura de las copas, 0,15 µs. El juego hace unas seis por paso
+—las ruedas a lo largo del camino del paso y las dos puntas del ala—, así que
+el coste por fotograma es de un microsegundo, una diezmilésima de los 16,7 ms
+de un fotograma; aunque una tablet de gama media sea diez veces más lenta, es
+ruido. Y en vuelo es menos: cada celda de treinta y dos metros sabe lo alto que
+llega lo más alto que tiene, y por encima de eso la pregunta acaba en la
+primera comparación. Sin reservar memoria al preguntar.
+
+**Qué se mira del avión**: las ruedas a lo largo del camino del paso —lo
+primero que llega a las copas al pasar por encima de un monte; y con el paso
+largo de la pestaña de fondo, una copa se cruzaría entera entre dos puntos— y
+las dos puntas del ala donde ha llegado, que es lo que engancha un árbol al
+virar bajo. **Arrimarse despacio no es un choque**: por debajo de `ROCE`, cinco
+metros por segundo, como en un edificio.
+
+### Por peldaños: lo que se gradúa es cuánta copa se perdona
+
+**Meterse en un árbol es percance en los cuatro peldaños**, como meterse en un
+edificio, tocar el campo volando o tocar el agua: el árbol existe en todos.
+Lo que crece con el peldaño es **cuánta piel de copa se perdona**
+(`holguraDeLaCopa`), con `crashTolerance`, como crece lo que aguanta el tren al
+tocar:
+
+| Peldaño | `crashTolerance` | Se perdona de la copa |
+|---|---|---|
+| Taguató Ruvichá | 0 | nada: tocar la copa que se ve es tocar el árbol |
+| Taguató | 0,4 | 80 cm |
+| Tukã | 1 | 2 m |
+| Guyrami | 1 | 2 m |
+
+Los dos metros (`ROZAR_LA_COPA`) son la simplificación, y se dice como tal: lo
+de fuera de una copa son hojas y ramitas, y una avioneta que las barre con las
+ruedas puede volver a casa con hojas en el tren —pasa, y sale en los informes
+como lo que estuvo a punto de ser un accidente—; de ahí para dentro están las
+ramas que paran un avión. No hay una cifra de cuánta copa aguanta un tren, y
+la que se pone es la piel de un lapacho de quince metros, que tiene cuatro de
+semialto. El tronco no se perdona en ningún peldaño.
+
+En Guyrami no hay ejercicio de pista corta (empieza en Tukã), así que ahí solo
+cuentan los árboles del mundo, que la vegetación ya aparta de la franja, de las
+calles y de las superficies de aproximación.
+
+### Consecuencias
+
+- `world/arboleda.test.ts`: que la copa del monte llega justo a sus quince
+  metros y ahí se toca; que las seis puntas de cada copa de la vegetación, justo
+  por dentro, se tocan, y la de arriba, justo por fuera, no; que se apuntan
+  tantos como se dibujan; la holgura de cada peldaño; y lo que cuesta.
+- `scripts/verificar-arboles.mjs`: volar contra un árbol del mundo, fuera de
+  todo ejercicio, en Yvytu Rape (Taguató Ruvichá y Guyrami) y en Los Rodeos, da
+  el percance con su dibujo, su frase donde se lee y su botón.
+- `world/arboles-de-la-senda.test.ts`: con el relieve de verdad de seis
+  campos —Yvytu Rape, Los Rodeos, Silvio Pettirossi, La Palma, Gran Canaria y
+  Encarnación—, ningún árbol de los que se tocan asoma por la senda de tres
+  grados ni diez metros por debajo de ella, ni por una subida del 4 % desde
+  los treinta y cinco pies, en las dos cabeceras, hasta tres kilómetros y con
+  las puntas de un ala de doce metros. Es lo que asegura que un vuelo
+  corriente no acabe en un árbol por pasar cerca de los que bordean la pista.
+- `scripts/ver-la-pista-corta.mjs` vuela además el caso de quedarse bajo, por
+  debajo de las copas: da el percance del árbol, a 84 nudos y nueve metros por
+  debajo de la cima, en Taguató Ruvichá y en Tukã (ADR 0027, enmienda H35b).
+- Por debajo de `ROCE` el avión todavía pasa por dentro de un árbol, despacio.
+  Rodar al paso contra un tronco no se para como contra un hangar; si un día
+  hace falta, el sitio es el mismo que el de los edificios en Guyrami.
