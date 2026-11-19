@@ -4922,3 +4922,30 @@ pies (VB-1110, p. 4-10)— y el modelo ya sube a sus cifras. **Pero no cabe en l
 granja**: pide 1.070 m por la toma y Yvytu Rape tiene novecientos (`cabeEn`),
 como el de verdad. El ejercicio sigue siendo solo del JAZ 20, y no hacen
 falta frases.
+
+### Volado
+
+- **El ILS de Fuerteventura con el bimotor** (`OGA_AVION=jaz-40
+  scripts/ver-ils-con-agujas.mjs`, reloj por cuatro), **20 de 20**: captura el
+  localizador y la senda desde abajo, a los mínimos con las dos agujas a
+  −0,02 puntos —lo peor desde mil pies, 0,04 y 0,17—, sale de la nube a 197
+  ft con la pista a la vista, aterriza y cierra con la pista. La final, con
+  todo fuera, la vuela el piloto del banco a 99 nudos con el gas entre 0,6 y
+  0,8.
+- La mesa del vuelo (`pista-corta.test.ts`, `motores.test.ts`,
+  `despegue-y-toma-del-manual.test.ts`, `turbo.test.ts`, `prestaciones.test.ts`)
+  vuela el modelo de vuelo entero y sin ayudas; las cifras de arriba son de
+  ahí.
+
+### Lo que queda
+
+- **La Vy del modelo**, seis u ocho nudos por encima de la de su manual (ver
+  arriba).
+- **Lo que frena volar con un motor**, que el modelo no cuenta: con su hélice,
+  en molinete sube 140 ft/min.
+- **El empuje parado del JAZ 40**, 5 kN sin fuente: con él rueda 323 m hasta la
+  Vr donde el suyo rueda unos 247.
+- **Los demás de hélice siguen con la recta**: el JAZ 25 y los turbohélices
+  del JAZ 50 y del JAZ 60, que la llevan calibrada contra su crucero y su
+  despegue. Los turbohélices tienen hélice de paso variable; pasarlos a
+  `potenciaUtil` es medirlos otra vez, uno a uno.
