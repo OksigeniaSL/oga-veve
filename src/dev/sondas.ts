@@ -26,7 +26,8 @@
  */
 import { HelicopteroComoModelo } from "../flight/fdm-helicoptero";
 import { velocidadesEnTierra } from "../flight/velocidades-en-tierra";
-import { propulsionDe } from "../flight/aircraft";
+import { esDeChorro, propulsionDe } from "../flight/aircraft";
+import { comoSeRecogen } from "../flight/flaps-de-despegue";
 import { codificarRejilla, ficheroDelPavimento } from "../world/pavimento-horneado";
 import {
   Box3,
@@ -698,6 +699,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       maniobraPorMuesca: muescasDeLaPalanca(juego.aircraft).map((f) =>
         maniobraCon(juego.avionConPeso(), f),
       ),
+      /*
+       * **Y cuándo se recogen los flaps de despegue**: sobre el suelo en pies
+       * y la indicada en nudos, lo mismo que la lista le pide a quien juega.
+       * El piloto del banco se los quitaba a la avioneta a los treinta metros,
+       * a la velocidad que llevara (enmienda H34d del ADR 0027).
+       */
+      recogeLosFlaps: comoSeRecogen(juego.aircraft, esDeChorro(juego.aircraft)),
       /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
        *
