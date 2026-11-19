@@ -299,6 +299,8 @@ Llegaste dando un golpe
 Te pasaste del final de la pista
 Entraste en la pista sin la luz verde
 Tocaste tierra sin sacar el tren
+Se rompió el tren rodando rápido por el campo
+Tocaste el agua, y sin flotadores no se flota
 Lo que llevás volado
 ¡Llegaste! Ya estás en casa
 ¡Buen vuelo!

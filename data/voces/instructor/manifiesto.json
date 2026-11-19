@@ -1555,6 +1555,10 @@
       "ms": 2745,
       "h": "8720c0c014"
     },
+    "percance.agua": {
+      "ms": 2508,
+      "h": "1fcf3e6d25"
+    },
     "percance.coche": {
       "ms": 1705,
       "h": "f4b28df340"
@@ -1586,6 +1590,10 @@
     "percance.sintren": {
       "ms": 1836,
       "h": "e1588edaf3"
+    },
+    "percance.tren": {
+      "ms": 2315,
+      "h": "5f3df98d27"
     },
     "pitot.abortado": {
       "ms": 4907,
@@ -6306,6 +6314,12 @@
     ],
     "ejercicio.pista-corta.solta": [
       "ejercicio.pista-corta.solta"
+    ],
+    "percance.tren": [
+      "percance.tren"
+    ],
+    "percance.agua": [
+      "percance.agua"
     ]
   }
 }

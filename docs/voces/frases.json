@@ -2433,6 +2433,20 @@
     "para": "lo que salió mal, en la pantalla de fin"
   },
   {
+    "id": "percance.tren",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se rompió el tren rodando rápido por el campo",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "percance.agua",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Tocaste el agua, y sin flotadores no se flota",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
     "id": "fin.horas",
     "voz": "instructor",
     "idioma": "es-PY",
