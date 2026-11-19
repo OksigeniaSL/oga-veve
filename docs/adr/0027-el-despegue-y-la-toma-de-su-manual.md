@@ -4932,6 +4932,12 @@ falta frases.
   ft con la pista a la vista, aterriza y cierra con la pista. La final, con
   todo fuera, la vuela el piloto del banco a 99 nudos con el gas entre 0,6 y
   0,8.
+- **El vuelo entero en Tenerife Norte, en Taguató** (`verificar-vuelo-entero.mjs
+  tenerife-norte taguato 1 jaz-40`, reloj por uno y ×1,00 de verdad), **58 de
+  58**: la torre le ofrece la intersección y sale desde ella, sube al 12 %
+  desde que suelta el suelo hasta los cien metros, llega estabilizado a los
+  500 ft a 88 nudos (Vref 86), toca a 597 m del umbral, a 0,2 m del eje y a
+  1,88 m/s, y acaba apagado en su puesto a los 909 s.
 - La mesa del vuelo (`pista-corta.test.ts`, `motores.test.ts`,
   `despegue-y-toma-del-manual.test.ts`, `turbo.test.ts`, `prestaciones.test.ts`)
   vuela el modelo de vuelo entero y sin ayudas; las cifras de arriba son de
