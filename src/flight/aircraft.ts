@@ -2531,10 +2531,10 @@ export const JAZ_50: AircraftConfig = {
    * **Y por encima pierde con la densidad a la 1,5, no a la 1** (H37d): con la
    * caída del motor de turbo subía hasta 32.000 ft a su peso máximo y 28.900
    * a 14.000 lb, donde Viking pone su techo de servicio —100 ft/min con los
-   * dos a potencia de subida— en 7.620 m (Guardian 400, 2018). Con 1,5 desde
-   * nueve mil pies, 24.500 ft a 14.000 lb y 26.800 a 12.500, sin tocar su
-   * subida de abajo ni sus cruceros; con 1,5 desde ocho mil, 23.800 y un nudo
-   * menos a diez mil pies. ADR 0027, enmienda H37d.
+   * dos a potencia de subida— en 7.620 m (folleto del Guardian 400). Con 1,5
+   * desde nueve mil pies, 24.500 ft a 14.000 lb y 26.800 a 12.500, sin tocar
+   * su subida de abajo ni sus cruceros; con 1,5 desde ocho mil, 23.800 y un
+   * nudo menos a diez mil pies. ADR 0027, enmienda H37d.
    */
   alturaCritica: 9000 * 0.3048,
   caidaSobreLaCritica: 1.5,
