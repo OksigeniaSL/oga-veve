@@ -6373,8 +6373,38 @@ export class PlanDeVuelo {
    * verde. Ver `por-donde-se-sale-en-la-roja.test.ts`.
    */
   comoSeSaldraDesdeAqui(): ComoSeSale | null {
+    return this.comoSeSaldraDesde(this.ultimaPos);
+  }
+
+  /**
+   * **Y lo mismo rodando, contado desde el punto de espera al que se va**, y
+   * no desde donde está el avión: la torre pregunta por la intersección
+   * antes de llegar (H29m). `null` si la raya no va a un punto de espera.
+   *
+   * Con la roja sola no bastaba. Con la pista libre la verde llega a los
+   * cuatro segundos de pararse —lo que tarda la torre en mirarte, ver
+   * `TORRE_TARDA` en `flight/vuelo.ts`—, y en ese rato la boca está con la
+   * roja y su «hold short»: en Los Rodeos con el JAZ 90 en Taguató la oferta
+   * y la TORA salían otra vez detrás del «cleared for take-off». Rodando hay
+   * tiempo, y la calle por la que se llega a la espera es la última de la
+   * raya, la misma que leerá la verde. Ver `contarPorDondeSeSale` en
+   * `game.ts`.
+   */
+  comoSeSaldraDesdeLaEspera(): ComoSeSale | null {
+    if (!this.vaAlPuntoDeEspera) return null;
+    const espera = this.ruta?.puntos.at(-1);
+    return espera ? this.comoSeSaldraDesde(espera) : null;
+  }
+
+  /** Si la raya de ahora lleva a un punto de espera. Ver `comoSeSaldraDesdeLaEspera`. */
+  get vaAlPuntoDeEspera(): boolean {
+    return this.destino === "espera" && (this.ruta?.puntos.length ?? 0) > 1;
+  }
+
+  /** Ver `comoSeSaldraDesdeAqui` y `comoSeSaldraDesdeLaEspera`. */
+  private comoSeSaldraDesde(desde: Punto): ComoSeSale | null {
     if (this.laSalidaDeHoy) return this.laSalidaDeHoy;
-    const alEje = this.alEjeDesde(this.ultimaPos);
+    const alEje = this.alEjeDesde(desde);
     if (!alEje) return null;
     // `backTaxiDesde` deja puesto su giro: se pregunta y se deja como estaba.
     const giro = this.giroDelBackTaxi;
