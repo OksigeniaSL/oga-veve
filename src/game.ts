@@ -39631,8 +39631,9 @@ export class Game {
   }
 
   private buildFlightModel(tier: Tier): FlightModel {
-    // El avión flota sobre el agua en vez de hundirse: es un juego para
-    // chicos, y amerizar de morro y desaparecer no le divierte a nadie.
+    // El agua se pisa a su cota y no en el fondo dibujado: el avión no se
+    // hunde de morro hasta desaparecer. Tocarla es un percance, con su dibujo:
+    // ver `mirarElSuelo` y `Terrain.esAgua`.
     const ground = (x: number, z: number): number =>
       this.terrain.sampleSurface(x, z);
     /*

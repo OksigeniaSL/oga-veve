@@ -164,18 +164,33 @@ function probar(page, que) {
     }
 
     if (que.franja) {
-      // En la franja: pasado el borde del asfalto y dentro del ancho doble.
-      const [x, z] = en(-r.length / 4, r.width * 0.8);
+      /*
+       * En la franja: pasado el borde del asfalto —que con sus márgenes llega
+       * más lejos que el ancho de la pista— y dentro del ancho doble, que es
+       * hasta donde llega la franja. Ver `sobreAlguna` en `pistas-del-vuelo.ts`.
+       */
+      const [x, z] = en(-r.length / 4, r.width * 0.93);
       out.franja = await rodarDesde(x, z, 24, hp);
     }
 
     if (que.agua) {
       /*
        * Agua de verdad, no la orilla: donde el suelo dibujado quede tres metros
-       * o más por debajo de la lámina.
+       * o más por debajo de la lámina, y con agua alrededor hasta medio
+       * kilómetro. Con solo lo primero salía un punto al pie de un acantilado
+       * de Anaga, y el avión, que en un segundo avanza treinta metros, tocaba
+       * la orilla y no el mar.
        */
+      const hondo = (x, z) => o.esAgua(x, z) && o.sueloDeVuelo(x, z) - o.suelo(x, z) > 3;
       const agua = buscar(
-        (x, z) => o.esAgua(x, z) && o.sueloDeVuelo(x, z) - o.suelo(x, z) > 3,
+        (x, z) => {
+          if (!hondo(x, z)) return false;
+          for (let k = 0; k < 8; k++) {
+            const a = (k / 8) * Math.PI * 2;
+            if (!hondo(x + Math.cos(a) * 500, z + Math.sin(a) * 500)) return false;
+          }
+          return true;
+        },
         250,
         30000,
       );
@@ -183,9 +198,11 @@ function probar(page, que) {
       else {
         const [x, z] = agua;
         const distancia = Math.round(Math.hypot(x - r.x, z - r.z));
+        // Mar adentro: el rumbo de la pista a ese punto, que se aleja de la costa.
+        const mar = Math.atan2(x - r.x, -(z - r.z));
         // Del aire: a doce metros, despacio y con el morro abajo.
         await posarEnLaPista();
-        o.colocar(x, o.sueloDeVuelo(x, z) + 12, z, 30, hp);
+        o.colocar(x, o.sueloDeVuelo(x, z) + 12, z, 30, mar);
         o.pilotar((c) => {
           c.engineOn = true;
           c.throttle = 0;
@@ -194,11 +211,27 @@ function probar(page, que) {
           c.aileron = 0;
         });
         const desde = o.reloj();
-        while (o.reloj() - desde < 12 && !o.percance()) await espera(40 / veces);
-        const delAire = { percance: o.percance(), tardo: +(o.reloj() - desde).toFixed(1) };
+        // Lo que pasa, por si sale mal: cuándo toca, dónde y qué pisa.
+        const traza = [];
+        while (o.reloj() - desde < 12 && !o.percance()) {
+          await espera(40 / veces);
+          const e = o.estado();
+          const { x: px, z: pz } = e.position;
+          traza.push(
+            `${(o.reloj() - desde).toFixed(2)} s · alto ${(e.position.y - o.sueloDeVuelo(px, pz)).toFixed(1)} m` +
+              ` · ${e.onGround ? "en el suelo" : "en el aire"} · agua ${o.esAgua(px, pz)}` +
+              ` · ${o.superficie()} · bajo la lámina ${(o.sueloDeVuelo(px, pz) - o.suelo(px, pz)).toFixed(1)} m` +
+              ` · ${e.groundSpeed.toFixed(1)} m/s`,
+          );
+        }
+        const delAire = {
+          percance: o.percance(),
+          tardo: +(o.reloj() - desde).toFixed(1),
+          traza: traza.slice(-12),
+        };
         o.pilotar(null);
         // Y ya en el suelo, sin venir del aire: como quien entra rodando desde la orilla.
-        const rodando = await rodarDesde(x, z, 4, hp, 2);
+        const rodando = await rodarDesde(x, z, 4, mar, 2);
         out.agua = { distancia, delAire, rodando };
       }
     }
@@ -246,18 +279,20 @@ try {
       );
     if (r.franja)
       comprobar(
-        `${de}: ni por su franja`,
-        r.franja.percance === null && r.franja.vmax > 20,
+        `${de}: ni por su franja, que es campo allanado`,
+        r.franja.percance === null && r.franja.vmax > 20 && r.franja.superficie === "campo",
         fmt(r.franja),
       );
     if (r.agua) {
       if (r.agua.fallo) comprobar(`${de}: el agua es percance`, false, r.agua.fallo);
       else {
+        const ok = r.agua.delAire.percance === "agua";
         comprobar(
           `${de}: tocar el agua viniendo del aire es percance`,
-          r.agua.delAire.percance === "agua",
+          ok,
           `a ${r.agua.distancia} m de la pista · percance: ${r.agua.delAire.percance} a los ${r.agua.delAire.tardo} s`,
         );
+        if (!ok) for (const l of r.agua.delAire.traza) console.log(`    ${l}`);
         comprobar(
           `${de}: y estar en ella sin venir del aire, también`,
           r.agua.rodando.percance === "agua",
