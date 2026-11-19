@@ -352,7 +352,23 @@ try {
   let enLosMinimosSeVe = null;
   /** Cuánto llevaba dicho la instructora al llegar a los mínimos: lo de después es lo de la frustrada o la toma. */
   let dichoHastaLosMinimos = null;
-  const comoSeVe = () =>
+  /*
+   * **Y la nube, desde el asiento**, no desde la cámara de cola. `enLaNube`
+   * es la de donde está el ojo, y el de la cola va seis décimas de envergadura
+   * por encima del avión: en el Twin Otter, doce metros. Con la capa que se
+   * deshilacha veinticinco metros por debajo de su base, a 197 ft el avión ya
+   * estaba fuera y la cámara todavía a medias dentro —0,51—, y el ILS del JAZ
+   * 50 daba 19 de 20 (ADR 0027, enmienda H37d). Lo que se comprueba es lo que
+   * ve quien pilota.
+   */
+  const comoSeVe = async () => {
+    const vista = await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+    await pausa(500);
+    const visto = await loQueSeVe();
+    await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+    return { ...visto, vista };
+  };
+  const loQueSeVe = () =>
     page.evaluate(() => {
       const o = globalThis.__oga;
       const j = o.juegoParaTrazas();
@@ -526,7 +542,7 @@ try {
     "a trescientos treinta pies, dentro de la nube; en los mínimos, fuera, con la pista a la vista",
     dentro && enLosMinimosSeVe && dentro.enLaNube > 0.3 && enLosMinimosSeVe.enLaNube < 0.2 && (enLosMinimosSeVe.haciaLaPista ?? 0) > 0.95,
     dentro && enLosMinimosSeVe
-      ? `a ${Math.round(dentro.pies)} ft en la nube ${dentro.enLaNube.toFixed(2)}; a ${Math.round(enLosMinimosSeVe.pies)} ft ${enLosMinimosSeVe.enLaNube.toFixed(2)}, hacia la pista deja ver ${enLosMinimosSeVe.haciaLaPista?.toFixed(2)}`
+      ? `desde la vista ${enLosMinimosSeVe.vista}: a ${Math.round(dentro.pies)} ft en la nube ${dentro.enLaNube.toFixed(2)}; a ${Math.round(enLosMinimosSeVe.pies)} ft ${enLosMinimosSeVe.enLaNube.toFixed(2)}, hacia la pista deja ver ${enLosMinimosSeVe.haciaLaPista?.toFixed(2)}`
       : "no llegó",
   );
   comprobar(
