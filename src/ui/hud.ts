@@ -3570,7 +3570,9 @@ export class Hud {
     this.destelloRestante = Math.max(0, this.destelloRestante - dt);
     if (despegando && !this.dijoV1) {
       this.dijoV1 = true;
-      this.v1EnLaVr = ias >= this.vr;
+      // Por las dos velocidades y no por la aguja: V1 se mira contra la verdadera y en un
+      // día de calor salta antes de que la indicada llegue a la Vr.
+      this.v1EnLaVr = decisionSpeed >= this.vr - 0.5;
       this.destellar("V1");
       this.velocidadesHandler?.("V1");
     } else if (
