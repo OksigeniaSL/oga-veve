@@ -1546,6 +1546,7 @@ import {
 import {
   cargaDelEjercicio,
   cargaParaElPlan,
+  combustibleDelPlan,
   comoVaElDeposito,
   hayQueLlenar,
   llamadaDeCombustible,
@@ -1556,6 +1557,7 @@ import {
   seCargaAlCambiarDeDestino,
   type LlamadaDeCombustible,
 } from "./flight/combustible";
+import { masaSinCombustibleDeLaHoja, pesar, type Hoja } from "./flight/hoja-de-carga";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import {
@@ -2358,6 +2360,14 @@ export interface GameOptions {
    * que se pudiera elegir. Ver `destinoDeSalida`.
    */
   destino?: string;
+
+  /**
+   * **La hoja de carga**, elegida en el hangar: cuánta gente va y si se llenan
+   * los depósitos, y para qué avión. Sin ella —se entró con la dirección
+   * puesta, un banco— el avión vuela con la carga de su ficha y el combustible
+   * de su plan, como siempre. Ver `flight/hoja-de-carga.ts`.
+   */
+  hojaDeCarga?: Hoja & { readonly avion: string };
 
   /**
    * Y sus fotografías, una por vecino y en el mismo orden, para que las islas
@@ -3998,7 +4008,26 @@ export class Game {
    * queda en los depósitos. Ver `masaConCombustible`.
    */
   masaDeAhora(): number {
+    const hoja = this.hojaDeEsteAvion();
+    if (hoja)
+      return (
+        masaSinCombustibleDeLaHoja(this.aircraft, hoja.pasajeros) +
+        Math.max(0, Number.isFinite(this.combustible) ? this.combustible : 0)
+      );
     return masaConCombustible(this.aircraft, this.combustible);
+  }
+
+  /** La hoja de carga del hangar. Ver `GameOptions.hojaDeCarga`. */
+  private hojaDeCarga: (Hoja & { readonly avion: string }) | null = null;
+
+  /**
+   * **La hoja, si es de este avión.** Se eligió para uno: si en el juego se
+   * cambia de avión, la gente de un 1900D no se sienta en un 172, y el nuevo
+   * vuela con la carga de su ficha.
+   */
+  private hojaDeEsteAvion(): Hoja | null {
+    const h = this.hojaDeCarga;
+    return h && h.avion === this.aircraft.id ? h : null;
   }
 
   /**
@@ -6794,6 +6823,7 @@ export class Game {
     );
     this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
     this.destinoPedido = options.destino;
+    this.hojaDeCarga = options.hojaDeCarga ?? null;
     this.noCaben = options.noCaben ?? [];
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? PYKASU;
@@ -18255,7 +18285,8 @@ export class Game {
     if (!canalesDe(this.tier.avisos).cifra) return;
     const campo = this.elCampo();
     const calor = calorQuePesa(
-      this.aircraft,
+      // Con lo que pesa hoy, que es lo que eligió la hoja de carga.
+      this.avionConPeso(),
       campo.escenario.meteo ?? TIEMPO_DE_CASA,
       this.cotaDelCampo(campo),
       this.superficie,
@@ -28276,10 +28307,16 @@ export class Game {
   /** Lo que se carga para un tramo: ida, alternativo, maniobra y reserva. */
   private cargaDelTramo(salidaId: string, destinoId: string): number {
     const { salida, destino } = this.tramoParaCargar(salidaId, destinoId);
-    return cargaParaElPlan(
-      this.aircraft,
-      tramosDelPlan(salida, destino, this.camposDelVuelo()),
-    );
+    const tramos = tramosDelPlan(salida, destino, this.camposDelVuelo());
+    /*
+     * **Con la hoja, lo que dice la hoja**: los depósitos llenos, o lo del
+     * plan sin recortarlo al peso de la ficha. Si con esa gente no cabe, el
+     * avión sale pesado, como se eligió: la hoja ya lo enseñó en el hangar, y
+     * la pista de hoy y el parte salen de ese peso. Ver `hoja-de-carga.ts`.
+     */
+    const hoja = this.hojaDeEsteAvion();
+    if (hoja) return pesar(this.aircraft, hoja, combustibleDelPlan(this.aircraft, tramos)).combustible;
+    return cargaParaElPlan(this.aircraft, tramos);
   }
 
   /** Los dos campos de un tramo, como los carga el depósito, y su nombre. */

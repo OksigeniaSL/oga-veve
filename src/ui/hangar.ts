@@ -49,7 +49,10 @@ import {
   type Veredicto,
 } from "../flight/cabe";
 import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
-import { cargaParaElPlan, loQueCabe } from "../flight/combustible";
+import { cargaParaElPlan, combustibleDelPlan, loQueCabe } from "../flight/combustible";
+import { cargaDeSuTipo, hojaDeSuFicha, type Hoja } from "../flight/hoja-de-carga";
+import { mandosDeLaHoja, PASO_CARGA, vistaDeLaHoja, type VueloDeLaHoja } from "./hoja-de-carga";
+import { leerMetar, pedirMetar, proxyDelParte, vientoDeCasa, type Meteo } from "../world/meteo";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { AERONAVES, aeronavePorId, laQueSeVuelaEn, seVuelaEn } from "../flight/aeronaves";
 import { esHelicoptero } from "../flight/helicoptero-en-el-juego";
@@ -135,6 +138,11 @@ export interface Eleccion {
   readonly inicio?: EscenaDelInicio;
   /** **El capítulo del vuelo largo, si no es el tercero**: el de la ficha de Madrid o el de la noche. */
   readonly capitulo?: 1 | 2;
+  /**
+   * **La hoja de carga** de este avión: cuánta gente sube y si se llenan los
+   * depósitos. Ver `flight/hoja-de-carga.ts` y `ui/hoja-de-carga.ts`.
+   */
+  readonly hoja?: Hoja;
 }
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
@@ -2335,6 +2343,7 @@ type Pantalla =
   | "inicio"
   | "donde"
   | "adonde"
+  | "carga"
   | "que"
   | "quien"
   | "conque"
@@ -2411,6 +2420,65 @@ export function abrirHangar(
     // Un ejercicio se practica en casa: la vuelta al campo.
     if (ejercicio) return sitio.id;
     return destinoPorDefecto(sitio, avion, leccion, mision);
+  };
+  /*
+   * **La hoja de carga**, de un avión: la gente de un 1900D no se sienta en un
+   * 172. Al cambiar de avión se vuelve a la de su ficha.
+   */
+  let hoja: Hoja | null = null;
+  let hojaDe = "";
+  const hojaDeAhora = (): Hoja => (hoja && hojaDe === avion.id ? hoja : hojaDeSuFicha(avion));
+  const ponerHoja = (h: Hoja): void => {
+    hoja = h;
+    hojaDe = avion.id;
+  };
+  /**
+   * **Todo lo que la hoja necesita del vuelo elegido**: el combustible del
+   * plan del destino de ahora —sin recortarlo al peso de la ficha—, la TORA
+   * del campo y su aire. El aire es el del parte si viene en la dirección
+   * (`?metar=`), y si no el día de siempre del sitio, el mismo que usa el
+   * vuelo cuando no hay METAR, hasta que llega el de verdad: se pide al abrir
+   * la hoja, como lo pide el vuelo al salir, y si no llega se queda el de
+   * siempre. Ver `pedirElParte`.
+   */
+  const partes = new Map<string, Meteo>();
+  const pedidos = new Set<string>();
+  const pedirElParte = (): void => {
+    const oaci = sitio.aerodrome?.id;
+    const proxy = proxyDelParte();
+    if (!oaci || !proxy || pedidos.has(oaci)) return;
+    pedidos.add(oaci);
+    void pedirMetar(oaci, proxy, vientoDeCasa(sitio.vientoDominante)).then((parte) => {
+      partes.set(oaci, parte);
+      // Si la hoja sigue abierta, se repinta con el aire de hoy.
+      const vista = root.querySelector<HTMLElement>("[data-hoja-vista]");
+      if (pantalla === "carga" && vista && sitio.aerodrome?.id === oaci)
+        vista.innerHTML = vistaDeLaHoja(vueloDeLaHoja());
+    });
+  };
+  const vueloDeLaHoja = (): VueloDeLaHoja => {
+    const campos = camposDeLaRuta(sitio, destinosPosibles(sitio, avion));
+    const casa = campos[0]!;
+    const aqui = campos.find((c) => c.id === destinoDeAhora()) ?? casa;
+    const campo = campoDe(sitio);
+    const crudo = new URLSearchParams(location.search).get("metar");
+    const parte =
+      (crudo ? leerMetar(crudo) : null) ??
+      partes.get(sitio.aerodrome?.id ?? "") ??
+      vientoDeCasa(sitio.vientoDominante);
+    return {
+      avion,
+      hoja: hojaDeAhora(),
+      delPlan: combustibleDelPlan(avion, tramosDelPlan(casa, aqui, campos)),
+      tora: campo.tora ?? campo.largo,
+      aire: {
+        temp: parte.temp,
+        qnh: parte.qnh,
+        cota: sitio.aerodrome?.elevationM ?? 0,
+        superficie: campo.superficie,
+      },
+      peldano: tramo.avisos,
+    };
   };
   let pantalla: Pantalla = "inicio";
   /** La que está pintada, para saber si se cambió de pantalla o se repinta. */
@@ -2495,6 +2563,8 @@ export function abrirHangar(
   const hayAdonde = (): boolean => destinosDeLaRuta(sitio).length > 0 && !esHelicoptero(avion);
 
   const pintar = (): void => {
+    // La hoja de carga, con el aire de hoy: el parte se pide al abrirla.
+    if (pantalla === "carga") pedirElParte();
     root.innerHTML = `
       ${cielo()}
       ${marca()}
@@ -2581,6 +2651,24 @@ export function abrirHangar(
             ${destinosQueNoCaben(sitio, avion)
               .map((d) => fichaDeDestinoQueNoCabe(sitio, d, tramo.avisos))
               .join("")}
+          </div>
+        </section>`
+            : ""
+        }
+
+        ${
+          pantalla === "carga"
+            ? `
+        <!--
+          **Qué se lleva, y si cabe.** La gente y el depósito arriba, que es lo
+          que se elige; la báscula y la pista debajo, que es lo que sale. Ver
+          \`ui/hoja-de-carga.ts\`.
+        -->
+        <section class="hangar__bloque hoja" aria-labelledby="hangar-carga">
+          <h2 class="hangar__pregunta" id="hangar-carga">${t("hangar.carga")}</h2>
+          <div class="hoja__tarjeta">
+            <div class="hoja__mandos">${mandosDeLaHoja(avion, hojaDeAhora(), tramo.avisos)}</div>
+            <div class="hoja__vista" data-hoja-vista>${vistaDeLaHoja(vueloDeLaHoja())}</div>
           </div>
         </section>`
             : ""
@@ -2774,7 +2862,7 @@ export function abrirHangar(
           pantalla === "inicio"
             ? `
         <div class="hangar__pasos" style="--pasos: ${
-          hayAdonde() ? 6 : 5
+          (hayAdonde() ? 6 : 5) + (esHelicoptero(avion) ? 0 : 1)
         }">
           ${[
             [
@@ -2811,6 +2899,26 @@ export function abrirHangar(
                   ],
                 ]
               : []),
+            /*
+             * **La hoja de carga**, detrás del destino: lo que se lleva depende
+             * de a dónde se va. El helicóptero no la tiene: su carga es otra
+             * cuenta.
+             */
+            ...(esHelicoptero(avion)
+              ? []
+              : [
+                  [
+                    "carga",
+                    t("hangar.carga"),
+                    ((tipo) =>
+                      tipo
+                        ? `${Math.round(hojaDeAhora().pasajeros)}/${tipo.plazas}`
+                        : t(hojaDeAhora().llenos ? "hoja.llenos" : "hoja.plan"))(
+                      cargaDeSuTipo(avion),
+                    ),
+                    PASO_CARGA,
+                  ],
+                ]),
             [
               "que",
               t("hangar.aque"),
@@ -2967,6 +3075,22 @@ export function abrirHangar(
      * una etiqueta que marca un botón de radio escondido, sin código, así que
      * se oye en el cambio. Volver a la ficha no suena, como cerrar una hoja.
      */
+    /** Repinta la vista de la hoja y deja los mandos donde están. Ver `pintar`. */
+    const repintarLaHoja = (): void => {
+      const vista = root.querySelector<HTMLElement>("[data-hoja-vista]");
+      if (vista) vista.innerHTML = vistaDeLaHoja(vueloDeLaHoja());
+      const h = hojaDeAhora();
+      const deslizador = root.querySelector<HTMLInputElement>("[data-hoja-gente]");
+      if (deslizador && Number(deslizador.value) !== h.pasajeros) deslizador.value = String(h.pasajeros);
+      for (const b of root.querySelectorAll<HTMLElement>(".hoja__opcion[data-hoja-llenos]"))
+        b.setAttribute("aria-checked", String((b.getAttribute("data-hoja-llenos") === "1") === h.llenos));
+    };
+    root.addEventListener("input", (event) => {
+      const deslizador = event.target as HTMLInputElement | null;
+      if (!deslizador?.matches("[data-hoja-gente]")) return;
+      ponerHoja({ ...hojaDeAhora(), pasajeros: Number(deslizador.value) });
+      repintarLaHoja();
+    });
     root.addEventListener("change", (event) => {
       const llave = event.target as HTMLInputElement | null;
       if (!llave?.matches(".iac__llave")) return;
@@ -3000,6 +3124,25 @@ export function abrirHangar(
             voz.decir(tocado.como.voz.clave, tocado.como.voz.texto);
           }
         }
+        return;
+      }
+
+      /*
+       * **La hoja de carga** se repinta por dentro y no entera: el deslizador
+       * no se puede reconstruir debajo del dedo que lo arrastra.
+       */
+      const paso = boton.getAttribute("data-hoja-paso");
+      const llenos = boton.getAttribute("data-hoja-llenos");
+      const quitar = boton.getAttribute("data-hoja-quitar");
+      if (paso !== null || llenos !== null || quitar !== null) {
+        const h = hojaDeAhora();
+        const plazas = cargaDeSuTipo(avion)?.plazas ?? 0;
+        const gente = (n: number): number => Math.max(0, Math.min(plazas, n));
+        if (paso !== null) ponerHoja({ ...h, pasajeros: gente(h.pasajeros + Number(paso)) });
+        else if (llenos !== null) ponerHoja({ ...h, llenos: llenos === "1" });
+        else ponerHoja({ ...h, pasajeros: gente(h.pasajeros - Number(quitar)) });
+        voz.ruido("clic");
+        repintarLaHoja();
         return;
       }
 
@@ -3220,6 +3363,7 @@ export function abrirHangar(
           ejercicio,
           aircraft: avion,
           destino: destinoDeAhora(),
+          ...(esHelicoptero(avion) ? {} : { hoja: hojaDeAhora() }),
           ...(conInicio ? { inicio: escenaDelInicio } : {}),
           ...(modo === "madrid" ? { capitulo: 1 as const } : modo === "noche" ? { capitulo: 2 as const } : {}),
         });
