@@ -155,6 +155,13 @@ try {
         const KT = 0.514444;
         const flaps = flapsDeDespegue(a);
         const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+        const dif = (x, y) => {
+          let d = x - y;
+          while (d > Math.PI) d -= 2 * Math.PI;
+          while (d < -Math.PI) d += 2 * Math.PI;
+          return d;
+        };
+        const rumbo = (j.scenario.runway.heading * Math.PI) / 180;
         let desde = null;
         let quiere = 0;
         let antes = null;
@@ -172,8 +179,12 @@ try {
           const indicada = indicatedAirspeed(s.airspeed, s.position.y, j.flight.aireDelDia()) / KT;
           c.flaps = flaps;
           c.throttle = 1;
-          c.aileron = 0;
-          c.rudder = 0;
+          // **Por el eje**: en el suelo con el pedal y la rueda, como `verificar-emergencias.mjs`; en el aire, con el ala.
+          const e = dif(rumbo, s.heading);
+          const q = s.orientation;
+          const ala = Math.asin(-2 * (q.x * q.y + q.w * q.z));
+          c.rudder = s.onGround ? clamp(e * 4 + 3 * s.beta, -1, 1) : clamp(3 * s.beta, -1, 1);
+          c.aileron = s.onGround ? clamp(e * 3, -1, 1) : clamp(3 * (clamp(1.5 * e, -0.3, 0.3) - ala) - 0.6 * s.rollRate, -1, 1);
           if (desde === null) desde = ahora;
           if (s.onGround) {
             // Frenos y motor a tope cuatro segundos con el avión quieto; luego, soltar.
