@@ -3,8 +3,8 @@
  * todo ejercicio, da el percance del árbol con su dibujo, su frase y su botón.
  *
  * Busca, alrededor de la pista, el primer árbol cuya copa esté a seis metros
- * del suelo con ochenta metros despejados por delante —ni suelo más alto ni
- * agua—, coloca el avión ahí a treinta metros por segundo y a la altura de la
+ * del suelo con ochenta metros despejados por delante —ni suelo más alto, ni
+ * agua, ni un edificio—, coloca el avión ahí a treinta metros por segundo y a la altura de la
  * copa, y deja que el juego decida. Lo de pasar por debajo de las copas del
  * monte de la pista corta lo mira `ver-la-pista-corta.mjs`; las reglas y lo
  * que cuesta, `world/arboleda.test.ts`.
@@ -81,6 +81,9 @@ try {
             if (o.suelo(px, pz) > suelo + 2 || o.esAgua?.(px, pz) || j.arboleda.toca(px, suelo + 6, pz)) libre = false;
           }
           if (!libre) continue;
+          // Y sin una casa, un hangar o un galpón por medio: eso es otro percance.
+          const y = suelo + 6 + a.gearHeight;
+          if (j.bultos.chocaEnElCamino(x - dx * 90, y, z - dz * 90, x, y, z)) continue;
           return { x, z, suelo, dx, dz, d, cuantos, tren: a.gearHeight };
         }
       return { fallo: "no hay un árbol a la vista", cuantos };
