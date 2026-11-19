@@ -1251,9 +1251,19 @@ export function rosaDeRumbo(
       </g>
       <path class="cr__fe" d="M0 ${-r - 4} l0 10" />
       ${conAvion ? `<path class="cr__simbolo" d="${helicoptero ? SIMBOLO.helicoptero : SIMBOLO.avion}" />` : ""}
+      ${conAvion ? GPS_EN_EL_HSI : ""}
     </g>
   `;
 }
+
+/**
+ * **Lo que el G1000 escribe del GPS junto al avioncito del HSI**: «LOI» sin
+ * integridad y «DR» sin posición, en ámbar, arriba a la derecha del avión
+ * (G1000 *Pilot's Guide*, tabla 2-3 y «Dead Reckoning»). Solo en la rosa del
+ * horizonte, que es el HSI del de cristal; nace escondido y lo enciende
+ * `Tablero.elGps`. Ver `anuncioDelGps` en `flight/gps-con-apagones.ts`.
+ */
+const GPS_EN_EL_HSI = `<text data-cristal="gps-hsi" x="14" y="-9" ${MARCA_ROTULO} class="cr__gps" visibility="hidden"></text>`;
 
 // ── La pantalla de navegación ─────────────────────────────────────────
 
@@ -1296,6 +1306,13 @@ export function pantallaDeNavegacion(ancho: number, alto: number, helicoptero = 
     </g>
     <path class="cr__simbolo" transform="translate(${cx} ${cy}) scale(1.15)"
           d="${helicoptero ? SIMBOLO.helicoptero : SIMBOLO.avion}" />
+    <!--
+      **«DR» encima del avioncito**, en ámbar, como lo escribe el G1000 sin
+      posición del GPS: el mapa sigue, y el avión que se ve es una estima. Lo
+      enciende Tablero.elGps; ver anuncioDelGps en flight/gps-con-apagones.ts.
+    -->
+    <text data-cristal="gps-carta" x="${cx}" y="${cy + 5}" ${MARCA_ROTULO}
+          class="cr__gps cr__gps--carta" text-anchor="middle" visibility="hidden">DR</text>
     <!--
       **La radio, encima de la carta**: la aguja del ADF y el CDI del VOR
       sobre la rosa, como en la pantalla de navegación de verdad, y la NAV y

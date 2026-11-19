@@ -6117,6 +6117,33 @@ button.motor__tecla::after {
 }
 
 /*
+ * **Lo que el G1000 dice del GPS**: «LOI» y «DR» junto al avioncito del HSI y
+ * «DR» encima del de la carta, en ámbar, que es precaución: mirá esto, no
+ * ahora mismo. Con su filo oscuro, que van encima del avión y de la carta.
+ * Y las millas y la hora de llegada, en ámbar mientras salen de una posición
+ * a estima. Ver `anuncioDelGps` en `flight/gps-con-apagones.ts`.
+ */
+.cr__gps {
+  fill: var(--cabina-precaucion);
+  font-family: var(--cabina-fuente);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  paint-order: stroke;
+  stroke: var(--cabina-pantalla);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.cr__gps--carta {
+  font-size: 15px;
+}
+
+.cr__aux.cr__aux--estima {
+  fill: var(--cabina-precaucion);
+}
+
+/*
  * La GS de rodar, en tierra: una fila del alto de los rótulos de la esquina,
  * sin caja, con el dibujo de rodar en cian como lo auxiliar, la barra verde
  * mientras va bien y ámbar si se llega rápido a lo que viene, y la marca

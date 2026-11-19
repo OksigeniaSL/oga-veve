@@ -1774,8 +1774,12 @@ export const EN: Dictionary = {
   "ejercicio.gps.sintonizar": "Put the home VOR back in the NAV",
   "ejercicio.gps.centrada": "That's it! With the bar centered, we're heading straight to the station",
   "ejercicio.gps.pasada": "Made it by radio, and the GPS is back! A good pilot always has a plan B",
+  "ejercicio.gps.loi": "LOI: the GPS can no longer vouch for where we are",
+  "ejercicio.gps.seFueDr": "The GPS is gone. DR: it's now estimating where we are. The plane flies the same",
+  "ejercicio.gps.planBCrs": "Plan B: turn the CRS until the bar is centered with TO, and follow it",
   "ejercicio.gps.nav": "NAV {id} {mhz}",
   "ejercicio.gps.obs": "OBS {curso}",
+  "ejercicio.gps.crs": "CRS {curso}",
   "ejercicio.gps.integOk": "INTEG OK",
   "ejercicio.gps.cierre":
     "The GPS can go out: jamming announced by a NOTAM, too few satellites in view, or the antenna. What doesn't depend on it keeps working: the radio, the compass, the heading indicator and the clock. That's why plan B is set up before you leave",

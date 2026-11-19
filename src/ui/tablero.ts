@@ -73,6 +73,7 @@ import { llevaVentanillaDeAltitud } from "../flight/altitud-seleccionada";
 import { decima as n1, escribir, poner } from "./si-cambia";
 import { apareceEnPantalla, pasaElTiempoDelCuadro, seVeEnPantalla } from "./explicaciones";
 import type { Pieza } from "../flight/lo-que-se-nombra";
+import type { AnuncioDelGps } from "../flight/gps-con-apagones";
 
 /** Un punto de la carta, en píxeles desde el centro de la rosa. */
 type Punto2 = { dx: number; dy: number };
@@ -1940,6 +1941,7 @@ export class Tablero {
      */
     this.laCarta(d, cifras);
     this.laRadio(d, cifras);
+    this.elGps();
     const tren = this.pieza('[data-cristal="tren"]');
     if (tren) {
       const luz = luzDeTren(d.tren);
@@ -2519,6 +2521,36 @@ export class Tablero {
   private texto(que: string, valor: string): void {
     if (!que) return;
     escribir(this.pieza(`[data-cristal="${que}"]`), valor);
+  }
+
+  /** **Lo que la cabina enseña del GPS**, o `null` con el GPS bien. Ver `ponerGps`. */
+  private gps: AnuncioDelGps | null = null;
+
+  /**
+   * **El GPS como lo anuncia esta cabina** (ADR 0031, enmienda H26w): lo pone
+   * el juego cuando cambia, y `update` lo pinta en cada vuelta, así que un
+   * cuadro rehecho lo vuelve a enseñar. Ver `anuncioDelGps`.
+   */
+  ponerGps(a: AnuncioDelGps | null): void {
+    this.gps = a;
+  }
+
+  /**
+   * **El «LOI» y el «DR» del G1000**: junto al avioncito del HSI, encima del
+   * de la carta, y las millas y la hora de llegada en ámbar mientras salen de
+   * una posición a estima. Las piezas solo están en el de cristal; en los
+   * demás no se encuentra ninguna y no se hace nada.
+   */
+  private elGps(): void {
+    const a = this.gps;
+    const hsi = this.pieza('[data-cristal="gps-hsi"]');
+    if (hsi) {
+      poner(hsi, "visibility", a?.hsi ? "visible" : "hidden");
+      escribir(hsi, a?.hsi ?? "");
+    }
+    poner(this.pieza('[data-cristal="gps-carta"]'), "visibility", a?.enLaCarta ? "visible" : "hidden");
+    const estima = !!a?.aEstima;
+    for (const que of ["distancia", "eta"]) this.pieza(`[data-cristal="${que}"]`)?.classList.toggle("cr__aux--estima", estima);
   }
 }
 

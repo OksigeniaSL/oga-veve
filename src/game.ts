@@ -1140,9 +1140,12 @@ import {
   type SucesoDelPitotHelado,
 } from "./flight/pitot-helado";
 import {
+  anuncioDelGps,
+  cabinaDelGps,
   CAUSA_DEL_EJERCICIO as CAUSA_DEL_APAGON,
   colocacionDelGps,
   SeApagaElGps,
+  type AnuncioDelGps,
   type ColocacionDelGps,
   type SucesoDelGps,
 } from "./flight/gps-con-apagones";
@@ -21753,6 +21756,8 @@ export class Game {
         rotuloDeMotor: cuadroDe(this.aircraft).rotulo,
         // Y lo que dice el EICAS de un motor parado. Ver `listaDelMotor`.
         mensajesDeMotor: this.mensajesDeMotor,
+        // Y el «LOI» y el «DR» del G1000, los mismos que el cuadro plano. Ver `practicarElGps`.
+        gps: this.gpsEnCabina,
         /*
          * Y dónde está la cabina, que no es donde está el avión. Ver
          * `flight/cabina-presurizada.ts`, y la pregunta que lo trajo: «¿qué
@@ -32091,6 +32096,9 @@ export class Game {
       readonly toFrom: string | null;
     } | null;
     readonly porDecir: number;
+    /** Lo que sabe el receptor, y lo que la cabina enseña de eso. Ver `anuncioDelGps`. */
+    readonly receptor: string;
+    readonly cabina: AnuncioDelGps | null;
   } | null {
     const g = this.gpsApagado;
     if (!g) return null;
@@ -32101,7 +32109,12 @@ export class Game {
       fase: g.fase,
       cierre: g.cierre,
       causa: CAUSA_DEL_APAGON,
-      sinGps: g.sinGps,
+      /*
+       * **Lo que sabe el plano**, leído del plano y no del ejercicio: en los de
+       * cristal el ejercicio sabe dónde se fue el GPS, pero el plano sigue a
+       * estima (H26w).
+       */
+      sinGps: this.hud.mapa.dondeSeQuedo,
       casaSinGps: !!document.querySelector('[data-hud="home"]')?.classList.contains("casa--sin-gps"),
       estacion: { id: g.estacion.id, x: g.estacion.x, z: g.estacion.z },
       colocacion: g.colocacion,
@@ -32109,20 +32122,51 @@ export class Game {
         ? { mhz: radio.navMhz, curso: radio.curso, desviacion: nav.lectura.desviacion, toFrom: nav.lectura.toFrom }
         : null,
       porDecir: this.frasesDelGps.cuantas,
+      receptor: g.receptor,
+      cabina: this.gpsEnCabina,
     };
   }
 
   /**
+   * **Lo que la cabina enseña del GPS ahora**, o `null` con el GPS bien: el
+   * «LOI» y el «DR» del G1000 en los de cristal. Lo pintan el cuadro y las
+   * pantallas de la cabina en 3D, las dos, que enseñan lo mismo. Ver
+   * `anuncioDelGps`.
+   */
+  private gpsEnCabina: AnuncioDelGps | null = null;
+
+  /** La cabina de este avión, por cómo lleva el GPS; el helicóptero, como la de esferas: no tiene el ejercicio. */
+  private get cabinaDelGps(): "esferas" | "cristal" | "linea" {
+    return cabinaDelGps(this.aircraft) ?? "esferas";
+  }
+
+  /**
    * **Un paso del GPS**: el ejercicio con el sitio de verdad y lo que marca la
-   * NAV, y lo que depende del GPS sin saber dónde está el avión mientras está
-   * apagado —el plano, quieto donde lo supo, sin la flecha ni la estela, y la
-   * tarjeta de casa sin aguja ni distancia—. Al volver, lo sabe otra vez.
+   * NAV, y lo que depende del GPS como lo enseña cada cabina (`anuncioDelGps`):
+   * en los de esferas, el plano quieto donde lo supo, sin la flecha ni la
+   * estela, y la tarjeta de casa sin aguja ni distancia; en los de cristal, el
+   * «LOI» y el «DR» del G1000, con el mapa siguiendo a estima. Al volver, lo
+   * sabe otra vez.
    */
   private practicarElGps(dt: number): void {
     const g = this.gpsApagado;
-    if (!g) return;
+    if (!g) {
+      if (this.gpsEnCabina) {
+        this.gpsEnCabina = null;
+        this.hud.ponerGpsEnCabina(null);
+      }
+      return;
+    }
     this.frasesDelGps.soltar();
-    const sin = g.sinGps;
+    const anuncio = anuncioDelGps(this.cabinaDelGps, g.receptor);
+    const hay = anuncio.hsi !== null || anuncio.enLaCarta !== null || anuncio.aEstima;
+    const ahora = hay ? anuncio : null;
+    if (ahora !== this.gpsEnCabina) {
+      this.gpsEnCabina = ahora;
+      this.hud.ponerGpsEnCabina(ahora);
+    }
+    // El plano y la tarjeta de casa, solo con el GPS de panel: el G1000 sigue a estima.
+    const sin = anuncio.planoQuieto ? g.sinGps : null;
     this.hud.mapa.ponerSinGps(sin);
     this.hud.ponerSinGps(sin !== null);
     this.hud.mapa.ponerEstela(sin ? null : () => this.libreta.traza);
@@ -32195,15 +32239,34 @@ export class Game {
         if (c) radio.curso = c.obs;
         return contar("gps-con-senal", "ejercicio.gps.antes", "", 20);
       }
+      case "sinIntegridad":
+        /*
+         * **El «LOI» del G1000**, en los de cristal: ámbar junto al avioncito
+         * del HSI, y la instructora lo cuenta. Sin sonido de aviso, como el
+         * apagón. En los de esferas el cuadro no lleva el receptor, y no se
+         * dice nada que no se vea. Si ya se fue la posición, sobra.
+         */
+        if (this.cabinaDelGps !== "cristal") return;
+        return contar("gps-apagado", "ejercicio.gps.loi", "", 12, () => this.gpsApagado?.receptor === "sinIntegridad");
       case "seFue":
-        // Sin sonido de aviso: no es una emergencia. Lo que se ve es el plano sin el avión.
-        return contar("gps-apagado", "ejercicio.gps.seFue", "", 14);
+        /*
+         * Sin sonido de aviso: no es una emergencia. En los de esferas, lo que
+         * se ve es el plano sin el avión; en los de cristal, el «DR» del G1000
+         * con el mapa siguiendo a estima.
+         */
+        return contar("gps-apagado", this.cabinaDelGps === "cristal" ? "ejercicio.gps.seFueDr" : "ejercicio.gps.seFue", "", 14);
       case "planB": {
         const c = this.gpsApagado?.colocacion;
+        /*
+         * El curso, con el nombre de su mando: el OBS del direccional en los
+         * de esferas y la ventanilla CRS en los de cristal —en un G1000, la
+         * perilla CRS; su «OBS» es un modo del GPS, y aquí no hay GPS—.
+         */
+        const crs = this.cabinaDelGps === "cristal";
         return contar(
           elCdi("a-tope"),
-          "ejercicio.gps.planB",
-          c ? t("ejercicio.gps.obs", { curso: String(c.alaRadio).padStart(3, "0") }) : "",
+          crs ? "ejercicio.gps.planBCrs" : "ejercicio.gps.planB",
+          c ? t(crs ? "ejercicio.gps.crs" : "ejercicio.gps.obs", { curso: String(c.alaRadio).padStart(3, "0") }) : "",
           16,
           sinGps,
         );

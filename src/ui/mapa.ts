@@ -887,6 +887,11 @@ export class Mapa {
     this.sinGps = punto;
   }
 
+  /** Dónde se quedó el plano sin GPS, o `null` si sabe dónde está el avión: lo que mira el banco. */
+  get dondeSeQuedo(): { readonly x: number; readonly z: number } | null {
+    return this.sinGps;
+  }
+
   /**
    * Mueve la flecha. Se llama cada fotograma, así que no pinta el mundo.
    *

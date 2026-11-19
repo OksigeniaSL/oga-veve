@@ -43,6 +43,7 @@ import { CuadroDelTelefono, type Grande } from "./cuadro-telefono";
 import type { Mapa as MapaDeLaCarta } from "./carta";
 import { Tablero, type DatosDelTablero } from "./tablero";
 import type { Estado as EstadoDeAvisos } from "../flight/avisos-de-cabina";
+import type { AnuncioDelGps } from "../flight/gps-con-apagones";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
 import { PYKASU, propulsionDe, esDeChorro, type AircraftConfig } from "../flight/aircraft";
@@ -5357,6 +5358,15 @@ export class Hud {
    */
   ponerSinGps(sin: boolean): void {
     this.home?.classList.toggle("casa--sin-gps", sin);
+  }
+
+  /**
+   * **El GPS como lo anuncia la cabina**: el «LOI» y el «DR» del G1000 en el
+   * cuadro de los de cristal, o `null` con el GPS bien. Se llama cuando
+   * cambia. Ver `anuncioDelGps` en `flight/gps-con-apagones.ts`.
+   */
+  ponerGpsEnCabina(a: AnuncioDelGps | null): void {
+    this.tablero.ponerGps(a);
   }
 
   /**

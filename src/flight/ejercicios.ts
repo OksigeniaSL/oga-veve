@@ -131,6 +131,7 @@ import { dondeSeVaElGiroscopo } from "./giroscopo-en-hora";
 import { laderaDelAltimetro } from "./el-altimetro-miente";
 import { inclinacionDelCampo } from "./brujula-que-baila";
 import { cabeElCruzado, cruzadoDelCampo } from "./final-con-viento-cruzado";
+import { cabinaDelGps } from "./gps-con-apagones";
 
 export type EjercicioId =
   | "planeo"
@@ -824,14 +825,21 @@ export const EJERCICIOS: readonly Ejercicio[] = [
      */
     peldanos: ["taguato-ruvicha"],
     /*
-     * **Los de esferas con NAV**: la avioneta y el bimotor de pistón. Su GPS
-     * es uno de panel, y su mapa móvil es el plano, que sin posición deja de
-     * saber dónde está el avión. Los de cristal lo anuncian de otra manera
-     * —el «LOI» y el «DR» del G1000, la inercial de los de línea— y eso
-     * queda escrito y no hecho: ver la enmienda H26v. El biplano agrícola no
-     * lleva radio.
+     * **Los de esferas con NAV y los de cristal**: la avioneta, el bimotor de
+     * pistón y los turbohélices. En los de esferas su GPS es uno de panel, y
+     * su mapa móvil es el plano, que sin posición deja de saber dónde está el
+     * avión; en los de cristal, el G1000 dice «LOI» y luego «DR», y el mapa
+     * sigue a estima (enmienda H26w). En los dos el plan B es el mismo: el
+     * VOR que ya estaba en la NAV. **En los de línea no**: con la inercial y
+     * el DME/DME el ordenador de vuelo sigue sabiendo dónde está, y volar a
+     * la radio porque se fue el GPS enseñaría un plan B que ese avión no
+     * necesita (regla 4). El biplano agrícola no lleva radio, y el
+     * helicóptero tiene su cabina.
      */
-    valePara: (a) => !conRadarMeteorologico(a) && radiosDe(a).nav,
+    valePara: (a) => {
+      const cabina = cabinaDelGps(a);
+      return (cabina === "esferas" || cabina === "cristal") && radiosDe(a).nav;
+    },
     leccion: "aterrizaje",
     colocacion: "gps",
     averias: [],
