@@ -2023,6 +2023,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
     }
     flapsDeDespegueFuera = false;
+    /*
+     * **Y la frustrada de la avioneta, muesca a muesca.** Ver
+     * `flapsDeLaFrustrada`: una muesca menos cuando ha llegado la anterior,
+     * sube y va a la de maniobra de la siguiente.
+     */
+    if (flapsDeLaFrustrada !== null && tramo < 2 && !enFinal) {
+      const indicada = (o.velocidadDeCabina?.() ?? kt) / 1.94384;
+      const llegaron =
+        Math.abs((o.controles?.().flaps ?? flapsDeLaFrustrada) - flapsDeLaFrustrada) < 0.02;
+      const deLaPrimera = suyas.maniobraPorMuesca?.[1] ?? RECOGE_LOS_FLAPS_A;
+      if (flapsDeLaFrustrada > 0.34) {
+        if (llegaron && s.verticalSpeed > 1 && indicada >= deLaPrimera) flapsDeLaFrustrada = 1 / 3;
+      } else if (s.heightAboveGround >= ASENTAR_LA_SUBIDA && indicada >= RECOGE_LOS_FLAPS_A)
+        flapsDeLaFrustrada = 0;
+      if (flapsDeLaFrustrada > 0) {
+        o.pedirFlaps?.(flapsDeLaFrustrada);
+        return;
+      }
+    }
+    flapsDeLaFrustrada = null;
     o.pedirFlaps?.(
       (enFinal || tramo >= 4) && kt < (suyas.vfeKt ?? 999)
         ? 1
@@ -2428,6 +2448,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   };
 
   /**
+   * **Lo deprisa que sube el morro sobre el horizonte**, rad/s.
+   *
+   * No es `pitchRate`, que es el giro en los ejes del avión: virando a
+   * treinta grados la avioneta gira en ellos cuatro grados por segundo con el
+   * morro quieto sobre el horizonte, y amortiguar eso es empujar en cada
+   * viraje. Es lo que se ve por el parabrisas: el giro de cabeceo y el de
+   * guiñada que suben el morro, sobre el coseno del cabeceo. Ver
+   * `AMORTIGUA_EL_MORRO`.
+   */
+  const ritmoDelMorro = (s) => {
+    const { x, y, z, w } = s.orientation;
+    const arriba = 1 - 2 * (x * x + z * z);
+    const derecha = 2 * (x * y + w * z);
+    return (
+      ((s.pitchRate ?? 0) * arriba + (s.yawRate ?? 0) * derecha) /
+      Math.max(0.2, Math.cos(cabeceoDe(s)))
+    );
+  };
+
+  /**
    * La actitud de la subida inicial, rad.
    *
    * Doce grados. Es lo que se rota en cualquier avión de transporte y algo más
@@ -2526,6 +2566,32 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * automático —ver `REACTOR_COMPLETO`—, que son los del «stall, stall».
    */
   const SUBE_CON_EL_MORRO = REACTOR_COMPLETO;
+  /**
+   * **La avioneta en el modelo completo**, que es la que sube a mano: los
+   * demás del modelo completo los sube el automático (`SUBE_CON_EL_MORRO`) y
+   * en Guyrami el ala no pierde. Es la JAZ 20 de Tukã para arriba, y a ella
+   * van los tres arreglos de la enmienda H34c del ADR 0027: rotar a su ritmo,
+   * nivelar sin tirón (`AMORTIGUA_EL_MORRO`) y frustrar con los flaps por
+   * pasos (`flapsDeLaFrustrada`).
+   */
+  const AVIONETA_COMPLETA = !SENCILLO && !SUBE_CON_EL_MORRO && !!suyas.llevaFlaps;
+  /**
+   * **Cuánto se opone la mano al morro que se mueve**, palanca por rad/s.
+   *
+   * Las leyes de la subida por velocidad y de `aLaAltura` mandan la palanca
+   * con lo que falta —velocidad o velocidad vertical— y nada más, así que el
+   * morro llega a lo pedido con todo el giro encima y se pasa: al dejar de
+   * subir, la palanca saltaba a tres décimas de empujar, el morro bajaba a
+   * dieciséis grados por segundo y la vuelta era el tirón. La traza de c28 lo
+   * pilló a 241 m: «stall, stall» a 65 nudos, α 13,5° y 1,65 g, con los flaps
+   * arriba; H34b lo había medido de 1,09 a 1,52 g al nivelar. Quien vuela de
+   * verdad mueve el morro y lo para donde quiere, y eso es esto: con 1,5,
+   * cinco grados por segundo de morro son trece centésimas de palanca en
+   * contra. En la mesa del modelo completo, con la racha de Los Rodeos, la
+   * carga al nivelar baja de 1,27–1,29 g a 1,08–1,15 y el margen al avisador
+   * sube de 2,2–3,5° a 4,7–4,9°.
+   */
+  const AMORTIGUA_EL_MORRO = 1.5;
   /** El gas de la subida, quieto desde la altura de aceleración. Ver `volarLaSenda`. */
   let gasDeLaSubida = null;
   /*
@@ -2538,10 +2604,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * cualquier procedimiento de frustrada: potencia, una muesca menos, subir,
    * y los flaps a su velocidad.
    */
+  /**
+   * **Y en la avioneta, por pasos, como su manual.** Esto de arriba era solo
+   * para los que sube el automático, y a la JAZ 20 `configurar` le pedía los
+   * flaps arriba del todo en cuanto dejaba la final, mientras subía a doce
+   * grados: en la tercera tirada de H34b, con la pista ocupada, bajó de 68 a
+   * 57 nudos en cinco segundos con el ala quedándose limpia y sonó «stall,
+   * stall» a 84 m, con 1,40 g y los flaps en 0,19. El 172 dice otra cosa:
+   * «Wing Flaps — RETRACT TO 20°», subir a 60 nudos, «Wing Flaps — 10°»
+   * hasta librar los obstáculos, y los últimos «after reaching a safe
+   * altitude and 65 KIAS» (Cessna 172S *Information Manual*, sección 4,
+   * *Balked Landing*). Aquí: la segunda muesca al irse; la primera cuando
+   * ya ha llegado a la segunda, sube y va a la de maniobra de la primera
+   * —60,6 nudos con su peso—; y arriba a la altura de aceleración y a la de
+   * recoger los de despegue, 63,8 nudos. Es la palanca que se sostiene, o
+   * `null` si no hay frustrada en curso. Ver `configurar`.
+   */
+  let flapsDeLaFrustrada = null;
   const irseConFlaps = () => {
     if (SUBE_CON_EL_MORRO && suyas.llevaFlaps) {
       o.pedirFlaps?.(1 / 3);
       flapsDeDespegueFuera = true;
+    } else if (AVIONETA_COMPLETA) {
+      flapsDeLaFrustrada = Math.min(2 / 3, o.palancaDeFlaps?.() ?? 2 / 3);
+      o.pedirFlaps?.(flapsDeLaFrustrada);
     }
   };
 
@@ -2569,12 +2655,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * que ya trae de la actitud de doce grados: el relevo de una ley a la otra
    * no tira de nada. Quien juega sube más deprisa aún, a la de subida que le
    * pinta la escalera (`indicadaDeSubida`, 85 nudos), y el 172 de verdad a su
-   * Vy, 74. Con los flaps fuera, y en Guyrami, como estaba.
+   * Vy, 74. En Guyrami, como estaba.
+   *
+   * **Y con los flaps de la frustrada todavía fuera, también** (H34c): si a
+   * la altura de aceleración aún lleva la primera muesca, la de antes —60
+   * nudos indicados— queda por debajo de la de recogerla, 63,8, y se subía
+   * con ella para siempre. A la limpia se llega, se recogen al pasar por esa
+   * y se sigue. Con diez grados la avioneta aguanta hasta 110 nudos.
    */
   const aQueSeSube = (s) =>
-    !SENCILLO && suyas.llevaFlaps && (o.palancaDeFlaps?.() ?? 0) < 0.01
-      ? Math.max(VELOCIDAD_DE_SUBIDA, enVerdadera(s, SUBIDA_LIMPIA))
-      : VELOCIDAD_DE_SUBIDA;
+    AVIONETA_COMPLETA ? Math.max(VELOCIDAD_DE_SUBIDA, enVerdadera(s, SUBIDA_LIMPIA)) : VELOCIDAD_DE_SUBIDA;
 
   const subirDeVerdad = (s) => {
     /*
@@ -2598,9 +2688,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * el JAZ 90 a 164 nudos. El automático arrancaba de ahí y el morro se iba
      * a 16°, subiendo a 14 m/s: el salto de palanca de 0,005 a 0,23 de #192.
      */
+    /*
+     * **Y la avioneta, con la mano a su ritmo también aquí**, no solo al
+     * rotar: al irse al aire desde la final, con el morro abajo, esta ley
+     * pedía seis décimas de golpe y en la mesa del modelo completo daba 1,79
+     * g a 50 m, con el ala a 1,8° del avisador. Ver `aSuRitmo`.
+     */
     if (s.heightAboveGround < ASENTAR_LA_SUBIDA || SUBE_CON_EL_MORRO) {
       const falta = CABECEO_DE_SUBIDA - cabeceoDe(s);
-      return ganancia(s) * Math.max(-0.35, Math.min(0.6, falta * 4));
+      const actitud = ganancia(s) * Math.max(-0.35, Math.min(0.6, falta * 4));
+      return AVIONETA_COMPLETA ? aSuRitmo(actitud, s) : actitud;
     }
     const base = palancaPorVelocidad(s, aQueSeSube(s));
     const falta = Math.max(0, 3 - s.verticalSpeed);
@@ -2625,7 +2722,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     const conMargen = s.airspeed > (suyas.rotacion ?? 28) * 1.05;
     const extra = conMargen ? Math.min(0.25, falta * 0.05) : 0;
-    return Math.max(-0.35, Math.min(0.5, base + extra));
+    /*
+     * Y la avioneta, parando el morro: subiendo por velocidad con la racha de
+     * Los Rodeos, en la mesa el morro iba de 3,6° a 20,7° y la carga de 0,53 a
+     * 1,41 g; en la traza de c28, a 20° pasados los 120 m. Ver
+     * `AMORTIGUA_EL_MORRO`.
+     */
+    const freno = AVIONETA_COMPLETA ? AMORTIGUA_EL_MORRO * ritmoDelMorro(s) : 0;
+    return Math.max(-0.35, Math.min(0.5, base + extra - freno));
   };
 
   /**
@@ -2702,7 +2806,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * banco puede tirar decide dónde se posa el avión, y eso no se ajusta de
      * pasada.
      */
-    const mando = Math.max(-0.3, Math.min(0.3, error * 0.08));
+    /*
+     * **Y en la avioneta del modelo completo, parando el morro** (H34c): ver
+     * `AMORTIGUA_EL_MORRO`. Solo en ella: en los demás del modelo completo la
+     * altura la lleva el automático desde que dejan de subir, y en Guyrami
+     * esta palanca decide dónde se posa el avión, que es lo de arriba.
+     */
+    const freno = AVIONETA_COMPLETA ? AMORTIGUA_EL_MORRO * ritmoDelMorro(s) : 0;
+    const mando = Math.max(-0.3, Math.min(0.3, error * 0.08 - freno));
     const conSuMando = mando * ganancia(s);
     return s.airspeed < minima ? Math.min(0, conSuMando) : conSuMando;
   };
@@ -6213,9 +6324,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * empezaba a tirar a 117 nudos indicados con la Vr en 129. Ver
        * `enVerdadera`.
        */
+      /*
+       * **Y la avioneta del modelo completo, igual: a una actitud y a su
+       * ritmo** (H34c). Con ocho décimas sostenidas el morro de la JAZ 20
+       * llegaba a 16,1°, el ángulo al que toca la cola (`maxGroundPitch`), y
+       * el avisador estaba puesto de 0,08 a 0,31 s a dos metros del suelo:
+       * en la avioneta eso es la bocina, y suena. Nadie rota un 172 hasta la
+       * cola. En la mesa del modelo completo, en Los Rodeos: de 16,1° y medio
+       * segundo de bocina a 11,4° y ninguna, despegando 48 m más adelante y
+       * pasando los treinta metros 29 m antes. En Guyrami, como estaba: allí
+       * el morro en el suelo no lo levanta la palanca.
+       */
       c.elevator = s.onGround
         ? s.airspeed > enVerdadera(s, (suyas.rotacion ?? 28) * 0.96)
-          ? SUBE_CON_EL_MORRO
+          ? SUBE_CON_EL_MORRO || AVIONETA_COMPLETA
             ? aSuRitmo(Math.max(0, Math.min(0.8, (rotarHasta - cabeceoDe(s)) * 4)), s)
             : 0.8
           : 0
