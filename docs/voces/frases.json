@@ -4768,6 +4768,51 @@
     }
   },
   {
+    "id": "ejercicio.gps.loi",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "LOI: el GPS ya no puede asegurar dónde estamos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "LOI: el GPS ya no puede asegurar dónde estamos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.gps.seFueDr",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se fue el GPS. DR: ahora calcula dónde estamos, a estima. El avión vuela igual",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Se fue el GPS. DR: ahora calcula dónde estamos, a estima. El avión vuela igual.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.gps.planBCrs",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Plan B: girá el CRS hasta que la barra quede al medio con TO, y seguila",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Plan B: girá el CRS hasta que la barra quede al medio con TO, y seguila.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "ejercicio.gps.cierre",
     "voz": "instructor",
     "idioma": "es-PY",

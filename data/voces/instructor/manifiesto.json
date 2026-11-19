@@ -535,6 +535,10 @@
       "ms": 14007,
       "h": "d889e0229e"
     },
+    "ejercicio.gps.loi": {
+      "ms": 3207,
+      "h": "33199b3f2f"
+    },
     "ejercicio.gps.pasada": {
       "ms": 4607,
       "h": "f742fa80ca"
@@ -543,9 +547,17 @@
       "ms": 4007,
       "h": "141bbf4a0b"
     },
+    "ejercicio.gps.planBCrs": {
+      "ms": 4407,
+      "h": "4e2d1db85b"
+    },
     "ejercicio.gps.seFue": {
       "ms": 4307,
       "h": "cdc2b703ad"
+    },
+    "ejercicio.gps.seFueDr": {
+      "ms": 5107,
+      "h": "de5c62612d"
     },
     "ejercicio.gps.sintonizar": {
       "ms": 1931,
@@ -6215,6 +6227,15 @@
     ],
     "ejercicio.gps.cierre": [
       "ejercicio.gps.cierre"
+    ],
+    "ejercicio.gps.loi": [
+      "ejercicio.gps.loi"
+    ],
+    "ejercicio.gps.seFueDr": [
+      "ejercicio.gps.seFueDr"
+    ],
+    "ejercicio.gps.planBCrs": [
+      "ejercicio.gps.planBCrs"
     ]
   }
 }

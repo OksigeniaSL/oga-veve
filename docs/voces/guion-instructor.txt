@@ -476,6 +476,9 @@ Plan B: girá el OBS hasta que la barra quede al medio con TO, y seguila
 Volvé a poner el VOR de casa en la NAV
 ¡Eso! Con la barra al medio, vamos derecho a la radio
 ¡Llegamos con la radio, y volvió el GPS! El buen piloto siempre tiene plan B
+LOI: el GPS ya no puede asegurar dónde estamos
+Se fue el GPS. DR: ahora calcula dónde estamos, a estima. El avión vuela igual
+Plan B: girá el CRS hasta que la barra quede al medio con TO, y seguila
 El GPS se puede ir: una interferencia que avisa un NOTAM, pocos satélites a la vista o la antena. Lo que no depende de él sigue andando: la radio, la brújula, el direccional y el reloj. Por eso el plan B se deja puesto antes de salir
 Ver el río
 Seguir el río
