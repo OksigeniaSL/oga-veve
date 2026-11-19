@@ -4616,8 +4616,8 @@ que el ejercicio trae los veintiocho grados y el viento quieto (`main.ts`).
 modelo no tiene fuerzas —el gas es la velocidad— y no hay pendiente que
 elegir. La instructora lo presenta, pide soltar los frenos con el motor a tope
 y el avión quieto, cuenta el ángulo sostenido tres segundos a cinco nudos de
-los 56 (el ancho que pide el examen práctico de la FAA, que deja +10/−5) y sin
-bailar más de cuatro, pide más nariz una vez si va diez por encima antes del
+los 56 (el ancho que pide el examen práctico de la FAA, que deja +10/−5), sin
+bailar más de cuatro y subiendo al menos un 6 %, pide más nariz una vez si va diez por encima antes del
 monte, cuenta cómo se pasó —con margen desde quince metros sobre las copas, la
 altura de los árboles otra vez; justo por debajo— y cierra con la Vy
 sostenida. **Parar en la pista rodando también se felicita**: renunciar
@@ -4659,8 +4659,20 @@ Y la tirada enseñó dos cosas que la mesa no:
   tiene que estar quieta, sin bailar más de cuatro nudos en el rato
   (`QUIETA`).
 
-La segunda tirada, con las dos cosas arregladas, en Taguato Ruvichá y en Tukã:
-ver abajo.
+**La segunda tirada**, con las dos cosas arregladas, en Taguato Ruvichá:
+
+| Segunda tirada | Al cruzar la fila | Sobre las copas | Se cuenta |
+|---|---|---|---|
+| A la del obstáculo | 54,5 kt | 57,5 m | con margen |
+| A buscar la Vy recién despegado | 75,0 kt | 10,8 m | justo |
+
+Y una tercera cosa: **al que salía a buscar la Vy se le seguía felicitando el
+ángulo**, «53 KT. That's it!», con la velocidad quieta. Recién despegado todos
+van a la de irse del suelo, y quien busca la Vy se queda ahí unos segundos con
+la nariz baja, acelerando casi sin subir. Lo que distingue la Vx no es solo la
+cifra, es **subir empinado**: el rato tiene que subir al menos seis metros por
+cada cien recorridos (`EMPINADA`), y a la del obstáculo el JAZ 20 sube al 9 %
+en la mesa y al 10 en el juego.
 
 ### Lo que queda
 
