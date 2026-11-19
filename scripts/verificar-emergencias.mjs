@@ -136,6 +136,28 @@ try {
       const vfe = planeo.vfeKt / 1.943844;
       const esReactor = vref > 60;
       /*
+       * **El bimotor de pistón no tiene V2: tiene línea azul**, y su manual
+       * no lo sube como a uno de transporte. «If the decision is made to
+       * continue: maintain heading. After establishing a climb, retract
+       * landing gear, accelerate to 92 KIAS and feather inoperative engine
+       * prop» (Piper, *Pilot's Operating Handbook* del PA-34-220T, VB-1110,
+       * sección 3). Rota a la Vr, muy por debajo de su línea azul, y con un
+       * motor no le sobra para subir y acelerar a la vez: el piloto del banco
+       * lo levantaba a la actitud de un reactor, se quedaba a 75 nudos, y al
+       * ir a buscar la línea azul a quince metros bajaba el morro y volvía al
+       * suelo. Ahora hace lo del manual: sube lo justo sin bajar de la Vr,
+       * mete el tren con la subida ya hecha, acelera a la línea azul sin
+       * bajar, la sostiene y recoge los flaps de despegue, que la línea azul
+       * es limpia.
+       *
+       * **Y no hay más**: con el motor parado antes de irse del suelo, la
+       * hélice en molinete, el tren fuera y los flaps, ese avión no sube, y
+       * vuelve a tocar la pista y la sigue corriendo hasta irse más deprisa.
+       * Volado en Gran Canaria, a los 2.900 m de sus 3.100 (enmienda H37b del
+       * ADR 0027). Su manual, por debajo de 85 nudos, manda parar.
+       */
+      const deLineaAzul = o.avion().conUnMotor === "VYSE";
+      /*
        * El circuito de vuelta, a la escala de cada avión: el reactor, alto y
        * ancho —vira con dos kilómetros de radio—; el turbohélice y el bimotor
        * de pistón, a mil pies y más cerca, que con un motor suben poco y no
@@ -303,19 +325,40 @@ try {
           // A la actitud de despegue de un avión de línea, unos ocho grados y
           // medio: con un motor se separa un poco más tarde, cerca de la V2.
           c.elevator = profundidad(s, 0.15, dt);
-          if (!s.onGround && sobre > 15) tramo = "subida";
+          // El de pistón, en cuanto vuela, a lo de su manual: ver `deLineaAzul`.
+          if (!s.onGround && sobre > (deLineaAzul ? 3 : 15)) tramo = "subida";
           return;
         }
 
         if (!s.onGround && ej?.fase !== "armada") {
-          if (s.verticalSpeed > 1 && sobre > 12) o.pedirTren(false);
+          /*
+           * «After establishing a climb»: en el de pistón, con la subida hecha
+           * aunque sea poca. Y no antes: metido a un metro del suelo, con la
+           * hélice aún en molinete, el avión vuelve a la pista sin ruedas.
+           */
+          if (deLineaAzul ? s.verticalSpeed > 0.3 && sobre > 8 : s.verticalSpeed > 1 && sobre > 12)
+            o.pedirTren(false);
         }
         c.rudder = pedal(s, dt);
 
         if (tramo === "subida") {
           c.throttle = 1;
           const v2 = vel.v2 ?? vref * 1.2;
-          c.elevator = porVelocidad(s, v2, dt);
+          if (deLineaAzul && ej?.fase !== "armada") {
+            /*
+             * Sin bajar de la Vr, subiendo lo justo mientras le falte para la
+             * línea azul, y en ella, a ella. Los flaps, dentro cuando ya va
+             * deprisa para ir sin ellos: a diez nudos de la línea azul.
+             */
+            const vr = vel.vr ?? vref;
+            c.elevator =
+              s.airspeed >= v2 - 0.5
+                ? porVelocidad(s, v2, dt)
+                : s.airspeed < vr + 1
+                  ? porVelocidad(s, vr + 1.5, dt)
+                  : porSubida(s, 0.4, dt);
+            if (s.airspeed > v2 - 5.1 && sobre > 15) o.pedirFlaps(0);
+          } else c.elevator = porVelocidad(s, v2, dt);
           c.aileron = alabear(s, h, 0.15);
           if (sobre > alto - 40) {
             tramo = "circuito";

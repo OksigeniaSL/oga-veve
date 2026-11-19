@@ -138,6 +138,55 @@ export function parDeLosMotores(
   return par;
 }
 
+/**
+ * **Lo que frena el timón de dirección pisado a fondo**, como coeficiente de
+ * resistencia sobre el ala, igual que el `cd0`. Ver `resistenciaDelTimon`.
+ *
+ * El timón no tuerce el avión de balde. Para dar su par, la deriva empuja de
+ * lado, y esa fuerza es una sustentación, con su inducida —la de un ala corta,
+ * que es lo que es una deriva— y con la resistencia de forma de una superficie
+ * con el flap metido, que es lo que es un timón. Con un motor parado se vuela
+ * así el rato entero: es el precio de la **resbalada cero** del manual de la
+ * FAA, «zero sideslip and best climb performance», que es la mejor de las que
+ * hay y no es gratis —«any attitude other than zero sideslip increases
+ * drag»— (FAA, *Airplane Flying Handbook*, FAA-H-8083-3C, cap. 13, p. 13-29).
+ * Y las cifras de subida con un motor de un manual son de ese vuelo: «the
+ * AFM/POH performance charts for one engine inoperative flight were
+ * determined at zero sideslip» (p. 13-27).
+ *
+ * **0,03**, de dos cuentas que dicen lo mismo:
+ *
+ * - **La de la deriva**: a fondo trabaja cerca de lo más que sostiene, un
+ *   coeficiente de 0,8, con una inducida de alargamiento dos —el suyo, uno y
+ *   medio, más lo que le suman el fuselaje y el estabilizador— y la de forma
+ *   del timón metido, que suman 0,18 sobre la deriva. La deriva es entre un
+ *   doce y un veinte por ciento del ala —el Seneca, el E170, el 747—: de 0,02
+ *   a 0,04 sobre el ala.
+ * - **La subida con un motor del Seneca II a su peso máximo**: 225 ft/min
+ *   según su hoja de datos y 235 según *Aviation Consumer* («Piper's PA-34
+ *   Seneca»). Sin el pie, el modelo daba 301 a esas 4.570 lb; con 0,03, 232
+ *   en la cuenta y 234 volado.
+ *
+ * Crece con el cuadrado de lo pisado, porque la inducida crece con el
+ * cuadrado de la fuerza de lado y la de forma de un flap, con el de su ángulo.
+ * Una sola cifra para toda la flota: lo que cambia de un avión a otro es
+ * cuánto pie le hace falta, y eso ya lo dicen su timón y sus motores. El
+ * bimotor de pistón lo nota más que nadie, porque lo que le sobra con uno es
+ * poco. ADR 0027, enmienda H37b.
+ */
+export const RESISTENCIA_DEL_TIMON = 0.03;
+
+/**
+ * **Lo que frena el timón de dirección pisado** una fracción `timon` de su
+ * recorrido, de −1 a 1: coeficiente sobre el ala. Lo suman el modelo de vuelo
+ * y la cuenta de la línea azul (`subidaConUnMotor`), que tienen que decir lo
+ * mismo.
+ */
+export function resistenciaDelTimon(timon: number): number {
+  const t = Math.max(-1, Math.min(1, timon));
+  return RESISTENCIA_DEL_TIMON * t * t;
+}
+
 /** Cuántos motores empujan. */
 export function enMarcha(estados: readonly EstadoDelMotor[]): number {
   let n = 0;

@@ -5463,3 +5463,209 @@ En el navegador, `verificar-vuelo-entero.mjs`, puerto 5687:
   (37.000 antes del régimen plano) donde el suyo se queda en 25.000. Por
   encima del régimen plano la potencia de una turbina cae algo más deprisa que
   la densidad, y el rendimiento de la hélice también, y no se cuenta.
+
+## Enmienda H37b (19-11-2026): lo que frena el pie, y el bimotor a su línea azul
+
+H37a dejó escrito que el JAZ 40 subía con un motor más que el suyo —340
+ft/min en bandera y 140 en molinete— y que el piloto del banco no lo llevaba a
+la línea azul. Las dos cosas eran ciertas, y tenían causas distintas.
+
+### Las cifras
+
+- **El Seneca II con un motor**, en bandera, al nivel del mar y a su peso
+  máximo de 4.570 lb (2.073 kg): **225 ft/min** según su hoja de datos y
+  **235** según *Aviation Consumer* («Piper's PA-34 Seneca»: «single-engine
+  climb rate improved to 235 FPM»). Y el III, con 220 hp por motor, **240** a
+  sus 4.750 lb (el mismo artículo). Son cifras de manual, y las de un manual
+  con un motor se sacan a **resbalada cero**: «the AFM/POH performance charts
+  for one engine inoperative flight were determined at zero sideslip» (FAA,
+  *Airplane Flying Handbook*, FAA-H-8083-3C, p. 13-27).
+- **Cómo se vuela esa resbalada cero**: el timón y el alabeo juntos, «a bank
+  of approximately 2° toward the operative engine. The ball is displaced
+  approximately one-third to one-half toward the operative engine. The result
+  is zero sideslip and maximum climb performance […] Any attitude other than
+  zero sideslip increases drag» (p. 13-29); el Seneca III pide de tres a
+  cinco grados (VB-1110, sección 3) y su figura 5-33 está hecha con «2° to 3°
+  bank towards the operative engine». Las alas a nivel y la bola al centro dan
+  «a moderate sideslip», y el alerón solo, uno grande.
+- **Lo que se pierde**: «the loss of 50 percent of power, which reduces climb
+  performance 80 to 90 percent» (p. 13-1).
+- **El molinete**: «a propeller windmilling at high speed in the low range of
+  blade angles can produce parasite drag as great as the parasite drag of the
+  entire airframe» (p. 13-3), y hasta que se pone en bandera, «airplane
+  climb performance is marginal or even non-existent» (p. 13-30). No hay en
+  ese manual una cifra en pies por minuto: los «doscientos pies por minuto de
+  molinete» que citaban la ficha y el ADR 0014 no están en la edición C. Lo
+  que se puede afirmar es eso: frena como mucho lo que el avión entero, y con
+  él la subida es marginal o ninguna. El JAZ 40 lleva 0,35 m² en molinete,
+  siete décimas de los 0,49 de su `cd0` por el ala: dentro.
+
+### La mesa: qué faltaba
+
+Volado sin ayudas con el modelo de vuelo entero (el piloto de
+`motores.test.ts`: el pie que pide el par de los motores más lo que corrija
+el derrape, las alas a nivel, la velocidad con el timón de profundidad) y
+con la cuenta de la línea azul, `subidaConUnMotor`, al nivel del mar:
+
+| JAZ 40 | antes | ahora | el suyo |
+|---|---|---|---|
+| Línea azul (cuenta) | 90,1 kt | 92,6 kt | 91 el I, 92 el III |
+| En bandera, 2.000 kg | 341 ft/min | 271 | |
+| En bandera, 4.570 lb | 301 | 234 (232 en la cuenta) | 225–235 el II |
+| En molinete, 2.000 kg | 145 | 30 | «marginal or even non-existent» |
+| En molinete, 4.570 lb | 107 | −3 | |
+| Lo que quita parar uno | 76 % | 81 % | 80–90 % |
+| El pie a la línea azul, en bandera | 0,45 | 0,43 | |
+
+**El derrape era cero y la cuenta lo sabía**: el modelo no le da fuerza de lado
+al timón, así que con las alas a nivel ya vuela sin resbalar, que es lo que en
+el de verdad consiguen los dos grados de alabeo. Lo que faltaba no era el
+derrape: era **lo que cuesta el timón pisado**. El modelo cobraba la guiñada
+de los motores y la sujetaba con el timón gratis. En el avión de verdad la
+deriva tiene que empujar de lado para dar ese par —unos 1.200 N en el Seneca,
+a cinco metros detrás del ala—, y eso es una sustentación con su inducida y un
+flap metido con su resistencia de forma. Con el pie a la mitad de su recorrido
+el rato entero, son unos 150 N: los 70 ft/min que sobraban.
+
+Antes de tocar nada se miró la otra sospecha, el molinete: 0,35 m² está dentro
+de lo que dice la FAA, y lo que sobraba en bandera era lo mismo que sobraba en
+molinete. No era la hélice.
+
+### El cambio
+
+- **`RESISTENCIA_DEL_TIMON`, 0,03 sobre el ala a fondo, con el cuadrado de lo
+  pisado** (`resistenciaDelTimon` en `motores.ts`). Lo suman el modelo de
+  vuelo, con el timón que lleva —el del piloto y el de la ayuda—, y la cuenta
+  de la línea azul, con el que pide el par de los motores. Sale de dos cuentas
+  que dicen lo mismo: la deriva a fondo, cerca de lo más que sostiene, frena
+  unos 0,18 sobre su área, y la deriva es del doce al veinte por ciento del ala
+  —el Seneca, el E170, el 747—, de 0,02 a 0,04; y el Seneca II, que con 0,03
+  sube con uno lo que dice su hoja.
+- **Una cifra para toda la flota**, sin campo nuevo en la ficha: lo que cambia
+  de un avión a otro es cuánto pie le hace falta, y eso ya lo dicen su timón y
+  sus motores. La comprobación, con la que no se ajustó nada: el Seneca III
+  —la misma ficha con 220 hp por motor— sube con ella 234 ft/min a 4.750 lb,
+  donde *Aviation Consumer* da 240. A 4.300 lb da 337, donde la figura 5-33 de
+  su manual da unos 385; esa cifra es la que H37a leyó de la gráfica, con el
+  texto de la página mal escaneado, y vale menos que las dos de arriba.
+- **El molinete no se toca.**
+
+### Lo que cambia de rebote
+
+- **La línea azul sube a 92,6 nudos**, la del Seneca III: el timón frena más
+  cuanto más despacio, porque a menos presión hace falta más pie para el mismo
+  par, y la mejor subida se va un poco hacia arriba.
+- **Los demás con un motor parado suben menos**, por la misma razón y porque a
+  su V2 llevan más pie (volado, sin ayudas, con los flaps de despegue):
+
+  | | antes | ahora | pie |
+  |---|---|---|---|
+  | JAZ 50 | 515 ft/min | 448 | 0,65 |
+  | JAZ 60 | 603 | 522 | 0,58 |
+  | JAZ 90 | 1.437 | 1.317 | 0,69 |
+  | JAZ 110 | 1.174 | 1.094 | 0,51 |
+  | JAZ 120, con tres | 1.885 | 1.642 | 0,83 |
+
+  Todos siguen muy por encima de lo que pide la norma en el segundo segmento
+  (CS 25.121 b: un 2,4 % el bimotor, un 3 % el cuatrimotor). Un reactor a V2
+  vuela cerca de su Vmc —la V2 es 1,1 veces ella como poco— y lleva el timón
+  muy pisado: lo paga, como el suyo.
+- **Pisar sin motor parado también cuesta**: el resbale para perder altura o
+  la corrección del viento cruzado en la recogida frenan algo más. Es poco
+  —el pie a la mitad son 0,0075 sobre el ala— y es de verdad: por eso el
+  resbale sirve para bajar.
+
+### El piloto del banco, a la línea azul
+
+El banco del motor parado (`verificar-emergencias.mjs`) subía a todos como a
+uno de transporte: rotar a la actitud de un reactor, y a quince metros, a la
+V2. El bimotor de pistón rota a 72 nudos, veinte por debajo de su línea azul,
+y con un motor no le sobra para subir y acelerar a la vez: se quedaba a 75,
+bajaba el morro a quince metros para ir a buscar los 90 y volvía al suelo.
+Ahora vuela lo de su manual —«maintain heading. After establishing a climb,
+retract landing gear, accelerate to 92 KIAS and feather inoperative engine
+prop» (VB-1110, sección 3)—: en cuanto vuela, sube lo justo sin bajar de la
+Vr, mete el tren en cuanto sube —sin esperar a una altura: la pista de Gran
+Canaria baja, y la cota del umbral no es la del suelo de debajo—, recoge los
+flaps de despegue con el tren dentro y a 1,2 veces su pérdida sin ellos,
+porque la línea azul es limpia, acelera a ella sin perder altura y la
+sostiene. Lo sabe por `conUnMotor`, que la sonda del avión dice ahora
+(`avion().conUnMotor`, «V2» o «VYSE»). Los demás vuelan como volaban.
+
+Lo que cuesta, en la cuenta, justo después de irse del suelo a 76 nudos (2.000
+kg, al nivel del mar, en ft/min):
+
+| | tren fuera | tren dentro |
+|---|---|---|
+| Flaps de despegue, molinete | −62 | 11 |
+| Flaps de despegue, bandera | 80 | 153 |
+| Limpio, molinete | −35 | 46 |
+| Limpio, bandera | 107 | 188 |
+
+Con la hélice en molinete y el tren fuera no sube, se haga lo que se haga.
+Es lo que dice la FAA —«as a general recommendation, if the landing gear has
+not been selected up, the takeoff should be rejected, even if airborne»,
+p. 13-12— y es lo que dice su manual, que no deja seguir por debajo de 85
+nudos (ver «Lo que queda»).
+
+### Volado
+
+- **La mesa** (`motores.test.ts`): una prueba nueva vuela el JAZ 40 sin
+  ayudas a su línea azul, a las 4.570 lb del Seneca II y al nivel del mar:
+  entre 215 y 250 ft/min en bandera, la cuenta a menos de 0,1 m/s del avión,
+  el pie entre 0,3 y 0,6, en molinete menos de 30 a ese peso y de 80 a los
+  2.000 kg, y la línea azul entre 90 y 95 nudos. Las que ya había —con uno
+  sube, la Vmc con el timón entero— siguen pasando con todos los bimotores.
+- **Un motor después de V1, en Gran Canaria** (`verificar-emergencias.mjs
+  despues gran-canaria jaz-40 taguato`), **10 de 10**, donde daba 7: el motor
+  se para a 69 nudos rodando, rota a 73, y con la hélice en molinete, el tren
+  fuera y los flaps de despegue vuelve a tocar la pista a los 670 m y la sigue
+  corriendo; se va del todo hacia los 2.900 m, a 85 nudos, mete el tren, la
+  compañera pone la bandera cuando el ejercicio lo da por volando, y sube a
+  la línea azul —89 a 94 nudos, de 0,4 a 3 m/s— con el pie a 0,45; da la
+  vuelta a mil pies y toca a 128 m del umbral. Sin percance, declarado, con
+  prioridad y con los bomberos. Una variante del piloto que metía el tren en
+  cuanto se iba del suelo, sin esperar a subir, volvió a la pista sin ruedas:
+  3 de 10. Es lo que dice la FAA del tren y de esa subida.
+- **Un motor antes de V1, en Gran Canaria, con el bimotor** (`antes
+  gran-canaria jaz-40 taguato`), **7 de 7**: se para a 203 m del umbral, de
+  3.104.
+- **Un motor después de V1 con el reactor** (`despues gran-canaria jaz-90
+  taguato`), que es al que más le cambia la subida con uno, **9 de 10**: sube
+  con uno a 128–137 nudos (V2 131) y de 4 a 13 m/s con el pie a 0,7, se
+  asegura, se declara, vuelve y toca a 205 m del umbral, pero a 30 m a la
+  izquierda del eje, fuera de los 28,5 que el juego da por pista. Se le paró
+  el derecho; las tiradas guardadas que pasaban, del 14-11 y de octubre, son
+  con el izquierdo, y en esta no se voló la misma con el código de antes. El
+  pie frena a lo largo y no de lado, así que lo que se desvía es la final con
+  un motor del piloto del banco, que va de 21 m a un lado a 11 al otro; pero
+  no está comprobado.
+
+### Lo que queda
+
+- **El ejercicio sigue con el bimotor donde su manual manda parar.** La V1
+  del JAZ 40 es su Vmc, 66 nudos, y el motor le falla en el ejercicio a unos
+  69, antes de rotar. Su manual dice otra cosa: «If engine failure occurs
+  during takeoff and 85 KIAS has not been attained: Throttles — CLOSE both
+  immediately. Stop straight ahead», y si no queda pista, se para igual,
+  esquivando lo que haya delante (VB-1110, sección 3; el del Seneca I, lo
+  mismo con 100 mph). La FAA, lo mismo: «if the landing gear has not been
+  selected up, the takeoff should be rejected, even if airborne» (p. 13-12).
+  Con el modelo de ahora se ve por qué: con la hélice en molinete y el tren
+  fuera no sube a ninguna velocidad (la tabla de arriba). El banco pasa porque
+  la pista de Gran Canaria es larga. Lo que se enseñe aquí —la V1 del de
+  pistón en 85 nudos, o el fallo con el tren ya dentro— es una decisión del
+  ejercicio y de sus frases, y no se ha tocado.
+- **La compañera pone la bandera a los quince metros.** El ejercicio no empieza
+  el procedimiento hasta que el avión vuela de verdad (`EN_EL_AIRE` en
+  `practica.ts`), y en el bimotor de pistón eso retrasa la bandera: con la
+  hélice en molinete no llega a esos quince metros sin rodar antes lo que le
+  falta. El manual de la FAA la pone en cuanto se ha identificado el motor.
+- **El alabeo de la resbalada cero no se vuela.** El modelo no le da fuerza
+  de lado al timón, así que la resbalada cero sale con las alas a nivel, y
+  los dos o tres grados hacia el motor bueno que piden la FAA y el manual no
+  hacen falta. Si un día el timón empuja de lado, el piloto del banco tendrá
+  que alabear.
+- **El JAZ 90 con el motor derecho parado toca a 30 m del eje** en el banco
+  de después de V1 (ver «Volado»): falta volar la misma tirada con el código
+  de antes para saber si el pie tiene algo que ver.

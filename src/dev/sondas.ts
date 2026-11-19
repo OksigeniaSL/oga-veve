@@ -94,7 +94,7 @@ import { planeoDe } from "../flight/sin-motor";
 import { PilotoDelDescenso } from "../flight/despresurizacion";
 import { laCuentaDe } from "../flight/avisos-de-altura";
 import { vfeDeAterrizaje } from "../flight/limites";
-import { maniobraCon, perdidaCon } from "../flight/velocidades-de-despegue";
+import { conUnMotor, maniobraCon, perdidaCon } from "../flight/velocidades-de-despegue";
 import { muescasDeLaPalanca } from "../flight/flaps";
 import { esSelloDelViaje } from "../flight/lo-que-se-toca";
 
@@ -596,6 +596,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       envergadura: juego.aircraft.wingSpan,
       /** Cuántos motores lleva, que es cuántos relojes tiene que haber. */
       motores: juego.aircraft.motores,
+      /*
+       * **Y qué se vuela con uno parado**: la V2 del de transporte o la línea
+       * azul del bimotor de pistón. El banco del motor parado los vuela
+       * distinto, como sus manuales. Ver `verificar-emergencias.mjs`.
+       */
+      conUnMotor: juego.aircraft.motores > 1 ? conUnMotor(juego.aircraft).nombre : null,
       /**
        * Y qué los mueve: hélice, chorro o rotor. El piloto del banco recoge un
        * turbohélice quitando el gas poco a poco y un reactor cortándolo de
