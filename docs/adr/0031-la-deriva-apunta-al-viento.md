@@ -3161,6 +3161,31 @@ graba. «LOI» y «DR» se dicen letra a letra. Sin grabar suenan mudas.
   de casa siguiendo, el «CRS» de la tarjeta, que al pasar no queda nada y las
   seis frases en su orden.
 
+### Volado
+
+En el juego, con el JAZ 60 en Fuerteventura, Taguató Ruvichá, el alisio del
+sitio, la Intel por ANGLE, el plano abierto y el reloj por ocho entre foto y
+foto:
+
+- **La primera tirada, diecisiete de veinte**, y las tres que no pasaron eran
+  del banco. Una: el banco leía dónde se quedó el plano del ejercicio, que lo
+  sabe aunque el plano siga a estima, y daba el plano por quieto; ahora lo lee
+  del plano (`Mapa.dondeSeQuedo`). Dos y tres, la misma: las frases de H26v ya
+  están grabadas y las tres nuevas no, y el banco juntaba la lista de las
+  grabadas y la de las mudas una detrás de otra, así que salían desordenadas;
+  ahora mira cada una en su orden, y que entre las dos estén todas.
+- **La segunda, veinte de veinte.** Empieza a 19,8 millas de FTV en el radial
+  120, a 961 m, con FTV en la NAV y el CRS en el 280. El «LOI» sale a 11,8
+  millas, el sesenta por ciento, junto al avioncito del HSI, con la carta
+  todavía limpia; el «DR», a 9,9, en el HSI y encima del avioncito de la
+  carta, y no se va mientras el avión anda 10,5 millas sin GPS, con el plano y
+  la tarjeta de casa siguiéndolo. En la cabina en 3D, lo mismo, y las millas
+  a la pista, en ámbar con «DR» y en blanco con «LOI». El plan B sale con
+  «CRS 300» delante; con el CRS en el 300, TO y la barra a 3,7°; centrada,
+  felicitada; encima de FTV, TO a FROM, «INTEG OK», y el HSI y la carta ya no
+  dicen nada. Las seis frases en su orden: las tres grabadas suenan y las
+  tres nuevas, mudas. Ni torre, ni tira de la radio, ni la flecha de casa.
+
 ### Lo que queda
 
 - **Las tres frases, sin grabar.**
