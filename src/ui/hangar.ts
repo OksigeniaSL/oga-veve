@@ -2068,6 +2068,12 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   planeo: EJ_PLANEO,
   "antes-de-v1": EJ_ANTES_DE_V1,
   "despues-de-v1": EJ_DESPUES_DE_V1,
+  /*
+   * Los del bimotor de pistón, con los mismos dibujos: en la pista con la mano
+   * de parar, y subiendo con el ala dormida. Ver `conV1` en `ejercicios.ts`.
+   */
+  "en-la-carrera": EJ_ANTES_DE_V1,
+  "tren-arriba": EJ_DESPUES_DE_V1,
   "un-motor": EJ_UN_MOTOR,
   simulador: EJ_SIMULADOR,
   despresurizacion: EJ_DESPRESURIZACION,

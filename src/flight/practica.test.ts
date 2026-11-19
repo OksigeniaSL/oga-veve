@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU, YVAGA } from "./aircraft";
+import { AIRCRAFT, ARAI, ARASUNU, JAZ_50, PANAMBI, PYKASU, TIJERETA, YVAGA } from "./aircraft";
 import {
+  conV1,
   EJERCICIOS,
   ejercicioPorId,
   ejerciciosPara,
@@ -24,6 +25,7 @@ const QUIETO: Lectura = {
   parado: true,
   percance: false,
   enFinal: false,
+  tren: "fuera",
 };
 
 const V = { v1: 70, vr: 78 };
@@ -73,12 +75,32 @@ describe("los ejercicios que se ofrecen", () => {
 
   it("en Taguato, V1 y el motor parado en vuelo, pero solo con más de un motor", () => {
     expect(ejerciciosPara("taguato", PYKASU).map((e) => e.id)).toEqual(["planeo"]);
+    for (const a of [JAZ_50, ARASUNU, ARAI, TIJERETA, YVAGA]) {
+      const ids = ejerciciosPara("taguato", a).map((e) => e.id);
+      expect(ids.slice(0, 4), a.id).toEqual(["planeo", "antes-de-v1", "despues-de-v1", "un-motor"]);
+    }
+  });
+
+  /*
+   * El bimotor de pistón no lleva V1: su manual para con el tren fuera y deja
+   * seguir con el tren dentro (Seneca III, VB-1110, sección 3; FAA-H-8083-3C,
+   * p. 13-12). Ver `conV1`.
+   */
+  it("y en el bimotor de pistón, lo de su manual: parar con el tren fuera, seguir con el tren dentro", () => {
+    expect(conV1(PANAMBI)).toBe(false);
+    for (const a of [JAZ_50, ARASUNU, ARAI, TIJERETA, YVAGA]) expect(conV1(a), a.id).toBe(true);
     expect(ejerciciosPara("taguato", PANAMBI).map((e) => e.id)).toEqual([
       "planeo",
-      "antes-de-v1",
-      "despues-de-v1",
+      "en-la-carrera",
+      "tren-arriba",
       "un-motor",
     ]);
+    // Y ninguno de los suyos se le ofrece a los de turbina.
+    for (const a of [JAZ_50, ARASUNU, ARAI, TIJERETA, YVAGA]) {
+      const ids = ejerciciosPara("taguato-ruvicha", a).map((e) => e.id);
+      expect(ids).not.toContain("en-la-carrera");
+      expect(ids).not.toContain("tren-arriba");
+    }
   });
 
   it("y la despresurización, de Taguató para arriba y solo en los presurizados", () => {
@@ -115,7 +137,7 @@ describe("antes de V1: se para", () => {
     expect(durante(p, corriendo, 2)).toEqual([]);
     const fallo = p.paso({ ...corriendo, indicada: 57 }, 0.1);
     expect(fallo).toEqual([
-      { que: "fallo", averia: "motor", motor: 0, antesDeV1: true, enElSuelo: true },
+      { que: "fallo", averia: "motor", motor: 0, parar: true, enElSuelo: true },
     ]);
     // Frenando, todavía nada; quieto, los bomberos a mirar los frenos y el cierre.
     expect(durante(p, { ...corriendo, indicada: 30, corriendo: false }, 3)).toEqual([]);
@@ -144,7 +166,7 @@ describe("pasada V1: se vuela, y en su orden", () => {
     const fallo = p.paso({ ...corriendo, indicada: 74 }, 0.1);
     // El motor de la derecha, con este sorteo.
     expect(fallo).toEqual([
-      { que: "fallo", averia: "motor", motor: 1, antesDeV1: false, enElSuelo: true },
+      { que: "fallo", averia: "motor", motor: 1, parar: false, enElSuelo: true },
     ]);
     expect(ladoDelMotor(ARAI, 1)).toBe("derecho");
     // Subiendo, por debajo de 400 ft: la velocidad, y nada del motor.
@@ -171,17 +193,6 @@ describe("pasada V1: se vuela, y en su orden", () => {
     expect(arriba).toContainEqual({ que: "declarar", socorro: "panpan" });
   });
 
-  it("en el bimotor de pistón la bandera no espera a los 400 ft: sin ella no sube", () => {
-    const p = practica("despues-de-v1", PANAMBI);
-    p.paso(QUIETO, 0.1);
-    p.paso({ ...QUIETO, corriendo: true, parado: false, indicada: 75 }, 0.1);
-    const bajo = durante(
-      p,
-      { ...QUIETO, enElSuelo: false, parado: false, sobreElCampo: 40, vertical: 1, indicada: 45 },
-      6,
-    );
-    expect(cuales(bajo)).toContain("asegurar");
-  });
 
   it("parar pasada V1 también se cierra, y se cuenta qué se hace", () => {
     const p = practica("despues-de-v1");
@@ -190,6 +201,104 @@ describe("pasada V1: se vuela, y en su orden", () => {
     durante(p, { ...QUIETO, corriendo: false, parado: false, indicada: 20 }, 3);
     durante(p, QUIETO, 2);
     expect(p.cierre).toBe("paradoTrasV1");
+  });
+});
+
+describe("el bimotor de pistón: lo de su manual, sin V1", () => {
+  const VP = { v1: 34, vr: 37 };
+  const dePiston = (id: string, azar = () => 0.1) => new Practica(ejercicioPorId(id)!, PANAMBI, VP, azar);
+  const corriendo = { ...QUIETO, corriendo: true, parado: false };
+
+  it("rodando cerca de la rotación, pasada la V1 del juego: se para, y parar es lo bien hecho", () => {
+    const p = dePiston("en-la-carrera");
+    p.paso(QUIETO, 0.1);
+    // A medio camino entre su V1, que es su Vmc, y la rotación.
+    expect(p.paso({ ...corriendo, indicada: 35 }, 0.1)).toEqual([]);
+    expect(p.paso({ ...corriendo, indicada: 35.6 }, 0.1)).toEqual([
+      { que: "fallo", averia: "motor", motor: 0, parar: true, enElSuelo: true },
+    ]);
+    // Ni velocidad de un motor ni bandera: gases atrás y frenos.
+    const frenando = durante(p, { ...corriendo, corriendo: false, indicada: 15 }, 4);
+    expect(cuales(frenando)).toEqual([]);
+    expect(cuales(durante(p, QUIETO, 2))).toEqual(["bomberos", "cerrar"]);
+    expect(p.cierre).toBe("parado");
+  });
+
+  it("recién despegado y con el tren fuera, también: se apoya y se para", () => {
+    const p = dePiston("en-la-carrera");
+    p.paso(QUIETO, 0.1);
+    p.paso({ ...corriendo, indicada: 34.5 }, 0.1);
+    // Rota antes de llegar al punto: falla en cuanto se va del suelo.
+    const fallo = p.paso({ ...corriendo, enElSuelo: false, enPista: false, sobreElCampo: 4, vertical: 1, indicada: 36 }, 0.1);
+    expect(fallo).toEqual([{ que: "fallo", averia: "motor", motor: 0, parar: true, enElSuelo: false }]);
+    expect(cuales(durante(p, { ...corriendo, enElSuelo: false, sobreElCampo: 2, vertical: -1, indicada: 34 }, 3))).toEqual([]);
+    durante(p, { ...corriendo, corriendo: false, indicada: 15 }, 3);
+    durante(p, QUIETO, 2);
+    expect(p.cierre).toBe("parado");
+  });
+
+  it("y si se sigue con el tren fuera y se vuelve, se cierra contando que tocaba parar", () => {
+    const p = dePiston("en-la-carrera");
+    p.paso(QUIETO, 0.1);
+    p.paso({ ...corriendo, indicada: 35.6 }, 0.1);
+    const subiendo = durante(
+      p,
+      { ...QUIETO, enElSuelo: false, parado: false, sobreElCampo: 60, vertical: 1, indicada: 40, tren: "dentro" },
+      12,
+    );
+    // Siguió: la compañera lo asegura en cuanto vuela.
+    expect(cuales(subiendo)).toEqual(["velocidad", "asegurar", "declarar"]);
+    durante(p, { ...QUIETO, enFinal: true, enElSuelo: false, sobreElCampo: 100, indicada: 45, parado: false }, 2);
+    durante(p, QUIETO, 2);
+    expect(p.cierre).toBe("seguidoAntesDeV1");
+  });
+
+  it("con el tren pedido fuera o entrando no falla; dentro y subiendo, sí, y se sigue", () => {
+    const p = dePiston("tren-arriba");
+    p.paso(QUIETO, 0.1);
+    p.paso({ ...corriendo, indicada: 37 }, 0.1);
+    const aire = { ...QUIETO, enElSuelo: false, enPista: false, parado: false, vertical: 3, indicada: 45 };
+    expect(durante(p, { ...aire, sobreElCampo: 40 }, 3)).toEqual([]);
+    expect(durante(p, { ...aire, sobreElCampo: 70, tren: "entrando" }, 3)).toEqual([]);
+    expect(p.paso({ ...aire, sobreElCampo: 90, tren: "dentro" }, 0.1)).toEqual([
+      { que: "fallo", averia: "motor", motor: 0, parar: false, enElSuelo: false },
+    ]);
+  });
+
+  it("y la compañera pone la bandera enseguida, sin esperar a los 400 ft ni a nada", () => {
+    const p = dePiston("tren-arriba", () => 0.9);
+    p.paso(QUIETO, 0.1);
+    p.paso({ ...corriendo, indicada: 37 }, 0.1);
+    // Recién metido el tren, a dieciséis metros: el fallo más bajo que da el ejercicio.
+    const aire = { ...QUIETO, enElSuelo: false, enPista: false, parado: false, vertical: 2, indicada: 44, tren: "dentro" as const };
+    const fallo = p.paso({ ...aire, sobreElCampo: 16 }, 0.1);
+    expect(fallo).toEqual([{ que: "fallo", averia: "motor", motor: 1, parar: false, enElSuelo: false }]);
+    // Identificar, verificar y bandera: a los cuatro segundos, a la altura que sea.
+    const despues = durante(p, { ...aire, sobreElCampo: 18, vertical: 0.5 }, 4.2);
+    expect(cuales(despues)).toEqual(["velocidad", "asegurar"]);
+    expect(despues[1]).toEqual({ que: "asegurar", motor: 1 });
+    expect(cuales(durante(p, { ...aire, sobreElCampo: 30 }, 5))).toEqual(["declarar"]);
+    durante(p, { ...aire, enFinal: true, tren: "fuera" }, 1);
+    durante(p, QUIETO, 2);
+    expect(p.cierre).toBe("vuelta");
+  });
+
+  it("y en la sesión de simulador, los dos fallos de la carrera se paran y el de la subida se sigue", () => {
+    const sim = ejercicioPorId("simulador")!;
+    for (const [tirada, parar] of [
+      [0.1, true],
+      [0.5, true],
+      [0.9, false],
+    ] as const) {
+      const p = new Practica(sim, PANAMBI, VP, () => tirada);
+      p.paso(QUIETO, 0.1);
+      const sucesos = [
+        ...durante(p, { ...corriendo, indicada: 36 }, 0.5),
+        ...durante(p, { ...QUIETO, enElSuelo: false, parado: false, sobreElCampo: 320, vertical: 3, indicada: 46, tren: "dentro" }, 0.5),
+      ];
+      const fallo = sucesos.find((x) => x.que === "fallo");
+      expect(fallo && fallo.que === "fallo" && fallo.parar, String(tirada)).toBe(parar);
+    }
   });
 });
 
@@ -205,7 +314,7 @@ describe("el planeo: todos los motores", () => {
       que: "fallo",
       averia: "motores",
       motor: null,
-      antesDeV1: false,
+      parar: false,
       enElSuelo: false,
     });
     // Sin motores no hay nada que asegurar ni que declarar aparte: eso lo
@@ -228,7 +337,7 @@ describe("la despresurización: el aire de la cabina", () => {
       que: "fallo",
       averia: "presion",
       motor: null,
-      antesDeV1: false,
+      parar: false,
       enElSuelo: false,
     });
     /*

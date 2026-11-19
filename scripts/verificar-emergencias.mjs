@@ -14,6 +14,11 @@
  *   bueno, se mete el tren, la compañera asegura el motor a los 400 ft, se
  *   declara, se da la vuelta por un circuito amplio y se aterriza con un
  *   motor. Con la torre dando prioridad y los bomberos esperando.
+ * - `carrera` y `tren`: los del bimotor de pistón, que no lleva V1 (H37e). En
+ *   `carrera` el motor se para rodando cerca de la rotación, donde un reactor
+ *   ya seguiría, y se para como en `antes`: su manual lo manda con el tren
+ *   fuera. En `tren` se para subiendo con el tren ya dentro, y se sigue como en
+ *   `despues`, a la línea azul y con la bandera puesta enseguida.
  * - `planeo`: en Tukã con la avioneta, el motor se para en el aire y se
  *   planea hasta la pista.
  * - `despres`: la cabina sin aire, en crucero. Se va el aire a su hora, se
@@ -27,7 +32,7 @@
  * lo que se mira aquí es que se **pidió**, grabado o no: lo dicho por la
  * instructora y lo callado por sin grabar.
  *
- * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|planeo|despres>
+ * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres>
  *        [escenario] [avion] [tramo]`
  *
  * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien.
@@ -40,17 +45,24 @@ const MODO = process.argv[2] ?? "despues";
 const EJERCICIO = {
   antes: "antes-de-v1",
   despues: "despues-de-v1",
+  carrera: "en-la-carrera",
+  tren: "tren-arriba",
   planeo: "planeo",
   despres: "despresurizacion",
 }[MODO];
 if (!EJERCICIO) {
   console.error(
-    "Uso: verificar-emergencias.mjs <antes|despues|planeo|despres> [escenario] [avion] [tramo]",
+    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres> [escenario] [avion] [tramo]",
   );
   process.exit(2);
 }
 const ESCENARIO = process.argv[3] ?? "gran-canaria";
-const AVION = process.argv[4] ?? (MODO === "planeo" ? "jaz-20" : "jaz-90");
+const AVION =
+  process.argv[4] ?? (MODO === "planeo" ? "jaz-20" : MODO === "carrera" || MODO === "tren" ? "jaz-40" : "jaz-90");
+/** Los que se paran en la pista: antes de V1, y el bimotor de pistón con el tren fuera. */
+const PARA = MODO === "antes" || MODO === "carrera";
+/** Los que siguen volando con un motor. */
+const SIGUE = MODO === "despues" || MODO === "tren";
 const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
 // Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
@@ -84,6 +96,28 @@ try {
   await page.addInitScript(() =>
     localStorage.setItem("oga-veve:teclas-vistas", "1"),
   );
+  /*
+   * **El motor que se para, a elegir**: `OGA_MOTOR=izquierdo` o `derecho`.
+   * El ejercicio lo sortea —se practican los dos pies— y una tirada que sale
+   * mal con uno solo no se puede repetir con el mismo lado sin esto: el JAZ 90
+   * tocaba a 30 m del eje con el derecho parado y nadie sabía si ya pasaba
+   * antes del cambio del timón (H37e). Se cambia la suerte solo donde la pide
+   * el ejercicio, `cualSePara` en `practica.ts`, mirando quién pregunta: el
+   * resto del juego sigue sorteando como siempre. Sirve igual con el código
+   * de antes, que es para lo que hacía falta.
+   */
+  if (process.env.OGA_MOTOR)
+    await page.addInitScript((lado) => {
+      const azar = Math.random;
+      Math.random = function () {
+        const tope = Error.stackTraceLimit;
+        Error.stackTraceLimit = 4;
+        const pila = new Error().stack ?? "";
+        Error.stackTraceLimit = tope;
+        if (pila.includes("cualSePara")) return lado === "derecho" ? 0.75 : 0.25;
+        return azar();
+      };
+    }, process.env.OGA_MOTOR);
   await page.goto(
     `${BASE}/?escenario=${ESCENARIO}&hora=12&avion=${AVION}&tramo=${TRAMO}` +
       `&ejercicio=${EJERCICIO}&teselas=0&meteo=`,
@@ -192,6 +226,7 @@ try {
       let mandoAlAire = false;
       let pedalMaximo = 0;
       let desdeElFallo = null;
+      let aseguradoEn = null;
       let recorridoAlParar = null;
       const puntos = [
         [pista.length + 3000, 0],
@@ -241,6 +276,7 @@ try {
         const p = enPista(s.position.x, s.position.z);
         const sobre = s.position.y - cota;
         if (ej?.fase !== "armada" && desdeElFallo === null) desdeElFallo = ahora;
+        if (ej?.asegurado && aseguradoEn === null) aseguradoEn = ahora;
 
         if (tramo === "crucero") {
           // Hasta que se va el aire, recto y a nivel hacia la pista de casa.
@@ -290,7 +326,7 @@ try {
           c.aileron = acota(e * 3, -1, 1);
           c.rudder = acota(e * 4 + 3 * s.beta, -1, 1);
           c.elevator = 0;
-          if (modo === "antes" && ej?.fase !== "armada") tramo = "parar";
+          if ((modo === "antes" || modo === "carrera") && ej?.fase !== "armada") tramo = "parar";
           else if (s.airspeed >= (vel.vr ?? vref) && ej?.fase !== "armada") tramo = "rotar";
           else if (s.airspeed >= (vel.vr ?? vref) && modo !== "antes") tramo = "rotar";
           return;
@@ -330,7 +366,11 @@ try {
           return;
         }
 
-        if (!s.onGround && ej?.fase !== "armada") {
+        /*
+         * Y en `tren`, el despegue de siempre con los dos: el tren dentro con
+         * la subida hecha, que es lo que el ejercicio espera para el fallo.
+         */
+        if (!s.onGround && (ej?.fase !== "armada" || modo === "tren")) {
           /*
            * «After establishing a climb»: en el de pistón, con la subida hecha
            * aunque sea poca. Y no antes: metido a un metro del suelo, con la
@@ -344,11 +384,14 @@ try {
         if (tramo === "subida") {
           c.throttle = 1;
           const v2 = vel.v2 ?? vref * 1.2;
-          if (deLineaAzul && ej?.fase !== "armada") {
+          if (deLineaAzul && (ej?.fase !== "armada" || modo === "tren")) {
             /*
              * Sin bajar de la Vr, subiendo lo justo mientras le falte para la
              * línea azul, y en ella, a ella. Los flaps, dentro cuando ya va
-             * deprisa para ir sin ellos: a diez nudos de la línea azul.
+             * deprisa para ir sin ellos: a diez nudos de la línea azul. Y en
+             * `tren`, también con los dos en marcha: ir a buscar los 92 nudos
+             * con el morro desde la Vr, a tres metros del suelo, era bajarlo
+             * once grados.
              */
             const vr = vel.vr ?? vref;
             c.elevator =
@@ -505,6 +548,7 @@ try {
         bajo,
         mandoAlAire,
         pedalMaximo,
+        bandera: aseguradoEn !== null && desdeElFallo !== null ? aseguradoEn - desdeElFallo : null,
         recorridoAlParar,
         largo: pista.length,
         percance: o.percance(),
@@ -541,9 +585,9 @@ try {
         : MODO === "planeo"
           ? ej.motorParado === null
           : ej.motorParado !== null) &&
-      (MODO !== "antes" || ej.antesDeV1) &&
-      (MODO !== "despues" || !ej.antesDeV1),
-    `fase ${ej?.fase} · motor ${ej?.motorParado} · antes de V1 ${ej?.antesDeV1} · ` +
+      (!PARA || (ej.parar ?? ej.antesDeV1)) &&
+      (!SIGUE || !(ej.parar ?? ej.antesDeV1)),
+    `fase ${ej?.fase} · motor ${ej?.motorParado} · se para ${ej?.parar ?? ej?.antesDeV1} · ` +
       `V1 ${nudos(r.velocidades.v1)} Vr ${nudos(r.velocidades.vr)} V2 ${nudos(r.velocidades.v2)} Vmc ${nudos(r.velocidades.vmc)} kt`,
   );
   comprobar(
@@ -551,7 +595,7 @@ try {
     !r.percance,
     r.percance ?? "ninguno",
   );
-  if (MODO === "antes") {
+  if (PARA) {
     comprobar(
       "se para en la pista",
       r.recorridoAlParar !== null && r.recorridoAlParar < r.largo,
@@ -559,7 +603,9 @@ try {
     );
     comprobar(
       cabina ? "la cabina canta «stop»" : "la instructora dice que se para",
-      cabina ? dice(r.cantados, "stop") : dice(pedido, "ejercicio.paramos"),
+      cabina
+        ? dice(r.cantados, "stop")
+        : dice(pedido, MODO === "carrera" ? "ejercicio.paramosConElTren" : "ejercicio.paramos"),
       (cabina ? r.cantados : pedido).filter((k) => /stop|paramos/i.test(k)).join(" · ") || "no",
     );
     comprobar(
@@ -568,7 +614,7 @@ try {
       `cierre ${ej?.cierre} · bomberos ${ej?.bomberos} · ${ej?.camiones} camiones`,
     );
   }
-  if (MODO === "despues") {
+  if (SIGUE) {
     comprobar(
       "sube con un motor, con el pie del lado bueno y sin quedarse sin timón",
       r.tocoEn !== null || (ej?.asegurado && ej?.declarada),
@@ -579,6 +625,17 @@ try {
       ej?.asegurado && ej?.declarada && ej?.prioridad,
       `asegurado ${ej?.asegurado} · declarada ${ej?.declarada} · prioridad ${ej?.prioridad} · EICAS ${ej?.mensajes?.join(" / ") || "-"}`,
     );
+    /*
+     * En el bimotor de pistón, identificar, verificar y bandera en cuanto
+     * falla: `IDENTIFICAR_Y_BANDERA`, cuatro segundos del juego, y el que tarde
+     * el paso del banco en verlo.
+     */
+    if (MODO === "tren")
+      comprobar(
+        "la compañera pone la bandera enseguida, sin esperar a ninguna altura",
+        r.bandera !== null && r.bandera <= 6,
+        `a los ${r.bandera?.toFixed(1) ?? "—"} s del fallo`,
+      );
     if (TRAMO === "taguato" || cabina)
       comprobar(
         "la torre contesta la llamada",

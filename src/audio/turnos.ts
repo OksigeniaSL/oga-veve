@@ -250,7 +250,7 @@ export function cierraElVuelo(clave: string | undefined): boolean {
 }
 
 const CIERRA_EL_VUELO =
-  /^(?:vuelo\.(?:apagado|enPuesto|cortaMotores|alto|flapsArribaAlSalir|alPuestoConFlaps|despuesDelAterrizaje|despues\.(?:aerofrenos|luces|transpondedor))|senalero\.(?:alto|frenos|calzos)|ejercicio\.(?:bien|bienParado|bienDespresurizacion|paradoTrasV1|seguidoAntesDeV1|bomberos|bomberosUno|bomberosFrenos)|gafas\.ganadas|fin\.(?:explica|llegaste|bien|muyBien|redondo))(?:[@~]|$)/;
+  /^(?:vuelo\.(?:apagado|enPuesto|cortaMotores|alto|flapsArribaAlSalir|alPuestoConFlaps|despuesDelAterrizaje|despues\.(?:aerofrenos|luces|transpondedor))|senalero\.(?:alto|frenos|calzos)|ejercicio\.(?:bien|bienParado|bienDespresurizacion|paradoTrasV1|paradoTrasV1Cuatro|seguidoAntesDeV1|seguidoConElTrenFuera|bomberos|bomberosUno|bomberosFrenos)|gafas\.ganadas|fin\.(?:explica|llegaste|bien|muyBien|redondo))(?:[@~]|$)/;
 
 /**
  * **Lo que cuenta una seña del señalero**: la voz de las de parar y lo que

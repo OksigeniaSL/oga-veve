@@ -3312,7 +3312,10 @@ export const ES_PY = {
   "hangar.ejercicio.planeo": "Planear sin motor",
   "hangar.ejercicio.antes-de-v1": "Motor antes de V1",
   "hangar.ejercicio.despues-de-v1": "Motor después de V1",
-  "hangar.ejercicio.un-motor": "Volar con un motor",
+  // Los del bimotor de pistón, que no lleva V1: su manual decide con el tren.
+  "hangar.ejercicio.en-la-carrera": "Motor en la carrera",
+  "hangar.ejercicio.tren-arriba": "Motor con el tren arriba",
+  "hangar.ejercicio.un-motor": "Volar con un motor parado",
   "hangar.ejercicio.simulador": "Sesión de simulador",
   "hangar.ejercicio.tormenta": "Rodear una tormenta",
   "hangar.ejercicio.estacionario": "Quedarse quieto en el aire",
@@ -3341,6 +3344,28 @@ export const ES_PY = {
     "Hoy practicamos un despegue que se para. Antes de V1 va a fallar un motor: gas atrás, frenos, y paramos en la pista. Parar a tiempo también es ganar",
   "ejercicio.despues-de-v1.antes":
     "Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con el otro motor y volvemos a aterrizar",
+  /*
+   * **Los del bimotor de pistón**, que no lleva V1: su manual manda parar
+   * con las ruedas en el suelo o el tren todavía fuera, y deja seguir solo
+   * con el tren dentro y subiendo. Ver `conV1` en `flight/ejercicios.ts`.
+   */
+  "ejercicio.en-la-carrera.antes":
+    "Hoy practicamos un motor que falla corriendo por la pista, ya cerca de despegar. En este avión, con las ruedas en el suelo o el tren todavía fuera, se para: los dos gases atrás, frenos y derecho por la pista. Así lo dice su manual, y parar también es ganar",
+  "ejercicio.tren-arriba.antes":
+    "Hoy practicamos un motor que falla subiendo, con el tren ya dentro. Ahí sí se sigue: pisás el pedal del lado del motor bueno, la nariz a la velocidad de la línea azul, y yo pongo en bandera la hélice del parado. Después volvemos a aterrizar",
+  /*
+   * **Y las del cuatrimotor**, al que le quedan tres: lo mismo sin «el otro».
+   * Ver `CON_MAS_DE_DOS` en `game.ts`.
+   */
+  "ejercicio.despues-de-v1.antesCuatro":
+    "Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con los otros tres y volvemos a aterrizar",
+  "ejercicio.un-motor.antesCuatro":
+    "Hoy practicamos volar con un motor parado. En un rato vamos a parar uno, y el avión sigue volando con los otros tres: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos",
+  "ejercicio.enVueloCuatro": "Se paró un motor. El avión sigue volando con los otros tres",
+  "ejercicio.velocidadCuatro":
+    "Con la nariz, sostené esta velocidad. Con un motor parado se sube más despacio, pero se sube",
+  "ejercicio.paradoTrasV1Cuatro":
+    "Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con los otros tres. La próxima, seguimos",
   "ejercicio.un-motor.antes":
     "Hoy practicamos volar con un motor. En un rato vamos a parar uno, y el avión sigue volando con el otro: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos",
   "ejercicio.simulador.antes":
@@ -3355,6 +3380,9 @@ export const ES_PY = {
   "palabra.practica": "Práctica",
   // Antes de V1: se para. La palabra corta es la de siempre, «¡Frená!».
   "ejercicio.paramos": "Falló un motor antes de V1: gas atrás y frenos, paramos",
+  // El bimotor de pistón, que para con el tren fuera aunque ya vuele.
+  "ejercicio.paramosConElTren":
+    "Falló un motor con el tren todavía fuera: los dos gases atrás, derecho por la pista, y paramos",
   "ejercicio.seguimos": "Falló un motor, y ya pasamos V1: seguimos volando",
   "ejercicio.enVuelo": "Se paró un motor. El avión sigue volando con el otro",
   /*
@@ -3379,7 +3407,7 @@ export const ES_PY = {
    * pies.
    */
   "ejercicio.bandera":
-    "Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos",
+    "Identifico el motor parado: es el del lado del pie que no pisa. Lo verifico con su gas, y pongo su hélice en bandera: de canto al aire, frena mucho menos",
   "ejercicio.banderaSola":
     "La hélice del motor parado ya se puso sola en bandera. Le corto el combustible",
   "ejercicio.cortar":
@@ -3460,6 +3488,8 @@ export const ES_PY = {
     "Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos",
   "ejercicio.seguidoAntesDeV1":
     "Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos",
+  "ejercicio.seguidoConElTrenFuera":
+    "Volviste bien. Pero en este avión, con el tren todavía fuera, lo seguro es parar: con un motor y el tren fuera apenas sube. La próxima, paramos",
   "ejercicio.otraVez":
     "El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez",
   "palabra.otraVez": "Otra vez",

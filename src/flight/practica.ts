@@ -15,6 +15,11 @@
  * la hay—, y se acabó el ejercicio cuando el avión está quieto. Parar a tiempo
  * **es** hacerlo bien, y cuenta como una frustrada: renunciar es ganar.
  *
+ * **En el bimotor de pistón no hay V1**, y lo que manda es su manual: con las
+ * ruedas en el suelo, o recién despegado con el tren todavía fuera, se para;
+ * con el tren dentro y subiendo, se sigue. Ver `conV1` en `ejercicios.ts`.
+ * Aquí «antes de V1» quiere decir eso: **donde su manual manda parar**.
+ *
  * **Pasada V1**, o ya en el aire: se vuela. Primero el avión —el pie del lado
  * del motor bueno, la nariz a la velocidad de un motor, el tren dentro—, y
  * **nada más hasta tener altura**: en un avión de línea no se toca ningún
@@ -34,7 +39,7 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
-import type { Averia, Ejercicio, Momento } from "./ejercicios";
+import { conV1, type Averia, type Ejercicio, type Momento } from "./ejercicios";
 import { motoresDeFuera } from "./motores";
 
 /** Cómo va el vuelo, lo que la práctica necesita mirar. Todo en m y m/s. */
@@ -55,6 +60,12 @@ export interface Lectura {
   readonly percance: boolean;
   /** Alineado con una cabecera y cerca: la pista delante. */
   readonly enFinal: boolean;
+  /**
+   * **El tren**: `fuera` sin pedir que entre —o sin tren que meter—;
+   * `entrando`, pedido dentro y de camino; `dentro`, del todo. Lo mira el
+   * bimotor de pistón, que decide con él: ver `conV1`.
+   */
+  readonly tren: "fuera" | "entrando" | "dentro";
 }
 
 /** Las tres velocidades del despegue de hoy, indicadas. */
@@ -65,6 +76,10 @@ export interface Velocidades {
 
 /** Cómo terminó. Ninguno es un reproche: ver `ejercicio.*` en el diccionario. */
 export type Cierre =
+  /*
+   * «Antes de V1» es donde su manual manda parar; en el bimotor de pistón,
+   * con el tren fuera. Ver la cabecera.
+   */
   /** Falló antes de V1 y se paró en la pista: lo que se practicaba. */
   | "parado"
   /** Falló pasada V1 y se paró igual, y cupo: bien, y se cuenta qué se hace. */
@@ -81,14 +96,15 @@ export type Suceso =
   | { readonly que: "presentar" }
   /**
    * El fallo. `motor` es cuál, de izquierda a derecha, o `null` si son todos
-   * o si lo que falla no es un motor —ver `averia`—. `antesDeV1` y
-   * `enElSuelo` dicen qué toca hacer.
+   * o si lo que falla no es un motor —ver `averia`—. `parar` dice qué toca
+   * hacer, según su manual: antes de V1 en los de turbina, con el tren fuera
+   * en el bimotor de pistón. Y `enElSuelo`, dónde.
    */
   | {
       readonly que: "fallo";
       readonly averia: Averia["que"];
       readonly motor: number | null;
-      readonly antesDeV1: boolean;
+      readonly parar: boolean;
       readonly enElSuelo: boolean;
     }
   /** Ya en el aire y subiendo: sostener la velocidad de un motor. */
@@ -124,7 +140,8 @@ export const ALTURA_PARA_ASEGURAR = 122;
  * **Lo que tarda la compañera** en asegurar el motor de un bimotor de pistón,
  * s: identificar —el pie que no pisa es el motor que no va—, comprobar con el
  * gas de ese motor y poner la hélice en bandera. Ahí no se espera a los
- * cuatrocientos pies: con la hélice en molinete ese avión no sube.
+ * cuatrocientos pies ni a nada: con la hélice en molinete ese avión no sube,
+ * y la cuenta empieza en el fallo.
  */
 export const IDENTIFICAR_Y_BANDERA = 4;
 
@@ -139,7 +156,8 @@ export class Practica {
   private presentada = false;
   private elegida: Averia;
   private cual: number | null = null;
-  private fueAntesDeV1 = false;
+  /** Si su manual manda parar donde falló. Ver `seParaAqui`. */
+  private tocaParar = false;
   private falloEnElSuelo = false;
   private volo = false;
   private dichaLaVelocidad = false;
@@ -178,9 +196,12 @@ export class Practica {
     return this.cual;
   }
 
-  /** Si el fallo llegó antes de V1. Solo tiene sentido después del fallo. */
-  get antesDeV1(): boolean {
-    return this.fueAntesDeV1;
+  /**
+   * Si donde falló su manual manda parar: antes de V1, o con el tren fuera en
+   * el bimotor de pistón. Solo tiene sentido después del fallo.
+   */
+  get parar(): boolean {
+    return this.tocaParar;
   }
 
   /** Si ya se aseguró el motor parado. */
@@ -211,7 +232,7 @@ export class Practica {
     this.faseActual = "armada";
     this.presentada = false;
     this.cual = null;
-    this.fueAntesDeV1 = false;
+    this.tocaParar = false;
     this.falloEnElSuelo = false;
     this.volo = false;
     this.dichaLaVelocidad = false;
@@ -245,14 +266,13 @@ export class Practica {
       if (this.tocaFallar(this.elegida.cuando, l)) {
         this.faseActual = "fallo";
         this.cual = this.elegida.que === "motor" ? this.cualSePara() : null;
-        this.fueAntesDeV1 =
-          l.enElSuelo && l.indicada < this.velocidades.v1;
+        this.tocaParar = this.seParaAqui(l);
         this.falloEnElSuelo = l.enElSuelo;
         sucesos.push({
           que: "fallo",
           averia: this.elegida.que,
           motor: this.cual,
-          antesDeV1: this.fueAntesDeV1,
+          parar: this.tocaParar,
           enElSuelo: l.enElSuelo,
         });
       }
@@ -262,6 +282,13 @@ export class Practica {
     // ── Después del fallo ────────────────────────────────────────────────
     this.desdeElFallo += dt;
     if (!l.enElSuelo && l.sobreElCampo > EN_EL_AIRE) this.volo = true;
+    /*
+     * **Y el bimotor de pistón que sigue vuela desde el fallo.** Si su manual
+     * le deja seguir —el tren ya pedido dentro—, la compañera no espera a los
+     * quince metros para la bandera: con la hélice en molinete ese avión no
+     * sube, y la bandera va en cuanto se ha identificado el motor.
+     */
+    if (!this.tocaParar && !l.enElSuelo && !conV1(this.avion)) this.volo = true;
 
     /*
      * **En el suelo sin haber volado**: una parada. Se acaba al quedarse
@@ -275,7 +302,7 @@ export class Practica {
           this.bomberos = true;
           sucesos.push({ que: "bomberos", donde: "avion" });
         }
-        this.cerrar(this.fueAntesDeV1 ? "parado" : "paradoTrasV1", sucesos);
+        this.cerrar(this.tocaParar ? "parado" : "paradoTrasV1", sucesos);
       }
       return sucesos;
     }
@@ -325,10 +352,7 @@ export class Practica {
       sucesos.push({ que: "bomberos", donde: "pista" });
     }
     if (l.enElSuelo && l.parado) {
-      this.cerrar(
-        this.fueAntesDeV1 && this.falloEnElSuelo ? "seguidoAntesDeV1" : "vuelta",
-        sucesos,
-      );
+      this.cerrar(this.tocaParar ? "seguidoAntesDeV1" : "vuelta", sucesos);
     }
     return sucesos;
   }
@@ -358,9 +382,27 @@ export class Practica {
         this.yaCorrio &&
         !l.enElSuelo &&
         l.sobreElCampo >= m.metros &&
-        l.vertical > 0
+        l.vertical > 0 &&
+        (!m.trenDentro || l.tren === "dentro")
       );
     return !l.enElSuelo && this.segundos >= m.segundos;
+  }
+
+  /**
+   * **Si su manual manda parar donde ha fallado.**
+   *
+   * En los de turbina, V1: en el suelo y sin llegar a ella. En el bimotor de
+   * pistón, el tren: en el suelo siempre —rota a 72 nudos, y su manual para
+   * por debajo de 85—, y en el aire mientras el tren siga fuera y quede la
+   * pista debajo, que es mientras no vuela de verdad. Ver `conV1`.
+   *
+   * Lo que no es un motor —todos, la cabina sin aire— nunca llega en la
+   * carrera, y sigue la regla de siempre.
+   */
+  private seParaAqui(l: Lectura): boolean {
+    if (this.elegida.que === "motor" && !conV1(this.avion))
+      return l.enElSuelo || (l.tren === "fuera" && l.sobreElCampo <= EN_EL_AIRE);
+    return l.enElSuelo && l.indicada < this.velocidades.v1;
   }
 
   /**
@@ -370,9 +412,8 @@ export class Practica {
    * segundos: identificar, comprobar y asegurar.
    */
   private tocaAsegurar(l: Lectura): boolean {
+    if (!conV1(this.avion)) return this.desdeElFallo >= IDENTIFICAR_Y_BANDERA;
     if (!this.falloEnElSuelo) return this.desdeElFallo >= IDENTIFICAR_Y_BANDERA + 1;
-    if (this.avion.sound.engine === "piston")
-      return this.desdeElFallo >= IDENTIFICAR_Y_BANDERA;
     return l.sobreElCampo >= ALTURA_PARA_ASEGURAR && this.desdeElFallo >= 3;
   }
 

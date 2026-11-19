@@ -94,7 +94,7 @@ import {
   MANDOS_AL_CENTRO,
   type PosicionDeLosMandos,
 } from "./world/superficies-de-mando";
-import { seOfrece, type Ejercicio } from "./flight/ejercicios";
+import { conV1, seOfrece, type Ejercicio } from "./flight/ejercicios";
 import { loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
 import {
@@ -812,6 +812,9 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   planeo: "motor-parado",
   "antes-de-v1": "freno",
   "despues-de-v1": "nopara",
+  // El bimotor de pistón: con el tren fuera se para, con el tren dentro ya no.
+  "en-la-carrera": "freno",
+  "tren-arriba": "nopara",
   "un-motor": "motor-parado",
   simulador: "motor-parado",
   // La máscara: la misma de su aviso. Ver `EJERCICIO_DE_DESPRESURIZACION`.
@@ -943,6 +946,26 @@ const CIERRE_DEL_EJERCICIO: Readonly<
   paradoTrasV1: "ejercicio.paradoTrasV1",
   vuelta: "ejercicio.bien",
   seguidoAntesDeV1: "ejercicio.seguidoAntesDeV1",
+};
+
+/**
+ * **Y el del bimotor de pistón que siguió donde su manual manda parar**: no
+ * fue antes de V1, que ese avión no la lleva, sino con el tren todavía fuera.
+ * Ver `conV1` en `flight/ejercicios.ts`.
+ */
+const SEGUIDO_CON_EL_TREN_FUERA: TranslationKey = "ejercicio.seguidoConElTrenFuera";
+
+/**
+ * **Y lo del cuatrimotor, donde la del bimotor dice «el otro»**: al JAZ 120 le
+ * quedan tres, y «sigue volando con el otro» o «con un motor se sube» no es
+ * verdad en él. Las del bimotor se quedan como están, que están grabadas.
+ */
+const CON_MAS_DE_DOS: Partial<Record<TranslationKey, TranslationKey>> = {
+  "ejercicio.despues-de-v1.antes": "ejercicio.despues-de-v1.antesCuatro",
+  "ejercicio.un-motor.antes": "ejercicio.un-motor.antesCuatro",
+  "ejercicio.enVuelo": "ejercicio.enVueloCuatro",
+  "ejercicio.velocidad": "ejercicio.velocidadCuatro",
+  "ejercicio.paradoTrasV1": "ejercicio.paradoTrasV1Cuatro",
 };
 
 /**
@@ -4301,7 +4324,7 @@ export class Game {
     readonly fase: string;
     readonly averia: unknown;
     readonly motorParado: number | null;
-    readonly antesDeV1: boolean;
+    readonly parar: boolean;
     readonly asegurado: boolean;
     readonly declarada: boolean;
     readonly cierre: string | null;
@@ -4320,7 +4343,7 @@ export class Game {
       fase: p.fase,
       averia: p.averia,
       motorParado: p.motorParado,
-      antesDeV1: p.antesDeV1,
+      parar: p.parar,
       asegurado: p.aseguradoYa,
       declarada: p.declaradaYa,
       cierre: p.cierre,
@@ -8094,6 +8117,8 @@ export class Game {
     this.hud.onVelocidades((cual) => {
       if (cual === "V1") {
         this.avisar("v1");
+        // Ver `elV1MentiriaEnElEjercicio`: el destello sale, el «seguí» no.
+        if (this.elV1MentiriaEnElEjercicio()) return;
         this.cantar(
           "V one",
           t("vuelo.comprometido"),
@@ -24855,6 +24880,12 @@ export class Game {
         parado: s.onGround && s.groundSpeed < 0.6,
         percance: this.percance !== null,
         enFinal: alUmbral < 8000,
+        tren:
+          !this.aircraft.trenRetractil || this.input.trenQueSePide
+            ? "fuera"
+            : this.input.controls.tren > 0.01
+              ? "entrando"
+              : "dentro",
       },
       dt,
     );
@@ -24867,11 +24898,7 @@ export class Game {
         return this.presentarElEjercicio();
       case "fallo":
         if (suceso.averia === "presion") return this.fallaLaPresion();
-        return this.fallaElMotor(
-          suceso.motor,
-          suceso.antesDeV1,
-          suceso.enElSuelo,
-        );
+        return this.fallaElMotor(suceso.motor, suceso.parar, suceso.enElSuelo);
       case "velocidad":
         return this.pedirLaVelocidadDeUnMotor();
       case "asegurar":
@@ -24913,10 +24940,36 @@ export class Game {
    * los cuatro peldaños —la voz es el canal de quien no lee—, el dibujo del
    * ejercicio sale en la tarjeta y la frase, donde se lee.
    */
+  /**
+   * **Si el «ya despegamos: seguí» de V1 sería mentira en este ejercicio**: el
+   * bimotor de pistón practicando un fallo del despegue. Su V1 del juego es su
+   * Vmc, 66 nudos, y su manual para con el tren fuera por debajo de 85: en «Motor
+   * en la carrera» el motor falla tres nudos después, y la instructora diría
+   * «seguí» y «paramos» con un segundo de diferencia. El destello de V1 sale
+   * igual en pantalla, en todos los aviones, que así se pidió (ver `hud.ts`); lo
+   * que se calla es la voz y la tarjeta de «seguí», mientras dura el ejercicio.
+   * Ver `conV1` en `flight/ejercicios.ts`.
+   */
+  private elV1MentiriaEnElEjercicio(): boolean {
+    const p = this.practica;
+    return (
+      !!p &&
+      p.fase !== "cerrada" &&
+      p.averia.que === "motor" &&
+      p.averia.cuando.en !== "aire" &&
+      !conV1(this.aircraft)
+    );
+  }
+
+  /** La frase del cuatrimotor, si la tiene: ver `CON_MAS_DE_DOS`. */
+  private segunLosMotores(clave: TranslationKey): TranslationKey {
+    return this.aircraft.motores > 2 ? (CON_MAS_DE_DOS[clave] ?? clave) : clave;
+  }
+
   private presentarElEjercicio(): void {
     const e = this.ejercicioDeHoy;
     if (!e) return;
-    const clave = `ejercicio.${e.id}.antes` as TranslationKey;
+    const clave = this.segunLosMotores(`ejercicio.${e.id}.antes` as TranslationKey);
     this.hud.senal.mostrar(
       DIBUJO_DEL_EJERCICIO[e.id],
       this.rotulo(clave, "palabra.practica"),
@@ -24961,10 +25014,15 @@ export class Game {
    *    vez: un suceso, una voz.
    * 3. **Y el pie**, en los de abajo: qué pedal pisar, porque el avión tira
    *    hacia el motor parado. Con su dibujo en los cuatro.
+   *
+   * `parar` es lo que manda su manual donde ha fallado —ver `seParaAqui` en
+   * `flight/practica.ts`—: antes de V1 en los de turbina, y con el tren
+   * todavía fuera en el bimotor de pistón, que no lleva V1 y lo dice con el
+   * tren.
    */
   private fallaElMotor(
     motor: number | null,
-    antesDeV1: boolean,
+    parar: boolean,
     enElSuelo: boolean,
   ): void {
     if (motor === null) {
@@ -24994,8 +25052,11 @@ export class Game {
     }
     // Lo que se dice va detrás de la campanada, no encima.
     const tras = conPantallas ? 0.8 : 0;
-    if (enElSuelo && antesDeV1) {
-      const dicho = this.avisoCon("ejercicio.paramos", "palabra.frena");
+    if (parar) {
+      const dicho = this.avisoCon(
+        conV1(this.aircraft) ? "ejercicio.paramos" : "ejercicio.paramosConElTren",
+        "palabra.frena",
+      );
       this.hud.senal.mostrar("freno", dicho.rotulo, null, {
         segundos: 8,
         prioridad: URGENTE,
@@ -25003,7 +25064,7 @@ export class Game {
       this.agenda.luego(tras, () => this.cantarDelEjercicio("stop", dicho, "urgente"));
       return;
     }
-    const clave = enElSuelo ? "ejercicio.seguimos" : "ejercicio.enVuelo";
+    const clave = enElSuelo ? "ejercicio.seguimos" : this.segunLosMotores("ejercicio.enVuelo");
     const dicho = this.avisoCon(clave, "palabra.practica");
     this.hud.senal.mostrar("motor-parado", dicho.rotulo, null, {
       segundos: 5,
@@ -25142,7 +25203,8 @@ export class Game {
     const u = conUnMotor(this.avionConPeso());
     const velocidad = this.velocidadesDeHoy?.v2 ?? u.velocidad;
     const unidades = UNIT_SYSTEMS[this.tier.units];
-    const dicho = this.avisoCon("ejercicio.velocidad", "palabra.practica");
+    const frase = this.segunLosMotores("ejercicio.velocidad");
+    const dicho = this.avisoCon(frase, "palabra.practica");
     const rotulo =
       canalesDe(this.tier.avisos).cifra && dicho.rotulo
         ? `${u.nombre} ${Math.round(unidades.speed(velocidad))} ${unidades.speedLabel()} · ${dicho.rotulo}`
@@ -25151,7 +25213,7 @@ export class Game {
       segundos: 8,
       prioridad: IMPORTANTE,
     });
-    if (laInstructoraLoExplica(this.tier.avisos)) this.decirDelEjercicio("ejercicio.velocidad", "mando");
+    if (laInstructoraLoExplica(this.tier.avisos)) this.decirDelEjercicio(frase, "mando");
   }
 
   /**
@@ -25321,7 +25383,9 @@ export class Game {
         ? CIERRE_DE_LA_DESPRESURIZACION
         : this.practica?.ejercicio.id === "autorrotacion" && como === "vuelta"
           ? "ejercicio.autorrotacion.bien"
-          : CIERRE_DEL_EJERCICIO[como];
+          : como === "seguidoAntesDeV1" && !conV1(this.aircraft)
+            ? SEGUIDO_CON_EL_TREN_FUERA
+            : this.segunLosMotores(CIERRE_DEL_EJERCICIO[como]);
     if (laInstructoraLoExplica(this.tier.avisos) && this.bomberosPor) {
       // Uno o varios: se cuentan los que se ven. Ver `ponerLosBomberos`.
       const b: TranslationKey =
@@ -30517,7 +30581,8 @@ export class Game {
         this.elSenaleroLlevaLaLlegada(vista) ||
         this.elRemolqueLlevaLaSalida(vista) ||
         this.loQueCalla.laFase ||
-        trasIrse === "nada";
+        trasIrse === "nada" ||
+        (vista.fase === "comprometido" && this.elV1MentiriaEnElEjercicio());
       const soloLaTarjetaTrasIrse = trasIrse === "solo la tarjeta";
       /*
        * **Y alineado en la pista, su número.**
