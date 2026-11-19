@@ -403,25 +403,38 @@ lb. Queda para cuando se lea su peso en vacío.
 
 Con mucho peso la V1 llega a la Vr —no puede pasarla: o se para o se rota—,
 y entonces se cantan las dos seguidas. Vr esperaba a que se apagara el
-destello de V1, 1,6 s, y en La Gomera con el JAZ 90 a tope y a 40 °C el avión
-ya estaba en el aire: solo destellaba V1. Ahora, si V1 llega ya en la Vr, Vr
+destello de V1, 1,6 s, y con las dos en la misma velocidad el avión podía
+estar ya en el aire cuando salía la segunda. Ahora, si V1 llega ya en la Vr, Vr
 sale 0,7 s detrás (`DE_V1_A_ROTATE` en `hud.ts`): se ven las dos y se oyen
 «V one» y «rotate». Con V1 por debajo de Vr, como siempre. Que coinciden se
 mira en las dos velocidades del día y no en la aguja, porque el destello de V1
 se dispara con la velocidad verdadera y a 40 °C salta antes de que la indicada
-llegue a la Vr: esa discrepancia queda apuntada, y no se toca aquí.
+llegue a la Vr.
+
+**Y el banco de La Gomera no pasa todavía**, y no por esto. Con el JAZ 90 a
+tope —37.426 kg— y 40 °C, `verificar-despegue.mjs` da 18 de 20: V1 destella a
+63,6 m/s de verdadera, y el piloto del banco tira cuando la **verdadera** pasa
+la Vr, 66,4 m/s; a 40 °C la indicada va un 6 % por debajo, así que el avión se
+va al aire a 70 m/s de verdadera y unos 65,8 de indicada, sin que la aguja
+llegue a la Vr antes de los 15 m en que el banco deja de mirar. Ni Vr ni su
+flecha llegan a salir. V1 y Vr no coinciden en este caso; lo que no coincide
+es con qué velocidad se mira cada una. Lo que toca, y queda para otro encargo:
+V1, Vr y el tirón del banco, los tres en indicada.
 
 ### El teléfono tumbado
 
 En 800 × 360 la frase del veredicto, en la columna de la derecha, se iba a
 cuatro renglones y el arreglo quedaba debajo de la barra de despegar, a 138 px
-de rueda. Con poco alto (`max-height: 460px`), todo un poco más justo —lo que
-se toca, a 46 px— y, cuando hay frase, el veredicto a lo ancho de la tarjeta y
-los asientos debajo de los mandos. Mirado en foto, con el JAZ 60 a tope hacia
+de rueda. Con poco alto (`max-height: 460px`), todo un poco más justo —menos
+lo que se toca, que sigue a 48 px— y el veredicto a lo ancho de la tarjeta, con
+los asientos debajo de los mandos; en todos los peldaños, sin `:has()`, que en
+el Firefox viejo pediría espejo. Mirado en foto, con el JAZ 60 a tope hacia
 Pedro Juan, el JAZ 40 hacia Estigarribia y el 747 en Los Rodeos, en los cuatro
 peldaños: en 800 × 360 la tarjeta acaba como mucho en el píxel 274 y la barra
 de despegar empieza en el 288; en 915 × 412, en el 268 y el 340. La rueda que
 queda, de 58 a 110 px, es el hueco que el hangar deja debajo para la barra, no
 la hoja. Y despegar con el JAZ 40 hacia Estigarribia deja la hoja abierta.
 `npm run carteles`, entero: 1.126 de 1.126, con la pista de la hoja contra
-los dos quintos del ancho que dejó H38a.
+los dos quintos del ancho que dejó H38a; pasado con la versión que llevaba
+`:has()`, y la de ahora, que solo cambia el peldaño de los dibujos, mirada en
+foto pero sin volver a pasarlo entero.
