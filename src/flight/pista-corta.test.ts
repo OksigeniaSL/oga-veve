@@ -228,6 +228,8 @@ describe("el ejercicio de la pista corta", () => {
     indicada: 0,
     sobreElSuelo: 0,
     vertical: 0,
+    // En el aire, por encima del colchón del suelo salvo que se diga.
+    sobreElTerreno: l.enElSuelo === false ? 30 : 0,
     enElSuelo: true,
     enLaPista: true,
     gas: 0,
@@ -255,8 +257,8 @@ describe("el ejercicio de la pista corta", () => {
       4,
     );
     expect(aire.map((x) => x.que)).toEqual(["alAngulo"]);
-    const pasa = volar(p, [{ gas: 1, enElSuelo: false, indicada: 57, pasadoElFinal: 130, sobreLasCopas: 22 }], 0.1);
-    expect(pasa).toEqual([{ que: "pasaste", como: "conMargen", margen: 22 }]);
+    const pasa = volar(p, [{ gas: 1, enElSuelo: false, indicada: 57, pasadoElFinal: 130, sobreLasCopas: 58 }], 0.1);
+    expect(pasa).toEqual([{ que: "pasaste", como: "conMargen", margen: 58 }]);
     const vy = volar(p, [{ gas: 1, enElSuelo: false, indicada: 74, pasadoElFinal: 400, sobreLasCopas: 40 }], 4);
     expect(vy.map((x) => x.que)).toEqual(["enVy", "cerrar"]);
     expect(p.cierre).toBe("conMargen");
@@ -277,6 +279,40 @@ describe("el ejercicio de la pista corta", () => {
     volar(p, [{ gas: 1 }, { gas: 1, sobreElSuelo: 26, indicada: 50 }]);
     const s = volar(p, [{ gas: 1, enElSuelo: false, indicada: 53, sobreElSuelo: 27, vertical: 0.6, pasadoElFinal: -400 }], 5);
     expect(s.map((x) => x.que)).not.toContain("alAngulo");
+  });
+
+  it("recién despegado, en el colchón del suelo, despacio y empinado no es todavía el ángulo", () => {
+    const p = nuevo();
+    volar(p, [{ gas: 1 }, { gas: 1, sobreElSuelo: 26, indicada: 50 }]);
+    // Lo que hacía en el banco quien sale a buscar la Vy: 52 nudos quietos y el tirón de la rotación.
+    const s = volar(
+      p,
+      [{ gas: 1, enElSuelo: false, indicada: 52, sobreElSuelo: 27, vertical: 3, sobreElTerreno: 6, pasadoElFinal: -450 }],
+      5,
+    );
+    expect(s.map((x) => x.que)).not.toContain("alAngulo");
+    // Y en cuanto sale del colchón a la misma velocidad y subiendo igual, sí.
+    const fuera = volar(
+      p,
+      [{ gas: 1, enElSuelo: false, indicada: 56, sobreElSuelo: 29, vertical: 3, sobreElTerreno: 12, pasadoElFinal: -400 }],
+      4,
+    );
+    expect(fuera.map((x) => x.que)).toEqual(["alAngulo"]);
+  });
+
+  it("los 17,5 m del banco saliendo a buscar la Vy se pasan justo, y los 57 a la del obstáculo, con margen", () => {
+    const justo = nuevo();
+    volar(justo, [{ gas: 1 }, { gas: 1, sobreElSuelo: 26, indicada: 50 }]);
+    expect(volar(justo, [{ gas: 1, enElSuelo: false, indicada: 75, pasadoElFinal: 121, sobreLasCopas: 17.5 }], 0.1)[0]).toMatchObject({
+      que: "pasaste",
+      como: "justo",
+    });
+    const bien = nuevo();
+    volar(bien, [{ gas: 1 }, { gas: 1, sobreElSuelo: 26, indicada: 50 }]);
+    expect(volar(bien, [{ gas: 1, enElSuelo: false, indicada: 55, pasadoElFinal: 121, sobreLasCopas: 57 }], 0.1)[0]).toMatchObject({
+      que: "pasaste",
+      como: "conMargen",
+    });
   });
 
   it("rápido antes del monte pide más morro una vez, y pasa justo", () => {

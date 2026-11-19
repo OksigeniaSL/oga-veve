@@ -167,12 +167,31 @@ export const QUIETA = 4;
  */
 export const EMPINADA = 0.06;
 /**
- * **Por debajo de cuánto margen sobre las copas se pasa «justo»**, m: quince,
- * la altura de los árboles otra vez. Por encima, con margen. Volado en el
- * juego, a la del obstáculo se pasa con 59 m y saliendo a buscar la Vy con
- * 13: con diez, los dos se felicitaban igual.
+ * **Y fuera del efecto suelo**: el rato no cuenta hasta que las ruedas van a
+ * once metros del suelo, la envergadura del JAZ 20, que es hasta donde llega
+ * el colchón del ala (`flight/efecto-suelo.ts`).
+ *
+ * Volado (H35b), quien sale a buscar la Vy recién despegado se felicitaba
+ * igual: en los primeros segundos todos van a la de irse del suelo, y el
+ * tirón de la rotación lo sube empinado sin que nadie haya elegido nada —52
+ * nudos y quieta, y más del 6 %—. Lo que distingue a quien vuela a la del
+ * obstáculo es que **sigue a ella cuando el avión ya sube por su cuenta**: a
+ * once metros, bien volado va a 57 nudos, y quien busca la Vy ya pasa de 65.
+ * La subida recién despegado, en el colchón del suelo, no dice qué técnica se
+ * eligió.
  */
-export const MARGEN_HOLGADO = 15;
+export const FUERA_DEL_EFECTO_SUELO = 11;
+/**
+ * **Por debajo de cuánto margen sobre las copas se pasa «justo»**, m: treinta,
+ * el doble de lo que miden los árboles. Por encima, con margen.
+ *
+ * Eran quince, la altura de los árboles otra vez, y volado no separaba las dos
+ * técnicas: a la del obstáculo se pasa con 57–61 m, pero saliendo a buscar la
+ * Vy se pasó con 13, con 11 y, en la tirada de H35b, con 17,5, que se
+ * felicitaba «con margen». El listón tiene que separar las técnicas y no el
+ * ruido de una tirada: treinta deja a cada una lejos de él.
+ */
+export const MARGEN_HOLGADO = 30;
 /**
  * **A partir de cuántos nudos de más se pide más morro**, antes del monte: diez
  * por encima de la del obstáculo, el borde de arriba del examen práctico.
@@ -195,6 +214,8 @@ export interface LecturaDeLaPistaCorta {
   readonly sobreElSuelo: number;
   /** Lo que sube, m/s. */
   readonly vertical: number;
+  /** Lo que van las ruedas sobre el suelo de debajo, m. Ver `FUERA_DEL_EFECTO_SUELO`. */
+  readonly sobreElTerreno: number;
   readonly enElSuelo: boolean;
   /**
    * **Si está en la pista**: rodando hasta ella con el gas alto no es la
@@ -325,7 +346,11 @@ export class PistaCorta {
         sucesos.push({ que: "pasaste", como, margen });
         return sucesos;
       }
-      if (!this.angulo && Math.abs(l.indicada - v.sobreElObstaculo) <= VELOCIDAD_A_CINCO) {
+      if (
+        !this.angulo &&
+        l.sobreElTerreno >= FUERA_DEL_EFECTO_SUELO &&
+        Math.abs(l.indicada - v.sobreElObstaculo) <= VELOCIDAD_A_CINCO
+      ) {
         this.sostener(l.indicada, dt);
         this.subido += l.vertical * dt;
         this.recorrido += l.sobreElSuelo * dt;

@@ -4690,3 +4690,89 @@ en la mesa y al 10 en el juego.
   Tukã la ayuda de cabeceo cerca del suelo («se acelera subiendo») puede
   pelearse con quien quiere ir despacio y empinado; está por ver si el niño
   llega a los 56 nudos sosteniéndolos.
+
+## Enmienda H35b (19-11-2026): la pista corta, volada; y los árboles, que se tocan
+
+H35a dejó cuatro cosas por hacer. Los árboles que se tocan son un percance
+nuevo y su porqué está en el ADR 0032 (enmienda H35b); aquí, lo que cambia en el
+ejercicio al volarlo.
+
+### Volado, salió lo que la mesa no veía
+
+La primera tirada de H35b, en Taguató Ruvichá y con la Intel de verdad, con la
+condición de subir empinado que H35a solo había comprobado en la mesa:
+
+| Primera tirada | Al cruzar la fila | Sobre las copas | Se cuenta |
+|---|---|---|---|
+| A la del obstáculo | 55,1 kt | 61,1 m | ángulo; con margen |
+| A buscar la Vy recién despegado | 75,6 kt | 17,5 m | **ángulo** (52 kt); **con margen** |
+
+Dos fallos, los dos de felicitar a quien vuela mal:
+
+- **El ángulo se le seguía contando a quien busca la Vy**, «52 KT. That's it!
+  Slow and steep», y con más del 6 % de subida. Recién despegado todos van a la
+  de irse del suelo, y el tirón de la rotación sube el avión empinado durante
+  unos segundos sin que nadie haya elegido nada. Lo que distingue a quien vuela
+  a la del obstáculo es que **sigue a ella cuando el avión ya sube por su
+  cuenta**. El rato ya no cuenta hasta que las ruedas van a once metros del
+  suelo, la envergadura del JAZ 20, que es hasta donde llega el colchón del ala
+  (`FUERA_DEL_EFECTO_SUELO`): a esa altura, bien volado va a 57 nudos y quien
+  busca la Vy ya pasa de 65. Y con eso vuelve lo que estaba escrito y no se
+  oía: a quien va diez nudos por encima antes del monte se le pide más nariz,
+  que el ángulo mal contado callaba.
+- **Con 17,5 m se felicitaba «con margen».** H35a había medido 13,1 y 10,8, y
+  puso el listón en quince; la tercera tirada lo pasó. El listón tiene que
+  separar las técnicas y no el ruido de una tirada: **treinta metros**, el doble
+  de lo que miden los árboles (`MARGEN_HOLGADO`), deja a la del obstáculo
+  (57–61) y a la de buscar la Vy (11–18) lejos de él por los dos lados.
+
+### Pasar por debajo de las copas
+
+El banco vuela un tercer caso, `copas`: recién despegado se queda a seis metros
+del suelo con el motor a tope y llega al monte por debajo de las copas. Tiene
+que salir el percance del árbol, y en el ejercicio, como todo percance, el «otra
+vez». En la primera tirada el piloto del banco no bajaba —el compensador de
+despegue del juego lleva el morro arriba y su lazo no tenía integral— y pasó
+**diez centímetros por encima de la cima**, sin tocar nada: que es también lo
+que tiene que pasar.
+Con la integral en su lazo, sí baja.
+
+### Volado otra vez, con las dos cosas arregladas
+
+`ver-la-pista-corta.mjs`, con la Intel de verdad; capturas y registros en
+`h35b/` del scratchpad.
+
+| Segunda tirada, Taguató Ruvichá | Al cruzar la fila | Sobre las copas | Se cuenta |
+|---|---|---|---|
+| A la del obstáculo | 55,0 kt | 59,2 m | ángulo; con margen |
+| A buscar la Vy recién despegado | 75,5 kt | 14,9 m | más nariz (una vez); justo |
+| Bajo, por debajo de las copas | 84 kt | −8,9 m | percance del árbol; otra vez |
+
+| Tukã | Al cruzar la fila | Sobre las copas | Se cuenta |
+|---|---|---|---|
+| A la del obstáculo | 55,9 kt | 55,3 m | ángulo; con margen |
+| A buscar la Vy recién despegado | 74,0 kt | 15,9 m | más nariz (una vez); justo |
+| Bajo, por debajo de las copas | 84 kt | −9,5 m | percance del árbol; otra vez |
+
+**Tukã sostiene los 56 nudos.** La ayuda de cabeceo cerca del suelo («se
+acelera subiendo») solo actúa con la palanca suelta, por debajo de ocho
+centésimas, y quien sostiene una velocidad lleva la mano puesta: a la del
+obstáculo, el avión fue de 55 a 57 nudos desde trescientos metros antes del
+final hasta la fila. No hizo falta tocar nada del ejercicio ni de la ayuda. Lo
+que sí falló en Tukã fue el banco, que buscaba el ángulo por el texto de la
+tarjeta, y en Tukã la tarjeta lleva una palabra («Steady»): ahora lo reconoce
+por su dibujo.
+
+Una cosa vista en la mesa y no en el juego: con las ayudas de Tukã y Taguató
+puestas en el modelo sin más, el JAZ 20 rota despacio y se va del suelo a 68
+nudos, a 577 m en vez de a 311. Volado en el juego no pasa —el ángulo se
+cuenta y se pasa con 55 m—, así que lo que lo cambia es algo del juego que la
+mesa no lleva; no se ha buscado qué.
+
+### Lo que queda
+
+- **Volado por un niño, no.** El piloto del banco sostiene la velocidad con un
+  lazo que lleva la mano siempre puesta; quien juega con teclas o con el dedo
+  suelta, y entonces sostiene la trayectoria la mano del juego
+  (`flight/mano.ts`), no la ayuda. Si con eso se llega a los 56 y se
+  sostienen, está por ver jugando.

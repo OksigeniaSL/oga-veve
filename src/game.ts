@@ -763,6 +763,9 @@ const ALCANCE_MINIMO_DEL_AVISO = 120;
  */
 const POR_ENCIMA_DEL_TEJADO = 3;
 
+/** La punta del ala en el mundo, para `mirarLosArboles`: una, y no una por paso. */
+const PUNTA_DEL_ALA = new Vector3();
+
 /**
  * Cuánto se tarda en enseñar el final tras apagar el motor, s.
  *
@@ -1362,10 +1365,12 @@ import { Frustrada } from "./flight/frustrada";
 import {
   ROCE,
   TrenEnElCampo,
+  holguraDeLaCopa,
   percanceAlTocar,
   percanceEnElAgua,
   type Percance,
 } from "./flight/percance";
+import { Arboleda } from "./world/arboleda";
 import {
   barrasDe,
   grado,
@@ -5846,6 +5851,13 @@ export class Game {
   };
   /** Contra qué se choca además del suelo. Ver `world/obstaculos.ts`. */
   readonly bultos = new Obstaculos();
+  /**
+   * **Los árboles que se tocan**: los del mundo y los de la granja, que se
+   * montan con él, y aparte los del monte de la pista corta, que pone el
+   * ejercicio. Ver `mirarLosArboles`.
+   */
+  readonly arboleda = new Arboleda();
+  readonly arboledaDelMonte = new Arboleda();
   /** Dónde estaba el avión antes de este paso, para mirar el camino entero. */
   private readonly antesDelPaso = new Vector3();
   /** Segundos que le quedan al aviso del bulto, para no repetirlo cada paso. */
@@ -11275,6 +11287,48 @@ export class Game {
     else s.position.set(golpe.libre.x, golpe.libre.y, golpe.libre.z);
 
     this.avisarDelBulto("edificio");
+  }
+
+  /**
+   * **¿Se ha metido el avión en un árbol?** Ver el percance `arbol` en
+   * `flight/percance.ts` y `world/arboleda.ts`.
+   *
+   * Se miran **las ruedas a lo largo del camino del paso** —lo primero que
+   * llega a las copas al pasar por encima de un monte, y con el paso largo de
+   * la pestaña de fondo una copa estrecha se cruzaría entera entre dos
+   * puntos— y **las dos puntas del ala** donde ha llegado, que es lo que
+   * engancha un árbol al virar bajo o al rodar junto a él.
+   *
+   * Como en un edificio, arrimarse despacio no es un choque (`ROCE`). Y lo
+   * que se perdona de la copa crece con el peldaño: ver `holguraDeLaCopa`.
+   */
+  private mirarLosArboles(): void {
+    if (!this.arboleda.cuantos && !this.arboledaDelMonte.cuantos) return;
+    const s = this.flight.state;
+    if (Math.hypot(s.groundSpeed, s.verticalSpeed) <= ROCE) return;
+    const holgura = holguraDeLaCopa(this.tier.assists.crashTolerance);
+    /*
+     * Con la fotografía 3D puesta, la vegetación se apaga
+     * (`apagarElMundoDeMentira`), y un árbol que no se ve no se toca: con
+     * ella se apartan también los de la granja, que van en la misma arboleda.
+     */
+    const delMundo = this.vegetacion?.visible !== false;
+    const toca = (x: number, y: number, z: number): boolean =>
+      (delMundo && this.arboleda.toca(x, y, z, holgura)) || this.arboledaDelMonte.toca(x, y, z, holgura);
+    const a = this.antesDelPaso;
+    const p = s.position;
+    const tren = this.aircraft.gearHeight;
+    const pasos = Math.min(64, Math.max(1, Math.ceil(a.distanceTo(p) / 2)));
+    for (let i = 1; i <= pasos; i++) {
+      const t = i / pasos;
+      if (toca(a.x + (p.x - a.x) * t, a.y + (p.y - a.y) * t - tren, a.z + (p.z - a.z) * t)) {
+        this.sufrirPercance("arbol");
+        return;
+      }
+    }
+    const ala = PUNTA_DEL_ALA.set(this.aircraft.wingSpan / 2, 0, 0).applyQuaternion(s.orientation);
+    if (toca(p.x + ala.x, p.y + ala.y, p.z + ala.z) || toca(p.x - ala.x, p.y - ala.y, p.z - ala.z))
+      this.sufrirPercance("arbol");
   }
 
   /**
@@ -18974,12 +19028,14 @@ export class Game {
   /** La granja, si el campo la tiene, y después el monte, que le pregunta dónde está. */
   private montarLaGranjaYElMonte(ortofoto: Ortofoto | undefined, ortofotoFina: Ortofoto | undefined): void {
     const aero = this.scenario.aerodrome;
+    this.arboleda.vaciar();
     if (aero) {
       this.granja = crearGranja(
         aero,
         (x, z) => this.terrain.sampleHeight(x, z),
         new Date(),
         this.scenario.seed,
+        this.arboleda,
       );
       if (this.granja) {
         this.scene.add(this.granja.grupo);
@@ -18995,6 +19051,7 @@ export class Game {
       // `createVegetation`.
       ortofoto ? (x, z) => ortofotoFina?.color(x, z) ?? ortofoto.color(x, z) : undefined,
       granja ? (x, z) => granja.ocupa(x, z) : undefined,
+      this.arboleda,
     );
     this.scene.add(this.vegetacion);
   }
@@ -19633,6 +19690,7 @@ export class Game {
     this.granja = null;
     fuera(this.vegetacion);
     this.vegetacion = null;
+    this.arboleda.vaciar();
     this.bultos.vaciar();
     this.scene.remove(this.terrain.group);
     this.terrain.dispose();
@@ -20320,6 +20378,7 @@ export class Game {
         guinada: mandos.rudder,
       };
       this.mirarSiChocaConAlgo();
+      this.mirarLosArboles();
       this.mirarElSuelo(dt);
     }
     this.quemarCombustible(dt);
@@ -26125,7 +26184,8 @@ export class Game {
         puntos.push({ x, y: suelo(x, z), z });
       }
     }
-    this.scene.add(filaDeArboles(puntos, monte.alto));
+    this.arboledaDelMonte.vaciar();
+    this.scene.add(filaDeArboles(puntos, monte.alto, this.arboledaDelMonte));
     // La cima: el suelo más alto de la primera fila cerca del eje, que es por donde se pasa, más los árboles.
     let cima = -Infinity;
     for (let lado = -30; lado <= 30; lado += 5) {
@@ -26159,6 +26219,7 @@ export class Game {
         indicada: indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) / NUDO,
         sobreElSuelo: s.groundSpeed,
         vertical: s.verticalSpeed,
+        sobreElTerreno: s.heightAboveGround - this.aircraft.gearHeight,
         enElSuelo: s.onGround,
         enLaPista: s.onRunway,
         gas: this.input.controls.throttle,
@@ -26232,9 +26293,12 @@ export class Game {
         );
       case "pasaste": {
         /*
-         * **Se cuenta, no se castiga**: con margen se felicita; justo, o por
-         * debajo de las copas —que en el juego no se tocan—, se dice que fue
-         * cerca y qué se hace ahora. El margen, en cifra desde Taguato.
+         * **Se cuenta, no se castiga**: con margen se felicita; justo, se dice
+         * que fue cerca y qué se hace ahora. Por debajo de la cima solo se
+         * llega aquí rozando las hojas de arriba que perdona el peldaño
+         * (`holguraDeLaCopa`), o entre dos copas: meterse en una es el
+         * percance del árbol, que cierra antes. El margen, en cifra desde
+         * Taguato.
          */
         const margen =
           this.tier.units === "aeronautical"

@@ -3070,6 +3070,7 @@ export const ES_PY = {
   "percance.sintren": "Tocaste tierra sin sacar el tren",
   "percance.tren": "Se rompió el tren rodando rápido por el campo",
   "percance.agua": "Tocaste el agua, y sin flotadores no se flota",
+  "percance.arbol": "Te metiste en un árbol",
   "grado.aprendiz": "Aprendiz",
   "grado.piloto": "Piloto",
   "grado.comandante": "Comandante",

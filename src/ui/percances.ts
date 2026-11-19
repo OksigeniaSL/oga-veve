@@ -230,6 +230,26 @@ const AGUA = lienzo(`
   <circle cx="57" cy="23" r="1.4" opacity="0.6" />
 `);
 
+/**
+ * **El árbol**: un árbol de copa redonda, con la avioneta de frente metida en
+ * ella hasta media ala, y unas hojas que caen.
+ *
+ * Lo que se tiene que leer es **contra qué** fue, y por eso el árbol es lo
+ * grande del dibujo: el tronco, la copa y el avión dentro, como un cometa
+ * enganchado. Las hojas que caen son el chiste, como la nubecilla en los
+ * otros: algo se rompió, nadie se hizo daño.
+ */
+const ARBOL = lienzo(`
+  <path d="M8 56 h48" stroke="currentColor" stroke-width="3.4"
+        stroke-linecap="round" fill="none" />
+  <path d="M29 56 v-18 h6 v18 Z" opacity="0.85" />
+  <ellipse cx="32" cy="27" rx="22" ry="16" opacity="0.4" />
+  <g transform="translate(6 -4) scale(0.8)">${AVIONETA}</g>
+  <path d="M10 44 q3 -3 6 0 q-3 3 -6 0 Z" opacity="0.8" />
+  <path d="M48 46 q3 -3 6 0 q-3 3 -6 0 Z" opacity="0.65" />
+  <path d="M53 36 q2.5 -2.5 5 0 q-2.5 2.5 -5 0 Z" opacity="0.5" />
+`);
+
 /*
  * La tabla lleva además alguna **variante**: un mismo percance con dos
  * motivos posibles, y el dibujo dice cuál. Ver `dibujoDePercance`.
@@ -244,6 +264,7 @@ const DIBUJOS: Record<string, string> = {
   sintren: SIN_TREN,
   tren: TREN,
   agua: AGUA,
+  arbol: ARBOL,
   ocupada: OCUPADA,
   "ocupada-avion": OCUPADA_AVION,
 };
