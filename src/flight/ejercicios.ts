@@ -115,6 +115,15 @@
  * de costado de siempre (`cruzadoDelCampo`) que no pase del demostrado del
  * avión (`conEsteAvion`), y las lleva `final-con-viento-cruzado.ts`. Ver el
  * ADR 0031, enmienda H32a.
+ *
+ * ## Y el despegue de pista corta, que tampoco
+ *
+ * «Despegar de una pista corta» (#91, H35a) va con `escena: "pista-corta"`:
+ * no falla nada, y lo que se practica es la subida de después de los frenos,
+ * a la de mejor ángulo hasta pasar el monte del final y a la de mejor régimen
+ * después. Pide un campo con monte medido (`monteDelCampo`) y un avión cuyo
+ * manual y cuyo modelo den las dos velocidades (`subidaDe`), y la lleva
+ * `pista-corta.ts`. Ver el ADR 0027, enmienda H35a.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -132,6 +141,7 @@ import { laderaDelAltimetro } from "./el-altimetro-miente";
 import { inclinacionDelCampo } from "./brujula-que-baila";
 import { cabeElCruzado, cruzadoDelCampo } from "./final-con-viento-cruzado";
 import { cabinaDelGps } from "./gps-con-apagones";
+import { monteDelCampo, subidaDe } from "./pista-corta";
 
 export type EjercicioId =
   | "planeo"
@@ -159,7 +169,8 @@ export type EjercicioId =
   | "pitot"
   | "gps"
   | "cangrejo"
-  | "ala-baja";
+  | "ala-baja"
+  | "pista-corta";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -241,7 +252,7 @@ export interface Ejercicio {
    * lecciones del ala rotatoria, `rotor`, que enseñan lo que hace un
    * helicóptero y no un avión (ver `lecciones-del-rotor.ts`).
    */
-  readonly escena?: "tormenta" | "rotor" | "radio" | "navegacion" | "cruzado";
+  readonly escena?: "tormenta" | "rotor" | "radio" | "navegacion" | "cruzado" | "pista-corta";
   /** Lo que enseña, en una línea: para quien lea esto, no para el juego. */
   readonly ensena: string;
   /**
@@ -905,6 +916,29 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     conEsteAvion: (a, oaci) => cabeElCruzado(a, oaci),
     ensena:
       "con viento de costado se baja con el ala del viento abajo y el pie contrario: el morro en la pista, el avión inclinado, y se toca primero con la rueda del viento",
+  },
+  /*
+   * **Despegar de una pista corta** (#91, H35a): frenos, motor a tope,
+   * soltar, y en el aire la de mejor ángulo hasta pasar el monte; después,
+   * la de mejor régimen.
+   */
+  {
+    id: "pista-corta",
+    /*
+     * **Desde Tukã, como dice el issue**: abajo la instructora lo cuenta con
+     * el dibujo, y desde Taguato salen las velocidades en cifra. En Guyrami no:
+     * su modelo de vuelo no tiene fuerzas —el gas es la velocidad— y no hay
+     * pendiente que elegir.
+     */
+    peldanos: DESDE_TUKA,
+    // Donde el manual trae la técnica y el modelo pone sus dos velocidades: hoy, el JAZ 20.
+    valePara: (a) => subidaDe(a) !== null,
+    leccion: "vuelta",
+    averias: [],
+    escena: "pista-corta",
+    dondeVale: (oaci) => monteDelCampo(oaci) !== null,
+    ensena:
+      "de una pista corta se sale con los frenos puestos y el motor a tope, y en el aire despacio y empinado, a la de mejor ángulo, hasta pasar los árboles; después, a la de mejor régimen, que sube más deprisa",
   },
 ];
 

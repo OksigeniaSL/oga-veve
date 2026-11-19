@@ -107,6 +107,15 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
    * del avión. Ver `flight/final-con-viento-cruzado.ts`.
    */
   if (ejercicio?.escena === "cruzado") return { ...deCasa, fuente: "mano" };
+  /*
+   * **Y el de la pista corta, la mañana caliente y sin viento**: los
+   * veintiocho grados de siempre de la granja, que son los que alargan la
+   * carrera, y en calma. Con el viento de siempre —del norte, seis nudos— la
+   * pista que se usa saldría con viento de cola, y de una pista corta nadie
+   * sale con viento de cola si puede elegir: eso enseñaría lo contrario. Ver
+   * `flight/pista-corta.ts`.
+   */
+  if (ejercicio?.escena === "pista-corta") return { ...deCasa, vientoDe: null, vientoKt: 0, fuente: "mano" };
 
   // El identificador OACI es el `id` del aeródromo: así se llama el fichero y
   // así lo llama el METAR.

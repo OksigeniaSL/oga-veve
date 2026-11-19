@@ -511,6 +511,31 @@ function buildSpecies(
   return group;
 }
 
+/**
+ * **Una fila de árboles puesta a mano**: el monte del final de la pista corta
+ * (`flight/pista-corta.ts`). Lapachos, que es lo que crece en el monte de San
+ * Pedro, escalados para que **la copa más alta llegue justo a `alto`** sobre
+ * su suelo: el ejercicio mide el margen contra esa altura, y un árbol que
+ * asomara por encima sería un obstáculo que no cuenta. Los demás, algo más
+ * bajos, que un monte no está podado a regla.
+ */
+export function filaDeArboles(puntos: readonly { readonly x: number; readonly y: number; readonly z: number }[], alto: number): Group {
+  const cima = LAPACHO.crown.lift + LAPACHO.crown.radius * LAPACHO.crown.height;
+  const random = mulberry32(0x6d6f6e74);
+  const arriba = new Vector3(0, 1, 0);
+  const matrices = puntos.map((p, i) => {
+    const escala = (alto / cima) * (i === 0 ? 1 : 0.85 + random() * 0.15);
+    return new Matrix4().compose(
+      new Vector3(p.x, p.y, p.z),
+      new Quaternion().setFromAxisAngle(arriba, random() * Math.PI * 2),
+      new Vector3(escala, escala, escala),
+    );
+  });
+  const grupo = buildSpecies(LAPACHO, matrices, LAPACHO.crown.colour);
+  grupo.name = "monte-del-final";
+  return grupo;
+}
+
 /** Pendiente aproximada muestreando el terreno alrededor del punto. */
 function slopeAt(ground: GroundSampler, x: number, z: number): number {
   const d = 12;
