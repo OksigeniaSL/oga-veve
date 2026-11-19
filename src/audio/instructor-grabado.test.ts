@@ -643,6 +643,58 @@ describe("lo que se nombra", () => {
     expect(instructor.noSeVeia).toEqual(["vuelo.coja"]);
   });
 
+  /*
+   * **Y si tiene gemela que no lo nombra, se dice la gemela** (H29l): en la
+   * final de Los Rodeos con el JAZ 20, el consejo de bajar la nariz hasta ver
+   * el PAPI se pidió con el PAPI a la vista, la puerta lo paró al tocarle, y
+   * el consejo se quedó en la tarjeta sin voz. La acción sigue siendo verdad.
+   */
+  it("y si se fue de la vista en la cola y tiene gemela sin nombrarlo, suena la gemela", async () => {
+    const { instructor, altavoz } = await conPack();
+    const p = {
+      ...puerta(),
+      enSuLugar: (clave: string | undefined) =>
+        clave === "vuelo.coja" ? { texto: "Seguí la raya verde", clave: "vuelo.rodando" } : null,
+    };
+    p.nombraLoQueNoSeVe = (clave) => clave === "vuelo.coja" && !p.seVe;
+    p.senalar = (clave) => {
+      p.senaladas.push(clave);
+    };
+    instructor.loNombrado = p;
+    const oido: string[] = [];
+    instructor.decir("Seguí la raya verde", "vuelo.rodando");
+    instructor.decir("Seguí la calle", "vuelo.coja", "normal", undefined, (q) => oido.push(q));
+    p.seVe = false;
+    altavoz.terminar();
+    // Sonaron las dos: la de delante y, en lugar de la que nombraba la calle, su gemela.
+    expect(altavoz.tocadas).toHaveLength(2);
+    expect(altavoz.tocadas[1]).toHaveLength(2);
+    expect(instructor.noSeVeia).toEqual([]);
+    expect(instructor.dichasEnSuLugar).toEqual(["vuelo.coja → vuelo.rodando"]);
+    expect(oido).toEqual(["empieza"]);
+    // Y se señala lo que nombra la que suena, no la que no se ve.
+    expect(p.senaladas).toEqual(["vuelo.rodando", "vuelo.rodando"]);
+  });
+
+  it("y la gemela que también nombra lo que no se ve no se dice: se cae", async () => {
+    const { instructor, altavoz } = await conPack();
+    const p = puerta();
+    instructor.loNombrado = {
+      ...p,
+      // Esperando turno deja de verse todo, también lo que nombra la gemela.
+      nombraLoQueNoSeVe: () => !p.seVe,
+      enSuLugar: () => ({ texto: "Seguí la raya verde", clave: "vuelo.rodando" }),
+      porQueNoSeVe: () => "tapado",
+    };
+    instructor.decir("Seguí la raya verde", "vuelo.rodando");
+    instructor.decir("Seguí la calle", "vuelo.coja");
+    p.seVe = false;
+    altavoz.terminar();
+    expect(altavoz.tocadas).toHaveLength(1);
+    expect(instructor.noSeVeia).toEqual(["vuelo.coja (tapado)"]);
+    expect(instructor.dichasEnSuLugar).toEqual([]);
+  });
+
   it("y al revés: lo que aparece con el mismo suceso que la pide, suena", async () => {
     const { instructor, altavoz } = await conPack();
     const p = puerta();

@@ -1385,12 +1385,17 @@ export class Hud {
    * maquetado. Ver `flight/lo-que-se-nombra.ts`.
    */
   tapaElPunto(x: number, y: number): boolean {
-    for (const el of this.root.querySelectorAll(LO_QUE_TAPA)) {
+    return this.queTapaElPunto(x, y) !== null;
+  }
+
+  /** **Qué del HUD tapa ese punto**, por su nombre, o `null`. Para los bancos. */
+  queTapaElPunto(x: number, y: number): string | null {
+    for (const el of this.root.querySelectorAll<HTMLElement>(LO_QUE_TAPA)) {
       const r = el.getBoundingClientRect();
       if (r.width > 0 && r.height > 0 && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)
-        return true;
+        return el.dataset.hud ?? el.className.split(" ")[0] ?? "?";
     }
-    return false;
+    return null;
   }
 
   /** Si se mira desde la cabina, donde el cuadro es el del avión. */
