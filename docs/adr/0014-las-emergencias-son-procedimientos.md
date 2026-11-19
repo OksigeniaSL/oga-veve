@@ -228,3 +228,119 @@ este registro, `EJERCICIO_DE_DESPRESURIZACION`. Al juntarlos:
 - FAA, *Airplane Flying Handbook* (FAA-H-8083-3), capítulo de bimotores.
 - E. Torenbeek, *Synthesis of Subsonic Airplane Design* (1982), apéndice G.
 - DINAC R 4444 y RD 1180/2018, para la fraseología; el 7700 del Doc 4444.
+
+## Enmienda H37e (19-11-2026): el bimotor de pistón no tiene V1
+
+### Lo que pasaba
+
+El ejercicio de después de V1 le paraba un motor al JAZ 40 rodando a 69
+nudos, tres por encima de su V1 del juego —que es su Vmc, 66—, y le pedía
+seguir. Su manual dice otra cosa, y la FAA también:
+
+- **Piper, PA-34-220T Seneca III** (VB-1110, sección 3): «If engine failure
+  occurs during takeoff and 85 KIAS has not been attained: Throttles — CLOSE
+  both immediately. Stop straight ahead», y si no queda pista, se para igual,
+  frenando a fondo y esquivando lo que haya delante. Por encima de 85 con el
+  tren todavía fuera, «if adequate runway remains, CLOSE both throttles
+  immediately, land if airborne and stop straight ahead»; solo sin pista se
+  decide seguir, y entonces «after establishing a climb, retract landing gear,
+  accelerate to 92 KIAS and feather inoperative engine prop». El del Seneca I
+  (VB-423), lo mismo con 100 mph.
+- **FAA, *Airplane Flying Handbook*** (FAA-H-8083-3C, cap. 13, p. 13-12):
+  «if the landing gear has not been selected up, the takeoff should be
+  rejected, even if airborne». Con el tren pedido dentro y si el avión puede
+  subir, se sigue: identificar, verificar, bandera y la línea azul.
+- **El modelo lo dice igual**: con un motor en molinete y el tren fuera, el
+  JAZ 40 no sube a ninguna velocidad (ADR 0027, enmienda H37b). El banco
+  pasaba en Gran Canaria porque la pista es larga: volvía a tocar a los 670 m
+  y se iba del todo a los 2.900.
+
+Y la compañera ponía la bandera tarde: el procedimiento no empezaba hasta que
+el ejercicio daba el avión por volando, a quince metros, y en ese avión la
+bandera va en cuanto se ha identificado el motor.
+
+### Qué manda cada tipo
+
+| | V1 en su manual | Fuente | Ejercicios del despegue |
+|---|---|---|---|
+| JAZ 40 (PA-34 Seneca II) | no: decide con 85 KIAS y el tren | POH del Seneca III, VB-1110, sec. 3; del I, VB-423; FAA-H-8083-3C, cap. 13 | «Motor en la carrera» (se para), «Motor con el tren arriba» (se sigue) |
+| JAZ 50 (DHC-6 -400) | sí, igual a la Vr, 73 kt | PSM 1-64-1A, fig. 4-1 | antes y después de V1 |
+| JAZ 60 (1900D) | sí, 100 kt a 16.000 lb | su AFM, citado por TSB A97C0229 | antes y después de V1 |
+| JAZ 90, 110 y 120 | sí, la de transporte | CS-25.107 / 14 CFR 25.107 | antes y después de V1 |
+
+Todos siguen con «Volar con un motor parado» y, en Taguató Ruvichá, con la
+sesión de simulador.
+
+### El cambio
+
+- **`conV1`** (`ejercicios.ts`): los multimotores de turbina. Los ejercicios
+  de antes y después de V1 solo se les ofrecen a ellos.
+- **Dos ejercicios del bimotor de pistón**, con los dibujos de los de V1:
+  - **«Motor en la carrera»** (`en-la-carrera`): falla donde fallaba el de
+    después de V1 —a medio camino entre su V1 del juego y la rotación, o al
+    irse del suelo si rota antes—, que es donde un reactor ya seguiría. En
+    este avión se para, y parar se felicita: es lo que se enseña.
+  - **«Motor con el tren arriba»** (`tren-arriba`): falla subiendo con el tren
+    ya dentro del todo, desde quince metros, que es el único fallo del
+    despegue en que su manual deja seguir. Se sigue a la línea azul.
+- **`Practica` decide por el tipo** (`seParaAqui`): en los de turbina, antes
+  de V1 en el suelo; en el bimotor de pistón, en el suelo siempre —rota a 72
+  nudos, por debajo de los 85 de su manual— y en el aire mientras el tren siga
+  pedido fuera y no vuele todavía. Lo mira con lo que el juego le cuenta del
+  tren, `fuera`, `entrando` o `dentro`.
+- **La bandera, enseguida**: si el bimotor de pistón sigue, el procedimiento
+  empieza en el fallo, sin esperar a los quince metros, y la compañera
+  identifica, verifica y pone la bandera a los cuatro segundos
+  (`IDENTIFICAR_Y_BANDERA`), a la altura que sea.
+- **La sesión de simulador** tiene los mismos tres momentos en todos, y lo que
+  toca en cada uno lo dice su manual: en el bimotor de pistón, los dos de la
+  carrera se paran y el de la subida se sigue.
+- **El «seguí» de V1 se calla en esos ejercicios.** El destello de V1 sale en
+  todos los aviones, que así se pidió (ver `hud.ts`), y no se toca. Pero en el
+  JAZ 40 la instructora decía «ya despegamos: seguí» a 66 nudos y «paramos» a
+  69. Mientras dura un ejercicio del despegue del bimotor de pistón, la voz y
+  la tarjeta de «seguí» se callan; el destello sale igual.
+
+### Lo que se dice
+
+Cada frase de estos ejercicios tiene que ser verdad en cada avión que la oye:
+
+- **Nuevas para el bimotor de pistón**: las presentaciones de los dos
+  ejercicios; «falló un motor con el tren todavía fuera: los dos gases atrás,
+  derecho por la pista, y paramos» (`ejercicio.paramosConElTren`); y el cierre
+  de quien siguió con el tren fuera, que en ese avión lo seguro era parar
+  (`ejercicio.seguidoConElTrenFuera`). «Antes de V1» no sale en ninguna.
+- **La bandera con identificar y verificar** (`ejercicio.bandera`, que solo
+  oye el de pistón): el motor parado es el del pie que no pisa, se verifica
+  con su gas y se pone en bandera.
+- **Las del cuatrimotor**: al JAZ 120 le quedan tres, y «sigue volando con el
+  otro», «con un motor se sube» o «el avión vuela con un motor» no son verdad
+  en él. Tiene las suyas (`CON_MAS_DE_DOS` en `game.ts`), y las del bimotor se
+  quedan como estaban, que están grabadas. En el hangar, «Volar con un motor»
+  pasa a «Volar con un motor parado», que es verdad en los dos.
+
+Ninguna de las nuevas o cambiadas está grabada todavía, así que hasta que lo
+esté se queda en el dibujo y en el texto de la tarjeta (ver
+`decirDelEjercicio`).
+
+### Volado
+
+`verificar-emergencias.mjs` aprende `carrera` y `tren`, los dos del bimotor
+de pistón, y `OGA_MOTOR=izquierdo|derecho` para elegir qué motor se para
+—el ejercicio lo sortea—. En Gran Canaria, en Taguató:
+
+- **Motor en la carrera** (`carrera gran-canaria jaz-40`), **7 de 7**: el
+  derecho se para a 69 nudos rodando, la instructora pide parar con el tren
+  fuera, y se para a 447 m del umbral, de 3.104. Cierre «parado», con los
+  bomberos a mirar los frenos y la felicitación. Ni «V one» ni «seguí».
+- **Motor con el tren arriba** (`tren gran-canaria jaz-40`), **11 de 11**:
+  despega con los dos, mete el tren, y el derecho se para a 98 m, a 94 nudos.
+  La compañera pone la bandera **a los 4,0 s del fallo**; sube a la línea
+  azul —87 a 94 nudos, de 0,2 a 4,6 m/s— con el pie a 0,45, da la vuelta a
+  mil pies y toca a 155 m del umbral, con MAYDAY, prioridad y bomberos.
+- **Las pruebas** (`practica.test.ts`): qué se ofrece a cada tipo; el de
+  pistón para rodando pasada su V1 del juego y recién despegado con el tren
+  fuera; si sigue con el tren fuera, se cierra contando que tocaba parar; con
+  el tren fuera o entrando no falla el de la subida, y dentro sí; la bandera a
+  los cuatro segundos a dieciséis metros; y la sesión de simulador del de
+  pistón para los dos de la carrera y sigue el de la subida.
