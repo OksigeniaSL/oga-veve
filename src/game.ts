@@ -32109,7 +32109,12 @@ export class Game {
       fase: g.fase,
       cierre: g.cierre,
       causa: CAUSA_DEL_APAGON,
-      sinGps: g.sinGps,
+      /*
+       * **Lo que sabe el plano**, leído del plano y no del ejercicio: en los de
+       * cristal el ejercicio sabe dónde se fue el GPS, pero el plano sigue a
+       * estima (H26w).
+       */
+      sinGps: this.hud.mapa.dondeSeQuedo,
       casaSinGps: !!document.querySelector('[data-hud="home"]')?.classList.contains("casa--sin-gps"),
       estacion: { id: g.estacion.id, x: g.estacion.x, z: g.estacion.z },
       colocacion: g.colocacion,

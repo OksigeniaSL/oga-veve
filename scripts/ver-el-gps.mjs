@@ -361,18 +361,28 @@ try {
   }
   const dicho = await page.evaluate(() => globalThis.__oga.dichoTodo());
   const cantados = await page.evaluate(() => globalThis.__oga.cantados());
-  const pedidas = [
-    ...(dicho.instructor ?? []).filter((k) => /^ejercicio\.gps\./.test(k)),
-    ...cantados
+  /*
+   * Las grabadas, en el historial de la boca; las mudas, en lo cantado «sin
+   * grabar». Son dos listas sin hora común, así que cada una se mira en su
+   * orden, y entre las dos tienen que estar todas: con las tres nuevas de
+   * H26w sin grabar, juntarlas una detrás de otra las desordenaba.
+   */
+  const unaVez = (l) => l.filter((k, i) => l.indexOf(k) === i);
+  const grabadas = unaVez((dicho.instructor ?? []).filter((k) => /^ejercicio\.gps\./.test(k)));
+  const mudas = unaVez(
+    cantados
       .map((c) => /^(ejercicio\.gps\.\w+): sin grabar/.exec(typeof c === "string" ? c : (c?.que ?? ""))?.[1])
       .filter(Boolean),
-  ];
-  const delGps = pedidas.filter((k, i) => pedidas.indexOf(k) === i);
-  const enSuOrden = CRISTAL ? ["antes", "loi", "seFueDr", "planBCrs", "centrada", "pasada"] : ["antes", "seFue", "planB", "centrada", "pasada"];
+  );
+  const esperadas = (CRISTAL ? ["antes", "loi", "seFueDr", "planBCrs", "centrada", "pasada"] : ["antes", "seFue", "planB", "centrada", "pasada"]).map(
+    (k) => `ejercicio.gps.${k}`,
+  );
+  const enSuOrden = (l) => l.every((k, i) => i === 0 || esperadas.indexOf(k) > esperadas.indexOf(l[i - 1]));
+  const todas = unaVez([...grabadas, ...mudas]);
   comprobar(
     "la instructora pide cada frase en su orden, una detrás de otra",
-    enSuOrden.every((k, i) => delGps[i] === `ejercicio.gps.${k}`),
-    delGps.join(", ") || "nada",
+    todas.length === esperadas.length && esperadas.every((k) => todas.includes(k)) && enSuOrden(grabadas) && enSuOrden(mudas),
+    `grabadas: ${grabadas.join(", ") || "nada"}; sin grabar: ${mudas.join(", ") || "nada"}`,
   );
   await ajeno.comprobar(page, comprobar, /^cdi-|^gps-/);
   // El panel del final sale ocho segundos y medio de juego después de pasar.
