@@ -475,6 +475,15 @@ const EXPLICA_TRAS_LA_TORRE = 6;
 const SEPARA_LA_RADIO = 4;
 
 /**
+ * A cuántos metros de raya del punto de espera pregunta la torre por la
+ * intersección, rodando. La oferta, lo que cuenta la instructora y la TORA
+ * son unos veinticinco segundos de boca: a ocho o diez metros por segundo,
+ * más de doscientos metros, y queda margen para que antes calle la
+ * frecuencia. Ver `contarPorDondeSeSale`.
+ */
+const CERCA_DE_LA_ESPERA = 400;
+
+/**
  * **Lo más que espera la comandante a la radio del PIREP para anunciar la
  * turbulencia**, s de juego: la red de la cadena. Ver `contarElPirep`.
  *
@@ -17827,6 +17836,22 @@ export class Game {
    * detrás, sin reloj, hasta que empieza la carrera. Ver `cuentaPorDondeSeSale`
    * en `audio/boca.ts`.
    *
+   * **Y antes de la roja, rodando hacia el punto de espera (H29m).** Con la
+   * pista libre la roja dura lo que tarda la torre en mirarte, cuatro
+   * segundos, y en ellos la boca está con la roja y su «hold short»: en Los
+   * Rodeos con el JAZ 90 en Taguató la oferta y la TORA volvieron a salir
+   * detrás del «cleared for take-off», cuatro frases de torre y treinta y
+   * cinco segundos, y con ellas en la boca «desde la intersección» y
+   * «alineando» de la instructora se retiraron al empezar la carrera y
+   * «sentados para el despegue» sonó con el avión corriendo. Una torre de
+   * verdad no hace eso: la intersección se acuerda con el rodaje, o la pide
+   * quien vuela rodando, y si no se acordó la torre autoriza desde donde
+   * estás sin ofrecer nada. Así que se pregunta a `CERCA_DE_LA_ESPERA` metros
+   * de raya, en cuanto calla la frecuencia, contado desde el punto de espera
+   * al que se va (`comoSeSaldraDesdeLaEspera`); en la roja, si rodando no
+   * calló nunca; y con la verde ya no se ofrece. La instructora cuenta lo
+   * suyo con la verde si no lo contó antes: va en la cabina, no en la radio.
+   *
    * **Remontar, en cambio, sigue esperando a la verde**: «backtrack runway one
    * two» es entrar en la pista, y dicho con la roja encendida la torre se
    * contradiría a sí misma.
@@ -17838,15 +17863,30 @@ export class Game {
    * silencio, y la oferta seguía saliendo con la verde (H29j). Ver
    * `comoSeSaldraDesdeAqui` en `world/plan-de-vuelo.ts`.
    */
-  private contarPorDondeSeSale(enLaRoja = false): void {
-    const sale = (enLaRoja ? this.plan?.comoSeSaldraDesdeAqui() : this.plan?.comoSeSale) ?? null;
+  private contarPorDondeSeSale(cuando: "rodando" | "roja" | "verde" = "verde"): void {
+    const sale =
+      (cuando === "rodando"
+        ? this.plan?.comoSeSaldraDesdeLaEspera()
+        : cuando === "roja"
+          ? this.plan?.comoSeSaldraDesdeAqui()
+          : this.plan?.comoSeSale) ?? null;
     if (this.remonteContado || !sale || sale.desde === "cabecera") return;
-    if (enLaRoja && sale.desde !== "interseccion") return;
+    const antesDeLaVerde = cuando !== "verde";
+    if (antesDeLaVerde && sale.desde !== "interseccion") return;
     this.remonteContado = true;
     const campo = this.elCampo();
     const aero = campo.escenario.aerodrome;
     const delinea = esDeLinea(this.aircraft);
-    if (this.tier.avisos !== "cabina") {
+    /*
+     * **Y la instructora, pedida detrás de la pregunta de la torre si la
+     * hay.** Lo suyo es el porqué de la respuesta —«la pista que queda nos
+     * sobra»—, y dicho antes de que la torre pregunte contestaba a lo que
+     * nadie había oído. Como la TORA va en `mando`, entra en el respiro que
+     * deja la oferta y ella suena detrás de las dos: el intercambio entero y
+     * luego su porqué. Sin oferta que oír, ya.
+     */
+    const laInstructora = (): void => {
+      if (this.tier.avisos === "cabina") return;
       const base =
         sale.desde === "interseccion"
           ? "vuelo.desdeLaInterseccion"
@@ -17870,13 +17910,16 @@ export class Game {
           if (this.flight.state.onGround)
             this.hud.flash(t((conPorque ?? base) as TranslationKey), 5);
         });
-    }
+    };
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
-    if (!conCifras || sinTorre(aero)) return;
     const yo = this.miIndicativo;
-    const pista = pistaEnPiezas(cabeceraEnUso(campo.escenario));
-    if (!pista) return;
+    const pista =
+      conCifras && !sinTorre(aero) ? pistaEnPiezas(cabeceraEnUso(campo.escenario)) : null;
+    if (!pista) {
+      laInstructora();
+      return;
+    }
     const calle = calleDicha(sale.calle);
     const rw = pista.dicho;
     /*
@@ -17897,7 +17940,12 @@ export class Game {
         relleno: { ...relleno, ...(mas as Record<string, string>) },
       };
     };
-    const lineas: { texto: string; clave?: string; relleno?: Record<string, string> }[] = [];
+    const lineas: {
+      texto: string;
+      clave?: string;
+      relleno?: Record<string, string>;
+      oferta?: true;
+    }[] = [];
     if (esAfis(aero)) {
       // Quien vuela dice lo que va a hacer: un AFIS informa, no autoriza.
       lineas.push({
@@ -17910,13 +17958,25 @@ export class Game {
       });
     } else {
       const remonta = sale.desde === "remonte";
-      // La oferta, si la entrada es una intersección con nombre que decir.
-      const ofrece = calle && sale.desdeLaEntrada < sale.entera - 150;
+      /*
+       * La oferta, si la entrada es una intersección con nombre que decir.
+       *
+       * **Y solo antes de la verde**: la intersección se acuerda rodando o en
+       * el punto de espera, con la fraseología del rodaje, y la autorización
+       * de despegar es lo último que dice la torre antes de la carrera (Doc
+       * 4444, 12.3.4.7 o y p, frente a 12.3.4.10). Con la verde dada no se
+       * ofrece nada: la torre autoriza desde donde estás, y lo que había que
+       * acordar se acordó antes o no se acuerda. Sin esto la oferta y la TORA
+       * sonaban detrás del «cleared for take-off» cada vez que la roja duraba
+       * menos que la boca (H29m).
+       */
+      const ofrece = antesDeLaVerde && calle && sale.desdeLaEntrada < sale.entera - 150;
       const enPiezas = { calle: calleEnPiezas(sale.calle) };
       if (ofrece)
         lineas.push({
           texto: `${yo.dicho}, advise able to depart from runway ${rw}, intersection ${calle}`,
           ...deLaTorre("torre.ofreceInterseccion", enPiezas),
+          oferta: true,
         });
       if (remonta) {
         const pide = delinea ? "request full length" : "request backtrack";
@@ -17935,17 +17995,21 @@ export class Game {
         });
       }
     }
+    /*
+     * Y con su voz **solo si está grabada**: sin ella, la tira. Una frase de
+     * la torre sin grabar se le pasaría a la voz del navegador, que en Brave
+     * para Linux es muda.
+     */
+    const conVoz = (l: (typeof lineas)[number]): boolean =>
+      !!l.clave && this.instructor.vozDe(l.clave, l.relleno) !== null;
+    const oferta = lineas.find((l) => l.oferta && conVoz(l));
+    if (!oferta) laInstructora();
     lineas.forEach((l, i) => {
       this.agenda.luego(i * SEPARA_LA_RADIO, () => {
         if (this.flight.state.onGround === false) return;
         this.hud.radio(l.texto, undefined, true);
-        /*
-         * Y con su voz **solo si está grabada**: sin ella, la tira. Una frase
-         * de la torre sin grabar se le pasaría a la voz del navegador, que en
-         * Brave para Linux es muda.
-         */
-        if (l.clave && this.instructor.vozDe(l.clave, l.relleno))
-          this.torre.decir(l.texto, l.clave, "mando", l.relleno);
+        if (l.clave && conVoz(l)) this.torre.decir(l.texto, l.clave, "mando", l.relleno);
+        if (l === oferta) laInstructora();
       });
     });
   }
@@ -17962,6 +18026,13 @@ export class Game {
    * `contarPorDondeSeSale`.
    */
   private porDondeSeSalePorDecir = false;
+
+  /**
+   * Si ya se preguntó rodando, a `CERCA_DE_LA_ESPERA` del punto de espera,
+   * por dónde se va a salir: una vez por despegue, diga lo que diga la
+   * cuenta. Ver `contarPorDondeSeSale`.
+   */
+  private porDondeSePreguntoRodando = false;
 
   /**
    * **«Hace calor: vamos a necesitar más pista»**, antes de despegar, cuando
@@ -29669,6 +29740,7 @@ export class Game {
       this.salidasDichas.dicha = false;
       this.remonteContado = false;
       this.porDondeSeSalePorDecir = false;
+      this.porDondeSePreguntoRodando = false;
       this.calorDicho = false;
       this.calorPorDecir = false;
     } else if (this.calorPorDecir && !this.hud.senal.puesto.dibujo) {
@@ -29681,7 +29753,19 @@ export class Game {
       !this.torre.hablando
     ) {
       this.porDondeSeSalePorDecir = false;
-      this.contarPorDondeSeSale(true);
+      this.contarPorDondeSeSale("roja");
+    } else if (
+      // Y rodando, antes de llegar: ver `CERCA_DE_LA_ESPERA`.
+      !this.porDondeSePreguntoRodando &&
+      this.faseDeAhora === "rodando" &&
+      this.plan.vaAlPuntoDeEspera &&
+      vista.restante > 0 &&
+      vista.restante < CERCA_DE_LA_ESPERA &&
+      BOCA.libre &&
+      !this.torre.hablando
+    ) {
+      this.porDondeSePreguntoRodando = true;
+      this.contarPorDondeSeSale("rodando");
     }
     this.presentarLaMatricula();
     /*

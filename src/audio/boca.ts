@@ -339,10 +339,12 @@ const DE_LA_FASE: ReadonlySet<string> = (() => {
 })();
 
 /**
- * **Por dónde se sale, contado en el punto de espera**: la oferta de la torre
- * de salir desde la intersección y lo que le sigue —la pista que queda, o
- * remontar— y lo que cuenta la instructora en los peldaños de abajo. Ver
- * `contarPorDondeSeSale` en `game.ts`.
+ * **Por dónde se sale, contado antes de entrar**: la oferta de la torre de
+ * salir desde la intersección y lo que le sigue —la pista que queda, o
+ * remontar— y lo que cuenta la instructora en los peldaños de abajo. Rodando
+ * hacia el punto de espera desde H29m, en la roja si rodando no calló la
+ * frecuencia, y remontar con la verde. Ver `contarPorDondeSeSale` en
+ * `game.ts`.
  *
  * Espera lo que haga falta y lo retira el juego al empezar la carrera, que es
  * cuando deja de ser verdad. Con los doce segundos de una orden no sonaba

@@ -140,16 +140,19 @@ function laVerde(veces: number): string[] {
 /**
  * **La verde con la intersección delante y la llamada de la tripulación**,
  * como se midió en H29i: Los Rodeos con el JAZ 90 en Taguató, sin que la
- * torre preguntara en la roja. Detrás de la verde y de su fraseología van la
- * oferta de la intersección y la TORA, cuatro frases de la torre seguidas, y
- * «sentados para el despegue» lleva delante su llamada: el tono pide turno y
- * la voz va al acabar. Las duraciones, del volcado de voces del banco; las
- * fases, de su recorrido. Devuelve lo que sonó.
+ * torre preguntara en la roja. Detrás de la verde y de su fraseología iban
+ * entonces la oferta de la intersección y la TORA, cuatro frases de la torre
+ * seguidas, y «sentados para el despegue» lleva delante su llamada: el tono
+ * pide turno y la voz va al acabar. Las duraciones, del volcado de voces del
+ * banco; las fases, de su recorrido. Devuelve lo que sonó.
  *
- * Desde H29j la torre pregunta en la roja, y esto es lo que queda cuando la
- * verde llega antes de que la roja calle. Y sin la fase de autorizado de la
- * instructora, que en Taguató la dice la lámpara: ver `laVerdeLaDiceLaTorre`
- * en `game.ts`.
+ * Desde H29j la torre pregunta en la roja, y desde H29m rodando, antes de
+ * llegar a la espera. Esto es lo que queda cuando no calló la frecuencia ni
+ * rodando ni en la roja: **la torre ya no ofrece nada con la verde**, que una
+ * torre no ofrece una intersección después del «cleared for take-off», y
+ * autoriza desde donde se está; la instructora, que va en la cabina, sí
+ * cuenta por dónde se sale. Y sin la fase de autorizado de la instructora,
+ * que en Taguató la dice la lámpara: ver `laVerdeLaDiceLaTorre` en `game.ts`.
  */
 function laVerdeConLaInterseccion(): string[] {
   let ahora = 0;
@@ -199,10 +202,8 @@ function laVerdeConLaInterseccion(): string[] {
   boca.pedir("mando", frase("torre.verde", DURA.verde), "torre.canario.verde@yo");
   boca.pedir("mando", frase("torre.clearedTakeoff", DURA.clearedTakeoff), "torre.canario.clearedTakeoff@yo");
   let fase: Fase = "autorizado";
-  // Por dónde se sale, con la verde: la oferta ya, y la TORA dos frases de radio después.
+  // Por dónde se sale, con la verde: solo la instructora. Ver `contarPorDondeSeSale`.
   boca.pedir("normal", frase("vuelo.desdeLaInterseccion", 3000), "vuelo.desdeLaInterseccion");
-  boca.pedir("mando", frase("torre.ofreceInterseccion", 7400), "torre.canario.ofreceInterseccion@yo");
-  esperar(8000, () => boca.pedir("mando", frase("torre.tora", 9200), "torre.canario.tora@yo"));
 
   /** Si hay una llamada pedida o sonando, que es la megafonía hablando. */
   let llamada = false;
@@ -250,6 +251,9 @@ function laVerdeConLaInterseccion(): string[] {
  * `laVerdeLaDiceLaTorre` en `game.ts`—. Las fases de la verde, las medidas en
  * `laVerdeConLaInterseccion`; la llamada, como `atenderALasLlamadas`.
  * Devuelve lo que sonó y lo que se cayó.
+ *
+ * Desde H29m la torre pregunta antes, rodando: esto es lo que queda cuando
+ * rodando no calló la frecuencia y la roja es larga. Ver `laRojaCorta`.
  */
 function laRojaYLaVerde(): { sono: string[]; caidas: string[] } {
   let ahora = 0;
@@ -363,8 +367,136 @@ function laRojaYLaVerde(): { sono: string[]; caidas: string[] } {
   return { sono, caidas: [...boca.descartadas] };
 }
 
+/**
+ * **La roja corta en Los Rodeos con el JAZ 90 (H29m)**: con la pista libre la
+ * verde llega a los cuatro segundos de pararse —lo que tarda la torre en
+ * mirarte, `TORRE_TARDA` en `flight/vuelo.ts`—, y en ese rato no cabe
+ * preguntar nada. Así que la torre pregunta rodando, a cuatrocientos metros
+ * del punto de espera y en cuanto calla la frecuencia —ver
+ * `CERCA_DE_LA_ESPERA` y `contarPorDondeSeSale` en `game.ts`—: la oferta, la
+ * instructora pedida con ella, y la TORA dos frases de radio después. Se
+ * llega a la espera a los cuarenta segundos, la roja con su «hold short» y la
+ * fase, y la verde a los cuatro, que retira lo que la roja tuviera esperando
+ * como hace `turno.alCambiarLaLuz`. Las fases de la verde, las medidas en
+ * H29k: la carrera a los treinta y tres segundos. Devuelve lo que sonó y lo
+ * que se cayó.
+ */
+function laRojaCorta(): { sono: string[]; caidas: string[] } {
+  let ahora = 0;
+  const luego: { cuando: number; hacer: () => void }[] = [];
+  const esperar = (ms: number, hacer: () => void) => {
+    luego.push({ cuando: ahora + ms, hacer });
+  };
+  const avanzar = (hasta: number) => {
+    for (;;) {
+      luego.sort((a, b) => a.cuando - b.cuando);
+      const p = luego[0];
+      if (!p || p.cuando > hasta) break;
+      luego.shift();
+      ahora = p.cuando;
+      p.hacer();
+    }
+    ahora = hasta;
+  };
+  const boca = new Boca({ ahora: () => ahora, cancelar: () => {}, esperar });
+  const sono: string[] = [];
+  let comandanteHablando = false;
+  const frase =
+    (que: string, ms: number): Hablar =>
+    (listo) => {
+      sono.push(que);
+      if (que.startsWith("comandante.")) comandanteHablando = true;
+      esperar(ms, () => {
+        if (que.startsWith("comandante.")) comandanteHablando = false;
+        listo();
+      });
+    };
+  const megafonia = new Megafonia();
+  const conPasaje = {
+    conPasaje: true,
+    conTripulacion: true,
+    sobreElCampo: 0,
+    vertical: 0,
+    desdeLoMasAlto: 0,
+  };
+  for (const fase of ["estacionado", "rodando"] as const)
+    for (let t = 0; t < 10; t += 0.5) megafonia.paso(0.5, { fase, ...conPasaje });
+
+  const ESPERA = 40;
+  const VERDE = ESPERA + 4;
+  const faseA = (s: number): Fase =>
+    s < ESPERA
+      ? "rodando"
+      : s < VERDE
+        ? "esperando"
+        : s < VERDE + 22
+          ? "autorizado"
+          : s < VERDE + 33
+            ? "alineando"
+            : s < VERDE + 52
+              ? "despegando"
+              : s < VERDE + 55
+                ? "comprometido"
+                : "en-vuelo";
+  let fase: Fase = "rodando";
+  let preguntado = false;
+  let llamada = false;
+  const PASO = 50;
+  for (let pared = PASO; pared <= (VERDE + 60) * 1000; pared += PASO) {
+    avanzar(pared);
+    /*
+     * Como `avanzarPlan`: rodando, cerca de la espera y con la frecuencia
+     * callada, la oferta; la instructora pedida detrás de ella, en el mismo
+     * paso, y la TORA dos frases de radio después.
+     */
+    if (!preguntado && fase === "rodando" && pared >= 10000 && boca.libre) {
+      preguntado = true;
+      boca.pedir("mando", frase("torre.ofreceInterseccion", 7400), "torre.canario.ofreceInterseccion@yo");
+      boca.pedir("normal", frase("vuelo.desdeLaInterseccion", 3000), "vuelo.desdeLaInterseccion");
+      esperar(8000, () => boca.pedir("mando", frase("torre.tora", 9200), "torre.canario.tora@yo"));
+    }
+    const ahoraFase = faseA(pared / 1000);
+    if (ahoraFase !== fase) {
+      fase = ahoraFase;
+      const clave = GUION[fase].clave;
+      boca.retirar((c) => anunciaLaFase(c) && c !== clave);
+      if (fase === "esperando") {
+        boca.pedir("mando", frase("torre.roja", 5800), "torre.canario.roja@yo");
+        boca.pedir("mando", frase("torre.holdShort", 4200), "torre.canario.holdShort@yo");
+        boca.pedir("normal", frase(clave, DURA.fase), clave);
+      } else if (fase === "autorizado") {
+        // Lo de la roja que todavía espera ya no es verdad: ver `turno.alCambiarLaLuz`.
+        boca.retirar((c) => /^torre\.canario\.(?:roja|holdShort)@/.test(c ?? ""));
+        boca.pedir("mando", frase("torre.verde", DURA.verde), "torre.canario.verde@yo");
+        boca.pedir("mando", frase("torre.clearedTakeoff", DURA.clearedTakeoff), "torre.canario.clearedTakeoff@yo");
+      } else boca.pedir("normal", frase(clave, DURA.fase), clave);
+    }
+    boca.retirar((c) => seLePasoElMomento(c, fase));
+    const anuncio = megafonia.paso(PASO / 1000, {
+      fase,
+      ...conPasaje,
+      megafoniaHablando:
+        comandanteHablando || llamada || boca.esperaAlguna((c) => esDeLaMegafonia(c)),
+    });
+    if (anuncio) {
+      llamada = true;
+      pedirLaLlamada(boca, {
+        tono: "llamadaTripulacion",
+        anuncio,
+        tocar: () => sono.push(`llamada:${anuncio}`),
+        laVoz: () => {
+          llamada = false;
+          boca.pedir("baja", frase(anuncio, DURA.despegue), anuncio);
+        },
+        esperar,
+      });
+    }
+  }
+  return { sono, caidas: [...boca.descartadas] };
+}
+
 describe("la megafonía del despegue en Taguató", () => {
-  it("con la intersección por delante, la voz va detrás de su llamada y antes del V1 (H29i)", () => {
+  it("con la intersección sin acordar, la voz va detrás de su llamada y antes del V1 (H29i, H29m)", () => {
     const sono = laVerdeConLaInterseccion();
     const llamada = sono.indexOf("llamada:comandante.despegue");
     const voz = sono.indexOf("comandante.despegue");
@@ -374,10 +506,13 @@ describe("la megafonía del despegue en Taguató", () => {
     expect(voz - llamada).toBeLessThanOrEqual(2);
     expect(voz).toBeLessThan(sono.indexOf(GUION.comprometido.clave));
     // Y la torre dice todo lo suyo igual, y la llamada no se mete en medio.
-    for (const t of ["torre.verde", "torre.clearedTakeoff", "torre.ofreceInterseccion", "torre.tora"]) {
+    for (const t of ["torre.verde", "torre.clearedTakeoff"]) {
       expect(sono).toContain(t);
       expect(sono.indexOf(t), t).toBeLessThan(llamada);
     }
+    // Y con la verde dada no ofrece la intersección (H29m).
+    expect(sono).not.toContain("torre.ofreceInterseccion");
+    expect(sono).not.toContain("torre.tora");
     // Y lo que cuenta la instructora de por dónde se sale no se cae de la cola.
     expect(sono).toContain("vuelo.desdeLaInterseccion");
   });
@@ -412,8 +547,9 @@ describe("la megafonía del despegue en Taguató", () => {
   });
 
   /*
-   * **Y lo que pasa ahora en Los Rodeos con el JAZ 90 (H29j)**: la torre
-   * pregunta por la intersección en la roja, en cuanto calla la frecuencia,
+   * **Y lo que pasaba en Los Rodeos con el JAZ 90 desde H29j**, y lo que
+   * queda desde H29m si rodando no calló la frecuencia: la torre pregunta por
+   * la intersección en la roja larga, en cuanto calla la frecuencia,
    * y en la verde la instructora no repite lo que acaba de decir la lámpara.
    * Del despegue no se cae nada: ni la llamada ni su voz, ni lo que cuenta la
    * instructora, ni la torre.
@@ -437,5 +573,47 @@ describe("la megafonía del despegue en Taguató", () => {
       expect(sono, f).toContain(GUION[f].clave);
     expect(sono).not.toContain(GUION.autorizado.clave);
     expect(caidas).toEqual([]);
+  });
+
+  /*
+   * **Y con la roja corta (H29m)**, que es lo que pasa con la pista libre: la
+   * torre ya preguntó rodando, y en la verde suenan la autorización entera,
+   * la llamada y su voz, todo antes de la carrera, y las fases de alinearse,
+   * correr y el V1. Lo único que no suena es lo de la roja que la verde dejó
+   * sin verdad.
+   */
+  it("con la roja corta, la intersección se acordó rodando y del despegue no se cae nada", () => {
+    const { sono, caidas } = laRojaCorta();
+    const roja = sono.indexOf("torre.roja");
+    const verde = sono.indexOf("torre.verde");
+    expect(roja).toBeGreaterThanOrEqual(0);
+    /*
+     * Rodando, antes de la roja, la oferta y la TORA, y detrás lo que cuenta
+     * la instructora: se pide con la oferta, pero la TORA va en `mando` y
+     * entra en el respiro que deja la oferta al acabar. Es el intercambio
+     * entero y luego su porqué, una voz detrás de otra.
+     */
+    expect(sono.slice(0, 3)).toEqual([
+      "torre.ofreceInterseccion",
+      "torre.tora",
+      "vuelo.desdeLaInterseccion",
+    ]);
+    expect(sono.indexOf("vuelo.desdeLaInterseccion")).toBeLessThan(roja);
+    // En la verde, la autorización entera, y detrás la llamada y su voz.
+    expect(sono.slice(verde, verde + 2)).toEqual(["torre.verde", "torre.clearedTakeoff"]);
+    const llamada = sono.indexOf("llamada:comandante.despegue");
+    const voz = sono.indexOf("comandante.despegue");
+    expect(llamada).toBeGreaterThan(verde);
+    expect(voz).toBeGreaterThan(llamada);
+    // Y «sentados para el despegue» antes de la carrera, no corriendo.
+    expect(voz).toBeLessThan(sono.indexOf(GUION.despegando.clave));
+    // Y después de la verde, la torre no ofrece nada.
+    expect(sono.lastIndexOf("torre.ofreceInterseccion")).toBeLessThan(roja);
+    expect(sono.lastIndexOf("torre.tora")).toBeLessThan(roja);
+    for (const f of ["alineando", "despegando", "comprometido"] as const)
+      expect(sono, f).toContain(GUION[f].clave);
+    // Lo único que se cae es lo de la roja que la verde retiró.
+    for (const c of caidas) expect(c).toMatch(/torre\.canario\.holdShort@|vuelo\.esperando|torre\.canario\.roja@/);
+    expect(caidas.some((c) => c.includes("Interseccion") || c.includes("tora"))).toBe(false);
   });
 });

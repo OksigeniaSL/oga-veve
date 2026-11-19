@@ -36,7 +36,18 @@ interface EnLaRoja {
   readonly rayaDespues: string;
   readonly giroAntes: number | null;
   readonly giroDespues: number | null;
+  /**
+   * Lo que se sabe rodando, a `CERCA_DE_LA_ESPERA` metros de raya del punto
+   * de espera, preguntado desde el punto de espera (H29m); `undefined` si la
+   * raya no pasó por ahí.
+   */
+  readonly rodando?: ComoSeSale | null;
+  /** Y la raya rodando, antes y después de preguntar. */
+  readonly rayaRodando?: readonly [string, string];
 }
+
+/** Ver `CERCA_DE_LA_ESPERA` en `game.ts`. */
+const CERCA_DE_LA_ESPERA = 400;
 
 /**
  * Rueda hasta la roja, pregunta por dónde se va a salir, espera la verde y
@@ -50,7 +61,8 @@ function laRoja(esc: Scenario, avion: AircraftConfig, vientoDe: number): EnLaRoj
   let p: Punto | null = null;
   let rumbo = 0;
   let v = 0;
-  let roja: Omit<EnLaRoja, "conLaVerde"> | null = null;
+  let roja: Omit<EnLaRoja, "conLaVerde" | "rodando" | "rayaRodando"> | null = null;
+  let rodando: Pick<EnLaRoja, "rodando" | "rayaRodando"> = {};
   const raya = (): string => plan.rutaVisible().map((q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(" ");
   for (let t = 0; t < 900; t += dt) {
     const ruta = plan.rutaVisible();
@@ -80,7 +92,7 @@ function laRoja(esc: Scenario, avion: AircraftConfig, vientoDe: number): EnLaRoj
       dt,
     );
     if (vista.fase === "autorizado" || vista.fase === "back-taxi" || vista.fase === "alineando")
-      return roja ? { ...roja, conLaVerde: plan.comoSeSale } : null;
+      return roja ? { ...roja, ...rodando, conLaVerde: plan.comoSeSale } : null;
     if (vista.fase === "despegando") return null;
     if (vista.fase === "esperando") {
       v = 0;
@@ -92,6 +104,15 @@ function laRoja(esc: Scenario, avion: AircraftConfig, vientoDe: number): EnLaRoj
         roja = { antes, enLaRoja, rayaAntes, rayaDespues: raya(), giroAntes, giroDespues: plan.dondeSeGira };
       }
       continue;
+    }
+    if (
+      vista.fase === "rodando" &&
+      !("rodando" in rodando) &&
+      vista.restante > 0 &&
+      vista.restante < CERCA_DE_LA_ESPERA
+    ) {
+      const antes = raya();
+      rodando = { rodando: plan.comoSeSaldraDesdeLaEspera(), rayaRodando: [antes, raya()] };
     }
     v = Math.max(0.5, vista.velocidadSugerida);
     const meta = plan.avanceEnLaRuta + v * dt;
@@ -143,6 +164,7 @@ describe("por dónde se sale, en la roja (H29j)", () => {
     ["La Gomera", LA_GOMERA, 90],
   ];
   const medidos: string[] = [];
+  const medidosRodando: string[] = [];
   for (const [nombre, esc, vientoDe] of CASOS)
     for (const id of ["jaz-20", "jaz-90", "jaz-120"])
       it(`${nombre} con viento de ${vientoDe}° y el ${id}: lo de la roja es lo de la verde, y preguntarlo no toca la raya`, () => {
@@ -154,12 +176,32 @@ describe("por dónde se sale, en la roja (H29j)", () => {
         expect(r.enLaRoja).toEqual(r.conLaVerde);
         expect(r.rayaDespues).toBe(r.rayaAntes);
         expect(r.giroDespues).toBe(r.giroAntes);
+        /*
+         * Y rodando, a cuatrocientos metros de la espera, lo mismo que dará
+         * la verde: la misma manera de salir y la misma calle, y la pista que
+         * queda a unos metros, lo que va del punto de espera de la raya a
+         * donde para el avión (H29m).
+         */
+        if (r.rodando === undefined) return;
+        medidosRodando.push(`${nombre} ${vientoDe} ${id} ${r.rodando?.desde}`);
+        const verde = r.conLaVerde!;
+        expect(r.rodando?.desde).toBe(verde.desde);
+        expect(r.rodando?.calle).toBe(verde.calle);
+        expect(r.rodando?.hastaElFinal).toBe(verde.hastaElFinal);
+        expect(Math.abs(r.rodando!.desdeLaEntrada - verde.desdeLaEntrada)).toBeLessThan(10);
+        expect(r.rayaRodando?.[1]).toBe(r.rayaRodando?.[0]);
       });
 
   // Y que lo de arriba mide algo: las tres salidas, en más de la mitad de los casos.
   it("se mide en la mayoría de los casos, y salen las tres maneras de salir", () => {
     expect(medidos.length).toBeGreaterThanOrEqual(8);
     const maneras = new Set(medidos.map((m) => m.split(" ").at(-1)));
+    expect([...maneras].sort()).toEqual(["cabecera", "interseccion", "remonte"]);
+  });
+
+  it("y rodando también se mide, con las tres maneras de salir (H29m)", () => {
+    expect(medidosRodando.length).toBeGreaterThanOrEqual(8);
+    const maneras = new Set(medidosRodando.map((m) => m.split(" ").at(-1)));
     expect([...maneras].sort()).toEqual(["cabecera", "interseccion", "remonte"]);
   });
 });
