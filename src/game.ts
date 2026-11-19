@@ -18868,6 +18868,12 @@ export class Game {
               ? this.aircraft.approachSpeed * 1.1
               : this.flight.velocidadDeEntradaEnFinal(this.aircraft.approachSpeed);
     const enLaAguja = this.dondeEmpiezaConRadio(colocacion);
+    /*
+     * El modelo, con lo que pesa ya con el depósito del ejercicio: con eso
+     * equilibra el ala al colocarlo y cuenta el gas de abajo. Lo ponía el
+     * primer fotograma, tarde para las dos cosas.
+     */
+    this.flight.ponerMasa?.(this.masaDeAhora());
     this.flight.reset({
       position: this.startPosition(),
       heading: enLaAguja ? enLaAguja.rumbo : MathUtils.degToRad(runway.heading),
@@ -18935,28 +18941,25 @@ export class Game {
         this.input.controls.flaps = 1;
       }
     }
-    // Con lo que lleva sacado: en el modelo sencillo, con tren y flaps hace
-    // falta más gas. Ver `gasPara` en `arcade.ts`.
-    this.input.controls.throttle = this.flight.gasPara(entrada, this.input.controls);
     /*
-     * **Y un ejercicio, con el gas que sostiene su velocidad a nivel**, en el
-     * modelo completo: el `gasPara` de ese modelo es una recta a ojo pensada
-     * para una final que baja, y a nivel se iba de largo. Medido en el banco
-     * del planeo con la avioneta de Tukã: empezaba a 70 nudos y a los catorce
-     * segundos, cuando se para el motor, iba a 93, con todo ese sobrante para
-     * gastar antes de la pista. Ver `gasQueSostiene`.
+     * Con lo que lleva sacado: en el modelo sencillo, con tren y flaps hace
+     * falta más gas. Ver `gasPara` en `arcade.ts`.
+     *
+     * **Y un ejercicio, con el que sostiene su velocidad a nivel; la final,
+     * con el de bajar por su senda.** En el modelo completo el gas sale de
+     * las fuerzas —ver `gasPara` en `fdm.ts`—, y nivelado o bajando no piden
+     * lo mismo: por la senda el peso empuja. La final es la de la marca del
+     * motor, que en la final cuenta la senda (`laMarcaDelMotor`).
+     *
+     * Aquí había además una segunda cuenta solo para los ejercicios, con
+     * `gasQueSostiene`, porque el `gasPara` de ese modelo era una recta a ojo
+     * pensada para una final que baja, y a nivel se iba de largo: la avioneta
+     * de Tukã empezaba el planeo a 70 nudos y a los catorce segundos, cuando
+     * se para el motor, iba a 93. Ya no hace falta: es la misma cuenta (ADR
+     * 0002, nota H40a).
      */
-    if (colocacion && this.tier.model !== "simple" && !this.aircraft.helicoptero) {
-      const sostiene = gasQueSostiene(this.avionConPeso(), {
-        altura: this.flight.state.position.y,
-        verdadera: entrada,
-        aire: this.flight.aireDelDia(),
-        flaps: 0,
-        tren: this.input.controls.tren,
-        pendiente: 0,
-      });
-      if (sostiene !== null) this.input.controls.throttle = sostiene;
-    }
+    const porLaSenda = colocacion ? 0 : -(this.sendaDe(this.laCasa) * Math.PI) / 180;
+    this.input.controls.throttle = this.flight.gasPara(entrada, this.input.controls, porLaSenda);
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
     this.otraVezLaLlegada(this.flight.state.position);
