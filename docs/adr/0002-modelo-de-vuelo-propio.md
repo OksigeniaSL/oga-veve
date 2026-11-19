@@ -1102,3 +1102,131 @@ entrar en la plataforma, cuando los pide la lista, como antes.
   mismo con los dos relojes —4,6 m/s en la traza a ×3 de c62dc29a, 4,7 de media
   a ×1 en la ronda—, porque sale de la cuenta del modelo y no del reloj; el
   vuelo de después no se ha repetido a ×1.
+
+## Nota H40a (19-11-2026): el gas que sostiene una velocidad sale de las fuerzas también volando
+
+### Lo que pasaba
+
+Tres pruebas de `mano.test.ts` —«la bajada que se deja, se queda», con el JAZ
+25 en Tukã, Taguató y Taguató Ruvicha— se pusieron en rojo al darle al
+fumigador su hélice de velocidad constante (H37c, ADR 0027). Esperaban que, con
+una décima de gas menos que el que sostiene la velocidad, el avión bajara más
+de 0,3 m/s; bajaba 0,25, y a los treinta segundos casi nada.
+
+La prueba no estaba mal: el avión nacía con gas de más. El banco de la mano
+(`empezar` en `mano-banco.ts`) coloca el avión con `gasPara`, y el `gasPara`
+del modelo completo era una recta a ojo: `velocidad / crucero × 0,8`. No miraba
+ni el empuje ni la resistencia, así que no se enteró de que el JAZ 25 había
+cambiado de hélice. A 1.500 m, contra el gas que de verdad sostiene nivelado
+(`gasQueSostiene`, la cuenta de la marca del motor):
+
+| kt | JAZ 25, la recta | JAZ 25, las fuerzas | JAZ 20, la recta | JAZ 20, las fuerzas |
+|---|---|---|---|---|
+| 60 | 0,483 | 0,442 | 0,443 | 0,544 |
+| 75 | 0,604 | 0,469 | 0,554 | 0,539 |
+| 90 | 0,725 | 0,586 | 0,664 | 0,630 |
+| 110 | 0,886 | 0,876 | 0,812 | 0,881 |
+
+El JAZ 25 nacía con trece centésimas de más, y con una décima menos seguía
+sobrado: aceleraba de 75 a 82 nudos y se quedaba casi nivelado. El JAZ 20, con
+la recta más cerca por suerte, bajaba como debe.
+
+### Por qué es la raíz
+
+Es lo mismo que pasó con `gasParaRodar`, que también era una recta a ojo y se
+cambió por las fuerzas: dos cuentas para lo mismo acaban diciendo cosas
+distintas. Y el juego ya lo sabía a medias: la colocación de los ejercicios
+llevaba un remiendo que pisaba el `gasPara` con `gasQueSostiene`, porque «es
+una recta a ojo pensada para una final que baja, y a nivel se iba de largo».
+El remiendo arreglaba un sitio; la prueba de la mano, los bancos que ponen el
+gas con `gasPara` y la final de la lección de aterrizar seguían con la recta.
+
+### Lo que se decidió (`gasPara` en `fdm.ts`)
+
+- **`gasPara` del modelo completo es la cuenta de la marca del motor**: la
+  resistencia de `empujeQueSostiene` —la de `step`, término a término— entre
+  el empuje a fondo de `empujeLleno` —con la hélice de cada uno—, con lo que se
+  lleva sacado, a la altura del avión y en el aire del día. Las dos van por
+  `palancaQueSostiene`, en `fdm.ts`, y `gasQueSostiene` la remata a su
+  manera: sin marca donde no se llega.
+- **Donde no hay solución, lo que se puede**: más rápido de lo que da a fondo,
+  todo el gas; más despacio que la pérdida con esos flaps, el que sostiene la
+  pérdida, que es lo más que pide nivelado. Sin lo sacado, el del último paso.
+- **Con pendiente, si se pide**: `gasPara(velocidad, sacado, pendiente)`, rad,
+  negativa bajando. La final de la lección de aterrizar empieza con el gas de
+  su senda, el mismo que enseña la marca del motor en la final; los ejercicios,
+  con el de nivelado, y el remiendo de `reiniciarEnFinal` se va. Ahí también se
+  le pone al modelo la masa con el depósito del ejercicio antes de colocarlo,
+  que la ponía el primer fotograma, tarde para equilibrar el ala y para el gas.
+- **El modelo sencillo no cambia**: ahí el gas es la velocidad por
+  construcción —`gasPara` de `arcade.ts` es la cuenta de `step` al revés—, y la
+  pendiente no la mira.
+
+Los usos de `gasPara` en el juego, uno a uno: el gas de la final de la escena
+de aterrizar del inicio, el del salto del vuelo largo, el «equilibrio» de los
+gases automáticos y de la final y la marca del motor en Guyrami, y la
+tripulación de `vuelo-de-linea.ts`, van todos en el modelo sencillo —el inicio
+y el vuelo largo se vuelan siempre en Guyrami, y la tripulación pide el morro
+con `mandoParaSubir`, que solo tiene ese modelo—, así que no cambian. El único
+que vuela el modelo completo es la colocación en el aire de `reiniciarEnFinal`.
+
+### Las cifras
+
+La final de la lección, en la colocación de `reiniciarEnFinal` (a 300 m): la
+recta contra las fuerzas nivelado y por una senda de tres grados.
+
+| Avión | Entra a | La recta | Nivelado | Por la senda |
+|---|---|---|---|---|
+| JAZ 20, limpio | 96 kt | 0,660 | 0,603 | 0,265 |
+| JAZ 25, limpio | 85 kt | 0,633 | 0,472 | 0,294 |
+| JAZ 40, configurado | 94 kt | 0,398 | 0,793 | 0,560 |
+| JAZ 50, limpio | 105 kt | 0,460 | 0,299 | 0,110 |
+| JAZ 60, configurado | 118 kt | 0,346 | 0,562 | 0,376 |
+| JAZ 90, configurado | 129 kt | 0,242 | 0,327 | 0,189 |
+| JAZ 110, configurado | 158 kt | 0,260 | 0,423 | 0,248 |
+| JAZ 120, configurado | 160 kt | 0,287 | 0,510 | 0,326 |
+
+La recta era «pensada para una final que baja» solo en los reactores; a las
+avionetas les daba casi el de nivelado, y al bimotor configurado, menos de lo
+que pide la senda.
+
+### Las pruebas
+
+`mano.test.ts` entero en verde sin tocar sus umbrales: con el gas de verdad, el
+JAZ 25 nace a 75 nudos con 0,467 y, con una décima menos, se asienta bajando
+1,28 m/s y sigue así a los treinta segundos, a 77 nudos. El JAZ 20 baja 0,83.
+
+`final-fina.test.ts` tenía un umbral pegado a lo medido: el JAZ 90 en Tuka, con
+el gas quieto tras un minuto de gases automáticos, oscila 0,14 m/s de V/S y el
+tope es 0,15. Su banco empieza con `empezar`, que pone el gas de nivelado; con
+la recta salía con 0,24, casi el de la senda por casualidad, y con el de
+nivelado, 0,34, el minuto de automáticos no llega a borrar el arranque: 0,155.
+El gas al que se asienta es el mismo (0,177 contra 0,178), así que lo que cambia
+es el arranque, no la final. La prueba empieza ahora la final con el gas de su
+senda, como el juego: 0,142 en Tuka, 0,51 en Taguató y 0,64 en Taguató Ruvicha,
+los de su comentario. El umbral no se ha tocado.
+
+### Volado en el navegador
+
+`scripts/ver-el-gas-al-colocar.mjs` abre un ejercicio en Taguató, sin viento, y
+mira medio minuto de juego sin tocar nada (19-11-2026, puerto 5685, sin GPU):
+
+| Caso | Nace con gas | A | A los 30 s |
+|---|---|---|---|
+| JAZ 20, la deriva | 0,801 | 114,5 kt | 86,7 kt, 288 m más arriba |
+| JAZ 25, la deriva | 0,702 | 106,9 kt | 84,5 kt, 324 m más arriba |
+| JAZ 40, la deriva | 0,750 | 160,8 kt | 123,3 kt, 527 m más arriba |
+| JAZ 20, la final del cangrejo | 0,259 | 96,2 kt | 77,2 kt, 139 m más abajo, bajando 1,4 m/s |
+
+En los ejercicios el gas es el de antes —ya era `gasQueSostiene`—, el que
+sostiene su velocidad nivelado. Lo que hacen sin nadie a los mandos no es del
+gas: el compensador se queda en cero al colocar el avión (`releaseAll`), y el
+avión cambia velocidad por altura hasta la que da ese compensador, unos 85
+nudos en las avionetas. El cambio de peldaño sí pone el que sostiene el avión
+nivelado; la colocación en el aire, no. No se ha tocado aquí: los bancos de
+cada ejercicio enganchan el automático al empezar, y quien juega coge los
+mandos.
+
+La final, en cambio, sí cambia: con la recta el JAZ 20 nacía con 0,66, más que
+el de nivelado a esa velocidad (0,60); con el de la senda, sin tocar nada, baja.
+La final con la recta no se ha volado en el navegador para compararla.
