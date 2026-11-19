@@ -2447,6 +2447,13 @@
     "para": "lo que salió mal, en la pantalla de fin"
   },
   {
+    "id": "percance.arbol",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Te metiste en un árbol",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
     "id": "fin.horas",
     "voz": "instructor",
     "idioma": "es-PY",
