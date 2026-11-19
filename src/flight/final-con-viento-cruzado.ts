@@ -271,6 +271,14 @@ export class FinalConViento {
     return this.faseActual;
   }
 
+  /**
+   * **Si está pidiendo el pie**: en el cangrejo, de los quince metros hasta
+   * tocar. Mientras, la tarjeta es suya: ver `loQueCallaElEjercicio`.
+   */
+  get pideElPie(): boolean {
+    return this.tecnica === "cangrejo" && this.faseActual === "corto";
+  }
+
   get cierre(): CierreDelCruzado | null {
     return this.comoCerro;
   }

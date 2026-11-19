@@ -383,11 +383,15 @@ describe("el ejercicio, con un piloto de cinemática", () => {
     expect(a.map((s) => s.que)).toEqual(["presentar", "enCangrejo"]);
     expect(f.cangrejo).toBeCloseTo(10, 5);
     expect(f.pidioAlContar).toBeCloseTo(10, 5);
+    expect(f.pideElPie).toBe(false);
     const b = volar(f, lectura({ rumbo: 112, altura: 14 }), 0.2);
     expect(b.map((s) => s.que)).toEqual(["elPie"]);
+    // Desde el pie hasta tocar, la tarjeta es suya (H32c): ver `loQueCallaElEjercicio`.
+    expect(f.pideElPie).toBe(true);
     const c = f.paso(lectura({ rumbo: 119, altura: 0, enElSuelo: true }), 0.1);
     expect(c[0]).toMatchObject({ que: "tocaste", como: "derecho" });
     expect(c[1]).toMatchObject({ que: "cerrar", como: "derecho" });
+    expect(f.pideElPie).toBe(false);
   });
 
   /**
@@ -449,6 +453,7 @@ describe("el ejercicio, con un piloto de cinemática", () => {
     expect(f.ala).toBeCloseTo(3.5, 5);
     // En el ala baja no se pide el pie: ya está puesto.
     expect(volar(f, lectura({ alabeo: -3, altura: 10 }), 1).some((s) => s.que === "elPie")).toBe(false);
+    expect(f.pideElPie).toBe(false);
     const c = f.paso(lectura({ alabeo: -2, altura: 0, enElSuelo: true }), 0.1);
     expect(c[0]).toMatchObject({ que: "tocaste", como: "derecho", rueda: true });
   });

@@ -48,6 +48,31 @@
  *   de tráfico de verdad, «mirá: hay otro avión cerca», no pasa por aquí: es
  *   seguridad, y sigue.
  *
+ * **Y el que lleva su propia final** (H32c): la final con viento cruzado,
+ * el cangrejo y el ala baja (`escena: "cruzado"`), es una lección de cómo se
+ * aterriza, y la cuenta ella —cómo se pone el avión, si va así, el pie—.
+ * Mientras dura se calla lo que la final dice por su cuenta de lo mismo:
+ *
+ * - **Cómo se aterriza en este avión** (`contarComoSeAterriza` en
+ *   `game.ts`), la explicación de la toma que se cuenta una vez por tramo y
+ *   espera a que la tarjeta quede libre. Es otra explicación de lo mismo a la
+ *   vez, y el ejercicio ocupa la tarjeta toda la final: salía en el primer
+ *   hueco, que en la corta es justo cuando toca el pie. No se gasta: queda
+ *   para el tramo siguiente.
+ * - **Y desde que pide el pie, «ya podés tocar» y las luces del PAPI.** El
+ *   pie y el morro a la pista ya dicen cuándo y cómo se toca con el viento de
+ *   costado, y las dos tarjetas son tan importantes como la suya: la última
+ *   que llega tapa a la anterior. Volado con el JAZ 90 en Los Rodeos, a los
+ *   quince metros salió «pie derecho» y en el mismo fotograma «ya podés
+ *   tocar» encima, y a los trece, el PAPI. Quien vuela un reactor no veía el
+ *   pie justo cuando tenía que pisar. Lo que sigue saliendo encima es la
+ *   recogida —«un poco de nariz»—, que es la otra mitad de la misma maniobra y
+ *   llega segundo y medio después. En el ala baja no se pide nada en la
+ *   corta, y ahí «ya podés tocar» sigue.
+ *
+ * Y las dos cosas se callan también en los que acaban en el aire, que son de
+ * la pista y no de su lección.
+ *
  * **Lo que no se calla nunca** es la seguridad: la máquina del avión
  * (*traffic*, *terrain*, la pérdida), los avisos del cuadro y la información
  * de tráfico, que sin torre la da la instructora (`comoSeDiceElTrafico`). Y al
@@ -70,6 +95,10 @@ export interface LoQueCalla {
   readonly laMegafonia: boolean;
   /** La instructora explicando la cabina una vez: los gases automáticos y el rombo del TCAS. */
   readonly lasExplicaciones: boolean;
+  /** Cómo se aterriza en este avión, que se cuenta una vez por tramo antes de la final. */
+  readonly comoSeAterriza: boolean;
+  /** Lo que la final dice por su cuenta en la corta: «ya podés tocar» y las luces del PAPI. */
+  readonly laCorta: boolean;
 }
 
 /** Sin ejercicio, o con uno que acaba en la pista: no se calla nada. */
@@ -80,6 +109,8 @@ export const NO_CALLA_NADA: LoQueCalla = {
   laVentanilla: false,
   laMegafonia: false,
   lasExplicaciones: false,
+  comoSeAterriza: false,
+  laCorta: false,
 };
 
 /**
@@ -97,16 +128,28 @@ export const SOLO_LA_FASE: LoQueCalla = { ...NO_CALLA_NADA, laFase: true };
 /**
  * **Lo que calla el ejercicio de hoy**: todo eso mientras dura uno que acaba
  * en el aire (`Ejercicio.acabaEnElAire`); la fase, mientras uno que acaba en
- * la pista está pidiendo irse al aire (`seVaAlAire`); y nada en cuanto se
- * cierra.
+ * la pista está pidiendo irse al aire (`seVaAlAire`); en la final con viento
+ * cruzado, cómo se aterriza, y desde que pide el pie (`pideElPie`), la corta;
+ * y nada en cuanto se cierra.
  */
 export function loQueCallaElEjercicio(
-  ejercicio: Pick<Ejercicio, "acabaEnElAire"> | null,
+  ejercicio: Pick<Ejercicio, "acabaEnElAire" | "escena"> | null,
   cerrado: boolean,
   seVaAlAire = false,
+  pideElPie = false,
 ): LoQueCalla {
   if (!ejercicio || cerrado) return NO_CALLA_NADA;
   if (ejercicio.acabaEnElAire)
-    return { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true, laMegafonia: true, lasExplicaciones: true };
+    return {
+      laFase: true,
+      laFrecuencia: true,
+      laTorre: true,
+      laVentanilla: true,
+      laMegafonia: true,
+      lasExplicaciones: true,
+      comoSeAterriza: true,
+      laCorta: true,
+    };
+  if (ejercicio.escena === "cruzado") return { ...NO_CALLA_NADA, comoSeAterriza: true, laCorta: pideElPie };
   return seVaAlAire ? SOLO_LA_FASE : NO_CALLA_NADA;
 }
