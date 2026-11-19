@@ -2015,6 +2015,14 @@ export class PlanDeVuelo {
   }
 
   /**
+   * Si la lista de antes de despegar está a medias: la torre no te mira hasta
+   * que se lea. Ver `Vuelo.listaPorLeer`.
+   */
+  set listaPorLeer(si: boolean) {
+    this.vuelo.listaPorLeer = si;
+  }
+
+  /**
    * **El aire del día**, para pasar la pérdida a velocidad verdadera. Lo pone
    * el juego antes de cada paso, como `pistaDeOtros`. Ver `perdida` abajo.
    */

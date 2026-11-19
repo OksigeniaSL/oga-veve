@@ -14,7 +14,8 @@
  * - **Antes de despegar**, los flaps de despegue van en la lista: «Wing Flaps
  *   — SET for takeoff» en la de una avioneta, «Flaps … set» en la de un avión
  *   de línea. Se lee en el punto de espera —o al entrar en la pista, si no se
- *   paró en él—.
+ *   paró en él—, y la torre no autoriza hasta que se lee: ver
+ *   `laListaEstaLeida`.
  * - **Si se mete gas sin ellos**, el avión de transporte lo dice: la norma le
  *   pide un aviso sonoro en la primera parte de la carrera si los flaps no
  *   están en el rango de despegue (14 CFR 25.703 a 1 i). Ver
@@ -192,7 +193,16 @@ export class ListaDeAntesDeDespegar {
       return "pide";
     }
     this.desde += l.dt;
-    if (abajo && !this.puestos && (entrando || this.desde >= PACIENCIA_EN_LA_ESPERA))
+    /*
+     * Y en la espera, ponerlos también cuando no hable nadie: lo que pide
+     * turno detrás de la torre caduca a los cuatro segundos, y la roja dura
+     * cinco. Entrando en la pista, ya.
+     */
+    if (
+      abajo &&
+      !this.puestos &&
+      (entrando || (this.desde >= PACIENCIA_EN_LA_ESPERA && !l.hablando))
+    )
       return this.ponerlos();
     return null;
   }
@@ -230,6 +240,46 @@ export function leTocaAlCompensador(
 ): boolean {
   if (!l.conFlaps || l.flapsPuestos) return true;
   return flaps.yaPedida && flaps.esperandoDesde >= PACIENCIA_EN_LA_ESPERA;
+}
+
+/**
+ * **Si la lista de antes de despegar ya se leyó**, y la torre puede mirarte.
+ *
+ * De verdad la lista se hace parado en el punto de espera, y solo al acabarla
+ * se le dice a la torre «listo para salir»: la autorización viene detrás. La
+ * torre de este juego miraba a los cuatro segundos de parar —un segundo y
+ * medio quieto y lo que tarda en contestar—, y la lista no cabía: con la roja
+ * de la torre por medio y la verde detrás, «bajá los flaps» y «los flaps los
+ * puse yo» caducaban esperando turno, y quien jugaba despegaba sin saber que
+ * los llevaba puestos. Así que la torre espera a esto. Ver `listaPorLeer` en
+ * `vuelo.ts`.
+ *
+ * Una línea está leída cuando no hay nada que poner —el avión no lo lleva—,
+ * cuando ya está puesta, o, en el peldaño de cabina, cuando se pidió y pasó
+ * la paciencia de la espera: ahí la lista es de quien vuela, nadie la hace
+ * por él, y si sale sin los flaps lo que queda es el aviso de su avión. Abajo
+ * la pone la instructora, así que hasta que esté puesta no está leída.
+ */
+export function laListaEstaLeida(
+  flaps: ListaDeAntesDeDespegar,
+  compensador: ListaDeAntesDeDespegar,
+  l: {
+    readonly conFlaps: boolean;
+    readonly flapsPuestos: boolean;
+    readonly conCompensador: boolean;
+    readonly compensadorPuesto: boolean;
+    readonly peldano: Peldano;
+  },
+): boolean {
+  const abajo = laInstructoraLoExplica(l.peldano);
+  const leida = (linea: ListaDeAntesDeDespegar, hay: boolean, puesta: boolean): boolean =>
+    !hay ||
+    puesta ||
+    (!abajo && linea.yaPedida && linea.esperandoDesde >= PACIENCIA_EN_LA_ESPERA);
+  return (
+    leida(flaps, l.conFlaps, l.flapsPuestos) &&
+    leida(compensador, l.conCompensador, l.compensadorPuesto)
+  );
 }
 
 // ── El aviso de configuración de despegue ──────────────────────────────

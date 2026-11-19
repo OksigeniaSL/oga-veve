@@ -1729,6 +1729,7 @@ import {
   comoSeRecogen,
   despegaConFlaps,
   enElRangoDeDespegue,
+  laListaEstaLeida,
   leTocaAlCompensador,
   loQueFalta,
   rotuloDeCabina,
@@ -37027,6 +37028,8 @@ export class Game {
   private atenderALosFlapsDelDespegue(fase: Fase, dt: number): void {
     const a = this.aircraft;
     this.franjaDeDespegue = null;
+    // Sin lista que leer, la torre mira como siempre. Ver `laListaEstaLeida`.
+    if (this.plan) this.plan.listaPorLeer = false;
     if (this.dePasaje || this.manoDeJazlyn) return;
     const conFlaps = despegaConFlaps(a);
     // Donde hay compensador que compense: ni en el modelo sencillo ni en el helicóptero.
@@ -37038,7 +37041,12 @@ export class Game {
       fase,
       enTierra: s.onGround,
       porElSuelo: s.groundSpeed,
+      /*
+       * Y lo que espera turno, también: lo pedido en el mismo fotograma que la
+       * roja de la torre iba detrás de ella y caducaba. Ver `BOCA.libre`.
+       */
       hablando:
+        !BOCA.libre ||
         this.instructor.hablando ||
         this.torre.hablando ||
         this.comandante.hablando ||
@@ -37071,6 +37079,24 @@ export class Game {
       });
       if (antes) this.decirElCompensadorDeDespegue(antes, franja);
     }
+    /*
+     * **Y hasta que la lista esté leída, la torre no te mira**: la lista se
+     * hace en el punto de espera, antes de decir «listo», y la autorización
+     * viene detrás. Ver `laListaEstaLeida`.
+     */
+    if (this.plan && s.onGround)
+      this.plan.listaPorLeer = !laListaEstaLeida(
+        this.antesDeDespegar,
+        this.compensadorAntesDeDespegar,
+        {
+          conFlaps,
+          // Lo de este paso: si la instructora los acaba de poner, ya cuentan.
+          flapsPuestos: conFlaps && Math.abs(this.input.palancaDeFlaps - flapsDeDespegue(a)) < 0.01,
+          conCompensador: franja !== null,
+          compensadorPuesto: franja === null || enLaFranja(franja, this.input.controls.trim),
+          peldano: this.tier.avisos,
+        },
+      );
 
     const suena = avisosDeABordo(a).configuracionDeDespegue;
     const delAviso = {

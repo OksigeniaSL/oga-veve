@@ -32,6 +32,8 @@ import {
   comoSeRecogen,
   despegaConFlaps,
   enElRangoDeDespegue,
+  laListaEstaLeida,
+  leTocaAlCompensador,
   rotuloDeCabina,
   type AntesDeDespegar,
   type LecturaAntesDeDespegar,
@@ -193,6 +195,85 @@ describe("la lista de antes de despegar", () => {
     expect(durante(lista, 600, { ...ESPERA, peldano: "dibujo" })).toEqual([]);
     durante(lista, 1, { ...ESPERA, peldano: "dibujo", enTierra: false, fase: "en-vuelo" });
     expect(durante(lista, 1, { ...ESPERA, peldano: "dibujo" })).toEqual(["pide"]);
+  });
+});
+
+/*
+ * **La torre espera a la lista** (H29n). En Guyrami la torre miraba a los
+ * cuatro segundos de parar en el punto de espera, y «bajá los flaps» y «los
+ * flaps los puse yo» caducaban detrás de su roja y de su verde. De verdad la
+ * lista se hace parado, antes de decir «listo»: ver `laListaEstaLeida`.
+ */
+describe("la lista se lee antes de la verde", () => {
+  /** Las dos líneas, paso a paso como en `Game.atenderALosFlapsDelDespegue`. */
+  function enLaEspera(
+    peldano: Peldano,
+    segundos: number,
+    pone: { flaps?: number; compensador?: number } = {},
+    hablando: (t: number) => boolean = () => false,
+  ): { leidaA: number | null; flaps: AntesDeDespegar[]; compensador: AntesDeDespegar[] } {
+    const flaps = new ListaDeAntesDeDespegar();
+    const compensador = new ListaDeAntesDeDespegar();
+    let flapsPuestos = false;
+    let compensadorPuesto = false;
+    let leidaA: number | null = null;
+    const dt = 0.1;
+    for (let t = 0; t < segundos; t += dt) {
+      if (pone.flaps !== undefined && t >= pone.flaps) flapsPuestos = true;
+      if (pone.compensador !== undefined && t >= pone.compensador) compensadorPuesto = true;
+      const l = { ...ESPERA, peldano, dt, hablando: hablando(t) };
+      if (flaps.paso({ ...l, puestos: flapsPuestos }) === "losPone") flapsPuestos = true;
+      if (leTocaAlCompensador(flaps, { conFlaps: true, flapsPuestos }))
+        if (compensador.paso({ ...l, puestos: compensadorPuesto }) === "losPone")
+          compensadorPuesto = true;
+      const leida = laListaEstaLeida(flaps, compensador, {
+        conFlaps: true,
+        flapsPuestos,
+        conCompensador: true,
+        compensadorPuesto,
+        peldano,
+      });
+      if (leida && leidaA === null) leidaA = t;
+    }
+    return { leidaA, flaps: flaps.hechos, compensador: compensador.hechos };
+  }
+
+  it("sin nada que poner, ya está leída: la torre mira como siempre", () => {
+    const vacia = new ListaDeAntesDeDespegar();
+    const sinNada = { conFlaps: false, flapsPuestos: false, conCompensador: false, compensadorPuesto: false };
+    for (const peldano of [...ABAJO, "cabina" as const])
+      expect(laListaEstaLeida(vacia, vacia, { ...sinNada, peldano })).toBe(true);
+  });
+
+  for (const peldano of ABAJO)
+    it(`en ${peldano}, sin tocar nada: las dos líneas, pedidas y puestas por ella, antes de leerse`, () => {
+      const r = enLaEspera(peldano, 60);
+      expect(r.flaps).toEqual(["pide", "losPone"]);
+      expect(r.compensador).toEqual(["pide", "losPone"]);
+      // Dos paciencias, una detrás de otra: lo que dura leerla sin saber dónde está nada.
+      expect(r.leidaA).toBeGreaterThanOrEqual(2 * PACIENCIA_EN_LA_ESPERA - 0.5);
+      expect(r.leidaA).toBeLessThan(2 * PACIENCIA_EN_LA_ESPERA + 1);
+    });
+
+  it("quien pone los flaps y el compensador al oírlo, la acaba antes", () => {
+    const r = enLaEspera("dibujo", 60, { flaps: 2, compensador: 4 });
+    expect(r.flaps).toEqual(["pide"]);
+    expect(r.compensador).toEqual(["pide"]);
+    expect(r.leidaA).toBeCloseTo(4, 0);
+  });
+
+  it("en el de cabina nadie la hace por quien vuela: leída al pasar la paciencia de cada línea", () => {
+    const r = enLaEspera("cabina", 60);
+    expect(r.flaps).toEqual(["pide"]);
+    expect(r.compensador).toEqual(["pide"]);
+    expect(r.leidaA).toBeGreaterThanOrEqual(2 * PACIENCIA_EN_LA_ESPERA - 0.5);
+  });
+
+  it("abajo, con la torre hablando, ella espera a que calle para ponerlos y decirlo", () => {
+    // La roja de la torre de los 7 a los 12 s: la paciencia se cumple a los 8.
+    const r = enLaEspera("palabra", 60, {}, (t) => t >= 7 && t < 12);
+    expect(r.flaps).toEqual(["pide", "losPone"]);
+    expect(r.leidaA).toBeGreaterThanOrEqual(12 + PACIENCIA_EN_LA_ESPERA - 0.5);
   });
 });
 
