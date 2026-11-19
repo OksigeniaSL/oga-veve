@@ -2597,6 +2597,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     enQueRadialEstoy: () => juego.enQueRadialEstoyParaBanco,
     /**
+     * «Se apaga el GPS»: la fase, dónde se quedó el plano, si la tarjeta de
+     * casa va sin GPS, la NAV y lo que queda por decir. Ver
+     * `flight/gps-con-apagones.ts`.
+     */
+    gps: () => juego.gpsParaBanco,
+    /**
      * «Interceptar un radial»: la fase, el radial pedido, lo que la barra se
      * fue al otro lado y dónde se empezó. Ver `flight/interceptar-un-radial.ts`.
      */

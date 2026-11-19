@@ -97,6 +97,11 @@
  * encima. Pide un campo con destino (`destinoDeLaEstima`) y la lleva
  * `estima.ts`. Ver el ADR 0031, enmienda H26n.
  *
+ * Y «Se apaga el GPS» (#51, el último peldaño), con la escena de la radio:
+ * el GPS se va a mitad de camino por la interferencia de un NOTAM, y se llega
+ * con el plan B, el VOR que ya estaba en la NAV. Pide un campo con VOR y la
+ * lleva `gps-con-apagones.ts`. Ver el ADR 0031, enmienda H26v.
+ *
  * Y «El altímetro miente» (#51, el altímetro barométrico), con la misma
  * escena: de alta a baja presión con la ventanilla sin tocar, hacia una
  * ladera de verdad. Pide un campo con ladera medida (`laderaDelAltimetro`) y
@@ -151,6 +156,7 @@ export type EjercicioId =
   | "brujula"
   | "giroscopo"
   | "pitot"
+  | "gps"
   | "cangrejo"
   | "ala-baja";
 
@@ -220,7 +226,8 @@ export interface Ejercicio {
     | "altimetro"
     | "brujula"
     | "giroscopo"
-    | "pitot";
+    | "pitot"
+    | "gps";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -797,6 +804,42 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => oaci !== null,
     ensena:
       "en nube fría el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere: se vuela con la actitud y el gas, y la calefacción del pitot lo destapa",
+  },
+  /*
+   * **Se apaga el GPS** (#51, el último peldaño, «con apagones en misiones
+   * avanzadas, para que la estima y el VOR sigan valiendo»): hacia el VOR del
+   * campo con el GPS, un NOTAM de interferencia, el GPS que se va a mitad de
+   * camino y el plano sin el avión; se llega con el plan B, el VOR que ya
+   * estaba en la NAV. Lo lleva `gps-con-apagones.ts`. Ver el ADR 0031,
+   * enmienda H26v.
+   */
+  {
+    id: "gps",
+    /*
+     * **En Taguató Ruvichá**, el peldaño de la radio: el plan B es el VOR, y
+     * la NAV, su CDI y la frecuencia en la carta entran en la escalera ahí
+     * (`RADIO_DESDE`, el calco de la radio de `escalera.ts`), como los demás
+     * ejercicios del VOR. Más abajo no hay radio con la que llegar, y un
+     * apagón sin plan B no enseña el plan B.
+     */
+    peldanos: ["taguato-ruvicha"],
+    /*
+     * **Los de esferas con NAV**: la avioneta y el bimotor de pistón. Su GPS
+     * es uno de panel, y su mapa móvil es el plano, que sin posición deja de
+     * saber dónde está el avión. Los de cristal lo anuncian de otra manera
+     * —el «LOI» y el «DR» del G1000, la inercial de los de línea— y eso
+     * queda escrito y no hecho: ver la enmienda H26v. El biplano agrícola no
+     * lleva radio.
+     */
+    valePara: (a) => !conRadarMeteorologico(a) && radiosDe(a).nav,
+    leccion: "aterrizaje",
+    colocacion: "gps",
+    averias: [],
+    escena: "radio",
+    acabaEnElAire: true,
+    dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
+    ensena:
+      "el GPS se puede ir —una interferencia avisada por NOTAM, pocos satélites, la antena— y lo que no depende de él sigue: con el VOR puesto antes de salir, se llega con la radio. El buen piloto siempre tiene un plan B",
   },
   /*
    * **La final con viento cruzado** (#92, H32a): las dos técnicas de aterrizar

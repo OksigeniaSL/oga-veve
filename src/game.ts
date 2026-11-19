@@ -837,6 +837,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   giroscopo: "giroscopo-se-fue",
   // La esfera con la aguja quieta y el hielo en el tubo. Ver `pitot-helado.ts`.
   pitot: "pitot-helado",
+  // El satélite tachado en ámbar: el GPS que se fue. Ver `gps-con-apagones.ts`.
+  gps: "gps-apagado",
 };
 
 /**
@@ -1128,6 +1130,14 @@ import {
   alturaDelFrio,
   type SucesoDelPitotHelado,
 } from "./flight/pitot-helado";
+import {
+  CAUSA_DEL_EJERCICIO as CAUSA_DEL_APAGON,
+  colocacionDelGps,
+  SeApagaElGps,
+  type ColocacionDelGps,
+  type SucesoDelGps,
+} from "./flight/gps-con-apagones";
+import { FrasesEnFila } from "./flight/frases-en-fila";
 import { sitioDelCielo } from "./world/cielo-de-noche";
 import {
   colocacionDelAltimetro,
@@ -4156,6 +4166,7 @@ export class Game {
       this.brujulaQueBaila?.ejercicio ??
       this.giroscopoEnHora?.ejercicio ??
       this.pitotHelado?.ejercicio ??
+      this.gpsApagado?.ejercicio ??
       null
     );
   }
@@ -4167,7 +4178,7 @@ export class Game {
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila ?? this.giroscopoEnHora ?? this.pitotHelado;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila ?? this.giroscopoEnHora ?? this.pitotHelado ?? this.gpsApagado;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
@@ -6844,6 +6855,15 @@ export class Game {
         if (vor && origen) {
           const { x, z } = dondeCae(origen, vor.estacion);
           this.corte = new InterceptarUnRadial(ejercicio, { emisora: vor, x, z });
+        }
+      } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "gps") {
+        // Ni el GPS: el VOR del campo, puesto donde está, que es el plan B. Ver `practicarElGps`.
+        const vor = vorDelCampo(oaciDe(this.scenario));
+        const origen = this.scenario.aerodrome?.origin;
+        if (vor && origen) {
+          const { x, z } = dondeCae(origen, vor.estacion);
+          this.gpsApagado = new SeApagaElGps(ejercicio, { id: vor.estacion.id, x, z });
+          this.vorDelGps = vor;
         }
       } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "radial") {
         // Ni el radial: el VOR del campo, puesto donde está. Ver `practicarElRadial`.
@@ -13795,6 +13815,7 @@ export class Game {
         colocacion &&
         colocacion !== "aguja" &&
         colocacion !== "radial" &&
+        colocacion !== "gps" &&
         colocacion !== "interceptar" &&
         colocacion !== "cruce" &&
         colocacion !== "ils" &&
@@ -14090,6 +14111,9 @@ export class Game {
     // Y el pitot, limpio y con la calefacción apagada, como se olvidó.
     this.pitotHelado?.reiniciar();
     this.pitotDelPanel.reiniciar();
+    // Y el GPS, otra vez con señal y con lo que quedaba por decir fuera.
+    this.gpsApagado?.reiniciar();
+    this.frasesDelGps.olvidar();
     this.calefaccionDelPitot = false;
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
@@ -18505,6 +18529,7 @@ export class Game {
               VELOCIDAD_DEL_PITOT * this.aircraft.velocidadDeCircuito
             : colocacion === "aguja" ||
                 colocacion === "radial" ||
+                colocacion === "gps" ||
                 colocacion === "interceptar" ||
                 colocacion === "cruce" ||
                 colocacion === "deriva" ||
@@ -18544,6 +18569,7 @@ export class Game {
       colocacion === "tormenta" ||
       colocacion === "aguja" ||
       colocacion === "radial" ||
+      colocacion === "gps" ||
       colocacion === "interceptar" ||
       colocacion === "cruce" ||
       colocacion === "ils" ||
@@ -20124,6 +20150,8 @@ export class Game {
     this.practicarElGiroscopo(dt);
     // Y el pitot que se hiela. Ver `practicarElPitot`.
     this.practicarElPitot(dt);
+    // Y el GPS que se apaga. Ver `practicarElGps`.
+    this.practicarElGps(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -25450,6 +25478,7 @@ export class Game {
     if (colocacion === "brujula") return this.dondeEmpiezaLaBrujula();
     if (colocacion === "giroscopo") return this.dondeEmpiezaElGiroscopo();
     if (colocacion === "pitot") return this.dondeEmpiezaElPitot();
+    if (colocacion === "gps") return this.dondeEmpiezaElGps();
     return null;
   }
 
@@ -31880,6 +31909,211 @@ export class Game {
           this.hud.mostrarCierreDeEjercicio(
             dibujoDeCierre("vuelta"),
             this.rotulo("ejercicio.pitot.cierre", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
+
+  // ── «Se apaga el GPS» ────────────────────────────────────────────────
+  //
+  // Ver `flight/gps-con-apagones.ts`. Aquí solo se decide quién dice y enseña
+  // cada cosa: el plano y la tarjeta de casa que dejan de saber dónde está el
+  // avión, el CDI de la tarjeta y la instructora. **Solo se apaga lo que
+  // depende del GPS**: el sitio de verdad lo siguen leyendo los pilotos de
+  // banco, los avisos, los demás ejercicios y el modelo de vuelo, y la NAV
+  // sigue recibiendo el VOR.
+
+  /** **«Se apaga el GPS»**, si se eligió. Ver `practicarElGps`. */
+  private gpsApagado: SeApagaElGps | null = null;
+  /** El VOR del ejercicio, el plan B: su frecuencia y su norte. */
+  private vorDelGps: Emisora | null = null;
+  /**
+   * **Lo que la instructora tiene por decir del GPS, de una en una**: como el
+   * altímetro (`porDecirDelAltimetro`), cada frase se pide cuando la anterior
+   * del ejercicio ha acabado, para que con su voz grabada no se caiga por
+   * esperar detrás de otra. Ver `flight/frases-en-fila.ts`.
+   */
+  private readonly frasesDelGps = new FrasesEnFila<TranslationKey>({
+    decir: (clave, alSonar) => this.decirDelEjercicio(clave, "mando", alSonar),
+    reloj: () => this.relojDePared,
+    apuntar: (que) => this.apuntarCanto(que),
+    retirar: (clave) => BOCA.retirar((c) => c === clave),
+    tope: TOPE_DE_UNA_FRASE_DEL_ALTIMETRO,
+    otraVezSi: SE_PIDE_OTRA_VEZ,
+    otraVezHasta: OTRA_VEZ_SI_SE_CAE,
+  });
+
+  /**
+   * **Dónde empieza el GPS**: en un radial de costado al viento del día, a
+   * siete minutos del VOR del campo, con el morro derecho a él. Se guarda en
+   * el ejercicio: el OBS y el morro salen de la misma cuenta.
+   */
+  private dondeEmpiezaElGps(): ColocacionDelGps | null {
+    const g = this.gpsApagado;
+    const vor = this.vorDelGps;
+    if (!g || !vor) return null;
+    if (g.colocacion) return g.colocacion;
+    const agua = this.scenario.waterLevel ?? 0;
+    g.colocar(
+      colocacionDelGps({
+        estacion: g.estacion,
+        declinacion: vor.declinacion,
+        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
+        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+        cotaDeLaPista: this.terrain.runwayElevation,
+      }),
+    );
+    return g.colocacion;
+  }
+
+  /** «Se apaga el GPS», para el banco: el ejercicio, lo que sabe el plano y lo que marca la NAV. */
+  get gpsParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly causa: string;
+    readonly sinGps: { readonly x: number; readonly z: number } | null;
+    readonly casaSinGps: boolean;
+    readonly estacion: { readonly id: string; readonly x: number; readonly z: number };
+    readonly colocacion: ColocacionDelGps | null;
+    readonly nav: {
+      readonly mhz: number | null;
+      readonly curso: number;
+      readonly desviacion: number | null;
+      readonly toFrom: string | null;
+    } | null;
+    readonly porDecir: number;
+  } | null {
+    const g = this.gpsApagado;
+    if (!g) return null;
+    const a = this.avionParaLaRadio();
+    const radio = this.radioAlDia();
+    const nav = a ? radio.leer(a, this.elevacionDeLaEstacion).nav : null;
+    return {
+      fase: g.fase,
+      cierre: g.cierre,
+      causa: CAUSA_DEL_APAGON,
+      sinGps: g.sinGps,
+      casaSinGps: !!document.querySelector('[data-hud="home"]')?.classList.contains("casa--sin-gps"),
+      estacion: { id: g.estacion.id, x: g.estacion.x, z: g.estacion.z },
+      colocacion: g.colocacion,
+      nav: nav
+        ? { mhz: radio.navMhz, curso: radio.curso, desviacion: nav.lectura.desviacion, toFrom: nav.lectura.toFrom }
+        : null,
+      porDecir: this.frasesDelGps.cuantas,
+    };
+  }
+
+  /**
+   * **Un paso del GPS**: el ejercicio con el sitio de verdad y lo que marca la
+   * NAV, y lo que depende del GPS sin saber dónde está el avión mientras está
+   * apagado —el plano, quieto donde lo supo, sin la flecha ni la estela, y la
+   * tarjeta de casa sin aguja ni distancia—. Al volver, lo sabe otra vez.
+   */
+  private practicarElGps(dt: number): void {
+    const g = this.gpsApagado;
+    if (!g) return;
+    this.frasesDelGps.soltar();
+    const sin = g.sinGps;
+    this.hud.mapa.ponerSinGps(sin);
+    this.hud.ponerSinGps(sin !== null);
+    this.hud.mapa.ponerEstela(sin ? null : () => this.libreta.traza);
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const a = this.avionParaLaRadio();
+    const radio = this.radioAlDia();
+    const nav = a ? radio.leer(a, this.elevacionDeLaEstacion).nav : null;
+    const vor = this.vorDelGps;
+    // Puesta no es oída: ver `practicarLaAguja`.
+    const sintonizada = !!vor && radio.navMhz !== null && Math.abs(radio.navMhz - vor.mhz) < 0.005;
+    const l = sintonizada && nav?.lectura.emisora?.estacion.id === g.estacion.id ? nav.lectura : null;
+    const sucesos = g.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+        sintonizada,
+        desviacion: l?.desviacion ?? null,
+        toFrom: l?.toFrom ?? null,
+        bandera: l?.bandera ?? true,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlGps(suceso);
+  }
+
+  private atenderAlGps(suceso: SucesoDelGps): void {
+    const vor = this.vorDelGps;
+    const radio = this.radioAlDia();
+    /** El CDI de la tarjeta, con la barra donde la tiene el de verdad. Ver `elCdiDelEjercicio`. */
+    const elCdi = (como: ComoVaLaBarra): DibujoDeSenal => this.elCdiDelEjercicio(como, vor ?? undefined, radio.curso);
+    /** La tarjeta con su dibujo y su frase, y la voz en fila detrás de la anterior del ejercicio. */
+    const contar = (
+      dibujo: DibujoDeSenal,
+      clave: TranslationKey,
+      delante = "",
+      segundos = 14,
+      vale: () => boolean = () => true,
+    ): void => {
+      const frase = this.rotulo(clave, "palabra.mira");
+      this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
+        segundos,
+        prioridad: IMPORTANTE,
+      });
+      this.frasesDelGps.pedir(clave, vale);
+    };
+    // La NAV escrita como en la caja: «NAV FTV 114.10». Es de Taguató Ruvichá: siempre con cifras.
+    const laNav = vor ? t("ejercicio.gps.nav", { id: vor.estacion.id, mhz: vor.mhz.toFixed(2) }) : "";
+    const sinGps = (): boolean => this.gpsApagado?.fase === "sinGps";
+    switch (suceso.que) {
+      case "presentar": {
+        /*
+         * **El plan B, puesto antes de que haga falta**: el VOR de casa en la
+         * NAV, como se deja antes de salir en un vuelo con GPS, y el OBS con
+         * otro curso, apartado del de la radio. Lo que se aprende es que ya
+         * estaba ahí.
+         */
+        if (vor) radio.poner("nav", vor.mhz);
+        const c = this.dondeEmpiezaElGps();
+        if (c) radio.curso = c.obs;
+        return contar("gps-con-senal", "ejercicio.gps.antes", laNav, 20);
+      }
+      case "seFue":
+        // Sin sonido de aviso: no es una emergencia. Lo que se ve es el plano sin el avión.
+        return contar("gps-apagado", "ejercicio.gps.seFue", t("ejercicio.gps.sinPosicion"), 14);
+      case "planB": {
+        const c = this.gpsApagado?.colocacion;
+        return contar(
+          elCdi("a-tope"),
+          "ejercicio.gps.planB",
+          c ? t("ejercicio.gps.obs", { curso: String(c.alaRadio).padStart(3, "0") }) : "",
+          16,
+          sinGps,
+        );
+      }
+      case "sintonizar":
+        return contar(elCdi("a-tope"), "ejercicio.gps.sintonizar", laNav, 14, sinGps);
+      case "centrada":
+        this.avisar("achieved");
+        return contar("cdi-to", "ejercicio.gps.centrada", "", 12, sinGps);
+      case "pasada":
+        this.avisar("achieved");
+        return contar("cdi-from", "ejercicio.gps.pasada", t("ejercicio.gps.integOk"), 14);
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice. Y lo que quedaba por decir, no.
+        if (suceso.como === "otraVez") {
+          this.frasesDelGps.olvidar();
+          return;
+        }
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          if (this.gpsApagado?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.gps.cierre", "palabra.bien"),
             plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });

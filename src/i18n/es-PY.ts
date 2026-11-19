@@ -3312,6 +3312,7 @@ export const ES_PY = {
   "hangar.ejercicio.brujula": "La brújula baila",
   "hangar.ejercicio.giroscopo": "Poné en hora el giróscopo",
   "hangar.ejercicio.pitot": "El pitot se hiela",
+  "hangar.ejercicio.gps": "Se apaga el GPS",
   "hangar.ejercicio.cangrejo": "Aterrizar en cangrejo",
   "hangar.ejercicio.ala-baja": "Aterrizar con el ala baja",
   "ejercicio.planeo.antes":
@@ -3799,6 +3800,26 @@ export const ES_PY = {
   // El panel del final: se lee, no se dice.
   "ejercicio.pitot.cierre":
     "Con nube y frío, el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere. Entonces se vuela con la actitud y el gas. La calefacción del pitot se prende antes de entrar en la nube",
+  /*
+   * **«Se apaga el GPS»** (#51, ADR 0031, enmienda H26v): hacia el VOR de
+   * casa con el GPS, un NOTAM de interferencia, el GPS que se va a mitad de
+   * camino y el plano sin el avión; se llega con el plan B, el VOR que ya
+   * estaba en la NAV. Sin drama: no es una emergencia, el avión vuela igual.
+   */
+  "ejercicio.gps.antes": "Hoy hay un NOTAM: pueden tapar el GPS. Por eso dejamos el VOR de casa en la NAV: es el plan B",
+  "ejercicio.gps.seFue": "Se fue el GPS, y el plano ya no sabe dónde estamos. No pasa nada: el avión vuela igual",
+  "ejercicio.gps.planB": "Vamos con el plan B. Girá el OBS hasta que la barra quede al medio con TO, y seguila",
+  "ejercicio.gps.sintonizar": "Volvé a poner el VOR de casa en la NAV",
+  "ejercicio.gps.centrada": "¡Eso! Con la barra al medio, vamos derecho a la radio",
+  "ejercicio.gps.pasada": "¡Llegamos con la radio! Y volvió el GPS. El buen piloto siempre tiene un plan B",
+  // Lo que va escrito delante de la frase en la tarjeta. Los rótulos de cabina, sin traducir.
+  "ejercicio.gps.nav": "NAV {id} {mhz}",
+  "ejercicio.gps.sinPosicion": "GPS sin señal",
+  "ejercicio.gps.obs": "OBS {curso} · TO",
+  "ejercicio.gps.integOk": "INTEG OK",
+  // El panel del final: se lee, no se dice.
+  "ejercicio.gps.cierre":
+    "El GPS se puede ir: una interferencia que avisa un NOTAM, pocos satélites a la vista o la antena. Lo que no depende de él sigue andando: la radio, la brújula, el direccional y el reloj. Por eso el plan B se deja puesto antes de salir",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

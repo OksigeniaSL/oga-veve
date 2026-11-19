@@ -1,0 +1,280 @@
+/**
+ * **«Se apaga el GPS», volado en el juego** (#51, ADR 0031, enmienda H26v):
+ * Fuerteventura, la avioneta en el peldaño de cabina y el VOR FTV de plan B.
+ *
+ *   node scripts/ver-el-gps.mjs <carpeta>
+ *
+ * Con el alisio del sitio, o en calma con `OGA_VIENTO=000/0`; otro avión con
+ * `OGA_AVION` (el bimotor, `jaz-40`). El piloto de banco:
+ *
+ * - con GPS, vuela con el automático derecho a FTV, el «directo a»;
+ * - cuando se va, mira que el plano se queda donde lo supo, sin el avión, y
+ *   que la tarjeta de casa va sin aguja ni distancia, mientras el sitio de
+ *   verdad sigue moviéndose;
+ * - con el plan B pedido, gira el OBS de grado en grado con el 9 y el 0 hasta
+ *   el curso a la radio, y vuela con la barra: el rumbo del curso más tres
+ *   veces lo que se aparta;
+ * - y pasa por encima de FTV: TO a FROM, el GPS vuelve y el plano lo sabe.
+ *
+ * Capturas, la página entera con el plano abierto y el cuadro de cerca, por
+ * fuera y desde el asiento: con GPS, recién ido, con la barra centrada y al
+ * pasar. El puerto, `OGA_PUERTO`; el reloj, por `OGA_VECES` (ocho).
+ */
+import { chromium } from "playwright";
+import { createServer } from "vite";
+import { mkdirSync } from "node:fs";
+import { baseDe } from "./servidor.mjs";
+import { vigilarLoAjeno } from "./lo-ajeno-al-ejercicio.mjs";
+
+const SALIDA = process.argv[2] ?? "capturas-gps";
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5686);
+const AVION = process.env.OGA_AVION ?? "jaz-20";
+const VECES = Number(process.env.OGA_VECES ?? 8);
+const VIENTO = process.env.OGA_VIENTO ?? null;
+const NOMBRE = `${AVION}-${VIENTO ? "calma" : "alisio"}`;
+
+mkdirSync(SALIDA, { recursive: true });
+const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const server = await createServer({
+  root: process.cwd(),
+  server: { port: PUERTO, hmr: false, watch: null },
+  logLevel: "error",
+});
+await server.listen();
+const BASE = baseDe(server, PUERTO);
+const navegador = await chromium.launch({
+  executablePath: "/usr/bin/google-chrome",
+  args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+});
+
+const resultados = [];
+const comprobar = (nombre, ok, detalle = "") => {
+  resultados.push({ nombre, ok: !!ok });
+  console.log(`  ${ok ? "✓" : "✗"} ${nombre}${detalle ? `  —  ${detalle}` : ""}`);
+};
+
+const leerSolo = (page) =>
+  page.evaluate(() => {
+    const o = globalThis.__oga;
+    const j = o.juegoParaTrazas();
+    const s = o.estado();
+    const a = j.avionParaLaRadio();
+    const radio = j.radioAlDia();
+    const nav = a ? radio.leer(a, j.elevacionDeLaEstacion).nav : null;
+    const l = nav?.lectura ?? null;
+    return {
+      x: s.position.x,
+      z: s.position.z,
+      y: s.position.y,
+      rumbo: s.heading,
+      gps: o.gps(),
+      navMhz: radio.navMhz,
+      curso: radio.curso,
+      navId: l?.emisora?.estacion.id ?? null,
+      declinacion: l?.emisora?.declinacion ?? 0,
+      desviacion: l?.desviacion ?? null,
+      toFrom: l?.toFrom ?? null,
+      bandera: l?.bandera ?? true,
+      tarjeta: o.tarjeta?.()?.dibujo ?? null,
+      texto: document.querySelector(".senal")?.textContent?.replace(/\s+/g, " ").trim() ?? "",
+      mapaAbierto: !!j.hud?.mapa?.visible,
+    };
+  });
+
+const ajeno = vigilarLoAjeno();
+const leer = async (page) => {
+  const r = await leerSolo(page);
+  await ajeno.mirar(page, r.gps && r.gps.fase !== "cerrada");
+  return r;
+};
+
+const rumboAlAutomatico = (page, rumbo) =>
+  page.evaluate((r) => {
+    const j = globalThis.__oga.juegoParaTrazas();
+    if (j.objetivos) j.objetivos.rumbo = r;
+  }, rumbo);
+
+const centrado = (g) => ((((g + 180) % 360) + 360) % 360) - 180;
+const GRADO = Math.PI / 180;
+const MILLA = 1852;
+
+let codigo = 0;
+try {
+  console.log(`\n${NOMBRE}`);
+  const contexto = await navegador.newContext({
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 1,
+    hasTouch: false,
+  });
+  const page = await contexto.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
+  await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
+  const viento = VIENTO ? `&viento=${VIENTO}` : "";
+  await page.goto(`${BASE}/?escenario=fuerteventura&hora=12&tramo=taguato-ruvicha&avion=${AVION}&ejercicio=gps${viento}`);
+  await page.waitForFunction(() => globalThis.__oga?.gps?.() != null, null, { timeout: 120000 });
+  await pausa(3000);
+  const foto = async (n, cabina = true) => {
+    const ruta = `${SALIDA}/${NOMBRE}-${n}.png`;
+    await page.screenshot({ path: ruta });
+    const cuadro = page.locator(".cuadro").first();
+    if (await cuadro.count()) await cuadro.screenshot({ path: `${SALIDA}/${NOMBRE}-${n}-cuadro.png` }).catch(() => {});
+    console.log(`    foto: ${ruta}`);
+    if (!cabina) return;
+    // Y desde el asiento: el panel con su CDI y lo que se ve por el parabrisas.
+    await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+    await pausa(500);
+    await page.screenshot({ path: `${SALIDA}/${NOMBRE}-${n}-asiento.png` });
+    await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+    await pausa(300);
+  };
+  const tarjetaGrafica = await page.evaluate(() => {
+    const g = document.createElement("canvas").getContext("webgl");
+    const i = g?.getExtension("WEBGL_debug_renderer_info");
+    return i ? g.getParameter(i.UNMASKED_RENDERER_WEBGL) : "sin WebGL";
+  });
+  console.log(`    tarjeta gráfica: ${tarjetaGrafica}`);
+
+  let r = await leer(page);
+  const est = r.gps.estacion;
+  const c = r.gps.colocacion;
+  const lejos0 = Math.hypot(est.x - r.x, est.z - r.z);
+  comprobar("empieza en el aire, lejos del VOR", r.y > 500 && lejos0 > 9.5 * MILLA, `${(lejos0 / MILLA).toFixed(1)} NM, ${Math.round(r.y)} m, radial ${c?.radial}`);
+  comprobar(
+    "el plan B ya está puesto: FTV en la NAV y el OBS apartado del curso a la radio",
+    r.navId === est.id && r.curso === c?.obs,
+    `nav ${r.navId} ${r.navMhz}, OBS ${r.curso}, a la radio ${c?.alaRadio}`,
+  );
+  comprobar(
+    "con GPS, el plano y la tarjeta de casa saben dónde está el avión",
+    r.gps.fase === "conGps" && r.gps.sinGps === null && !r.gps.casaSinGps,
+    `${r.gps.fase}, plano ${JSON.stringify(r.gps.sinGps)}, casa sin GPS ${r.gps.casaSinGps}`,
+  );
+  await page.evaluate(() => globalThis.__oga.juegoParaTrazas().hud.mapa.alternar());
+  await pausa(800);
+  r = await leer(page);
+  comprobar("el plano, abierto", r.mapaAbierto);
+  await foto("01-con-gps");
+
+  // Con GPS, el «directo a»: el automático derecho a la radio, y el reloj por ocho.
+  await page.evaluate(() => globalThis.__oga.pilotoAutomatico(true));
+  const puestas = await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
+  console.log(`    reloj por ${puestas}`);
+  const fin1 = Date.now() + 4 * 60000;
+  while (Date.now() < fin1 && r.gps.fase === "conGps") {
+    await rumboAlAutomatico(page, Math.atan2(est.x - r.x, -(est.z - r.z)));
+    await pausa(200);
+    r = await leer(page);
+  }
+  const alIrse = r;
+  const lejosAlIrse = Math.hypot(est.x - r.x, est.z - r.z);
+  comprobar(
+    "se va a mitad de camino",
+    r.gps.fase === "sinGps" && lejosAlIrse < 0.55 * lejos0 && lejosAlIrse > 0.35 * lejos0,
+    `${r.gps.fase}, a ${(lejosAlIrse / MILLA).toFixed(1)} de ${(lejos0 / MILLA).toFixed(1)} NM`,
+  );
+  // El reloj normal para las fotos: lo que se ve recién ido.
+  await page.evaluate(() => globalThis.__oga.acelerar(1));
+  await pausa(1500);
+  r = await leer(page);
+  comprobar(
+    "sin GPS: el plano sin el avión y la tarjeta de casa sin aguja ni distancia",
+    r.gps.sinGps !== null && r.gps.casaSinGps,
+    `plano ${JSON.stringify(r.gps.sinGps && { x: Math.round(r.gps.sinGps.x), z: Math.round(r.gps.sinGps.z) })}, casa ${r.gps.casaSinGps}`,
+  );
+  comprobar("la tarjeta dice que se fue, con el satélite tachado", r.tarjeta === "gps-apagado", `${r.tarjeta}: «${r.texto}»`);
+  await foto("02-sin-gps");
+  const quieto = r.gps.sinGps;
+
+  // El plan B: esperar a que lo pida, y el OBS de grado en grado hasta el curso a la radio.
+  await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
+  const fin2 = Date.now() + 60000;
+  while (Date.now() < fin2 && !/^cdi-/.test(r.tarjeta ?? "")) {
+    await pausa(250);
+    r = await leer(page);
+  }
+  comprobar("pide el plan B con el CDI en la tarjeta y el curso escrito", /^cdi-/.test(r.tarjeta ?? "") && /OBS \d{3}/.test(r.texto ?? ""), `${r.tarjeta}: «${r.texto}»`);
+  for (let i = 0; i < 60 && r.curso !== c.alaRadio; i++) {
+    await page.keyboard.press(centrado(c.alaRadio - r.curso) > 0 ? "Digit0" : "Digit9");
+    await pausa(80);
+    r = await leer(page);
+  }
+  comprobar("el OBS en el curso a la radio, y dice TO", r.curso === c.alaRadio && r.toFrom === "TO", `OBS ${r.curso}, ${r.toFrom}, barra ${r.desviacion?.toFixed(1)}°`);
+  let centradaVista = false;
+  let cerrada = null;
+  let movido = 0;
+  let planoQuieto = true;
+  const fin3 = Date.now() + 8 * 60000;
+  while (Date.now() < fin3) {
+    r = await leer(page);
+    if (r.desviacion !== null && r.toFrom === "TO") {
+      const mag = r.curso + Math.max(-30, Math.min(30, 3 * r.desviacion));
+      await rumboAlAutomatico(page, (mag - r.declinacion) * GRADO);
+    }
+    if (r.gps.fase === "sinGps") {
+      movido = Math.max(movido, Math.hypot(r.x - alIrse.x, r.z - alIrse.z));
+      if (!r.gps.sinGps || Math.hypot(r.gps.sinGps.x - quieto.x, r.gps.sinGps.z - quieto.z) > 1) planoQuieto = false;
+    }
+    if (!centradaVista && r.tarjeta === "cdi-to") {
+      centradaVista = true;
+      await page.evaluate(() => globalThis.__oga.acelerar(1));
+      await pausa(800);
+      await foto("03-centrada-to");
+      await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
+    }
+    if (r.gps.fase === "cerrada") {
+      cerrada = r;
+      await page.evaluate(() => globalThis.__oga.acelerar(1));
+      await pausa(1500);
+      cerrada = await leer(page);
+      await foto("04-pasada");
+      break;
+    }
+    await pausa(150);
+  }
+  comprobar(
+    "mientras no hay GPS el avión se mueve y el plano se queda donde lo supo",
+    planoQuieto && movido > 3 * MILLA,
+    `el avión anduvo ${(movido / MILLA).toFixed(1)} NM; el plano quieto: ${planoQuieto}`,
+  );
+  comprobar("la barra centrada con TO, felicitada", centradaVista);
+  comprobar(
+    "se llega con la radio: TO a FROM encima de FTV, y el GPS vuelve",
+    cerrada?.gps.cierre === "hecho" && cerrada.gps.sinGps === null && !cerrada.gps.casaSinGps,
+    cerrada ? `${cerrada.toFrom}, plano ${JSON.stringify(cerrada.gps.sinGps)}, casa sin GPS ${cerrada.gps.casaSinGps}, «${cerrada.texto}»` : "no llegó",
+  );
+  // Lo que pidió decir la instructora, en su orden, sonara o no (sin grabar, se calla).
+  {
+    const hasta = Date.now() + 30000;
+    while (Date.now() < hasta && ((await page.evaluate(() => globalThis.__oga.gps()?.porDecir ?? 0)) > 0)) await pausa(250);
+  }
+  const dicho = await page.evaluate(() => globalThis.__oga.dichoTodo());
+  const cantados = await page.evaluate(() => globalThis.__oga.cantados());
+  const pedidas = [
+    ...(dicho.instructor ?? []).filter((k) => /^ejercicio\.gps\./.test(k)),
+    ...cantados
+      .map((c) => /^(ejercicio\.gps\.\w+): sin grabar/.exec(typeof c === "string" ? c : (c?.que ?? ""))?.[1])
+      .filter(Boolean),
+  ];
+  const delGps = pedidas.filter((k, i) => pedidas.indexOf(k) === i);
+  comprobar(
+    "la instructora pide cada frase en su orden, una detrás de otra",
+    ["antes", "seFue", "planB", "centrada", "pasada"].every((k, i) => delGps[i] === `ejercicio.gps.${k}`),
+    delGps.join(", ") || "nada",
+  );
+  await ajeno.comprobar(page, comprobar, /^cdi-|^gps-/);
+  await pausa(4000);
+  await foto("05-final", false);
+  comprobar("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await contexto.close();
+} catch (e) {
+  console.error(e);
+  codigo = 1;
+} finally {
+  await navegador.close();
+  await server.close();
+}
+const malas = resultados.filter((x) => !x.ok).length;
+console.log(`\n${resultados.length - malas} de ${resultados.length}`);
+process.exit(codigo || (malas ? 1 : 0));
