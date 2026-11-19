@@ -8817,13 +8817,14 @@ button.motor__tecla::after {
   stroke: #8fc3e8;
 }
 
-.hoja__cuenta,
-.hoja__cifras {
+.hoja__cuenta {
   color: var(--tinta);
   font-variant-numeric: tabular-nums;
 }
 
 .hoja__cifras {
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
   display: flex;
   justify-content: space-between;
   gap: 10px;
