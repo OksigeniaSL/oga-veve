@@ -1209,7 +1209,7 @@ los de su comentario. El umbral no se ha tocado.
 ### Volado en el navegador
 
 `scripts/ver-el-gas-al-colocar.mjs` abre un ejercicio en Taguató, sin viento, y
-mira medio minuto de juego sin tocar nada (19-11-2026, puerto 5685, sin GPU):
+mira medio minuto de juego sin tocar nada (19-11-2026, puerto 5685):
 
 | Caso | Nace con gas | A | A los 30 s |
 |---|---|---|---|
@@ -1229,4 +1229,6 @@ mandos.
 
 La final, en cambio, sí cambia: con la recta el JAZ 20 nacía con 0,66, más que
 el de nivelado a esa velocidad (0,60); con el de la senda, sin tocar nada, baja.
-La final con la recta no se ha volado en el navegador para compararla.
+La final con la recta no se ha volado en el navegador para compararla. La del
+cangrejo, con su piloto de banco (`ver-el-cruzado.mjs`, el JAZ 20 en Taguató,
+con la tarjeta de verdad): 7 de 7, toca con el morro en la pista a 0,2°.
