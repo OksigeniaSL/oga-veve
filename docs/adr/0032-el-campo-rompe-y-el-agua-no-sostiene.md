@@ -215,7 +215,12 @@ ruedas puede volver a casa con hojas en el tren —pasa, y sale en los informes
 como lo que estuvo a punto de ser un accidente—; de ahí para dentro están las
 ramas que paran un avión. No hay una cifra de cuánta copa aguanta un tren, y
 la que se pone es la piel de un lapacho de quince metros, que tiene cuatro de
-semialto. El tronco no se perdona en ningún peldaño.
+semialto. **Y nunca más de dos quintos de la copa** (`PIEL`, en
+`world/arboleda.ts`): con los dos metros enteros, los árboles pequeños de la
+granja —un naranjo, un karanday, con menos de dos metros de semialto— se
+quedaban sin copa que tocar, y en Guyrami el banco voló a través de uno. En un
+naranjo de cuatro metros no hay dos de hojas que barrer. El tronco no se
+perdona en ningún peldaño.
 
 En Guyrami no hay ejercicio de pista corta (empieza en Tukã), así que ahí solo
 cuentan los árboles del mundo, que la vegetación ya aparta de la franja, de las
