@@ -2468,3 +2468,147 @@ Pettirossi: **16 de 16**.
   altímetro, en cuanto pasa su paso. La estima y la brújula pasaron sus
   bancos con las tomas grabadas, pero no se ha mirado en su volcado de voces
   si alguna cayó por esperar; si cae, el arreglo es el mismo.
+
+## Enmienda H32b (19-11-2026): la final con viento cruzado, juzgada por la media del rato
+
+La ronda de cierre sobre a9aafe59 voló la final con viento cruzado y sacó
+dos fallos de la enmienda H32a.
+
+### El cangrejo en Taguató, medido 6,0° cuando pedía 8,5
+
+Con la JAZ 20, 6 de 7: «el cangrejo medido es el del triángulo con la
+verdadera y el viento de ese momento, a menos de dos grados — medido 6,0°,
+pedía 8,5°». En H32a había salido 9,1 contra 8,6. Entre las dos tiradas
+entraron H26t y H26u, y ninguno toca la final: la velocidad de la tabla de
+crucero es de la estima, el altímetro y el rumbo de noche, y lo que calla un
+ejercicio en el aire son explicaciones. El piloto de banco, el avión y el
+instante de la medida eran los de H32a. Lo que cambia de una tirada a otra
+es el aire.
+
+La medida tenía dos fallos de origen, y los dos salen del triángulo:
+
+- **El morro se contaba desde la pista, no desde el camino.** El cangrejo es
+  lo que el morro va apartado del camino —es la definición, y es como lo
+  mide ya «Apuntá al viento» (`deriva.ts`)—. Con el camino «por el eje», que
+  es a menos de tres grados, el morro desde la pista puede ir hasta tres
+  grados por encima o por debajo del cangrejo sin que nada esté mal.
+- **Lo que pedía salía del viento del parte, y al avión lo empuja el parte
+  con la racha encima.** El alisio de Los Rodeos va racheado
+  (`rafagas.ts`; volando la final, la racha de costado iba de −7,8 a
+  +5,5 kt), y una racha de costado mueve el morro —el avión se pone a la
+  veleta— sin mover lo pedido. Y se medía un instante: el último de los
+  cinco segundos.
+
+Lo cambiado, en `FinalConViento.paso`:
+
+- el cangrejo es `rumbo − camino`, con su signo hacia el viento;
+- lo que pide es `correccionDelViento` de `deriva.ts` —el viento de costado
+  de ese camino partido por la verdadera de ese paso— con **el viento que
+  empuja**: el del parte donde está el avión, la racha encima y el perfil de
+  cerca del suelo, el mismo que recibe el modelo de vuelo
+  (`elVientoQueEmpuja` en `game.ts`; el viento entra ahora en la lectura y
+  ya no en el constructor);
+- y las dos cosas son **la media del mismo rato**: los cinco segundos con el
+  camino por el eje, con la misma verdadera, que en la final va bajando y
+  con ella sube el cangrejo que hace falta.
+
+Lo que dice la tarjeta desde Taguató —«N° al viento»— es esa media.
+
+### El ala baja con el JAZ 40, sin medir
+
+En Taguató Ruvichá, 3 de 5: «el ala del viento abajo, medida — undefined°»
+y «la tarjeta dibuja el avión inclinado — null». El ejercicio se ofrece con
+el bimotor (`seOfrece`: su límite demostrado son 17 kt, y el costado de
+Los Rodeos, 11,3), la fase avanzaba —la corta, el toque y el cierre
+«primero la rueda del viento» salieron— y lo único que no llegaba era
+contarlo. Contarlo pedía cinco segundos **seguidos**, por encima de 25 m, sin
+que un solo paso sacara el camino, el morro o el ala de su raya.
+
+En la mesa, sin aire que se mueva, el piloto del banco lo cuenta con el
+JAZ 40 a 228 m, con 4° de ala y el 26 % del pedal. En el navegador vuela de
+otra manera: volado otra vez con esa regla y la traza nueva del banco
+(`OGA_TRAZA=1`), el bimotor llevaba el ala entre 17,6° hacia el viento y 1°
+hacia el otro lado, el derrape hasta 25°, el pedal entre el 30 y el 90 %, y la
+verdadera bajaba de 84 a 57 kt; y como la final empieza 20 m a la derecha
+del eje y el viento lo lleva a 38, el camino va buena parte del rato a más de
+tres grados de la pista, volviendo. Esa vez lo contó, a 130 m; en la ronda no
+llegó. Metiendo en la mesa las ráfagas del juego (`Rafagas`) con
+σ de 2 a 3 m/s, más de lo que se vio en la final, se parece —derrape de 15 a
+20°, alabeo de 15°— y lo sigue contando, más abajo (211 m con σ 2, 199 con
+σ 3); y con el piloto del banco a 6, 8, 10, 15 o 30 pasos por segundo, el
+bimotor va igual de quieto que a 60. Así que el
+bandazo del JAZ 40 en el navegador no sale de la racha ni de los fotogramas,
+y no se ha encontrado de dónde sale (ver «Lo que queda»). Lo que sí está
+claro es lo que le pasa al ejercicio: un instante suelto cae donde lo deja el
+bandazo, y que caigan cinco segundos limpios antes de los 25 m es cuestión de
+suerte.
+
+Pasa igual a quien vuela: un ala baja bien sostenida se mece con la racha, y
+lo que se enseña es lo que se sostiene. Así que **se juzga la media del
+rato**, como el cangrejo: cinco segundos con el camino por el eje, y en ellos
+el morro de media en la pista (±3°) y el ala de media un grado o más hacia
+el viento. Si el rato no cumple, se empieza otro; si el camino se sale del
+eje, también. El bimotor puede, y no hubo que quitarlo.
+
+### Volado
+
+`scripts/ver-el-cruzado.mjs`, con la tarjeta de verdad (`OGA_GPU=1`: ANGLE
+sobre la Intel Iris Xe), en Los Rodeos con el alisio de casa y el piloto de
+la mesa en la página. Con `OGA_TRAZA=1` el banco escribe ahora la final en
+renglones —el morro y el camino desde la pista, el ala, el derrape, la
+verdadera, el viento de costado del parte, la racha que lleva el modelo de
+vuelo y lo que pide el triángulo—, que es de donde salen los números de
+arriba.
+
+- **El cangrejo en Taguató con la JAZ 20**, dos veces: **7 de 7** y **7 de
+  7**. Contado a 170 y 168 m, 6,5° al viento cuando el triángulo pedía 6,4,
+  y 6,8 cuando pedía 6,2; en ese instante el morro iba a 6,7° y a 4,5° de la
+  pista. Sale menos que los diez grados de la corta porque se cuenta
+  todavía deprisa —la final empieza a 96 kt y la JAZ 20 se aproxima a 64—,
+  y lo que pide baja con ella. La tarjeta, «7° al viento»; el pie derecho en
+  la corta, y al tocar el morro a 1,5° y a 0,2° de la pista.
+- **El ala baja con el JAZ 40 en Taguató Ruvichá**: **5 de 5**, contado a
+  89 m con 5,3° de ala de media, la tarjeta del avión inclinado, y al tocar
+  el morro a 0,2° y el ala del viento 4,7° abajo, «primero la rueda del
+  viento». Con la regla de la ronda para el ala baja —cinco segundos seguidos
+  sin salirse— otra tirada también salió 5 de 5, contada a 130 m: la de la
+  ronda fue de las que no llegan.
+- **El ala baja con la JAZ 20 en Taguató Ruvichá**: **5 de 5**, contada a
+  157 m con 3,3° de ala de media —la mesa da 3,2—, y al tocar el morro a
+  0,5° y el ala del viento 3,4° abajo.
+- **El cangrejo en Tukã con la JAZ 20**: **6 de 6**, contado a 165 m, 9,1°
+  al viento cuando pedía 8,1; en ese instante el morro iba a 5,5° de la
+  pista, que con la medida de antes habría fallado. Al tocar, el morro a
+  0,7°.
+- **El cangrejo con el JAZ 90 en Taguató**, que se ofrece y no se había
+  volado: **3 de 7**. No se cuenta, y no es del ejercicio: el piloto del
+  banco no vuela el reactor. Su ley de alabeo es la de la avioneta, y con el
+  JAZ 90 a 100-125 kt hace eses: el morro de −48° a +25° de la pista, el ala
+  de −25° a +22° y el avión de 110 m a un lado a 75 al otro. El camino no
+  pasa cinco segundos seguidos por el eje, no hay rato que juzgar, y se toca
+  torcido —4,3°—, que el ejercicio cuenta como torcido, que es lo que fue.
+
+### Lo que queda
+
+- **Un piloto de banco para el reactor**: el del cangrejo con ganancias del
+  JAZ 90, o el automático del juego con el localizador, para volar el
+  cangrejo de un avión de línea en el navegador. Hasta entonces el cangrejo
+  del reactor no se ha visto volar en ninguna parte: la mesa de H32a vuela
+  los de hélice (JAZ 20, 40, 50 y 60).
+
+- **El bimotor vuela la final del navegador más despacio que en la mesa**,
+  con el mismo piloto: a unos 60 kt en vez de los 86 de su aproximación, y
+  con 15 a 19° de derrape donde la mesa da 8. El derrape es casi el que pide
+  el triángulo a 60 kt con el morro un grado a sotavento del camino —de 12 a
+  15°—; lo raro es la velocidad. No sale de la racha ni de los fotogramas
+  (arriba). Una pista sin comprobar: la verdadera se cae, de 90 a 56 kt en
+  unos veinte segundos, mientras el avión se queda a 145 m sobre el suelo de
+  debajo, y el piloto del banco lleva la senda sobre ese suelo y no sobre la
+  pista; con los flaps abajo y ese derrape, a 60 kt el bimotor está del lado
+  malo de la curva de potencia y el gas solo no lo saca. Lo siguiente es
+  trazar la cota y el gas en el banco, o llevar la senda sobre la cota de la
+  pista. El ejercicio ya cuenta lo que se sostiene; esto es del banco, o del
+  vuelo, no del cruzado.
+- **El cangrejo se cuenta deprisa**: en los primeros cinco segundos buenos,
+  a unos 170 m y con 75 kt, cuando pide 6 o 7°; en la corta, a 64 kt, son
+  10. Lo que dice la tarjeta es verdad en ese rato.

@@ -352,13 +352,15 @@ describe("dónde y con qué avión se ofrece", () => {
 describe("el ejercicio, con un piloto de cinemática", () => {
   const ejercicio = ejercicioPorId("cangrejo") as Ejercicio;
   /** La 12, el viento de la izquierda y diez grados de cangrejo. */
-  const nuevo = (tecnica: "cangrejo" | "ala-baja"): FinalConViento =>
-    new FinalConViento(ejercicio, tecnica, 120, -1, Math.sin(10 * GRADO) * 33);
+  const nuevo = (tecnica: "cangrejo" | "ala-baja"): FinalConViento => new FinalConViento(ejercicio, tecnica, 120, -1);
+  /** El aire hacia la derecha de la pista: el viento de la izquierda, el de diez grados a 33 m/s. */
+  const deLaIzquierda = (ms: number): { x: number; z: number } => ({ x: Math.cos(120 * GRADO) * ms, z: Math.sin(120 * GRADO) * ms });
   const lectura = (o: Partial<LecturaDelCruzado> & { camino?: number; v?: number }): LecturaDelCruzado => {
     const camino = (o.camino ?? 120) * GRADO;
     const v = o.v ?? 33;
     return {
       verdadera: 33,
+      viento: deLaIzquierda(Math.sin(10 * GRADO) * 33),
       vx: Math.sin(camino) * v,
       vz: -Math.cos(camino) * v,
       rumbo: 120,
@@ -388,6 +390,42 @@ describe("el ejercicio, con un piloto de cinemática", () => {
     expect(c[1]).toMatchObject({ que: "cerrar", como: "derecho" });
   });
 
+  /**
+   * **Una lectura que cumple el triángulo**: el avión con el morro a `rumbo` y
+   * esa verdadera, y el camino que le sale con el viento de la izquierda.
+   */
+  const enElTriangulo = (rumbo: number, verdadera: number): LecturaDelCruzado => {
+    const viento = deLaIzquierda(Math.sin(10 * GRADO) * 33);
+    const vx = Math.sin(rumbo * GRADO) * verdadera + viento.x;
+    const vz = -Math.cos(rumbo * GRADO) * verdadera + viento.z;
+    return { ...lectura({ rumbo, verdadera, viento }), vx, vz };
+  };
+
+  it("girando todavía hacia el viento dentro de la raya, el cangrejo es el del triángulo: se mide desde el camino, no desde la pista", () => {
+    const f = nuevo("cangrejo");
+    // El morro a siete grados y medio de la pista, y el camino dos y medio del otro lado: dentro de los tres de la raya.
+    const l = enElTriangulo(112.5, 33);
+    const camino = (Math.atan2(l.vx, -l.vz) / GRADO + 360) % 360;
+    expect(camino - 120).toBeGreaterThan(2);
+    expect(camino - 120).toBeLessThan(3);
+    expect(volar(f, l, 6).map((s) => s.que)).toEqual(["presentar", "enCangrejo"]);
+    expect(f.cangrejo!).toBeGreaterThan(9.5);
+    expect(f.cangrejo!).toBeCloseTo(f.pidioAlContar!, 6);
+  });
+
+  it("y con la verdadera bajando, la medida y lo que pide salen del mismo rato: la media de los cinco segundos", () => {
+    const f = nuevo("cangrejo");
+    const k = Math.sin(10 * GRADO) * 33;
+    // Por el eje en todo momento: el morro apartado lo que pide cada verdadera.
+    const derecho = (v: number): LecturaDelCruzado => enElTriangulo(120 - Math.asin(k / v) / GRADO, v);
+    const todos = [...volar(f, derecho(40), 2.5), ...volar(f, derecho(33), 3)];
+    expect(todos.filter((s) => s.que === "enCangrejo")).toHaveLength(1);
+    const deprisa = Math.asin(k / 40) / GRADO;
+    expect(f.cangrejo!).toBeGreaterThan(deprisa + 0.5);
+    expect(f.cangrejo!).toBeLessThan(10 - 0.5);
+    expect(f.cangrejo!).toBeCloseTo(f.pidioAlContar!, 6);
+  });
+
   it("con el morro en la pista, el camino se va de lado y no hay cangrejo que contar", () => {
     const f = nuevo("cangrejo");
     const a = volar(f, lectura({ rumbo: 120, camino: 130 }), 10);
@@ -413,6 +451,29 @@ describe("el ejercicio, con un piloto de cinemática", () => {
     expect(volar(f, lectura({ alabeo: -3, altura: 10 }), 1).some((s) => s.que === "elPie")).toBe(false);
     const c = f.paso(lectura({ alabeo: -2, altura: 0, enElSuelo: true }), 0.1);
     expect(c[0]).toMatchObject({ que: "tocaste", como: "derecho", rueda: true });
+  });
+
+  it("una racha que mece el ala un segundo no deshace el ala baja: se juzga la media del rato", () => {
+    const f = nuevo("ala-baja");
+    const a = [
+      ...volar(f, lectura({ alabeo: -3.5 }), 2),
+      // La racha: el ala al otro lado y el morro fuera de su raya, un segundo.
+      ...volar(f, lectura({ alabeo: 2, rumbo: 124 }), 1),
+      ...volar(f, lectura({ alabeo: -3.5 }), 2.5),
+    ];
+    expect(a.map((s) => s.que)).toEqual(["presentar", "conElAlaBaja"]);
+    expect(f.ala!).toBeGreaterThan(1);
+    expect(f.ala!).toBeLessThan(3.5);
+  });
+
+  it("y con el camino fuera del eje se empieza otra vez a contar", () => {
+    const f = nuevo("ala-baja");
+    const a = [
+      ...volar(f, lectura({ alabeo: -3.5 }), 4),
+      ...volar(f, lectura({ alabeo: -3.5, camino: 125 }), 0.5),
+      ...volar(f, lectura({ alabeo: -3.5 }), 4),
+    ];
+    expect(a.some((s) => s.que === "conElAlaBaja")).toBe(false);
   });
 
   it("con el ala contraria, no cuenta como ala baja", () => {

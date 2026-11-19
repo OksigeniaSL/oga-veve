@@ -20,7 +20,10 @@
  * escribe la tarjeta. Capturas **desde fuera**, que es desde donde se
  * distinguen las dos: el avión torcido sobre la raya, o derecho e inclinado.
  * El puerto, `OGA_PUERTO`; el peldaño, `OGA_TRAMO`; el avión, `OGA_AVION`; el
- * reloj, `OGA_VECES` (dos); con `OGA_GPU=1`, con la tarjeta de verdad.
+ * reloj, `OGA_VECES` (dos); con `OGA_GPU=1`, con la tarjeta de verdad; con
+ * `OGA_TRAZA=1`, la final en renglones: el morro y el camino desde la pista,
+ * el ala, el derrape, la verdadera, el viento de costado y lo que pide el
+ * triángulo (H32b).
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -74,6 +77,13 @@ const leer = (page) =>
       morro: ((((s.heading - h) * 180) / Math.PI + 540) % 360) - 180,
       ala: (Math.asin(-2 * (q.x * q.y + q.w * q.z)) * 180) / Math.PI,
       enElSuelo: s.onGround,
+      camino: ((((Math.atan2(s.velocity.x, -s.velocity.z) - h) * 180) / Math.PI + 540) % 360) - 180,
+      derrape: (s.beta * 180) / Math.PI,
+      piloto: o.pilotoAutomatico?.() ?? null,
+      // La ráfaga que lleva el modelo de vuelo encima del viento del parte: solo para la traza.
+      racha: j.flight?.racha ? { x: j.flight.racha.x, z: j.flight.racha.z } : null,
+      alabeoPedido: j.input?.controls?.aileron ?? null,
+      piePedido: j.input?.controls?.rudder ?? null,
       verdadera: s.airspeed,
       viento: j.vientoAqui?.aire ?? { x: 0, z: 0 },
       pista: r.heading,
@@ -201,9 +211,18 @@ try {
   let tarjetaMedida = null;
   let tarjetaDelPie = null;
   const fin = Date.now() + 6 * 60000;
+  const TRAZA = process.env.OGA_TRAZA === "1";
+  let trazaEn = 0;
   while (Date.now() < fin && !r.enElSuelo && r.ejercicio?.fase !== "cerrada") {
     await pausa(120);
     r = await leer(page);
+    if (TRAZA && Date.now() > trazaEn) {
+      trazaEn = Date.now() + 700;
+      const vc = -(r.viento.x * Math.cos((r.pista * Math.PI) / 180) + r.viento.z * Math.sin((r.pista * Math.PI) / 180));
+      console.log(
+        `    · ${Math.round(r.altura)} m  ${r.ejercicio.fase}  morro ${r.morro.toFixed(1)}  camino ${r.camino.toFixed(1)}  ala ${r.ala.toFixed(1)}  beta ${r.derrape.toFixed(1)}  ias ${(r.verdadera / 0.514444).toFixed(0)} kt  costado ${(vc / 0.514444).toFixed(1)} kt  pide ${r.ejercicio.pide.toFixed(1)}  eje ${r.eje.toFixed(1)}  racha de costado ${r.racha ? (-(r.racha.x * Math.cos((r.pista * Math.PI) / 180) + r.racha.z * Math.sin((r.pista * Math.PI) / 180)) / 0.514444).toFixed(1) : "?"} kt  ap ${r.piloto}  alerón ${r.alabeoPedido?.toFixed(2)}  pie ${r.piePedido?.toFixed(2)}`,
+      );
+    }
     const medido = TECNICA === "cangrejo" ? r.ejercicio.cangrejo : r.ejercicio.ala;
     if (!fotoMedida && medido !== null) {
       fotoMedida = true;
