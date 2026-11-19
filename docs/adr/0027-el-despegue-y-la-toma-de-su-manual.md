@@ -6167,10 +6167,20 @@ radial al nivel del mar, un 22 % por encima de la cuenta.
 
 ### Volado
 
-(pendiente)
+- **El vuelo entero en Tenerife Norte, en Taguató, con la avioneta**
+  (`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-20`, reloj por uno
+  y ×1,00 de verdad), **58 de 58**, 2 sin medir: sube al 9,2 % hasta los cien
+  metros, sin el avisador de pérdida; final estabilizada a 500 ft a 71 nudos,
+  toca a 1,1 m/s, a 0,3 m del eje y 287 m pasado el umbral, y apaga en su
+  puesto a los 999 s. Ni aviso de reserva ni llamada de combustible en todo
+  el vuelo, con los 28 kg de la vuelta al campo. El banco no lee los kilos
+  de un vuelo local: lo que se gasta volando está en la mesa.
+- **El JAZ 50** no se ha volado en el navegador: la cola del navegador no
+  llegó a su turno dentro del tope de este encargo.
 
 ### Lo que queda
 
+- **El vuelo entero con el JAZ 50 en el navegador** (ver arriba).
 - **El despegue del turbohélice**, un 21 % corto en la cuenta (ver arriba).
 - **El 1900D esperando abajo**, 347 kg/h en la cuenta, sin cifra suya con la
   que compararlo.
