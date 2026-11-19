@@ -663,6 +663,46 @@
       "ms": 3707,
       "h": "262c9960f2"
     },
+    "ejercicio.pista-corta.alAngulo": {
+      "ms": 3607,
+      "h": "99f84f6a49"
+    },
+    "ejercicio.pista-corta.antes": {
+      "ms": 9207,
+      "h": "4372678e6f"
+    },
+    "ejercicio.pista-corta.cierre": {
+      "ms": 9007,
+      "h": "54c253533b"
+    },
+    "ejercicio.pista-corta.cierreJusto": {
+      "ms": 7807,
+      "h": "bed2937e62"
+    },
+    "ejercicio.pista-corta.cierreParado": {
+      "ms": 3607,
+      "h": "45e263a88f"
+    },
+    "ejercicio.pista-corta.enVy": {
+      "ms": 1866,
+      "h": "9a2ce823cb"
+    },
+    "ejercicio.pista-corta.masDespacio": {
+      "ms": 3907,
+      "h": "27193cf18d"
+    },
+    "ejercicio.pista-corta.pasaste": {
+      "ms": 4507,
+      "h": "6c204ac8d3"
+    },
+    "ejercicio.pista-corta.pasasteJusto": {
+      "ms": 4607,
+      "h": "269f1fd959"
+    },
+    "ejercicio.pista-corta.solta": {
+      "ms": 2326,
+      "h": "0712b871fa"
+    },
     "ejercicio.pitot.acelera": {
       "ms": 4707,
       "h": "920b562d13"
@@ -6236,6 +6276,36 @@
     ],
     "ejercicio.gps.planBCrs": [
       "ejercicio.gps.planBCrs"
+    ],
+    "ejercicio.pista-corta.alAngulo": [
+      "ejercicio.pista-corta.alAngulo"
+    ],
+    "ejercicio.pista-corta.antes": [
+      "ejercicio.pista-corta.antes"
+    ],
+    "ejercicio.pista-corta.cierre": [
+      "ejercicio.pista-corta.cierre"
+    ],
+    "ejercicio.pista-corta.cierreJusto": [
+      "ejercicio.pista-corta.cierreJusto"
+    ],
+    "ejercicio.pista-corta.cierreParado": [
+      "ejercicio.pista-corta.cierreParado"
+    ],
+    "ejercicio.pista-corta.enVy": [
+      "ejercicio.pista-corta.enVy"
+    ],
+    "ejercicio.pista-corta.masDespacio": [
+      "ejercicio.pista-corta.masDespacio"
+    ],
+    "ejercicio.pista-corta.pasaste": [
+      "ejercicio.pista-corta.pasaste"
+    ],
+    "ejercicio.pista-corta.pasasteJusto": [
+      "ejercicio.pista-corta.pasasteJusto"
+    ],
+    "ejercicio.pista-corta.solta": [
+      "ejercicio.pista-corta.solta"
     ]
   }
 }

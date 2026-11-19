@@ -3943,6 +3943,156 @@
     }
   },
   {
+    "id": "ejercicio.pista-corta.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy salimos de una pista corta, con árboles al final. Frenos puestos y motor a tope; soltás, y en el aire, despacio y con la nariz alta hasta pasar los árboles",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy salimos de una pista corta, con árboles al final. Frenos puestos y motor a tope; soltás, y en el aire, despacio y con la nariz alta hasta pasar los árboles.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.solta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Motor a tope. ¡Ahora, soltá los frenos!",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Motor a tope. ¡Ahora, soltá los frenos!",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.alAngulo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso! Despacio y empinado: así se sube más en cada metro",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Eso! Despacio y empinado: así se sube más en cada metro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.masDespacio",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vas rápido. Un poco más de nariz: más despacio, más empinado",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Vas rápido. Un poco más de nariz: más despacio, más empinado.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.pasaste",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Pasaste los árboles con margen! Ahora bajá un poquito la nariz, para subir más rápido",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Pasaste los árboles con margen! Ahora bajá un poquito la nariz, para subir más rápido.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.pasasteJusto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pasaste muy cerca de los árboles. Ahora bajá un poquito la nariz, para subir más rápido",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Pasaste muy cerca de los árboles. Ahora bajá un poquito la nariz, para subir más rápido.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.enVy",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Bien! Así se sube más rápido",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Bien! Así se sube más rápido.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "De una pista corta: frenos, motor a tope y soltar; despacio y empinado hasta pasar los árboles, y después más rápido, que sube más deprisa",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "De una pista corta: frenos, motor a tope y soltar; despacio y empinado hasta pasar los árboles, y después más rápido, que sube más deprisa.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.cierreJusto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pasaste muy cerca de los árboles. La próxima, recién despegado, despacio y con la nariz alta hasta pasarlos: así se sube más en cada metro",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Pasaste muy cerca de los árboles. La próxima, recién despegado, despacio y con la nariz alta hasta pasarlos: así se sube más en cada metro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pista-corta.cierreParado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Bien decidido! Parar en la pista cuando no da también es despegar bien",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Bien decidido! Parar en la pista cuando no da también es despegar bien.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "ejercicio.rumbo.antes",
     "voz": "instructor",
     "idioma": "es-PY",

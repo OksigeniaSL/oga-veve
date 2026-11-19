@@ -2726,5 +2726,35 @@
   ],
   "ejercicio.gps.planBCrs": [
     "ejercicio.gps.planBCrs"
+  ],
+  "ejercicio.pista-corta.alAngulo": [
+    "ejercicio.pista-corta.alAngulo"
+  ],
+  "ejercicio.pista-corta.antes": [
+    "ejercicio.pista-corta.antes"
+  ],
+  "ejercicio.pista-corta.cierre": [
+    "ejercicio.pista-corta.cierre"
+  ],
+  "ejercicio.pista-corta.cierreJusto": [
+    "ejercicio.pista-corta.cierreJusto"
+  ],
+  "ejercicio.pista-corta.cierreParado": [
+    "ejercicio.pista-corta.cierreParado"
+  ],
+  "ejercicio.pista-corta.enVy": [
+    "ejercicio.pista-corta.enVy"
+  ],
+  "ejercicio.pista-corta.masDespacio": [
+    "ejercicio.pista-corta.masDespacio"
+  ],
+  "ejercicio.pista-corta.pasaste": [
+    "ejercicio.pista-corta.pasaste"
+  ],
+  "ejercicio.pista-corta.pasasteJusto": [
+    "ejercicio.pista-corta.pasasteJusto"
+  ],
+  "ejercicio.pista-corta.solta": [
+    "ejercicio.pista-corta.solta"
   ]
 }
