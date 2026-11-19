@@ -4282,3 +4282,113 @@ tiempo. Quedan `tenerife-norte taguato 12 jaz-90` y `tenerife-norte taguato 1
 jaz-50` dos veces cada uno, y `taguato 1 jaz-90` y `guyrami 3 jaz-20` para ver
 que no se rompen; la primera tirada no llegó a despegar porque el worktree no
 tenía `node_modules/three`, que el banco importa por su ruta.
+
+## Enmienda H34b (19-11-2026): el «stall, stall» de la avioneta subiendo en Taguató
+
+El vuelo entero de la JAZ 20 en Los Rodeos (`tenerife-norte taguato 1 jaz-20`)
+salía unas veces en verde y otras con la comprobación «en un vuelo normal no
+suena el avisador de pérdida» en rojo. En c25, una vez: 62 nudos, 157 m, α
+13,4° y 1,47 g. En una tirada intermedia de H29n, dos: a 175 m con 63 nudos y
+1,57 g, y a 266 m con 70 nudos y 1,88 g. Las tres con los flaps arriba. El
+«volvió» de esa comprobación habla de la final, pero esa es la historia de la
+comprobación: **las tres eran de la subida**, entre el «veve» del despegue y
+el «mainumby» del circuito, en el orden de los cantos. Es del piloto del
+banco. Las trazas de esta tanda están en `h34b/` del scratchpad.
+
+### Lo que hace el banco al pasar los ciento veinte metros
+
+La avioneta despega con los diez grados que le pone la instructora, sube por
+actitud —doce grados— y a los treinta metros `configurar` le quita los flaps:
+`flapsDeDespegueFuera`, que los aguanta hasta la altura y la velocidad de
+recogerlos, es solo de los que sube el automático. Limpia y a doce grados va a
+65–68 nudos indicados. A los ciento veinte metros, `ASENTAR_LA_SUBIDA`, deja la
+actitud y pasa a volar por velocidad, y la velocidad que pedía era
+`VELOCIDAD_DE_SUBIDA`, la Vr y un quince por ciento: 62,6 nudos verdaderos,
+una velocidad de flaps de despegue. Con el ala limpia, en Los Rodeos eso son
+58 o 59 indicados, 1,19 veces su pérdida limpia de 49.
+
+Y se pedía de golpe. Con el avión a 36 m/s y 32,2 pedidos, la palanca pasaba
+de cero a dos décimas en un segundo; el morro se iba a 25–30°, la velocidad
+caía a 56 nudos y de ahí se seguía subiendo a 56–64, con el ala a entre dos y
+seis grados del avisador. La traza de la tirada de antes de esta tanda —que salió
+en verde— lo enseña igual que las rojas: el morro a 29,9° a 137 m, la
+palanca a 0,21, el margen al avisador en 1,4° a 244 m. Lo que decidía el
+color era la racha y el tirón de después: con 1,47 g a 62 nudos ya suena.
+Era la misma subida de flaps de despegue con el ala limpia que el #192 quitó
+en los reactores (ver `SUBIDA_LIMPIA`), y en la avioneta se había quedado.
+
+No es del juego. La lista le pide a quien juega recoger los flaps a 200 pies
+y 60 nudos, la de su manual (`recogeLosFlaps`), y la escalera le pinta la
+subida a 85 nudos (`indicadaDeSubida`); el 172 de verdad sube limpio a su Vy,
+74. Nadie que siga lo que le dice el juego sube limpio a 58 nudos.
+
+### Lo cambiado
+
+`aQueSeSube` en el banco: en el modelo completo, con los flaps arriba, la
+subida por velocidad pide `SUBIDA_LIMPIA` —1,35 veces la pérdida limpia, 66
+nudos indicados— pasada a verdadera, que es la de los demás aviones limpios y
+casi lo que ya trae de la actitud: el relevo de una ley a la otra no tira de
+nada. Con los flaps fuera, y en Guyrami, sigue la de antes. Solo la recorre
+la JAZ 20: los que sube el automático (`SUBE_CON_EL_MORRO`) vuelan por actitud
+toda la subida, el JAZ 40 entre ellos.
+
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1`, con la traza del ala y
+las voces:
+
+| Tirada | Avisador | Margen mínimo subiendo | Morro máximo | Palanca de 110 a 180 m | Velocidad de 110 a 180 m |
+|---|---|---|---|---|---|
+| antes (código de main) | ni una vez | 1,4° a 244 m, 59 kt | 29,9° | hasta 0,21 | 56–68 kt |
+| después, 1 | ni una vez | 3,2° a 44 m, 64 kt (aún por actitud) | 17,4° | hasta 0,06 | 61–66 kt |
+| después, 2 | ni una vez | 3,3° a 75 m, 66 kt (aún por actitud) | 16,9° | hasta 0,06 | 63–67 kt |
+| después, 3 | **una, en la frustrada** (ver abajo) | 2,4° a 255 m, 62 kt | 17,8° | hasta 0,09 | 61–67 kt |
+
+En las tres de después la subida no se acerca al avisador: el morro no pasa
+de 18°, la palanca de una décima en el relevo de los ciento veinte metros, y
+el peor margen queda entre 2,4° y 3,3°, contra 1,4° en la de antes. La de
+antes salió en verde, como c26 y c27: el rojo dependía de la racha, y lo que
+se compara es el margen, no el color. Las dos primeras, en verde entero (58
+de 58). La tercera, no, y por otra cosa.
+
+### La frustrada de la tercera
+
+En la tercera la torre mandó irse al aire a 51 m —«pista ocupada», con otro
+aterrizando delante—, y el avisador sonó a 84 m: 58 nudos, α 13,3°, 1,40 g y
+los flaps en 0,19, saliendo. El banco hace en la avioneta la frustrada que el
+#192 ya le quitó a los reactores: `irseConFlaps`, que deja la primera muesca
+hasta la altura y la velocidad de recogerla, es solo de los que sube el
+automático, así que `configurar` le pidió los flaps arriba del todo en
+cuanto dejó la final, mientras subía por actitud a doce grados. De 68 nudos
+bajó a 57 en cinco segundos con el ala quedándose limpia, y con 1,4 g en el
+vaivén del morro sonó. El manual del 172 dice otra cosa: «Wing Flaps —
+RETRACT TO 20°», 60 nudos, y los diez últimos grados no se quitan hasta estar
+a salvo y a 65 (Cessna 172S *Information Manual*, sección 4, *Balked
+Landing*). Es del banco, y no se ha cambiado en esta tanda: no
+había tiempo de volarlo. Lo que toca es que `irseConFlaps` valga también para
+la avioneta en el modelo completo, y volar una frustrada con la pista ocupada
+para verlo. La toma de después de esa frustrada fue a 2,75 m/s, también en
+rojo; no se ha mirado.
+
+### Lo que queda
+
+- **La frustrada de la avioneta**, la de arriba.
+- **La bocina al rotar.** En las cuatro tiradas con traza, el banco rota la
+  avioneta con ocho décimas de palanca y sin ritmo —`aSuRitmo` es solo de los
+  que sube el automático—, el morro llega a 16,1°, que es justo el ángulo al
+  que toca la cola (`maxGroundPitch`), y el avisador está puesto entre 0,08 y
+  0,31 s a dos metros del suelo. En la avioneta eso es la bocina, y suena: es
+  lo que sonaría en un 172 rotado así. La comprobación no lo cuenta porque mira
+  los cantos, y por debajo de treinta metros la instructora no explica. Lo que
+  no es real es rotar así. Rotar la JAZ 20 a su ritmo cambia su carrera en
+  todos los escenarios y pide su propia ronda.
+- **El nivelado.** `aLaAltura` manda la palanca con la velocidad vertical que
+  falta, sin amortiguar el cabeceo, y al pasar de subir a nivelar da un tirón
+  que depende de lo que se suba en ese momento. Con la subida de ahora nivela a
+  62–78 nudos con 1,09–1,52 g. La segunda pérdida de la tirada de H29n, a 266
+  m con 70 nudos y 1,88 g, está a la altura a la que nivela, y no llevaba
+  traza: no está medido que fuera ese tirón después de un morro a 25°, que es
+  lo que parece. Si vuelve a salir con la subida nueva, el sitio es ese.
+- **El JAZ 40 no se voló** en esta tanda. El cambio no puede tocarlo: sube por
+  actitud de principio a fin (`SUBE_CON_EL_MORRO`) y vuelve de `subirDeVerdad`
+  antes de llegar a `aQueSeSube`.
