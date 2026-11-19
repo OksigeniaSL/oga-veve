@@ -152,11 +152,18 @@ export const VELOCIDAD_A_CINCO = 5;
 /** Lo que tiene que sostenerse una velocidad para contarla, s. */
 export const SOSTENIDA = 3;
 /**
- * **Por debajo de cuánto margen sobre las copas se pasa «justo»**, m: diez.
- * Por encima, con margen. Es un tercio largo de la altura de los árboles: lo
- * que separa un despegue que se repetiría tranquilo de uno que no.
+ * **Lo que puede bailar la velocidad en ese rato**, nudos: cuatro. Pasar por
+ * la banda acelerando no es sostenerla: en el banco, quien salía a buscar la
+ * Vy cruzaba los 56 nudos a dos por segundo y se le felicitaba el ángulo.
  */
-export const MARGEN_HOLGADO = 10;
+export const QUIETA = 4;
+/**
+ * **Por debajo de cuánto margen sobre las copas se pasa «justo»**, m: quince,
+ * la altura de los árboles otra vez. Por encima, con margen. Volado en el
+ * juego, a la del obstáculo se pasa con 59 m y saliendo a buscar la Vy con
+ * 13: con diez, los dos se felicitaban igual.
+ */
+export const MARGEN_HOLGADO = 15;
 /**
  * **A partir de cuántos nudos de más se pide más morro**, antes del monte: diez
  * por encima de la del obstáculo, el borde de arriba del examen práctico.
@@ -223,6 +230,8 @@ export class PistaCorta {
   private pedidoMasDespacio = false;
   private sostenida = 0;
   private sumada = 0;
+  private menor = Infinity;
+  private mayor = -Infinity;
   private comoCerro: CierreDeLaPistaCorta | null = null;
   private comoPaso: ComoSePaso | null = null;
   private margenMedido: number | null = null;
@@ -305,7 +314,7 @@ export class PistaCorta {
       }
       if (!this.angulo && Math.abs(l.indicada - v.sobreElObstaculo) <= VELOCIDAD_A_CINCO) {
         this.sostener(l.indicada, dt);
-        if (this.sostenida >= SOSTENIDA) {
+        if (this.sostenidaDeVerdad) {
           this.angulo = true;
           sucesos.push({ que: "alAngulo", kt: this.media });
         }
@@ -320,7 +329,7 @@ export class PistaCorta {
     // Pasado el monte: a la Vy, y sostenida, se cierra.
     if (Math.abs(l.indicada - v.vy) <= VELOCIDAD_A_CINCO && !l.enElSuelo) {
       this.sostener(l.indicada, dt);
-      if (this.sostenida >= SOSTENIDA) {
+      if (this.sostenidaDeVerdad) {
         sucesos.push({ que: "enVy", kt: this.media });
         this.cerrar(this.comoPaso ?? "conMargen", sucesos);
       }
@@ -346,13 +355,27 @@ export class PistaCorta {
   private get media(): number {
     return this.sostenida > 0 ? this.sumada / this.sostenida : 0;
   }
+  /**
+   * **El rato entero y quieta**: tres segundos dentro de la banda, y sin
+   * bailar más de `QUIETA`. Si baila, el rato vuelve a empezar desde aquí.
+   */
+  private get sostenidaDeVerdad(): boolean {
+    if (this.sostenida < SOSTENIDA) return false;
+    if (this.mayor - this.menor <= QUIETA) return true;
+    this.empezarElRato();
+    return false;
+  }
   private sostener(kt: number, dt: number): void {
     this.sostenida += dt;
     this.sumada += kt * dt;
+    this.menor = Math.min(this.menor, kt);
+    this.mayor = Math.max(this.mayor, kt);
   }
   private empezarElRato(): void {
     this.sostenida = 0;
     this.sumada = 0;
+    this.menor = Infinity;
+    this.mayor = -Infinity;
   }
   private cerrar(como: CierreDeLaPistaCorta, sucesos: SucesoDeLaPistaCorta[]): void {
     this.faseActual = "cerrada";

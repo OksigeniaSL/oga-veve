@@ -257,12 +257,23 @@ describe("el ejercicio de la pista corta", () => {
     expect(p.cierre).toBe("conMargen");
   });
 
+  it("pasar por la banda acelerando no es sostener el ángulo", () => {
+    const p = nuevo();
+    volar(p, [{ gas: 1 }, { gas: 1, sobreElSuelo: 26, indicada: 50 }]);
+    const s: SucesoDeLaPistaCorta[] = [];
+    // De 51 a 61 nudos a dos por segundo, que es lo que hacía el banco saliendo a buscar la Vy.
+    for (let t = 0; t < 5; t += 0.1)
+      s.push(...p.avanzar(lectura({ gas: 1, enElSuelo: false, indicada: 51 + 2 * t, pasadoElFinal: -300, sobreLasCopas: 0 }), 0.1));
+    expect(s.map((x) => x.que)).not.toContain("alAngulo");
+  });
+
   it("rápido antes del monte pide más morro una vez, y pasa justo", () => {
     const p = nuevo();
     volar(p, [{ gas: 1 }, { gas: 1, sobreElSuelo: 26, indicada: 50 }]);
     const s = volar(p, [{ gas: 1, enElSuelo: false, indicada: 72, pasadoElFinal: -100, sobreLasCopas: 0 }], 4);
     expect(s.map((x) => x.que)).toEqual(["masDespacio"]);
-    const pasa = volar(p, [{ gas: 1, enElSuelo: false, indicada: 74, pasadoElFinal: 121, sobreLasCopas: 4 }], 0.1);
+    // Los 13 m del banco saliendo a buscar la Vy: justo.
+    const pasa = volar(p, [{ gas: 1, enElSuelo: false, indicada: 74, pasadoElFinal: 121, sobreLasCopas: 13 }], 0.1);
     expect(pasa[0]).toMatchObject({ que: "pasaste", como: "justo" });
   });
 
