@@ -43,8 +43,10 @@ describe("el motor con turbo", () => {
     expect(loQueDaElMotor(PANAMBI, crucero)).toBeGreaterThan(loQueDaElMotor(PYKASU, crucero));
   });
 
-  it("y los demás, con la ley de siempre", () => {
-    expect(loQueDaElMotor(PYKASU, sigma(10000))).toBeCloseTo(Math.pow(sigma(10000), 0.7), 9);
+  // Los atmosféricos, con la de Gagg y Farrar: ver `techo.test.ts` (H37g).
+  it("y los atmosféricos, con la ley de Gagg y Farrar", () => {
+    const s = sigma(10000);
+    expect(loQueDaElMotor(PYKASU, s)).toBeCloseTo(s - (1 - s) / 7.55, 9);
   });
 
   /*

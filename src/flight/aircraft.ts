@@ -429,8 +429,7 @@ export function tieneReversa(a: AircraftConfig): boolean {
 /**
  * **Lo que da el motor con este aire**, como fracción de lo que da al nivel
  * del mar en un día estándar: la densidad a la 0,7, la ley de los libros de
- * proyecto para el empuje de una turbina y, en primera aproximación, para la
- * potencia de un motor de pistón. Ver el ADR 0011.
+ * proyecto para el empuje de una turbina. Ver el ADR 0011.
  *
  * **Y el de pistón con turbo, entero hasta su altitud crítica.** Hasta ahí el
  * turbo le da el aire de nivel del mar y el motor da lo mismo; por encima, lo
@@ -455,18 +454,24 @@ export function tieneReversa(a: AircraftConfig): boolean {
  * cada uno llevara la suya, la carrera que se anuncia y la que se vuela
  * dirían cosas distintas.
  *
- * El de pistón sin compresor pierde, de verdad, algo más deprisa —la ley de
- * Gagg y Farrar, `σ − (1 − σ)/7,55`, le deja el 71 % a tres mil metros donde
- * esta le deja el 81 %—. No se usa aquí: el ADR 0012 lo dejó pendiente de
- * decidir qué motor lleva el JAZ 40, y ya está decidido —el de su clase, con
- * turbo—. La avioneta y el fumigador siguen con la de todos.
+ * **Y el de pistón sin compresor, con la ley de Gagg y Farrar**,
+ * `σ − (1 − σ)/7,55`: pierde más deprisa que la densidad, porque además de
+ * entrarle menos aire tiene que mover sus pistones y sus bombas con lo que
+ * queda. Le deja el 70 % a diez mil pies y el 65 % a doce mil, donde la de
+ * las turbinas le dejaba el 81 y el 77; el manual del 172R pone la fila más
+ * alta de su tabla de crucero en el 72 y el 69 % (figura 5-8), algo más por el
+ * aire que la marcha le mete en la toma. Con la de todos, la avioneta subía a
+ * 22.400 ft y el fumigador a 20.000, donde el 172R se queda en 13.500 y el Ag
+ * Cat en trece o catorce mil (ADR 0027, enmienda H37g). Se decide por el
+ * motor, como la reversa: el de pistón y el radial; el turbohélice y el
+ * turbofán siguen con la de todos.
  *
  * Lo que no cuenta: el calor del día también le quita al de turbo —el uno por
  * ciento cada seis grados Fahrenheit sobre la estándar de su manual—, y aquí
  * solo se sabe la densidad, no qué parte de ella es temperatura.
  */
 export function loQueDaElMotor(
-  ac: Pick<AircraftConfig, "alturaCritica" | "caidaSobreLaCritica">,
+  ac: Pick<AircraftConfig, "alturaCritica" | "caidaSobreLaCritica" | "sound">,
   sigma: number,
 ): number {
   if (ac.alturaCritica !== null) {
@@ -475,7 +480,19 @@ export function loQueDaElMotor(
     // Por encima, con la caída de su clase: ver `caidaSobreLaCritica`.
     return Math.pow(Math.max(0, sigma) / enLaCritica, ac.caidaSobreLaCritica ?? 1);
   }
+  if (esDePiston(ac)) return Math.max(0, sigma - (1 - sigma) / GAGG_Y_FARRAR);
   return Math.pow(Math.max(0, sigma), 0.7);
+}
+
+/**
+ * **El 7,55 de Gagg y Farrar**: lo que cuesta mover el motor por dentro, en
+ * la forma en que lo escriben los libros de proyecto. Ver `loQueDaElMotor`.
+ */
+const GAGG_Y_FARRAR = 7.55;
+
+/** Si su motor es de pistón —en línea o radial— y no un turbohélice ni un turbofán. */
+function esDePiston(ac: Pick<AircraftConfig, "sound">): boolean {
+  return ac.sound.engine === "piston" || ac.sound.engine === "radial";
 }
 
 /**

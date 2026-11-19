@@ -728,11 +728,15 @@ describe("y sin sacudir a nadie: los topes de un automático de verdad", () => {
           });
           enTopes(maniobra(a, capas, alto, ias, va({}), 60), "sosteniendo");
           /*
-           * Tres minutos para subir trescientos metros: de sobra en un
+           * Cuatro minutos para subir trescientos metros: de sobra en un
            * reactor, y lo justo en una avioneta en su crucero, donde lo que
-           * sube es lo poco que le sobra al motor.
+           * sube es lo poco que le sobra al motor. Eran tres, y la del JAZ 20
+           * a tres mil metros no los sube en tres: el 172R, a diez mil pies,
+           * sube 268 ft/min a lo más (su manual, figura 5-6), y 300 m son
+           * 3,7 minutos. Con el motor de pistón de antes subía de más (ADR
+           * 0027, enmienda H37g).
            */
-          const sube = maniobra(a, capas, alto, ias, va({ altitud: alto + 300 }), 180);
+          const sube = maniobra(a, capas, alto, ias, va({ altitud: alto + 300 }), 240);
           enTopes(sube, "subiendo trescientos metros");
           expect(Math.abs(sube.altura - (alto + 300))).toBeLessThan(15);
           const baja = maniobra(a, capas, alto, ias, va({ altitud: alto - 300 }), 120);
