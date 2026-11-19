@@ -1019,6 +1019,7 @@ import {
   DEL_CUADRO,
   DURA_EL_SENALADO,
   LoSenalado,
+  SIN_VER,
   conSuSinVer,
   laQueSePuedeDecir,
   nombraLoQueNoSeVe,
@@ -7866,6 +7867,12 @@ export class Game {
       senalar: (clave) => {
         for (const p of piezasDe(clave)) this.senalarLaPieza(p);
       },
+      enSuLugar: (clave) => this.enSuLugar(clave),
+      porQueNoSeVe: (clave) =>
+        piezasDe(clave)
+          .filter((p) => !this.seVe(p))
+          .map((p) => (p === "papi" ? `papi: ${this.porQueNoSeVeElPapi()}` : p))
+          .join(", "),
     };
     /*
      * Y con los paneles ya montados, el vuelo se entera de cuándo hay alguno
@@ -35370,6 +35377,34 @@ export class Game {
   };
 
   /**
+   * **La gemela que no nombra lo que no se ve**, de las que se pidieron
+   * nombrándolo: la del consejo, que la elige él mismo con lo que se vería sin
+   * su objetivo —ver `decirElConsejo`—, o su `SIN_VER`. Solo si está grabada:
+   * sin su toma sería muda en el navegador de quien más juega. Ver `hablarYa`
+   * en `audio/instructor-grabado.ts`.
+   */
+  private enSuLugar(clave: string | undefined): { readonly texto: string; readonly clave: string } | null {
+    if (!clave) return null;
+    const delConsejo = this.gemelaDelConsejo.get(clave);
+    if (delConsejo && this.instructor.vozDe(delConsejo.clave)) return delConsejo;
+    const sinVer = SIN_VER[clave];
+    if (sinVer && this.instructor.vozDe(sinVer)) return { texto: t(sinVer as TranslationKey), clave: sinVer };
+    return null;
+  }
+  /** La gemela de cada consejo que nombra algo, la última que se pidió. Ver `enSuLugar`. */
+  private readonly gemelaDelConsejo = new Map<string, { readonly texto: string; readonly clave: string }>();
+
+  /** Por qué no se ve el PAPI ahora, para los bancos. Ver `seDistingueElPapi`. */
+  private porQueNoSeVeElPapi(): string {
+    const v = this.papiVisto;
+    if (!v) return "sin PAPI a la vista de esta cámara";
+    const medida = `a ${Math.round(v.distancia)} m, ${Math.round(v.anchoPx)} px, en ${v.x.toFixed(2)},${v.y.toFixed(2)} (franja ${this.franjaLibre.abajo.toFixed(2)}–${this.franjaLibre.arriba.toFixed(2)})`;
+    if (!this.papiSeDistingue)
+      return `${!v.delante ? "detrás" : v.tapado ? "tapado por el avión" : "no se distingue"} · ${medida}`;
+    return `lo tapa ${this.hud.queTapaElPunto(...this.papiEnPixeles(v)) ?? "?"} · ${medida}`;
+  }
+
+  /**
    * **Dónde caen las luces del PAPI en la pantalla**, en píxeles, si se
    * distinguen y nada del HUD las tapa; si no, `null`. Detrás del cartel de
    * la radio no se ven aunque la cámara las tenga delante: medido en la final
@@ -35380,12 +35415,14 @@ export class Game {
   private papiEnLaPantalla(): { x: number; y: number } | null {
     const v = this.papiVisto;
     if (!this.papiSeDistingue || !v) return null;
+    const [x, y] = this.papiEnPixeles(v);
+    return this.hud.tapaElPunto(x, y) ? null : { x, y };
+  }
+
+  /** Dónde caen esas luces en la pantalla, en píxeles. */
+  private papiEnPixeles(v: PapiVisto): [number, number] {
     const caja = this.renderer.domElement.getBoundingClientRect();
-    const donde = {
-      x: caja.left + ((v.x + 1) / 2) * caja.width,
-      y: caja.top + ((1 - v.y) / 2) * caja.height,
-    };
-    return this.hud.tapaElPunto(donde.x, donde.y) ? null : donde;
+    return [caja.left + ((v.x + 1) / 2) * caja.width, caja.top + ((1 - v.y) / 2) * caja.height];
   }
 
   /** La señala mientras se dice. Ver `LoSenalado`. */
@@ -35493,6 +35530,8 @@ export class Game {
     senalados: Partial<Record<Pieza, number>>;
     aro: { x: number; y: number } | null;
     noSeVeia: string[];
+    /** Las que se fueron de la vista en la cola y sonaron con su gemela. Ver `enSuLugar`. */
+    dichasEnSuLugar: string[];
   } {
     return {
       papi: this.papiVisto,
@@ -35503,6 +35542,7 @@ export class Game {
       senalados: { ...this.nombrado.edades },
       aro: this.aroDelPapi.donde,
       noSeVeia: [...this.instructor.noSeVeia],
+      dichasEnSuLugar: [...this.instructor.dichasEnSuLugar],
     };
   }
 
@@ -35867,6 +35907,24 @@ export class Game {
     else if (f.grabadas.length) {
       const g = f.grabadas[Math.floor(Math.random() * f.grabadas.length)]!;
       forma = laForma(g.clave as TranslationKey, g.forma);
+    }
+    /*
+     * **Y su gemela sin objetivo**, por si al tocarle turno lo nombrado ya no
+     * se ve: la que se elegiría sin él, grabada. La dice la boca en su lugar;
+     * ver `enSuLugar` y `hablarYa` en `audio/instructor-grabado.ts` (H29l).
+     */
+    if (forma && piezasDe(forma.id).length) {
+      const sin = fraseDe(c, "nada", frena, modo, this.lucesDe(this.elCampo())?.unidades === 2 ? "apapi" : "papi");
+      const g0 = sin.grabadas[0];
+      const gemela =
+        sin.nueva && this.instructor.vozDe(sin.nueva)
+          ? { texto: t(sin.nueva as TranslationKey), id: sin.nueva }
+          : g0
+            ? laForma(g0.clave as TranslationKey, g0.forma)
+            : null;
+      if (gemela && gemela.id !== forma.id && !piezasDe(gemela.id).length)
+        this.gemelaDelConsejo.set(forma.id, { texto: gemela.texto, clave: gemela.id });
+      else this.gemelaDelConsejo.delete(forma.id);
     }
     const larga = forma?.texto ?? (f.nueva ? t(f.nueva as TranslationKey) : "");
     /*

@@ -181,6 +181,14 @@ export interface LoNombrado {
   nombraLoQueNoSeVe(clave: string | undefined): boolean;
   /** Empieza a decirse: se señala lo que nombra. */
   senalar(clave: string | undefined): void;
+  /**
+   * **La que dice lo mismo sin nombrar lo que no se ve**, grabada, si la hay.
+   * Ver `hablarYa`: lo que se fue de la vista mientras esperaba turno se dice
+   * así, no se calla.
+   */
+  enSuLugar?(clave: string | undefined): { readonly texto: string; readonly clave: string } | null;
+  /** Por qué no se ve lo que nombra, para los bancos. */
+  porQueNoSeVe?(clave: string | undefined): string;
 }
 
 export class InstructorGrabado implements Instructor {
@@ -528,11 +536,19 @@ export class InstructorGrabado implements Instructor {
    */
   readonly noSeVeia: string[] = [];
 
+  /**
+   * Las que se fueron de la vista esperando turno y se dijeron con su gemela
+   * que no lo nombra, «la pedida → la dicha». Para los bancos. Ver `hablarYa`.
+   */
+  readonly dichasEnSuLugar: string[] = [];
+
   /** Si la puerta de lo nombrado la para, y entonces se apunta. */
   private noSeVe(clave: string | undefined): boolean {
     if (!this.loNombrado?.nombraLoQueNoSeVe(clave)) return false;
     if (import.meta.env.DEV) {
-      this.noSeVeia.push(clave ?? "");
+      // Y por qué, si quien mira lo sabe: sin eso, el banco solo podía adivinar.
+      const porque = this.loNombrado.porQueNoSeVe?.(clave);
+      this.noSeVeia.push(`${clave ?? ""}${porque ? ` (${porque})` : ""}`);
       if (this.noSeVeia.length > 5000) this.noSeVeia.shift();
     }
     return true;
@@ -656,7 +672,25 @@ export class InstructorGrabado implements Instructor {
     listo: (noSono?: boolean) => void,
     soloGrabada = false,
   ): (() => void) | void {
-    // Lo que nombraba ya no se ve: se cae sin sonar. Ver `loNombrado`.
+    /*
+     * **Y si se fue de la vista esperando turno, se dice lo mismo sin
+     * nombrarlo** (H29l). Quien la pidió eligió la que nombraba lo que se veía
+     * entonces, y entre pedir y hablar puede pasar la frase de delante: en la
+     * final de Los Rodeos con el JAZ 20, el consejo de bajar la nariz se pidió
+     * con el PAPI a la vista —«consejo narizAbajo (alto, papi, final)»— y al
+     * tocarle la puerta lo paró; se callaba entero y el consejo se quedaba en
+     * la tarjeta. La acción sigue siendo verdad: la dice su gemela sin el
+     * «hasta», la que quien la pidió habría elegido ahora. Ver `enSuLugar`.
+     */
+    const otra = this.loNombrado?.nombraLoQueNoSeVe(clave) ? this.loNombrado.enSuLugar?.(clave) : null;
+    if (otra && otra.clave !== clave && !this.loNombrado?.nombraLoQueNoSeVe(otra.clave)) {
+      if (import.meta.env.DEV) {
+        this.dichasEnSuLugar.push(`${clave ?? ""} → ${otra.clave}`);
+        if (this.dichasEnSuLugar.length > 5000) this.dichasEnSuLugar.shift();
+      }
+      return this.hablarYa(otra.texto, otra.clave, urgencia, undefined, alSonar, listo, soloGrabada);
+    }
+    // Lo que nombraba ya no se ve y no tiene gemela: se cae sin sonar. Ver `loNombrado`.
     if (this.noSeVe(clave)) {
       alSonar?.("se-cae", "no-se-ve");
       listo(true);
