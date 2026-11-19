@@ -93,7 +93,16 @@ export type Percance =
    * del aire o rodando desde la orilla— no flota, y un helicóptero sin
    * flotadores tampoco. Ver `percanceEnElAgua`.
    */
-  | "agua";
+  | "agua"
+  /**
+   * **Se metió en un árbol**: atravesó una copa, o un tronco, con velocidad.
+   *
+   * Es lo que hay al final de una pista corta —el obstáculo de cincuenta pies
+   * de toda tabla de despegue es una fila de árboles— y lo que bordea un
+   * campo de hierba. Hasta hoy el avión pasaba por dentro de ellos como si
+   * fueran humo. Ver `holguraDeLaCopa` y `world/arboleda.ts`.
+   */
+  | "arbol";
 
 /**
  * A qué velocidad un contacto deja de ser un roce y pasa a ser un percance,
@@ -306,4 +315,35 @@ export function percanceEnElAgua(c: {
     c.superficie === "campo" &&
     !c.flotadores
   );
+}
+
+/**
+ * **Lo que se puede rozar de una copa sin romper nada, a tolerancia uno**, m.
+ *
+ * Lo de fuera de una copa son hojas y ramitas, y una avioneta que las barre
+ * con las ruedas puede volver a casa con hojas en el tren: pasa, y se cuenta
+ * en los informes de accidentes como lo que estuvo a punto de ser uno. Dos
+ * metros es esa piel de la copa en un lapacho de quince, que tiene cuatro de
+ * semialto; de ahí para dentro están las ramas que paran un avión.
+ *
+ * Es una simplificación y se dice como tal: no hay una cifra de cuánta copa
+ * aguanta un tren. Lo que sí es de verdad es el orden: rozar las hojas de
+ * arriba no es meterse en el árbol.
+ */
+export const ROZAR_LA_COPA = 2;
+
+/**
+ * **Cuánto se puede rozar la copa en este peldaño**, m: lo que crece con
+ * `crashTolerance`, como crece lo que aguanta el tren al tocar
+ * (`FlightModel.limiteDeCaida`). En Taguató Ruvichá, nada: tocar la copa que
+ * se ve es tocar el árbol. En Taguató, ochenta centímetros; en Tukã y en
+ * Guyrami, los dos metros de hojas.
+ *
+ * **Meterse en el árbol es percance en los cuatro peldaños**, como meterse en
+ * un edificio o tocar el campo volando: lo que se gradúa es cuánta piel de
+ * copa se perdona, no si el árbol existe. Un árbol que se atraviesa enseña
+ * que los árboles del final de la pista dan igual.
+ */
+export function holguraDeLaCopa(crashTolerance: number): number {
+  return ROZAR_LA_COPA * Math.max(0, Math.min(1, crashTolerance));
 }

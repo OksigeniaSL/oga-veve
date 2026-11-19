@@ -81,6 +81,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import type { Aerodrome, Punto } from "./aerodrome";
 import { mulberry32 } from "./noise";
 import type { PinturaEncima } from "./grano";
+import type { Arboleda, FormaDeArbol } from "./arboleda";
 
 /** Cota del terreno en coordenadas de mundo del campo. */
 export type Cota = (x: number, z: number) => number;
@@ -610,6 +611,30 @@ const SOMBRA: Record<Especie, number> = {
   lapacho: 4.6,
   timbo: 11,
 };
+
+/**
+ * **La forma que se toca de cada especie**: la bola principal de su copa,
+ * como la dibuja `arbol`, y su tronco. Ver `world/arboleda.ts`.
+ *
+ * La bola es un icosaedro, que por dentro llega a ocho décimas del radio en
+ * el centro de las caras y a uno en las puntas: se toma nueve décimas, que es
+ * lo que se ve por fuera casi en todas partes. Las bolas pequeñas de al lado
+ * y las hojas sueltas del pindó no cuentan: son el adorno de la silueta.
+ */
+const FORMA: Record<Especie, FormaDeArbol> = (() => {
+  const bola = (radio: number, semialto: number, centro: number, tronco: number, troncoAlto: number): FormaDeArbol => ({
+    copa: { tipo: "elipsoide", radio: radio * 0.9, semialto: semialto * 0.9, centro },
+    tronco: { radio: tronco, alto: troncoAlto },
+  });
+  return {
+    mango: bola(5.4, 4, 6, 0.55, 3.4),
+    naranjo: bola(1.9, 1.7, 2.3, 0.17, 1.1),
+    pindo: bola(3.3, 1.1, 10.4, 0.24, 11),
+    karanday: bola(2.3, 1.7, 10.1, 0.24, 9.5),
+    lapacho: bola(4.2, 2.6, 7, 0.42, 5.2),
+    timbo: bola(11.5, 3.4, 10.5, 1.2, 4.2),
+  };
+})();
 
 /**
  * Un árbol, en piezas de colores. Pocos triángulos y con la silueta de su
@@ -1214,6 +1239,8 @@ export function crearGranja(
   cota: Cota,
   fecha: Date,
   semilla: number,
+  /** Dónde apuntar cada árbol para que se toque. Ver `world/arboleda.ts`. */
+  arboleda?: Arboleda,
 ): Granja | null {
   if (!aero.granja) return null;
   const marco = marcoDe(aero);
@@ -1360,7 +1387,9 @@ export function crearGranja(
     if (enLaFranja(x, z) || cercaDeLoPavimentado(x, z, 6) || ocupado(x, z)) return;
     if (asomaPorLaSenda(x, z, ALTO[especie] * escala)) return;
     const y = cota(x, z);
-    arbol(obra, especie, x, y, z, escala, azar() * Math.PI * 2, enFlor, azar);
+    const giro = azar() * Math.PI * 2;
+    arbol(obra, especie, x, y, z, escala, giro, enFlor, azar);
+    arboleda?.plantar(x, y, z, escala, giro, FORMA[especie]);
     sombras.poner(x, z, SOMBRA[especie] * escala, 0.3, cota);
   };
   // A la sombra de la casa, los mangos.

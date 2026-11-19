@@ -42,6 +42,7 @@ import { ValueNoise2D, mulberry32 } from "./noise";
 import type { Scenario } from "./scenarios";
 import type { Aerodrome, Punto } from "./aerodrome";
 import { techoSobreLaPista } from "./superficie-de-aproximacion";
+import type { Arboleda, FormaDeArbol } from "./arboleda";
 
 /** Cota del terreno en unas coordenadas de mundo. */
 export type GroundSampler = (x: number, z: number) => number;
@@ -250,6 +251,10 @@ export function createVegetation(
    * una casa es un monte con una casa dentro.
    */
   fuera?: (x: number, z: number) => boolean,
+  /**
+   * **Y dónde apuntar cada árbol para que se toque.** Ver `world/arboleda.ts`.
+   */
+  arboleda?: Arboleda,
 ): Group {
   const group = new Group();
   group.name = "vegetacion";
@@ -381,9 +386,11 @@ export function createVegetation(
 
     const size =
       species.scale[0] + random() * (species.scale[1] - species.scale[0]);
+    const giro = random() * Math.PI * 2;
     position.set(x, height, z);
-    rotation.setFromAxisAngle(up, random() * Math.PI * 2);
+    rotation.setFromAxisAngle(up, giro);
     scale.set(size, size, size);
+    arboleda?.plantar(x, height, z, size, giro, formaDe(species));
 
     const matrix = new Matrix4().compose(position, rotation, scale);
     if (species === LAPACHO && random() < FLOWERING) flowering.push(matrix);
@@ -519,21 +526,45 @@ function buildSpecies(
  * asomara por encima sería un obstáculo que no cuenta. Los demás, algo más
  * bajos, que un monte no está podado a regla.
  */
-export function filaDeArboles(puntos: readonly { readonly x: number; readonly y: number; readonly z: number }[], alto: number): Group {
+export function filaDeArboles(
+  puntos: readonly { readonly x: number; readonly y: number; readonly z: number }[],
+  alto: number,
+  /** Y dónde apuntarlos para que se toquen. Ver `world/arboleda.ts`. */
+  arboleda?: Arboleda,
+): Group {
   const cima = LAPACHO.crown.lift + LAPACHO.crown.radius * LAPACHO.crown.height;
   const random = mulberry32(0x6d6f6e74);
   const arriba = new Vector3(0, 1, 0);
+  const forma = formaDe(LAPACHO);
   const matrices = puntos.map((p, i) => {
     const escala = (alto / cima) * (i === 0 ? 1 : 0.85 + random() * 0.15);
+    const giro = random() * Math.PI * 2;
+    arboleda?.plantar(p.x, p.y, p.z, escala, giro, forma);
     return new Matrix4().compose(
       new Vector3(p.x, p.y, p.z),
-      new Quaternion().setFromAxisAngle(arriba, random() * Math.PI * 2),
+      new Quaternion().setFromAxisAngle(arriba, giro),
       new Vector3(escala, escala, escala),
     );
   });
   const grupo = buildSpecies(LAPACHO, matrices, LAPACHO.crown.colour);
   grupo.name = "monte-del-final";
   return grupo;
+}
+
+/**
+ * **La forma que se toca de una especie**: la misma que dibuja `buildSpecies`,
+ * el octaedro achatado de la copa y el tronco. Ver `world/arboleda.ts`.
+ */
+function formaDe(species: Species): FormaDeArbol {
+  return {
+    copa: {
+      tipo: "octaedro",
+      radio: species.crown.radius,
+      semialto: species.crown.radius * species.crown.height,
+      centro: species.crown.lift,
+    },
+    tronco: { radio: species.trunk.radiusBottom, alto: species.trunk.height },
+  };
 }
 
 /** Pendiente aproximada muestreando el terreno alrededor del punto. */
