@@ -1738,6 +1738,10 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * buscando cuando esto se añadió.
      */
     sueloDeVuelo: (x: number, z: number) => juego.terrain.sampleSurface(x, z),
+    /** Si en ese punto hay agua: el mar, el río de casa o un lago. Ver `Terrain.esAgua`. */
+    esAgua: (x: number, z: number) => juego.terrain.esAgua(x, z),
+    /** De qué está hecho lo que pisa el avión ahora: asfalto, hierba o campo. */
+    superficie: () => juego.superficieParaBanco,
     /**
      * Si el terreno lleva puesta la ortofoto, y de qué tamaño.
      *

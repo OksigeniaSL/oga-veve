@@ -78,7 +78,22 @@ export type Percance =
    * aterrizaje, no lo había sacado». Un simulador que puntúa un aterrizaje de
    * panza enseña que el tren es opcional.
    */
-  | "sintren";
+  | "sintren"
+  /**
+   * **Se rompió el tren rodando deprisa por el campo.**
+   *
+   * Lo que no es pista, ni franja, ni hierba preparada no es sitio para
+   * rodar deprisa: un surco, una piedra o la tierra blanda en la que se hunde
+   * la rueda le meten al tren un golpe de abajo arriba, y a partir de cierta
+   * velocidad ese golpe es más de lo que aguanta. Ver `TrenEnElCampo`.
+   */
+  | "tren"
+  /**
+   * **El agua no es un suelo.** Un avión de tierra que toca el agua —viniendo
+   * del aire o rodando desde la orilla— no flota, y un helicóptero sin
+   * flotadores tampoco. Ver `percanceEnElAgua`.
+   */
+  | "agua";
 
 /**
  * A qué velocidad un contacto deja de ser un roce y pasa a ser un percance,
@@ -149,4 +164,146 @@ export function percanceAlTocar(c: {
   if (c.caida > c.rompe) return "golpe";
   if (c.velocidad >= c.perdida) return "fuera";
   return null;
+}
+
+/**
+ * **Lo empinado de los baches de un campo**, metros que sube la rueda por
+ * metro que avanza.
+ *
+ * **Es una simplificación, y se dice como tal.** No hay una cifra
+ * certificada de a qué velocidad se rompe un tren fuera de la pista. Lo que
+ * dice la certificación es lo contrario: el tren tiene que aguantar rodar por
+ * «el terreno más áspero que quepa esperar en operación normal» (CS-25.235 y
+ * 14 CFR 25.235; CS-23 lo pide igual para las pistas sin pavimentar), y la
+ * franja de una pista se allana para que un avión que se sale la cruce «sin
+ * daños estructurales» (FAA AC 150/5300-13B, la RSA). Un campo no es ni lo
+ * uno ni lo otro: ahí nadie promete nada.
+ *
+ * Lo que sí es de verdad es **qué** rompe el tren: un golpe de abajo arriba
+ * más fuerte que el que aguanta, que es lo mismo que rompe una toma dura. Una
+ * rueda que avanza a `v` y pilla un surco, una piedra o un borde de tierra
+ * blanda sube a `v` por lo empinado del bache, de golpe. Para la rueda de
+ * morro de una avioneta —unos dieciocho centímetros de radio—, un escalón de
+ * centímetro y medio ya la hace subir en un ángulo de veinticuatro grados, y
+ * eso son cuatro décimas; en tierra blanda la rueda se hunde y el escalón es
+ * de palmos. Tres décimas es el bache corriente de un campo sin preparar, no
+ * el peor.
+ *
+ * Con el tren del peldaño de arriba —seis metros por segundo, ver
+ * `FlightModel.limiteDeCaida`—, se rompe por encima de veinte metros por
+ * segundo: setenta y dos por hora, treinta y nueve nudos. **Rodar a ochenta
+ * por un campo rompe el tren**, que es la lección; rodar al paso por la
+ * hierba de al lado de una calle, no.
+ */
+export const PENDIENTE_DEL_CAMPO = 0.3;
+
+/**
+ * Cuánto tiempo seguido deprisa por el campo hace falta para encontrar el
+ * bache, s.
+ *
+ * Un campo tiene un surco cada pocos metros, y a la velocidad que rompe eso
+ * son unas décimas. El número evita además que el borde de una calle, que el
+ * avión pisa y deja en un fotograma, cuente como haber rodado por el campo.
+ */
+export const HASTA_EL_BACHE = 0.3;
+
+/**
+ * **La velocidad por el suelo que rompe el tren en el campo**, m/s.
+ *
+ * El golpe que se lleva la rueda es la velocidad por lo empinado de lo que
+ * pisa: los baches del campo y, encima, la cuesta por la que va —entrar desde
+ * la franja, que es llana, en una ladera es subir de golpe esa cuesta, y en
+ * una ladera los baches de cara a la subida son más empinados—. Se rompe
+ * cuando eso pasa de lo que aguanta el tren de este modelo: `rompe`, el mismo
+ * número que decide el golpe al tocar.
+ */
+export function velocidadQueRompeElTren(rompe: number, cuesta: number): number {
+  return rompe / (PENDIENTE_DEL_CAMPO + Math.abs(cuesta));
+}
+
+/**
+ * **El tren rodando por el campo**: cuánto lleva deprisa por donde no se
+ * rueda, y si ya se ha roto.
+ *
+ * Se gradúa como todo lo que rompe el avión, con la caída que aguanta el tren
+ * en cada peldaño —`limiteDeCaida`, que crece con `crashTolerance`—: en
+ * Taguató Ruvichá, veinte metros por segundo; en Taguató, casi cuarenta; en
+ * Tukã, más de sesenta, que en una avioneta es ir volando. **En Guyrami no se
+ * rompe nunca**, como no se rompe nada en ese peldaño (ver el final de
+ * `ArcadeFlightModel.step`): ahí rodar por el campo traquetea, frena y
+ * suena, y el tractor lo devuelve a la raya.
+ */
+export class TrenEnElCampo {
+  private deprisa = 0;
+
+  /** Un paso. Devuelve si en este se rompió el tren. */
+  paso(
+    dt: number,
+    c: {
+      /** Si las ruedas están sobre alguna pista del vuelo, franja incluida. */
+      readonly enLaPista: boolean;
+      readonly superficie: Superficie;
+      readonly enElSuelo: boolean;
+      /** Velocidad por el suelo, m/s. */
+      readonly velocidad: number;
+      /** La cuesta por la que va, m por m, en el sentido de la marcha. */
+      readonly cuesta: number;
+      /** La caída que rompe el tren en este modelo, m/s. */
+      readonly rompe: number;
+      /** Si en este peldaño se puede romper algo. En Guyrami, no. */
+      readonly sePuedeRomper: boolean;
+    },
+  ): boolean {
+    const enElCampo =
+      c.sePuedeRomper && c.enElSuelo && !c.enLaPista && c.superficie === "campo";
+    if (!enElCampo || c.velocidad <= velocidadQueRompeElTren(c.rompe, c.cuesta)) {
+      this.deprisa = 0;
+      return false;
+    }
+    this.deprisa += dt;
+    return this.deprisa >= HASTA_EL_BACHE;
+  }
+
+  reiniciar(): void {
+    this.deprisa = 0;
+  }
+}
+
+/**
+ * **Si tocar lo que hay debajo es tocar el agua.**
+ *
+ * Hasta hoy el agua era un suelo más a su cota —ver `Terrain.sampleSurface`—
+ * y el avión se posaba en el mar y rodaba por él. Un avión de tierra no
+ * flota: lo que se ve el día que pasa de verdad es un avión hundiéndose hasta
+ * las alas, y es lo que cuenta el dibujo.
+ *
+ * Da igual cómo se llegue —del aire, a cualquier velocidad, o rodando desde
+ * la orilla—, y da igual el peldaño, como el resto de lo que se toca fuera de
+ * la pista: en Guyrami tocar el campo volando ya es un percance, y el agua
+ * también.
+ *
+ * Dos cosas no son nunca agua, diga lo que diga el mapa de alturas: **la
+ * pista con su franja y lo pavimentado**. El mapa va a treinta metros por
+ * muestra, y en las pistas que acaban junto al mar —La Gomera, Gran Canaria—
+ * la orilla interpolada no puede comerse la franja. Ver `agua.test.ts`.
+ *
+ * `flotadores` es para el avión o el helicóptero que los lleve: posarse en el
+ * agua es otra lección, y todavía no hay ninguno en la flota que los lleve.
+ */
+export function percanceEnElAgua(c: {
+  /** Si lo que hay debajo es agua. Ver `Terrain.esAgua`. */
+  readonly agua: boolean;
+  readonly enElSuelo: boolean;
+  /** Si las ruedas están sobre alguna pista del vuelo, franja incluida. */
+  readonly enLaPista: boolean;
+  readonly superficie: Superficie;
+  readonly flotadores: boolean;
+}): boolean {
+  return (
+    c.agua &&
+    c.enElSuelo &&
+    !c.enLaPista &&
+    c.superficie === "campo" &&
+    !c.flotadores
+  );
 }

@@ -1587,6 +1587,14 @@ export interface AircraftConfig {
    * `flight/helicoptero-en-el-juego.ts` y el ADR 0026.
    */
   helicoptero?: FichaDeHelicoptero;
+  /**
+   * **Si lleva flotadores**, y entonces el agua no es un percance. Ninguno de
+   * la flota los lleva todavía: los del Tujuju son el #185, y posarse en el
+   * agua es una lección aparte. Los flotadores de emergencia de un
+   * helicóptero de mar no cuentan: son para un amerizaje forzoso, que termina
+   * el vuelo igual. Ver `percanceEnElAgua` en `flight/percance.ts`.
+   */
+  flotadores?: boolean;
 }
 
 /**

@@ -184,6 +184,52 @@ const OCUPADA_AVION = lienzo(`
   ${HUMO}
 `);
 
+/**
+ * **El tren roto en el campo**: la avioneta de frente, ladeada sobre el lado
+ * de la pata que se fue, y la rueda suelta rodando sola por los baches.
+ *
+ * Lo que tiene que decir es **por dónde** se iba, y por eso el suelo no es la
+ * raya recta de los otros dibujos sino lomos y terrones: eso no es una pista.
+ * Y la rueda que se escapa es el chiste, como la nubecilla: se rompió algo,
+ * nadie se hizo daño.
+ */
+const TREN = lienzo(`
+  <path d="M20 16 l1.6 3.6 3.6 1.6 -3.6 1.6 -1.6 3.6 -1.6 -3.6 -3.6 -1.6
+           3.6 -1.6 Z" opacity="0.9" />
+  <g transform="translate(-6 8) rotate(-14 32 34)">${AVIONETA}</g>
+  <path class="percance__hueco" d="M2 51 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 V64 H2 Z" />
+  <path d="M2 51 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0"
+        stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" />
+  <circle cx="12" cy="57" r="1.6" opacity="0.7" />
+  <circle cx="36" cy="58" r="1.3" opacity="0.6" />
+  <circle cx="51" cy="42.5" r="4.2" />
+  <circle class="percance__hueco" cx="51" cy="42.5" r="1.5" />
+  <path d="M57.5 38 h4 M57.5 43 h3" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" fill="none" opacity="0.7" />
+`);
+
+/**
+ * **El agua**: la avioneta de frente, metida hasta las alas, con las olas por
+ * delante y unas gotas del chapuzón.
+ *
+ * Lo que se lee a los cuatro años es que el avión **no flota**: se ve el ala
+ * a ras de agua y nada de lo de debajo. Las olas tapan la panza con el color
+ * del panel, que es como el dibujo dice «esto está debajo».
+ */
+const AGUA = lienzo(`
+  <g transform="translate(0 6)">${AVIONETA}</g>
+  <path class="percance__hueco" d="M2 43 h60 v21 h-60 Z" />
+  <path d="M4 44 q4 -4 8 0 q4 4 8 0 q4 -4 8 0 q4 4 8 0 q4 -4 8 0 q4 4 8 0 q4 -4 8 0"
+        stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" />
+  <path d="M10 53 q4 -3 8 0 q4 3 8 0 M34 55 q4 -3 8 0 q4 3 8 0"
+        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"
+        opacity="0.6" />
+  <circle cx="12" cy="30" r="2" opacity="0.8" />
+  <circle cx="8" cy="24" r="1.4" opacity="0.6" />
+  <circle cx="53" cy="29" r="2" opacity="0.8" />
+  <circle cx="57" cy="23" r="1.4" opacity="0.6" />
+`);
+
 /*
  * La tabla lleva además alguna **variante**: un mismo percance con dos
  * motivos posibles, y el dibujo dice cuál. Ver `dibujoDePercance`.
@@ -196,6 +242,8 @@ const DIBUJOS: Record<string, string> = {
   pasada: PASADA,
   sinpermiso: SIN_PERMISO,
   sintren: SIN_TREN,
+  tren: TREN,
+  agua: AGUA,
   ocupada: OCUPADA,
   "ocupada-avion": OCUPADA_AVION,
 };

@@ -1284,6 +1284,48 @@ export class Terrain {
       : suelo;
   }
 
+  /**
+   * **Si lo que hay en este punto es agua**: el mar, el río de casa o un lago.
+   *
+   * Es la pregunta que le faltaba a `sampleSurface`, que pone el agua a su
+   * cota para que el avión no se hunda en el fondo dibujado y con eso la
+   * convertía en un suelo más: el avión se posaba en el mar y rodaba por él.
+   * Ver `percanceEnElAgua` en `flight/percance.ts`.
+   *
+   * Contesta con lo mismo que decide la superficie, para que lo que se pisa
+   * como agua sea lo que se llama agua:
+   *
+   * - **El mar y el río**: donde el suelo, con su pavimento, queda por debajo
+   *   de la lámina —y fuera del mapa fino, solo donde el horizonte pinta agua,
+   *   ver `esAguaDeCasa`—. Así sabe dónde hay agua el mundo: por la cota, y no
+   *   por un contorno. Un río que el relieve no talla por debajo de su lámina
+   *   no existe para esto.
+   * - **Los lagos**: el relieve mide su lámina como suelo, así que la cota no
+   *   los distingue, y se pregunta a su contorno. Ver `world/lagos.ts`.
+   * - **En el mundo de un vecino**, lo que diga él, con su lámina.
+   */
+  esAgua(x: number, z: number): boolean {
+    const fuera = Math.abs(x) > this.half || Math.abs(z) > this.half;
+    if (fuera) {
+      const lejos = this.aguaLejana?.(x, z);
+      if (lejos !== null && lejos !== undefined) return lejos;
+    }
+    const h = this.sampleHeight(x, z);
+    const nivel = this.scenario.waterLevel;
+    if ((!fuera || esAguaDeCasa(h, nivel)) && h + this.resalteEn(x, z) < nivel)
+      return true;
+    if (!this.lagos) return false;
+    const { lat, lon } = this.aGrados(x, z);
+    return this.lagos.cotaParaPisar(lat, lon) !== null;
+  }
+
+  /** Quién sabe dónde hay agua fuera del mapa fino. Ver `esAgua`. */
+  private aguaLejana: ((x: number, z: number) => boolean | null) | null = null;
+
+  ponerAguaLejana(fuente: ((x: number, z: number) => boolean | null) | null): void {
+    this.aguaLejana = fuente;
+  }
+
   /** Quién sabe la superficie fuera del mapa fino. Ver `sampleSurface`. */
   private superficieLejana: ((x: number, z: number) => number | null) | null =
     null;

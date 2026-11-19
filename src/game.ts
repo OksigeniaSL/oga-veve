@@ -1359,7 +1359,13 @@ import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones, type Galon } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
-import { ROCE, percanceAlTocar, type Percance } from "./flight/percance";
+import {
+  ROCE,
+  TrenEnElCampo,
+  percanceAlTocar,
+  percanceEnElAgua,
+  type Percance,
+} from "./flight/percance";
 import {
   barrasDe,
   grado,
@@ -7209,6 +7215,14 @@ export class Game {
         }
         return null;
       });
+      // Y dónde hay agua, con la lámina de cada uno. Ver `Terrain.esAgua`.
+      this.terrain.ponerAguaLejana((x, z) => {
+        for (const v of this.vecinos) {
+          const a = v.mundo.agua(x, z);
+          if (a !== null) return a;
+        }
+        return null;
+      });
       /*
        * **Y el horizonte se aparta donde manda el mapa fino del vecino.**
        *
@@ -11261,6 +11275,76 @@ export class Game {
     else s.position.set(golpe.libre.x, golpe.libre.y, golpe.libre.z);
 
     this.avisarDelBulto("edificio");
+  }
+
+  /**
+   * **Lo que hay debajo de las ruedas, cuando no es para rodar**: el agua, y
+   * el campo a una velocidad que rompe el tren. Ver `percanceEnElAgua` y
+   * `TrenEnElCampo` en `flight/percance.ts`.
+   *
+   * Va en cada paso con las ruedas en el suelo y no solo al tocar, porque a
+   * los dos se llega también rodando: desde la orilla al agua, y desde la
+   * franja al campo. Y va antes del veredicto de la toma: tocar el mar
+   * volando es el agua, no «fuera de la pista».
+   */
+  private mirarElSuelo(dt: number): void {
+    const s = this.flight.state;
+    if (!s.onGround) {
+      this.trenEnElCampo.reiniciar();
+      return;
+    }
+    const enLaPista = this.tocoEnElCampoDeVuelo();
+    const { x, z } = s.position;
+    if (
+      percanceEnElAgua({
+        agua: this.terrain.esAgua(x, z),
+        enElSuelo: true,
+        enLaPista,
+        superficie: this.superficie,
+        flotadores: !!this.aircraft.flotadores,
+      })
+    ) {
+      this.sufrirPercance("agua");
+      return;
+    }
+    // El helicóptero no rueda por el campo: se posa en él. Ver `checkLanding`.
+    if (this.aircraft.helicoptero) return;
+    if (
+      this.trenEnElCampo.paso(dt, {
+        enLaPista,
+        superficie: this.superficie,
+        enElSuelo: true,
+        velocidad: s.groundSpeed,
+        cuesta: this.cuestaDelCamino(),
+        rompe: this.flight.limiteDeCaida(),
+        sePuedeRomper: this.tier.model !== "simple",
+      })
+    )
+      this.sufrirPercance("tren");
+  }
+
+  /** De qué está hecho lo que pisa el avión ahora. Para el banco. */
+  get superficieParaBanco(): Superficie {
+    return this.superficie;
+  }
+
+  /** Cuánto lleva rodando deprisa por el campo. Ver `mirarElSuelo`. */
+  private readonly trenEnElCampo = new TrenEnElCampo();
+
+  /**
+   * La cuesta del terreno en el sentido de la marcha, m por m: la diferencia
+   * de cota entre cuatro metros por delante y cuatro por detrás.
+   */
+  private cuestaDelCamino(): number {
+    const s = this.flight.state;
+    const v = Math.hypot(s.velocity.x, s.velocity.z);
+    if (v < 0.5) return 0;
+    const fx = (s.velocity.x / v) * 4;
+    const fz = (s.velocity.z / v) * 4;
+    const { x, z } = s.position;
+    return (
+      (this.terrain.sampleHeight(x + fx, z + fz) - this.terrain.sampleHeight(x - fx, z - fz)) / 8
+    );
   }
 
   /**
@@ -20236,6 +20320,7 @@ export class Game {
         guinada: mandos.rudder,
       };
       this.mirarSiChocaConAlgo();
+      this.mirarElSuelo(dt);
     }
     this.quemarCombustible(dt);
     this.doblarElAla(dt);
@@ -21580,6 +21665,7 @@ export class Game {
         );
         this.terrain.ponerSuperficieLejana(null);
         this.terrain.ponerResalteLejano(null);
+        this.terrain.ponerAguaLejana(null);
         /*
          * **Y se descarta lo que no cuadre con el desfase que ya se midió.**
          *
@@ -39823,8 +39909,9 @@ export class Game {
   }
 
   private buildFlightModel(tier: Tier): FlightModel {
-    // El avión flota sobre el agua en vez de hundirse: es un juego para
-    // chicos, y amerizar de morro y desaparecer no le divierte a nadie.
+    // El agua se pisa a su cota y no en el fondo dibujado: el avión no se
+    // hunde de morro hasta desaparecer. Tocarla es un percance, con su dibujo:
+    // ver `mirarElSuelo` y `Terrain.esAgua`.
     const ground = (x: number, z: number): number =>
       this.terrain.sampleSurface(x, z);
     /*

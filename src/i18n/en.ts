@@ -1253,6 +1253,8 @@ export const EN: Dictionary = {
   "percance.pasada": "You ran off the end of the runway",
   "percance.sinpermiso": "You entered the runway without clearance",
   "percance.sintren": "You touched down with the gear up",
+  "percance.tren": "The gear broke rolling fast across the field",
+  "percance.agua": "You touched the water, and without floats you sink",
   "grado.aprendiz": "Student",
   "grado.piloto": "Pilot",
   "grado.comandante": "Captain",
