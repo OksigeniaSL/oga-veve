@@ -18967,7 +18967,7 @@ export class Game {
      * y el compensador, la velocidad. `releaseAll` lo dejaba en cero, que en
      * las avionetas sostiene unos 85 nudos, y sin nadie a los mandos el avión
      * cambiaba velocidad por altura hasta llegar a ellos: el JAZ 20 en la
-     * deriva, de 114 a 87 nudos y 288 m más arriba en medio minuto. En la
+     * deriva, de 114 a 87 nudos y 288 m más arriba en un par de minutos. En la
      * final, el que sostiene su velocidad por la senda, que pide al ala lo
      * mismo que nivelado. Ver `dejarloCompensado` y la nota H40b del ADR 0002.
      */
@@ -40256,8 +40256,9 @@ export class Game {
    * compensador en cero, no: el compensador fija el ángulo del ala, y el
    * ángulo, la velocidad a la que vuela solo. Medido en Taguató sin tocar
    * nada, el JAZ 20 colocado en la deriva a 114 nudos y con el compensador en
-   * cero se iba a 87 subiendo casi diez metros por segundo, que es lo que da
-   * ese compensador (ADR 0002, nota H40b).
+   * cero se iba a 88 y 224 m más arriba en un par de minutos, que es lo que
+   * da ese compensador; compensado, a 114 y a su altura (ADR 0002, nota
+   * H40b).
    *
    * Lo piden los dos sitios donde nace un avión volando sin que nadie lo haya
    * compensado: el cambio de peldaño, que construye un modelo nuevo, y la

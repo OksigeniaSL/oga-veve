@@ -14,6 +14,11 @@
  * bajando por su senda. Sin viento (`viento=000/0`), para que lo que se mida
  * sea el gas y no la ráfaga. El puerto, `OGA_PUERTO`; el reloj, por
  * `OGA_VECES` (cuatro).
+ *
+ * **Y el medio minuto es del reloj de la página** (`clock`, el `Clock` de
+ * three, que va con el tiempo de verdad), no del vuelo: con el juego por
+ * cuatro son unos dos minutos de vuelo, si la máquina da para ello (ADR 0002,
+ * nota H40b).
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";

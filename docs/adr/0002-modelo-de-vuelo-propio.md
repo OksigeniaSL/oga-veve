@@ -1240,7 +1240,8 @@ con la tarjeta de verdad): 7 de 7, toca con el morro en la pista a 0,2°.
 Lo midió H40a con `scripts/ver-el-gas-al-colocar.mjs` (la tabla de arriba): un
 ejercicio colocado en el aire, sin nadie a los mandos, se ponía a subir y a
 perder velocidad. El JAZ 20 en la deriva, de 114,5 a 86,7 nudos y 288 m más
-arriba en medio minuto; el JAZ 40, de 160,8 a 123,3 y 527 m.
+arriba en lo que el banco llama medio minuto, que son unos dos de vuelo (ver
+abajo); el JAZ 40, de 160,8 a 123,3 y 527 m.
 
 El gas era el bueno. El compensador no: `releaseAll` lo deja en cero —que es
 como se encuentra un avión al subirse a él, en el suelo— y `reiniciarEnFinal`
@@ -1310,11 +1311,12 @@ bajando 1,33 m/s. Es la regla de la ayuda, no el compensador, y cambiarla
 —que una final colocada sostenga su senda sola en los peldaños con ayuda,
 hasta el suelo— es una decisión de juego que no se ha tomado aquí.
 
-En el navegador acaba igual —81,0 nudos, bajando 1,33 m/s—, pero 141 m más
-abajo y no 24; y con el compensador a cero, 139, los mismos que medía H40a.
-Esos cien metros de más no son del compensador, que no los cambia, y la mesa
-no los da: algo del juego de los primeros segundos de esa final que no se ha
-llegado a medir aquí. Queda abierto.
+En el navegador parecía otra cosa —141 m más abajo en «medio minuto», y no
+24— y era el reloj del banco: ver abajo. Volada dos minutos, la mesa da 162 m
+más abajo, 79,5 nudos y bajando 1,55 m/s; la sonda en el navegador, renglón a
+renglón, 157 m, 79,6 nudos y 1,51 m/s, con la ayuda sosteniendo «nivelado»
+(`trimClimb` en cero) todo el rato y nadie más a los mandos. Es la misma
+final.
 
 ### Las pruebas
 
@@ -1327,19 +1329,37 @@ por la senda a su velocidad.
 ### Volado en el navegador
 
 `scripts/ver-el-gas-al-colocar.mjs`, sus cuatro casos, en Taguató, sin viento
-y medio minuto sin tocar nada (19-11-2026, puerto 5685, la máquina cargada:
-carga de 26 en veinte núcleos). Cada caso, dos veces: como nace, y con el
+y medio minuto de reloj sin tocar nada (19-11-2026, puerto 5685, la máquina
+cargada: carga de 26 en veinte núcleos). Cada caso, dos veces: como nace, y con el
 compensador devuelto a cero a mano al empezar, que es como nacía antes:
 
-| Caso | Nace con | A los 30 s, compensado | Con el compensador a cero |
+| Caso | Nace con | Compensado, al medio minuto de reloj | Con el compensador a cero |
 |---|---|---|---|
 | JAZ 20, la deriva | 114,5 kt, −0,078 | 114,0 kt, 3 m más abajo | 88,0 kt, 224 m más arriba |
 | JAZ 25, la deriva | 106,9 kt, −0,090 | 107,2 kt, 3 m más abajo | 84,4 kt, 289 m más arriba |
 | JAZ 40, la deriva | 160,8 kt, −0,084 | 160,0 kt, 1 m más arriba | 122,4 kt, 541 m más arriba |
 | JAZ 20, la final del cangrejo | 96,2 kt, −0,023 | 81,0 kt, 141 m más abajo | 74,7 kt, 139 m más abajo |
 
+**El medio minuto del banco es del reloj de la página, no del vuelo**: el
+banco cuenta con `clock`, el `Clock` de three, que va con el tiempo de verdad,
+y pone el juego por cuatro (`OGA_VECES`). Así que mide unos dos minutos de
+vuelo: la sonda de la final contó 2,07 s de vuelo por cada medio segundo de
+reloj. Vale también para la tabla de H40a. No se ha cambiado el banco, que no
+se ha podido volver a volar; su comentario ya lo dice.
+
 Los tres de la deriva se quedan a su velocidad, a tres nudos como mucho en
-todo el medio minuto, y a su altura. El gas con el que nacen no es el de la
+esos dos minutos, y a su altura. El gas con el que nacen no es el de la
 tabla de H40a (0,835 contra 0,801 en el JAZ 20; 0,732 contra 0,702 en el JAZ
 25), y no es de este cambio: se cuenta antes de compensar, y con él se quedan
-nivelados.
+nivelados. La final del cangrejo es la de la mesa: ver arriba.
+
+Y la final del cangrejo con su piloto de banco (`ver-el-cruzado.mjs`, el JAZ
+20 en Taguató, con la tarjeta de verdad, Intel Iris Xe): 7 de 7, el cangrejo
+medido 9,6° contra 9,3° del triángulo, y toca derecho con el morro a 1,8° de
+la pista y el ala 4,8° al viento.
+
+No se han vuelto a volar `ver-el-gps.mjs`, `ver-la-deriva.mjs` ni
+`ver-seguir-la-aguja.mjs`: con la máquina cargada, el navegador fue solo para
+lo imprescindible. Sus colocaciones ya nacían equilibradas; lo único que les
+cambia es el compensador, y sus pilotos de banco enganchan el automático al
+empezar, que coge el timón con el que vuela el avión (`timonAhora`).

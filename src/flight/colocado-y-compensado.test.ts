@@ -8,7 +8,7 @@
  * compensador en `timonDeEquilibrio` con esos flaps, que es lo que pone
  * `dejarloCompensado`. Medio minuto sin nadie a los mandos.
  *
- * Nivelado, en Taguató, como el banco del navegador
+ * Nivelado, en Taguató, el peldaño del banco del navegador
  * (`ver-el-gas-al-colocar.mjs`), y en Taguató Ruvichá, sin ayuda ninguna. La
  * final, solo en Taguató Ruvichá: en Taguató, al soltar, la ayuda de subida
  * coge «nivelado» —nunca un descenso: ver `trimClimb` en `fdm.ts`— y la
