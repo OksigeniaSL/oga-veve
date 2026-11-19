@@ -408,9 +408,18 @@ clic, bajos y cortos; con un aviso sonando, la carta se calla.
   girada si lo está (`Game.dondeCaeLaBrujula`, `Hud.ponerLaBrujula`). Y **la tarjeta de la orden, antes de recogerse a
   su dibujo, se estrecha en su sitio** —el mismo borde, la misma fila y la frase en una línea más—, si lo que pisa le
   queda a la derecha y le deja al menos la mitad (`estrechaEnSuSitio`): es lo que no se mueve de su rincón, y recogida
-  perdía la frase entera por unos píxeles. Lo mira `npm run carteles` con lo más largo que lleva
+  perdía la frase entera por unos píxeles. **Y el plano abierto tampoco se tapa** (H31c): un instrumento que se
+  consulta volando —el plano, el tiempo, la misión— es lo que quien juega ha abierto para mirar, y su concha recoge
+  los toques, así que lleva `data-tocable` y entra en la cuenta. Ninguno tapa al otro, y quien se aparta es lo que se
+  lee: la tarjeta de la orden y el cronómetro **se corren en su fila**, enteros, justo al otro lado del plano
+  (`correrEnSuFila`), sin saltar por encima de una segunda cosa —una tarjeta en mitad del parabrisas, no—; si entera
+  no cabe, la tarjeta se recoge a su dibujo y se corre así; y si ni el dibujo cabe —de pie, el plano llena el
+  ancho—, espera a que se cierre, que la instructora la dice igual. El plano no se mueve ni encoge por ella: lo que
+  se toca no salta, y ceder sitio (`LO_QUE_CEDE`) es para la seguridad. Como la concha entra con un fundido desde
+  transparente, el reparto se repite cuando acaba de entrar algo que se toca. Lo mira `npm run carteles` con lo más largo que lleva
   cada cosa —la orden, la más larga del código—, en las cuatro maneras en que coinciden y en las tres vistas: fuera,
-  cabina y la pantalla en grande del teléfono; y de pie con el dedo, el vuelo del pasaje. Lo que cuesta, con la CPU de
+  cabina y la pantalla en grande del teléfono; de pie con el dedo, el vuelo del pasaje; y con el plano abierto, desde
+  el asiento y de fuera, a 1280 × 800, 1024 × 600 y 915 × 412 con el dedo y 600 × 900 de pie. Lo que cuesta, con la CPU de
   una tablet de gama media, lo mide `scripts/medir-reparto.mjs`.
 - Separaciones de uso: 2, 4, 6, 8, 10, 12, 14 y 16 px. Radios: `--r-s` 10, `--r-m` 16 y `--r-l` 22; 999 px para las
   pastillas y 50 % para lo redondo.

@@ -112,10 +112,20 @@ let cuantos = 0;
 export function armarPanel(que: Armado): string {
   const id = `concha-titulo-${++cuantos}`;
   const acciones = que.acciones ?? [];
+  /*
+   * **Y un instrumento abierto se toca entero** (H31c): su concha recoge los
+   * toques —el plano dice qué hay debajo del dedo, la rueda acerca— y es lo
+   * que quien juega ha abierto para mirarlo volando. Con la marca entra en el
+   * reparto como lo que se toca, y lo que se lee se aparta de él en vez de
+   * quedarse debajo: la tarjeta de la orden, desde el asiento, quedaba con
+   * media frase detrás del plano. Ver `ui/reparto.ts`. Una pantalla que se lee
+   * no la lleva: congela el vuelo, y con ella abierta no se vuela mirando la
+   * tarjeta.
+   */
   return `
     <div class="concha${que.instrumento ? " concha--instrumento" : ""} ${
       que.clase ?? ""
-    }" role="dialog" aria-modal="true"
+    }" role="dialog" aria-modal="true"${que.instrumento ? " data-tocable" : ""}
          aria-labelledby="${id}">
       <header class="concha__cabecera">
         ${iconoDe(que.panel)}
