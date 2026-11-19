@@ -26072,6 +26072,7 @@ export class Game {
         sobreLasCopas: s.position.y - this.aircraft.gearHeight - m.cima,
         indicada: indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) / NUDO,
         sobreElSuelo: s.groundSpeed,
+        vertical: s.verticalSpeed,
         enElSuelo: s.onGround,
         enLaPista: s.onRunway,
         gas: this.input.controls.throttle,

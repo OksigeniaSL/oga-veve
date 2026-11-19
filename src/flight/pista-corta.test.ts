@@ -227,6 +227,7 @@ describe("el ejercicio de la pista corta", () => {
     sobreLasCopas: -15,
     indicada: 0,
     sobreElSuelo: 0,
+    vertical: 0,
     enElSuelo: true,
     enLaPista: true,
     gas: 0,
@@ -248,7 +249,11 @@ describe("el ejercicio de la pista corta", () => {
       { gas: 1, sobreElSuelo: 26, indicada: 50 },
     ]);
     expect(s.map((x) => x.que)).toEqual(["presentar", "solta"]);
-    const aire = volar(p, [{ gas: 1, enElSuelo: false, indicada: 56, pasadoElFinal: -200, sobreLasCopas: 5 }], 4);
+    const aire = volar(
+      p,
+      [{ gas: 1, enElSuelo: false, indicada: 56, sobreElSuelo: 29, vertical: 2.7, pasadoElFinal: -200, sobreLasCopas: 5 }],
+      4,
+    );
     expect(aire.map((x) => x.que)).toEqual(["alAngulo"]);
     const pasa = volar(p, [{ gas: 1, enElSuelo: false, indicada: 57, pasadoElFinal: 130, sobreLasCopas: 22 }], 0.1);
     expect(pasa).toEqual([{ que: "pasaste", como: "conMargen", margen: 22 }]);
@@ -264,6 +269,13 @@ describe("el ejercicio de la pista corta", () => {
     // De 51 a 61 nudos a dos por segundo, que es lo que hacía el banco saliendo a buscar la Vy.
     for (let t = 0; t < 5; t += 0.1)
       s.push(...p.avanzar(lectura({ gas: 1, enElSuelo: false, indicada: 51 + 2 * t, pasadoElFinal: -300, sobreLasCopas: 0 }), 0.1));
+    expect(s.map((x) => x.que)).not.toContain("alAngulo");
+  });
+
+  it("a la del obstáculo pero sin subir —la nariz baja, acelerando— tampoco es el ángulo", () => {
+    const p = nuevo();
+    volar(p, [{ gas: 1 }, { gas: 1, sobreElSuelo: 26, indicada: 50 }]);
+    const s = volar(p, [{ gas: 1, enElSuelo: false, indicada: 53, sobreElSuelo: 27, vertical: 0.6, pasadoElFinal: -400 }], 5);
     expect(s.map((x) => x.que)).not.toContain("alAngulo");
   });
 

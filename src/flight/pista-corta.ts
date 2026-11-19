@@ -158,6 +158,15 @@ export const SOSTENIDA = 3;
  */
 export const QUIETA = 4;
 /**
+ * **Y subiendo de verdad**: seis metros por cada cien recorridos, como poco,
+ * en ese rato. Recién despegado todos van a la de irse del suelo, y quien sale
+ * a buscar la Vy se queda ahí unos segundos con la nariz baja, acelerando
+ * casi sin subir: en la segunda tirada del banco, a 53 nudos y quieta, se le
+ * felicitaba igual. A la del obstáculo, el JAZ 20 sube al 9 % en la mesa y al
+ * 10 en el juego; a la Vy, al 7,7.
+ */
+export const EMPINADA = 0.06;
+/**
  * **Por debajo de cuánto margen sobre las copas se pasa «justo»**, m: quince,
  * la altura de los árboles otra vez. Por encima, con margen. Volado en el
  * juego, a la del obstáculo se pasa con 59 m y saliendo a buscar la Vy con
@@ -184,6 +193,8 @@ export interface LecturaDeLaPistaCorta {
   readonly indicada: number;
   /** La velocidad sobre el suelo, m/s. */
   readonly sobreElSuelo: number;
+  /** Lo que sube, m/s. */
+  readonly vertical: number;
   readonly enElSuelo: boolean;
   /**
    * **Si está en la pista**: rodando hasta ella con el gas alto no es la
@@ -232,6 +243,8 @@ export class PistaCorta {
   private sumada = 0;
   private menor = Infinity;
   private mayor = -Infinity;
+  private subido = 0;
+  private recorrido = 0;
   private comoCerro: CierreDeLaPistaCorta | null = null;
   private comoPaso: ComoSePaso | null = null;
   private margenMedido: number | null = null;
@@ -314,7 +327,9 @@ export class PistaCorta {
       }
       if (!this.angulo && Math.abs(l.indicada - v.sobreElObstaculo) <= VELOCIDAD_A_CINCO) {
         this.sostener(l.indicada, dt);
-        if (this.sostenidaDeVerdad) {
+        this.subido += l.vertical * dt;
+        this.recorrido += l.sobreElSuelo * dt;
+        if (this.sostenidaDeVerdad && this.empinada) {
           this.angulo = true;
           sucesos.push({ que: "alAngulo", kt: this.media });
         }
@@ -355,6 +370,12 @@ export class PistaCorta {
   private get media(): number {
     return this.sostenida > 0 ? this.sumada / this.sostenida : 0;
   }
+  /** **Si en el rato subió empinado**; si no, el rato vuelve a empezar. Ver `EMPINADA`. */
+  private get empinada(): boolean {
+    if (this.recorrido > 0 && this.subido / this.recorrido >= EMPINADA) return true;
+    this.empezarElRato();
+    return false;
+  }
   /**
    * **El rato entero y quieta**: tres segundos dentro de la banda, y sin
    * bailar más de `QUIETA`. Si baila, el rato vuelve a empezar desde aquí.
@@ -376,6 +397,8 @@ export class PistaCorta {
     this.sumada = 0;
     this.menor = Infinity;
     this.mayor = -Infinity;
+    this.subido = 0;
+    this.recorrido = 0;
   }
   private cerrar(como: CierreDeLaPistaCorta, sucesos: SucesoDeLaPistaCorta[]): void {
     this.faseActual = "cerrada";
