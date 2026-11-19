@@ -244,8 +244,8 @@
       "h": "b90bf6fa21"
     },
     "ejercicio.bandera": {
-      "ms": 4207,
-      "h": "33f87b0168"
+      "ms": 8807,
+      "h": "ca59d40224"
     },
     "ejercicio.banderaSola": {
       "ms": 4207,
@@ -411,6 +411,10 @@
       "ms": 7707,
       "h": "a473bfe443"
     },
+    "ejercicio.despues-de-v1.antesCuatro": {
+      "ms": 7807,
+      "h": "05830a9526"
+    },
     "ejercicio.efecto-suelo.antes": {
       "ms": 8307,
       "h": "d6384443c0"
@@ -431,9 +435,17 @@
       "ms": 5107,
       "h": "6595fd68b0"
     },
+    "ejercicio.en-la-carrera.antes": {
+      "ms": 14907,
+      "h": "c8c2a65a2e"
+    },
     "ejercicio.enVuelo": {
       "ms": 2902,
       "h": "90d4602450"
+    },
+    "ejercicio.enVueloCuatro": {
+      "ms": 2999,
+      "h": "071a983ad3"
     },
     "ejercicio.estacionario.antes": {
       "ms": 7407,
@@ -651,9 +663,17 @@
       "ms": 7007,
       "h": "622181cb90"
     },
+    "ejercicio.paradoTrasV1Cuatro": {
+      "ms": 7107,
+      "h": "c0d077a50d"
+    },
     "ejercicio.paramos": {
       "ms": 3407,
       "h": "3aa7632d9c"
+    },
+    "ejercicio.paramosConElTren": {
+      "ms": 5407,
+      "h": "1868b09843"
     },
     "ejercicio.pieDerecho": {
       "ms": 3707,
@@ -799,6 +819,10 @@
       "ms": 5307,
       "h": "da317964cf"
     },
+    "ejercicio.seguidoConElTrenFuera": {
+      "ms": 7807,
+      "h": "9262a3ea7b"
+    },
     "ejercicio.seguimos": {
       "ms": 2998,
       "h": "d571133961"
@@ -859,13 +883,25 @@
       "ms": 9407,
       "h": "144af44616"
     },
+    "ejercicio.tren-arriba.antes": {
+      "ms": 12807,
+      "h": "e06948bc59"
+    },
     "ejercicio.un-motor.antes": {
       "ms": 9207,
       "h": "3360c162de"
     },
+    "ejercicio.un-motor.antesCuatro": {
+      "ms": 10307,
+      "h": "8b3505e8b8"
+    },
     "ejercicio.velocidad": {
       "ms": 4407,
       "h": "e0d219cab4"
+    },
+    "ejercicio.velocidadCuatro": {
+      "ms": 5407,
+      "h": "bb99d1896c"
     },
     "explica.actitud.texto": {
       "ms": 14007,
@@ -6327,6 +6363,33 @@
     ],
     "percance.arbol": [
       "percance.arbol"
+    ],
+    "ejercicio.en-la-carrera.antes": [
+      "ejercicio.en-la-carrera.antes"
+    ],
+    "ejercicio.tren-arriba.antes": [
+      "ejercicio.tren-arriba.antes"
+    ],
+    "ejercicio.despues-de-v1.antesCuatro": [
+      "ejercicio.despues-de-v1.antesCuatro"
+    ],
+    "ejercicio.un-motor.antesCuatro": [
+      "ejercicio.un-motor.antesCuatro"
+    ],
+    "ejercicio.enVueloCuatro": [
+      "ejercicio.enVueloCuatro"
+    ],
+    "ejercicio.velocidadCuatro": [
+      "ejercicio.velocidadCuatro"
+    ],
+    "ejercicio.paradoTrasV1Cuatro": [
+      "ejercicio.paradoTrasV1Cuatro"
+    ],
+    "ejercicio.paramosConElTren": [
+      "ejercicio.paramosConElTren"
+    ],
+    "ejercicio.seguidoConElTrenFuera": [
+      "ejercicio.seguidoConElTrenFuera"
     ]
   }
 }

@@ -2779,6 +2779,111 @@
     }
   },
   {
+    "id": "ejercicio.en-la-carrera.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos un motor que falla corriendo por la pista, ya cerca de despegar. En este avión, con las ruedas en el suelo o el tren todavía fuera, se para: los dos gases atrás, frenos y derecho por la pista. Así lo dice su manual, y parar también es ganar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos un motor que falla corriendo por la pista, ya cerca de despegar. En este avión, con las ruedas en el suelo o el tren todavía fuera, se para: los dos gases atrás, frenos y derecho por la pista. Así lo dice su manual, y parar también es ganar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.tren-arriba.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos un motor que falla subiendo, con el tren ya dentro. Ahí sí se sigue: pisás el pedal del lado del motor bueno, la nariz a la velocidad de la línea azul, y yo pongo en bandera la hélice del parado. Después volvemos a aterrizar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos un motor que falla subiendo, con el tren ya dentro. Ahí sí se sigue: pisás el pedal del lado del motor bueno, la nariz a la velocidad de la línea azul, y yo pongo en bandera la hélice del parado. Después volvemos a aterrizar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.despues-de-v1.antesCuatro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos un motor que falla pasada V1. Ahí ya no queda pista para parar: seguimos volando con los otros tres y volvemos a aterrizar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos un motor que falla pasada ve uno. Ahí ya no queda pista para parar: seguimos volando con los otros tres y volvemos a aterrizar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.un-motor.antesCuatro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos volar con un motor parado. En un rato vamos a parar uno, y el avión sigue volando con los otros tres: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy practicamos volar con un motor parado. En un rato vamos a parar uno, y el avión sigue volando con los otros tres: pisamos el pedal del lado bueno, sostenemos la velocidad y aterrizamos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.enVueloCuatro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se paró un motor. El avión sigue volando con los otros tres",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Se paró un motor. El avión sigue volando con los otros tres.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.velocidadCuatro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con la nariz, sostené esta velocidad. Con un motor parado se sube más despacio, pero se sube",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Con la nariz, sostené esta velocidad. Con un motor parado se sube más despacio, pero se sube.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.paradoTrasV1Cuatro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con los otros tres. La próxima, seguimos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Paraste, y te alcanzó la pista. Pasada ve uno lo seguro es seguir volando, que el avión vuela con los otros tres. La próxima, seguimos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "ejercicio.un-motor.antes",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -2830,6 +2935,21 @@
     "texto": "Falló un motor antes de V1: gas atrás y frenos, paramos",
     "para": "los ejercicios de emergencia: antes, durante y después",
     "dicho": "Falló un motor antes de ve uno: gas atrás y frenos, paramos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.paramosConElTren",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Falló un motor con el tren todavía fuera: los dos gases atrás, derecho por la pista, y paramos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Falló un motor con el tren todavía fuera: los dos gases atrás, derecho por la pista, y paramos.",
     "ajustes": {
       "stability": 0.85,
       "similarity_boost": 0.75,
@@ -2917,9 +3037,9 @@
     "id": "ejercicio.bandera",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos",
+    "texto": "Identifico el motor parado: es el del lado del pie que no pisa. Lo verifico con su gas, y pongo su hélice en bandera: de canto al aire, frena mucho menos",
     "para": "los ejercicios de emergencia: antes, durante y después",
-    "dicho": "Pongo la hélice del motor parado en bandera: de canto al aire, frena mucho menos.",
+    "dicho": "Identifico el motor parado: es el del lado del pie que no pisa. Lo verifico con su gas, y pongo su hélice en bandera: de canto al aire, frena mucho menos.",
     "ajustes": {
       "stability": 0.85,
       "similarity_boost": 0.75,
@@ -3085,6 +3205,21 @@
     "texto": "Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos",
     "para": "los ejercicios de emergencia: antes, durante y después",
     "dicho": "Volviste bien. Antes de ve uno todavía queda pista, y lo seguro es parar. La próxima, paramos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.seguidoConElTrenFuera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Volviste bien. Pero en este avión, con el tren todavía fuera, lo seguro es parar: con un motor y el tren fuera apenas sube. La próxima, paramos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Volviste bien. Pero en este avión, con el tren todavía fuera, lo seguro es parar: con un motor y el tren fuera apenas sube. La próxima, paramos.",
     "ajustes": {
       "stability": 0.85,
       "similarity_boost": 0.75,
