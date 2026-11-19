@@ -2573,8 +2573,28 @@ arriba.
   viento». Con la regla de la ronda para el ala baja —cinco segundos seguidos
   sin salirse— otra tirada también salió 5 de 5, contada a 130 m: la de la
   ronda fue de las que no llegan.
+- **El ala baja con la JAZ 20 en Taguató Ruvichá**: **5 de 5**, contada a
+  157 m con 3,3° de ala de media —la mesa da 3,2—, y al tocar el morro a
+  0,5° y el ala del viento 3,4° abajo.
+- **El cangrejo en Tukã con la JAZ 20**: **6 de 6**, contado a 165 m, 9,1°
+  al viento cuando pedía 8,1; en ese instante el morro iba a 5,5° de la
+  pista, que con la medida de antes habría fallado. Al tocar, el morro a
+  0,7°.
+- **El cangrejo con el JAZ 90 en Taguató**, que se ofrece y no se había
+  volado: **3 de 7**. No se cuenta, y no es del ejercicio: el piloto del
+  banco no vuela el reactor. Su ley de alabeo es la de la avioneta, y con el
+  JAZ 90 a 100-125 kt hace eses: el morro de −48° a +25° de la pista, el ala
+  de −25° a +22° y el avión de 110 m a un lado a 75 al otro. El camino no
+  pasa cinco segundos seguidos por el eje, no hay rato que juzgar, y se toca
+  torcido —4,3°—, que el ejercicio cuenta como torcido, que es lo que fue.
 
 ### Lo que queda
+
+- **Un piloto de banco para el reactor**: el del cangrejo con ganancias del
+  JAZ 90, o el automático del juego con el localizador, para volar el
+  cangrejo de un avión de línea en el navegador. Hasta entonces el cangrejo
+  del reactor no se ha visto volar en ninguna parte: la mesa de H32a vuela
+  los de hélice (JAZ 20, 40, 50 y 60).
 
 - **El bimotor vuela la final del navegador más despacio que en la mesa**,
   con el mismo piloto: a unos 60 kt en vez de los 86 de su aproximación, y
