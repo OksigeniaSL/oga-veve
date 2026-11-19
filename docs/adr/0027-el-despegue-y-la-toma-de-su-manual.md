@@ -4518,3 +4518,127 @@ primera, el mismo nivelado quedó a 5,4°.
   automático). En la primera tirada no dio guerra: los quita a 62–64 nudos,
   en su maniobra limpia. El 172 los quita por encima de los
   obstáculos y a su velocidad; si vuelve a salir algo ahí, el sitio es ese.
+
+## Enmienda H35a (19-11-2026): la pista corta, a la de mejor ángulo hasta el monte
+
+La mitad de la pista corta ya estaba: el juego sabe cuánta pista necesita cada
+avión, y frenos puestos, motor a tope y soltar. Faltaba lo que pasa al irse del
+suelo, que es donde se gana o se pierde el margen contra los árboles (#91): hay
+dos velocidades de subida y no son la misma. **La Vx** es la que más altura
+gana por metro recorrido; **la Vy**, la que más gana por segundo. La Vy es más
+rápida y sube más deprisa pero más tendida, y quien sale a buscarla recién
+despegado tiene que acelerar primero, casi sin subir, de la velocidad de irse
+del suelo a la de subir deprisa: ese trozo se lo come la pista que no hay.
+
+### Las cifras, de su manual
+
+Del Cessna 172S, la clase del JAZ 20 (*Information Manual*, sección 4,
+velocidades de operación normal y lista del despegue de pista corta; la tabla
+de la sección 5 da lo mismo a 2.550 lb):
+
+| | KIAS |
+|---|---|
+| Vx, limpio, al nivel del mar | 62 |
+| Vy, limpio, al nivel del mar | 74 |
+| Despegue corto, flaps 10°, «until all obstacles are cleared» | 56 |
+| Recoger los flaps, «slowly after reaching» | 60 |
+
+Los 56 son la Vx con los flaps del despegue corto, y por eso más lentos que
+los 62 limpios. Es la que se vuela hasta el monte, como manda el manual; en la
+cabina no se llama «Vx 56», se dice la cifra.
+
+### La mesa
+
+Con el modelo de vuelo del juego (`CoefficientFlightModel`) **sin ayudas**,
+volando y no despejando ecuaciones: a cada velocidad, treinta segundos
+sostenida con el timón y veinte midiendo, a 500 m y al día estándar
+(`pista-corta.test.ts`).
+
+| JAZ 20, 1.100 kg | Pendiente máxima | Régimen máximo |
+|---|---|---|
+| Limpio | 60 kt, 9,9 % | 76 kt, 3,52 m/s |
+| Flaps 10° | 60 kt, 8,9 % (plana entre 56 y 64) | 70 kt, 3,05 m/s (plano entre 66 y 74) |
+
+**El modelo da la Vx y la Vy donde las pone el manual**, a dos nudos, sin
+tocarlo. La cuenta de un libro con `empujeLleno` y `empujeQueSostiene` dice lo
+mismo: 63 y 79 limpio, 61 y 74 con los flaps.
+
+**Y los demás de hélice, no.** El JAZ 40 da la Vx bien —80 nudos, contra los 90
+mph (78 nudos) del manual del PA-34— pero la Vy a 107, dieciséis por encima de
+sus 105 mph: su curva de régimen es casi plana de 100 a 110 y el máximo cae
+donde no debe. Enseñarle la Vy a ese avión sería enseñar una cifra que el
+modelo no vuela, y arreglarlo es tocar su empuje o su polar, que es otra
+decisión. El biplano y el Twin Otter no tienen una fuente a mano que se pueda
+citar. Los turbohélices de transporte y los reactores no vuelan esta técnica:
+salen con la V2 de su peso y el obstáculo lo resuelve el cálculo de la pista.
+O sea, **solo el JAZ 20** (`subidaDe` en `flight/pista-corta.ts`).
+
+### El campo: la granja
+
+**Yvytu Rape (SGOG)**: novecientos metros de hierba a 258 m de cota, y los
+veintiocho grados de siempre allí, que son los que alargan la carrera. Es la
+única pista corta de verdad que tiene el juego —los demás campos son
+aeropuertos de un kilómetro y medio para arriba, con las superficies de
+obstáculos limpias— y es justo el sitio de esta técnica: una pista de granja
+sin torre, sin luces y con monte al final.
+
+**El monte, tres filas de lapachos de quince metros a ciento veinte del
+final.** Quince metros son los cincuenta pies de toda tabla de despegue, que
+es la altura de una fila de árboles, y el lapacho es lo que crece en el monte
+de San Pedro. Ciento veinte, porque es donde la técnica decide; en la granja,
+con la hierba y el calor (la mesa, igual que arriba):
+
+| Rueda 322 m | A 120 m del final | Sobre las copas |
+|---|---|---|
+| A la del obstáculo, 56 kt | 54,7 m | 39,7 m |
+| A buscar la Vy recién despegado | 20,0 m | 5,0 m |
+
+El piloto de la mesa cambia la velocidad que busca a dos nudos por segundo,
+como quien vuela con la mano: con el salto de golpe de 56 a 74 nudos el lazo
+se tiraba cincuenta metros hacia el suelo y la medida era del lazo.
+
+Más lejos, a los trescientos treinta metros donde una pista con su franja
+despejada a la norma tendría su primer obstáculo de quince, se pasa con margen
+de las dos maneras y la lección se pierde. Una pista de granja no es eso: el
+monte del vecino llega hasta donde llega, y por eso esta técnica existe. El
+monte se pone a mano con el ejercicio (`filaDeArboles` en
+`world/vegetation.ts`), con el árbol más alto sobre el eje midiendo justo los
+quince: uno que asomara por encima sería un obstáculo que no cuenta.
+
+**La mañana, en calma.** La pista que se usa es la 15 (`cabeceraEnUso`), y con
+el viento de siempre de la granja —del norte, seis nudos— saldría con viento
+de cola. De una pista corta nadie sale con viento de cola si puede elegir, así
+que el ejercicio trae los veintiocho grados y el viento quieto (`main.ts`).
+
+### El ejercicio
+
+«Despegar de una pista corta», `pista-corta`, **desde Tukã**: en Guyrami el
+modelo no tiene fuerzas —el gas es la velocidad— y no hay pendiente que
+elegir. La instructora lo presenta, pide soltar los frenos con el motor a tope
+y el avión quieto, cuenta el ángulo sostenido tres segundos a cinco nudos de
+los 56 (el ancho que pide el examen práctico de la FAA, que deja +10/−5), pide
+más nariz una vez si va diez por encima antes del monte, cuenta cómo se pasó
+—con margen desde diez metros sobre las copas, justo por debajo— y cierra con
+la Vy sostenida. **Parar en la pista rodando también se felicita**: renunciar
+es ganar. Las frases van en fila (`FrasesEnFila`), y mientras dura callan la
+fase del plan y lo que se explica de la cabina, que serían otra voz para el
+mismo suceso (`lo-que-calla-el-ejercicio.ts`). Las cifras salen delante de la
+frase desde Taguato, en km/h y metros, y en nudos y pies en Taguato Ruvichá.
+
+**Sin marcas de Vx y Vy en el velocímetro.** El JAZ 20 lleva la cabina de
+esferas de un 172 (`cabinaDelGps`), y la esfera de un 172 solo trae sus arcos
+y su raya roja. Un G1000 sí las tiene —las referencias de la tecla TMR/REF—,
+pero esta cabina no es esa.
+
+### Volado
+
+(Pendiente de la tirada del banco: `scripts/ver-la-pista-corta.mjs`.)
+
+### Lo que queda
+
+- **La Vy del bimotor**, que el modelo pone dieciséis nudos alta: cuando se
+  arregle, el JAZ 40 entra con las suyas.
+- **Los árboles no se tocan**: pasar por debajo de las copas se cuenta y se
+  repite, pero el avión las atraviesa. Hacerlas obstáculo es un percance que
+  hoy no existe en ningún árbol del juego.
+- **Las frases, sin grabar.**
