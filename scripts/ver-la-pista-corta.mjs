@@ -75,6 +75,7 @@ const leer = (page) =>
   });
 
 const medidos = {};
+const pasos = {};
 let codigo = 0;
 try {
   for (const tecnica of TECNICAS) {
@@ -231,6 +232,9 @@ try {
     const tarjetas = await page.evaluate(() => globalThis.__tarjetas ?? []);
     console.log(`    tarjetas: ${tarjetas.join(" | ")}`);
     soltar = soltar || tarjetas.some((x) => x.startsWith("freno") && /solt|release|let go/i.test(x));
+    const alAngulo = tarjetas.some((x) => /empinado|Slow and steep/i.test(x));
+    if (tecnica === "bien") comprobar("bien volado se cuenta el ángulo sostenido", alAngulo);
+    else comprobar("mal volado no se cuenta el ángulo, que solo se cruzó acelerando", !alAngulo);
     const enLaFila = perfil.find((x) => x.pasado >= (e?.pasadaLaPista ?? 120));
     comprobar("pide soltar los frenos con el motor a tope", soltar);
     comprobar(
@@ -239,6 +243,7 @@ try {
       `cierre ${e?.cierre}, pasó ${e?.paso} con ${e?.margen?.toFixed(1)} m sobre las copas; al cruzar la fila ${enLaFila ? `${enLaFila.kt} kt` : "?"}`,
     );
     medidos[tecnica] = e?.margen ?? null;
+    pasos[tecnica] = e?.paso ?? null;
     console.log(
       "    perfil: " +
         [-300, -150, 0, 60, 120, 240].map((d) => {
@@ -253,6 +258,7 @@ try {
   }
   if (medidos.bien != null && medidos.mal != null) {
     comprobar("bien volado se pasa con margen", medidos.bien >= 10, `${medidos.bien.toFixed(1)} m`);
+    comprobar("bien volado se cuenta «con margen», y mal volado «justo»", pasos.bien === "conMargen" && pasos.mal === "justo", `${pasos.bien} · ${pasos.mal}`);
     comprobar(
       "y mal volado, a la Vy desde el principio, con mucho menos",
       medidos.mal < medidos.bien - 10,
