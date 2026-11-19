@@ -452,7 +452,7 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
          * Cat de 450 hp va a fondo a 147 mph, 128 nudos (*Plane & Pilot*,
          * 2010), un 20 % por encima de los 107 de su ficha. Con la recta de la
          * hélice de paso fijo no pasaba de 111; con la de su hélice de
-         * velocidad constante, a 1.500 m, 124,7 (ADR 0027, enmienda H37c).
+         * velocidad constante, a 1.500 m, unos 125 (ADR 0027, enmienda H37c).
          */
         const holgura = a.alturaCritica !== null || a.id === "jaz-25" ? 1.2 : 1.15;
         expect(tope).toBeLessThan(a.cruiseSpeed * holgura);

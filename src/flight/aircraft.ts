@@ -1896,12 +1896,17 @@ export const MAINUMBY: AircraftConfig = {
    * veces su crucero, y con ella iba a fondo a 111 nudos y subía 455 ft/min a
    * las 4.500 lb del Ag Cat. Con su hélice, el 70 % de sus 450 hp: va a fondo a
    * 124 nudos —el de 450 hp, a 147 mph, 128 nudos (*Plane & Pilot*, «Gulfstream
-   * American Super Ag-Cat», 2010)— y sube, a esas 4.500 lb, unos 750 ft/min
-   * en la cuenta, donde las revistas le dan entre 1.080 y 1.800. El empuje
-   * parado baja a 4.500 N para que ruede lo mismo que rodaba: los 615 ft de
-   * su manual a 4.500 lb (ver `deRodarADespegar`). ADR 0027, enmienda H37c.
+   * American Super Ag-Cat», 2010)— y sube, a esas 4.500 lb, unos 810 ft/min
+   * en la cuenta, donde las revistas le dan entre 1.080 y 1.800.
+   *
+   * El empuje parado baja a 4.700 N, y rueda 179 m a 4.500 lb, un 4,5 % menos
+   * que los 615 ft de su manual (ver `deRodarADespegar`). Con 4.500 los
+   * rodaba enteros, pero el combustible del juego se cuenta con el empuje
+   * parado —el crucero, a un tercio de él (`cargaParaLaRuta`)—, y con ellos el
+   * vuelo local de media hora llamaba «minimum fuel» a los 25 minutos. ADR
+   * 0027, enmienda H37c.
    */
-  maxThrust: 4500,
+  maxThrust: 4700,
   potenciaUtil: 0.7 * 450 * 745.7,
   motores: 1,
   mandos: "convencionales",

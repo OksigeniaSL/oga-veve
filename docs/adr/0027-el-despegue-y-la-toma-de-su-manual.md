@@ -5192,20 +5192,27 @@ mar para los topes; la masa, la de la ficha, salvo donde se dice.
 | Carrera hasta la Vr | 482 m | 482 |
 | Vmc, cuenta | 85,1 kt | 86,4 |
 
-| JAZ 25, 1.500 kg | Recta (antes) | Paso variable, 70 % de 450 hp, 4,5 kN (ahora) | Su clase |
+| JAZ 25, 1.500 kg | Recta (antes) | Paso variable, 70 % de 450 hp, 4,7 kN (ahora) | Su clase |
 |---|---|---|---|
-| Mejor subida, volada | 68 kt, 905 ft/min | 76 kt, 1.276 ft/min | — |
-| A 4.500 lb (2.041 kg) | 455 ft/min (cuenta) | 697 volada, 752 cuenta | 1.080–1.800, revistas |
+| Mejor subida, volada | 68 kt, 905 ft/min | 76 kt, 1.355 ft/min | — |
+| A 4.500 lb (2.041 kg) | 455 ft/min (cuenta) | 755 volada, 811 cuenta | 1.080–1.800, revistas |
 | A fondo, nivel del mar | 111 kt | 124 kt | 128 (147 mph) |
-| Carrera hasta la Vr, 4.500 lb | 189 m | 188 m | 187 (615 ft) |
+| Carrera hasta la Vr, 4.500 lb | 189 m | 179 m | 187 (615 ft) |
 
 ### Lo que se cambia
 
 - **El JAZ 25, a la ley de su hélice**: `potenciaUtil`, el 70 % de sus 450 hp,
-  y el empuje parado de 5,2 a 4,5 kN para que ruede lo de su manual. El 70 %
-  es el que lo deja a fondo cerca de los 128 nudos sin pasar de su Vmo de 130.
-  Sube más y más deprisa, que es lo que daba la recta de menos: a 4.500 lb,
-  455 ft/min donde las revistas le dan más de mil.
+  y el empuje parado de 5,2 a 4,7 kN. El 70 % es el que lo deja a fondo cerca
+  de los 128 nudos sin pasar de su Vmo de 130. Sube más y más deprisa, que es
+  lo que daba la recta de menos: a 4.500 lb, 455 ft/min donde las revistas le
+  dan más de mil.
+- **Por qué 4,7 kN y no 4,5, que rodaban los 615 ft de su manual enteros**:
+  el combustible del juego se cuenta con el empuje parado —el crucero, a un
+  tercio de `maxThrust` (`cargaParaLaRuta`)—, y con 4,5 kN el vuelo local de
+  media hora cargaba 136 kg y llamaba «minimum fuel» a los 25 minutos
+  (`combustible-del-vuelo-local.test.ts`). Con 4,7, 138 kg y no llama; rueda
+  179 m, un 4,5 % menos que su manual. El vuelo entero del navegador se voló
+  con 4,5.
 - **El JAZ 50, con régimen plano**: `alturaCritica`, que ya era la de la
   norma —«the maximum altitude at which, in standard atmosphere, it is
   possible to maintain… a specified power» (14 CFR 1.1)— y no distingue el
@@ -5248,15 +5255,15 @@ tanda: queda escrito abajo.
 
 ### Lo que cambia de rebote
 
-- **Ningún puesto de salida, ninguna remontada.** El fumigador rueda lo
-  mismo (188 m a 4.500 lb, donde rodaba 189) y el Twin Otter, al nivel del
+- **Ningún puesto de salida, ninguna remontada.** El fumigador rueda un
+  5 % menos (179 m a 4.500 lb, donde rodaba 189) y el Twin Otter, al nivel del
   mar, empuja lo mismo; en los campos altos —Tenerife Norte, a 632 m— el
   régimen plano le da al JAZ 50 los 620 shp enteros donde la ley de la casa
   le quitaba un 4 %, y rueda algo menos. `puesto-de-salida-de-cada-campo.json`
   sale igual, `remontar-por-tipo.test.ts` y
   `despegue-y-toma-del-manual.test.ts` pasan sin tocar sus bandas.
 - **`prestaciones.test.ts` pedía a la hélice ir a fondo menos de un 15 % por
-  encima de su crucero.** El fumigador va a 124,7 nudos a 1.500 m, un 16,6 %
+  encima de su crucero.** El fumigador va a unos 125 nudos a 1.500 m, casi un 17 %
   sobre los 107 de su ficha; el Ag Cat va a 128, un 20 %. Se le da la holgura
   del turbo, 1,2, como al JAZ 40.
 - **`turbo.test.ts`** decía que solo el JAZ 40 tenía altitud crítica: ahora
@@ -5290,9 +5297,19 @@ En el navegador, `verificar-vuelo-entero.mjs`, puerto 5687:
   —la máquina iba cargada; el banco lo da por bueno—: **62 de 62**, 2 sin
   medir. V1 a 45 nudos y rotar a 51; sube al 10,3 % hasta los cien metros;
   toca a 1,2 m/s, en el eje y 353 m pasado el umbral; apagado a los 976 s.
+  Volado con 4,5 kN de empuje parado; la ficha lleva 4,7 (ver arriba).
+- **El ILS de Fuerteventura con el Twin Otter** (`OGA_AVION=jaz-50
+  ver-ils-con-agujas.mjs`, reloj por cuatro), **19 de 20**: captura el
+  localizador y la senda desde abajo, a los mínimos con las agujas a −0,05 y
+  0,01 puntos —lo peor desde mil pies, 0,07 y 0,19—, aterriza y cierra con la
+  pista. La que falla es la de la nube: a 339 ft dentro, como pide, pero a
+  197 ft todavía a medias (0,51), con la pista a la vista. No es del empuje
+  —la final la vuela el banco a la senda, con las agujas en cruz— y no se ha
+  volado antes con este avión para saber si ya fallaba: queda por mirar.
 
 ### Lo que queda
 
+- **La nube del ILS con el JAZ 50**, a medias a 197 ft (ver arriba).
 - **La hélice por cantidad de movimiento** para los cuatro de paso variable:
   la ley de arriba, con el diámetro de cada hélice en su ficha —1,93, 2,59,
   2,79 y el de la 2D30 del Ag Cat, que no se ha leído—, y medirlos otra vez.

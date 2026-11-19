@@ -124,6 +124,11 @@ describe("el JAZ 25, su hélice de velocidad constante", () => {
     expect(abajo).toBeLessThan(MAINUMBY.vmoKt);
   });
 
+  /*
+   * 179 m, un 4,5 % menos: con los 4.500 N que los rodaban enteros, el vuelo
+   * local de media hora llamaba «minimum fuel», porque el combustible del
+   * juego se cuenta con el empuje parado (ver la ficha).
+   */
   it("y rueda lo de su manual a 4.500 lb: 615 ft, a un 5 %", () => {
     const r = carreraHastaVr(conMasa(MAINUMBY, 4500 * 0.45359237)) / (615 * PIE);
     expect(r).toBeGreaterThan(0.95);
