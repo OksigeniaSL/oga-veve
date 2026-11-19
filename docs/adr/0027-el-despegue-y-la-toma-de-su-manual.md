@@ -4776,3 +4776,176 @@ mesa no lleva; no se ha buscado qué.
   suelta, y entonces sostiene la trayectoria la mano del juego
   (`flight/mano.ts`), no la ayuda. Si con eso se llega a los 56 y se
   sostienen, está por ver jugando.
+
+## Enmienda H34d (19-11-2026): los flecos del piloto del vuelo entero
+
+Lo que las rondas de cierre dejaban al filo de sus comprobaciones y H34a,
+H34b y H34c dejaron apuntado. Todo es del piloto del banco
+(`verificar-vuelo-entero.mjs`); del juego no se ha cambiado nada —la sonda
+de desarrollo (`src/dev/sondas.ts`) dice ahora cuándo se recogen los flaps de
+despegue, que es lo que la lista ya le pedía a quien juega—. Las mesas, las
+trazas y los registros, en `h34d/` del scratchpad.
+
+### 1. El JAZ 50, la racha de los últimos metros
+
+Tocaba a 2,05, 2,13 y 2,16 m/s en c26, c27 y c28 con la comprobación pidiendo
+de uno a dos. La mesa que H34a echaba en falta (`h34d/mesa50/`: la de H32c con
+el modelo, el automático en la senda, el gas de la final y las rachas del
+juego, trescientas finales) lo enseña igual que las tiradas: con la mano de
+antes, 64 de 270 tomas de más de 2 m/s y la peor a 3,84. Es la racha que
+baja en los últimos metros y una mano que no llega: medio gas por metro por
+segundo que se hunde de más, y el proporcional de siempre.
+
+Un piloto de bimotor nota la racha en el asiento antes que en el variómetro y
+mete gas y tira a la vez. Ahora (`BIMOTOR_EN_LA_RECOGIDA`), cuando se baja
+más de lo que pide el perfil, el doble de proporcional; y gas entero por cada
+metro por segundo de más y por cada g que falte.
+
+| Mesa, σ 1 m/s | Antes | Después |
+|---|---|---|
+| JAZ 50, más de 2 m/s | 64 de 270, la peor 3,84 | 24 de 267, la peor 2,95 |
+| JAZ 50, con la racha de cara de H34a | 64 de 274 | 32 de 274 |
+| JAZ 50, σ 1,5 | 94 de 224 | 63 de 220 |
+| JAZ 50, mediana del toque / más de 600 m | 208 m / 2 | 221 m / 4 |
+| JAZ 40, más de 2 m/s | 19 de 293 | 11 de 293 |
+| JAZ 60, más de 2 m/s / más de 600 m | 86 / 47 de 293 | 35 / 32 de 293 |
+
+En la primera vuelta de la mesa, con ciento ochenta finales: la mano de antes,
+41 de más de 2 m/s; solo el gas al doble, 23; solo el proporcional al doble,
+30; solo el gas por la carga que falta, 35; el ángulo por la carga que falta,
+34 a 38; las tres cosas juntas, 12. Es lo que se ha puesto.
+
+### 2. El nivelado de la avioneta, a la regla del diez por ciento
+
+Empezaba a nivelar a quince metros fijos y `aLaAltura` pedía de golpe la
+décima de lo que faltaba: subiendo a tres metros por segundo, la palanca de
+0,06 a −0,12 en un paso; con la racha, a −0,30, y la carga a 0,63 g. Ahora
+(`sigueSubiendo`, `ANTES_DE_LA_ALTURA`) empieza a seis segundos de lo que sube
+—a quinientos pies por minuto, cincuenta pies antes—, con lo que sube contado
+hasta 4 m/s, y desde ahí pide subir lo que falta en seis segundos, que donde
+empieza es justo lo que ya sube; sin tirar nunca más de lo que sostiene la
+velocidad de subida. Una vez nivelando no se vuelve a subir salvo que se quede
+a más de treinta metros.
+
+En la mesa de H34c (`h34d/mesa20/`), a 250 y 300 m: sin racha, la palanca no
+salta (0,06 → 0) y la carga va de 0,93 a 0,99 g, donde iba de 0,90 a 1,00;
+con la racha de ±3 m/s en seis fases, el salto de −0,36 a −0,22 como mucho
+—lo que queda es el freno del morro que mueve la racha— y la carga de
+0,63–1,27 a 0,70–1,25 g. El margen al avisador, en cambio, baja algo con esa
+racha: de 4,7° a 4,3° como poco, porque se sigue subiendo un rato más y la
+racha lo pilla más lento. Sin el tope de la velocidad de subida, 3,8°.
+
+### 3. La frustrada, sin tirón
+
+`aSuRitmo` deja de tirar cuando el morro va deprisa, pero no empuja, y su
+cero es la palanca suelta: la final se volaba con −0,35 de palanca —todos los
+flaps, 71 nudos— y al irse la ley pedía seis décimas de golpe. En la traza de
+H34c, la palanca a 2,6 por segundo, el morro a 17,5° por segundo y 1,56 g. La
+ley de la actitud de la avioneta lleva ahora el freno del morro también
+empujando, y la palanca se mueve desde la que llevaba el avión, a uno por
+segundo (`conLaMano`).
+
+En la mesa, desde una final de cuatro segundos a 71 nudos con la palanca que
+la sostiene (−0,28): el morro de 19,6 a 8,4° por segundo y la carga de 1,50 a
+1,28 g, sin bajar más de un metro. Con el freno solo, la carga baja a 1,31 g
+pero el morro sigue saliendo a 19,6° por segundo: el tirón es el salto de la
+palanca. Medio por segundo da lo mismo; dos vuelven los 12° por segundo. Al
+rotar no cambia nada (11,3° de morro, 30 m a 780 m de carrera).
+
+### 4. Los flaps de despegue de la avioneta
+
+`configurar` se los quitaba a los treinta metros a la velocidad que llevara.
+La lista se los pide a quien juega a los doscientos pies y sesenta nudos
+(`recogeLosFlaps` de la JAZ 20, `comoSeRecogen`), que es el 172. En las dos
+trazas de H34c se recogieron a 33 m y 62 nudos, y en los quince segundos
+siguientes la subida bajó a 0,7 y 1,2 m/s con el ala a 3,5° y 4,7° del
+avisador. Se ha cambiado, para que vuele lo que el juego enseña
+(`avionetaConLosDeDespegue`), y la mesa dice que no arregla ni estropea: sin
+racha, el margen a 5,2° y 5,3°; con la racha de seis fases, recogiendo a los
+treinta metros se recogían a 56 nudos en dos de ellas —por debajo de los
+sesenta del manual— y el margen después iba de 3,0° a 4,1°; a los doscientos
+pies, de 2,7° a 3,8°. Lo que acerca el ala al avisador ahí no es cuándo se
+recogen: es la actitud de doce grados con el ala ya limpia hasta los 120 m.
+Bajar el morro a la limpia en cuanto se recogen se probó y no vale: con esa
+ley el avión baja (hasta −1,5 m/s) a sesenta metros del suelo.
+
+### 6. «Ya podés tocar» tapado por el PAPI en Guyrami
+
+Un ayudante vio en `tenerife-norte guyrami 3 jaz-20` la comprobación «antes
+de tocar, el juego dice que ya se puede tocar» en rojo, con «papi2» en
+pantalla justo después de que el juego lo decidiera. En c28 y en la tirada de
+esta tanda, en verde (62 de 62). No se ha vuelto a ver, así que no está medido;
+lo que dice el código es esto. La tarjeta de «ya podés tocar» y la del PAPI
+van las dos con `prioridad: IMPORTANTE`, y `mostrar` en `ui/senal.ts` solo
+deja esperando a la de menos prioridad: con la misma, gana la última. El banco
+mira la pantalla cada décima de segundo de juego; si al mirar ya está «papi2»,
+un cambio de luces del PAPI —que cruzando el umbral cambian deprisa— la tapó
+antes de esa décima, y quien juega tampoco la habría visto. Es del juego, no
+del banco: lo mismo que H32c calló en la final con viento cruzado («ya podés
+tocar» y el PAPI, con la misma prioridad), fuera de ella sigue abierto. No se
+ha tocado.
+
+### Volado
+
+`verificar-vuelo-entero.mjs`, con la traza del ala (`h34d/leer.mjs` la lee).
+
+**`tenerife-norte taguato 1 jaz-20` con `OGA_PISTA_OCUPADA=1`**: 58 de 58,
+el avisador ni una muestra, la torre manda irse a 50 m y se toca después a
+1,74 m/s, 230 m pasado el umbral. Contra las dos de H34c:
+
+| | H34c, 1 (pista ocupada) | H34c, 2 | H34d |
+|---|---|---|---|
+| Flaps del despegue: se recogen | a 33 m y 62 kt | a 33 m y 62 kt | a 63 m y 61 kt |
+| … y en los 15 s siguientes | sube a 0,7 m/s, margen 3,5° | 1,2 m/s, 4,7° | 2,2 m/s, 6,0° |
+| Nivelado del primer circuito: carga | 0,65–1,37 g | 0,62–1,32 g | 0,80–1,16 g |
+| … el empuje más rápido | −1,05 por segundo | −0,68 por segundo | −0,12 por segundo |
+| … margen mínimo | 4,9° | 2,4° | 4,2° (en una racha) |
+| Frustrada: palanca de la final | −0,36 | — | −0,31 |
+| … la palanca, como mucho | 2,6 por segundo | — | 0,5 por segundo |
+| … el morro, como mucho | 17,5°/s | — | 7,3°/s |
+| … carga máxima / margen | 1,56 g / 3,3° | — | 1,34 g / 4,4° |
+| … flaps | 30→20 a 61 m, 10 a 75 m, 0 a 143 m | — | 30→20 a 53 m, 10 a 69 m, 0 a 142 m |
+
+Esta tirada salió con el pestillo del nivelado de la primera versión (volvía
+a subir solo si se quedaba a treinta metros *y sin subir*); lo de ahora
+(66f3385e) solo cambia eso, para que una frustrada que vuelve al mismo
+circuito no se tome por un nivelado, y aquí no llegó a mandar.
+
+**`tenerife-norte taguato 1 jaz-50`**, una vez: 57 de 57, toca a 1,62 m/s y
+309 m pasado el umbral (c26, c27 y c28: 2,05, 2,13 y 2,16). La recogida
+empieza a 9 m bajando 2,4 m/s a 70 nudos; a 6 m le entra una racha que baja
+—0,87 g, el ángulo de ataque a −1,5°— y lo lleva otra vez a 2,2 m/s; el gas
+sube de 0,42 a 0,73, la palanca sigue tirando, y a 4 m baja a 0,5 m/s. Una
+tirada no hace estadística: la mesa es la que dice cuánto baja.
+
+**`tenerife-norte taguato 12 jaz-90`** (punto 5, lo de H32c, que no se había
+volado): 64 de 64, toca a 1,33 m/s y 351 m pasado el umbral, con las gafas.
+La recogida empieza a 10,7 m, 27 m antes del umbral, **bajando solo 1,1 m/s**
+a 121 nudos —el caso de H32c, la senda aplanada—, y con el perfil empezado en
+lo que pide la senda toca en la zona. Antes, 621–627 m en c26, c27 y H34a; en
+c28, 382 m. Esto no lo toca H34d: el reactor no pasa por nada de lo de arriba.
+
+**`tenerife-norte guyrami 3 jaz-20`** (punto 6), con el código de antes de esta
+tanda —en Guyrami no cambia nada de esto—: 62 de 62, «ya podés tocar» salió.
+
+La máquina, sin carga que se notara: las de ×1 a ×1,00 de verdad, la de ×12 a
+×1,39.
+
+### Lo que queda
+
+- **La segunda del JAZ 50, la segunda de la JAZ 20 sin frustrada y el JAZ
+  40** no se volaron: el navegador es uno para toda la máquina y no cupieron
+  en el tope de la tanda. El JAZ 40 sí cambia con esto —es bimotor de hélice,
+  `BIMOTOR_EN_LA_RECOGIDA`—; la mesa lo da mejor (de 19 a 11 tomas duras de
+  293), pero no está volado.
+- **La subida por actitud con el ala limpia.** Hasta los 120 m la avioneta
+  sube a doce grados aunque ya haya recogido los flaps, y limpia eso son de
+  57 a 62 nudos: con la racha de la mesa, es ahí donde el ala se acerca al
+  avisador (2,7–3,8°). Pasar a la limpia en cuanto se recogen se probó y no
+  vale tal cual —baja el morro de golpe y el avión desciende—; lo que haría un
+  piloto es bajar el morro poco a poco hasta su Vy, y pide su propia mesa.
+- **El nivelado se queda arriba.** `aLaAltura` es proporcional y sin
+  compensador: a 80 nudos el avión necesita la palanca adelante, y eso se
+  paga con estar unos metros por encima de lo pedido —catorce en la mesa,
+  antes y ahora—. No es de esta tanda.
+- **«Ya podés tocar» tapado por el PAPI**, del juego: ver el punto 6.

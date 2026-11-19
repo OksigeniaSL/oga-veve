@@ -1215,6 +1215,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * correr en cuanto se engancha.
    */
   let ultimaCaida = 0;
+  /**
+   * La palanca que llegó al avión en el último fotograma, con todo lo que la
+   * toca —el automático, la recogida, el tope de ángulo—, o `null` si aún no
+   * ha llegado ninguna. Aquí y no con `conLaMano` porque la escribe el gancho.
+   */
+  let palancaQueLleva = null;
   const recoger = (mandos) => {
     if (!recogida) return;
     const s = o.estado();
@@ -1369,13 +1375,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           POR_LO_QUE_ACELERA *
           (acelera - ((s.loadFactor ?? 1) - 1) * 9.81)
         : 0;
+    /*
+     * **Y un bimotor de hélice que se hunde, con el doble de mano** (H34d).
+     * Ver `BIMOTOR_EN_LA_RECOGIDA`.
+     */
+    const kpQueSeHunde = BIMOTOR_EN_LA_RECOGIDA && falta > 0 ? kp * 2 : kp;
     const calculado = Math.max(
       -0.6,
       Math.min(
         0.8,
         recogida.palanca +
           porLaPresion *
-            (porLoQueFrena + porDelante + kp * falta + ki * recogida.acumulado + porLoQueAcelera) -
+            (porLoQueFrena +
+              porDelante +
+              kpQueSeHunde * falta +
+              ki * recogida.acumulado +
+              porLoQueAcelera) -
           kq * (s.pitchRate ?? 0),
       ),
     );
@@ -1479,11 +1494,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * **Y un reactor, al ralentí a los treinta pies**, no al empezar a recoger:
      * ver `RECOGIDA_DE_REACTOR`.
      */
+    /*
+     * **Y la racha se nota en el asiento antes que en el variómetro** (H34d):
+     * el gas sube con lo que se hunde de más y con la carga que falta. Ver
+     * `BIMOTOR_EN_LA_RECOGIDA`.
+     */
     if (!SENCILLO)
-      mandos.throttle =
-        suyas.propulsion === "helice" && (suyas.motores ?? 1) >= 2
-          ? Math.min(1, (recogida.gas ?? 0) * queda + 0.5 * Math.max(0, falta))
-          : RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR
+      mandos.throttle = BIMOTOR_EN_LA_RECOGIDA
+        ? Math.min(
+            1,
+            (recogida.gas ?? 0) * queda +
+              Math.max(0, falta) +
+              Math.max(0, 1 - (s.loadFactor ?? 1)),
+          )
+        : RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR
             ? (recogida.gas ?? 0)
             : 0;
   };
@@ -1629,6 +1653,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     }
     limitarElAngulo(mandos);
     apuntarElAla(mandos);
+    // La palanca que de verdad llegó al avión: de ahí parte la mano. Ver `conLaMano`.
+    palancaQueLleva = mandos.elevator;
   });
   /*
    * **La pista es la del campo en el que se está**, no siempre la de casa.
@@ -2024,6 +2050,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     }
     flapsDeDespegueFuera = false;
     /*
+     * **Y la avioneta, con los de despegue hasta la altura y la velocidad de
+     * su lista.** Ver `avionetaConLosDeDespegue`.
+     */
+    if (avionetaConLosDeDespegue && tramo < 2 && !enFinal) {
+      const cuando = suyas.recogeLosFlaps;
+      const indicadaKt = o.velocidadDeCabina?.() ?? kt;
+      if (!cuando || (s.heightAboveGround >= cuando.pies * 0.3048 && indicadaKt >= cuando.kt))
+        avionetaConLosDeDespegue = false;
+      else return;
+    }
+    avionetaConLosDeDespegue = false;
+    /*
      * **Y la frustrada de la avioneta, muesca a muesca.** Ver
      * `flapsDeLaFrustrada`: una muesca menos cuando ha llegado la anterior,
      * sube y va a la de maniobra de la siguiente.
@@ -2304,6 +2342,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * empezaba, a los segundos de senda de `SEGUNDOS_DE_RECOGIDA`.
    */
   const RECOGIDA_DE_REACTOR = !SENCILLO && suyas.propulsion === "chorro";
+  /**
+   * **Un bimotor de hélice en el modelo completo, recogiendo con racha.**
+   *
+   * El JAZ 50 de Los Rodeos tocaba a 2,05, 2,13 y 2,16 m/s en las rondas c26,
+   * c27 y c28, con la comprobación pidiendo de uno a dos: una racha que baja
+   * en los últimos cuatro metros —en la traza de H34a, el ángulo de ataque de
+   * 1,3° a −2,6° en tres décimas de segundo, con la palanca quieta y la carga
+   * en 0,79 g— y la mano que tenía, medio gas por metro por segundo de más,
+   * no llegaba a pararla. Quien vuela un bimotor nota la racha en el asiento
+   * antes de verla en el variómetro, y mete gas y tira a la vez. Aquí: el
+   * doble de proporcional cuando se baja más de lo que pide el perfil, el gas
+   * entero por cada metro por segundo de más, y otro tanto por cada g que
+   * falte.
+   *
+   * Medido en una mesa con el modelo, el automático en la senda, el gas de la
+   * final y las rachas del juego (σ 1 m/s, trescientas finales por avión,
+   * `h34d/mesa50/` del scratchpad): las tomas de más de 2 m/s del JAZ 50 van
+   * de 64 a 24 de 267, la peor de 3,84 a 2,95 m/s, y se toca 13 m más allá de
+   * mediana —las de más de 600 m, de 2 a 4—; con la racha de cara de H34a, de
+   * 64 a 32; con σ 1,5, de 94 a 63. El JAZ 40, de 19 a 11, y el JAZ 60, de 86
+   * a 35, sin flotar más: las suyas de más de 600 m, de 47 a 32.
+   */
+  const BIMOTOR_EN_LA_RECOGIDA =
+    !SENCILLO && suyas.propulsion === "helice" && (suyas.motores ?? 1) >= 2;
   /** El ritmo al que se busca tocar, m/s: el del perfil de `recoger`. */
   const ritmoAlTocar = RECOGIDA_DE_REACTOR ? 2 * 0.3048 : RITMO_AL_TOCAR;
   /** Las ruedas a las que un reactor pone el gas al ralentí, m. */
@@ -2561,6 +2623,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   let flapsDeDespegueFuera = false;
   /**
+   * **Si la avioneta lleva todavía los flaps con que despegó**, y se le
+   * dejan hasta la altura y la velocidad a la que la lista se los pide
+   * recoger a quien juega (`recogeLosFlaps` de la sonda, `comoSeRecogen` en
+   * `flaps-de-despegue.ts`): doscientos pies y sesenta nudos en la JAZ 20, los
+   * de su manual. `configurar` se los quitaba a los treinta metros, a la
+   * velocidad que llevara; con el morro a doce grados la subida caía de 4,5 a
+   * 1,3 m/s mientras se recogían, y el ala se quedaba a 4,4° del avisador
+   * (trazas de H34c). Se recogen de una vez, que en el 172 está bien con la
+   * velocidad y la altura que tocan, y el motor de los flaps ya los lleva a
+   * su ritmo. Ver `configurar`.
+   */
+  let avionetaConLosDeDespegue = false;
+  /**
    * **Si esta subida se vuela con la técnica de la línea**: morro a la
    * velocidad y el gas quieto. En el modelo completo, en los que vuela el
    * automático —ver `REACTOR_COMPLETO`—, que son los del «stall, stall».
@@ -2666,6 +2741,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const aQueSeSube = (s) =>
     AVIONETA_COMPLETA ? Math.max(VELOCIDAD_DE_SUBIDA, enVerdadera(s, SUBIDA_LIMPIA)) : VELOCIDAD_DE_SUBIDA;
 
+  /**
+   * **Lo deprisa que mueve la palanca una mano**, por segundo: de suelta a
+   * entera en un segundo.
+   *
+   * La ley de la actitud manda la palanca que toca, y la manda de golpe. Al
+   * irse al aire, de los −0,28 con que se volaba la final a las seis décimas
+   * de la actitud: en la mesa del modelo completo, desde una final a 71
+   * nudos, el morro subía a 19,6° por segundo y la carga a 1,50 g. Con el
+   * freno del morro solo, la carga baja a 1,31 g pero el morro sigue
+   * saliendo a 19,6° por segundo en el primer fotograma, que es el salto;
+   * moviendo la palanca desde donde estaba, a 8,4° por segundo y 1,28 g, y
+   * sin perder más de un metro (`h34d/mesa20/` del scratchpad). Medio por
+   * segundo da lo mismo, y dos ya vuelven los 12° por segundo.
+   */
+  const MANO_POR_SEGUNDO = 1;
+  let relojDeLaMano = null;
+  /** La palanca pedida, movida desde la que llevaba el avión a `MANO_POR_SEGUNDO`. */
+  const conLaMano = (quiere) => {
+    const ahora = o.reloj();
+    const transcurrido = relojDeLaMano === null ? PASO : ahora - relojDeLaMano;
+    relojDeLaMano = ahora;
+    // Si no se movía desde hace rato, es una mano que empieza: un paso del bucle.
+    const dt = transcurrido > 0 && transcurrido <= 0.25 ? transcurrido : PASO;
+    const desde = palancaQueLleva ?? quiere;
+    const cabe = MANO_POR_SEGUNDO * dt;
+    return desde + Math.max(-cabe, Math.min(cabe, quiere - desde));
+  };
+
   const subirDeVerdad = (s) => {
     /*
      * **Los primeros metros, por actitud.**
@@ -2697,7 +2800,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     if (s.heightAboveGround < ASENTAR_LA_SUBIDA || SUBE_CON_EL_MORRO) {
       const falta = CABECEO_DE_SUBIDA - cabeceoDe(s);
       const actitud = ganancia(s) * Math.max(-0.35, Math.min(0.6, falta * 4));
-      return AVIONETA_COMPLETA ? aSuRitmo(actitud, s) : actitud;
+      /*
+       * **Y parando el morro, también empujando, desde donde estaba la
+       * palanca** (H34d). `aSuRitmo` deja de tirar cuando el morro va
+       * deprisa, pero no empuja, y su cero es la palanca suelta. Al irse al
+       * aire, la final se volaba con −0,35 —con todos los flaps y a 71 nudos,
+       * el morro abajo— y la ley pedía seis décimas de golpe: soltar ya era
+       * tirar treinta y cinco centésimas, y con el motor a tope el morro subió
+       * a diecisiete grados por segundo, 1,56 g a 73 nudos (traza de H34c). Un
+       * piloto mete el gas, sujeta el morro que se le viene arriba y lo lleva a
+       * la actitud de subida: el freno de `AMORTIGUA_EL_MORRO` y la mano de
+       * `conLaMano`.
+       */
+      return AVIONETA_COMPLETA
+        ? conLaMano(Math.max(-0.35, Math.min(0.6, aSuRitmo(actitud, s) - AMORTIGUA_EL_MORRO * ritmoDelMorro(s))))
+        : actitud;
     }
     const base = palancaPorVelocidad(s, aQueSeSube(s));
     const falta = Math.max(0, 3 - s.verticalSpeed);
@@ -2791,9 +2908,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * 68 m/s. Pidiendo cinco metros por segundo de bajada, el mismo error se
      * recorre en veinte segundos y el avión llega volando.
      */
+    /*
+     * **Y la avioneta que nivela desde una subida, a la regla del diez por
+     * ciento** (H34d): ver `sigueSubiendo`. Mientras le falte, pide subir lo
+     * que falta en seis segundos —donde empieza, justo lo que ya sube— y no
+     * la décima de lo que falta, que a quince metros era metro y medio por
+     * segundo de golpe.
+     */
+    const queda = objetivo - alto(s);
+    const capturando =
+      AVIONETA_COMPLETA && queda > 0 && nivelandoHacia !== null && Math.abs(nivelandoHacia - objetivo) < 1;
     const quiere = Math.max(
       -CAIDA_MAXIMA,
-      Math.min(4, (objetivo - alto(s)) * 0.1),
+      Math.min(4, capturando ? queda / ANTES_DE_LA_ALTURA : queda * 0.1),
     );
     const error = quiere - s.verticalSpeed;
     /*
@@ -2815,7 +2942,73 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const freno = AVIONETA_COMPLETA ? AMORTIGUA_EL_MORRO * ritmoDelMorro(s) : 0;
     const mando = Math.max(-0.3, Math.min(0.3, error * 0.08 - freno));
     const conSuMando = mando * ganancia(s);
-    return s.airspeed < minima ? Math.min(0, conSuMando) : conSuMando;
+    /*
+     * Y mientras nivela, nunca más morro del que sostiene su velocidad de
+     * subida: quien nivela baja el morro y deja que la velocidad suba, no la
+     * gasta en subir lo que le queda. Con la racha de la mesa, el margen al
+     * avisador al nivelar se quedaba en 3,8°; así, en 4,3°.
+     */
+    const sinGastarLaVelocidad = capturando ? Math.min(conSuMando, subirDeVerdad(s)) : conSuMando;
+    return s.airspeed < minima ? Math.min(0, sinGastarLaVelocidad) : sinGastarLaVelocidad;
+  };
+  /**
+   * **A cuánto de la altura empieza a nivelar la avioneta**, en segundos de
+   * lo que sube: seis. Es la regla del diez por ciento —a quinientos pies por
+   * minuto, cincuenta pies antes—, que es lo que se enseña en cualquier
+   * escuela y lo que hace el piloto de un 172. Ver `sigueSubiendo`.
+   */
+  const ANTES_DE_LA_ALTURA = 6;
+  /**
+   * La altura hacia la que la avioneta está nivelando desde una subida, m
+   * sobre el campo, o `null`. Ver `sigueSubiendo`.
+   */
+  let nivelandoHacia = null;
+  /**
+   * **Si se sigue subiendo o ya se nivela**, hacia `altoQueToca`.
+   *
+   * Se empezaba a nivelar a quince metros fijos de la altura, y `aLaAltura`
+   * pedía de golpe la décima de lo que faltaba: subiendo a tres metros por
+   * segundo, la palanca de 0,06 a −0,12 en un paso, y a −0,30 con la racha de
+   * Los Rodeos subiéndolo a cinco y pico; la carga, hasta 0,63 g. Es el
+   * empujón que H34c dejó en el nivelado de la segunda tirada, a 2,4° del
+   * avisador. En la avioneta del modelo completo se empieza a nivelar a seis
+   * segundos de lo que sube —el diez por ciento—, con lo que sube contado
+   * hasta cuatro metros por segundo, que más es la racha y no la subida, y
+   * desde ahí `aLaAltura` pide justo lo que ya sube: la palanca no salta. Y
+   * una vez nivelando no se vuelve a la subida salvo que se quede a más de
+   * treinta metros —más de lo que se empieza a nivelar, veinticuatro como
+   * mucho—: el diez por ciento de una racha cambia cada segundo, y sin eso el
+   * piloto saltaría de una ley a la otra. Y treinta metros por debajo, sea
+   * por lo que sea —una frustrada que vuelve a subir al mismo circuito—, ya
+   * no es nivelar.
+   *
+   * Y con la racha, nivelando así el ala se queda a 4,3° del avisador como
+   * poco, donde a quince metros fijos se quedaba a 4,7°: se sigue subiendo
+   * un poco más rato y la racha lo pilla más lento. Con
+   * `sinGastarLaVelocidad` de `aLaAltura`; sin eso, 3,8°.
+   *
+   * Medido en la mesa del modelo completo (`h34d/mesa20/` del scratchpad), a
+   * 250 y 300 m: sin racha, la palanca no salta (de 0,06 a 0) y la carga va
+   * de 0,93 a 0,99 g, donde iba de 0,90 a 1,00; con la racha de Los Rodeos en
+   * seis fases, el salto de −0,36 a −0,22 como mucho —lo que queda es el freno
+   * del morro que mueve la racha— y la carga de 0,63–1,27 a 0,70–1,25 g.
+   *
+   * Los demás, como estaban: a quince metros (`antes`).
+   */
+  const sigueSubiendo = (s, altoQueToca, antes) => {
+    const queda = altoQueToca - alto(s);
+    if (!AVIONETA_COMPLETA) return queda > antes;
+    if (nivelandoHacia !== null && Math.abs(nivelandoHacia - altoQueToca) < 1) {
+      if (queda <= 30) return false;
+      nivelandoHacia = null;
+      return true;
+    }
+    if (queda > Math.max(3, ANTES_DE_LA_ALTURA * Math.min(4, s.verticalSpeed))) {
+      nivelandoHacia = null;
+      return true;
+    }
+    nivelandoHacia = altoQueToca;
+    return false;
   };
 
   /**
@@ -6153,6 +6346,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         o.pedirFlaps?.(1 / 3);
         flapsDeDespegueFuera = true;
       }
+      // Y la avioneta, los que le pone la instructora: ver `avionetaConLosDeDespegue`.
+      if (s.onGround && AVIONETA_COMPLETA) avionetaConLosDeDespegue = true;
       /*
        * **En el eje, apuntando por delante del avión y no del umbral.**
        *
@@ -6478,7 +6673,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         cruceroDesde = t;
       const yaBaja = cruceroDesde !== null && t - cruceroDesde >= cruceroPedido;
       const altoQueToca = yaBaja ? ALTO_DE_BAJADA : ALTO_DE_CRUCERO;
-      const subiendo = !yaBaja && alto(s) < altoQueToca - 15;
+      const subiendo = !yaBaja && sigueSubiendo(s, altoQueToca, 15);
       const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
       const gasSubiendo =
         NECESITA_TECNICA && peldano !== "guyrami"
@@ -6693,7 +6888,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         ? Math.min(tope - cotaDePista, porLaSenda + (suyas.tren ?? 0))
         : CRUCERO;
       ultimoAltoQueToca = altoQueToca;
-      const subiendo = alto(s) < altoQueToca - 15;
+      const subiendo = sigueSubiendo(s, altoQueToca, 15);
       const quiereIr = velocidadDelTramo(aDonde, s);
       /*
        * **Y subiendo, el gas a tope solo mientras haga falta.**
