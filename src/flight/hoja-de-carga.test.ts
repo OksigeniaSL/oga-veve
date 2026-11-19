@@ -53,7 +53,7 @@ describe("lo que pesa cada renglón", () => {
   });
 
   it("sin la masa en vacío leída, la carga de su ficha y nada que elegir", () => {
-    for (const id of ["jaz-25", "jaz-40", "jaz-120"]) {
+    for (const id of ["jaz-25", "jaz-40", "jaz-110"]) {
       const a = aircraftById(id);
       expect(cargaDeSuTipo(a), id).toBeNull();
       expect(masaSinCombustibleDeLaHoja(a, 50), id).toBe(a.masaSinCombustible);
@@ -163,6 +163,38 @@ describe("la decisión de verdad: la gente o el combustible, no las dos", () => 
     expect(pesar(a, { pasajeros: 2, llenos: false }, delPlan("jaz-20", "pettirossi", "yvytu-rape")).cabe).toBe(
       true,
     );
+  });
+
+  /*
+   * **El JAZ 40 de Pettirossi a Mariscal Estigarribia no llega con la
+   * reserva**, en los dos sentidos: con su alternativo, el plan pide más de lo
+   * que cabe en sus depósitos. Salía con ellos a tope y el sello verde; ni
+   * llenando se lleva el combustible legal, y la hoja lo dice (H38c).
+   */
+  it("el JAZ 40 entre Pettirossi y Estigarribia no llega con la reserva, ni llenando", () => {
+    const a = aircraftById("jaz-40");
+    for (const [salida, destino] of [
+      ["pettirossi", "estigarribia"],
+      ["estigarribia", "pettirossi"],
+    ] as const) {
+      const plan = delPlan("jaz-40", salida, destino);
+      expect(plan, salida).toBeGreaterThan(loQueCabe(a));
+      for (const llenos of [false, true]) {
+        const p = pesar(a, { ...hojaDeSuFicha(a), llenos }, plan);
+        expect(p.llega, `${salida} ${llenos}`).toBe(false);
+        expect(p.pide).toBe(plan);
+        // Lo que se carga sigue siendo lo que cabe: el plan no se vuelve depósito.
+        expect(p.combustible).toBe(loQueCabe(a));
+      }
+    }
+    // Y a un destino más cerca, sí.
+    expect(pesar(a, hojaDeSuFicha(a), delPlan("jaz-40", "pettirossi", "pettirossi")).llega).toBe(true);
+  });
+
+  it("y llega quien carga lo que pide su plan, por justo que vaya", () => {
+    const a = aircraftById("jaz-60");
+    expect(pesar(a, hojaDeSuFicha(a), loQueCabe(a)).llega).toBe(true);
+    expect(pesar(a, hojaDeSuFicha(a), loQueCabe(a) + 1).llega).toBe(false);
   });
 
   it.each(Object.keys(CARGA_DE_SU_TIPO))(

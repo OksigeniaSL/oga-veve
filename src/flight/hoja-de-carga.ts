@@ -27,10 +27,11 @@
  *
  * El centrado —dónde va el peso, no cuánto— no entra aquí: es otra hoja.
  *
- * Los aviones de los que no se ha podido leer la masa en vacío —el Ag Cat, el
- * Seneca II, el 787 y el 747— no llevan renglón de gente: vuelan con la carga
- * de su ficha, y su hoja solo deja elegir el combustible. Es preferible no
- * dejar elegir a hacerlo con una cifra inventada.
+ * Los aviones de los que no se ha podido leer la masa en vacío en una fuente
+ * de primera mano —el Ag Cat, el Seneca II y el 787— no llevan renglón de
+ * gente: vuelan con la carga de su ficha, y su hoja solo deja elegir el
+ * combustible. Es preferible no dejar elegir a hacerlo con una cifra
+ * inventada, o con una de tres revistas que no dicen lo mismo.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -51,6 +52,12 @@ export interface CargaDeSuTipo {
   readonly plazas: number;
   /** Lo que pesa cada pasajero con lo que lleva, kg. */
   readonly porPersona: number;
+  /**
+   * **La carga de bodega de su ficha**, kg, la que no es equipaje de nadie: el
+   * correo y las mercancías de un avión de línea grande. La hoja no la elige
+   * —es otra decisión, de otro despacho—, pero pesa.
+   */
+  readonly bodega?: number;
 }
 
 /** La masa estándar de un adulto con su equipaje de mano, kg: CAT.POL.MAB.100, tabla 1. */
@@ -63,8 +70,9 @@ const LIBRA = 0.45359237;
 /**
  * Por avión, con su fuente. Solo los que tienen la masa en vacío leída.
  *
- * Los cuatro salen de cifras que el propio juego ya citaba en su ficha
- * (`aircraft.ts`); aquí se reparten en avión y gente en vez de ir sumados.
+ * Los cuatro primeros salen de cifras que el propio juego ya citaba en su
+ * ficha (`aircraft.ts`); aquí se reparten en avión y gente en vez de ir
+ * sumados. El 747, del manual de aeropuertos de Boeing (H38c).
  */
 export const CARGA_DE_SU_TIPO: Readonly<Record<string, CargaDeSuTipo>> = {
   /*
@@ -93,6 +101,19 @@ export const CARGA_DE_SU_TIPO: Readonly<Record<string, CargaDeSuTipo>> = {
    * incluida (APM-170, tabla 2.1). Setenta y ocho de pasaje, con su maleta.
    */
   "jaz-90": { vacio: 20700, plazas: 78, porPersona: ADULTO + MALETA },
+  /*
+   * El 747-100: 358.000 lb de peso operativo en vacío, el de los JT9D-3A, con
+   * su tripulación (manual de aeropuertos de Boeing, D6-58326, 2.1.1).
+   * Cuatrocientos cincuenta y dos de pasaje en dos clases, con su maleta. Y su
+   * ficha es la de un chárter lleno con bodega: lo que le queda de su masa sin
+   * combustible con los 452 a bordo, unas 26 t, va en la bodega y no se elige.
+   */
+  "jaz-120": {
+    vacio: Math.round(358000 * LIBRA),
+    plazas: 452,
+    porPersona: ADULTO + MALETA,
+    bodega: 231600 - Math.round(358000 * LIBRA) - 452 * (ADULTO + MALETA),
+  },
 };
 
 /** Lo que se elige en la hoja. */
@@ -117,7 +138,7 @@ export function cargaDeSuTipo(a: AircraftConfig): CargaDeSuTipo | null {
 export function pasajerosDeSuFicha(a: AircraftConfig): number {
   const t = cargaDeSuTipo(a);
   if (!t) return 0;
-  const n = Math.floor((a.masaSinCombustible - t.vacio) / t.porPersona);
+  const n = Math.floor((a.masaSinCombustible - t.vacio - (t.bodega ?? 0)) / t.porPersona);
   return Math.max(0, Math.min(t.plazas, n));
 }
 
@@ -134,7 +155,7 @@ export function masaSinCombustibleDeLaHoja(a: AircraftConfig, pasajeros: number)
   const t = cargaDeSuTipo(a);
   if (!t) return a.masaSinCombustible;
   const n = Math.max(0, Math.min(t.plazas, Math.round(pasajeros)));
-  return t.vacio + n * t.porPersona;
+  return t.vacio + (t.bodega ?? 0) + n * t.porPersona;
 }
 
 /** El peso máximo al despegue de su manual, kg, o `null` si no se ha leído. */
@@ -163,14 +184,28 @@ export interface Pesada {
    * gente.
    */
   readonly quitar: number | null;
+  /**
+   * **Si llega con la reserva**: si lo que pide el plan cabe en los depósitos.
+   * Si no cabe, ni llenándolos se sale con el combustible legal, y ni la gente
+   * ni los tanques lo arreglan: solo un destino más cerca.
+   */
+  readonly llega: boolean;
+  /** Lo que pide el plan, kg, sin ningún tope: el tramo, el alternativo, la maniobra y la reserva. */
+  readonly pide: number;
 }
 
 /**
  * **Pesa la hoja**: el avión con su gente más el combustible, contra su máximo.
  *
- * `delPlan` es lo que pide el plan de su destino **sin el tope del peso**
- * —`combustibleDelPlan`—: si con esta gente no cabe, es justo lo que la hoja
- * tiene que enseñar, y no lo que tiene que esconder recortando el depósito.
+ * `delPlan` es lo que pide el plan de su destino **sin topes** —ni el del
+ * peso ni el del depósito, `combustibleDelPlan`—: si con esta gente no cabe, o
+ * si no cabe en los depósitos, es justo lo que la hoja tiene que enseñar, y no
+ * lo que tiene que esconder recortando lo que se carga.
+ *
+ * Lo segundo es el JAZ 40 de Pettirossi a Mariscal Estigarribia: con su
+ * alternativo, su plan pide más de lo que le cabe, y salía con los depósitos a
+ * tope y sin la reserva del alternativo, como si nada. Un piloto de verdad no
+ * sale sin el combustible legal: elige un destino más cerca.
  */
 export function pesar(a: AircraftConfig, hoja: Hoja, delPlan: number): Pesada {
   const sinCombustible = masaSinCombustibleDeLaHoja(a, hoja.pasajeros);
@@ -184,7 +219,19 @@ export function pesar(a: AircraftConfig, hoja: Hoja, delPlan: number): Pesada {
     const n = Math.ceil(deMas / t.porPersona);
     quitar = n <= Math.round(hoja.pasajeros) ? n : null;
   } else if (deMas === 0) quitar = 0;
-  return { sinCombustible, combustible, despegue, maximo, cabe: deMas === 0, deMas, quitar };
+  // Medio kilo de holgura: el plan y el depósito se cuentan por separado y redondeados.
+  const llega = delPlan <= loQueCabe(a) + 0.5;
+  return {
+    sinCombustible,
+    combustible,
+    despegue,
+    maximo,
+    cabe: deMas === 0,
+    deMas,
+    quitar,
+    llega,
+    pide: delPlan,
+  };
 }
 
 /** El aire y el suelo del campo de salida, para la cuenta de la pista de hoy. */
