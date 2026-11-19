@@ -12263,6 +12263,16 @@ export class Game {
       if (this.aircraft.helicoptero) return;
       // Ni encima del pie del cangrejo, a quince metros del suelo: ver `loQueCalla`.
       if (this.loQueCalla.laCorta) return;
+      /*
+       * **Ni encima de «ya podés tocar».** Las dos tarjetas van con la misma
+       * prioridad y gana la última, así que cualquier cambio de luces a ras
+       * de pista la tapaba en menos de una décima: el banco de H34d lo vio en
+       * Guyrami, y quien juega tampoco llegaba a leerla. A esa altura el PAPI
+       * ya no guía —su senda acaba en el umbral, y se mira el final de la
+       * pista—; lo que toca es tocar. Se rearma con la toma, al subirse otra
+       * vez.
+       */
+      if (this.dichoDeLaToma) return;
       const enLaSenda = blancasEnLaSenda(unidades);
       const apapi = unidades === 2;
       this.hud.senal.mostrar(
