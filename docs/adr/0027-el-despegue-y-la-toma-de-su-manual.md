@@ -5240,7 +5240,7 @@ acelerar mucho el aire que pasa despacio—, y la ley de rendimiento fijo no lo
 cuenta; la recta, sin querer, se le parece. **La ley que vale para todos es
 la de la cantidad de movimiento**, `T·(V + vᵢ) = η·P` con el disco de cada
 uno. En la mesa, con ella y el 80–85 % de rendimiento de perfil, la mejor
-subida sale en 92 nudos en el Seneca (su manual, 92), 94–95 en el Twin Otter
+subida sale en 92 nudos en el Seneca (su manual, 92), 93–95 en el Twin Otter
 (100) y 134 en el 1900D, sin tocar sus polares. Pero cambia el empuje parado
 —9,3 kN en el Seneca donde la ficha lleva 5— y con él la carrera, la Vmc y la
 Vx de los cuatro, y el JAZ 40 acaba de medirse con la de H37a. No cabe en esta
@@ -5276,6 +5276,20 @@ La mesa —`helice-de-cada-avion.test.ts`, `prestaciones.test.ts`,
 `remontar-por-tipo.test.ts`, `puesto-de-salida-de-cada-campo.test.ts` y
 `escalera-de-velocidades.test.ts`— vuela el modelo entero y sin ayudas; las
 cifras de arriba son de ahí y de la cuenta de libro.
+
+En el navegador, `verificar-vuelo-entero.mjs`, puerto 5687:
+
+- **`tenerife-norte taguato 1 jaz-50`**, reloj por uno y ×1,00 de verdad:
+  **57 de 57**, 4 sin medir. V1 a 70 nudos y rotar a 77; sube al 13,4 %
+  desde que suelta el suelo hasta los cien metros; recoge los flaps a 122 m
+  y 82 nudos; ni una vez el avisador
+  de pérdida; toca a 1,11 m/s, a 0,1 m del eje y 375 m pasado el umbral, con
+  la recogida empezada a 6,9 m bajando 2,2 m/s a 71 nudos; apagado en su
+  puesto a los 731 s. En H34d tocaba a 1,62 m/s y 309 m.
+- **`tenerife-norte guyrami 3 jaz-25`**, reloj por tres y ×2,25 de verdad
+  —la máquina iba cargada; el banco lo da por bueno—: **62 de 62**, 2 sin
+  medir. V1 a 45 nudos y rotar a 51; sube al 10,3 % hasta los cien metros;
+  toca a 1,2 m/s, en el eje y 353 m pasado el umbral; apagado a los 976 s.
 
 ### Lo que queda
 
