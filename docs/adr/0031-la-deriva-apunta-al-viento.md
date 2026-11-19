@@ -3185,6 +3185,14 @@ foto:
   felicitada; encima de FTV, TO a FROM, «INTEG OK», y el HSI y la carta ya no
   dicen nada. Las seis frases en su orden: las tres grabadas suenan y las
   tres nuevas, mudas. Ni torre, ni tira de la radio, ni la flecha de casa.
+- **Y la avioneta, como estaba**: con el banco ya leyendo el plano del plano,
+  el JAZ 20 da dieciséis de dieciséis con los mismos números que en H26v —se
+  va a 6,8 millas de 13,5, el plano quieto mientras el avión anda 7,3, la
+  barra a 7,6° con el OBS en el 300— y sus cinco frases, ya grabadas, en su
+  orden.
+- **Sin `npm run carteles`**: lo nuevo son letras dentro de dos pantallas
+  que ya estaban, sin caja propia ni sitio en el reparto, y no mueve nada de
+  lo que esa ronda mira.
 
 ### Lo que queda
 
