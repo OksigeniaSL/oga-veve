@@ -26100,24 +26100,39 @@ export class Game {
       palabra: TranslationKey,
       delante = "",
       segundos = 10,
+      vale: () => boolean = () => true,
     ): void => {
       const frase = this.rotulo(clave, palabra);
       this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
         segundos,
         prioridad: IMPORTANTE,
       });
-      this.frasesDeLaPistaCorta.pedir(clave);
+      this.frasesDeLaPistaCorta.pedir(clave, vale);
     };
+    /*
+     * **Lo que solo es verdad un rato**: «soltá los frenos» mientras sigue
+     * quieto, y lo de la subida hasta el monte mientras no se ha pasado. En
+     * fila detrás de la presentación, dicho tarde sería mentira.
+     */
+    const enLosFrenos = (): boolean => this.pistaCorta?.fase === "frenos";
+    const subiendo = (): boolean => this.pistaCorta?.fase === "subida";
     const cifra = (texto: string): string => (conCifra ? texto : "");
     const v = p.velocidades;
     switch (suceso.que) {
       case "presentar":
         return contar("freno", "ejercicio.pista-corta.antes", "palabra.frena", "", 20);
       case "solta":
-        return contar("freno", "ejercicio.pista-corta.solta", "palabra.solta", "", 6);
+        return contar("freno", "ejercicio.pista-corta.solta", "palabra.solta", "", 6, enLosFrenos);
       case "alAngulo":
         this.avisar("achieved");
-        return contar("subida", "ejercicio.pista-corta.alAngulo", "palabra.asi", cifra(this.velocidadDelPeldano(suceso.kt)));
+        return contar(
+          "subida",
+          "ejercicio.pista-corta.alAngulo",
+          "palabra.asi",
+          cifra(this.velocidadDelPeldano(suceso.kt)),
+          10,
+          subiendo,
+        );
       case "masDespacio":
         return contar(
           "nariz-arriba",
@@ -26125,6 +26140,7 @@ export class Game {
           "palabra.narizArriba",
           cifra(this.velocidadDelPeldano(v.sobreElObstaculo)),
           8,
+          subiendo,
         );
       case "pasaste": {
         /*
