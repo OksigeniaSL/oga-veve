@@ -437,6 +437,18 @@ export class MundoVecino {
   }
 
   /**
+   * Si en ese punto hay agua, con su lámina y sus lagos, o `null` fuera de su
+   * mapa. Ver `Terrain.esAgua`.
+   */
+  agua(x: number, z: number): boolean | null {
+    const dx = x - this.desplazamiento.x;
+    const dz = z - this.desplazamiento.z;
+    if (Math.abs(dx) > this.medioLado || Math.abs(dz) > this.medioLado)
+      return null;
+    return this.terreno.esAgua(dx, dz);
+  }
+
+  /**
    * Lo que sobresale su pavimento en ese punto, o `null` fuera de su mapa,
    * por lo mismo que `cota`. Ver `Terrain.resalteEn`.
    */
