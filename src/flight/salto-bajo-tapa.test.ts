@@ -154,11 +154,15 @@ describe("el estado que le toca", () => {
     expect(casiVacio).toBeLessThan(lleno);
   });
 
-  it("nunca se carga más de lo que cabe, y el JAZ 120 no llega: el avión de prueba se carga aparte", () => {
-    // Lo real del juego: con los tanques de la ficha, la ruta no le cabe. La T2 trae el avión que sí.
+  it("nunca se carga más de lo que cabe, y el JAZ 120 llega con los depósitos de su manual", () => {
+    /*
+     * Con la proporción de su clase, un tercio de su masa de ficha —84 t—, la
+     * ruta no le cabía. Con los 47.210 galones utilizables del 747-100
+     * (D6-58326, 2.1.1), 143 t, le cabe con sus dos reservas (H38c).
+     */
     const carga = cargaDelVueloLargo(JAZ_120, DE_INVIERNO);
-    expect(carga).toBe(loQueCabe(JAZ_120));
-    expect(quemadoEnElVuelo(JAZ_120, DE_INVIERNO, 0, DE_INVIERNO.enElAire, 150_000)).toBeGreaterThan(carga);
+    expect(carga).toBeLessThan(loQueCabe(JAZ_120));
+    expect(carga).toBeGreaterThan(quemadoEnElVuelo(JAZ_120, DE_INVIERNO, 0, DE_INVIERNO.enElAire, carga));
   });
 });
 
