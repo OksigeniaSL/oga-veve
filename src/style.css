@@ -8684,21 +8684,6 @@ button.motor__tecla::after {
   display: contents;
 }
 
-.hoja__cabina {
-  grid-area: cabina;
-}
-
-.hoja__bascula {
-  grid-area: bascula;
-}
-
-.hoja__pista {
-  grid-area: pista;
-}
-
-.hoja__veredicto {
-  grid-area: veredicto;
-}
 
 .hoja__fila {
   display: flex;
@@ -8807,6 +8792,7 @@ button.motor__tecla::after {
 
 /* Los asientos: vacíos, una raya; ocupados, rellenos. */
 .hoja__cabina {
+  grid-area: cabina;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -8846,8 +8832,13 @@ button.motor__tecla::after {
 }
 
 /* La báscula: tres tramos seguidos y la raya del máximo. */
-.hoja__bascula,
+.hoja__bascula {
+  grid-area: bascula;
+  width: 100%;
+}
+
 .hoja__pista {
+  grid-area: pista;
   width: 100%;
 }
 
@@ -9002,6 +8993,7 @@ button.motor__tecla::after {
 
 /* El veredicto: el sello, la frase si el peldaño la lleva y el arreglo. */
 .hoja__veredicto {
+  grid-area: veredicto;
   display: flex;
   align-items: center;
   gap: 12px;
