@@ -3779,7 +3779,9 @@ for (const [ancho, alto] of [[915, 412], [800, 360], [960, 540], [565, 641], [40
       const h = await page.evaluate(medirLaHoja);
       comprobar(
         `${tam}, ${peldano}: la hoja se ve entera, del tamaño del dedo, y dice que no cabe`,
-        h && !h.fuera.length && !h.chicos.length && h.corta && h.pistaAncho > ancho * 0.5,
+        // La pista, al menos dos quintos del ancho: con sitio, la hoja va en dos
+        // columnas y la pista ocupa la de la derecha.
+        h && !h.fuera.length && !h.chicos.length && h.corta && h.pistaAncho > ancho * 0.4,
         h
           ? [
               h.fuera.length ? `fuera: ${h.fuera.join(", ")}` : "",
