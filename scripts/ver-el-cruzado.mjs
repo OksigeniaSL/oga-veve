@@ -23,7 +23,8 @@
  * reloj, `OGA_VECES` (dos); con `OGA_GPU=1`, con la tarjeta de verdad; con
  * `OGA_TRAZA=1`, la final en renglones: el morro y el camino desde la pista,
  * el ala, el derrape, la verdadera, el viento de costado y lo que pide el
- * triángulo (H32b).
+ * triángulo (H32b), y lo del piloto: el gas, la senda y la altura sobre el
+ * punto de toma, y lo que baja contra lo que pide (H34a).
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -88,6 +89,7 @@ const leer = (page) =>
       viento: j.vientoAqui?.aire ?? { x: 0, z: 0 },
       pista: r.heading,
       tarjeta: o.tarjeta?.()?.dibujo ?? null,
+      delPiloto: globalThis.__trazaDelPiloto ?? null,
       texto: document.querySelector(".senal")?.textContent?.replace(/\s+/g, " ").trim() ?? "",
     };
   });
@@ -133,9 +135,10 @@ try {
   await page.evaluate(() => globalThis.__oga.pedirFlaps(1));
   // **El piloto de la mesa**, en la página. Ver `final-con-viento-cruzado.test.ts`.
   await page.evaluate(
-    ({ tecnica, veces }) => {
+    async ({ tecnica, veces }) => {
       const o = globalThis.__oga;
       const j = o.juegoParaTrazas();
+      const { mandosPara, memoriaNueva } = await import("/src/flight/piloto-automatico.ts");
       const r = j.scenario.runway;
       const h = (r.heading * Math.PI) / 180;
       const fx = Math.sin(h);
@@ -150,10 +153,27 @@ try {
       const a = j.aircraft;
       // El punto de toma, a trescientos metros del umbral.
       const umbral = r.length / 2 - 300;
+      /*
+       * **La senda, sobre la cota de la pista en el punto de toma**, y no sobre
+       * el suelo de debajo (H34a). La final de la 12 de Los Rodeos va sobre
+       * un terreno que sube hacia el campo: unos ochenta metros por debajo de
+       * la pista a tres kilómetros y medio, y dos al cruzar el umbral. Con la
+       * senda sobre ese suelo, el piloto se tiraba sesenta metros al empezar
+       * —bajando a 19 m/s, y el gas a cero al embalarse— y luego volaba casi
+       * nivelado, con el gas a fondo y hasta cuarenta y cinco metros por
+       * debajo de la senda de verdad; en una tirada de H32b se quedó en 56
+       * nudos. La senda de un PAPI o de un ILS es de la pista, y es la que
+       * vuela quien juega.
+       */
+      const cotaDe = o.cotaDePistaDeAhora ?? o.cotaDePista;
+      const cotaDeLaToma = cotaDe(r.x - fx * umbral, r.z - fz * umbral);
       const dt = veces / 60;
       let integral = 0;
       let pie = 0;
       let gas = null;
+      const reactor = o.avion?.()?.propulsion === "chorro";
+      let memoria = null;
+      let reloj = null;
       o.pilotar((c) => {
         const s = o.estado();
         if (s.onGround) {
@@ -165,7 +185,7 @@ try {
           return;
         }
         if (gas === null) gas = c.throttle;
-        // Sobre el suelo de debajo: la pista de Los Rodeos no está toda a la cota del campo.
+        // Sobre el suelo de debajo, para la recogida: la pista de Los Rodeos no está toda a la cota del campo.
         const hAlto = s.position.y - j.terrain.sampleHeight(s.position.x, s.position.z) - a.gearHeight;
         const x = (s.position.x - r.x) * fx + (s.position.z - r.z) * fz + umbral;
         const y = (s.position.x - r.x) * Math.cos(h) + (s.position.z - r.z) * Math.sin(h);
@@ -175,13 +195,60 @@ try {
         const morro = dif(s.heading, h);
         const tan3 = Math.tan((3 * Math.PI) / 180);
         const senda = -x * tan3;
+        const sobreLaToma = s.position.y - cotaDeLaToma - a.gearHeight;
         const recogida = hAlto < Math.max(4, a.gearHeight * 2);
-        const vsQuiere = recogida ? -0.6 : -Math.hypot(s.velocity.x, s.velocity.z) * tan3 + 0.3 * (senda - hAlto);
+        const vsQuiere = recogida ? -0.6 : -Math.hypot(s.velocity.x, s.velocity.z) * tan3 + 0.3 * (senda - sobreLaToma);
         const err = vsQuiere - s.verticalSpeed;
         integral = clamp(integral + err * dt, -5, 5);
         c.elevator = clamp(0.12 * err + 0.03 * integral - 0.4 * s.pitchRate, -1, 1);
         gas = recogida ? 0 : clamp(gas + dt * 0.15 * (a.approachSpeed - s.airspeed), 0, 1);
         c.throttle = gas;
+        /*
+         * **Y el reactor, con el automático del juego en la senda y los gases
+         * en la velocidad** (H34a), hasta la recogida: el de `volarLaSenda` en
+         * `verificar-vuelo-entero.mjs`, por lo mismo. Con la ley de la
+         * avioneta el morro del JAZ 90 —un período de cinco segundos y poco
+         * amortiguado— se pelea con el gas: en la mesa, de bajar a 11,7 m/s a
+         * subir a 2,6 con el gas de cero a fondo. Con el automático baja a 3,1
+         * quieto, a la Vref y cinco en indicada, que es como vuela la final
+         * uno de verdad.
+         */
+        if (reactor && !recogida) {
+          const ahora = o.reloj();
+          const paso = reloj === null ? 1 / 60 : Math.max(1 / 240, Math.min(0.1, ahora - reloj));
+          reloj = ahora;
+          const engancha = memoria === null;
+          if (engancha) memoria = memoriaNueva();
+          const actitud = o.actitud();
+          const m = mandosPara(
+            {
+              heading: s.heading,
+              alabeo: actitud.alabeo,
+              cabeceo: actitud.cabeceo,
+              altitud: s.position.y,
+              vertical: s.velocity.y,
+              velocidad: (o.velocidadDeCabina?.() ?? 0) / 1.94384,
+              gas: c.throttle,
+              verdadera: s.airspeed,
+              ritmoDeCabeceo: s.pitchRate,
+              timon: engancha ? c.elevator : undefined,
+              autoridadDelTimon: o.autoridadDelTimon?.(),
+              subeElAire: o.subeElAire?.() ?? 0,
+              anguloSinSustentacion: o.anguloSinSustentacion?.(),
+            },
+            {
+              rumbo: null,
+              altitud: cotaDeLaToma + a.gearHeight + senda,
+              ritmo: -Math.hypot(s.velocity.x, s.velocity.z) * tan3,
+              velocidad: a.approachSpeed + 5 * 0.514444,
+            },
+            paso,
+            memoria,
+          );
+          c.elevator = m.elevator;
+          if (m.throttle !== null) c.throttle = gas = m.throttle;
+        }
+        globalThis.__trazaDelPiloto = { gas, senda, sobreLaToma, hAlto, vs: s.verticalSpeed, vsQuiere, elev: c.elevator };
         const enderezar = tecnica === "cangrejo" && hAlto < Math.max(5, a.gearHeight * 2.5);
         const conElPie = tecnica === "ala-baja" || enderezar;
         if (conElPie) {
@@ -192,8 +259,24 @@ try {
           c.aileron = clamp(3 * (alaQuiere - ala) - 0.6 * s.rollRate, -1, 1);
         } else {
           const camino = Math.atan2(s.velocity.x, -s.velocity.z);
-          const quiere = h - Math.atan2(y, 150);
-          const alaQuiere = clamp(2 * dif(quiere, camino), -0.3, 0.3);
+          /*
+           * **Y el reactor, mirando más lejos** (H34a). El ala da la
+           * aceleración de lado —g por la inclinación— y el camino se mide en
+           * ángulo, que es esa velocidad de lado partida por la del suelo: con
+           * el morro de la inclinación en proporción al camino que falta hacia
+           * un punto a `L` metros, el amortiguamiento va como √(g·L/2)/V. Con
+           * los ciento cincuenta metros de la avioneta, a 33 m/s es 0,8; a los
+           * 64 del JAZ 90, 0,4, y con el alabeo de un reactor, que tarda más,
+           * menos: hacía eses de cien metros, con el morro de −48° a +25° de
+           * la pista (H32b). Mirando en proporción al cuadrado de la velocidad
+           * el amortiguamiento es el de la avioneta en todos, y el reactor se
+           * inclina como uno en final: quince grados como mucho.
+           */
+          const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
+          const lejos = reactor ? Math.max(150, 150 * (porElSuelo / 33) ** 2) : 150;
+          const quiere = h - Math.atan2(y, lejos);
+          const tope = reactor ? 0.26 : 0.3;
+          const alaQuiere = clamp(2 * dif(quiere, camino), -tope, tope);
           c.aileron = clamp(3 * (alaQuiere - ala) - 0.6 * s.rollRate, -1, 1);
           // Sin timón automático, la bola la centran los pies de quien vuela.
           c.rudder = j.tier.assists.autoRudder > 0 ? 0 : clamp(4.5 * s.beta, -1, 1);
@@ -220,7 +303,10 @@ try {
       trazaEn = Date.now() + 700;
       const vc = -(r.viento.x * Math.cos((r.pista * Math.PI) / 180) + r.viento.z * Math.sin((r.pista * Math.PI) / 180));
       console.log(
-        `    · ${Math.round(r.altura)} m  ${r.ejercicio.fase}  morro ${r.morro.toFixed(1)}  camino ${r.camino.toFixed(1)}  ala ${r.ala.toFixed(1)}  beta ${r.derrape.toFixed(1)}  ias ${(r.verdadera / 0.514444).toFixed(0)} kt  costado ${(vc / 0.514444).toFixed(1)} kt  pide ${r.ejercicio.pide.toFixed(1)}  eje ${r.eje.toFixed(1)}  racha de costado ${r.racha ? (-(r.racha.x * Math.cos((r.pista * Math.PI) / 180) + r.racha.z * Math.sin((r.pista * Math.PI) / 180)) / 0.514444).toFixed(1) : "?"} kt  ap ${r.piloto}  alerón ${r.alabeoPedido?.toFixed(2)}  pie ${r.piePedido?.toFixed(2)}`,
+        `    · ${Math.round(r.altura)} m  ${r.ejercicio.fase}  morro ${r.morro.toFixed(1)}  camino ${r.camino.toFixed(1)}  ala ${r.ala.toFixed(1)}  beta ${r.derrape.toFixed(1)}  ias ${(r.verdadera / 0.514444).toFixed(0)} kt  costado ${(vc / 0.514444).toFixed(1)} kt  pide ${r.ejercicio.pide.toFixed(1)}  eje ${r.eje.toFixed(1)}  racha de costado ${r.racha ? (-(r.racha.x * Math.cos((r.pista * Math.PI) / 180) + r.racha.z * Math.sin((r.pista * Math.PI) / 180)) / 0.514444).toFixed(1) : "?"} kt  ap ${r.piloto}  alerón ${r.alabeoPedido?.toFixed(2)}  pie ${r.piePedido?.toFixed(2)}` +
+          (r.delPiloto
+            ? `  gas ${r.delPiloto.gas.toFixed(2)}  senda ${r.delPiloto.senda.toFixed(0)}  sobre la toma ${r.delPiloto.sobreLaToma.toFixed(0)}  vs ${r.delPiloto.vs.toFixed(1)} (pide ${r.delPiloto.vsQuiere.toFixed(1)})  palanca ${r.delPiloto.elev.toFixed(2)}`
+            : ""),
       );
     }
     const medido = TECNICA === "cangrejo" ? r.ejercicio.cangrejo : r.ejercicio.ala;
