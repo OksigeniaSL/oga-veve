@@ -4616,10 +4616,11 @@ que el ejercicio trae los veintiocho grados y el viento quieto (`main.ts`).
 modelo no tiene fuerzas —el gas es la velocidad— y no hay pendiente que
 elegir. La instructora lo presenta, pide soltar los frenos con el motor a tope
 y el avión quieto, cuenta el ángulo sostenido tres segundos a cinco nudos de
-los 56 (el ancho que pide el examen práctico de la FAA, que deja +10/−5), pide
-más nariz una vez si va diez por encima antes del monte, cuenta cómo se pasó
-—con margen desde diez metros sobre las copas, justo por debajo— y cierra con
-la Vy sostenida. **Parar en la pista rodando también se felicita**: renunciar
+los 56 (el ancho que pide el examen práctico de la FAA, que deja +10/−5) y sin
+bailar más de cuatro, pide más nariz una vez si va diez por encima antes del
+monte, cuenta cómo se pasó —con margen desde quince metros sobre las copas, la
+altura de los árboles otra vez; justo por debajo— y cierra con la Vy
+sostenida. **Parar en la pista rodando también se felicita**: renunciar
 es ganar. Las frases van en fila (`FrasesEnFila`), y mientras dura callan la
 fase del plan y lo que se explica de la cabina, que serían otra voz para el
 mismo suceso (`lo-que-calla-el-ejercicio.ts`). Las cifras salen delante de la
@@ -4632,7 +4633,34 @@ pero esta cabina no es esa.
 
 ### Volado
 
-(Pendiente de la tirada del banco: `scripts/ver-la-pista-corta.mjs`.)
+`scripts/ver-la-pista-corta.mjs`, en Taguato Ruvichá (sin ayudas), con la
+Intel de verdad, el piloto de la mesa metido en la página y el avión puesto a
+diez metros del principio de la 15. Las capturas y los registros, en `h35a/`
+del scratchpad.
+
+| Primera tirada | Al cruzar la fila | Sobre las copas |
+|---|---|---|
+| A la del obstáculo, 56 kt | 55,8 kt | 59,3 m |
+| A buscar la Vy recién despegado | 75,4 kt | 13,1 m |
+
+**La lección es real en el juego**: cuarenta y seis metros de diferencia
+contra los treinta y cinco de la mesa. El juego sube algo más que la mesa en
+las dos —cerca del suelo, el efecto suelo y el aire del día que lleva el
+juego—, y el orden y la distancia entre las dos son los mismos.
+
+Y la tirada enseñó dos cosas que la mesa no:
+
+- **Con diez metros de margen, las dos se felicitaban igual.** Los 13,1 m de
+  quien sale a buscar la Vy salían «con margen». El listón sube a quince, la
+  altura de los árboles otra vez: 59 es margen, 13 es justo.
+- **Al que aceleraba se le felicitaba el ángulo.** Saliendo a buscar la Vy a
+  dos nudos por segundo, el avión cruza la banda de 51 a 61 en cinco segundos,
+  y tres dentro bastaban: «53 KT. That's it! Slow and steep». La velocidad
+  tiene que estar quieta, sin bailar más de cuatro nudos en el rato
+  (`QUIETA`).
+
+La segunda tirada, con las dos cosas arregladas, en Taguato Ruvichá y en Tukã:
+ver abajo.
 
 ### Lo que queda
 
