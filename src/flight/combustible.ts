@@ -303,6 +303,17 @@ export function cargaParaLaRuta(
   /** Lo que se va a volar, en metros. Un circuito son unos pocos miles. */
   metros: number,
 ): number {
+  return Math.min(loQueDejaElPeso(avion), loQuePideLaRuta(avion, metros));
+}
+
+/**
+ * **Lo que pide la ruta, sin el tope del peso**, kg: el viaje y la reserva,
+ * con el tope del depósito. Es `cargaParaLaRuta` antes de mirar si cabe en el
+ * peso máximo con la carga de la ficha; la hoja de carga lo necesita así,
+ * porque con otra gente a bordo el tope es otro, y si no cabe es justo lo que
+ * tiene que enseñar. Ver `flight/hoja-de-carga.ts`.
+ */
+function loQuePideLaRuta(avion: AircraftConfig, metros: number): number {
   // `maxThrust` ya es el de todos los motores juntos. Ver la cabecera.
   const crucero = quemaPorSegundo(avion, avion.maxThrust / 3);
   const viaje = crucero * cuantoDura(avion, metros);
@@ -325,7 +336,7 @@ export function cargaParaLaRuta(
     crucero * RESERVA_SEGUNDOS,
     reservaEnKilos(avion) + margenDelMinimo(avion) + contingencia(avion, viaje),
   );
-  return Math.min(loQueCabe(avion), loQueDejaElPeso(avion), viaje + reserva);
+  return Math.min(loQueCabe(avion), viaje + reserva);
 }
 
 /**
@@ -397,6 +408,19 @@ export function cargaParaElPlan(
  * Lo que el ejercicio vuela de más —rodear la tormenta, la curva del perro—
  * es lo que cubre la maniobra, que para eso está.
  */
+/**
+ * **Lo que pide el plan de un destino, sin el tope del peso**, kg: las cuatro
+ * partidas de `cargaParaElPlan` con el tope del depósito y nada más. Es la
+ * entrada de la hoja de carga, que pesa con la gente que se elija y no con la
+ * de la ficha. Ver `flight/hoja-de-carga.ts`.
+ */
+export function combustibleDelPlan(
+  avion: AircraftConfig,
+  tramos: { readonly alDestino: number; readonly alAlterno: number },
+): number {
+  return loQuePideLaRuta(avion, Math.max(0, tramos.alDestino) + Math.max(0, tramos.alAlterno));
+}
+
 export function cargaDelEjercicio(
   avion: AircraftConfig,
   /** Dónde empieza, en metros del mundo. */
