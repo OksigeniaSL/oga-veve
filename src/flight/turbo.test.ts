@@ -15,7 +15,8 @@ const sigma = (pies: number) => airDensity(pies * PIE) / SEA_LEVEL_DENSITY;
 
 describe("el motor con turbo", () => {
   it("lo lleva el bimotor de pistón, y solo él", () => {
-    expect(AIRCRAFT.filter((a) => a.alturaCritica !== null).map((a) => a.id)).toEqual(["jaz-40"]);
+    const conTurbo = AIRCRAFT.filter((a) => a.alturaCritica !== null && a.sound.engine === "piston");
+    expect(conTurbo.map((a) => a.id)).toEqual(["jaz-40"]);
     expect(PANAMBI.alturaCritica! / PIE).toBeCloseTo(12000, 6);
   });
 

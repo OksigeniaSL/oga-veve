@@ -447,8 +447,15 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
          * al 75 %: los 189 nudos del de su clase son de arriba, donde el aire
          * frena menos (218 millas por hora, *Plane & Pilot*, «Seneca II»). Su
          * tope, los 196 nudos de 12.000 pies, lo mide `turbo.test.ts`.
+         *
+         * **Y el fumigador, también algo más**, porque así es el suyo: el Ag
+         * Cat de 450 hp va a fondo a 147 mph, 128 nudos (*Plane & Pilot*,
+         * 2010), un 20 % por encima de los 107 de su ficha. Con la recta de la
+         * hélice de paso fijo no pasaba de 111; con la de su hélice de
+         * velocidad constante, a 1.500 m, 124,7 (ADR 0027, enmienda H37c).
          */
-        expect(tope).toBeLessThan(a.cruiseSpeed * (a.alturaCritica !== null ? 1.2 : 1.15));
+        const holgura = a.alturaCritica !== null || a.id === "jaz-25" ? 1.2 : 1.15;
+        expect(tope).toBeLessThan(a.cruiseSpeed * holgura);
         return;
       }
       expect(medirCrucero(a, 0.45)).toBeLessThan(a.cruiseSpeed);

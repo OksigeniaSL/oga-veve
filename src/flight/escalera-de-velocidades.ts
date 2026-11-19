@@ -385,6 +385,10 @@ function cruceroDeHelice(a: AircraftConfig, altitud: number, aire: Aire): number
  * marca rosa que no se alcanza ni a fondo: a 8.000 pies, 189 nudos son su
  * tope. En los atmosféricos no cambia nada: ahí la potencia de crucero se
  * acaba subiendo, y la cifra de su ficha es la de abajo.
+ *
+ * **Y lo mismo el turbohélice con régimen plano** (`alturaCritica`, ADR 0027,
+ * enmienda H37c): los 182 nudos del JAZ 50 son de diez mil pies, y al nivel
+ * del mar el suyo va a 170 y la marca pide 165.
  */
 function verdaderaDeCrucero(a: AircraftConfig, altitud: number, aire: Aire): number {
   if (a.alturaCritica === null || altitud >= a.alturaDeCrucero) return a.cruiseSpeed;

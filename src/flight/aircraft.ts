@@ -440,6 +440,12 @@ export function tieneReversa(a: AircraftConfig): boolean {
  * 2), y esta cuenta le deja dos tercios de los 200 de nivel del mar. Ver
  * `alturaCritica`.
  *
+ * **Y el turbohélice, entero hasta donde llega su régimen plano**, con la
+ * misma cuenta: hasta esa altura da la potencia limitada de su placa, y por
+ * encima cae con la densidad. Sin ella, el JAZ 50 no corría arriba más que
+ * abajo, y el suyo va a 170 nudos al nivel del mar y a 182 a diez mil pies
+ * (ADR 0027, enmienda H37c).
+ *
  * **Y con el aire del día**, que es lo que faltaba: el motor no sabe a qué
  * altura está, solo cuánto aire le entra, y en una tarde de calor le entra
  * menos. Ver `atmosphere.ts`.
@@ -881,14 +887,22 @@ export interface AircraftConfig {
    */
   motoresA: readonly number[];
   /**
-   * **Hasta qué altura sostiene el turbo la potencia**, m, o `null` en el
-   * motor que no lo lleva.
+   * **Hasta qué altura sostiene el motor la potencia de nivel del mar**, m, o
+   * `null` en el que la pierde en cuanto sube.
    *
    * Un motor de pistón atmosférico pierde potencia en cuanto sube, porque le
    * entra menos aire; con turbocompresor, el turbo aprieta el aire de la
    * admisión hasta la presión de nivel del mar y la potencia se queda donde
    * estaba hasta su **altitud crítica**. Por encima, el turbo ya va a fondo y
    * el motor pierde como uno atmosférico. Ver `loQueDaElMotor`.
+   *
+   * **El turbohélice también la tiene, por otro camino: su régimen plano.** Su
+   * turbina podría dar más de lo que se le deja —el par que aguantan la caja
+   * reductora y la hélice—, así que al nivel del mar va limitada, y al subir
+   * sostiene esa potencia hasta que el aire ya no le deja más. Es la misma
+   * definición de la norma: «the maximum altitude at which, in standard
+   * atmosphere, it is possible to maintain… a specified power» (14 CFR 1.1,
+   * *critical altitude*), que no distingue motores. ADR 0027, enmienda H37c.
    */
   alturaCritica: number | null;
   /**
@@ -1869,13 +1883,33 @@ export const MAINUMBY: AircraftConfig = {
   wingSpan: 12.5,
   chord: 1.7,
   inertia: { xx: 1600, yy: 2400, zz: 3600 },
-  maxThrust: 5200,
+  /*
+   * **El radial de 450 hp con su hélice de velocidad constante**, la del Ag Cat
+   * G-164A: un Pratt & Whitney R-985 con una Hamilton Standard 2D30 —«ACFT TYPE
+   * CERTIFICATE SHOWS THAT A HAMILTON STANDARD PROPELLER M/N 2D30/6101A-12-13-14
+   * IS INSTALLED», del expediente de la NTSB que cita la Aviation Safety
+   * Network; la CAA de Nueva Zelanda, TAR 2/21B/3, da la 2D30 o la 2D40 para
+   * la serie—. Es la de contrapesos y gobernador del Beaver, del mismo motor:
+   * sostiene las vueltas, y el radial da sus 450 hp a cualquier velocidad.
+   *
+   * Llevaba la recta de la hélice de paso fijo, 5.200 N que acababan en 2,4
+   * veces su crucero, y con ella iba a fondo a 111 nudos y subía 455 ft/min a
+   * las 4.500 lb del Ag Cat. Con su hélice, el 70 % de sus 450 hp: va a fondo a
+   * 124 nudos —el de 450 hp, a 147 mph, 128 nudos (*Plane & Pilot*, «Gulfstream
+   * American Super Ag-Cat», 2010)— y sube, a esas 4.500 lb, unos 750 ft/min
+   * en la cuenta, donde las revistas le dan entre 1.080 y 1.800. El empuje
+   * parado baja a 4.500 N para que ruede lo mismo que rodaba: los 615 ft de
+   * su manual a 4.500 lb (ver `deRodarADespegar`). ADR 0027, enmienda H37c.
+   */
+  maxThrust: 4500,
+  potenciaUtil: 0.7 * 450 * 745.7,
   motores: 1,
   mandos: "convencionales",
   motoresA: [0],
   alturaCritica: null,
   helicesContrarrotativas: false,
-  // La hélice grande del radial, de paso fijo: más disco y ninguna bandera.
+  // La hélice grande del radial, de velocidad constante pero sin bandera: más
+  // disco y nada con qué pararla de canto.
   motorParado: { molinete: 0.5, bandera: null, autoBandera: false },
   cruiseSpeed: 55,
   // Dos mil quinientos: el trabajo de un avión así se hace mucho más abajo, y
@@ -2415,9 +2449,10 @@ export const JAZ_50: AircraftConfig = {
    */
   inertia: { xx: 26660, yy: 34650, zz: 51650 },
   /*
-   * **El empuje de dos PT6A-27 de 620 shp** (EASA.IM.A.575, A.III.5; los mismos
-   * del -300, FAA A9EA) con la hélice Hartzell HC-B3TN-3D de tres palas y 2,59
-   * m. La recta sale de dos cifras de su clase, como la del JAZ 60:
+   * **El empuje de dos PT6A-34 de 620 shp** —o dos PT6A-27, la opción del 300-G;
+   * los dos con régimen plano en esos 620 (EASA.IM.A.575, issue 6, p. 7)— con
+   * la hélice Hartzell HC-B3TN-3D de tres palas y 2,59 m, de velocidad
+   * constante. La recta sale de dos cifras de su clase, como la del JAZ 60:
    *
    * - **Sube 1.600 ft/min** al nivel del mar con los dos a potencia de subida
    *   (Viking, 2018).
@@ -2430,7 +2465,17 @@ export const JAZ_50: AircraftConfig = {
    * máximo, un 14 % más que a potencia de subida, y arriba no gana velocidad
    * —170 nudos a 10.000 ft donde el suyo va a 182—, porque la ley de empuje de
    * la casa le quita potencia con la altura y el PT6A-27 la sostiene hasta su
-   * temperatura de régimen plano (ADR 0027, enmienda H11a).
+   * temperatura de régimen plano (ADR 0027, enmienda H11a). Con el régimen
+   * plano ya contado (`alturaCritica`, H37c), va a 176 y a 178.
+   *
+   * **Sigue con la recta aunque su hélice sea de velocidad constante**, y es a
+   * propósito: con la ley de la hélice de paso variable (`potenciaUtil`), la
+   * del JAZ 40, su mejor subida bajaba de 94 a 82 nudos y a los 100 de su
+   * manual subía el 92 % de lo que puede; con la recta sube a 100 el 99 %.
+   * Su manual pone la Vy en 100 y la línea azul en 80 (PSM 1-64-1A, placa del
+   * § 2.18 y § 3.2): con sus 620 shp en un disco de 2,59 m, la hélice rinde
+   * bastante menos a 80 nudos que a 100, y la ley de potencia constante no lo
+   * cuenta. ADR 0027, enmienda H37c.
    */
   maxThrust: 24000,
   heliceSinEmpujeA: 130,
@@ -2453,7 +2498,16 @@ export const JAZ_50: AircraftConfig = {
    * `motores.test.ts` comprueba que el guion y la ficha dicen lo mismo.
    */
   motoresA: [-2.75, 2.75],
-  alturaCritica: null,
+  /*
+   * **Su régimen plano, hasta ocho mil pies.** El PT6A-34 da sus 620 shp de
+   * despegue y de máxima continua «available to 42 °C (108 °F) ambient
+   * temperature (S.L.)» (EASA.IM.A.575, issue 6, p. 7), y la misma placa, 50
+   * psi de par, vale para el crucero máximo. La hoja no dice hasta qué altura
+   * en día estándar: los ocho mil pies son los que ponen su crucero donde
+   * Viking lo pone, 170, 181 y 182 nudos al nivel del mar, a 5.000 y a 10.000
+   * ft —el modelo, 170, 176 y 178—. Sin él iba a 170 a cualquier altura.
+   */
+  alturaCritica: 8000 * 0.3048,
   // Las dos giran igual: «Propellers rotate Clockwise in view of flight
   // direction» (EASA.IM.A.575, A.III.6.1).
   helicesContrarrotativas: false,
