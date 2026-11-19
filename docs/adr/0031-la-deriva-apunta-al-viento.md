@@ -2623,8 +2623,8 @@ sobre un terreno que sube hacia el campo: unos ochenta metros por debajo de la
 pista a tres kilómetros y medio, una treintena a dos y dos al cruzar el
 umbral (la traza del ala de un vuelo entero, que da las dos alturas). El
 ejercicio empieza en la senda de la pista, que sobre ese suelo son sesenta
-metros de más; el piloto se tiraba a por ellos —en la traza nueva, bajando a
-19 m/s con el gas fuera y la palanca a fondo— y luego, con el suelo
+metros de más; el piloto se tiraba a por ellos —en la traza nueva, la palanca
+adelante del todo, bajando a 19 m/s y el gas a cero en cuanto se embalaba— y luego, con el suelo
 subiendo a casi la mitad de la senda, volaba casi nivelado: el gas a fondo,
 el derrape del ala baja encima y hasta cuarenta y cinco metros por debajo de
 la senda de verdad. Así es como una tirada de H32b acabó en 56 nudos; en la

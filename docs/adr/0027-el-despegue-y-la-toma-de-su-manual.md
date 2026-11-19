@@ -4119,3 +4119,94 @@ sin compensar y 12 compensando.
 - **El lazo del medio** después de un cambio grande de lo pedido, y con la
   racha horizontal (Los Rodeos, 1.ª; Gran Canaria): de H29b, sigue.
 - **La megafonía**: en las dos de Los Rodeos no sonó `comandante.despegue`.
+
+## Enmienda H34a (19-11-2026): las tomas al filo de Los Rodeos
+
+Tres tomas del vuelo entero salían unas veces en verde y otras no, siempre al
+filo de su comprobación (c26 y c27): el JAZ 40 cruzando la puerta de los
+quinientos pies a 85 nudos con la Vref en 86; el JAZ 50 tocando a 2,05 y 2,13
+m/s; y el JAZ 90, a 621 y 623 m del umbral con la zona acabando en 600. Las tres
+son del piloto del banco. Las trazas de esta tanda están en `h34a/` del
+scratchpad.
+
+### El JAZ 40, tres metros por segundo por debajo de lo que pide
+
+El gas de la final, con el automático en la senda, es un servo proporcional y
+que acumula: 0,04 de palanca por metro por segundo que cambie el error y 0,01
+por metro por segundo y segundo. Se afinó con el JAZ 90, cuyo empuje tarda. En
+la traza de c27 el JAZ 40 bajó de 51 a 46 m/s de verdadera en cuarenta
+segundos con 49 pedidos, y el lazo lo dejó ahí veinte: con tres metros por
+segundo de error, lo que acumula es una décima de palanca cada tres segundos.
+Pasó la puerta a 85.
+
+Una hélice da el empuje al momento. En los de hélice, el doble de
+proporcional y el triple de lo que acumula: con los dos metros y medio por
+segundo al cuadrado que da el bimotor por cada palanca entera y lo que frena su
+resistencia, en la cuenta el lazo queda amortiguado como estaba —ζ de 0,52 a
+0,49— y corrige el doble de deprisa. El reactor sigue con lo suyo. En Guyrami no
+cambia nada: ahí el gas es de otra ley.
+
+No es del juego: la mesa del cruzado (enmienda H34a del ADR 0031) vuela el
+JAZ 40 en la senda con el gas entre 0,33 y 0,86, y el bimotor sostiene su
+Vref.
+
+### El JAZ 90, recogiendo bien y flotando a ras de suelo
+
+Dónde se toca depende de dónde empieza la recogida, y eso de lo bien que se
+vuele la senda. En siete vuelos de Los Rodeos, la recogida empezó entre 117 m
+antes del umbral y 160 m pasado, y se tocó de 325 a 606 m después de
+empezarla. Las dos tomas largas, a 0,55 y 0,6 m/s: el perfil de la recogida
+acaba en dos pies por segundo —0,61 m/s, ver `RECOGIDA_DE_REACTOR`—, y
+tocar por debajo de eso es haber flotado a ras de suelo. Es lo que hacía el
+JAZ 110 de arriba, con la palanca subiendo por la velocidad que se pierde;
+esas dos tiradas no llevaban traza, así que no está medido que fuera lo mismo.
+Ya estaba escrito qué hace un piloto ahí —se aguanta la actitud y se deja que
+se pose—, pero solo para las alas de más de treinta metros; el JAZ 90 tiene
+veintiséis. Ahora también los reactores. En el vuelo de esta tanda no flotó, y
+la regla no llegó a mandar: está puesta, no medida.
+
+**Y a ×12 el reloj no le quita precisión.** El banco pide ×12 y la página da
+×1,4 o ×1,5 (`el vuelo avanza al ritmo que dice`), y la recogida va en el gancho
+de cada fotograma. Las tomas largas salen igual a ×1: la de c26 a ×1, 623 m.
+
+### El JAZ 50, la racha de los últimos metros
+
+En diez vuelos de Los Rodeos con el JAZ 50 desde el 15-11, cuatro tocaron por
+encima de 2 m/s (2,05 a 2,6) y los demás entre 0,92 y 1,8. Su recogida no se
+ha cambiado —el gas de la final sí, que es el de todas las hélices—, y la traza
+del vuelo de esta tanda, que tocó a 1,14, enseña lo que le pasa. Empieza a
+recoger a 9,5 m bajando 3,1 m/s, lo baja a 1,4 en cinco metros, y a cuatro metros del suelo el ángulo de ataque cae de 1,3° a −2,6° en
+tres décimas de segundo con la palanca quieta y la carga en 0,79 g: una racha
+que baja. Vuelve a bajar a 2 m/s, el pelo de gas de la enmienda del #192 —medio
+gas por metro por segundo de más— sube de 0,30 a 0,47, y esta vez llega a
+tocar a 1,14. Las de 2,05 y 2,13 de c26 y c27 no llevaban traza, así que no
+está medido que sean esa misma racha pillada más abajo, sin metros para
+corregirla; es lo que se le parece. Afinar la mano para eso pide un banco de
+mesa con las rachas del juego, como el de la enmienda del #192, y no cabía en
+esta tanda (ver «Lo que queda»).
+
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato`, con la traza del ala:
+
+- **JAZ 40 a ×1**, dos veces: en verde entero las dos. La puerta a 89 nudos
+  con la Vref en 86 las dos veces; la final de la primera, de 85 a 94 nudos
+  indicados con el gas entre 0,26 y 0,97; toca a 361 m y 1,16 m/s, y a 344 m
+  y 1,27.
+- **JAZ 50 a ×1**: en verde entero. La puerta a 75 nudos; toca a 312 m y 1,14
+  m/s, con la racha de arriba en la recogida.
+- **JAZ 90 a ×12**: en verde entero. La puerta a 121 nudos; recoge a 10,3 m,
+  19 m pasado el umbral, y toca a 369 m y 0,75 m/s sin flotar.
+
+Las segundas del JAZ 90 a ×12 y del JAZ 50 no llegaron a volarse en la tanda
+(el navegador es uno para toda la máquina), y tampoco Guyrami con la JAZ 20 ni
+el JAZ 90 a ×1. Lo de Guyrami no lo toca nada de esto —ahí `CON_EL_AUTOMATICO`
+es falso y la JAZ 20 ni es reactor ni pasa de treinta metros de ala—; el JAZ 90
+a ×1 corre lo mismo que a ×12.
+
+### Lo que queda
+
+- **La racha de los últimos metros del JAZ 50**: medir en la mesa, con el
+  modelo y las rachas de Los Rodeos, cuántas recogidas pasan de 2 m/s y qué
+  mano —más proporcional cuando se hunde, o el gas antes— las baja, sin hacer
+  flotar las demás.

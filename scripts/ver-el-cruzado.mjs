@@ -159,10 +159,11 @@ try {
        * un terreno que sube hacia el campo: unos ochenta metros por debajo de
        * la pista a tres kilómetros y medio, y dos al cruzar el umbral. Con la
        * senda sobre ese suelo, el piloto se tiraba sesenta metros al empezar
-       * —bajando a 19 m/s con el gas fuera— y luego volaba casi nivelado, con
-       * el gas a fondo y hasta cuarenta y cinco metros por debajo de la senda
-       * de verdad; en una tirada de H32b se quedó en 56 nudos. La senda de un
-       * PAPI o de un ILS es de la pista, y es la que vuela quien juega.
+       * —bajando a 19 m/s, y el gas a cero al embalarse— y luego volaba casi
+       * nivelado, con el gas a fondo y hasta cuarenta y cinco metros por
+       * debajo de la senda de verdad; en una tirada de H32b se quedó en 56
+       * nudos. La senda de un PAPI o de un ILS es de la pista, y es la que
+       * vuela quien juega.
        */
       const cotaDe = o.cotaDePistaDeAhora ?? o.cotaDePista;
       const cotaDeLaToma = cotaDe(r.x - fx * umbral, r.z - fz * umbral);
