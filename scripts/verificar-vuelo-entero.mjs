@@ -7777,6 +7777,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * de la bajada nombraron qué. Ver `flight/lo-que-se-nombra.ts`.
      */
     noSeVeia: o.juegoParaTrazas?.()?.loNombradoParaBanco?.noSeVeia ?? [],
+    // Y las que se fueron de la vista en la cola y sonaron con su gemela: ver `enSuLugar` en `game.ts`.
+    dichasEnSuLugar: o.juegoParaTrazas?.()?.loNombradoParaBanco?.dichasEnSuLugar ?? [],
     consejos: (o.cantados?.() ?? []).filter((c) => /^(consejo|paso )/.test(c)).map((c) => c.split(" [")[0]),
     /*
      * **Y la voz de la máquina, que no pasa por ninguna boca**: la cuenta y
@@ -8634,7 +8636,8 @@ if (CON_MODELO.has(AVION)) {
 comprobar(
   "la instructora no nombra lo que no se ve",
   (vuelo.noSeVeia ?? []).length === 0,
-  `${(vuelo.noSeVeia ?? []).join(", ") || "nada parado"} · ${(vuelo.consejos ?? []).length} consejos y pasos`,
+  `${(vuelo.noSeVeia ?? []).join(", ") || "nada parado"} · ${(vuelo.consejos ?? []).length} consejos y pasos` +
+    ((vuelo.dichasEnSuLugar ?? []).length ? ` · con su gemela: ${vuelo.dichasEnSuLugar.join(", ")}` : ""),
   "nombrar el PAPI sin la pista en la pantalla es lo del 273",
 );
 for (const c of vuelo.consejos ?? []) console.log(`      ${c}`);
@@ -9129,9 +9132,36 @@ comprobar(
     ? ["«pista libre»", "«runway free»"]
     : ["«podés aterrizar»", "«cleared to land»"];
   const conTorre = vuelo.aterrizaConTorre !== false;
+  /*
+   * **Y con la pista libre a última hora, la fraseología se calla con razón.**
+   * Si la pista fue de otro hasta hace nada —los mismos quince segundos del
+   * listón de abajo—, el castellano suena casi en la decisión y dura sus siete
+   * segundos largos; el «cleared to land» que va detrás llega a la cola por
+   * debajo de los mínimos y se retira sin sonar, que es la regla de la cuenta:
+   * lo que ya no puede sonar a su altura, no se dice. Ver `paso` en
+   * `flight/turno-de-pista.ts`. Medido en Los Rodeos con el JAZ 40 (H29l): la
+   * pista libre a 65 m, «podés aterrizar» de 513 a 520 s y su fraseología
+   * retirada al acabar. Callada no es perdida: solo vale si la boca la retiró
+   * —«ya no es verdad», que es quien sabe que ya no vale— y no si se cayó.
+   */
+  const RECIEN_LIBRE_PARA_LA_FRASEOLOGIA = 15;
+  const tarde = enCasa.find(
+    (a) => a.conOtroHace !== null && a.conOtroHace !== undefined && a.conOtroHace <= RECIEN_LIBRE_PARA_LA_FRASEOLOGIA,
+  );
+  // La de esa final: retirada después de sonar el castellano tarde, no la de una final de antes.
+  const retirada = (vuelo.descartes ?? []).find(
+    (d) =>
+      (afis
+        ? /^[\d.]+s torre\.(?:[a-z]+\.)?afisFree\b.*: ya no es verdad$/
+        : /^[\d.]+s torre\.(?:[a-z]+\.)?clearedLand\b.*: ya no es verdad$/
+      ).test(d) &&
+      !!tarde &&
+      parseFloat(d) >= tarde.t - 1,
+  );
+  const calladaConRazon = conFraseologia && !enRadio.length && !!tarde && !!retirada;
   const falta = !enCasa.length
     ? `no sonó ${permiso}`
-    : conFraseologia && !enRadio.length
+    : conFraseologia && !enRadio.length && !calladaConRazon
       ? `sonó ${permiso} y no el ${deRadio} de detrás`
       : !conFraseologia && enRadio.length
         ? `sonó el ${deRadio} en inglés en un peldaño sin fraseología`
@@ -9148,7 +9178,10 @@ comprobar(
           ? `sonó fuera de final: ${fueraDeFinal.map((a) => `${a.t} s en «${a.fase}» ${a.dice}`).join(" · ")}`
           : falta
             ? `${falta}: ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`
-            : `${tuyas.length} · ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`,
+            : `${tuyas.length} · ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}` +
+              (calladaConRazon
+                ? ` · con la pista libre hace ${tarde.conOtroHace} s, a ${tarde.alto} m, su ${deRadio} se retiró a los mínimos: ${retirada.replace(/@.*(?=: ya no es verdad$)/, "")}`
+                : ""),
       "«podés aterrizar» y «cleared to land» subiendo en la frustrada, en cuanto el de delante dejó la pista; y en Guyrami, la torre muda: el permiso iba solo por radio y en inglés",
     );
 }
