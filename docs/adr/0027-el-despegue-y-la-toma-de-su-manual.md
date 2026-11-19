@@ -5136,3 +5136,189 @@ falta frases.
   del JAZ 50 y del JAZ 60, que la llevan calibrada contra su crucero y su
   despegue. Los turbohélices tienen hélice de paso variable; pasarlos a
   `potenciaUtil` es medirlos otra vez, uno a uno.
+
+## Enmienda H37c (19-11-2026): la hélice del fumigador y el régimen plano del Twin Otter
+
+H37a dejó escrito que los demás de hélice seguían con la recta de la hélice de
+paso fijo, y que pasarlos a la de paso variable era medirlos uno a uno. Se han
+medido. **El fumigador pasa**; **los dos turbohélices no**, porque con la ley
+de potencia constante su mejor subida se va lejos de la de su manual; y el
+JAZ 50 gana lo que de verdad le faltaba arriba, que no era la hélice sino el
+motor: su **régimen plano**.
+
+### Las cifras de su clase
+
+| | Cifra | Fuente |
+|---|---|---|
+| **Twin Otter 400**, motor | 2 PT6A-34 (o -27 en el 300-G), «both flat rated at 620 shp» | EASA.IM.A.575, issue 6 (18-6-2026), p. 7 y notas 12-13 |
+| … régimen plano | despegue y máxima continua, 620 shp y 50 psi, «available to 42 °C (108 °F) ambient temperature (S.L.)»; con el -27, 33 °C | ídem, p. 7 |
+| … hélice | Hartzell HC-B3TN-3D(Y), tres palas, 2,591 m, de velocidad constante, Np 2.110 rpm | ídem, p. 8 |
+| … Vx / Vy, limpio | 87 / 100 KIAS | PSM 1-64-1A, placa del § 2.18, reproducida por Horlings (AvioConsult, 2026) |
+| … Vyse | 80 KIAS, flaps 10° | PSM 1-64-1A, § 3.2 |
+| … crucero máximo | 170 / 181 / 182 kt verdaderos al nivel del mar, 5.000 y 10.000 ft, a 50 psi | De Havilland, dehavilland.com/twin-otter; Viking, folleto del Guardian 400 (2015) |
+| … subida | 1.600 ft/min «at max. climb power» | folleto del Guardian 400, que es la versión de patrulla de 14.000 lb |
+| … techo | 25.000 ft, a 100 ft/min | ídem; y altitud máxima de operación, EASA, p. 9 |
+| **Beech 1900D**, motor | PT6A-67D, 1.279 shp al despegue y 1.215 de máxima continua, régimen plano hasta 48 °C (46,5 °C la continua) | EASA.IM.E.008, issue 6 (2022), pp. 8 y 15 |
+| … hélice | Hartzell HC-E4A-3, cuatro palas, de velocidad constante | CAA de Nueva Zelanda, TAR 98/07, rev. 1 |
+| … Vx, Vy | **sin fuente leída**: su manual no se ha podido abrir | — |
+| **Ag Cat G-164A**, hélice | Hamilton Standard 2D30, de contrapesos y gobernador, con el R-985 de 450 hp | la NTSB, citando su hoja de tipo, en la Aviation Safety Network; la serie, 2D30 o 2D40 (CAA de Nueva Zelanda, TAR 2/21B/3) |
+| … a fondo / subida | 147 mph (128 kt) / 1.080 a 1.800 ft/min a 4.500 lb | *Plane & Pilot* (2010) y otras revistas: **sin manual** |
+| … despegue | 615 ft de rodadura y 1.170 a los cincuenta pies, a 4.500 lb | *Ag-Cat Pilot's Handbook* (1977), que ya cita la ficha |
+
+La ficha del JAZ 50 decía dos PT6A-27: la hoja de tipo del -400 da el -34, y
+el -27 solo como opción del 300-G. Los dos con 620 shp de placa, que es lo
+que cuenta el modelo.
+
+### La mesa
+
+Con el modelo de vuelo entero y sin ayudas, a 500 m y al día estándar (la
+cuenta de `helice-de-cada-avion.test.ts`), y la cuenta de libro al nivel del
+mar para los topes; la masa, la de la ficha, salvo donde se dice.
+
+| JAZ 50, 5.182 kg | Recta (antes) | Potencia constante (la del JAZ 40) | Recta y régimen plano (ahora) | Su manual |
+|---|---|---|---|---|
+| Mejor subida, volada | 94 kt, 1.631 ft/min | 82 kt, 1.727 | 94 kt, 1.795 | Vy 100 |
+| A 100 kt, lo que sube | el 99 % de la mejor | el 92 % | el 99 % | |
+| A su masa máxima, 5.670 kg | 94 kt, 1.447 | 82 kt, 1.513 | 94 kt, 1.588 | 1.600 |
+| A fondo, 0 / 5.000 / 10.000 ft | 170 / 171 / 171 | 170 / 179 / 181 (con 7.000 ft de régimen plano) | 170 / 176 / 178 | 170 / 181 / 182 |
+| Carrera hasta la Vr, 5.670 kg | 229 m | 232 (con 20 kN parado) | 229 | 244 |
+| Línea azul, cuenta | 86,9 kt | 78,6 | 86,9 | 80 con 10° |
+
+| JAZ 60, 7.296 kg | Recta (sin cambio) | Potencia constante, 75 %, 24 kN |
+|---|---|---|
+| Mejor subida, volada | 126–132 kt, 2.353 ft/min | 120–126 kt, 2.385 |
+| A su masa máxima | 130 kt, 2.234 | 124 kt, 2.239 |
+| A fondo a 25.000 ft | 278 kt | 271 |
+| Carrera hasta la Vr | 482 m | 482 |
+| Vmc, cuenta | 85,1 kt | 86,4 |
+
+| JAZ 25, 1.500 kg | Recta (antes) | Paso variable, 70 % de 450 hp, 4,7 kN (ahora) | Su clase |
+|---|---|---|---|
+| Mejor subida, volada | 68 kt, 905 ft/min | 76 kt, 1.355 ft/min | — |
+| A 4.500 lb (2.041 kg) | 455 ft/min (cuenta) | 755 volada, 811 cuenta | 1.080–1.800, revistas |
+| A fondo, nivel del mar | 111 kt | 124 kt | 128 (147 mph) |
+| Carrera hasta la Vr, 4.500 lb | 189 m | 179 m | 187 (615 ft) |
+
+### Lo que se cambia
+
+- **El JAZ 25, a la ley de su hélice**: `potenciaUtil`, el 70 % de sus 450 hp,
+  y el empuje parado de 5,2 a 4,7 kN. El 70 % es el que lo deja a fondo cerca
+  de los 128 nudos sin pasar de su Vmo de 130. Sube más y más deprisa, que es
+  lo que daba la recta de menos: a 4.500 lb, 455 ft/min donde las revistas le
+  dan más de mil.
+- **Por qué 4,7 kN y no 4,5, que rodaban los 615 ft de su manual enteros**:
+  el combustible del juego se cuenta con el empuje parado —el crucero, a un
+  tercio de `maxThrust` (`cargaParaLaRuta`)—, y con 4,5 kN el vuelo local de
+  media hora cargaba 136 kg y llamaba «minimum fuel» a los 25 minutos
+  (`combustible-del-vuelo-local.test.ts`). Con 4,7, 138 kg y no llama; rueda
+  179 m, un 4,5 % menos que su manual. El vuelo entero del navegador se voló
+  con 4,5.
+- **El JAZ 50, con régimen plano**: `alturaCritica`, que ya era la de la
+  norma —«the maximum altitude at which, in standard atmosphere, it is
+  possible to maintain… a specified power» (14 CFR 1.1)— y no distingue el
+  turbo de un pistón del régimen plano de una turbina, a ocho mil pies. La
+  hoja de tipo da el régimen plano en temperatura al nivel del mar, 42 °C, y
+  no en altura con día estándar: los ocho mil pies son los que ponen su
+  crucero donde lo pone Viking. Hasta ahí da los 620 shp; por encima, cae con
+  la densidad. Como la del Seneca, pinta la marca rosa del crucero más abajo
+  cuando vuela por debajo de su altura de crucero (`verdaderaDeCrucero`): al
+  nivel del mar, 165 nudos, que ya alcanza.
+- **El JAZ 60, nada.** Su régimen plano llega a 48 °C y su motor tiene una
+  potencia máxima continua por debajo de la de despegue: con un solo «a
+  fondo», los 274 nudos de 25.000 ft y los 2.615 ft/min del nivel del mar ya
+  salen con la ley de la casa, y no hay cifras de crucero a media altura con
+  que medir hasta dónde llega el régimen plano.
+
+### Por qué los turbohélices siguen con la recta
+
+La ley de H37a dice que una hélice de velocidad constante empuja su potencia
+útil entre la velocidad, con un rendimiento fijo. En el Seneca era la buena:
+la Vy bajó de 107 a 98–100 y a su cifra sube el 99 %. En el Twin Otter es la
+mala: su mejor subida baja a 82 nudos, donde su manual la pone en 100, y a 100
+sube el 92 % de lo que puede. Con la recta, a 100 sube el 99 %. Por el criterio
+de H37a —gana lo que se siente en cabina, que es subir lo que el avión puede a
+la cifra de su manual—, la recta se queda.
+
+Lo que separa a los dos es **lo cargado que va el disco**: un Seneca da 200
+hp por hélice en un disco de 1,93 m, unos 51 kW por metro cuadrado; el Twin
+Otter, 620 shp en uno de 2,59, 88; el 1900D, 1.279 en uno de 2,79, 156. Una
+hélice muy cargada rinde bastante menos a 80 nudos que a 100 —tiene que
+acelerar mucho el aire que pasa despacio—, y la ley de rendimiento fijo no lo
+cuenta; la recta, sin querer, se le parece. **La ley que vale para todos es
+la de la cantidad de movimiento**, `T·(V + vᵢ) = η·P` con el disco de cada
+uno. En la mesa, con ella y el 80–85 % de rendimiento de perfil, la mejor
+subida sale en 92 nudos en el Seneca (su manual, 92), 93–95 en el Twin Otter
+(100) y 134 en el 1900D, sin tocar sus polares. Pero cambia el empuje parado
+—9,3 kN en el Seneca donde la ficha lleva 5— y con él la carrera, la Vmc y la
+Vx de los cuatro, y el JAZ 40 acaba de medirse con la de H37a. No cabe en esta
+tanda: queda escrito abajo.
+
+### Lo que cambia de rebote
+
+- **Ningún puesto de salida, ninguna remontada.** El fumigador rueda un
+  5 % menos (179 m a 4.500 lb, donde rodaba 189) y el Twin Otter, al nivel del
+  mar, empuja lo mismo; en los campos altos —Tenerife Norte, a 632 m— el
+  régimen plano le da al JAZ 50 los 620 shp enteros donde la ley de la casa
+  le quitaba un 4 %, y rueda algo menos. `puesto-de-salida-de-cada-campo.json`
+  sale igual, `remontar-por-tipo.test.ts` y
+  `despegue-y-toma-del-manual.test.ts` pasan sin tocar sus bandas.
+- **`prestaciones.test.ts` pedía a la hélice ir a fondo menos de un 15 % por
+  encima de su crucero.** El fumigador va a unos 125 nudos a 1.500 m, casi un 17 %
+  sobre los 107 de su ficha; el Ag Cat va a 128, un 20 %. Se le da la holgura
+  del turbo, 1,2, como al JAZ 40.
+- **`turbo.test.ts`** decía que solo el JAZ 40 tenía altitud crítica: ahora
+  dice que es el único de pistón con turbo.
+- **El JAZ 50 a fondo a 5.000 ft, 175,5 nudos**, un 3 % por debajo de los 181
+  de Viking: el régimen plano le da la potencia, pero la recta le quita
+  empuje cuanto más corre. Con la ley de potencia constante y siete mil pies
+  de régimen plano iba a 179 y 181. Es en lo que esa ley le iba mejor, junto
+  con la línea azul de la cuenta —78,6 nudos donde su manual da 80 con 10°, y
+  la recta 86,9—, que en un turbohélice no se pinta: con un motor se vuela su
+  V2 (`conUnMotor`).
+
+### Volado
+
+La mesa —`helice-de-cada-avion.test.ts`, `prestaciones.test.ts`,
+`turbo.test.ts`, `despegue-y-toma-del-manual.test.ts`,
+`remontar-por-tipo.test.ts`, `puesto-de-salida-de-cada-campo.test.ts` y
+`escalera-de-velocidades.test.ts`— vuela el modelo entero y sin ayudas; las
+cifras de arriba son de ahí y de la cuenta de libro.
+
+En el navegador, `verificar-vuelo-entero.mjs`, puerto 5687:
+
+- **`tenerife-norte taguato 1 jaz-50`**, reloj por uno y ×1,00 de verdad:
+  **57 de 57**, 4 sin medir. V1 a 70 nudos y rotar a 77; sube al 13,4 %
+  desde que suelta el suelo hasta los cien metros; recoge los flaps a 122 m
+  y 82 nudos; ni una vez el avisador
+  de pérdida; toca a 1,11 m/s, a 0,1 m del eje y 375 m pasado el umbral, con
+  la recogida empezada a 6,9 m bajando 2,2 m/s a 71 nudos; apagado en su
+  puesto a los 731 s. En H34d tocaba a 1,62 m/s y 309 m.
+- **`tenerife-norte guyrami 3 jaz-25`**, reloj por tres y ×2,25 de verdad
+  —la máquina iba cargada; el banco lo da por bueno—: **62 de 62**, 2 sin
+  medir. V1 a 45 nudos y rotar a 51; sube al 10,3 % hasta los cien metros;
+  toca a 1,2 m/s, en el eje y 353 m pasado el umbral; apagado a los 976 s.
+  Volado con 4,5 kN de empuje parado; la ficha lleva 4,7 (ver arriba).
+- **El ILS de Fuerteventura con el Twin Otter** (`OGA_AVION=jaz-50
+  ver-ils-con-agujas.mjs`, reloj por cuatro), **19 de 20**: captura el
+  localizador y la senda desde abajo, a los mínimos con las agujas a −0,05 y
+  0,01 puntos —lo peor desde mil pies, 0,07 y 0,19—, aterriza y cierra con la
+  pista. La que falla es la de la nube: a 339 ft dentro, como pide, pero a
+  197 ft todavía a medias (0,51), con la pista a la vista. No es del empuje
+  —la final la vuela el banco a la senda, con las agujas en cruz— y no se ha
+  volado antes con este avión para saber si ya fallaba: queda por mirar.
+
+### Lo que queda
+
+- **La nube del ILS con el JAZ 50**, a medias a 197 ft (ver arriba).
+- **La hélice por cantidad de movimiento** para los cuatro de paso variable:
+  la ley de arriba, con el diámetro de cada hélice en su ficha —1,93, 2,59,
+  2,79 y el de la 2D30 del Ag Cat, que no se ha leído—, y medirlos otra vez.
+- **La Vy del 1900D**, sin cifra de su manual: con la recta el modelo sube
+  mejor a 126–132 nudos, y con la cantidad de movimiento saldría a unos 134.
+- **El régimen plano del 1900D**, sin cruceros a media altura con que medirlo.
+- **La Vx del Twin Otter**, 87 nudos limpio en su manual: el modelo sube más
+  empinado cuanto más despacio, hasta la pérdida, con cualquiera de las leyes.
+- **El techo del JAZ 50**: el modelo sube a 100 ft/min a unos 34.500 ft
+  (37.000 antes del régimen plano) donde el suyo se queda en 25.000. Por
+  encima del régimen plano la potencia de una turbina cae algo más deprisa que
+  la densidad, y el rendimiento de la hélice también, y no se cuenta.
