@@ -2975,9 +2975,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * segundos de lo que sube —el diez por ciento—, con lo que sube contado
    * hasta cuatro metros por segundo, que más es la racha y no la subida, y
    * desde ahí `aLaAltura` pide justo lo que ya sube: la palanca no salta. Y
-   * una vez nivelando no se vuelve a la subida salvo que se caiga treinta
-   * metros por debajo sin subir: el diez por ciento de una racha cambia cada
-   * segundo, y sin eso el piloto saltaría de una ley a la otra.
+   * una vez nivelando no se vuelve a la subida salvo que se quede a más de
+   * treinta metros —más de lo que se empieza a nivelar, veinticuatro como
+   * mucho—: el diez por ciento de una racha cambia cada segundo, y sin eso el
+   * piloto saltaría de una ley a la otra. Y treinta metros por debajo, sea
+   * por lo que sea —una frustrada que vuelve a subir al mismo circuito—, ya
+   * no es nivelar.
+   *
+   * Y con la racha, nivelando así el ala se queda a 4,3° del avisador como
+   * poco, donde a quince metros fijos se quedaba a 4,7°: se sigue subiendo
+   * un poco más rato y la racha lo pilla más lento. Con
+   * `sinGastarLaVelocidad` de `aLaAltura`; sin eso, 3,8°.
    *
    * Medido en la mesa del modelo completo (`h34d/mesa20/` del scratchpad), a
    * 250 y 300 m: sin racha, la palanca no salta (de 0,06 a 0) y la carga va
@@ -2991,7 +2999,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const queda = altoQueToca - alto(s);
     if (!AVIONETA_COMPLETA) return queda > antes;
     if (nivelandoHacia !== null && Math.abs(nivelandoHacia - altoQueToca) < 1) {
-      if (queda <= 30 || s.verticalSpeed >= 0.5) return false;
+      if (queda <= 30) return false;
       nivelandoHacia = null;
       return true;
     }
