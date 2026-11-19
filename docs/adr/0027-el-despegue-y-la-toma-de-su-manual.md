@@ -4682,3 +4682,11 @@ en la mesa y al 10 en el juego.
   repite, pero el avión las atraviesa. Hacerlas obstáculo es un percance que
   hoy no existe en ningún árbol del juego.
 - **Las frases, sin grabar.**
+- **La condición de subir empinado no está volada en el navegador**: entró
+  después de la segunda tirada, con la mesa y sus pruebas
+  (`pista-corta.test.ts`), y la tercera —en Taguato Ruvichá y en Tukã— no tuvo
+  turno de navegador. Es lo primero que hay que volar.
+- **Tukã, sin volar.** Las dos tiradas son de Taguato Ruvichá, sin ayudas. En
+  Tukã la ayuda de cabeceo cerca del suelo («se acelera subiendo») puede
+  pelearse con quien quiere ir despacio y empinado; está por ver si el niño
+  llega a los 56 nudos sosteniéndolos.
