@@ -8672,6 +8672,74 @@ button.motor__tecla::after {
   }
 }
 
+/*
+ * **En un teléfono tumbado, la hoja entera sin rodar** (H38c). Con 360 de
+ * alto la barra de despegar se queda abajo con sus cien píxeles y la hoja
+ * tiene unos doscientos: la frase del veredicto, en la columna de la
+ * derecha, se iba a cuatro renglones y el arreglo quedaba debajo de la barra,
+ * a 138 px de rueda. A quien no lee nadie le dice que ruede. Así que todo un
+ * poco más justo —menos lo que se toca, que sigue a 48— y, cuando hay
+ * frase, el veredicto a lo ancho de la tarjeta, donde cabe en dos renglones,
+ * y los asientos debajo de los mandos.
+ */
+@media (min-width: 700px) and (max-height: 460px) {
+  .hangar[data-pantalla="carga"] .hangar__bloque {
+    gap: 6px;
+  }
+
+  .hangar[data-pantalla="carga"] .hangar__pregunta {
+    font-size: 17px;
+  }
+
+  .hoja__tarjeta {
+    gap: 6px 16px;
+    padding: 8px 12px;
+  }
+
+  .hoja__tarjeta:has(.hoja__texto) {
+    grid-template-areas:
+      "mandos bascula"
+      "mandos pista"
+      "cabina pista"
+      "veredicto veredicto";
+  }
+
+  .hoja__mandos {
+    gap: 6px;
+  }
+
+  .hoja__opcion {
+    padding: 4px 10px;
+  }
+
+  .hoja__barra {
+    height: 22px;
+  }
+
+  .hoja__campo {
+    height: 24px;
+  }
+
+  .hoja__carrera {
+    height: 20px;
+    margin-top: 2px;
+  }
+
+  .hoja__cifras {
+    margin-top: 1px;
+    font-size: 14px;
+  }
+
+  .hoja__asientos {
+    height: 28px;
+  }
+
+  .hoja__texto {
+    font-size: 14px;
+    line-height: 1.25;
+  }
+}
+
 .hoja__mandos {
   grid-area: mandos;
   display: flex;
