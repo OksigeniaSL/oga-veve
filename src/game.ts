@@ -1447,6 +1447,7 @@ import {
   anunciaElPuntoDeDescenso,
   anunciaLaFase,
   cuantoAguanta,
+  esDeLaListaDeDespegue,
   cuentaPorDondeSeSale,
   cuentaUnPasoDeRadio,
   esDelDescenso,
@@ -1722,6 +1723,7 @@ import {
 } from "./flight/flaps";
 import {
   AvisoDeConfiguracion,
+  ENTRANDO,
   EN_LA_ESPERA,
   EN_LA_PISTA,
   ListaDeAntesDeDespegar,
@@ -1729,6 +1731,7 @@ import {
   comoSeRecogen,
   despegaConFlaps,
   enElRangoDeDespegue,
+  laListaEstaLeida,
   leTocaAlCompensador,
   loQueFalta,
   rotuloDeCabina,
@@ -37027,6 +37030,8 @@ export class Game {
   private atenderALosFlapsDelDespegue(fase: Fase, dt: number): void {
     const a = this.aircraft;
     this.franjaDeDespegue = null;
+    // Sin lista que leer, la torre mira como siempre. Ver `laListaEstaLeida`.
+    if (this.plan) this.plan.listaPorLeer = false;
     if (this.dePasaje || this.manoDeJazlyn) return;
     const conFlaps = despegaConFlaps(a);
     // Donde hay compensador que compense: ni en el modelo sencillo ni en el helicóptero.
@@ -37038,7 +37043,12 @@ export class Game {
       fase,
       enTierra: s.onGround,
       porElSuelo: s.groundSpeed,
+      /*
+       * Y lo que espera turno, también: lo pedido en el mismo fotograma que la
+       * roja de la torre iba detrás de ella y caducaba. Ver `BOCA.libre`.
+       */
       hablando:
+        !BOCA.libre ||
         this.instructor.hablando ||
         this.torre.hablando ||
         this.comandante.hablando ||
@@ -37052,6 +37062,14 @@ export class Game {
      * un reactor, que su aviso acepta, no es la de su Vr.
      */
     const flapsPuestos = conFlaps && Math.abs(palanca - flapsDeDespegue(a)) < 0.01;
+    /*
+     * **Y lo que la lista tiene pedido y ya no vale, se retira**: sus líneas no
+     * caducan —ver `esDeLaListaDeDespegue`—. Corriendo por la pista o en el
+     * aire ya no se lee; y la que pide los flaps, con los flaps puestos, sobra.
+     */
+    if (!s.onGround || s.groundSpeed >= ENTRANDO)
+      BOCA.retirar((c) => esDeLaListaDeDespegue(c));
+    else if (flapsPuestos) BOCA.retirar((c) => c === "vuelo.flapsParaDespegar");
     if (conFlaps) {
       const antes = this.antesDeDespegar.paso({ ...lectura, puestos: flapsPuestos });
       if (antes) this.decirLosFlapsDeDespegue(antes);
@@ -37059,6 +37077,8 @@ export class Game {
 
     const franja = conCompensador ? compensadorDeDespegue(this.avionConPeso()) : null;
     const trim = this.input.controls.trim;
+    if (franja && s.onGround && enLaFranja(franja, trim))
+      BOCA.retirar((c) => c === "vuelo.compensadorParaDespegar");
     if (franja && s.onGround && (EN_LA_ESPERA.has(fase) || EN_LA_PISTA.has(fase)))
       this.franjaDeDespegue = franja;
     // En el aire también se le da el paso: es como se rearma para la salida siguiente.
@@ -37071,6 +37091,24 @@ export class Game {
       });
       if (antes) this.decirElCompensadorDeDespegue(antes, franja);
     }
+    /*
+     * **Y hasta que la lista esté leída, la torre no te mira**: la lista se
+     * hace en el punto de espera, antes de decir «listo», y la autorización
+     * viene detrás. Ver `laListaEstaLeida`.
+     */
+    if (this.plan && s.onGround)
+      this.plan.listaPorLeer = !laListaEstaLeida(
+        this.antesDeDespegar,
+        this.compensadorAntesDeDespegar,
+        {
+          conFlaps,
+          // Lo de este paso: si la instructora los acaba de poner, ya cuentan.
+          flapsPuestos: conFlaps && Math.abs(this.input.palancaDeFlaps - flapsDeDespegue(a)) < 0.01,
+          conCompensador: franja !== null,
+          compensadorPuesto: franja === null || enLaFranja(franja, this.input.controls.trim),
+          peldano: this.tier.avisos,
+        },
+      );
 
     const suena = avisosDeABordo(a).configuracionDeDespegue;
     const delAviso = {

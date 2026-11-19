@@ -678,7 +678,9 @@ suena, y la voz que va detrás es lo siguiente que suena—; la frecuencia de lo
 **Un suceso, una voz.** Una frase detrás de otra, nunca dos a la vez contando lo mismo. Al despegar no se solapa nada:
 es el momento con más voces y el que más agobia. Por eso la torre pregunta por la intersección rodando hacia el punto
 de espera, que es cuando hay silencio —o en la roja, si rodando no calló la frecuencia—, y nunca después del «cleared
-for take-off»; y de Taguató para arriba la verde la cuenta la torre y la instructora no la repite.
+for take-off»; y de Taguató para arriba la verde la cuenta la torre y la instructora no la repite. Y la lista de antes
+de despegar —los flaps y el compensador— se lee parado en el punto de espera, como de verdad, y la torre no te mira
+hasta que está leída: la verde viene detrás del «listo», no encima de la lista (`laListaEstaLeida`).
 
 **Lo que dice el avión no sube por la escalera.** La cuenta del radioaltímetro y los avisos de sus cajas (*terrain*,
 *sink rate*, *pull up*, *bank angle*, *stall*, *minimums*, *traffic, traffic*) suenan con su voz de máquina **en los

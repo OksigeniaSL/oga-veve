@@ -247,6 +247,20 @@ const ESPERA_MINIMA = 1.5;
 const TORRE_TARDA = 2.2;
 
 /**
+ * **Lo que la lista de antes de despegar puede tener a la torre sin mirarte**,
+ * s parado en la doble raya: noventa. Leída entera y sin tocar nada, con las
+ * dos líneas y su paciencia, son unos treinta; y la frecuencia habla entre
+ * medias, que la lista espera a que calle. Con cuarenta y cinco no bastaba:
+ * en Taguató con la JAZ 20 y otro avión en la frecuencia, la torre le dijo
+ * «hold short» al otro, a ti la roja y tu «hold short», ofreció la
+ * intersección y la TORA —diecisiete segundos ella sola—, y el tope soltó la
+ * verde con la línea del compensador por leer. Pasado esto la torre mira
+ * igual: si algo deja la lista a medias para siempre, el avión no se queda
+ * en la roja para siempre. Ver `listaPorLeer`.
+ */
+export const LA_LISTA_COMO_MUCHO = 90;
+
+/**
  * A cuánto del eje de pista se considera que ya la has abandonado, m.
  *
  * No vale con salirse del asfalto: la pista tiene una franja de seguridad a los
@@ -438,6 +452,20 @@ export class Vuelo {
    * del guion de la espera. Ver `ocupanLaPista` en `flight/radio.ts`.
    */
   pistaDeOtros = false;
+
+  /**
+   * **Si quien vuela todavía está leyendo la lista de antes de despegar**: los
+   * flaps y el compensador, en el punto de espera. Lo pone el juego, que es
+   * quien la lee. Ver `laListaEstaLeida` en `flight/flaps-de-despegue.ts`.
+   *
+   * Mientras tanto la torre no te mira, como con la pista ocupada: de verdad
+   * la lista se hace parado en el punto de espera, y solo al acabarla se le
+   * dice a la torre «listo para salir»; la autorización viene detrás. Aquí la
+   * torre miraba a los cuatro segundos de parar, la lista no cabía y sus
+   * frases se caían detrás de la roja y de la verde. Como mucho
+   * `LA_LISTA_COMO_MUCHO`: una espera tiene que tener salida.
+   */
+  listaPorLeer = false;
 
   /** Si ya se paró en la doble raya con la lección de rodar. Ver `Paso`. */
   private rodajeHecho = false;
@@ -933,7 +961,7 @@ export class Vuelo {
       if (this.quieto > ESPERA_MINIMA) this.rodajeHecho = true;
       return;
     }
-    if (this.pistaDeOtros) {
+    if (this.pistaDeOtros || (this.listaPorLeer && this.quieto < LA_LISTA_COMO_MUCHO)) {
       this.mirando = 0;
       return;
     }

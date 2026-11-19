@@ -11,6 +11,7 @@
 import { describe, expect, it } from "vitest";
 import {
   GUION,
+  LA_LISTA_COMO_MUCHO,
   SE_QUEDAN,
   Vuelo,
   guionAfis,
@@ -282,6 +283,43 @@ describe("las trampas", () => {
     // Recién libre, todavía no: la torre te mira antes de dártela.
     expect(durante(v, enLaRaya, 1)).toBe("esperando");
     expect(durante(v, enLaRaya, 5)).toBe("autorizado");
+  });
+
+  it("con la lista de antes de despegar a medias, la torre espera a que se lea; y no para siempre", () => {
+    /*
+     * De verdad la lista se hace parado en el punto de espera, y la torre
+     * autoriza detrás del «listo». Aquí miraba a los cuatro segundos de
+     * parar, y las frases de los flaps y del compensador se caían detrás de
+     * su roja y de su verde (H29n). Ver `listaPorLeer`.
+     */
+    const v = new Vuelo();
+    v.reiniciar();
+    durante(v, con({ motor: true }), 1);
+    durante(
+      v,
+      con({ motor: true, estado: { airspeed: 6, groundSpeed: 6 } as never }),
+      1,
+    );
+    v.listaPorLeer = true;
+    const enLaRaya = con({ motor: true, restante: 10 });
+    expect(durante(v, enLaRaya, 20)).toBe("esperando");
+    v.listaPorLeer = false;
+    // Leída, la torre te mira el rato de siempre antes de dártela.
+    expect(durante(v, enLaRaya, 1)).toBe("esperando");
+    expect(durante(v, enLaRaya, 5)).toBe("autorizado");
+
+    // Y si se queda a medias, la torre mira igual pasado su tope.
+    const otra = new Vuelo();
+    otra.reiniciar();
+    durante(otra, con({ motor: true }), 1);
+    durante(
+      otra,
+      con({ motor: true, estado: { airspeed: 6, groundSpeed: 6 } as never }),
+      1,
+    );
+    otra.listaPorLeer = true;
+    expect(durante(otra, enLaRaya, LA_LISTA_COMO_MUCHO - 5)).toBe("esperando");
+    expect(durante(otra, enLaRaya, 10)).toBe("autorizado");
   });
 
   it("el permiso se gasta al entrar en pista", () => {
