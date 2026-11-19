@@ -28,6 +28,8 @@
  *   el helicóptero, el suyo: la autorrotación, con la ayuda llevando el
  *   colectivo y la recogida (#110).
  * - **Taguato**: V1 —parar antes, seguir después— y un motor parado en vuelo.
+ *   En el bimotor de pistón, que no lleva V1, lo de su manual: con el tren
+ *   fuera se para, con el tren dentro y subiendo se sigue (ver `conV1`).
  * - **Taguato Ruvicha**: todo lo anterior, y la sesión de simulador: se sabe
  *   que es un ejercicio y no se sabe qué va a fallar ni cuándo.
  *
@@ -147,6 +149,8 @@ export type EjercicioId =
   | "planeo"
   | "antes-de-v1"
   | "despues-de-v1"
+  | "en-la-carrera"
+  | "tren-arriba"
   | "un-motor"
   | "simulador"
   | "despresurizacion"
@@ -184,8 +188,13 @@ export type Momento =
    * el «fallo de V1» del simulador de verdad, cuando ya no hay dónde parar.
    */
   | { readonly en: "carrera"; readonly antesDeV1: boolean }
-  /** Subiendo, al pasar esta altura sobre el campo, m. */
-  | { readonly en: "subida"; readonly metros: number }
+  /**
+   * Subiendo, al pasar esta altura sobre el campo, m. Y con `trenDentro`,
+   * además con el tren ya dentro del todo: el fallo de después de despegar
+   * del bimotor de pistón, el único del despegue en que su manual deja
+   * seguir. Ver `en-la-carrera` y `tren-arriba`.
+   */
+  | { readonly en: "subida"; readonly metros: number; readonly trenDentro?: boolean }
   /** Ya en el aire desde el principio, a los segundos que se digan. */
   | { readonly en: "aire"; readonly segundos: number };
 
@@ -287,6 +296,33 @@ const DESDE_TUKA: readonly TierId[] = ["tuka", "taguato", "taguato-ruvicha"];
 const DESDE_TAGUATO: readonly TierId[] = ["taguato", "taguato-ruvicha"];
 const multimotor = (a: AvionDelEjercicio): boolean => a.motores > 1;
 /**
+ * **Si su manual decide el despegue con V1**: los multimotores de turbina.
+ *
+ * El turbohélice y el reactor llevan V1 en su manual —el Twin Otter -400,
+ * igual a la Vr (PSM 1-64-1A, figura 4-1); el 1900D y los reactores, la de
+ * su categoría de transporte—: antes se para, después se sigue. El bimotor
+ * de pistón **no la lleva**. Su manual decide con la velocidad y con el
+ * tren: «If engine failure occurs during takeoff and 85 KIAS has not been
+ * attained: Throttles — CLOSE both immediately. Stop straight ahead», y si
+ * no queda pista, se para igual, esquivando lo que haya delante; y por
+ * encima de 85 nudos con el tren todavía fuera, se para si queda pista
+ * (Piper, PA-34-220T Seneca III, VB-1110, sección 3; el del Seneca I, lo
+ * mismo con 100 mph). La FAA lo dice con el tren: «if the landing gear has
+ * not been selected up, the takeoff should be rejected, even if airborne»
+ * (*Airplane Flying Handbook*, FAA-H-8083-3C, p. 13-12). El JAZ 40 rota a
+ * 72 nudos, así que en su despegue **todo fallo con el tren fuera se para**,
+ * y solo se sigue con el tren dentro y subiendo. Con un motor en molinete y
+ * el tren fuera no sube a ninguna velocidad (ADR 0027, enmienda H37b).
+ *
+ * El destello de V1 en pantalla sale igual en todos —ver `hud.ts`—: lo que
+ * cambia es lo que se practica y lo que se dice. Ver el ADR 0027, enmienda
+ * H37e.
+ */
+export const conV1 = (a: Pick<AircraftConfig, "motores" | "sound">): boolean =>
+  a.motores > 1 && a.sound.engine !== "piston" && a.sound.engine !== "radial";
+/** El bimotor de pistón: el que decide con el tren y no con V1. */
+const bimotorDePiston = (a: AvionDelEjercicio): boolean => multimotor(a) && !conV1(a);
+/**
  * **Si lleva radar meteorológico**: los de turbina, que son los de cabina de
  * pantallas. La avioneta y el bimotor de pistón de la flota no lo llevan, y
  * en ellos lo de una tormenta es otra lección —no salir—, la de la tarjeta
@@ -318,7 +354,8 @@ export const EJERCICIOS: readonly Ejercicio[] = [
   {
     id: "antes-de-v1",
     peldanos: DESDE_TAGUATO,
-    valePara: multimotor,
+    // Solo donde su manual decide con V1: ver `conV1`.
+    valePara: conV1,
     leccion: "vuelta",
     averias: [{ que: "motor", cuando: { en: "carrera", antesDeV1: true } }],
     ensena:
@@ -327,11 +364,48 @@ export const EJERCICIOS: readonly Ejercicio[] = [
   {
     id: "despues-de-v1",
     peldanos: DESDE_TAGUATO,
-    valePara: multimotor,
+    /*
+     * Solo donde su manual decide con V1. Al bimotor de pistón se le paraba
+     * un motor rodando a 69 nudos, tres por encima de su V1 del juego, y se
+     * le pedía seguir: su manual manda parar ahí, y con la hélice en molinete
+     * y el tren fuera no sube. Pasaba en Gran Canaria porque la pista es
+     * larga. Lo suyo son los dos de abajo.
+     */
+    valePara: conV1,
     leccion: "vuelta",
     averias: [{ que: "motor", cuando: { en: "carrera", antesDeV1: false } }],
     ensena:
       "pasada V1 ya no hay pista para parar: se vuela con un motor, con el pie del lado del bueno",
+  },
+  {
+    id: "en-la-carrera",
+    peldanos: DESDE_TAGUATO,
+    valePara: bimotorDePiston,
+    leccion: "vuelta",
+    /*
+     * **Donde el de transporte ya sigue**: a medio camino entre su V1 del
+     * juego, que es su Vmc, y la rotación —69 nudos en el JAZ 40—, o en
+     * cuanto se va del suelo si rota antes. Es el momento en que un piloto de
+     * reactor seguiría, y en este avión se para: es lo que se enseña.
+     */
+    averias: [{ que: "motor", cuando: { en: "carrera", antesDeV1: false } }],
+    ensena:
+      "en el bimotor de pistón, con las ruedas en el suelo o el tren todavía fuera, un motor que falla se para: gases atrás y derecho, aunque ya vuele",
+  },
+  {
+    id: "tren-arriba",
+    peldanos: DESDE_TAGUATO,
+    valePara: bimotorDePiston,
+    leccion: "vuelta",
+    /*
+     * **Subiendo y con el tren ya dentro**, el único fallo del despegue en
+     * que su manual deja seguir. Desde quince metros, la altura a la que la
+     * práctica da el avión por volando; el juego pide el tren a los sesenta
+     * (`meteElTrenA`), así que falla en cuanto acaba de entrar.
+     */
+    averias: [{ que: "motor", cuando: { en: "subida", metros: 15, trenDentro: true } }],
+    ensena:
+      "con el tren dentro y subiendo se sigue: el pie del lado del bueno, la línea azul, y la compañera identifica, verifica y pone en bandera enseguida",
   },
   {
     id: "un-motor",
@@ -348,6 +422,13 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     peldanos: ["taguato-ruvicha"],
     valePara: multimotor,
     leccion: "vuelta",
+    /*
+     * Los mismos tres momentos en todos, y lo que toca en cada uno lo dice su
+     * manual: en los de turbina, el primero se para y los otros se siguen; en
+     * el bimotor de pistón, los dos de la carrera se paran —con las ruedas en
+     * el suelo, su manual para siempre— y el de la subida se sigue. Lo decide
+     * `Practica`, con `conV1`.
+     */
     averias: [
       { que: "motor", cuando: { en: "carrera", antesDeV1: true } },
       { que: "motor", cuando: { en: "carrera", antesDeV1: false } },

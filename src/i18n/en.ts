@@ -1442,7 +1442,9 @@ export const EN: Dictionary = {
   "hangar.ejercicio.planeo": "Glide with no engine",
   "hangar.ejercicio.antes-de-v1": "Engine before V1",
   "hangar.ejercicio.despues-de-v1": "Engine after V1",
-  "hangar.ejercicio.un-motor": "Fly on one engine",
+  "hangar.ejercicio.en-la-carrera": "Engine on the take-off run",
+  "hangar.ejercicio.tren-arriba": "Engine with the gear up",
+  "hangar.ejercicio.un-motor": "Fly with an engine out",
   "hangar.ejercicio.simulador": "Simulator session",
   "hangar.ejercicio.tormenta": "Go around a storm",
   "hangar.ejercicio.estacionario": "Staying still in the air",
@@ -1471,6 +1473,19 @@ export const EN: Dictionary = {
     "Today we practise a take-off that stops. Before V1 an engine will fail: throttles back, brakes, and we stop on the runway. Stopping in time is winning too",
   "ejercicio.despues-de-v1.antes":
     "Today we practise an engine failing after V1. There is no runway left to stop: we keep flying on the other engine and come back to land",
+  "ejercicio.en-la-carrera.antes":
+    "Today we practise an engine failing on the take-off run, just before lifting off. In this plane, with the wheels on the ground or the gear still down, we stop: both throttles back, brakes, and straight down the runway. That's what its manual says, and stopping is winning too",
+  "ejercicio.tren-arriba.antes":
+    "Today we practise an engine failing in the climb, with the gear already up. Then we do keep going: you push the pedal on the good engine's side, the nose for blue-line speed, and I feather the dead engine's propeller. Then we come back to land",
+  "ejercicio.despues-de-v1.antesCuatro":
+    "Today we practise an engine failing after V1. There is no runway left to stop: we keep flying on the other three and come back to land",
+  "ejercicio.un-motor.antesCuatro":
+    "Today we practise flying with an engine out. In a while we will shut one down, and the plane keeps flying on the other three: we push the pedal on the good side, hold the speed and land",
+  "ejercicio.enVueloCuatro": "An engine has stopped. The plane keeps flying on the other three",
+  "ejercicio.velocidadCuatro":
+    "Use the nose to hold this speed. With an engine out it climbs more slowly, but it climbs",
+  "ejercicio.paradoTrasV1Cuatro":
+    "You stopped, and it fitted on the runway. After V1 the safe thing is to keep flying: the plane flies on the other three. Next time, we go",
   "ejercicio.un-motor.antes":
     "Today we practise flying on one engine. In a while we will shut one down, and the plane keeps flying on the other: we push the pedal on the good side, hold the speed and land",
   "ejercicio.simulador.antes":
@@ -1479,6 +1494,8 @@ export const EN: Dictionary = {
     "Today we practise losing cabin pressure. In a little while the pressure will go, on purpose: a warning sounds and the masks drop. Mask first, then we go down quickly to where we can breathe. It's a procedure, and we do it calmly",
   "palabra.practica": "Practice",
   "ejercicio.paramos": "Engine failure before V1: throttles back and brakes, we stop",
+  "ejercicio.paramosConElTren":
+    "Engine failure with the gear still down: both throttles back, straight down the runway, and we stop",
   "ejercicio.seguimos": "Engine failure, and we are past V1: we keep flying",
   "ejercicio.enVuelo": "An engine has stopped. The plane keeps flying on the other one",
   "ejercicio.pieDerecho":
@@ -1490,7 +1507,7 @@ export const EN: Dictionary = {
   "ejercicio.velocidad":
     "Use the nose to hold this speed. On one engine it climbs slowly, but it climbs",
   "ejercicio.bandera":
-    "I'm feathering the propeller of the dead engine: edge-on to the air, it drags much less",
+    "I identify the dead engine: it's on the side of the foot that isn't pushing. I verify it with its throttle, and feather its propeller: edge-on to the air, it drags much less",
   "ejercicio.banderaSola":
     "The dead engine's propeller has feathered itself. I'm cutting its fuel",
   "ejercicio.cortar":
@@ -1552,6 +1569,8 @@ export const EN: Dictionary = {
     "You stopped, and it fitted on the runway. After V1 the safe thing is to keep flying: the plane flies on one engine. Next time, we go",
   "ejercicio.seguidoAntesDeV1":
     "Good return. Before V1 there is still runway left, and the safe thing is to stop. Next time, we stop",
+  "ejercicio.seguidoConElTrenFuera":
+    "Good return. But in this plane, with the gear still down, the safe thing is to stop: on one engine with the gear down it barely climbs. Next time, we stop",
   "ejercicio.otraVez":
     "The exercise didn't work out this time. In the simulator you repeat it as often as you need: let's go again",
   "palabra.otraVez": "Again",
