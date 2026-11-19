@@ -4949,3 +4949,190 @@ La máquina, sin carga que se notara: las de ×1 a ×1,00 de verdad, la de ×12 
   paga con estar unos metros por encima de lo pedido —catorce en la mesa,
   antes y ahora—. No es de esta tanda.
 - **«Ya podés tocar» tapado por el PAPI**, del juego: ver el punto 6.
+
+## Enmienda H37a (19-11-2026): la hélice de paso variable del bimotor
+
+H35a dejó al JAZ 40 sin pista corta porque su modelo subía más deprisa a 107
+nudos, y su avión de verdad lo hace hacia los 90. No era su polar: era su
+hélice.
+
+### Las cifras de su clase
+
+El JAZ 40 vuela los números del Seneca II (PA-34-200T). Su manual no se ha
+podido leer; los de sus dos hermanos sí, y dicen lo mismo:
+
+| | Seneca I (VB-423, en mph) | Seneca III (VB-1110, KIAS) | Seneca II |
+|---|---|---|---|
+| Vx | 90 mph, 78 kt | 76 | — |
+| Vy | 105 mph, 91 kt | 92 | — |
+| Vyse, línea azul | 105 mph, 91 kt | 92 | — |
+| Vxse | — | 78 | — |
+| Vmc | 80 mph, 70 kt | 66 | 66 |
+| Despegue corto | — | 25° de flaps, 66 kt a los 50 ft | — |
+| Subida, nivel del mar | — | — | 1.340 ft/min a 4.570 lb |
+| Tope / 75 % | — | — | 196 / 189 kt verdaderos a 12.000 ft |
+| Pérdida | — | 66 kt limpio a 4.750 lb (del ejemplo de la fig. 5-7) | 70 mph, 61 kt |
+| Techo | — | — | 25.000 ft |
+
+El Seneca I es el *Airplane Flight Manual* del PA-34-200 (Piper, VB-423,
+1974) y la lista de chequeo que copia sus velocidades; el Seneca III, el
+*Pilot's Operating Handbook* del PA-34-220T (Piper, VB-1110, 1981), § 2.3
+y 4.3, p. 4-10 y figura 5-7; la subida, el tope, el crucero, la pérdida y el techo
+del II, de *Plane & Pilot* («Piper Seneca II, III, IV, V»), que ya cita su
+ficha. Los 1.340 ft/min del II a su peso máximo son unos 1.390 a los 2.000 kg
+de la ficha.
+
+### La mesa: por qué la Vy salía alta
+
+Lo que sube un avión es lo que le sobra de potencia, la que llega al aire
+menos la que pide volar: la Vy es donde esa resta es mayor. Con la potencia
+que pide volar no había nada raro —la mínima, con la polar de la ficha, cae a
+73 nudos—. El problema era la otra: el JAZ 40 llevaba la ley de empuje de
+todos los de hélice, **la recta**, que sale de su empuje parado y llega a
+cero a los 375 nudos de su ficha. Es la ley de una hélice de paso fijo, la del
+172: sus vueltas, y con ellas la potencia del motor, suben con la velocidad.
+Con ella la potencia que llega al aire crecía de 176 kW a 90 nudos a 241 a
+187, un 37 %, y el máximo de lo que sobra se iba con ella hacia arriba.
+
+Antes de tocar nada, la mesa buscó otra salida: con la recta y la polar libre
+—`cd0` de 0,020 a 0,036, Oswald de 0,5 a 0,85—, la Vy no baja de 106 nudos
+con ninguna; para ponerla a 90 hace falta un `cd0` de 0,018 y un empuje
+parado de 8,9 kN, que ya no es ese avión. **No era la polar.**
+
+Las hélices del Seneca son de velocidad constante —«Constant Speed», dice la
+sección 1 del VB-423—: el gobernador sostiene las vueltas y el motor da sus
+200 hp a cualquier velocidad, así que lo que empuja es esa potencia por el
+rendimiento de la hélice, entre la velocidad. Con esa ley, y la polar y el
+empuje parado de siempre (`subidaA` de `pista-corta.test.ts`, volado y sin
+ayudas, a 500 m; y la cuenta de libro, al nivel del mar):
+
+| JAZ 40, 2.000 kg | Recta (antes) | Paso variable (ahora) | Su clase |
+|---|---|---|---|
+| Vx, volada | 72 kt, 11,9 % | 70 kt, 16,1 % (15,8–16,1 de 66 a 78) | 76–78 |
+| Vx, cuenta | 80 | 78 | |
+| Vy, volada | 110 kt | 98–100 kt | 89–92 |
+| Vy, cuenta | 107 | 100 | |
+| Subida a la Vy | 5,69 m/s, 1.120 ft/min | 7,15 m/s, 1.410 ft/min | ~1.390 a esta masa |
+| A 92 kt, lo que sube | el 95 % de lo mejor | el 99 % | |
+| A 76 kt, lo empinado | el 99 % | el 99 % | |
+| Línea azul (cuenta) | 91,1 kt | 90,1 kt | 89–92 |
+| Tope a 12.000 ft | 195,5 kt | 195,2 kt | 196 |
+| 75 % a su altura de crucero | 185 kt | 183,5 kt | 189 |
+| Tope al nivel del mar | 174,5 kt | 174,2 kt | |
+| Vmc | 62,1 kt | 65,5 kt (con el timón de abajo) | 66 |
+| Pérdida limpia / con todo | 65,9 / 56,9 kt | igual | ~64 / ~60 a esta masa |
+
+### El cambio
+
+- **`potenciaUtil` en la ficha**: la potencia del motor por el rendimiento de
+  su hélice. En el JAZ 40, el 80 % de sus 400 hp, el rendimiento de una hélice
+  de paso variable a su crucero y el que deja su tope donde estaba. Con el 76
+  % la Vy baja a 97, pero va a fondo a 191, fuera del 2 % de `turbo.test.ts`.
+  Sin ella, la hélice es de paso fijo y nada cambia: el JAZ 20 sigue con su
+  recta, que es la buena para él.
+- **`parteDelEmpuje`**, la ley en un solo sitio: la recta de la de paso fijo, o
+  las dos leyes de la de paso variable juntas —parada, su empuje de siempre;
+  andando, su potencia útil entre la velocidad— con un codo blando
+  (`CODO_DE_LA_HELICE`, seis). La preguntan el motor de vuelo (`empujeLleno`),
+  la carrera de despegue y el ascenso de la ficha (`carrera.ts`), que llevaban
+  cada uno su copia de la recta.
+- **El timón, de 0,04 a 0,042.** La Vmc depende de lo que empuja el motor
+  bueno a esa velocidad, y la hélice de paso variable empuja casi lo de parada:
+  con el mismo timón la Vmc pasaba de 62 a 67 nudos, por encima de su V1 de
+  66, y el bimotor se quedaba sin V1. Con 0,042, 65,5: medio nudo por debajo
+  de los 66 del Seneca.
+
+### Lo que no sale, y cuál gana
+
+**La Vy sigue seis u ocho nudos alta**: 98–100 donde su clase dice 89–92. No
+se encontró una ley de hélice ni una polar razonable que la baje más sin
+romper otra cifra: con el codo más duro la Vx sube a la par; con más empuje
+parado la Vx cae hacia los 70 y el empuje de la carrera crece un cuarto; con
+la polar libre, y con la hélice contada por cantidad de movimiento, no baja de
+94. Lo que sí sale
+es lo que importa en cabina: **la curva es plana**, como la del de verdad, y
+a los 92 nudos de su manual sube el 99 % de lo que sube a la mejor —con la
+recta, el 95—. Gana la subida, porque es la que se siente en el avión: el
+niño que vuela a la cifra de su manual sube lo que el avión puede, y sube
+1.410 ft/min, que es lo del Seneca. La cifra de la Vy es la de su manual; la
+del modelo no se enseña.
+
+### Lo que cambia de rebote
+
+- **La carrera del Seneca, a mejor.** H7b había dejado escrito que le faltaba
+  empuje rodando —376 m hasta la Vr donde el suyo rueda unos 247— y que eso se
+  arreglaba «cambiando el modelo de la hélice o no». Con esta ley rueda 323
+  volando y 320 en la cuenta; hasta los cincuenta pies vuela 593 m, donde
+  volaba 672 (su manual, 352 a esta masa). Lo que queda es su empuje parado,
+  5 kN, elegido por la subida y sin fuente. La cuenta del hangar toma lo de
+  después de la Vr como una proporción fija de la carrera, y volando eso se
+  acorta menos (de 296 m a 270): el JAZ 40 vuela un 30,1 % más que la cuenta,
+  y su banda en `despegue-y-toma-del-manual.test.ts` pasa del 30 al 32 %.
+- **En El Hierro ya no remonta por el calor.** Pedía 713 m un día de tablas, a
+  doce de los 725 que le deja la calle, y una tarde de 38 grados lo mandaba a
+  remontar. Ahora pide 606 y 659: sale desde la calle los dos días. Ningún
+  avión de hélice de la flota, en ningún campo del juego, remonta por el
+  calor solo de una tarde de 38 grados; con viento de cola, sí. La prueba de
+  `remontar-por-tipo.test.ts` dice ahora lo que pasa.
+- **En Asunción, por la 19, sale desde una calle** y no desde la cabecera: es
+  el único puesto de salida de toda la flota que cambia
+  (`puesto-de-salida-de-cada-campo.json`, rehecho).
+- **Con un motor sube más, y en molinete ya sube.** A su línea azul, 1,72 m/s
+  (340 ft/min) en bandera y 0,72 (140) en molinete, donde la tabla del ADR 0014
+  decía 0,9 y −0,2. La diferencia entre las dos, 200 ft/min, sigue siendo la
+  de la FAA. El Seneca III sube unos 385 ft/min en bandera a 4.300 lb, al
+  nivel del mar y con los 220 hp de despegue (VB-1110, figura 5-33); el II
+  tiene veinte caballos menos en el motor bueno y no hay cifra suya leída.
+  **«En molinete no sube» ya no es verdad en el modelo**, y no es la hélice:
+  es que el modelo no cuenta lo que frena volar con un motor —el pie y el
+  alabeo que sujetan el bueno—, que la recta escondía quitándole empuje. Queda
+  por hacer.
+
+### La pista corta, no
+
+Su manual trae la técnica —25° de flaps, rotar a 64 y 66 nudos a los cincuenta
+pies (VB-1110, p. 4-10)— y el modelo ya sube a sus cifras. **Pero no cabe en la
+granja**: pide 1.070 m por la toma y Yvytu Rape tiene novecientos (`cabeEn`),
+como el de verdad. El ejercicio sigue siendo solo del JAZ 20, y no hacen
+falta frases.
+
+### Volado
+
+- **El ILS de Fuerteventura con el bimotor** (`OGA_AVION=jaz-40
+  scripts/ver-ils-con-agujas.mjs`, reloj por cuatro), **20 de 20**: captura el
+  localizador y la senda desde abajo, a los mínimos con las dos agujas a
+  −0,02 puntos —lo peor desde mil pies, 0,04 y 0,17—, sale de la nube a 197
+  ft con la pista a la vista, aterriza y cierra con la pista. La final, con
+  todo fuera, la vuela el piloto del banco a 99 nudos con el gas entre 0,6 y
+  0,8.
+- **El vuelo entero en Tenerife Norte, en Taguató** (`verificar-vuelo-entero.mjs
+  tenerife-norte taguato 1 jaz-40`, reloj por uno y ×1,00 de verdad), **58 de
+  58**: la torre le ofrece la intersección y sale desde ella, sube al 12 %
+  desde que suelta el suelo hasta los cien metros, llega estabilizado a los
+  500 ft a 88 nudos (Vref 86), toca a 597 m del umbral, a 0,2 m del eje y a
+  1,88 m/s, y acaba apagado en su puesto a los 909 s.
+- **Un motor después de V1, en Gran Canaria** (`verificar-emergencias.mjs
+  despues gran-canaria jaz-40 taguato`), **7 de 10, con la recta y con la
+  hélice nueva**: el piloto del banco sube con un motor a 75–79 nudos, por
+  debajo de la línea azul (90), y vuelve al suelo. Con la recta no pasó de 12 m
+  en 80 s y tocó con el tren fuera; con la hélice nueva sube a 12 m en 8 s, mete
+  el tren y toca sin él. No es la hélice: es el piloto del banco, que con el
+  bimotor no acelera a la línea azul antes de subir. No se había volado nunca
+  con el JAZ 40. Queda por hacer.
+- La mesa del vuelo (`pista-corta.test.ts`, `motores.test.ts`,
+  `despegue-y-toma-del-manual.test.ts`, `turbo.test.ts`, `prestaciones.test.ts`)
+  vuela el modelo de vuelo entero y sin ayudas; las cifras de arriba son de
+  ahí.
+
+### Lo que queda
+
+- **La Vy del modelo**, seis u ocho nudos por encima de la de su manual (ver
+  arriba).
+- **Lo que frena volar con un motor**, que el modelo no cuenta: con su hélice,
+  en molinete sube 140 ft/min.
+- **El empuje parado del JAZ 40**, 5 kN sin fuente: con él rueda 323 m hasta la
+  Vr donde el suyo rueda unos 247.
+- **Los demás de hélice siguen con la recta**: el JAZ 25 y los turbohélices
+  del JAZ 50 y del JAZ 60, que la llevan calibrada contra su crucero y su
+  despegue. Los turbohélices tienen hélice de paso variable; pasarlos a
+  `potenciaUtil` es medirlos otra vez, uno a uno.

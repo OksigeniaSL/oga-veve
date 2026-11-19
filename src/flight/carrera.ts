@@ -31,7 +31,7 @@ import {
   esDeChorro,
   loQueDaElMotor,
   masaDe,
-  velocidadSinEmpuje,
+  parteDelEmpuje,
   type AircraftConfig,
 } from "./aircraft";
 import { actitudEnTierra } from "./apoyo";
@@ -125,7 +125,7 @@ export function carreraHastaVr(
     const cd = delTren + ((cl * cl) / inducida) * suelo.inducida;
     const sustenta = Math.max(0, q) * cl;
     const empuje =
-      a.maxThrust * motor * Math.max(0.2, 1 - Math.max(0, aire) / velocidadSinEmpuje(a));
+      a.maxThrust * motor * parteDelEmpuje(a, Math.max(0, aire));
     const acc = (empuje - q * cd - mu * Math.max(0, peso - sustenta)) / masa;
     if (acc <= 0) return Infinity;
     s += (v / acc) * dv;
@@ -662,7 +662,7 @@ export function ascensoMaximo(a: AircraftConfig): number {
     a.maxThrust *
     (esDeChorro(a)
       ? Math.max(0.5, 1 - (0.3 * v) / a.cruiseSpeed)
-      : Math.max(0.2, 1 - v / velocidadSinEmpuje(a)));
+      : parteDelEmpuje(a, v));
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
   const masa = masaDe(a);
   const cl = (2 * masa * G) / (RHO * v * v * a.wingArea);

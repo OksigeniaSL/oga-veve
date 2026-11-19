@@ -484,6 +484,50 @@ export function velocidadSinEmpuje(
 }
 
 /**
+ * **Lo blando que es el paso del empuje parado al de potencia constante** en
+ * una hélice de paso variable: el exponente con que se juntan las dos leyes
+ * en `parteDelEmpuje`. Con uno muy alto el empuje sería una esquina, y la Vx
+ * y la Vy caerían las dos en ella, en la misma velocidad; con dos o tres, el
+ * empuje empieza a caer ya rodando y la Vx se va hacia la pérdida. Seis es el
+ * que pone a la vez la Vx y la subida del JAZ 40 donde las pone su manual
+ * (ADR 0027, enmienda H37a): no es una cifra del avión, es la forma de la
+ * curva.
+ */
+export const CODO_DE_LA_HELICE = 6;
+
+/**
+ * **Lo que empuja una hélice a esa velocidad verdadera**, como parte de lo que
+ * empuja parada (`maxThrust`). Vive aquí y no en cada sitio que cuenta el
+ * empuje porque son tres —el motor en vuelo (`empujeLleno`), la carrera de
+ * despegue y el ascenso de la ficha— y con una ley en cada uno el avión
+ * corría en uno lo que no corría en otro.
+ *
+ * - **De paso fijo**, la recta: el empuje cae con la velocidad hasta cero en
+ *   `velocidadSinEmpuje`. Es la hélice del 172, y con ella el JAZ 20 sube
+ *   más empinado a 60 nudos y más deprisa a 76, donde su manual dice 62 y 74.
+ * - **De paso variable** (`potenciaUtil`), dos leyes juntas: parada empuja lo
+ *   suyo, y en cuanto anda empuja su potencia útil entre la velocidad, porque
+ *   el gobernador sostiene las vueltas y el motor da lo mismo a cualquier
+ *   velocidad. Lo que sube un avión es lo que le sobra de potencia, y con
+ *   esta ley la que tiene casi no crece pasada la de subir: con la recta
+ *   crecía un 37 % de 90 a 187 nudos, y el JAZ 40 subía más deprisa a 107.
+ *
+ * El empuje cae con la densidad aparte, en `loQueDaElMotor`: con un motor que
+ * da menos, la hélice empuja menos parada y tiene menos potencia, y la forma
+ * de la curva es la misma.
+ */
+export function parteDelEmpuje(
+  a: Pick<AircraftConfig, "cruiseSpeed" | "heliceSinEmpujeA" | "potenciaUtil" | "maxThrust">,
+  velocidad: number,
+): number {
+  if (a.potenciaUtil !== undefined) {
+    const x = (a.maxThrust * Math.max(0, velocidad)) / a.potenciaUtil;
+    return Math.pow(1 + Math.pow(x, CODO_DE_LA_HELICE), -1 / CODO_DE_LA_HELICE);
+  }
+  return Math.max(0.2, 1 - velocidad / velocidadSinEmpuje(a));
+}
+
+/**
  * **La velocidad de pérdida con todo fuera**, m/s: por encima, el ala lleva
  * el avión; por debajo, lo llevan las ruedas.
  *
@@ -875,9 +919,21 @@ export interface AircraftConfig {
    * Hace falta cuando el crucero de la ficha es el de verdad y la recta, con
    * él, deja ir el avión a fondo más deprisa que el de verdad: el crucero y
    * el tope son dos números del mismo avión, y una sola cifra no puede dar
-   * los dos. Ver el JAZ 40.
+   * los dos. Ver el JAZ 50.
    */
   heliceSinEmpujeA?: number;
+  /**
+   * **La potencia útil de una hélice de paso variable**, W: la del motor —la
+   * de todos— por el rendimiento de su hélice. Con ella el empuje deja de
+   * caer en recta y sigue la ley de esa hélice: ver `parteDelEmpuje`.
+   *
+   * Sin decir, la hélice es de paso fijo, como la del 172: la recta de
+   * `heliceSinEmpujeA`. Es un dato del avión y no del modelo: el gobernador de
+   * una hélice de paso variable sostiene las vueltas, y el motor da su
+   * potencia entera a cualquier velocidad; en una de paso fijo las vueltas, y
+   * con ellas la potencia, suben con la velocidad. ADR 0027, enmienda H37a.
+   */
+  potenciaUtil?: number;
   /**
    * A qué altura se hace ese crucero, m.
    *
@@ -1998,6 +2054,11 @@ export const MAINUMBY: AircraftConfig = {
  * El empuje se eligió **midiendo**: con cinco mil ochocientos newtons subía a
  * seis metros y medio por segundo, que es régimen de avión de transporte
  * ligero y no de bimotor de seis plazas. Con cinco mil, cinco.
+ *
+ * Y eso era con la recta de la hélice de paso fijo, que a la velocidad de
+ * subir le quitaba empuje. Con su hélice de paso variable (`potenciaUtil`,
+ * H37a) los mismos cinco mil suben 7,2 m/s, 1.410 ft/min: los 1.340 del
+ * Seneca II a su peso máximo (*Plane & Pilot*) son unos 1.390 a esta masa.
  */
 export const PANAMBI: AircraftConfig = {
   id: "jaz-40",
@@ -2043,8 +2104,17 @@ export const PANAMBI: AircraftConfig = {
    * un motor parado en un bimotor de pistón. Treinta y cinco decímetros
    * cuadrados en molinete son los doscientos pies por minuto que cuenta el
    * manual de la FAA a su velocidad de mejor subida con un motor —y a este
-   * avión, con uno, le sobran unos ciento setenta—; en bandera, una décima
-   * parte. O sea: en molinete no sube, en bandera sí.
+   * avión, con uno, le sobraban unos ciento setenta—; en bandera, una décima
+   * parte. O sea: en molinete no subía, en bandera sí.
+   *
+   * **Con su hélice de paso variable (H37a) sube con uno 340 ft/min en
+   * bandera y 140 en molinete**: la diferencia sigue siendo la de la FAA, pero
+   * en molinete ya sube. El manual del Seneca III da unos 385 en bandera, a
+   * 4.300 lb, al nivel del mar y con sus 220 hp de despegue (VB-1110, figura
+   * 5-33); el II tiene veinte caballos menos en el motor bueno, y del suyo no
+   * hay cifra leída. Lo que el modelo no cuenta es lo que frena volar con el
+   * pie y el alabeo sujetando el motor bueno: con él, en molinete apenas
+   * subiría. ADR 0027, enmienda H37a.
    */
   motorParado: { molinete: 0.35, bandera: 0.03, autoBandera: false },
   /*
@@ -2056,19 +2126,30 @@ export const PANAMBI: AircraftConfig = {
    */
   cruiseSpeed: 189 * 0.514444,
   /*
-   * **Y su tope, que es otro número: 196 nudos** («Top mph 226», *Plane &
-   * Pilot*, el mismo artículo). Con la recta de empuje de siempre —2,4 veces
-   * el crucero— los 189 de arriba lo llevaban a fondo a 211 nudos a 12.000
-   * pies: quince más que el de verdad.
+   * **Dos hélices de paso variable, y su potencia útil: el 80 % de sus 400
+   * hp.** Las del Seneca son Hartzell bipalas de velocidad constante
+   * («Constant Speed», Piper, *Airplane Flight Manual* del PA-34-200, VB-423,
+   * sección 1, «Propellers»), y con ellas el motor da sus 200 hp a cualquier
+   * velocidad: lo que empuja es esa potencia por el rendimiento de la hélice,
+   * entre la velocidad. Ver `parteDelEmpuje`.
    *
-   * Con la recta acabando en 375 nudos va a fondo a 196 **a 12.000 pies**, su
-   * altitud crítica, que es donde un motor con turbo corre más —ahí tiene aún
-   * sus 200 hp y el aire ya frena menos—, y a 175 a nivel del mar. Y el
-   * crucero sigue saliendo: con el 75 % de su potencia —que a su altura de
-   * crucero es el 91 % de la palanca, porque arriba el turbo ya no da los 200
-   * hp— va a 185 nudos, y a 20.000 pies a 188. Lo prueba `turbo.test.ts`.
+   * Llevaba la recta de la hélice de paso fijo, con el cero en 375 nudos para
+   * que fuera a fondo a sus 196 («Top mph 226», *Plane & Pilot*, el mismo
+   * artículo). Daba el tope, pero con ella la potencia que le llega al aire
+   * crecía un 37 % de 90 a 187 nudos: el avión subía más deprisa a 107 nudos,
+   * donde su manual pone la Vy hacia los 90, y subía 1.140 ft/min, donde el de
+   * verdad sube 1.340 (*Plane & Pilot*: «Initial climb rate 1,340»). Con su
+   * hélice, volado en la mesa de `pista-corta.test.ts`, sube 1.410 ft/min a su
+   * masa —1.390 serían los del Seneca a ella—, lo más a 98–100 nudos, y a los
+   * 76 y 92 de su manual sube el 99 % de lo más empinado y de lo más deprisa;
+   * va a fondo a 195 a 12.000 pies y la línea azul queda en 90. ADR 0027,
+   * enmienda H37a.
+   *
+   * El 80 % es el rendimiento de una hélice de paso variable a su crucero, y
+   * es el que deja el tope donde estaba: con el 76 % la Vy baja a 97, pero va
+   * a fondo a 191, fuera del 2 % de `turbo.test.ts`.
    */
-  heliceSinEmpujeA: 375 * 0.514444,
+  potenciaUtil: 0.8 * 2 * 200 * 745.7,
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
@@ -2221,9 +2302,15 @@ export const PANAMBI: AircraftConfig = {
      * eso la Vmc salía a 72 nudos: por encima de su V1 y en su propia Vr, un
      * avión que no se podría certificar. Los bimotores de seis plazas tienen
      * la Vmc en los sesenta y pico —el Seneca II, 66— y el timón que la da es
-     * éste: 62 nudos. Ver `vmc` en `velocidades-de-despegue.ts`.
+     * éste. Ver `vmc` en `velocidades-de-despegue.ts`.
+     *
+     * Con 0,04 daba 62 nudos con la recta de la hélice de paso fijo; con la de
+     * paso variable (`potenciaUtil`) el motor bueno empuja más a esa velocidad
+     * —casi lo de parado— y con el mismo timón la Vmc subía a 67, por encima
+     * de su V1 de 66. Con 0,042, 65,5: a medio nudo de la del Seneca (66
+     * KIAS, Piper, VB-1110, § 2.3). ADR 0027, enmienda H37a.
      */
-    cnRudder: 0.04,
+    cnRudder: 0.042,
     cnAileron: -0.0025,
   },
 };
