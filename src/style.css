@@ -10844,6 +10844,15 @@ button.motor__tecla::after {
   fill: #6c7480;
 }
 
+/* Y la pista corta: la pista de hierba y el monte del final, más oscuro. */
+.ejercicio__hierba {
+  fill: #6f9a4e;
+}
+
+.ejercicio__monte {
+  fill: #2f5a35;
+}
+
 .ejercicio__lluvia {
   stroke: #9fb3c6;
   stroke-width: 1.4;

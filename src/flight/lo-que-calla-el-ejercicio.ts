@@ -151,5 +151,14 @@ export function loQueCallaElEjercicio(
       laCorta: true,
     };
   if (ejercicio.escena === "cruzado") return { ...NO_CALLA_NADA, comoSeAterriza: true, laCorta: pideElPie };
+  /*
+   * **En la pista corta, la fase y lo que se explica de la cabina**, hasta que
+   * se cierra: la subida de después de los frenos la cuenta la instructora
+   * —la de mejor ángulo hasta el monte, la de mejor régimen después—, y la
+   * fase del plan pidiendo su subida de siempre encima sería otra voz para el
+   * mismo suceso (H35a). La pista y su gente sí son de la lección: se sale de
+   * ella.
+   */
+  if (ejercicio.escena === "pista-corta") return { ...NO_CALLA_NADA, laFase: true, lasExplicaciones: true };
   return seVaAlAire ? SOLO_LA_FASE : NO_CALLA_NADA;
 }

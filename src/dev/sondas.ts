@@ -2620,6 +2620,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     cruzado: () => juego.cruzadoParaBanco,
     /**
+     * El despegue de pista corta: la fase, cómo se pasó el monte y con cuánto
+     * margen, dónde está el monte y las velocidades del avión. Ver
+     * `flight/pista-corta.ts`.
+     */
+    pistaCorta: () => juego.pistaCortaParaBanco,
+    /**
      * «Rumbo de noche»: la fase, la hora del ejercicio y la del cielo, el sol,
      * el rumbo pedido, lo que se apartó el morro, cómo llegó y si las luces
      * de la ciudad están encendidas. Ver `flight/rumbo-de-noche.ts`.

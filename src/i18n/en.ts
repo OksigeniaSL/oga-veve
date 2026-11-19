@@ -1445,6 +1445,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.gps": "The GPS goes out",
   "hangar.ejercicio.cangrejo": "Landing in a crab",
   "hangar.ejercicio.ala-baja": "Landing wing-low",
+  "hangar.ejercicio.pista-corta": "Short-field takeoff",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1685,6 +1686,21 @@ export const EN: Dictionary = {
     "Good call! In a crosswind, going around and trying again is landing well too",
   "ejercicio.cangrejo.grados": "{n}° into the wind",
   "ejercicio.ala-baja.grados": "{n}° of bank",
+  "ejercicio.pista-corta.antes":
+    "Today we take off from a short strip, with trees at the end. Brakes on and full power; let go, and in the air, slow and nose high until we clear the trees",
+  "ejercicio.pista-corta.solta": "Full power. Now, release the brakes!",
+  "ejercicio.pista-corta.alAngulo": "That's it! Slow and steep: the most height for every metre",
+  "ejercicio.pista-corta.masDespacio": "A bit fast. A little more nose up: slower is steeper",
+  "ejercicio.pista-corta.pasaste": "Trees cleared with room to spare! Now lower the nose a little, to climb faster",
+  "ejercicio.pista-corta.pasasteJusto": "That was close to the trees. Now lower the nose a little, to climb faster",
+  "ejercicio.pista-corta.enVy": "Well done! That's the fastest climb",
+  "ejercicio.pista-corta.cierre":
+    "From a short strip: brakes, full power and let go; slow and steep until the trees are cleared, then faster, which climbs quicker",
+  "ejercicio.pista-corta.cierreJusto":
+    "That was close to the trees. Next time, right after lift-off, slow and nose high until they're cleared: that's the most height for every metre",
+  "ejercicio.pista-corta.cierreParado":
+    "Good call! Stopping on the runway when it won't work is a good takeoff too",
+  "palabra.solta": "Let go!",
   "ejercicio.rumbo.antes": "Follow the river: the sun has just set. Look how the water shines",
   "ejercicio.rumbo.anochece": "It's night now and the river is getting dark. Keep the arrow still on the mark",
   "ejercicio.rumbo.seVa": "Off the mark. Come back gently, no rush",

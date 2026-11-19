@@ -3315,6 +3315,7 @@ export const ES_PY = {
   "hangar.ejercicio.gps": "Se apaga el GPS",
   "hangar.ejercicio.cangrejo": "Aterrizar en cangrejo",
   "hangar.ejercicio.ala-baja": "Aterrizar con el ala baja",
+  "hangar.ejercicio.pista-corta": "Despegar de una pista corta",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3657,6 +3658,30 @@ export const ES_PY = {
   // Los grados, de Taguato para arriba, delante de la frase.
   "ejercicio.cangrejo.grados": "{n}° al viento",
   "ejercicio.ala-baja.grados": "{n}° de ala",
+  /*
+   * **El despegue de pista corta** (#91, H35a): frenos, motor a tope y
+   * soltar; despacio y empinado hasta pasar los árboles, y después más
+   * rápido. Se habla de «despacio» y «más rápido», no de Vx y Vy: las cifras
+   * salen delante de la frase desde Taguato. Las del aire, cortas, que se
+   * dicen subiendo con el monte delante.
+   */
+  "ejercicio.pista-corta.antes":
+    "Hoy salimos de una pista corta, con árboles al final. Frenos puestos y motor a tope; soltás, y en el aire, despacio y con la nariz alta hasta pasar los árboles",
+  "ejercicio.pista-corta.solta": "Motor a tope. ¡Ahora, soltá los frenos!",
+  "ejercicio.pista-corta.alAngulo": "¡Eso! Despacio y empinado: así se sube más en cada metro",
+  "ejercicio.pista-corta.masDespacio": "Vas rápido. Un poco más de nariz: más despacio, más empinado",
+  "ejercicio.pista-corta.pasaste": "¡Pasaste los árboles con margen! Ahora bajá un poquito la nariz, para subir más rápido",
+  "ejercicio.pista-corta.pasasteJusto": "Pasaste muy cerca de los árboles. Ahora bajá un poquito la nariz, para subir más rápido",
+  "ejercicio.pista-corta.enVy": "¡Bien! Así se sube más rápido",
+  // Los paneles del final: se leen, no se dicen.
+  "ejercicio.pista-corta.cierre":
+    "De una pista corta: frenos, motor a tope y soltar; despacio y empinado hasta pasar los árboles, y después más rápido, que sube más deprisa",
+  "ejercicio.pista-corta.cierreJusto":
+    "Pasaste muy cerca de los árboles. La próxima, recién despegado, despacio y con la nariz alta hasta pasarlos: así se sube más en cada metro",
+  "ejercicio.pista-corta.cierreParado":
+    "¡Bien decidido! Parar en la pista cuando no da también es despegar bien",
+  // La palabra de Tukã para soltar los frenos: «¡Frená!» diría lo contrario.
+  "palabra.solta": "¡Soltá!",
   /*
    * **«Rumbo de noche»** (#51, peldaño 1): se sigue el río con la última luz,
    * anochece y queda el rumbo. La instructora habla de «la flecha» y «la

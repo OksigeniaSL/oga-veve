@@ -2008,6 +2008,18 @@ const EJ_PITOT = escena(`
 `);
 
 /**
+ * **Despegar de una pista corta**: la hierba que se acaba, el avión que sube
+ * empinado y el monte del final, que pasa por debajo con margen. Ver
+ * `flight/pista-corta.ts`.
+ */
+const EJ_PISTA_CORTA = escena(`
+  <path class="ejercicio__hierba" d="M0 84 L30 56 h20 L32 84 Z" />
+  <path class="leccion__estela" d="M26 72 q14-8 36-38" />
+  ${AVION("translate(68 26) rotate(-40) scale(1.05)")}
+  <path class="ejercicio__monte" d="M74 84 V72 q3-12 8-3 q4-13 9-1 q4-12 9 0 q4-11 9 1 q4-9 7 1 V84 Z" />
+`);
+
+/**
  * **Se apaga el GPS**: a la izquierda, el plano con la ruta en magenta y el
  * avión en blanco a rayas, que ya no sabe dónde está; arriba, el satélite
  * tachado en ámbar; y a la derecha el CDI del VOR con la barra en el centro y
@@ -2060,6 +2072,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   pitot: EJ_PITOT,
   // El plano sin el avión, el satélite tachado y el CDI centrado con TO. Ver `gps-con-apagones.ts`.
   gps: EJ_GPS,
+  // La hierba que se acaba, la subida empinada y el monte. Ver `pista-corta.ts`.
+  "pista-corta": EJ_PISTA_CORTA,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {

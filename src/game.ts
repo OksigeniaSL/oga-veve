@@ -298,7 +298,7 @@ import {
   RunwayGuide,
   type PasoDeAro,
 } from "./world/runway-guide";
-import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
+import { createVegetation, filaDeArboles, zonaDeAeropuerto } from "./world/vegetation";
 import { FinalDeLaTorre } from "./flight/final-de-la-torre";
 import { crearGranja, type Granja } from "./world/granja";
 import { SitiosConModelo } from "./world/sitios-con-modelo";
@@ -848,6 +848,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   pitot: "pitot-helado",
   // El satélite tachado en ámbar: el GPS que se fue. Ver `gps-con-apagones.ts`.
   gps: "gps-apagado",
+  // La subida: lo que se practica es cómo se sube. Ver `pista-corta.ts`.
+  "pista-corta": "subida",
 };
 
 /**
@@ -1091,6 +1093,13 @@ import {
   tecnicaDe,
   type SucesoDelCruzado,
 } from "./flight/final-con-viento-cruzado";
+import {
+  dondeAcabaLaPista,
+  monteDelCampo,
+  PistaCorta,
+  subidaDe,
+  type SucesoDeLaPistaCorta,
+} from "./flight/pista-corta";
 import {
   colocacionDelRumbo,
   rioDeNoche,
@@ -4095,6 +4104,26 @@ export class Game {
   /** El ejercicio de la final con viento cruzado, hasta que se monta. */
   private cruzadoPedido: Ejercicio | null = null;
   /**
+   * **El despegue de pista corta**, si se eligió: los frenos, la de mejor
+   * ángulo hasta el monte del final y la de mejor régimen después. Se monta
+   * en el primer paso, con la pista y su monte. Ver `flight/pista-corta.ts` y
+   * `practicarLaPistaCorta`.
+   */
+  private pistaCorta: PistaCorta | null = null;
+  /** El ejercicio de la pista corta, hasta que se monta. */
+  private pistaCortaPedida: Ejercicio | null = null;
+  /**
+   * **Dónde está el monte**: el final de la pista, hacia dónde se sale, y la
+   * cima de los árboles sobre el eje, m. Ver `practicarLaPistaCorta`.
+   */
+  private monteDeLaPista: {
+    readonly x: number;
+    readonly z: number;
+    readonly dx: number;
+    readonly dz: number;
+    readonly cima: number;
+  } | null = null;
+  /**
    * **Las dos rayas del suelo** de la deriva: la blanca, por donde va el
    * avión, y la magenta, la recta al sitio. Ver `world/raya-del-camino.ts`.
    */
@@ -4175,6 +4204,8 @@ export class Game {
       this.deriva?.ejercicio ??
       this.finalConViento?.ejercicio ??
       this.cruzadoPedido ??
+      this.pistaCorta?.ejercicio ??
+      this.pistaCortaPedida ??
       this.rumboDeNoche?.ejercicio ??
       this.estima?.ejercicio ??
       this.altimetroMiente?.ejercicio ??
@@ -4197,7 +4228,7 @@ export class Game {
     const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila ?? this.giroscopoEnHora ?? this.pitotHelado ?? this.gpsApagado;
     return loQueCallaElEjercicio(
       this.ejercicioDeHoy,
-      deRadio?.fase === "cerrada",
+      deRadio?.fase === "cerrada" || this.pistaCorta?.fase === "cerrada",
       this.ils?.fase === "frustrando",
       this.finalConViento?.pideElPie ?? false,
     );
@@ -6833,6 +6864,12 @@ export class Game {
          * la pista y el viento que haya de verdad. Ver `practicarElCruzado`.
          */
         this.cruzadoPedido = ejercicio;
+      } else if (ejercicio.escena === "pista-corta") {
+        /*
+         * **Ni la pista corta**: se monta en su primer paso, con la pista del
+         * escenario y el monte del campo. Ver `practicarLaPistaCorta`.
+         */
+        this.pistaCortaPedida = ejercicio;
       } else if (ejercicio.escena === "navegacion") {
         /*
          * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
@@ -14137,6 +14174,9 @@ export class Game {
     // Y el GPS, otra vez con señal y con lo que quedaba por decir fuera.
     this.gpsApagado?.reiniciar();
     this.frasesDelGps.olvidar();
+    // Y la pista corta, otra vez desde los frenos.
+    this.pistaCorta?.reiniciar();
+    this.frasesDeLaPistaCorta.olvidar();
     this.calefaccionDelPitot = false;
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
@@ -20222,6 +20262,8 @@ export class Game {
     this.practicarLaDeriva(dt);
     // Y la final con viento cruzado. Ver `practicarElCruzado`.
     this.practicarElCruzado(dt);
+    // Y el despegue de pista corta. Ver `practicarLaPistaCorta`.
+    this.practicarLaPistaCorta(dt);
     // Y el rumbo de noche. Ver `practicarElRumbo`.
     this.practicarElRumbo(dt);
     // Y la estima. Ver `practicarLaEstima`.
@@ -25947,6 +25989,242 @@ export class Game {
       cangrejo: f.cangrejo,
       ala: f.ala,
       alTocar: f.alTocar,
+    };
+  }
+
+  // ── El despegue de pista corta ───────────────────────────────────────
+  //
+  // Ver `flight/pista-corta.ts`. Aquí solo se decide quién dice y enseña cada
+  // cosa: el monte en el mundo, la tarjeta con su dibujo, las velocidades
+  // desde Taguato y la instructora.
+
+  /**
+   * **Lo que la instructora tiene por decir de la pista corta, de una en
+   * una**: como las del GPS, cada frase se pide cuando la anterior del
+   * ejercicio ha acabado, para que con su voz grabada no se caiga por esperar
+   * detrás de otra. Ver `flight/frases-en-fila.ts`.
+   */
+  private readonly frasesDeLaPistaCorta = new FrasesEnFila<TranslationKey>({
+    decir: (clave, alSonar) => this.decirDelEjercicio(clave, "mando", alSonar),
+    reloj: () => this.relojDePared,
+    apuntar: (que) => this.apuntarCanto(que),
+    retirar: (clave) => BOCA.retirar((c) => c === clave),
+    tope: TOPE_DE_UNA_FRASE_DEL_ALTIMETRO,
+    otraVezSi: SE_PIDE_OTRA_VEZ,
+    otraVezHasta: OTRA_VEZ_SI_SE_CAE,
+  });
+
+  /**
+   * **El monte del final**, puesto en el mundo: tres filas de lapachos de
+   * través, a lo que diga el campo pasado el final de la pista por la que se
+   * sale —la de `cabeceraEnUso`, que va por el rumbo de la pista del
+   * escenario—, el más alto sobre el eje. Guarda dónde está y su cima.
+   */
+  private ponerElMonte(monte: { readonly pasadaLaPista: number; readonly alto: number }): void {
+    const pista = this.scenario.runway;
+    const fin = dondeAcabaLaPista(pista, pista.heading);
+    const agua = this.scenario.waterLevel ?? 0;
+    const suelo = (x: number, z: number): number => Math.max(agua, this.terrain.sampleHeight(x, z));
+    // De través: a la derecha de quien sale.
+    const tx = -fin.dz;
+    const tz = fin.dx;
+    const puntos: { x: number; y: number; z: number }[] = [];
+    // El primero, sobre el eje: es el que mide `alto` justo. Ver `filaDeArboles`.
+    for (let fila = 0; fila < 3; fila++) {
+      const d = monte.pasadaLaPista + fila * 9;
+      for (let k = 0; k <= 36; k++) {
+        const lado = (k % 2 === 0 ? 1 : -1) * Math.ceil(k / 2) * 11 + (fila % 2) * 5.5;
+        const x = fin.x + fin.dx * d + tx * lado;
+        const z = fin.z + fin.dz * d + tz * lado;
+        puntos.push({ x, y: suelo(x, z), z });
+      }
+    }
+    this.scene.add(filaDeArboles(puntos, monte.alto));
+    // La cima: el suelo más alto de la primera fila cerca del eje, que es por donde se pasa, más los árboles.
+    let cima = -Infinity;
+    for (let lado = -30; lado <= 30; lado += 5) {
+      const x = fin.x + fin.dx * monte.pasadaLaPista + tx * lado;
+      const z = fin.z + fin.dz * monte.pasadaLaPista + tz * lado;
+      cima = Math.max(cima, suelo(x, z) + monte.alto);
+    }
+    this.monteDeLaPista = { x: fin.x, z: fin.z, dx: fin.dx, dz: fin.dz, cima };
+  }
+
+  /** **Un paso de la pista corta.** Se monta la primera vez, con su monte. */
+  private practicarLaPistaCorta(dt: number): void {
+    if (!this.pistaCorta && this.pistaCortaPedida) {
+      const subida = subidaDe(this.aircraft);
+      const monte = monteDelCampo(oaciDe(this.scenario));
+      if (!subida || !monte) return;
+      this.ponerElMonte(monte);
+      this.pistaCorta = new PistaCorta(this.pistaCortaPedida, subida, monte);
+      this.pistaCortaPedida = null;
+    }
+    const p = this.pistaCorta;
+    const m = this.monteDeLaPista;
+    if (!p || !m) return;
+    this.frasesDeLaPistaCorta.soltar();
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const sucesos = p.avanzar(
+      {
+        pasadoElFinal: (s.position.x - m.x) * m.dx + (s.position.z - m.z) * m.dz,
+        sobreLasCopas: s.position.y - this.aircraft.gearHeight - m.cima,
+        indicada: indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) / NUDO,
+        sobreElSuelo: s.groundSpeed,
+        vertical: s.verticalSpeed,
+        enElSuelo: s.onGround,
+        enLaPista: s.onRunway,
+        gas: this.input.controls.throttle,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderALaPistaCorta(suceso);
+  }
+
+  /**
+   * **Una velocidad como se lee en este peldaño**: nudos con las unidades de
+   * piloto, km/h con las otras. La cifra es de Taguato para arriba.
+   */
+  private velocidadDelPeldano(kt: number): string {
+    return this.tier.units === "aeronautical" ? `${Math.round(kt)} KT` : `${Math.round(kt * 1.852)} km/h`;
+  }
+
+  private atenderALaPistaCorta(suceso: SucesoDeLaPistaCorta): void {
+    const p = this.pistaCorta;
+    if (!p) return;
+    const conCifra = canalesDe(this.tier.avisos).cifra;
+    /** La tarjeta con su dibujo y su frase, y la voz en fila detrás de la anterior del ejercicio. */
+    const contar = (
+      dibujo: DibujoDeSenal,
+      clave: TranslationKey,
+      palabra: TranslationKey,
+      delante = "",
+      segundos = 10,
+      vale: () => boolean = () => true,
+    ): void => {
+      const frase = this.rotulo(clave, palabra);
+      this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
+        segundos,
+        prioridad: IMPORTANTE,
+      });
+      this.frasesDeLaPistaCorta.pedir(clave, vale);
+    };
+    /*
+     * **Lo que solo es verdad un rato**: «soltá los frenos» mientras sigue
+     * quieto, y lo de la subida hasta el monte mientras no se ha pasado. En
+     * fila detrás de la presentación, dicho tarde sería mentira.
+     */
+    const enLosFrenos = (): boolean => this.pistaCorta?.fase === "frenos";
+    const subiendo = (): boolean => this.pistaCorta?.fase === "subida";
+    const cifra = (texto: string): string => (conCifra ? texto : "");
+    const v = p.velocidades;
+    switch (suceso.que) {
+      case "presentar":
+        return contar("freno", "ejercicio.pista-corta.antes", "palabra.frena", "", 20);
+      case "solta":
+        return contar("freno", "ejercicio.pista-corta.solta", "palabra.solta", "", 6, enLosFrenos);
+      case "alAngulo":
+        this.avisar("achieved");
+        return contar(
+          "subida",
+          "ejercicio.pista-corta.alAngulo",
+          "palabra.asi",
+          cifra(this.velocidadDelPeldano(suceso.kt)),
+          10,
+          subiendo,
+        );
+      case "masDespacio":
+        return contar(
+          "nariz-arriba",
+          "ejercicio.pista-corta.masDespacio",
+          "palabra.narizArriba",
+          cifra(this.velocidadDelPeldano(v.sobreElObstaculo)),
+          8,
+          subiendo,
+        );
+      case "pasaste": {
+        /*
+         * **Se cuenta, no se castiga**: con margen se felicita; justo, o por
+         * debajo de las copas —que en el juego no se tocan—, se dice que fue
+         * cerca y qué se hace ahora. El margen, en cifra desde Taguato.
+         */
+        const margen =
+          this.tier.units === "aeronautical"
+            ? `${Math.round(suceso.margen / 0.3048)} FT`
+            : `${Math.round(suceso.margen)} m`;
+        if (suceso.como === "conMargen") {
+          this.avisar("achieved");
+          return contar("nariz-abajo", "ejercicio.pista-corta.pasaste", "palabra.narizAbajo", cifra(`+${margen}`));
+        }
+        return contar("nariz-abajo", "ejercicio.pista-corta.pasasteJusto", "palabra.narizAbajo", cifra(margen));
+      }
+      case "enVy":
+        this.avisar("achieved");
+        return contar(
+          "subida",
+          "ejercicio.pista-corta.enVy",
+          "palabra.bien",
+          cifra(`Vy ${this.velocidadDelPeldano(suceso.kt)}`),
+          8,
+        );
+      case "cerrar": {
+        // Lo malo ya lo cuenta el percance. Y lo que quedaba por decir, no.
+        if (suceso.como === "otraVez") {
+          this.frasesDeLaPistaCorta.olvidar();
+          return;
+        }
+        const clave: TranslationKey =
+          suceso.como === "parado"
+            ? "ejercicio.pista-corta.cierreParado"
+            : suceso.como === "conMargen"
+              ? "ejercicio.pista-corta.cierre"
+              : "ejercicio.pista-corta.cierreJusto";
+        const como = suceso.como;
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          if (this.pistaCorta?.cierre !== como) return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo(clave, "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+      }
+    }
+  }
+
+  /** La pista corta, para el banco. */
+  get pistaCortaParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly paso: string | null;
+    readonly margen: number | null;
+    readonly monte: {
+      readonly x: number;
+      readonly z: number;
+      readonly dx: number;
+      readonly dz: number;
+      readonly cima: number;
+    } | null;
+    readonly pasadaLaPista: number;
+    readonly alto: number;
+    readonly velocidades: { readonly vx: number; readonly vy: number; readonly sobreElObstaculo: number };
+    readonly porDecir: number;
+  } | null {
+    const p = this.pistaCorta;
+    if (!p) return null;
+    return {
+      fase: p.fase,
+      cierre: p.cierre,
+      paso: p.paso,
+      margen: p.margen,
+      monte: this.monteDeLaPista,
+      pasadaLaPista: p.monte.pasadaLaPista,
+      alto: p.monte.alto,
+      velocidades: { vx: p.velocidades.vx, vy: p.velocidades.vy, sobreElObstaculo: p.velocidades.sobreElObstaculo },
+      porDecir: this.frasesDeLaPistaCorta.cuantas,
     };
   }
 
