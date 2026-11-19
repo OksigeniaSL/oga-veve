@@ -1442,6 +1442,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.brujula": "The dancing compass",
   "hangar.ejercicio.giroscopo": "Set the gyro",
   "hangar.ejercicio.pitot": "The pitot freezes",
+  "hangar.ejercicio.gps": "The GPS goes out",
   "hangar.ejercicio.cangrejo": "Landing in a crab",
   "hangar.ejercicio.ala-baja": "Landing wing-low",
   "ejercicio.planeo.antes":
@@ -1767,6 +1768,17 @@ export const EN: Dictionary = {
   "ejercicio.pitot.cuanto": "Actual {real} {u} · needle {aguja} {u}",
   "ejercicio.pitot.cierre":
     "In cloud and cold, ice blocks the pitot and the needle stays still even as the plane speeds up. Then you fly by attitude and power. Pitot heat goes on before you enter the cloud",
+  "ejercicio.gps.antes": "There's a NOTAM: the GPS may be jammed. Plan B is set: the home VOR in the NAV",
+  "ejercicio.gps.seFue": "The GPS is gone: the map no longer knows where we are. The plane flies the same",
+  "ejercicio.gps.planB": "Plan B: turn the OBS until the bar is centered with TO, and follow it",
+  "ejercicio.gps.sintonizar": "Put the home VOR back in the NAV",
+  "ejercicio.gps.centrada": "That's it! With the bar centered, we're heading straight to the station",
+  "ejercicio.gps.pasada": "Made it by radio, and the GPS is back! A good pilot always has a plan B",
+  "ejercicio.gps.nav": "NAV {id} {mhz}",
+  "ejercicio.gps.obs": "OBS {curso}",
+  "ejercicio.gps.integOk": "INTEG OK",
+  "ejercicio.gps.cierre":
+    "The GPS can go out: jamming announced by a NOTAM, too few satellites in view, or the antenna. What doesn't depend on it keeps working: the radio, the compass, the heading indicator and the clock. That's why plan B is set up before you leave",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

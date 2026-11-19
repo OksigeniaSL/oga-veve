@@ -1849,6 +1849,31 @@ const PITOT_CALEFACCION = icono(`${ESFERA_CON_PITOT}
   <path d="M15.6 19 q-1 -1.3 0 -2.6 q1 -1.3 0 -2.6 M18.6 19 q-1 -1.3 0 -2.6 q1 -1.3 0 -2.6 M21.6 19 q-1 -1.3 0 -2.6 q1 -1.3 0 -2.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />`);
 
 /**
+ * **El satélite del GPS**, de canto: el cuerpo y sus dos paneles, inclinado
+ * como se dibuja en toda pantalla de satélites. Es la base de los dos dibujos
+ * de «Se apaga el GPS» —ver `flight/gps-con-apagones.ts`—: con las ondas que
+ * bajan, hay señal; tachado en ámbar, no.
+ */
+const SATELITE = `
+  <g transform="rotate(-35 12 10)">
+    <rect x="9.6" y="7.4" width="4.8" height="5.2" rx="0.9" />
+    <rect x="2.2" y="8.3" width="6" height="3.4" rx="0.5" />
+    <rect x="15.8" y="8.3" width="6" height="3.4" rx="0.5" />
+    <path d="M8.2 10 H9.6 M14.4 10 H15.8" stroke="currentColor" stroke-width="1" />
+  </g>`;
+
+/** **El GPS con señal**: el satélite y las tres ondas que bajan hasta el avión. */
+const GPS_CON_SENAL = icono(`${SATELITE}
+  <path d="M8.4 17.2 Q12 19.6 15.6 17.2 M6.6 19.6 Q12 23 17.4 19.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />`);
+
+/**
+ * **El GPS que se fue**: el mismo satélite tachado en ámbar, sin ondas. Ámbar
+ * y no rojo: es mirarlo, no una emergencia (`DESIGN.md`, las dos luces).
+ */
+const GPS_APAGADO = icono(`${SATELITE}
+  <path class="senal__se-va" d="M3.4 21.4 L20.6 2.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />`);
+
+/**
  * **El servicio a bordo**: una botella de agua y un vaso, en su bandeja.
  *
  * Es el dibujo de cuando la tripulación anuncia que pasa por el pasillo, y en
@@ -2392,6 +2417,9 @@ export const DIBUJOS = {
   // «El pitot se hiela»: la aguja quieta con el hielo en la boca, y la calefacción. Ver `pitot-helado.ts`.
   "pitot-helado": PITOT_HELADO,
   "pitot-calefaccion": PITOT_CALEFACCION,
+  // «Se apaga el GPS»: el satélite con señal y el tachado. Ver `gps-con-apagones.ts`.
+  "gps-con-senal": GPS_CON_SENAL,
+  "gps-apagado": GPS_APAGADO,
   ...TRAFICO,
   ...CERCANO,
   ...RA,

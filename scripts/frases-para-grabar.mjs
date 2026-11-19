@@ -128,8 +128,9 @@ const HABLADOS = [
     "instructor",
     "los ejercicios de emergencia: antes, durante y después",
     // La tormenta, la autorrotación y las lecciones del helicóptero van al final de la lista: ver
-    // `DE_LA_TORMENTA`, `DE_LA_AUTORROTACION` y `DE_LAS_LECCIONES_DEL_ROTOR`.
-    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo)\./,
+    // `DE_LA_TORMENTA`, `DE_LA_AUTORROTACION` y `DE_LAS_LECCIONES_DEL_ROTOR`. Y lo que
+    // «Se apaga el GPS» escribe delante de su frase, que se lee: ver `atenderAlGps`.
+    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo)\.|^ejercicio\.gps\.integOk$/,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],

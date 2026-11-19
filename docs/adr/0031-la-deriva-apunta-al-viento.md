@@ -2612,3 +2612,251 @@ arriba.
 - **El cangrejo se cuenta deprisa**: en los primeros cinco segundos buenos,
   a unos 170 m y con 75 kt, cuando pide 6 o 7°; en la corta, a 64 kt, son
   10. Lo que dice la tarjeta es verdad en ese rato.
+
+## Enmienda H26v (19-11-2026): el GPS con apagones, y «Se apaga el GPS»
+
+El último peldaño de #51: «**GPS**, el último y a propósito. Con apagones en
+misiones avanzadas, para que la estima y el VOR sigan valiendo. La lección de
+fondo: el buen piloto siempre tiene un plan B». Va en este ADR y no en el
+0030 aunque el plan B sea la radio, por lo mismo que la estima: es de la
+familia de ejercicios de navegación de #51 que cierra en el aire, y lo que
+se apaga es una pantalla (`Mapa.ponerSinGps`, de H26n), no la radio. Lo
+lleva `flight/gps-con-apagones.ts`.
+
+### Lo que deja de funcionar, de verdad
+
+El GPS es lo único de la cabina que depende de algo que no está en el
+avión. Cuando se va, deja de funcionar lo que sale de su posición —el mapa
+móvil, el «directo a» con su rumbo y su distancia, el CDI puesto en GPS— y
+sigue todo lo demás: **la radio** (VOR, ADF e ILS, por sus antenas de VHF y
+de onda media), **la brújula**, **el direccional** y **el reloj**. Por eso
+el plan B no se busca cuando hace falta: se deja puesto antes de salir.
+
+**Por qué se va**, las tres causas de los manuales (`CausaDelApagon`):
+
+- **La integridad (RAIM)**: el receptor comprueba él mismo que ningún
+  satélite miente, y para eso necesita cinco a la vista, o cuatro y el
+  altímetro (FAA, AIM 1-1-17, *Receiver Autonomous Integrity Monitoring*).
+  Con menos, sigue dando un sitio que ya no garantiza, y lo dice: «LOI —
+  Loss of Integrity Monitoring: GPS integrity is insufficient for the current
+  phase of flight» (Garmin, *G1000 Pilot's Guide*, tabla 2-3, anunciaciones
+  del HSI).
+- **La interferencia, publicada por NOTAM**: los ensayos de interferencia de
+  los militares, durante los cuales «the GPS signal is either on or off», y
+  el control avisa de que el GPS puede no estar disponible hasta que el
+  ensayo acaba (FAA, interpretación de los NOTAM de *GPS testing*; AIM,
+  capítulo 1, sobre no notificar la interferencia dentro de una zona ya
+  publicada). Hoy es además lo que pasa en el Báltico y en el Mediterráneo
+  oriental (EASA, SIB 2022-02). Con la señal tapada el receptor no ve ningún
+  satélite: no hay sitio que dar.
+- **La antena**: un fallo del avión, sin aviso. Tampoco hay sitio.
+
+**El ejercicio es el de la interferencia**, y no por gusto: la primera regla
+de los ejercicios es que nada falla por sorpresa en un vuelo tranquilo
+(cabecera de `ejercicios.ts`), y la interferencia es la que se sabe antes de
+salir, porque la publica un NOTAM. Es el trato de la avería avisada: primero
+se sabe qué puede pasar, y después pasa.
+
+### Cómo lo anuncia cada cabina
+
+| Cabina | Qué anuncia | Qué deja de saber | Hecho |
+| --- | --- | --- | --- |
+| **De esferas** (JAZ 20, JAZ 40), con GPS de panel de la clase del GNS 430 | el aviso del receptor | **el plano**: es su mapa móvil, y sin posición no sabe dónde está el avión; la tarjeta de casa, que es su «directo a» | **sí** |
+| **De cristal con un G1000** (JAZ 50, JAZ 60) | «LOI» en ámbar junto al avioncito del HSI; sin posición, «DR»: «system is using projected position rather than GPS position», y el CDI del GPS se quita (G1000, tabla 2-3) | el mapa sigue con la posición proyectada, en ámbar | no |
+| **De línea** (JAZ 90, JAZ 110, JAZ 120), con plataforma inercial | el ordenador de vuelo: en el 737, «GPS-L INVALID» y «GPS-R INVALID» y, sin radio que corrija la inercial, «IRS NAV ONLY» | nada en el rato de un ejercicio: la inercial, corregida con DME/DME, sigue sabiéndolo | no |
+
+En los de esferas no hay mensaje que leer en pantalla: el plano, que es la
+carta en las rodillas con el avión pintado encima por el GPS, **se queda
+donde lo supo por última vez**, sin la flecha del avión ni su estela —lo
+que ya hacía «Rumbo y reloj» (`Mapa.ponerSinGps`)—, y la tarjeta de casa
+pierde su aguja y su distancia (`casa--sin-gps`). La placa del campo y la
+manga siguen. Lo que se ve es lo que pasa: el avión sigue volando y la
+pantalla ya no sabe dónde.
+
+**Los dos de abajo quedan escritos y no hechos** (ver «Lo que queda»): la
+pantalla de navegación de los de cristal pide su ámbar y su modo DR, y en
+los de línea un apagón de GPS no deja de saber nada que se vea en el rato
+de un ejercicio, así que su lección es otra —la RNP que ya no se puede
+volar— y no la del plan B.
+
+### El sitio, el avión y el peldaño
+
+- **El peldaño: Taguató Ruvichá.** El plan B es el VOR, y la NAV, su CDI y la
+  frecuencia en la carta entran en la escalera en el peldaño de la radio
+  (`RADIO_DESDE`, el calco de la radio de `escalera.ts`), donde están los
+  demás ejercicios del VOR. En Taguató el cuadro no lleva la radio: un apagón
+  sin plan B no enseña el plan B. La estima, que es el otro plan B, ya tiene
+  su ejercicio desde Taguató (H26n).
+- **El avión: los de esferas con NAV**, la avioneta y el bimotor de pistón.
+  El fumigador no lleva radio; los de cristal y los de línea, ver arriba.
+- **El campo: cualquiera con VOR** (`radioDeSalida`), como «¿En qué radial
+  estoy?»: Fuerteventura, Los Rodeos, Tenerife Sur, Asunción… En el banco,
+  Fuerteventura con su alisio, que es donde ya se volaron los del VOR.
+
+### Lo que pasa
+
+1. **Presentar**, a siete minutos del VOR del campo (entre diez y veinte
+   millas), en un radial redondo **de costado al viento** —el de «¿En qué
+   radial estoy?», para que la vuelta a la radio pida corregirlo—, con el
+   morro derecho a la radio, que es el «directo a» del GPS. La NAV **ya
+   lleva el VOR** y el OBS, otro curso, veinte grados apartado: el plan B
+   puesto a medias, como se deja en un vuelo con GPS. La tarjeta, el
+   satélite con sus ondas; la instructora: «Hay un NOTAM: pueden tapar el
+   GPS. El plan B ya está puesto: el VOR de casa en la NAV». La NAV con su
+   frecuencia se ve en el cuadro.
+2. **Se va el GPS a mitad de camino**, medido con el sitio de verdad —no
+   antes de treinta segundos, que la presentación se oiga entera, ni después
+   de cuatro minutos si se vuela hacia otro lado—. **Sin sonido de aviso**:
+   no es una emergencia. El plano se queda, la tarjeta de casa pierde la
+   aguja, y la tarjeta enseña el satélite tachado **en ámbar** —mirarlo, no
+   ahora mismo, como las dos luces del cuadro—; la instructora: «Se fue el
+   GPS: el plano ya no sabe dónde estamos. El avión vuela igual».
+3. **El plan B**, seis segundos después, detrás y no a la vez: el CDI de la
+   tarjeta con la barra donde la tiene el de verdad y «OBS 300» delante, el
+   curso a la radio; «Plan B: girá el OBS hasta que la barra quede al medio
+   con TO, y seguila». Si se quita el VOR de la NAV, «NAV FTV 114.10»
+   delante y que se vuelva a poner, una vez por cada vez que se quita.
+4. **La barra al medio con TO** (a menos de dos grados, sin bandera): el
+   logro y «¡Eso! Con la barra al medio, vamos derecho a la radio».
+5. **Encima de la radio**, TO y FROM se dan la vuelta a menos de tres millas:
+   «¡Llegamos con la radio, y volvió el GPS! El buen piloto siempre tiene
+   plan B», con «INTEG OK» delante —la anunciación con que el G1000 dice que
+   la integridad volvió—. El ensayo del NOTAM acabó: el plano y la tarjeta
+   de casa vuelven a saber dónde está el avión. Y el panel del final, que se
+   lee.
+
+**Nadie suspende**: sin centrar la barra se pasa igual —o no se pasa, y el
+ejercicio sigue esperando, como el radial—, y al pasar se dice lo mismo.
+
+### Lo que no se toca
+
+**Solo dejan de saber las pantallas que dependen del GPS**: el plano y la
+tarjeta de casa. El ejercicio mide con el sitio de verdad, y lo siguen
+leyendo los pilotos de banco, los avisos, el modelo de vuelo, los demás
+ejercicios y la NAV, que recibe el VOR como siempre. **Y fuera del ejercicio
+el GPS no se apaga**: ni en los vuelos de siempre ni en las misiones (ver
+abajo).
+
+### Las frases, de una en una
+
+Seis para la instructora, en `es-PY.ts` y en `en.ts`, para decirlas a quince
+o dieciocho caracteres por segundo: `ejercicio.gps.antes`, `.seFue`,
+`.planB`, `.sintonizar`, `.centrada` y `.pasada`. El cierre del panel se lee.
+Lo escrito delante de la frase (`.nav`, `.obs`, `.integOk`) se lee y no se
+graba: `frases-para-grabar.mjs` lo deja fuera. Y la tarjeta va corta: con la
+frase y lo de delante en más de cuatro renglones, a 1280 × 800 pisa el mando
+del gas y el reparto la recoge en el dibujo (`lee-recogida`), que es lo que
+pasó en el primer banco (ver «Volado»). Sin grabar
+suenan mudas.
+
+**Y se piden de una en una**, cada una cuando ha acabado la anterior del
+ejercicio, como el altímetro desde H26t: sin grabar no ocupan la boca y en
+el banco no se ve, pero con su voz de verdad «se fue» y «el plan B» llegan
+con seis segundos de diferencia, y la primera dura cuatro o cinco. La fila del
+altímetro se ha escrito aparte, sin copiarla, en `flight/frases-en-fila.ts`
+(`FrasesEnFila`), y la usa este ejercicio; el altímetro sigue con la suya
+mientras nadie la mueva, que es tocar un ejercicio que ya está volado.
+
+### Cómo entraría en las misiones avanzadas
+
+El issue dice «con apagones en misiones avanzadas», y aquí **no se mete en
+ningún vuelo de siempre**. Queda escrito cómo entraría, para quien lo haga:
+
+- **Solo en Taguató Ruvichá**, donde la radio está en el cuadro, y **solo en
+  los aviones donde ya se ha hecho** cómo lo anuncia su cabina: hoy, los de
+  esferas con NAV.
+- **Avisado antes de salir**, como la avería avisada: el NOTAM del día en la
+  tarjeta del tiempo o en el plan, con el ensayo y su ventana. Nunca un
+  apagón por sorpresa en un vuelo tranquilo (regla 1 de `ejercicios.ts`).
+- **Solo en un tramo con plan B**: un VOR o un NDB al alcance en el camino
+  (`radioDeSalida`, `siguienteEmisora`) o, sin radio, un tramo de estima con
+  su rumbo y su tiempo. El modelo ya lo da: `SeApagaElGps` sabe cuándo se va
+  y cuándo vuelve, y lo que dejan de saber las pantallas es una sola
+  llamada (`ponerSinGps`).
+- La misma voz y la misma calma: se fue, el avión vuela igual, el plan B.
+
+### Lo que se prueba
+
+- `flight/gps-con-apagones.test.ts`, con un piloto de cinemática y la radio
+  de verdad (`leerNav`) en Fuerteventura: dónde se ofrece (Taguató Ruvichá,
+  la avioneta y el bimotor, campos con VOR; ni abajo, ni el fumigador, ni el
+  reactor, ni La Palma); que la causa del ejercicio es la del NOTAM; dónde
+  empieza (entre diez y veinte millas, el morro a la radio, el curso a la
+  radio que es el radial dado la vuelta, el OBS veinte grados apartado y TO
+  en el sitio). Y volado: **con la avioneta y el alisio** (del 030 a veinte nudos,
+  117 kt), sale a 13,6 millas en el radial 120 de FTV con el OBS en el 280;
+  el GPS se va a los 212 s, a 6,8 millas, el plan B se pide a los 218, la
+  barra queda al medio con TO a los 227 y se pasa por encima a los 441, siete
+  minutos y medio; **con el bimotor** (189 kt), a veinte millas, se va a los
+  191 s a diez millas y se pasa a los 393; el plano, quieto en el sitio del
+  apagón todo el rato; **en calma y sin tocar el OBS**, se pasa igual a los
+  438 s y no se felicita la barra; quitar la NAV pide ponerla una vez; quitar la NAV pide
+  ponerla una vez; el percance y reiniciar.
+- `scripts/ver-el-gps.mjs`: el mismo vuelo en el juego, con el automático y
+  el OBS con sus teclas, el reloj por ocho.
+
+### Volado
+
+En el juego, con la avioneta en Fuerteventura, Taguató Ruvichá, el alisio
+del sitio, la Intel por ANGLE (`OGA_GPU=1`), el plano abierto y el reloj por
+ocho entre foto y foto:
+
+- **La primera tirada**, catorce de dieciséis, enseñó una cosa del juego y
+  una del banco. Del juego: **la tarjeta de la presentación y la del apagón
+  salían sin frase**, solo con el satélite. Con «NAV FTV 114.10» o «GPS sin
+  señal» delante, eran cinco renglones, a 1280 × 800 la tarjeta pisaba el
+  mando del gas y el reparto la recogía en el dibujo (`lee-recogida`); la de
+  la llegada, de cuatro, sí salía. Ahora van sin nada delante y con la frase
+  más corta (ver «Las frases»). Del banco: con solo tres veces lo apartado,
+  el alisio dejaba la barra quieta a tres grados y medio del centro —la
+  avioneta pide diez de corrección— y nunca llegaba a «al medio»; el piloto
+  del banco suma ahora lo que la barra sigue apartada, que es lo que hace un
+  piloto, y el ejercicio no se ha tocado: dos grados es un punto de la
+  escala.
+- **La segunda, dieciséis de dieciséis.** Empieza a 13,5 millas de FTV, en
+  el radial 120, a 947 m, con FTV en la NAV y el OBS en el 280 —el curso a la
+  radio, 300—. El GPS se va **a 6,8 millas de 13,5**: el plano se queda en el
+  sitio del apagón sin la flecha ni la estela, la tarjeta de casa pierde la
+  aguja y los kilómetros, y mientras el avión anda 7,3 millas sin GPS el
+  plano no se mueve ni un metro. El plan B sale con «OBS 300» delante y la
+  barra a tope a la derecha; con el OBS en el 300 dice TO y la barra está a
+  7,6°, que es lo que el «directo a» del banco —derecho a la radio, sin
+  corregir— dejó que el viento lo apartara. Con la barra al medio, la
+  felicitación; encima de FTV, TO a FROM, «INTEG OK» y el plano y la tarjeta
+  de casa vuelven a saberlo, con la traza entera. La instructora pidió, en
+  su orden, `antes`, `seFue`, `planB`, `centrada` y `pasada`, mudas porque
+  no están grabadas. Lo único más que se oyó fue la información de un
+  tráfico, que es de seguridad; ni torre, ni fase, ni tira de la radio, ni
+  la flecha de casa latiendo. Y el panel del final, con su traza.
+- **Con el bimotor** (`OGA_AVION=jaz-40`), dieciséis de dieciséis: empieza a
+  19,8 millas, el GPS se va a 10,0, anda 10,6 sin él con el plano quieto, la
+  barra está a 5,2° con el OBS en el 300 y se centra, y pasa por encima de
+  FTV con las cinco frases en su orden.
+- **Lo visto y no arreglado**: desde el asiento, el rincón de las tarjetas
+  va a la izquierda, y con el plano abierto el panel del plano tapa media
+  tarjeta (en las capturas `-asiento`). No es de este ejercicio —pasa con
+  cualquier tarjeta y el plano abierto en cabina— y queda en «Lo que queda».
+
+`vitest` entero, en verde con el primer commit del ejercicio: 531 ficheros y
+10.750 pruebas (29 saltadas); después del arreglo de las frases, los de este
+ejercicio, los de i18n, el hangar y lo que calla, en verde.
+
+### Lo que queda
+
+- **Las frases, sin grabar**: seis (ver «Las frases»). Hasta entonces, mudas.
+- **Los de cristal y los de línea**: el «LOI» y el «DR» en ámbar en la
+  pantalla de navegación de los turbohélices, con el mapa en posición
+  proyectada y el CDI del GPS quitado; y en los de línea, el mensaje del
+  ordenador de vuelo con el mapa siguiendo. Con eso, el ejercicio se les
+  podría ofrecer.
+- **El aviso del receptor en el cuadro de los de esferas**: un GNS 430 de
+  verdad escribe su anunciación junto al CDI del GPS; aquí el cuadro no
+  lleva el receptor, y lo que se ve es el plano.
+- **La fila del altímetro** a `FrasesEnFila`, para que no haya dos.
+- **Las misiones con apagones** (arriba): escrito cómo, no hecho.
+- **El plano y la tarjeta, desde el asiento**: con el plano abierto, el
+  panel del plano tapa media tarjeta del rincón, que en cabina va a la
+  izquierda. Es de todas las tarjetas, no de este ejercicio, y pide mirarlo
+  con `npm run carteles`.
+- **Fuera de Fuerteventura**: la mesa lo ofrece en todo campo con VOR
+  (Los Rodeos, Asunción…), pero el banco solo lo ha volado allí.

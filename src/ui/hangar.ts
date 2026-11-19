@@ -2007,6 +2007,28 @@ const EJ_PITOT = escena(`
   <path d="M110.0 58.0 L110.0 74.0 M116.9 62.0 L103.1 70.0 M116.9 70.0 L103.1 62.0 M111.7 72.7 L110.0 71.0 L108.3 72.7 M105.1 70.8 L105.7 68.5 L103.4 67.9 M103.4 64.1 L105.7 63.5 L105.1 61.2 M108.3 59.3 L110.0 61.0 L111.7 59.3 M114.9 61.2 L114.3 63.5 L116.6 64.1 M116.6 67.9 L114.3 68.5 L114.9 70.8" style="fill: none; stroke: #ffb02e; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round" />
 `);
 
+/**
+ * **Se apaga el GPS**: a la izquierda, el plano con la ruta en magenta y el
+ * avión en blanco a rayas, que ya no sabe dónde está; arriba, el satélite
+ * tachado en ámbar; y a la derecha el CDI del VOR con la barra en el centro y
+ * su TO: el plan B. Ver `flight/gps-con-apagones.ts`.
+ */
+const EJ_GPS = escena(`
+  <rect x="6" y="18" width="52" height="58" rx="3" style="fill: #f3efe3" />
+  <path d="M16 68 L46 26" style="stroke: #c0219b; stroke-width: 3; stroke-linecap: round" />
+  <path d="M29 51 l0 -10 M24 46 l10 0 M26.5 49.5 l5 0" style="stroke: #22302a; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 2 2; opacity: 0.6" />
+  <g transform="translate(60 12) rotate(-35 8 6)">
+    <rect x="5.6" y="3.4" width="4.8" height="5.2" rx="0.9" style="fill: #f2f5f7" />
+    <rect x="-1.8" y="4.3" width="6" height="3.4" rx="0.5" style="fill: #f2f5f7" />
+    <rect x="11.8" y="4.3" width="6" height="3.4" rx="0.5" style="fill: #f2f5f7" />
+  </g>
+  <path d="M58 26 L80 2" style="stroke: #ffb02e; stroke-width: 3; stroke-linecap: round" />
+  <circle cx="92" cy="52" r="22" style="fill: #0b1322; stroke: #f2f5f7; stroke-width: 2" />
+  <path d="M92 36 V68" style="stroke: #f2f5f7; stroke-width: 3; stroke-linecap: round" />
+  <path d="M82 52 H86 M98 52 H102 M76 52 H78 M106 52 H108" style="stroke: #f2f5f7; stroke-width: 2; stroke-linecap: round" />
+  <path d="M100 42 l5 -6 l5 6 Z" style="fill: #f2f5f7" />
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -2036,6 +2058,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   giroscopo: EJ_GIROSCOPO,
   // La aguja quieta dentro de la nube y el hielo en la boca del pitot. Ver `pitot-helado.ts`.
   pitot: EJ_PITOT,
+  // El plano sin el avión, el satélite tachado y el CDI centrado con TO. Ver `gps-con-apagones.ts`.
+  gps: EJ_GPS,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {
