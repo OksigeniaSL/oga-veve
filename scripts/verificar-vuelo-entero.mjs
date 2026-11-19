@@ -1442,7 +1442,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * se sostenía ahí hasta gastarla: 758 m pasado el umbral, a 1,1 m/s. Es lo que
      * se enseña a no hacer: se aguanta la actitud y se deja que se pose.
      */
-    const aRas = envergadura > 30 && ruedas < 1.5 && pide - contraLaPista < 0;
+    /*
+     * **Y un reactor tampoco** (H34a), aunque no llegue a los treinta metros
+     * de ala. El JAZ 90 de Los Rodeos tocaba a 621 y 623 m del umbral, pasada
+     * la zona, a 0,6 y 0,55 m/s: recogía bien y luego flotaba a ras de suelo,
+     * con la palanca subiendo por la velocidad que se perdía. En las tiradas
+     * que tocaban en la zona, a más de un metro por segundo, no flotaba.
+     */
+    const aRas =
+      (envergadura > 30 || RECOGIDA_DE_REACTOR) && ruedas < 1.5 && pide - contraLaPista < 0;
     mandos.elevator =
       (falta < -0.6 || aRas) && recogida.ultimoMando !== undefined
         ? recogida.ultimoMando
@@ -6994,11 +7002,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * umbral. En Guyrami no: allí el gas es también la mitad de lo que baja,
        * y sin la senda en el gas la avioneta se queda corta.
        */
+      /*
+       * **Y en uno de hélice, la mano más firme** (H34a): el doble de
+       * proporcional y el triple de lo que acumula. Las ganancias de arriba se
+       * afinaron con el JAZ 90, cuyo empuje tarda en llegar; la hélice lo da
+       * al momento, y con ellas el JAZ 40 de Los Rodeos se quedaba veinte
+       * segundos tres metros por segundo por debajo de lo que pedía —de 51 a
+       * 46 m/s de verdadera— y cruzó la puerta de los quinientos pies a 85
+       * nudos con la Vref en 86. Con el empuje del bimotor —dos metros y
+       * medio por segundo al cuadrado por cada palanca entera— y lo que frena
+       * su resistencia, el lazo sigue amortiguado a la mitad, que es lo que
+       * tenía, y corrige el doble de deprisa.
+       */
       if (CON_EL_AUTOMATICO) {
         const err = quiere - s.airspeed;
+        const deHelice = suyas.propulsion === "helice";
+        const kp = deHelice ? 0.08 : 0.04;
+        const ki = deHelice ? 0.03 : 0.01;
         c.throttle = Math.max(
           0,
-          Math.min(1, c.throttle + (err - (errorDeGasAntes ?? err)) * 0.04 + err * 0.01 * paso),
+          Math.min(1, c.throttle + (err - (errorDeGasAntes ?? err)) * kp + err * ki * paso),
         );
         errorDeGasAntes = err;
       } else c.throttle = Math.max(0, Math.min(1, c.throttle + cambio));
