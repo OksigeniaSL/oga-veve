@@ -1447,6 +1447,7 @@ import {
   anunciaElPuntoDeDescenso,
   anunciaLaFase,
   cuantoAguanta,
+  esDeLaListaDeDespegue,
   cuentaPorDondeSeSale,
   cuentaUnPasoDeRadio,
   esDelDescenso,
@@ -1722,6 +1723,7 @@ import {
 } from "./flight/flaps";
 import {
   AvisoDeConfiguracion,
+  ENTRANDO,
   EN_LA_ESPERA,
   EN_LA_PISTA,
   ListaDeAntesDeDespegar,
@@ -37060,6 +37062,14 @@ export class Game {
      * un reactor, que su aviso acepta, no es la de su Vr.
      */
     const flapsPuestos = conFlaps && Math.abs(palanca - flapsDeDespegue(a)) < 0.01;
+    /*
+     * **Y lo que la lista tiene pedido y ya no vale, se retira**: sus líneas no
+     * caducan —ver `esDeLaListaDeDespegue`—. Corriendo por la pista o en el
+     * aire ya no se lee; y la que pide los flaps, con los flaps puestos, sobra.
+     */
+    if (!s.onGround || s.groundSpeed >= ENTRANDO)
+      BOCA.retirar((c) => esDeLaListaDeDespegue(c));
+    else if (flapsPuestos) BOCA.retirar((c) => c === "vuelo.flapsParaDespegar");
     if (conFlaps) {
       const antes = this.antesDeDespegar.paso({ ...lectura, puestos: flapsPuestos });
       if (antes) this.decirLosFlapsDeDespegue(antes);
@@ -37067,6 +37077,8 @@ export class Game {
 
     const franja = conCompensador ? compensadorDeDespegue(this.avionConPeso()) : null;
     const trim = this.input.controls.trim;
+    if (franja && s.onGround && enLaFranja(franja, trim))
+      BOCA.retirar((c) => c === "vuelo.compensadorParaDespegar");
     if (franja && s.onGround && (EN_LA_ESPERA.has(fase) || EN_LA_PISTA.has(fase)))
       this.franjaDeDespegue = franja;
     // En el aire también se le da el paso: es como se rearma para la salida siguiente.

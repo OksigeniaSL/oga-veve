@@ -16,7 +16,7 @@
  * `Vuelo.atenderALaTorre`, con las duraciones grabadas.
  */
 import { describe, expect, it } from "vitest";
-import { Boca, type Hablar } from "./boca";
+import { Boca, cuantoAguanta, type Hablar } from "./boca";
 import {
   ListaDeAntesDeDespegar,
   laListaEstaLeida,
@@ -24,6 +24,7 @@ import {
   type AntesDeDespegar,
 } from "../flight/flaps-de-despegue";
 import type { Peldano } from "../flight/escalera";
+import { LA_LISTA_COMO_MUCHO } from "../flight/vuelo";
 
 /** Lo que dura cada frase grabada, ms: de los manifiestos de `data/voces`. */
 const DURA: Record<string, number> = {
@@ -35,6 +36,10 @@ const DURA: Record<string, number> = {
   "torre.canario.roja@yo": 5800,
   "torre.canario.verde@yo": 6179,
   "torre.canario.clearedTakeoff@yo": 10512,
+  "torre.canario.holdShort@otro": 4400,
+  "torre.canario.holdShort@yo": 4000,
+  "torre.canario.ofreceInterseccion@yo": 7300,
+  "torre.canario.tora@yo": 8900,
 };
 
 /** Quieto en la raya antes de que la torre mire, y lo que tarda: ver `vuelo.ts`. */
@@ -49,14 +54,20 @@ const LINEA: Record<"flaps" | "compensador", Record<AntesDeDespegar, string>> = 
   },
 };
 
+/** Lo que dice la frecuencia mientras se espera: a los cuántos segundos de parar, quién y qué. */
+type Charla = readonly (readonly [number, "normal" | "mando", string])[];
+
 /**
  * Se para en el punto de espera con la pista libre, sin tocar nada. Con
  * `esperaALaLista`, la torre no mira hasta que la lista está leída, como
- * desde H29n; sin, como antes. Devuelve lo que sonó y lo que se cayó.
+ * desde H29n —y como mucho `LA_LISTA_COMO_MUCHO`—; sin, como antes. Con
+ * `charla`, lo que dice además la frecuencia. Devuelve lo que sonó y lo que
+ * se cayó.
  */
 function enElPuntoDeEspera(
   peldano: Peldano,
   esperaALaLista: boolean,
+  charla: Charla = [],
 ): { sono: string[]; caidas: string[]; verdeA: number | null } {
   let ahora = 0;
   const luego: { cuando: number; hacer: () => void }[] = [];
@@ -93,11 +104,12 @@ function enElPuntoDeEspera(
   let mirando = 0;
   let verdeA: number | null = null;
   let roja = false;
+  const porDecir = [...charla];
 
   const PASO = 50;
   const dt = PASO / 1000;
   // Hasta tres segundos después de la verde, rodando ya hacia la pista.
-  for (let pared = PASO; pared <= 90000; pared += PASO) {
+  for (let pared = PASO; pared <= 150000; pared += PASO) {
     avanzar(pared);
     if (verdeA !== null && pared / 1000 > verdeA + 3) break;
     const rodando = verdeA !== null;
@@ -129,6 +141,10 @@ function enElPuntoDeEspera(
       compensadorPuesto,
       peldano,
     });
+    while (porDecir[0] && porDecir[0][0] <= pared / 1000) {
+      const [, urgencia, clave] = porDecir.shift()!;
+      pedir(urgencia, clave);
+    }
     // La lámpara en rojo al parar, y la fase de la instructora.
     if (!roja) {
       roja = true;
@@ -137,7 +153,7 @@ function enElPuntoDeEspera(
     }
     // La torre, como `Vuelo.atenderALaTorre`.
     quieto += dt;
-    if (esperaALaLista && porLeer) mirando = 0;
+    if (esperaALaLista && porLeer && quieto < LA_LISTA_COMO_MUCHO) mirando = 0;
     else if (quieto > ESPERA_MINIMA) mirando += dt;
     if (mirando > TORRE_TARDA && verdeA === null) {
       verdeA = pared / 1000;
@@ -156,11 +172,43 @@ const ABAJO: readonly Peldano[] = ["dibujo", "palabra", "cifra"];
 const DE_LA_LISTA = Object.values(LINEA).flatMap((l) => Object.values(l));
 
 describe("la lista de antes de despegar en el punto de espera", () => {
-  it("como estaba, con la torre mirando a los cuatro segundos, lo de la lista se caía", () => {
-    // Entrando con la verde, la instructora los pone y lo dice detrás de la torre.
-    const { caidas } = enElPuntoDeEspera("cifra", false);
-    const deLaLista = caidas.filter((c) => DE_LA_LISTA.some((k) => c.includes(k)));
-    expect(deLaLista.length).toBeGreaterThan(0);
+  it("como estaba, con la torre mirando a los cuatro segundos, la lista no cabía antes de la verde", () => {
+    // Entrando con la verde, la instructora los pone y lo dice detrás de la torre, o se cae.
+    const { sono, caidas } = enElPuntoDeEspera("cifra", false);
+    const verde = sono.indexOf("torre.canario.verde@yo");
+    const fuera = DE_LA_LISTA.filter(
+      (k) => caidas.some((c) => c.includes(k)) || sono.indexOf(k) > verde,
+    );
+    expect(fuera.length).toBeGreaterThan(0);
+  });
+
+  it("las líneas de la lista no caducan: las retira el juego cuando dejan de valer", () => {
+    for (const clave of DE_LA_LISTA) expect(cuantoAguanta(clave)).toBe(Infinity);
+  });
+
+  /*
+   * Medido en el banco del vuelo entero, Taguató con la JAZ 20 (H29n): con
+   * otro avión en la frecuencia, la torre le dijo «hold short» a él y a ti la
+   * roja y tu «hold short», y luego ofreció la intersección y la TORA,
+   * diecisiete segundos ella sola. Con un tope de cuarenta y cinco segundos
+   * la torre soltó la verde con el compensador por leer, y su «lo puse yo» se
+   * cayó detrás del «cleared for take-off».
+   */
+  it("con la frecuencia hablando, la lista espera a que calle y la verde sigue detrás", () => {
+    const charla: Charla = [
+      [0, "mando", "torre.canario.holdShort@otro"],
+      [6, "mando", "torre.canario.holdShort@yo"],
+      [13, "mando", "torre.canario.ofreceInterseccion@yo"],
+      [13, "mando", "torre.canario.tora@yo"],
+    ];
+    for (const peldano of ABAJO) {
+      const { sono, caidas, verdeA } = enElPuntoDeEspera(peldano, true, charla);
+      expect(caidas).toEqual([]);
+      const verde = sono.indexOf("torre.canario.verde@yo");
+      for (const clave of DE_LA_LISTA) expect(sono.indexOf(clave)).toBeLessThan(verde);
+      expect(sono.indexOf("torre.canario.tora@yo")).toBeLessThan(verde);
+      expect(verdeA).toBeLessThan(LA_LISTA_COMO_MUCHO);
+    }
   });
 
   for (const peldano of ABAJO)

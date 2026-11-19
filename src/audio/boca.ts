@@ -172,6 +172,7 @@ export function cuantoAguanta(
     anunciaLaFase(clave) ||
     anunciaElPuntoDeDescenso(clave) ||
     esElAvisoDeAves(clave) ||
+    esDeLaListaDeDespegue(clave) ||
     esLaInformacionDeTrafico(clave) ||
     esDelDescenso(clave) ||
     cuentaPorDondeSeSale(clave, urgencia) ||
@@ -188,6 +189,30 @@ export function cuantoAguanta(
       esDeLaMegafonia(clave)
       ? CADUCA_LA_MEGAFONIA
       : CADUCA;
+}
+
+/**
+ * **Las líneas de la lista de antes de despegar**: pedir los flaps y el
+ * compensador, o decir que los puso la instructora. Esperan lo que haga
+ * falta y las retira el juego cuando dejan de valer —al correr por la pista o
+ * en el aire; la que pide, al estar puesto lo que pide—. Ver
+ * `atenderALosFlapsDelDespegue` en `game.ts`.
+ *
+ * Con los cuatro segundos de un aviso se caían detrás de la torre: medido en
+ * el banco del vuelo entero (H29m, H29n), «vuelo.flapsDeDespeguePuestos» y
+ * «vuelo.compensadorDeDespeguePuesto» caducaban detrás de la verde y de su
+ * «cleared for take-off», y quien jugaba despegaba sin saber que los llevaba
+ * puestos. La torre espera a la lista —ver `laListaEstaLeida`—, pero quien
+ * entra en la pista sin pararse en la espera los oye ponerse con la torre
+ * hablando, y eso sigue siendo verdad hasta que se corre.
+ */
+export function esDeLaListaDeDespegue(clave: string | undefined): boolean {
+  return (
+    !!clave &&
+    /^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|compensadorParaDespegar|compensadorDeDespeguePuesto)(?:~\d+)?$/.test(
+      clave,
+    )
+  );
 }
 
 /**

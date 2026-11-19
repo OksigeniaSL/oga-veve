@@ -248,13 +248,17 @@ const TORRE_TARDA = 2.2;
 
 /**
  * **Lo que la lista de antes de despegar puede tener a la torre sin mirarte**,
- * s parado en la doble raya: cuarenta y cinco. Leída entera y sin tocar nada,
- * con las dos líneas, su paciencia y lo que dice la torre entre medias, son
- * unos treinta. Pasado esto la torre mira igual: si algo deja la lista a
- * medias para siempre, el avión no se queda en la roja para siempre. Ver
- * `listaPorLeer`.
+ * s parado en la doble raya: noventa. Leída entera y sin tocar nada, con las
+ * dos líneas y su paciencia, son unos treinta; y la frecuencia habla entre
+ * medias, que la lista espera a que calle. Con cuarenta y cinco no bastaba:
+ * en Taguató con la JAZ 20 y otro avión en la frecuencia, la torre le dijo
+ * «hold short» al otro, a ti la roja y tu «hold short», ofreció la
+ * intersección y la TORA —diecisiete segundos ella sola—, y el tope soltó la
+ * verde con la línea del compensador por leer. Pasado esto la torre mira
+ * igual: si algo deja la lista a medias para siempre, el avión no se queda
+ * en la roja para siempre. Ver `listaPorLeer`.
  */
-export const LA_LISTA_COMO_MUCHO = 45;
+export const LA_LISTA_COMO_MUCHO = 90;
 
 /**
  * A cuánto del eje de pista se considera que ya la has abandonado, m.
