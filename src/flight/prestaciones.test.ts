@@ -93,7 +93,7 @@ import {
   AIRCRAFT,
   RESERVADOS,
   esDeChorro,
-  velocidadSinEmpuje,
+  parteDelEmpuje,
   type AircraftConfig,
 } from "./aircraft";
 
@@ -757,9 +757,9 @@ function carreraTeorica(a: AircraftConfig, superficie: Superficie): number {
       a.aero.cd0 +
       resistenciaDelTren(a, 1) +
       (cl * cl) / (Math.PI * AR * a.aero.oswald);
-    // La recta de la ficha: con `heliceSinEmpujeA`, la suya, y sin ella, 2,4
-    // veces el crucero. Ver `velocidadSinEmpuje`.
-    const empuje = a.maxThrust * Math.max(0.2, 1 - v / velocidadSinEmpuje(a));
+    // La ley de su hélice: la recta de la de paso fijo, o la de paso variable
+    // con su potencia útil. Ver `parteDelEmpuje`.
+    const empuje = a.maxThrust * parteDelEmpuje(a, v);
     const acc = (empuje - q * cd - mu * Math.max(0, peso - q * cl)) / a.mass;
     if (acc <= 0) return Infinity;
     s += (v / acc) * dv;

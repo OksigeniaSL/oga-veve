@@ -307,12 +307,18 @@ describe("remontar la pista según el avión", () => {
   });
 
   /*
-   * **En El Hierro, y no en Pedro Juan Caballero**, desde que el Seneca despega
-   * con su proporción de verdad (ADR 0027): en Pedro Juan la calle le deja 877 m
-   * y ni una tarde de 38 grados le pide tanto —831—. En El Hierro, con el viento
-   * del norte, la calle le deja 725 y un día de tablas pide 713.
+   * **En El Hierro, una tarde de calor pide más pista, y ya no tanta como para
+   * remontar.** Con la recta de la hélice de paso fijo el Seneca pedía 713 m
+   * un día de tablas, a doce de los 725 que le deja la calle, y una tarde de
+   * 38 grados lo mandaba a remontar. Con sus hélices de paso variable (ADR
+   * 0027, enmienda H37a) rueda lo que le falta de empuje en la carrera y pide
+   * 606; la tarde de calor, 659: un 9 % más —al nivel del mar el calor solo no
+   * llega a la décima con la que `porQueHoyMasPista` lo cuenta como el
+   * porqué—, y sigue saliendo desde la calle. Ningún avión de hélice de la
+   * flota remonta hoy por el calor solo en ningún campo; con viento de cola,
+   * sí (abajo).
    */
-  it("la misma avioneta, en el mismo campo: sale desde la calle un día de tablas y remonta una tarde de calor", () => {
+  it("la misma avioneta, en el mismo campo: una tarde de calor pide más pista", () => {
     const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
     const fresco = entrada(EL_HIERRO, jaz40, 0)!;
     expect(fresco.sale!.desde).toBe("interseccion");
@@ -323,11 +329,9 @@ describe("remontar la pista según el avión", () => {
       superficie: "asfalto",
     };
     const caliente = entrada(EL_HIERRO, jaz40, 0, calor)!;
-    expect(caliente.sale!.desde).toBe("remonte");
-    // Un 9 % más: al nivel del mar el calor solo no llega a la décima con la
-    // que `porQueHoyMasPista` lo cuenta como el porqué. En Pedro Juan, a 571 m,
-    // eran un 17 %.
     expect(caliente.sale!.necesitaHoy).toBeGreaterThan(fresco.sale!.necesitaHoy * 1.05);
+    expect(caliente.sale!.necesitaHoy).toBeLessThan(caliente.sale!.desdeLaEntrada);
+    expect(caliente.sale!.desde).toBe("interseccion");
   });
 
   it("y con viento de cola, también, y dice que es por el viento", () => {

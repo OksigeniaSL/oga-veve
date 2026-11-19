@@ -50,7 +50,8 @@ describe("el motor con turbo", () => {
    * **Y va a fondo y al 75 % a lo que va el Seneca II, a la vez**: «Top mph
    * 226» y el 75 % a 218 mph (*Plane & Pilot*, «Seneca II»), 196 y 189 nudos.
    * Con una sola cifra no salían los dos: con el crucero de verdad, a fondo
-   * iba a 211. Ver `heliceSinEmpujeA`.
+   * iba a 211. Ver `potenciaUtil`: con la ley de su hélice de paso variable
+   * (H37a) va a fondo a 195.
    *
    * Se mide donde el empuje y la resistencia se igualan. El tope, a 12.000
    * pies, la altitud crítica, que es donde un motor con turbo corre más; y en

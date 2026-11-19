@@ -9,11 +9,12 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { CoefficientFlightModel, timonQueSostiene } from "./fdm";
-import { AIRCRAFT, PYKASU, type AircraftConfig } from "./aircraft";
+import { AIRCRAFT, PANAMBI, PYKASU, type AircraftConfig } from "./aircraft";
 import { neutralControls } from "./model";
 import { flapsDeDespegue } from "./flaps";
 import { indicatedAirspeed, type Aire } from "./atmosphere";
 import { EJERCICIOS } from "./ejercicios";
+import { lineaAzul } from "./velocidades-de-despegue";
 import {
   dondeAcabaLaPista,
   monteDelCampo,
@@ -78,9 +79,9 @@ function subidaA(a: AircraftConfig, kt: number, flaps: number): Subida {
   return { kt, pendiente: sube / avanza, regimen: sube / 20 };
 }
 
-function mejores(a: AircraftConfig, flaps: number): { angulo: Subida; regimen: Subida; todas: Subida[] } {
+function mejores(a: AircraftConfig, flaps: number, desde = 50, hasta = 96): { angulo: Subida; regimen: Subida; todas: Subida[] } {
   const todas: Subida[] = [];
-  for (let kt = 50; kt <= 96; kt += 2) todas.push(subidaA(a, kt, flaps));
+  for (let kt = desde; kt <= hasta; kt += 2) todas.push(subidaA(a, kt, flaps));
   const angulo = todas.reduce((x, y) => (y.pendiente > x.pendiente ? y : x));
   const regimen = todas.reduce((x, y) => (y.regimen > x.regimen ? y : x));
   return { angulo, regimen, todas };
@@ -184,6 +185,56 @@ describe("la pista corta, en la mesa (H35a)", () => {
     expect(limpio.regimen.kt - limpio.angulo.kt).toBeGreaterThanOrEqual(8);
     expect(limpio.angulo.pendiente).toBeGreaterThan(limpio.regimen.pendiente);
     expect(limpio.regimen.regimen).toBeGreaterThan(limpio.angulo.regimen);
+  });
+
+  /*
+   * **Y el JAZ 40, con sus hélices de paso variable** (H37a), 2.000 kg, a 500 m
+   * y al día estándar, de dos en dos nudos:
+   *
+   *     pendiente   16,1 % a 70 kt, y del 15,8 al 16,1 de 66 a 78
+   *     régimen     7,15 m/s (1.410 ft/min) a 98 y a 100 kt
+   *     a 76 kt     15,9 %, el 99 % de la mejor
+   *     a 92 kt     7,07 m/s, el 99 % de la mejor
+   *
+   * Con la recta de la hélice de paso fijo que llevaba, en esta misma mesa:
+   * pendiente máxima del 11,9 % a 72 nudos y régimen máximo de 5,69 m/s
+   * (1.120 ft/min) a 110; a 92, un 5 % menos que a la suya, y no pasa.
+   *
+   * Las de su clase, del manual del Seneca III (Piper, PA-34-220T, VB-1110,
+   * § 4.3 y 2.3): Vx 76, Vy 92 y línea azul 92 nudos indicados; las del Seneca
+   * I, en millas, dicen lo mismo —90 y 105 mph, 78 y 91 nudos— (VB-423). La
+   * subida del Seneca II, 1.340 ft/min a 4.570 lb (*Plane & Pilot*), que a
+   * los 2.000 kg de la ficha son unos 1.390.
+   *
+   * **Las dos curvas son planas**, como en el avión de verdad, y el máximo de
+   * cada una cae a seis nudos de su cifra —la pendiente por debajo, el
+   * régimen por encima—. Lo que se comprueba es lo que importa en cabina:
+   * que a las cifras de su manual el avión sube lo que puede, a un 2 %.
+   */
+  it("el JAZ 40, a la Vx y a la Vy de su manual, sube lo que puede", () => {
+    const limpio = mejores(PANAMBI, 0, 66, 116);
+    const a = (kt: number): Subida => limpio.todas.find((s) => s.kt === kt)!;
+    const vx = a(76);
+    const vy = a(92);
+    const fila = (s: Subida): string => `${s.kt} kt ${(s.pendiente * 100).toFixed(1)} % ${s.regimen.toFixed(2)} m/s`;
+    apuntar(
+      `JAZ 40 limpio: Vx ${fila(limpio.angulo)} · Vy ${fila(limpio.regimen)} · a 76 ${fila(vx)} · a 92 ${fila(vy)}\n` +
+        limpio.todas.map(fila).join("\n"),
+    );
+    // A las de su manual, lo mejor que puede: a un 2 %.
+    expect(vx.pendiente).toBeGreaterThan(limpio.angulo.pendiente * 0.98);
+    expect(vy.regimen).toBeGreaterThan(limpio.regimen.regimen * 0.98);
+    // Y los máximos, cerca: a ocho nudos.
+    expect(Math.abs(limpio.angulo.kt - 76)).toBeLessThanOrEqual(8);
+    expect(Math.abs(limpio.regimen.kt - 92)).toBeLessThanOrEqual(8);
+    // Las dos no son la misma: a la Vx, más empinado; a la Vy, más deprisa.
+    expect(vx.pendiente).toBeGreaterThan(vy.pendiente);
+    expect(vy.regimen).toBeGreaterThan(vx.regimen);
+    // Lo que sube: los 1.390 ft/min del Seneca II a esta masa, a un 7 %.
+    expect(limpio.regimen.regimen).toBeGreaterThan(7.06 * 0.93);
+    expect(limpio.regimen.regimen).toBeLessThan(7.06 * 1.07);
+    // Y con un motor, la línea azul a cinco nudos de la suya.
+    expect(Math.abs(lineaAzul(PANAMBI) / KT - 92)).toBeLessThanOrEqual(5);
   });
 
   /*

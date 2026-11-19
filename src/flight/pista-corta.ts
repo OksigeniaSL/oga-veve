@@ -27,11 +27,11 @@
  * turbohélices de transporte no la vuelan: despegan con la V2 de su peso y la
  * subida de la norma, y el obstáculo lo resuelve el cálculo de la pista, no
  * una velocidad elegida a mano. Y de los de hélice de la flota, **solo el JAZ
- * 20**, porque es el único cuyo modelo de vuelo pone las dos velocidades donde
- * las pone su manual: el bimotor da la Vx bien (80 nudos contra los 90 mph,
- * 78 nudos, del manual del PA-34) pero la Vy a 107 nudos, dieciséis por encima
- * de sus 105 mph, y eso no se enseña sin tocar antes el modelo, que es otra
- * decisión (ADR 0027, enmienda H35a).
+ * 20**. El bimotor ya sube como su manual —con la ley de su hélice de paso
+ * variable, a sus 76 y 92 nudos sube lo que puede, a un 2 % (ADR 0027,
+ * enmienda H37a)— y su manual trae la técnica, 66 nudos a los cincuenta pies
+ * con 25° de flaps; pero no cabe en la granja: pide 1.070 m de pista, por la
+ * toma, y la granja tiene novecientos (`cabeEn`), como el de verdad.
  *
  * Este fichero no sabe de cámaras, ni de voces, ni de HUD: lee el avión y
  * devuelve sucesos. Quién dice y enseña cada cosa lo decide `game.ts`
