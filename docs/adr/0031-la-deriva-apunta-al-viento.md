@@ -2996,3 +2996,174 @@ y no de su lección.
   es callarlo en todo el cangrejo, que su «tocá» es el pie. No ha cabido en
   esta tanda.
 - **Al tocar, el JAZ 90 inclinado**, como en H34a.
+
+## Enmienda H26w (19-11-2026): el GPS que se va, en el de cristal y en el de línea
+
+H26v dejó escrito, y no hecho, cómo anuncian el GPS que se va los de cristal
+y los de línea. Aquí está lo que dice cada cabina con su fuente, lo que se
+pinta, lo que no y por qué, y si «Se apaga el GPS» se les ofrece. Lo de cada
+cabina lo dice una función, `anuncioDelGps` en `flight/gps-con-apagones.ts`,
+y lo pintan el cuadro plano (`Tablero.elGps`) y las pantallas de la cabina en
+3D (`world/pantallas-cabina.ts`), las dos, que enseñan lo mismo.
+
+### De cristal: el G1000
+
+**La cabina de cristal del juego es la de un G1000**: dos pantallas, la de
+vuelo con su HSI en el tercio de abajo y el mapa en la otra (`deCristal` en
+`ui/tablero.ts`; «el modelo trae un G1000 con sus dos pantallas», en
+`world/pantallas-cabina.ts`). Así que lo que anuncia es lo de un G1000. Los
+aviones de verdad de su clase llevan otras aviónicas —el Twin Otter -400, la
+Primus Apex de Honeywell (ADR 0027)—, y lo de esas no se ha contrastado aquí.
+
+Lo que dice el *Pilot's Guide* de Garmin, en los extractos que se han podido
+consultar de varias ediciones (la Cessna Nav III, el G950, el G1000H, el TBM
+850 y la Citation Mustang), que dicen lo mismo salvo donde se indica:
+
+- **«LOI»** en ámbar, junto al avioncito del HSI: «Loss of Integrity
+  Monitoring — GPS integrity is insufficient for the current phase of
+  flight» (tabla 2-3, ya citada en H26v). Y al volver, «INTEG OK».
+- **Sin posición, «DR»**, la navegación a estima: «System is using projected
+  position rather than GPS position to compute navigation data» (tabla 2-3).
+  En la sección «Dead Reckoning»: «DR» en ámbar encima del avioncito del
+  mapa y en el HSI, arriba a la derecha del avioncito; lo que sale de la
+  posición, en ámbar; la barra del CDI del GPS se quita —en unas ediciones
+  enseguida, en otras a los veinte minutos—; y el mensaje «GPS NAV LOST» en
+  la pantalla de vuelo. La posición proyectada sale de la última que supo,
+  el rumbo, la velocidad del aire y el último viento, y el manual avisa de que
+  se vuelve menos fiable con el tiempo y no vale como único medio de
+  navegación. **Solo en ruta**: en terminal o en aproximación no hay estima,
+  sale «NO GPS POSITION» en el mapa y deja de navegar con el GPS. Vuelve solo
+  cuando vuelve la señal.
+- **Por qué primero la integridad**: el receptor necesita cinco satélites, o
+  cuatro y el altímetro, para comprobarse a sí mismo, y cuatro para dar un
+  sitio (AIM 1-1-17). Que con una interferencia el «LOI» llegue antes que el
+  «DR» **no lo dice Garmin con esas palabras**: sale de esa cuenta, según la
+  interferencia va tapando los satélites que llegan más débiles. Por eso el
+  receptor del ejercicio pierde la integridad al sesenta por ciento del
+  camino (`A_SIN_INTEGRIDAD`) y la posición a la mitad, como en H26v.
+
+**Lo que se pinta**, en las dos superficies:
+
+- «LOI», y luego «DR», en ámbar con su filo oscuro, arriba a la derecha del
+  avioncito del HSI de la pantalla de vuelo (`GPS_EN_EL_HSI` en
+  `ui/cristal.ts`).
+- «DR» en ámbar encima del avioncito de la carta, en la otra pantalla.
+- Las millas al punto y la hora de llegada, en ámbar mientras hay «DR».
+- **El mapa sigue**: el G1000 sigue a estima, así que la carta, el plano y
+  la tarjeta de casa siguen sabiendo dónde está el avión. Es lo contrario de
+  los de esferas, cuyo GPS de panel no tiene estima, y por eso
+  `anuncioDelGps` dice `planoQuieto` solo para ellos.
+- **Con el sitio de verdad, y no con una estima calculada aparte**: la del
+  G1000 sale del rumbo, la velocidad del aire y el viento que supo, y en el
+  ejercicio el viento del sitio no cambia; con las rachas, que van y vienen,
+  la estima cae encima del sitio de verdad a la escala de la carta en los
+  minutos que dura. Lo que cambia es cómo lo dice. Lo que no se ve es que la
+  estima se va apartando con las horas: no cabe en un ejercicio de siete
+  minutos, y no se ha fingido.
+
+**Lo que no se pinta**, y por qué:
+
+- **La barra del CDI del GPS**: el HSI del juego va siempre con la NAV —el
+  VOR del plan B—, así que no hay CDI del GPS que quitar.
+- **«GPS NAV LOST»**: el G1000 lo escribe en su ventana de alertas, y la
+  pantalla de vuelo del juego no la lleva. Está en `anuncioDelGps.mensajes`.
+- **«NO GPS POSITION»**: el ejercicio empieza a tres mil pies y de diez a
+  veinte millas del VOR, que es ruta; en terminal sería otro caso, y no hay
+  ejercicio que lo pida.
+
+### De línea: la inercial y el DME
+
+Lo que está claro, con fuente firme (el FCOM del 737 MAX de Boeing, que es
+el que se ha podido consultar, en extractos; la cabina de línea del juego es
+la de un Boeing, con su MCP y el arco verde de su pantalla de navegación):
+
+- **En el CDU, «GPS-L INVALID» y «GPS-R INVALID»**: el FCOM los pone entre
+  los mensajes del bloc del CDU con los que se hace el procedimiento
+  suplementario de comprobación de la navegación. Que quieren decir que el
+  ordenador de vuelo ya no recibe datos buenos de ese GPS lo dice una
+  referencia de segunda mano, y es lo que dice su nombre.
+- **La luz ámbar GPS** del techo: «Illuminated (amber) – indicates failure of
+  both GPS sensor units»; con uno solo, nada más que al repasar el maestro de
+  precaución (FCOM, «GPS Light»).
+- **La posición sigue**: el ordenador de vuelo la lleva con la inercial
+  corregida por la radio, DME/DME, y el mapa no se mueve de su sitio.
+
+Lo que **no** está claro, y no se pone: **«IRS NAV ONLY»**. No se ha
+encontrado el texto del FCOM; lo que hay son foros, y uno dice que sale tras
+doce minutos sin radio que corrija la inercial. Como H26v ya avisó, las
+fuentes no coinciden en cuándo, y con un DME a la vista no es lo que pasa.
+Tampoco se ha contrastado lo que dicen el Embraer (Primus Epic) ni el A340,
+que son las clases de los JAZ 90 y JAZ 120: se ha tomado el 737 porque la
+cabina del juego es la de un Boeing.
+
+**Y no se pinta nada**: el cuadro de línea del juego no lleva CDU ni techo,
+y como el ejercicio no se les ofrece (abajo), el GPS no se va nunca en un
+avión de línea. Lo dice el modelo (`anuncioDelGps("linea", …)`: los dos
+mensajes, la luz y la posición con la inercial y la radio) y su prueba. El
+día que haya un ejercicio de línea con el GPS, la luz va en el panel de la
+visera (`flight/avisos-de-cabina.ts`), en ámbar, con su maestro.
+
+### El ejercicio, en cada cabina
+
+- **De cristal, sí** (JAZ 50 y JAZ 60, Taguató Ruvichá, campos con VOR). La
+  lección es la misma que con esferas, y es de verdad: el G1000 sigue a
+  estima, pero el manual dice que la estima no vale como único medio, y el
+  plan B es el VOR que ya estaba en la NAV. Lo que cambia es lo que se ve y
+  lo que se dice: «LOI» con su frase al irse la integridad, «DR» y el mapa
+  que sigue a estima al irse la posición, y el curso con su nombre en esta
+  cabina, **«CRS»**, que es la ventanilla de la visera y la perilla del
+  G1000. «Girá el OBS» sería otra cosa en un G1000: su OBS es un modo del
+  GPS.
+- **De línea, no.** Con la inercial y el DME/DME el ordenador de vuelo sigue
+  sabiendo dónde está: «se fue el GPS, el mapa ya no sabe dónde estamos» es
+  falso, y volar al VOR porque se fue el GPS enseña un plan B que ese avión
+  lleva dentro (regla 4). Su lección es otra —comprobar el ordenador de vuelo
+  con la radio en bruto, que es el procedimiento del FCOM, y las
+  aproximaciones RNP que ya no se pueden volar— y queda en «Lo que queda».
+- **De esferas, igual que en H26v.** El modelo da ahora un suceso más,
+  `sinIntegridad`, que en su cabina no enseña ni dice nada: su cuadro no
+  lleva el receptor, y el plano sigue mientras hay posición.
+
+### La escalera
+
+El ejercicio va en Taguató Ruvichá, el peldaño de cabina, así que «LOI» y
+«DR» se leen tal cual: son rótulos de cabina, no se traducen, y entran con
+las letras (`MARCA_ROTULO`, `desdePara`). No suenan: como en H26v, el apagón
+no lleva sonido de aviso, y lo que explica es la instructora, detrás.
+
+### Las frases
+
+Tres nuevas, para la instructora, en `es-PY.ts` y en `en.ts`, pedidas en fila
+(`FrasesEnFila`) como las de H26v:
+
+- `ejercicio.gps.loi` — «LOI: el GPS ya no puede asegurar dónde estamos».
+- `ejercicio.gps.seFueDr` — «Se fue el GPS. DR: el mapa sigue, pero a
+  estima. El avión vuela igual».
+- `ejercicio.gps.planBCrs` — «Plan B: girá el CRS hasta que la barra quede
+  al medio con TO, y seguila».
+
+Y `ejercicio.gps.crs` («CRS {curso}»), lo escrito delante, que se lee y no se
+graba. «LOI» y «DR» se dicen letra a letra. Sin grabar suenan mudas.
+
+### Lo que se prueba
+
+- `flight/gps-con-apagones.test.ts`: dónde se ofrece (ahora también el JAZ 50
+  y el JAZ 60; ni los tres de línea ni el fumigador); que el receptor pasa
+  de con posición a sin integridad, a sin posición y otra vez a con
+  posición, con el «LOI» entre el sesenta y el cincuenta por ciento del
+  camino y más de veinte segundos antes del «DR», con la avioneta, el JAZ 50
+  y el JAZ 60; y lo que dice cada cabina con cada estado.
+- `scripts/ver-el-gps.mjs`, con `OGA_AVION=jaz-60`: el «LOI» con su foto, el
+  «DR» en el HSI y en la carta con las millas en ámbar, el plano y la tarjeta
+  de casa siguiendo, el «CRS» de la tarjeta, que al pasar no queda nada y las
+  seis frases en su orden.
+
+### Lo que queda
+
+- **Las tres frases, sin grabar.**
+- **De línea**: la luz GPS y los mensajes del CDU, el día que tengan un
+  ejercicio con el GPS; y ese ejercicio, que sería el de comprobar el
+  ordenador de vuelo con la radio en bruto. Y contrastar lo del Embraer y el
+  A340, y «IRS NAV ONLY» con un FCOM entero.
+- **De cristal**: la ventana de alertas con «GPS NAV LOST», y lo que llevan
+  de verdad las clases de los turbohélices.
