@@ -46,6 +46,7 @@ import { AVISO_DE_CABINA } from "../flight/despresurizacion";
 import { anillosDe, type Eco } from "../flight/tormentas";
 import { bienPuesta } from "../flight/altimetro";
 import type { MensajeDeMotor } from "../flight/practica";
+import type { AnuncioDelGps } from "../flight/gps-con-apagones";
 import { temperaturaExterior, type Aire } from "../flight/atmosphere";
 
 /**
@@ -241,6 +242,12 @@ export interface DatosDeCabina {
    * caja o fuera del peldaño de la radio. Ver `pintarLaRadioEnLaRosa`.
    */
   readonly radio?: LaRadioPintada | null;
+  /**
+   * **El GPS como lo anuncia esta cabina**: el «LOI» y el «DR» del G1000,
+   * los mismos que pinta el cuadro plano (`Tablero.elGps`). `null` con el GPS
+   * bien. Ver `anuncioDelGps` en `flight/gps-con-apagones.ts`.
+   */
+  readonly gps?: AnuncioDelGps | null;
   /** Cabeceo, radianes. Positivo, morro arriba. */
   readonly cabeceo: number;
   /** Alabeo, radianes. Positivo, ala derecha abajo. */
@@ -943,7 +950,17 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   apuntarYSenalar(g, d, x0, anchoAct, alto);
   if (conRosa) {
     const rr = Math.min(anchoAct / 2 - 10, 76);
-    pintarRosa(g, x0 + anchoAct / 2, alto - rr - 10, rr, magnetico(d), true);
+    const hx = x0 + anchoAct / 2;
+    const hy = alto - rr - 10;
+    pintarRosa(g, hx, hy, rr, magnetico(d), true);
+    /*
+     * **El «LOI» y el «DR» del G1000**, arriba a la derecha del avioncito del
+     * HSI, en ámbar y con su filo oscuro, como en el cuadro plano
+     * (`GPS_EN_EL_HSI` en `ui/cristal.ts`). Con las letras: lo decide
+     * `escribir`.
+     */
+    if (d.gps?.hsi)
+      escribir(g, d.gps.hsi, hx + 16, hy - 12, "700 14px " + FUENTE, PALETA.precaucion, "left", FONDO);
   } else {
     cintaDeRumbo(g, x0, ALTO_CINTAS, anchoAct, RUMBO_ABAJO, d);
   }
@@ -2341,6 +2358,8 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     g.stroke();
   }
   g.lineCap = "butt";
+  // «DR» encima del avioncito, en ámbar: el mapa sigue a estima. Ver `pantallaDeNavegacion` en `ui/cristal.ts`.
+  if (d.gps?.enLaCarta) escribir(g, d.gps.enLaCarta, cx, cy + 6, "700 17px " + FUENTE, PALETA.precaucion, "center", FONDO);
   if (d.radio) pintarLaRadioEnLaRosa(g, d.radio, cx, cy, r, grados, izquierda, anchoNav);
 
   // Y el rumbo en cifras, arriba, con su rótulo debajo.
@@ -2423,6 +2442,11 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
    * `Dibujo.ruta` en `ui/carta.ts`.
    */
   const siguiente = d.mapa?.ruta?.fijos[d.mapa.ruta.activo];
+  /*
+   * **Y en ámbar, con «DR»**: las millas y la hora salen de una posición a
+   * estima, como las pinta el G1000 sin GPS. Ver `Tablero.elGps`.
+   */
+  const aEstima = d.gps?.aEstima === true;
   if (!d.objetivo && d.mapa && siguiente) {
     escribir(
       g,
@@ -2430,11 +2454,11 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
       ANCHO - 12,
       22,
       "500 15px " + FUENTE,
-      PALETA.objetivo,
+      aEstima ? PALETA.precaucion : PALETA.objetivo,
       "right",
     );
     if (d.peldano >= 4 && d.mapa.ruta?.hora)
-      escribir(g, d.mapa.ruta.hora, ANCHO - 12, 40, "500 13px " + FUENTE, TINTA, "right");
+      escribir(g, d.mapa.ruta.hora, ANCHO - 12, 40, "500 13px " + FUENTE, aEstima ? PALETA.precaucion : TINTA, "right");
     // Y el nivel del plan, en magenta y con su «CRZ». Ver `Tablero.elPlan`.
     if (d.mapa.ruta?.crucero)
       escribir(g, `CRZ ${d.mapa.ruta.crucero}`, ANCHO - 12, 57, "600 13px " + FUENTE, PALETA.objetivo, "right");
@@ -2445,7 +2469,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
       ANCHO - 12,
       22,
       "500 15px " + FUENTE,
-      TINTA,
+      aEstima ? PALETA.precaucion : TINTA,
       "right",
     );
   }

@@ -3812,9 +3812,19 @@ export const ES_PY = {
   "ejercicio.gps.sintonizar": "Volvé a poner el VOR de casa en la NAV",
   "ejercicio.gps.centrada": "¡Eso! Con la barra al medio, vamos derecho a la radio",
   "ejercicio.gps.pasada": "¡Llegamos con la radio, y volvió el GPS! El buen piloto siempre tiene plan B",
+  /*
+   * **Los de cristal** (H26w): el G1000 dice «LOI» antes de irse y «DR»
+   * después, y el mapa sigue a estima; el curso se gira en la ventanilla
+   * CRS, que en un G1000 es la perilla CRS (su «OBS» es otra cosa, un modo del
+   * GPS). Lo demás es lo mismo.
+   */
+  "ejercicio.gps.loi": "LOI: el GPS ya no puede asegurar dónde estamos",
+  "ejercicio.gps.seFueDr": "Se fue el GPS. DR: el mapa sigue, pero a estima. El avión vuela igual",
+  "ejercicio.gps.planBCrs": "Plan B: girá el CRS hasta que la barra quede al medio con TO, y seguila",
   // Lo que va escrito delante de la frase en la tarjeta. Los rótulos de cabina, sin traducir.
   "ejercicio.gps.nav": "NAV {id} {mhz}",
   "ejercicio.gps.obs": "OBS {curso}",
+  "ejercicio.gps.crs": "CRS {curso}",
   "ejercicio.gps.integOk": "INTEG OK",
   // El panel del final: se lee, no se dice.
   "ejercicio.gps.cierre":

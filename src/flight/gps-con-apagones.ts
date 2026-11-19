@@ -49,14 +49,17 @@
  * - **Los de cristal con un G1000** (los turbohélices): el ámbar «LOI» junto
  *   al avioncito del HSI y, sin posición, el modo «DR»: «System is using
  *   projected position rather than GPS position to compute navigation data»,
- *   con el CDI del GPS quitado de la pantalla (G1000, tabla 2-3).
+ *   con el CDI del GPS quitado de la pantalla (G1000, tabla 2-3). El mapa no
+ *   se queda quieto: sigue con la posición a estima, con «DR» encima del
+ *   avioncito y lo que sale de ella en ámbar.
  * - **Los de línea**: llevan plataforma inercial. Sin GPS el ordenador de
  *   vuelo sigue sabiendo dónde está con la inercial corregida por la radio
- *   (DME/DME) y lo dice en su pantalla —en el 737, «GPS-L INVALID» y «GPS-R
- *   INVALID» y, sin radio que lo corrija, «IRS NAV ONLY»—; el mapa sigue.
+ *   (DME/DME), y lo que cambia es el aviso: en el 737, «GPS-L INVALID» y
+ *   «GPS-R INVALID» en el CDU y la luz ámbar GPS. El mapa sigue.
  *
- * Los dos últimos quedan escritos y no hechos: el ejercicio va en los de
- * esferas (ver la enmienda H26v, «Lo que queda»).
+ * Lo de cada cabina lo dice `anuncioDelGps`. El ejercicio va en los de
+ * esferas y en los de cristal, y no en los de línea, donde la lección sería
+ * otra (ver las enmiendas H26v y H26w).
  *
  * ## El ejercicio
  *
@@ -194,6 +197,13 @@ export type CierreDelGps = "hecho" | "otraVez";
 export type SucesoDelGps =
   /** El NOTAM y el plan B, puesto antes de que haga falta. */
   | { readonly que: "presentar" }
+  /**
+   * **Se va la integridad**: el receptor ya no ve satélites para comprobar
+   * que ninguno miente, y todavía da un sitio. Es el «LOI» de un G1000; el
+   * cuadro de esferas no lleva el receptor y no lo enseña. Ver
+   * `A_SIN_INTEGRIDAD`.
+   */
+  | { readonly que: "sinIntegridad" }
   /** Se fue el GPS: el plano ya no sabe dónde está el avión. */
   | { readonly que: "seFue" }
   /** El plan B: el OBS hasta la barra al medio con TO, y seguirla. */
@@ -215,6 +225,18 @@ export type FaseDelGps = "conGps" | "sinGps" | "cerrada";
  * vuela hacia otro lado.
  */
 export const A_MITAD = 0.5;
+/**
+ * **Cuándo se va la integridad**, antes que la posición: al sesenta por
+ * ciento del camino, y no antes de la misma espera de la presentación. El
+ * receptor necesita cinco satélites, o cuatro y el altímetro, para
+ * comprobarse a sí mismo, y cuatro para dar un sitio (AIM 1-1-17): según la
+ * interferencia va tapando los que llegan más débiles, lo primero que pierde
+ * es la integridad, y después la posición. Del sesenta al cincuenta por
+ * ciento van de treinta a cuarenta segundos con los turbohélices, que es lo
+ * que el «LOI» se deja ver antes del «DR». Si la posición se va antes —por el
+ * tope, volando hacia otro lado—, se va todo a la vez, como con la antena.
+ */
+export const A_SIN_INTEGRIDAD = 0.6;
 export const ANTES_DEL_APAGON = 30;
 export const TOPE_DEL_APAGON = 240;
 /** Lo que se deja entre «se fue» y pedir el plan B, s: que se vea el plano sin el avión. */
@@ -227,6 +249,8 @@ export const ENCIMA = 3 * MILLA;
 export class SeApagaElGps {
   private faseActual: FaseDelGps = "conGps";
   private presentada = false;
+  /** Si ya se fue la integridad, que se va antes que la posición. */
+  private sinIntegridad = false;
   private comoCerro: CierreDelGps | null = null;
   private reloj = 0;
   private desdeQueSeFue = 0;
@@ -263,6 +287,18 @@ export class SeApagaElGps {
   }
 
   /**
+   * **Lo que sabe el receptor**: con posición, sin integridad —sigue dando un
+   * sitio que ya no garantiza— o sin posición. Al pasar por encima de la radio
+   * se acaba el ensayo del NOTAM y vuelve todo. Lo que enseña cada cabina con
+   * esto lo dice `anuncioDelGps`.
+   */
+  get receptor(): EstadoDelReceptor {
+    if (this.faseActual === "sinGps") return "sinPosicion";
+    if (this.faseActual === "conGps" && this.sinIntegridad) return "sinIntegridad";
+    return "conPosicion";
+  }
+
+  /**
    * **Dónde se quedó el GPS**, mientras está apagado: el último sitio que
    * supo, que es donde se queda el plano. `null` con GPS.
    */
@@ -273,6 +309,7 @@ export class SeApagaElGps {
   reiniciar(): void {
     this.faseActual = "conGps";
     this.presentada = false;
+    this.sinIntegridad = false;
     this.comoCerro = null;
     this.reloj = 0;
     this.desdeQueSeFue = 0;
@@ -302,7 +339,14 @@ export class SeApagaElGps {
     if (this.faseActual === "conGps") {
       this.ultimoSitio = { x: l.x, z: l.z };
       const aMitad = lejos <= A_MITAD * this.lejosAlEmpezar;
-      if ((aMitad && this.reloj >= ANTES_DEL_APAGON) || this.reloj >= TOPE_DEL_APAGON) {
+      const seVa = (aMitad && this.reloj >= ANTES_DEL_APAGON) || this.reloj >= TOPE_DEL_APAGON;
+      const sinIntegridad = this.reloj >= ANTES_DEL_APAGON && lejos <= A_SIN_INTEGRIDAD * this.lejosAlEmpezar;
+      if (!this.sinIntegridad && !seVa && sinIntegridad) {
+        this.sinIntegridad = true;
+        sucesos.push({ que: "sinIntegridad" });
+      }
+      if (seVa) {
+        this.sinIntegridad = true;
         this.faseActual = "sinGps";
         this.desdeQueSeFue = 0;
         sucesos.push({ que: "seFue" });
@@ -355,3 +399,125 @@ export class SeApagaElGps {
     sucesos.push({ que: "cerrar", como });
   }
 }
+
+// ── Cómo lo dice cada cabina ─────────────────────────────────────────────
+
+/** Lo que sabe el receptor. Ver `SeApagaElGps.receptor`. */
+export type EstadoDelReceptor = "conPosicion" | "sinIntegridad" | "sinPosicion";
+
+/**
+ * **Las tres cabinas de ala fija**, por cómo llevan el GPS: el de panel de los
+ * de esferas, el G1000 de los de cristal y el ordenador de vuelo con inercial
+ * de los de línea. Las reparte como `familiaDe` en `ui/familia.ts`; el
+ * helicóptero no entra, que su cabina es otra.
+ */
+export type CabinaDelGps = "esferas" | "cristal" | "linea";
+
+export function cabinaDelGps(a: {
+  readonly sound: { readonly engine: string };
+  readonly helicoptero?: unknown;
+}): CabinaDelGps | null {
+  if (a.helicoptero) return null;
+  if (a.sound.engine === "turbofan") return "linea";
+  if (a.sound.engine === "turboprop") return "cristal";
+  return "esferas";
+}
+
+/** Lo que enseña una cabina con el receptor como está. */
+export interface AnuncioDelGps {
+  /**
+   * **Junto al avioncito del HSI**, arriba a la derecha y en ámbar: «LOI» sin
+   * integridad, «DR» sin posición. `null` si no hay nada que decir.
+   */
+  readonly hsi: "LOI" | "DR" | null;
+  /** **Encima del avioncito de la carta**, en ámbar: «DR», la posición a estima. */
+  readonly enLaCarta: "DR" | null;
+  /**
+   * **Si lo que sale de la posición va en ámbar**: las millas al punto y la
+   * hora de llegada, que con «DR» salen de una posición estimada.
+   */
+  readonly aEstima: boolean;
+  /**
+   * **Si el plano y la tarjeta de casa dejan de saber dónde está el avión**:
+   * solo con el GPS de panel de los de esferas, cuyo mapa móvil es el plano.
+   * El G1000 sigue a estima y el de línea, con la inercial.
+   */
+  readonly planoQuieto: boolean;
+  /** De dónde saca la cabina la posición. */
+  readonly posicion: "gps" | "estima" | "inercialYRadio" | "ninguna";
+  /**
+   * **Lo que escribe la aviónica**, en inglés de cabina: el mensaje de alerta
+   * del G1000 y los del CDU del 737. El cuadro del juego no lleva ni la
+   * ventana de alertas del G1000 ni el CDU, y no se pintan: ver la enmienda
+   * H26w.
+   */
+  readonly mensajes: readonly string[];
+  /** **La luz ámbar GPS** del 737: los dos receptores perdidos. No se pinta: ver H26w. */
+  readonly luzGps: boolean;
+}
+
+const NADA: AnuncioDelGps = {
+  hsi: null,
+  enLaCarta: null,
+  aEstima: false,
+  planoQuieto: false,
+  posicion: "gps",
+  mensajes: [],
+  luzGps: false,
+};
+
+/**
+ * **Cómo anuncia cada cabina el GPS que se va**, de verdad (ADR 0031,
+ * enmiendas H26v y H26w):
+ *
+ * - **De esferas**: el GPS de panel escribe su aviso en su propia pantalla,
+ *   que el cuadro no lleva; lo que se ve es el plano, que sin posición se
+ *   queda donde lo supo. Sin integridad el plano sigue: todavía hay sitio.
+ * - **De cristal**, con un G1000: «LOI» en ámbar junto al avioncito del HSI
+ *   mientras falta la integridad. Sin posición, «DR» en ámbar en el HSI y
+ *   encima del avioncito de la carta, el mapa siguiendo con la posición
+ *   proyectada —el rumbo, la velocidad del aire y el último viento que supo—,
+ *   lo que sale de ella en ámbar, el CDI del GPS quitado y el mensaje «GPS NAV
+ *   LOST» (G1000 *Pilot's Guide*, tabla 2-3 y «Dead Reckoning»). El HSI del
+ *   juego va siempre con la NAV, así que no hay CDI del GPS que quitar.
+ * - **De línea**: el ordenador de vuelo sigue sabiendo dónde está con la
+ *   inercial y el DME/DME, y lo que cambia es el aviso: en el 737, «GPS-L
+ *   INVALID» y «GPS-R INVALID» en el CDU (737 FCOM, mensajes del FMC) y la
+ *   luz ámbar GPS, la de los dos receptores perdidos (737 FCOM, «GPS
+ *   Light»). Sin integridad no se escribe nada aquí: crece la cuenta de la
+ *   precisión (ANP), que solo avisa si pasa de la que pide el tramo. «IRS NAV
+ *   ONLY» no se pone: las fuentes no dicen lo mismo de cuándo sale, y con un
+ *   DME a la vista no es lo que pasa.
+ */
+export function anuncioDelGps(cabina: CabinaDelGps, receptor: EstadoDelReceptor): AnuncioDelGps {
+  if (receptor === "conPosicion") return NADA;
+  switch (cabina) {
+    case "esferas":
+      return receptor === "sinPosicion" ? PLANO_QUIETO : NADA;
+    case "cristal":
+      return receptor === "sinIntegridad" ? LOI_DEL_G1000 : DR_DEL_G1000;
+    case "linea":
+      return receptor === "sinIntegridad" ? NADA : CON_LA_INERCIAL;
+  }
+}
+
+/*
+ * Los anuncios, hechos una vez: el juego pregunta en cada paso, y con el mismo
+ * objeto sabe sin comparar campo a campo si la cabina tiene que cambiar algo.
+ */
+const PLANO_QUIETO: AnuncioDelGps = { ...NADA, planoQuieto: true, posicion: "ninguna" };
+const LOI_DEL_G1000: AnuncioDelGps = { ...NADA, hsi: "LOI" };
+const DR_DEL_G1000: AnuncioDelGps = {
+  ...NADA,
+  hsi: "DR",
+  enLaCarta: "DR",
+  aEstima: true,
+  posicion: "estima",
+  mensajes: ["GPS NAV LOST"],
+};
+const CON_LA_INERCIAL: AnuncioDelGps = {
+  ...NADA,
+  posicion: "inercialYRadio",
+  mensajes: ["GPS-L INVALID", "GPS-R INVALID"],
+  luzGps: true,
+};
