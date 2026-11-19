@@ -59,6 +59,9 @@ export const SUPER_PUMA_EN_EL_JUEGO: AircraftConfig = {
   // El combustible sale del empuje: lo que gastan los dos Makila a plena
   // potencia, contado como empuje. Ver `NEWTON_POR_VATIO`.
   maxThrust: SUPER_PUMA.motores.cuantos * SUPER_PUMA.motores.potencia * NEWTON_POR_VATIO,
+  // Y por eso sin la potencia al eje del avión del que copia: su empuje ya es
+  // la potencia de sus turboejes. Ver `potenciaAlEje`.
+  potenciaAlEje: undefined,
   motores: SUPER_PUMA.motores.cuantos,
   // Los dos turboejes van juntos encima de la cabina: no hay par asimétrico de
   // hélices que sujetar si se para uno.

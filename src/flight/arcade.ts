@@ -54,7 +54,7 @@ import type {
   InitialConditions,
   LoSacado,
 } from "./model";
-import { conMasa, loQueDaElMotor, masaDe, type AircraftConfig } from "./aircraft";
+import { conMasa, loQueDaElMotor, masaDe, parteDelEmpuje, type AircraftConfig } from "./aircraft";
 import { cargaPorRafaga } from "./rafagas";
 
 /**
@@ -384,7 +384,16 @@ export class ArcadeFlightModel implements FlightModel {
   empujeCon(fraccion: number): number {
     const densidad =
       airDensity(this.state.position.y, this.aire) / airDensity(0);
-    return fraccion * this.aircraft.maxThrust * loQueDaElMotor(this.aircraft, densidad);
+    const empuje = fraccion * this.aircraft.maxThrust * loQueDaElMotor(this.aircraft, densidad);
+    /*
+     * Y en uno de hélice, por lo que empuja su hélice a esta velocidad, como en
+     * `empujeLleno`: lo que gasta sale de la potencia, que es el empuje entre
+     * esa parte (`quemaPorSegundo`), y sin ella el gas de crucero gastaba como
+     * a fondo.
+     */
+    return this.aircraft.potenciaAlEje === undefined
+      ? empuje
+      : empuje * parteDelEmpuje(this.aircraft, this.speed);
   }
 
   /** Aquí el cabeceo no es un timón. Ver `timonAhora` en `model.ts`. */

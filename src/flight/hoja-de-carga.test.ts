@@ -118,8 +118,11 @@ describe("la decisión de verdad: la gente o el combustible, no las dos", () => 
    * **El 1900D lleno no llega a Pedro Juan Caballero.** 10.874 lb vacío
    * (Raytheon), dos de cabina y diecinueve de pasaje a 84 + 11 kg: 6.927 kg.
    * Su máximo, 17.120 lb (7.766 kg). El plan de Pettirossi a Pedro Juan con
-   * su alternativo y su reserva, 1.194 kg. No cabe: se quedan en tierra
-   * cuatro.
+   * su alternativo y su reserva, 893 kg: no cabe por 54, y se queda en tierra
+   * uno. Su hoja da 382 NM con diecinueve a bordo contando cien de
+   * alternativo, y este plan son 358 con el suyo: va justo, como el de
+   * verdad. Eran 1.194 kg y se quedaban cuatro, con el combustible contado
+   * por el empuje (ADR 0027, enmienda H37h).
    */
   it("el JAZ 60 con sus diecinueve plazas llenas no sale de Pettirossi a Pedro Juan", () => {
     const a = aircraftById("jaz-60");
@@ -129,7 +132,7 @@ describe("la decisión de verdad: la gente o el combustible, no las dos", () => 
     expect(lleno.maximo).toBe(7766);
     expect(lleno.cabe).toBe(false);
     expect(lleno.quitar).toBe(Math.ceil(lleno.deMas / 95));
-    expect(lleno.quitar).toBeGreaterThanOrEqual(3);
+    expect(lleno.quitar).toBe(1);
     // Quitando a los que dice, cabe.
     const sinEllos = pesar(a, { pasajeros: 19 - lleno.quitar!, llenos: false }, plan);
     expect(sinEllos.cabe).toBe(true);
@@ -139,19 +142,25 @@ describe("la decisión de verdad: la gente o el combustible, no las dos", () => 
 
   /*
    * **El 172 con cuatro adultos no llena los depósitos.** 1.639 lb vacío y
-   * cuatro de 84 kg: 1.079 kg, a 32 kg de sus 2.450 lb. Ni para dar la vuelta
-   * al campo le llega: es lo que le pasa a un 172 de verdad.
+   * cuatro de 84 kg: 1.079 kg, a 32 kg de sus 2.450 lb, once galones y medio.
+   * Le llega para la vuelta al campo —media hora y la reserva, 28 kg—, y no
+   * para ir a ningún sitio: a Yvytu Rape, el más cerca de Pettirossi, pide 58.
+   * Es lo que le pasa a un 172 de verdad, que gasta 8,2 galones a la hora a
+   * crucero. Con el combustible contado por el empuje la vuelta al campo
+   * pedía 42 y tampoco cabía (ADR 0027, enmienda H37h).
    */
-  it("el JAZ 20 con quien pilota y tres más no carga ni la vuelta al campo", () => {
+  it("el JAZ 20 con quien pilota y tres más da la vuelta al campo y no va a ningún sitio", () => {
     const a = aircraftById("jaz-20");
-    const lleno = pesar(a, { pasajeros: 3, llenos: false }, delPlan("jaz-20", "pettirossi", "pettirossi"));
-    expect(lleno.sinCombustible).toBe(1079);
-    expect(lleno.maximo).toBe(1111);
-    expect(lleno.cabe).toBe(false);
-    expect(lleno.quitar).toBe(1);
+    const local = pesar(a, { pasajeros: 3, llenos: false }, delPlan("jaz-20", "pettirossi", "pettirossi"));
+    expect(local.sinCombustible).toBe(1079);
+    expect(local.maximo).toBe(1111);
+    expect(local.cabe).toBe(true);
     expect(pesar(a, { pasajeros: 3, llenos: true }, 0).cabe).toBe(false);
-    // Con uno menos, la vuelta al campo sí cabe.
-    expect(pesar(a, { pasajeros: 2, llenos: false }, delPlan("jaz-20", "pettirossi", "pettirossi")).cabe).toBe(
+    const lejos = pesar(a, { pasajeros: 3, llenos: false }, delPlan("jaz-20", "pettirossi", "yvytu-rape"));
+    expect(lejos.cabe).toBe(false);
+    expect(lejos.quitar).toBe(1);
+    // Con uno menos, sí.
+    expect(pesar(a, { pasajeros: 2, llenos: false }, delPlan("jaz-20", "pettirossi", "yvytu-rape")).cabe).toBe(
       true,
     );
   });

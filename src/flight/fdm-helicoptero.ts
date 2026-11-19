@@ -61,10 +61,11 @@ const TOMA_ROTA = 2.44;
 
 /**
  * **Lo que gasta un turboeje por vatio, pasado a un empuje equivalente.** El
- * combustible del juego se cuenta con el empuje —`quemaPorSegundo`— y el
- * consumo de un turbohélice, 0,05 kg por newton y hora. Un turboeje como el
- * Makila gasta unos 0,36 kg por kilovatio y hora (del orden de los de su
- * clase); igualando las dos cuentas, cada vatio vale 0,0072 N. Con eso el
+ * combustible del helicóptero se cuenta con el empuje —`quemaPorSegundo`— y el
+ * consumo por newton de la tabla del turbohélice, 0,05 kg por newton y hora;
+ * los aviones de hélice gastan por la potencia (`potenciaAlEje`). Un
+ * turboeje como el Makila gasta unos 0,36 kg por kilovatio y hora (del orden
+ * de los de su clase); igualando las dos cuentas, cada vatio vale 0,0072 N. Con eso el
  * Super Puma en crucero quema unos 600 kg a la hora, que es lo suyo.
  */
 const NEWTON_POR_VATIO = (0.36 / 1000) / 0.05;

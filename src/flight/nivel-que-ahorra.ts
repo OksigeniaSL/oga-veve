@@ -37,7 +37,7 @@ import {
 } from "./atmosphere";
 import { empujeLleno } from "./fdm";
 import { machDe, resistenciaDeOnda } from "./limites";
-import { consumoEspecifico } from "./combustible";
+import { quemaPorSegundo } from "./combustible";
 import { velocidadQueToca, NUDO } from "./escalera-de-velocidades";
 import { GAS_DE_SUBIDA } from "./gases-automaticos";
 
@@ -80,10 +80,17 @@ export function resistenciaNivelado(
   return qS * cd;
 }
 
-/** El consumo específico aquí, kg por newton y hora. */
-function tsfcEn(a: AircraftConfig, altura: number, verdadera: number): number {
+/**
+ * **Lo que se quema aquí dando ese empuje**, kg/s: la misma cuenta que en
+ * vuelo (`quemaPorSegundo`), que en un avión de hélice va por la potencia.
+ */
+function quemaEn(a: AircraftConfig, empuje: number, altura: number, verdadera: number): number {
   const theta = (temperaturaExterior(altura) + 273.15) / 288.15;
-  return consumoEspecifico(a, { mach: machDe(verdadera, altura), theta });
+  return quemaPorSegundo(a, empuje, {
+    mach: machDe(verdadera, altura),
+    theta,
+    sigma: airDensity(altura, AIRE_ESTANDAR) / SEA_LEVEL_DENSITY,
+  });
 }
 
 /** La verdadera de una indicada a esa altura, m/s. */
@@ -130,7 +137,7 @@ export function costeDelTramo(
       }
       const t = paso / ritmo;
       subida += v * t;
-      kilos += (empuje * tsfcEn(a, h, v) * t) / 3600;
+      kilos += quemaEn(a, empuje, h, v) * t;
     }
   }
   const bajada = Math.max(0, nivel - hasta) * BAJADA_POR_METRO;
@@ -149,7 +156,7 @@ export function costeDelTramo(
     }).kt;
     const v = verdaderaDe(kt, h);
     const empuje = Math.max(0, resistenciaNivelado(a, h, v) - peso * Math.sin(SENDA));
-    kilos += (empuje * tsfcEn(a, h, v) * (bajada / v)) / 3600;
+    kilos += quemaEn(a, empuje, h, v) * (bajada / v);
   }
   const nivelado = distancia - subida - bajada;
   if (nivelado < 0) cabe = false;
@@ -161,9 +168,7 @@ export function costeDelTramo(
     subiendo: false,
   }).kt;
   const v = verdaderaDe(kt, nivel);
-  kilos +=
-    (resistenciaNivelado(a, nivel, v) * tsfcEn(a, nivel, v) * (Math.max(0, nivelado) / v)) /
-    3600;
+  kilos += quemaEn(a, resistenciaNivelado(a, nivel, v), nivel, v) * (Math.max(0, nivelado) / v);
   return { kilos, cabe, subida, bajada };
 }
 

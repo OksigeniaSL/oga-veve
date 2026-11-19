@@ -20,6 +20,7 @@ import {
   seCargaAlCambiarDeDestino,
   cargaParaElPlan,
   duracionDeLaReservaFinal,
+  quemaDeCrucero,
   quemaEsperando,
   RESERVA_SEGUNDOS,
 } from "./combustible";
@@ -46,9 +47,9 @@ describe("lo que se quema", () => {
   });
 
   it("y la avioneta, decenas de kilos", () => {
-    const crucero = PYKASU.maxThrust / 3;
-    const kgh = porHora(PYKASU, crucero);
-    // Treinta y ocho litros a la hora son unos veintisiete kilos.
+    const kgh = quemaDeCrucero(PYKASU) * 3600;
+    // Su manual, a 10.000 ft y a 118 nudos: 8,2 galones a la hora, unos
+    // veintidós kilos. Ver `combustible-por-potencia.test.ts`.
     expect(kgh).toBeGreaterThan(15);
     expect(kgh).toBeLessThan(50);
   });
@@ -84,7 +85,7 @@ describe("lo que se carga para la ruta", () => {
 
   it("y con la reserva dentro: siempre da para los cuarenta y cinco minutos", () => {
     for (const a of AIRCRAFT) {
-      const crucero = quemaPorSegundo(a, a.maxThrust / 3);
+      const crucero = quemaDeCrucero(a);
       expect(cargaParaLaRuta(a, 4000) / crucero).toBeGreaterThan(
         RESERVA_SEGUNDOS,
       );
@@ -121,10 +122,18 @@ describe("el aviso", () => {
     for (const a of AIRCRAFT) {
       const lleno = cargaParaLaRuta(a, 40_000);
       expect(comoVaElDeposito(a, lleno)).toBe("bien");
-      // Y que la trampa era de verdad: al consumo de despegue, ese mismo
-      // depósito da para bastante menos de los cuarenta y cinco minutos.
-      const aFondo = quemaPorSegundo(a, a.maxThrust);
-      expect(loQueQueda(lleno, aFondo)).toBeLessThan(RESERVA_SEGUNDOS);
+    }
+    /*
+     * Y que la trampa era de verdad en los reactores: al consumo de despegue,
+     * parados y a fondo, ese mismo depósito da para menos de los cuarenta y
+     * cinco minutos. En los de hélice ya no, y es lo de verdad: gastan por la
+     * potencia, y a fondo gastan una vez y media su crucero, no tres (ADR
+     * 0027, enmienda H37h).
+     */
+    for (const a of AIRCRAFT.filter((x) => x.potenciaAlEje === undefined)) {
+      const lleno = cargaParaLaRuta(a, 40_000);
+      const aFondo = quemaPorSegundo(a, a.maxThrust, { mach: 0, theta: 1, sigma: 1 });
+      expect(loQueQueda(lleno, aFondo), a.id).toBeLessThan(RESERVA_SEGUNDOS);
     }
   });
 

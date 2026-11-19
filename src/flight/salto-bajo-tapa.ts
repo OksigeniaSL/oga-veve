@@ -25,7 +25,13 @@
  * van en grados, como en `ruta-larga.ts`.
  */
 
-import { airDensity, GRAVITY, temperaturaExterior, velocidadDelSonido } from "./atmosphere";
+import {
+  airDensity,
+  GRAVITY,
+  SEA_LEVEL_DENSITY,
+  temperaturaExterior,
+  velocidadDelSonido,
+} from "./atmosphere";
 import { altitudDeCabina } from "./cabina-presurizada";
 import { loQueCabe, masaConCombustible, quemaPorSegundo, reservaEnKilos } from "./combustible";
 import type { AircraftConfig } from "./aircraft";
@@ -160,6 +166,7 @@ export function quemadoEnElVuelo(
     const quema = quemaPorSegundo(avion, resistencia, {
       mach: v / velocidadDelSonido(altura),
       theta: (temperaturaExterior(altura) + 273.15) / 288.15,
+      sigma: airDensity(altura) / SEA_LEVEL_DENSITY,
     });
     kilos = Math.max(0, kilos - quema * rato);
   }

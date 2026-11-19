@@ -260,10 +260,17 @@ describe("los de pistón sin turbo, con la ley de Gagg y Farrar", () => {
    * ficha de la que sale su velocidad a fondo) y 13.000 ft en las fichas de
    * segunda mano del G-164A. El manual del G-164A que se ha leído no lo da.
    * Con la ley de las turbinas subía a 20.000.
+   *
+   * **Y se queda 500 ft por debajo de la más baja**, 12.500, con los 4.500 N
+   * de parado con los que rueda los 615 ft de su manual. Con los 4.700 que
+   * llevó mientras el combustible se contó con el empuje parado llegaba a
+   * 13.100; ese parche se deshizo en cuanto el combustible pasó a la potencia
+   * (ADR 0027, enmienda H37h), y entre la carrera de su manual y el techo de
+   * una revista gana el manual.
    */
-  it("el JAZ 25, a 4.500 lb, entre los 13.000 y los 14.000 ft de su clase", () => {
+  it("el JAZ 25, a 4.500 lb, a un 5 % de los 13.000 ft de su clase y por debajo de los 14.000", () => {
     const t = techo(conMasa(MAINUMBY, 4500 * LIBRA));
-    expect(t).toBeGreaterThan(13000);
+    expect(t).toBeGreaterThan(13000 * 0.95);
     expect(t).toBeLessThan(14000);
   });
 });

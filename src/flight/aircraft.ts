@@ -983,6 +983,17 @@ export interface AircraftConfig {
    */
   potenciaUtil?: number;
   /**
+   * **La potencia al eje de sus motores**, W: la de todos juntos, la de su
+   * placa al nivel del mar. Es de la que sale lo que gasta un avión de hélice,
+   * porque un motor de hélice gasta por la potencia que da y no por lo que
+   * empuja: ver `quemaPorSegundo` en `combustible.ts`.
+   *
+   * Sin decir, el avión gasta por el empuje, que es como gasta un reactor.
+   * Distinta de `potenciaUtil`, que es esta por el rendimiento de la hélice y
+   * solo la llevan las de paso variable. ADR 0027, enmienda H37h.
+   */
+  potenciaAlEje?: number;
+  /**
    * A qué altura se hace ese crucero, m.
    *
    * **La cifra de crucero de un avión es verdad arriba y no abajo**, y sin esta
@@ -1723,7 +1734,7 @@ export const PYKASU: AircraftConfig = {
    * **743 kg de avión y 221 de gente**: el peso en vacío estándar del 172R
    * —1.639 lb en su manual de vuelo— con la instructora, quien vuela y una
    * criatura detrás. Con más, el vuelo más largo que tiene en el juego
-   * —Estigarribia a Pettirossi, 147 kg de combustible— pasaría de las 2.450 lb
+   * —Estigarribia a Pettirossi, 128 kg de combustible— pasaría de las 2.450 lb
    * de su peso máximo, que es lo que le pasa a un 172 de verdad: con cuatro
    * adultos no se llenan los depósitos.
    */
@@ -1745,6 +1756,12 @@ export const PYKASU: AircraftConfig = {
    * cae el empuje con la velocidad, no aquí.
    */
   maxThrust: 2600,
+  /*
+   * **160 hp**, el Lycoming IO-360-L2A del 172R a 2.400 vueltas (*Model 172R
+   * Information Manual*, «Performance - Specifications»): de lo que sale lo
+   * que gasta. Ver `potenciaAlEje`.
+   */
+  potenciaAlEje: 160 * 745.7,
   motores: 1,
   // Cables y varillas, como toda avioneta de escuela: compensada, vuelve a su
   // velocidad. Ver `mandos`.
@@ -1930,18 +1947,20 @@ export const MAINUMBY: AircraftConfig = {
    * veces su crucero, y con ella iba a fondo a 111 nudos y subía 455 ft/min a
    * las 4.500 lb del Ag Cat. Con su hélice, el 70 % de sus 450 hp: va a fondo a
    * 124 nudos —el de 450 hp, a 147 mph, 128 nudos (*Plane & Pilot*, «Gulfstream
-   * American Super Ag-Cat», 2010)— y sube, a esas 4.500 lb, unos 810 ft/min
+   * American Super Ag-Cat», 2010)— y sube, a esas 4.500 lb, unos 750 ft/min
    * en la cuenta, donde las revistas le dan entre 1.080 y 1.800.
    *
-   * El empuje parado baja a 4.700 N, y rueda 179 m a 4.500 lb, un 4,5 % menos
-   * que los 615 ft de su manual (ver `deRodarADespegar`). Con 4.500 los
-   * rodaba enteros, pero el combustible del juego se cuenta con el empuje
-   * parado —el crucero, a un tercio de él (`cargaParaLaRuta`)—, y con ellos el
-   * vuelo local de media hora llamaba «minimum fuel» a los 25 minutos. ADR
-   * 0027, enmienda H37c.
+   * El empuje parado baja a 4.500 N para que ruede lo mismo que rodaba: los
+   * 615 ft de su manual a 4.500 lb (ver `deRodarADespegar`). ADR 0027,
+   * enmienda H37c. Estuvo en 4.700 mientras el combustible se contó con el
+   * empuje parado, porque con 4.500 el vuelo local llamaba «minimum fuel» a
+   * los 25 minutos; desde que se cuenta con la potencia (`potenciaAlEje`), el
+   * empuje parado vuelve a ser solo lo que rueda. Enmienda H37h.
    */
-  maxThrust: 4700,
+  maxThrust: 4500,
   potenciaUtil: 0.7 * 450 * 745.7,
+  // Los 450 hp del R-985 del G-164A: de lo que sale lo que gasta. Ver `potenciaAlEje`.
+  potenciaAlEje: 450 * 745.7,
   motores: 1,
   mandos: "convencionales",
   motoresA: [0],
@@ -2141,8 +2160,10 @@ export const PANAMBI: AircraftConfig = {
   /*
    * **Las 4.000 lb de masa máxima sin combustible del Seneca II**, la cabina
    * llena: su ficha de tipo, la FAA A7SO, lo dice al revés —«all weight in
-   * excess of 4000 lb must be fuel»—. Con el vuelo más largo del juego queda
-   * en 2.042 kg, debajo de sus 4.570 lb al despegue.
+   * excess of 4000 lb must be fuel»—. Con el vuelo más largo del juego llega
+   * justo a sus 4.570 lb al despegue, 2.073 kg: el peso le deja 259 kg de
+   * combustible donde el plan pide 315 (ver `loQueDejaElPeso` y la enmienda
+   * H37h del ADR 0027).
    */
   masaSinCombustible: 1814,
   wingArea: 19.0,
@@ -2225,6 +2246,8 @@ export const PANAMBI: AircraftConfig = {
    * a fondo a 191, fuera del 2 % de `turbo.test.ts`.
    */
   potenciaUtil: 0.8 * 2 * 200 * 745.7,
+  // Los 200 hp de cada TSIO-360-E: de lo que sale lo que gasta. Ver `potenciaAlEje`.
+  potenciaAlEje: 2 * 200 * 745.7,
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
@@ -2521,6 +2544,8 @@ export const JAZ_50: AircraftConfig = {
    */
   maxThrust: 24000,
   heliceSinEmpujeA: 130,
+  // Los 620 shp de cada PT6A, los de su régimen plano: de lo que sale lo que gasta. Ver `potenciaAlEje`.
+  potenciaAlEje: 2 * 620 * 745.7,
   /*
    * **1.168 kg de queroseno** en los depósitos de serie (De Havilland, 300-G,
    * 2025: «Standard Fuel Capacity 1,168 kg»), los de debajo del suelo de la
@@ -2999,6 +3024,8 @@ export const ARASUNU: AircraftConfig = {
    */
   maxThrust: 28000,
   heliceSinEmpujeA: 230,
+  // Los 1.279 shp de cada PT6A-67D: de lo que sale lo que gasta. Ver `potenciaAlEje`.
+  potenciaAlEje: 2 * 1279 * 745.7,
   /*
    * **665 galones US de queroseno**, 4.456 lb a 6,7 lb el galón (*Plane &
    * Pilot*, «Beechcraft 1900»; 4.458 en la hoja de Raytheon). Sin él, la

@@ -5,7 +5,7 @@ import {
   cargaParaElPlan,
   llamadaDeCombustible,
   quemaEsperando,
-  quemaPorSegundo,
+  quemaDeCrucero,
 } from "./combustible";
 import { EJERCICIOS } from "./ejercicios";
 import { colocacionDeLaTormenta } from "./practica-de-tormenta";
@@ -34,7 +34,7 @@ function loQueSeLlama(
   metros: number,
   velocidad: number,
 ): ReturnType<typeof llamadaDeCombustible> {
-  const quema = Math.max(quemaPorSegundo(a, a.maxThrust / 3), quemaEsperando(a));
+  const quema = Math.max(quemaDeCrucero(a), quemaEsperando(a));
   let peor: ReturnType<typeof llamadaDeCombustible> = "nada";
   for (let falta = metros; falta > 0; falta -= velocidad * 10) {
     const llamada = llamadaDeCombustible(a, kilos, falta / velocidad);

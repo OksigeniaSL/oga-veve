@@ -9,8 +9,8 @@ import {
   llamadaDeCombustible,
   loQueCabe,
   loQueDejaElPeso,
+  quemaDeCrucero,
   quemaEsperando,
-  quemaPorSegundo,
   reservaEnKilos,
 } from "./combustible";
 
@@ -34,7 +34,7 @@ import {
 const MEDIA_HORA = 30 * 60;
 const A_CINCO_MINUTOS = 5 * 60;
 
-const crucero = (a: AircraftConfig) => quemaPorSegundo(a, a.maxThrust / 3);
+const crucero = (a: AircraftConfig) => quemaDeCrucero(a);
 const loMasDeLaCuenta = (a: AircraftConfig) => Math.max(crucero(a), quemaEsperando(a));
 
 /**
@@ -79,15 +79,18 @@ describe("el combustible de un vuelo local", () => {
     });
   }
 
-  it("con la carga de antes, los de pistón lo pedían a los pocos minutos: era el fallo", () => {
-    for (const id of ["jaz-20", "jaz-25"]) {
-      const a = AIRCRAFT.find((x) => x.id === id)!;
-      // La maniobra y los cuarenta y cinco minutos, los dos al consumo de crucero.
-      const antes = crucero(a) * (30 + 45) * 60;
-      const llama = cuandoSeLlama(a, antes, MEDIA_HORA);
-      expect(llama, id).not.toBeNull();
-      expect(llama!, id).toBeLessThan(10 * 60);
-    }
+  /*
+   * **Y el fumigador, con el empuje parado de su manual**, 4.500 N. Mientras
+   * el combustible se contó con el empuje parado entre tres, planeaba 78 kg/h
+   * y quemaba de 117 a 139, y con esos 4.500 N llamaba «minimum fuel» a los 25
+   * minutos; se le dejó en 4.700 para que no lo hiciera. Desde que gasta por
+   * la potencia, lo que planea es lo que quema en su crucero, y el empuje
+   * parado vuelve a ser solo lo que rueda (ADR 0027, enmienda H37h).
+   */
+  it("el JAZ 25 vuela su media hora con los 4.500 N de su manual", () => {
+    const a = AIRCRAFT.find((x) => x.id === "jaz-25")!;
+    expect(a.maxThrust).toBe(4500);
+    expect(cuandoSeLlama(a, cargaParaElPlan(a, LOCAL), MEDIA_HORA)).toBeNull();
   });
 
   it("y la reserva que se carga ya no es menos que la reserva final de la ley", () => {
@@ -98,10 +101,13 @@ describe("el combustible de un vuelo local", () => {
     }
   });
 
-  it("en los de turbina, cada ruta del juego carga lo de siempre: sus cuarenta y cinco minutos a crucero ya lo cubrían", () => {
-    const turbinas = AIRCRAFT.filter(
-      (a) => a.sound.engine === "turbofan" || a.sound.engine === "turboprop",
-    );
+  /*
+   * **En los reactores**, y ya no en los turbohélices: esperando abajo, un
+   * turbohélice gasta casi lo de su crucero, y su reserva final con lo de un
+   * cambio pasa de los cuarenta y cinco minutos a crucero (enmienda H37h).
+   */
+  it("en los reactores, cada ruta del juego carga lo de siempre: sus cuarenta y cinco minutos a crucero ya lo cubrían", () => {
+    const turbinas = AIRCRAFT.filter((a) => a.sound.engine === "turbofan");
     expect(turbinas.length).toBeGreaterThan(0);
     let rutas = 0;
     for (const a of turbinas)
