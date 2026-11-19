@@ -12,7 +12,12 @@
  *
  * - **bien**: a la del obstáculo, 56 nudos, hasta pasar el monte, y luego a
  *   la Vy, 74;
- * - **mal**: a la Vy desde que se va del suelo.
+ * - **mal**: a la Vy desde que se va del suelo;
+ * - **copas**: recién despegado se queda a seis metros del suelo, con el
+ *   motor a tope y sin subir, y llega al monte por debajo de las copas. Desde
+ *   H35b los árboles se tocan: tiene que salir el percance del árbol y el
+ *   ejercicio pedir otra vez (`OGA_TECNICA=bien,mal,copas`, que es lo de
+ *   siempre).
  *
  * Mira que se presente, que pida soltar los frenos, que el monte esté en su
  * sitio, cómo se pasa y con cuánto margen sobre las copas, y que bien volado
@@ -29,7 +34,7 @@ const SALIDA = process.argv[2] ?? "capturas-pista-corta";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5686);
 const TRAMO = process.env.OGA_TRAMO ?? "taguato-ruvicha";
 const CON_GPU = process.env.OGA_GPU === "1";
-const TECNICAS = (process.env.OGA_TECNICA ?? "bien,mal").split(",");
+const TECNICAS = (process.env.OGA_TECNICA ?? "bien,mal,copas").split(",");
 
 mkdirSync(SALIDA, { recursive: true });
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -69,6 +74,7 @@ const leer = (page) =>
       kt: o.velocidadDeCabina(),
       enElSuelo: s.onGround,
       percance: j.percance !== null,
+      cualPercance: j.percance,
       tarjeta: o.tarjeta?.()?.dibujo ?? null,
       texto: document.querySelector(".senal")?.textContent?.replace(/\s+/g, " ").trim() ?? "",
     };
@@ -197,6 +203,26 @@ try {
           }
           c.brakes = 0;
           const pasado = m ? (s.position.x - m.x) * m.dx + (s.position.z - m.z) * m.dz : 0;
+          if (tecnica === "copas") {
+            /*
+             * **A seis metros del suelo y sin subir**: el morro que sostiene la
+             * velocidad de ahora, más lo que pide la altura, menos lo que sube.
+             */
+            const alto = s.position.y - a.gearHeight - j.terrain.sampleHeight(s.position.x, s.position.z);
+            /*
+             * Con integral: el timón de la página lleva encima el compensador
+             * de despegue del juego, morro arriba, y sin ella el avión se
+             * quedaba a dieciséis metros, justo rozando la cima del monte.
+             */
+            integral = clamp(integral + (6 - alto) * 0.03 * dt, -0.6, 0.6);
+            c.elevator = clamp(
+              timonQueSostiene(a, Math.max(indicada, 50) * KT, flaps) + (6 - alto) * 0.05 + integral - s.verticalSpeed * 0.1 - s.pitchRate * 1.2,
+              -1,
+              1,
+            );
+            globalThis.__perfil.push({ pasado, kt: indicada, quiere: indicada, alto: s.position.y - a.gearHeight - (m?.cima ?? 0) });
+            return;
+          }
           const meta = tecnica === "bien" && pasado < p.pasadaLaPista ? p.velocidades.sobreElObstaculo : p.velocidades.vy;
           quiere += clamp(meta - quiere, -2 * dt, 2 * dt);
           const acelera = ((indicada - (antes ?? indicada)) * KT) / dt;
@@ -227,6 +253,12 @@ try {
       if (r.ejercicio?.fase === "cerrada" || r.percance) break;
       await pausa(150);
     }
+    // Con el percance, el vuelo se para: lo que haya cerrado el ejercicio, se lee en un momento.
+    if (r.percance) {
+      await pausa(1500);
+      r = await leer(page);
+      await foto("02b-el-percance");
+    }
     const e = r.ejercicio;
     const perfil = await page.evaluate(() => globalThis.__perfil ?? []);
     const tarjetas = await page.evaluate(() => globalThis.__tarjetas ?? []);
@@ -234,14 +266,22 @@ try {
     soltar = soltar || tarjetas.some((x) => x.startsWith("freno") && /solt|release|let go/i.test(x));
     const alAngulo = tarjetas.some((x) => /empinado|Slow and steep/i.test(x));
     if (tecnica === "bien") comprobar("bien volado se cuenta el ángulo sostenido", alAngulo);
-    else comprobar("mal volado no se cuenta el ángulo, que solo se cruzó acelerando", !alAngulo);
+    else if (tecnica === "mal") comprobar("mal volado no se cuenta el ángulo, que solo se cruzó acelerando", !alAngulo);
     const enLaFila = perfil.find((x) => x.pasado >= (e?.pasadaLaPista ?? 120));
     comprobar("pide soltar los frenos con el motor a tope", soltar);
-    comprobar(
-      "se cierra en el aire, con la Vy sostenida",
-      e?.fase === "cerrada" && !r.percance,
-      `cierre ${e?.cierre}, pasó ${e?.paso} con ${e?.margen?.toFixed(1)} m sobre las copas; al cruzar la fila ${enLaFila ? `${enLaFila.kt} kt` : "?"}`,
-    );
+    if (tecnica === "copas") {
+      const ultimo = perfil[perfil.length - 1];
+      comprobar(
+        "por debajo de las copas, el árbol se toca: percance y otra vez",
+        r.cualPercance === "arbol" && (e?.cierre ?? "otraVez") === "otraVez",
+        `percance ${r.cualPercance}, cierre ${e?.cierre}; el último paso, ${ultimo ? `${ultimo.pasado.toFixed(0)} m pasado el final, ${ultimo.alto.toFixed(1)} m sobre la cima a ${ultimo.kt.toFixed(0)} kt` : "?"}`,
+      );
+    } else
+      comprobar(
+        "se cierra en el aire, con la Vy sostenida",
+        e?.fase === "cerrada" && !r.percance,
+        `cierre ${e?.cierre}, pasó ${e?.paso} con ${e?.margen?.toFixed(1)} m sobre las copas; al cruzar la fila ${enLaFila ? `${enLaFila.kt} kt` : "?"}`,
+      );
     medidos[tecnica] = e?.margen ?? null;
     pasos[tecnica] = e?.paso ?? null;
     console.log(
