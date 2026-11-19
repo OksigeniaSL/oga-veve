@@ -495,8 +495,13 @@ export interface FlightModel {
    * `sacado` es lo que se lleva fuera; sin él, lo del último paso. En el
    * modelo sencillo cambia la cuenta —con tren y flaps hace falta más gas—, y
    * quien coloca el avión configurado se lo dice antes del primer paso.
+   *
+   * `pendiente` es la de la trayectoria, rad, negativa bajando; sin ella,
+   * nivelado. En el modelo completo el gas sale de las fuerzas —ver
+   * `gasPara` en `fdm.ts`—, y por la senda de una final el peso empuja y
+   * hace falta menos. En el sencillo el gas es la velocidad y no la mira.
    */
-  gasPara(velocidad: number, sacado?: LoSacado): number;
+  gasPara(velocidad: number, sacado?: LoSacado, pendiente?: number): number;
   /**
    * **Lo más rápido que va a fondo con eso sacado**, m/s verdaderos: en el
    * modelo sencillo, que es donde el gas es la velocidad. Lo mira la marca de

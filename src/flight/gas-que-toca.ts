@@ -29,7 +29,7 @@
 import { esDeChorro, loQueDaElMotor, type AircraftConfig } from "./aircraft";
 import { AIRE_ESTANDAR, airDensity, SEA_LEVEL_DENSITY, type Aire } from "./atmosphere";
 import { MOTOR_QUE_SOSTIENE } from "./arcade";
-import { empujeLleno, empujeQueSostiene, type ParaSostener } from "./fdm";
+import { palancaQueSostiene, type ParaSostener } from "./fdm";
 import { topeConMargen } from "./limites";
 
 export type { ParaSostener } from "./fdm";
@@ -38,18 +38,14 @@ export type { ParaSostener } from "./fdm";
  * **El gas que sostiene esa velocidad**, de 0 a 1, en el modelo completo; o
  * `null` si ni a fondo se llega.
  *
- * La resistencia es la de `fdm.ts` —ver `empujeQueSostiene`—, y el empuje el
- * de `empujeLleno`: si uno cambia, esto cambia con él.
+ * La cuenta es `palancaQueSostiene` de `fdm.ts`, la misma del `gasPara` de
+ * ese modelo: la resistencia de `empujeQueSostiene` entre el empuje de
+ * `empujeLleno`. Si una cambia, esto cambia con ella.
  */
 export function gasQueSostiene(a: AircraftConfig, p: ParaSostener): number | null {
-  const rho = airDensity(p.altura, p.aire ?? AIRE_ESTANDAR);
-  const v = Math.max(1, p.verdadera);
-  const empuje = empujeQueSostiene(a, p);
-  const lleno = empujeLleno(a, rho, v);
-  if (!(lleno > 0)) return null;
-  const gas = empuje / lleno;
+  const gas = palancaQueSostiene(a, p);
   // Un pelo por encima del tope es redondeo; más, es que no se llega.
-  if (gas > 1.02) return null;
+  if (!(gas <= 1.02)) return null;
   return Math.max(0, Math.min(1, gas));
 }
 

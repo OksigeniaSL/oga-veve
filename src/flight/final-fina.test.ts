@@ -99,7 +99,21 @@ function vuela(
  */
 function enLaFinal(a: AircraftConfig, tier: Tier, senda = -3, gas: Gas = "automatico"): Final {
   const ias = a.approachSpeed;
-  const v = empezar(a, tier, ias, senda < 0 ? 600 : 300, 1);
+  const alto = senda < 0 ? 600 : 300;
+  const v = empezar(a, tier, ias, alto, 1);
+  /*
+   * Y con el gas de su senda, que es como el juego coloca una final (ver
+   * `reiniciarEnFinal`): `empezar` pone el de nivelado. Con la recta a ojo de
+   * antes el reactor salía casi con el de la senda por casualidad; con el de
+   * nivelado, lo que le queda al JAZ 90 con el gas quieto en Tuka pasaba de
+   * 0,145 a 0,155 m/s, que es el arranque sin asentar del todo y no la final
+   * (ADR 0002, nota H40a).
+   */
+  v.gas = v.modelo.gasPara(
+    ias / Math.sqrt(airDensity(alto) / SEA_LEVEL_DENSITY),
+    { flaps: 1, tren: 1 },
+    senda * RAD,
+  );
   // Con el gas buscando la velocidad, la mano sostiene la senda en todos. Ver
   // `sostieneLaVelocidad` en `mano.ts`.
   v.gasLlevaLaVelocidad = true;

@@ -105,6 +105,7 @@ import type {
   FlightState,
   GroundSampler,
   InitialConditions,
+  LoSacado,
 } from "./model";
 
 /** Paso máximo de integración. Por encima, el modelo se vuelve inestable. */
@@ -663,6 +664,12 @@ export class CoefficientFlightModel implements FlightModel {
 
   /** Los flaps con los que voló el último paso, de 0 a 1. */
   private flapsDelPaso = 0;
+  /**
+   * Y el tren y los aerofrenos, para `gasPara` sin lo sacado. El tren, fuera
+   * hasta el primer paso, como en `neutralControls`.
+   */
+  private trenDelPaso = 1;
+  private aerofrenosDelPaso = 0;
 
   /**
    * **El ángulo de ataque de sustentación nula**, con los flaps del último
@@ -926,13 +933,6 @@ export class CoefficientFlightModel implements FlightModel {
   }
 
   /**
-   * Aquí no hay cuenta exacta: el empuje pelea contra la resistencia y la
-   * velocidad de equilibrio depende de la actitud, del alabeo y de si se sube
-   * o se baja. Se estima con la proporción al crucero, que en el rango de la
-   * aproximación se queda cerca, y el modelo termina de ajustarla en unos
-   * segundos como haría un piloto con la palanca.
-   */
-  /**
    * Vez y media la de aproximación: rápido para posarse, y lo bastante lento
    * como para que la aproximación sea una aproximación. Medido, este modelo la
    * sostiene nivelada durante el minuto entero que dura la senda.
@@ -995,11 +995,53 @@ export class CoefficientFlightModel implements FlightModel {
     return vref * 1.5;
   }
 
-  gasPara(velocidad: number): number {
-    return Math.max(
-      0.15,
-      Math.min(1, (velocidad / this.aircraft.cruiseSpeed) * 0.8),
-    );
+  /**
+   * **El gas que sostiene esa velocidad verdadera**, sacado de las mismas
+   * fuerzas que mueven el avión: la resistencia a esa velocidad con lo que se
+   * lleva fuera, a esta altura y en el aire del día, entre lo que da el motor
+   * a fondo ahí. Nivelado, o por la pendiente que se diga.
+   *
+   * Aquí había una recta a ojo —la velocidad entre la de crucero, por ocho
+   * décimas— y la justificación era que «no hay cuenta exacta»: la velocidad
+   * de equilibrio depende de la actitud y de si se sube o se baja. Nivelado
+   * la hay, y es la de `gasQueSostiene`, que ya llevaban la marca del motor
+   * y la colocación de los ejercicios. La recta no miraba ni el empuje ni la
+   * resistencia, así que no se enteró de nada de lo que cambió en ellos: con
+   * la hélice de velocidad constante del JAZ 25 (H37c), a 75 nudos y mil
+   * quinientos metros pedía 0,60 cuando lo que sostiene es 0,47, y el avión
+   * que la prueba de la mano coloca con ese gas aceleraba hasta 82 nudos en
+   * vez de quedarse; al JAZ 20 le daba de menos a 60 nudos —0,44 contra
+   * 0,54— y le sobraba a 90. Es lo mismo que pasó con `gasParaRodar`: dos
+   * cuentas para lo mismo acaban diciendo cosas distintas (ADR 0002, nota
+   * H40a).
+   *
+   * Sin `sacado`, con lo del último paso. Y donde no hay solución, lo que se
+   * puede: más rápido de lo que da a fondo, todo el gas; más despacio que la
+   * pérdida con esos flaps, el que la sostiene a ella, que es lo más que
+   * pide nivelado —por debajo no hay gas que sostenga nada, y la cuenta
+   * despejaría una sustentación que el ala no da—.
+   */
+  gasPara(velocidad: number, sacado?: LoSacado, pendiente = 0): number {
+    const ac = this.aircraft;
+    const lleva = sacado ?? {
+      flaps: this.flapsDelPaso,
+      tren: this.trenDelPaso,
+      aerofrenos: this.aerofrenosDelPaso,
+    };
+    const altura = this.state.position.y;
+    const densidad = airDensity(altura, this.aire);
+    const perdida =
+      perdidaCon(ac, lleva.flaps) * Math.sqrt(SEA_LEVEL_DENSITY / Math.max(0.01, densidad));
+    const gas = palancaQueSostiene(ac, {
+      altura,
+      verdadera: Math.max(velocidad, perdida),
+      aire: this.aire,
+      flaps: lleva.flaps,
+      tren: lleva.tren,
+      aerofrenos: lleva.aerofrenos ?? 0,
+      pendiente,
+    });
+    return Number.isFinite(gas) ? clamp(gas, 0, 1) : 1;
   }
 
   /**
@@ -1135,6 +1177,8 @@ export class CoefficientFlightModel implements FlightModel {
 
     const assisted = this.applyAssist(controls, s.alpha, s.beta, dt, qS);
     this.flapsDelPaso = assisted.flaps;
+    this.trenDelPaso = assisted.tren;
+    this.aerofrenosDelPaso = controls.aerofrenos ?? 0;
     /*
      * **Y lo que sustenta, frena y cabecea es el aire que pasa por el plano de
      * simetría**, no todo el que llega.
@@ -2663,6 +2707,22 @@ export function empujeQueSostiene(a: AircraftConfig, p: ParaSostener): number {
     resistenciaDeLosPaneles(a, p.aerofrenos ?? 0, 0) +
     resistenciaDeOnda(machDe(v, p.altura, aire), a.mmo, a.aero.cd0);
   return qS * cd + peso * Math.sin(p.pendiente);
+}
+
+/**
+ * **La palanca que sostiene esa velocidad por esa pendiente**, sin tope: el
+ * empuje de `empujeQueSostiene` entre el de `empujeLleno` ahí. Por encima de
+ * uno es que ni a fondo se llega; `Infinity`, que el motor no da nada.
+ *
+ * Es la cuenta de la marca del motor (`gasQueSostiene`) y la de `gasPara`
+ * de este modelo, que cada uno remata a su manera: una no pone marca donde no
+ * se llega, y el otro pide todo el gas.
+ */
+export function palancaQueSostiene(a: AircraftConfig, p: ParaSostener): number {
+  const rho = airDensity(p.altura, p.aire ?? AIRE_ESTANDAR);
+  const lleno = empujeLleno(a, rho, Math.max(1, p.verdadera));
+  if (!(lleno > 0)) return Infinity;
+  return empujeQueSostiene(a, p) / lleno;
 }
 
 /**
