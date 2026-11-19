@@ -2924,3 +2924,75 @@ la JAZ 20 sigue igual con la senda nueva: **7 de 7**, 9,2° pedía 9,0.
   —la ley de enderezar con el pie es la de la avioneta—. El ejercicio lo
   cuenta como derecho, que lo es de morro; un reactor de verdad no toca con
   tanta ala.
+
+## Enmienda H32c (19-11-2026): el pie del cangrejo, tapado por «ya podés tocar» y el PAPI
+
+### No era cómo se aterriza
+
+H34a dejó escrito que en la corta del reactor la tarjeta del pie la tapaba la
+de cómo se aterriza (`contarComoSeAterriza`), que se arma con los flaps y
+espera a que la tarjeta quede libre. Lo decía el dibujo: «toma». Pero ese
+dibujo lo ponen tres cosas, y el banco solo leía el dibujo, cada ciento veinte
+milisegundos. Ahora `ver-el-cruzado.mjs` apunta cada tarjeta que se pide por
+debajo de ochenta metros, con su altura y su texto. En la primera tirada con
+eso, otra vez 6 de 7:
+
+> 15,0 m pie-derecho «Now, right rudder: nose to the runway» · 15,0 m toma
+> «You can touch down now» · 12,8 m papi2 «Two red, two white: on the glide
+> path» · 9,4 m nariz-arriba «A little nose up»
+
+Es **«ya podés tocar»**, en el mismo paso que el pie, y a los dos metros, el
+PAPI. Cómo se aterriza no salió en toda la corta. Las tres —el pie, la de
+tocar y la del PAPI— van con la misma prioridad, y entre iguales gana la
+última que llega. La de tocar sale a menos de dieciocho metros sobre la pista
+llegando a la zona de toma, o a segundo y medio del umbral (ver
+`llegandoALaZonaDeToma`), y el pie a quince metros de ruedas sobre el suelo
+de debajo: el JAZ 90, con dos metros de tren y la pista de Los Rodeos un par
+de metros por encima del suelo de antes del umbral, cruza las dos alturas en
+el mismo sitio, y cuál sale segunda es cosa del fotograma. Por eso salía 7 de 7
+una vez y 6 de 7 otra.
+
+### Lo cambiado: lo que calla el ejercicio que lleva su propia final
+
+Quien juega en un reactor no veía «pie derecho» justo cuando tenía que pisar,
+y a diez metros con el viento de costado lo que se enseña es el pie. La final
+con viento cruzado es una lección de cómo se aterriza, y la cuenta ella. Así
+que entra en `lo-que-calla-el-ejercicio.ts`, con dos cosas nuevas:
+
+- **Cómo se aterriza**, mientras dura el ejercicio (`escena: "cruzado"`): es
+  otra explicación de lo mismo a la vez, y el ejercicio ocupa la tarjeta toda
+  la final, así que salía en el primer hueco. No se gasta: se deja de esperar
+  y la rearma el tramo siguiente.
+- **«Ya podés tocar» y las luces del PAPI, desde que pide el pie hasta tocar**
+  (`FinalConViento.pideElPie`). El pie y el morro a la pista ya dicen cuándo y
+  cómo se toca con viento de costado. En el ala baja no se pide nada en la
+  corta, y ahí «ya podés tocar» sigue.
+
+Lo que sigue saliendo encima del pie es la recogida, «un poco de nariz», que
+es la otra mitad de la misma maniobra —al tocar se endereza y se recoge— y
+llega segundo y medio después: lo que `LA_TOMA_SE_ADELANTA` da por bastante
+para que una tarjeta se vea. Y la seguridad, que no se calla nunca.
+
+En los ejercicios que acaban en el aire se calla lo mismo, que es de la pista
+y no de su lección.
+
+### Volado
+
+`ver-el-cruzado.mjs` con `OGA_TECNICA=cangrejo OGA_AVION=jaz-90`, dos veces:
+
+- **7 de 7.** El pie a 15,0 m y encima nada más que la recogida, a 9,4 m.
+  «Ya podés tocar» salió esta vez en el mismo paso pero **antes** del pie,
+  que lo tapó: la tarjeta, bien.
+- **6 de 7**, con el pie bien —a 15,0 m, y la siguiente, la recogida a 9,4
+  m—. Lo que falla es lo de H34a que sigue abierto: toca con 3,6° de morro y
+  11,8° de ala al viento, la ley de enderezar de la avioneta en el reactor.
+
+### Lo que queda
+
+- **«Ya podés tocar» en el mismo paso, antes del pie.** Lo calla el pie desde
+  que se pide, y cuando sale un paso antes la tarjeta del pie lo tapa; pero su
+  voz, en los aviones que no cantan la cuenta —el JAZ 90 sí la canta, y ahí
+  no habla la instructora—, sonaría justo antes de la del pie. Lo de verdad
+  es callarlo en todo el cangrejo, que su «tocá» es el pie. No ha cabido en
+  esta tanda.
+- **Al tocar, el JAZ 90 inclinado**, como en H34a.

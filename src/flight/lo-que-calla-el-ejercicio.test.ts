@@ -14,7 +14,16 @@ import juego from "../game.ts?raw";
 import { EJERCICIOS, ejercicioPorId, type EjercicioId } from "./ejercicios";
 import { NO_CALLA_NADA, loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
 
-const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true, laMegafonia: true, lasExplicaciones: true };
+const TODO = {
+  laFase: true,
+  laFrecuencia: true,
+  laTorre: true,
+  laVentanilla: true,
+  laMegafonia: true,
+  lasExplicaciones: true,
+  comoSeAterriza: true,
+  laCorta: true,
+};
 /**
  * Los que se cierran en el aire: los de radio menos el ILS, la deriva, que acaba encima de su puente, el rumbo de noche, encima del río, y la estima, que acaba con el reloj a cero.
  * Y el altímetro que miente, pasada la cima (H26p), y la brújula, con la tarjeta quieta (H26q); y el giróscopo, puesto con ella (H26r).
@@ -67,9 +76,27 @@ describe("lo que calla un ejercicio que no acaba en la pista", () => {
     expect(loQueCallaElEjercicio(ejercicioPorId("radial"), false, true)).toEqual(TODO);
   });
 
-  it("el juego le dice cuándo el ILS está pidiendo la frustrada", () => {
-    expect(juego).toMatch(/loQueCallaElEjercicio\(this\.ejercicioDeHoy, [^;]*this\.ils\?\.fase === "frustrando"\)/);
+  it("el juego le dice cuándo el ILS está pidiendo la frustrada, y cuándo el cangrejo pide el pie", () => {
+    expect(juego).toMatch(
+      /loQueCallaElEjercicio\(\s*this\.ejercicioDeHoy,[^;]*this\.ils\?\.fase === "frustrando",\s*this\.finalConViento\?\.pideElPie/,
+    );
   });
+
+  /*
+   * H32c: el cangrejo del JAZ 90 en Los Rodeos. A los quince metros salió «pie
+   * derecho» y en el mismo fotograma «ya podés tocar» encima; a los trece, el
+   * PAPI. Y cómo se aterriza, que espera a que la tarjeta quede libre, salía en
+   * el primer hueco de la final del ejercicio.
+   */
+  for (const id of ["cangrejo", "ala-baja"] as const)
+    it(`«${id}» cuenta su propia final: cómo se aterriza, callado; la corta, solo mientras pide el pie`, () => {
+      const e = ejercicioPorId(id);
+      expect(e?.escena).toBe("cruzado");
+      expect(loQueCallaElEjercicio(e, false)).toEqual({ ...NO_CALLA_NADA, comoSeAterriza: true });
+      expect(loQueCallaElEjercicio(e, false, false, true)).toEqual({ ...NO_CALLA_NADA, comoSeAterriza: true, laCorta: true });
+      // Cerrado, lo que se vuele después ya es un vuelo.
+      expect(loQueCallaElEjercicio(e, true, false, true)).toEqual(NO_CALLA_NADA);
+    });
 });
 
 /** El cuerpo de un método de `game.ts`, de su firma a la llave que lo cierra. */
@@ -138,5 +165,13 @@ describe("y el juego lo calla donde nace cada cosa", () => {
     const rombo = cuerpoDe(/\n {2}private explicarElTrafico\(\): void \{/);
     expect(rombo, "no se encontró explicarElTrafico en game.ts").not.toBe("");
     expect(rombo).toMatch(/this\.loQueCalla\.lasExplicaciones/);
+  });
+
+  it("cómo se aterriza no se cuenta encima del ejercicio, y en la corta del pie no salen ni «ya podés tocar» ni el PAPI", () => {
+    const toma = cuerpoDe(/\n {2}private contarComoSeAterriza\(\): void \{/);
+    expect(toma, "no se encontró contarComoSeAterriza en game.ts").not.toBe("");
+    expect(toma).toMatch(/if \(this\.loQueCalla\.comoSeAterriza\) \{\s*this\.tomaPorContar = false;/);
+    expect(juego).toMatch(/const puedeTocar =[^;]*!this\.loQueCalla\.laCorta/);
+    expect(juego).toMatch(/this\.hechos\.on\("papi",[^]*?if \(this\.loQueCalla\.laCorta\) return;[^]*?this\.hud\.senal\.mostrar\(/);
   });
 });

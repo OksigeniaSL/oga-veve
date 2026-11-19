@@ -108,6 +108,27 @@ try {
   });
   await pausa(2500);
   await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+  /*
+   * **Cada tarjeta que se pide por debajo de ochenta metros, y si entra**
+   * (H32c). El bucle lee cada ciento veinte milisegundos, y entre dos lecturas
+   * caben varias tarjetas: en la corta del JAZ 90 salió «toma» en vez del pie,
+   * y con solo el dibujo no se sabía cuál de las tres que lo usan la puso.
+   */
+  await page.evaluate(() => {
+    const j = globalThis.__oga.juegoParaTrazas();
+    const senal = j.hud.senal;
+    const original = senal.mostrar.bind(senal);
+    globalThis.__tarjetasDeLaCorta = [];
+    senal.mostrar = (dibujo, texto, letra, opciones = {}) => {
+      original(dibujo, texto, letra, opciones);
+      const s = j.flight.state;
+      const alto = s.position.y - j.terrain.sampleHeight(s.position.x, s.position.z) - j.aircraft.gearHeight;
+      if (alto < 80)
+        globalThis.__tarjetasDeLaCorta.push(
+          `${alto.toFixed(1)} m ${dibujo}${senal.puesto.dibujo === dibujo ? "" : " (espera)"} «${(texto || "").slice(0, 40)}»`,
+        );
+    };
+  });
   const foto = async (n) => {
     const ruta = `${SALIDA}/${NOMBRE}-${n}.png`;
     await page.screenshot({ path: ruta });
@@ -331,7 +352,12 @@ try {
       `medido ${r.ejercicio.cangrejo?.toFixed(1)}°, pedía ${r.ejercicio.pidioAlContar?.toFixed(1)}°`,
     );
     comprobar("la tarjeta dibuja el avión torcido sobre la raya", tarjetaMedida === "cangrejo-viento-izquierda", String(tarjetaMedida));
-    comprobar("y en la corta, el pie derecho", tarjetaDelPie === "pie-derecho", String(tarjetaDelPie));
+    const pedidas = await page.evaluate(() => globalThis.__tarjetasDeLaCorta ?? []);
+    comprobar(
+      "y en la corta, el pie derecho",
+      tarjetaDelPie === "pie-derecho",
+      `${tarjetaDelPie} · las pedidas por debajo de 80 m: ${pedidas.join(" | ")}`,
+    );
     if (TRAMO !== "tuka")
       comprobar("desde Taguato, los grados escritos", /\d+° (al viento|into the wind)/.test(textoMedido), `«${textoMedido.slice(0, 80)}»`);
   } else {

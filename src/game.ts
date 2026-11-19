@@ -4185,13 +4185,19 @@ export class Game {
   /**
    * **Lo que el ejercicio de hoy calla mientras dura**: en los de radio, que se
    * cierran en el aire, la fase del plan, la torre, su frecuencia, la
-   * ventanilla, la megafonía y lo que se explica de la cabina (H26u); y en el
-   * ILS, desde que pide la frustrada, la fase. Ver
+   * ventanilla, la megafonía y lo que se explica de la cabina (H26u); en el
+   * ILS, desde que pide la frustrada, la fase; y en la final con viento
+   * cruzado, cómo se aterriza y, desde que pide el pie, la corta (H32c). Ver
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
     const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila ?? this.giroscopoEnHora ?? this.pitotHelado ?? this.gpsApagado;
-    return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
+    return loQueCallaElEjercicio(
+      this.ejercicioDeHoy,
+      deRadio?.fase === "cerrada",
+      this.ils?.fase === "frustrando",
+      this.finalConViento?.pideElPie ?? false,
+    );
   }
   /**
    * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un
@@ -12077,6 +12083,8 @@ export class Game {
     this.hechos.on("papi", ({ blancas, unidades = 4 }) => {
       // La senda del PAPI es la de un avión a su pista; el helicóptero se acerca a su helipuerto.
       if (this.aircraft.helicoptero) return;
+      // Ni encima del pie del cangrejo, a quince metros del suelo: ver `loQueCalla`.
+      if (this.loQueCalla.laCorta) return;
       const enLaSenda = blancasEnLaSenda(unidades);
       const apapi = unidades === 2;
       this.hud.senal.mostrar(
@@ -20905,6 +20913,8 @@ export class Game {
     const puedeTocar =
       !this.aircraft.helicoptero &&
       !this.flight.state.onGround &&
+      // Ni mientras el cangrejo pide el pie, que dice lo mismo: ver `loQueCalla`.
+      !this.loQueCalla.laCorta &&
       // Y no en el bote de después de tocar: ahí ya se dijo «frená», y «ya
       // podés tocar» detrás es contar el pasado. Ver `yaTocoTierra`.
       !this.yaTocoTierra &&
@@ -22255,6 +22265,15 @@ export class Game {
     if (!this.tomaPorContar || this.tomaContada) return;
     // Cómo se aterriza es cómo aterriza un avión.
     if (this.aircraft.helicoptero) return;
+    /*
+     * **Y no encima de un ejercicio que cuenta su propia final** (H32c): se
+     * deja de esperar sin contarlo, y lo rearma el tramo siguiente. Ver
+     * `flight/lo-que-calla-el-ejercicio.ts`.
+     */
+    if (this.loQueCalla.comoSeAterriza) {
+      this.tomaPorContar = false;
+      return;
+    }
     if (this.instructor.hablando || this.hud.senal.ocupada) return;
     this.tomaPorContar = false;
     this.tomaContada = true;
