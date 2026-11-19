@@ -38,6 +38,7 @@
 import type { AircraftConfig } from "./aircraft";
 import type { TierId } from "./tiers";
 import { AIRE_ESTANDAR, type Aire, indicatedAirspeed, velocidadDelSonido } from "./atmosphere";
+import { MARGEN_KT, MARGEN_MACH } from "./limites";
 import { type Estado, mandosPara, memoriaNueva } from "./piloto-automatico";
 
 const PIE = 0.3048;
@@ -158,9 +159,10 @@ export type AvionQueBaja = Pick<
   "vmoKt" | "mmo" | "aerofrenos" | "vleKt" | "trenRetractil"
 >;
 
-/** El margen por debajo de los topes al que se baja, en nudos y en Mach. */
-const MARGEN_KT = 10;
-const MARGEN_MACH = 0.02;
+/*
+ * El margen por debajo de los topes al que se baja, en nudos y en Mach, es el
+ * de `topeConMargen` en `limites.ts`: el mismo con el que se cruza.
+ */
 
 /**
  * **A qué velocidad se baja**, indicada, m/s: la máxima, con un margen.

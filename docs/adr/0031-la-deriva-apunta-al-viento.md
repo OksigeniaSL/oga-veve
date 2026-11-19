@@ -3203,3 +3203,107 @@ foto:
   A340, y «IRS NAV ONLY» con un FCOM entero.
 - **De cristal**: la ventana de alertas con «GPS NAV LOST», y lo que llevan
   de verdad las clases de los turbohélices.
+
+## Enmienda H39a (19-11-2026): los ejercicios en crucero, a la de la tabla y nunca contra su tope
+
+### Lo que se vio
+
+`ver-el-gps.mjs` con el JAZ 50 daba 19 de 20, y con el JAZ 20, el JAZ 40 y
+el JAZ 60, 20 de 20. Lo que fallaba era «ni se ve: solo sus tarjetas»: entre
+las del ejercicio salía `sobrevelocidad`. Nada más empezar.
+
+### La causa
+
+Los ejercicios que empiezan en crucero arrancaban a la de la ficha: los de
+radio —la aguja, el radial, el GPS, el corte, el cruce y la deriva—, la
+brújula y el giróscopo, a `Math.min(cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)`;
+la despresurización y la tormenta, a `cruiseSpeed` a secas. Y la de la ficha
+es la verdadera **a su altura de crucero**. El JAZ 50, de la clase del Twin
+Otter Series 400, da sus 182 nudos a diez mil pies, y su Vmo son 166
+indicados: a tres mil pies, 174 verdaderos. Nacía ocho nudos por encima del
+tope y el aviso saltaba a los dos segundos. Tampoco los sostenía ahí: ni a
+fondo.
+
+H26t ya había dejado la estima y el altímetro en la de la tabla, y escribió
+que los demás seguían con la de la ficha porque «su cuenta no depende de la
+velocidad». Eso valía para su cuenta, no para el avión. Y un manual no pone
+nunca en su tabla de crucero una velocidad por encima de su Vmo.
+
+Medido sin volar, para cada avión y cada colocación en el aire, contra el
+tope a esa altura (`topeDeVelocidad`) y contra lo que sostiene con su gas
+(`gasQueSostiene`), con la pista a cien metros. En Los Rodeos, a 632, sale
+lo mismo con dos o tres nudos más, salvo el JAZ 110 en la tormenta, que se
+queda seis por debajo del tope:
+
+| Avión | Ejercicio, altura | Antes | Tope ahí | Después |
+| --- | --- | --- | --- | --- |
+| JAZ 50 | radio, 1.014 m | 182 kt: **pasa del tope y no se sostiene** | 174 | 160 kt (153 indicados, gas 0,80) |
+| JAZ 50 | deriva, 557 m | 182 kt: **pasa del tope y no se sostiene** | 171 | 159 kt (gas 0,78) |
+| JAZ 50 | tormenta, 3.148 m | 182 kt: **no se sostiene** | 194 | 168 kt (gas 0,93) |
+| JAZ 40 | radio, 1.014 m | 189 kt: **no se sostiene** | 242 | 160 kt (gas 0,75) |
+| JAZ 40 | deriva, 557 m | 189 kt: **no se sostiene** | 236 | 158 kt (gas 0,75) |
+| JAZ 110 | tormenta, 6.100 m | 488 kt: **pasa del tope** | 480 | 466 kt (340 indicados) |
+| JAZ 90 | tormenta, 6.100 m | 428 kt, a 7 indicados de la Vmo | 438 | 425 kt (310 indicados) |
+| JAZ 60 | deriva, 557 m | 250 kt, a 5 indicados de la Vmo | 255 | 244 kt (238 indicados) |
+| JAZ 20 | radio, 1.014 m | 117 kt (gas 0,85) | 171 | 113 kt (gas 0,80) |
+| JAZ 25 | radio, 1.014 m | 107 kt (gas 0,92) | 137 | 100 kt (gas 0,80) |
+
+Los reactores en los de radio, por debajo de diez mil pies, siguen a 250; la
+despresurización, que solo llevan los presurizados, a la de la ficha, que es
+la de su altura; el
+rumbo de noche, el pitot, el ILS, el planeo y el de un motor ya iban por
+debajo del tope y con gas de sobra, y no se tocan.
+
+### Lo cambiado
+
+- **`topeConMargen`** (`limites.ts`): diez nudos por debajo de la Vmo y dos
+  centésimas del Mmo, el que llegue antes. Es el margen del descenso de
+  emergencia, que ahora lo toma de aquí (`despresurizacion.ts`), y el de la
+  marca de crucero de un turbohélice (`cruceroDeHelice`). A un nudo del tope,
+  la primera racha lo pasa.
+- **`velocidadDeCrucero` no pasa de él** (`gas-que-toca.ts`), tampoco en un
+  reactor: abajo, la de su ficha —428 nudos en el JAZ 90 a mil metros— es la
+  de arriba.
+- **`laDeLaTabla` es la velocidad de entrada de todo ejercicio que empieza en
+  crucero**, a la altura a la que empieza (`reiniciarEnFinal`). El tope de
+  los doscientos cincuenta nudos lo pone ya solo por debajo de diez mil pies,
+  que es donde lo pone la norma: hasta ahora solo lo usaban la estima y el
+  altímetro, que van bajos, y daba igual.
+- **El sitio sale de la misma cuenta**: los de radio colocan «a seis minutos»
+  o «a siete» con la velocidad que se vuela. Como la estima, en dos pasadas
+  (`aLaDeLaTabla`): la primera, con la de la ficha, da la altura; la
+  segunda, con la de la tabla ahí. La tormenta y la despresurización cuentan
+  lo que se vuela mientras se explica con la misma.
+- **El gas, el que la sostiene**: con la de la ficha, `gasQueSostiene` no
+  encontraba gas en el JAZ 50 ni en el JAZ 40, y se quedaba el de la recta a
+  ojo del modelo sencillo. Con la de la tabla lo encuentra siempre.
+
+### Lo que se prueba
+
+`gas-que-toca.test.ts`: que en ningún avión ni a ninguna altura la de la
+tabla pasa de `topeConMargen`; que el JAZ 50 a tres mil pies va a 156
+indicados o menos y la sostiene; y que un reactor abajo se queda en su Vmo
+menos diez.
+
+### Volado
+
+Con la tarjeta del equipo (Intel Iris Xe, ANGLE sobre OpenGL):
+
+- `ver-el-gps.mjs` con el JAZ 50: **20 de 20**, y entre las tarjetas ya no
+  sale `sobrevelocidad`. Empieza a 18,7 NM del VOR —siete minutos a la de la
+  tabla— en vez de a 19,8; el GPS se va a 9,4 de 18,7, a mitad de camino.
+- `ver-el-gps.mjs` con el JAZ 20: 16 de 16, a 13,4 NM.
+- `ver-la-deriva.mjs` con el JAZ 20: 19 de 19, a 8,7 km del puente Remanso.
+- `ver-seguir-la-aguja.mjs` con el JAZ 20: 20 de 20, a 11,5 NM del NDB.
+
+Y las pruebas, enteras: 536 ficheros, 10.833 pruebas.
+
+### Lo que queda
+
+- **El JAZ 50 no llega a la de su ficha ni a su altura de crucero**: con el
+  75 % da 168 nudos a diez mil pies, y su ficha dice 182. Es la ley de empuje
+  de los turbohélices, que se está mirando aparte (H37c); cuando cambie, la
+  tabla lo seguirá sola.
+- La tormenta con el JAZ 50 (`verificar-tormenta.mjs rodear pettirossi
+  jaz-50`) no se ha volado: se quedó en la cola del navegador. La tabla de
+  arriba dice que entra a 168 nudos con gas 0,93 y 26 bajo el tope.

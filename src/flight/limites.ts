@@ -93,6 +93,35 @@ export function topeDeVelocidad(
     : { verdadera: porElAire, manda: "aire" };
 }
 
+/** El margen por debajo de los topes al que se vuela deprisa a propósito, en nudos y en Mach. */
+export const MARGEN_KT = 10;
+export const MARGEN_MACH = 0.02;
+
+/**
+ * **Lo más deprisa que se vuela a propósito**, verdadera, m/s: diez nudos por
+ * debajo de la Vmo y dos centésimas por debajo del Mmo, el que llegue antes.
+ *
+ * Es el margen de los puntos de memoria del descenso de emergencia —«la
+ * máxima, sin rozar el aviso»— y el de la marca de crucero de un turbohélice
+ * (`cruceroDeHelice`). Y es lo que hace que un manual nunca escriba en su
+ * tabla de crucero una velocidad por encima de su Vmo: la tabla se vuela
+ * horas, y a un nudo del tope la primera racha lo pasa. El JAZ 50 lo
+ * enseñó: su ficha dice 182 nudos verdaderos, que son los de diez mil pies;
+ * a tres mil, su Vmo de 166 indicados son 174 verdaderos, y un ejercicio que
+ * empezaba a la de la ficha nacía con el aviso de sobrevelocidad (ADR 0031,
+ * enmienda H39a).
+ */
+export function topeConMargen(
+  a: AircraftConfig,
+  alturaM: number,
+  aire: Aire = AIRE_ESTANDAR,
+): number {
+  return Math.min(
+    verdaderaDesdeIndicada((a.vmoKt - MARGEN_KT) * NUDO, alturaM, aire),
+    (a.mmo - MARGEN_MACH) * velocidadDelSonido(alturaM, aire),
+  );
+}
+
 /**
  * La altura a la que los dos topes valen lo mismo, m.
  *

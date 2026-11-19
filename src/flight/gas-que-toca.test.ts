@@ -22,6 +22,7 @@ import { NUDO, velocidadQueToca } from "./escalera-de-velocidades";
 import { gasQueSostiene, marcaDelGas, NIVELADO, velocidadDeCrucero } from "./gas-que-toca";
 import { MOTOR_QUE_SOSTIENE } from "./arcade";
 import { TAGUATO } from "./tiers";
+import { topeConMargen, topeDeVelocidad } from "./limites";
 
 const PIE = 0.3048;
 const DT = 1 / 60;
@@ -192,6 +193,50 @@ describe("la velocidad de la tabla de crucero", () => {
         expect(v, `${a.id} a ${pies} ft`).toBeLessThanOrEqual(a.cruiseSpeed);
         expect(sostiene(a, pies * PIE, v), `${a.id} a ${pies} ft`).not.toBeNull();
       }
+    }
+  });
+
+  /*
+   * **Y nunca por encima de su tope** (ADR 0031, enmienda H39a). El JAZ 50
+   * empezaba los ejercicios de radio a la de su ficha, 182 nudos verdaderos,
+   * que son los de diez mil pies: a tres mil, su Vmo de 166 indicados son 174
+   * verdaderos, y nacía con el aviso de sobrevelocidad. Un manual no escribe
+   * en su tabla de crucero una velocidad por encima de su Vmo.
+   */
+  it("en ningún avión ni a ninguna altura pasa de su tope, con diez nudos y dos centésimas de margen", () => {
+    for (const a of AIRCRAFT.filter((x) => !x.helicoptero)) {
+      for (const altura of [0, 1000 * PIE, 3000 * PIE, 5000 * PIE, 9000 * PIE, 6000, a.alturaDeCrucero]) {
+        const v = velocidadDeCrucero(a, { altura, tren: a.trenRetractil ? 0 : 1 });
+        const que = `${a.id} a ${Math.round(altura)} m`;
+        expect(v, que).toBeLessThanOrEqual(topeConMargen(a, altura) + 1e-9);
+        expect(v, que).toBeLessThan(topeDeVelocidad(a, altura).verdadera);
+        expect(indicatedAirspeed(v, altura) / NUDO, que).toBeLessThanOrEqual(a.vmoKt - 10 + 1e-6);
+      }
+    }
+  });
+
+  it("el JAZ 50 a tres mil pies va por debajo de su Vmo y la sostiene; a su altura de crucero, cerca de la ficha", () => {
+    const a = de("jaz-50");
+    const abajo = velocidadDeCrucero(a, { altura: 3000 * PIE, tren: 0 });
+    // Su ficha, ahí, pasa del tope: es lo que hacía saltar el aviso al empezar.
+    expect(a.cruiseSpeed).toBeGreaterThan(topeDeVelocidad(a, 3000 * PIE).verdadera);
+    expect(indicatedAirspeed(abajo, 3000 * PIE) / NUDO).toBeLessThanOrEqual(156);
+    expect(abajo / NUDO).toBeGreaterThan(150);
+    expect(sostiene(a, 3000 * PIE, abajo)).not.toBeNull();
+    // Arriba, entre la de la tabla y la ficha.
+    const arriba = velocidadDeCrucero(a, { altura: a.alturaDeCrucero, tren: 0 });
+    expect(arriba / NUDO).toBeGreaterThan(160);
+    expect(arriba).toBeLessThanOrEqual(a.cruiseSpeed);
+  });
+
+  it("un reactor abajo no da la de su ficha, que es la de arriba: se queda bajo su Vmo", () => {
+    for (const id of ["jaz-90", "jaz-110", "jaz-120"]) {
+      const a = de(id);
+      const abajo = velocidadDeCrucero(a, { altura: 1000, tren: 0 });
+      expect(abajo, id).toBeLessThan(a.cruiseSpeed);
+      expect(indicatedAirspeed(abajo, 1000) / NUDO, id).toBeCloseTo(a.vmoKt - 10, 0);
+      // Y arriba, a su altura de crucero, la de la ficha.
+      expect(velocidadDeCrucero(a, { altura: a.alturaDeCrucero, tren: 0 }), id).toBeCloseTo(a.cruiseSpeed, 6);
     }
   });
 
