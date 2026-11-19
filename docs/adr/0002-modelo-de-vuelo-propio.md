@@ -1232,3 +1232,134 @@ el de nivelado a esa velocidad (0,60); con el de la senda, sin tocar nada, baja.
 La final con la recta no se ha volado en el navegador para compararla. La del
 cangrejo, con su piloto de banco (`ver-el-cruzado.mjs`, el JAZ 20 en Taguató,
 con la tarjeta de verdad): 7 de 7, toca con el morro en la pista a 0,2°.
+
+## Nota H40b (19-11-2026): el avión colocado en el aire nace compensado
+
+### Lo que pasaba
+
+Lo midió H40a con `scripts/ver-el-gas-al-colocar.mjs` (la tabla de arriba): un
+ejercicio colocado en el aire, sin nadie a los mandos, se ponía a subir y a
+perder velocidad. El JAZ 20 en la deriva, de 114,5 a 86,7 nudos y 288 m más
+arriba en lo que el banco llama medio minuto, que son unos dos de vuelo (ver
+abajo); el JAZ 40, de 160,8 a 123,3 y 527 m.
+
+El gas era el bueno. El compensador no: `releaseAll` lo deja en cero —que es
+como se encuentra un avión al subirse a él, en el suelo— y `reiniciarEnFinal`
+no ponía después el que sostiene el avión. El compensador fija el ángulo del
+ala, y el ángulo, la velocidad a la que el avión vuela solo; en cero, las
+avionetas sostienen unos 85 nudos, así que cambiaban velocidad por altura
+hasta llegar a ellos. Un avión de verdad compensado en crucero y suelto sigue
+en crucero, y quien empieza un ejercicio en el aire lo recibe como lo dejaría
+un instructor: compensado.
+
+### La causa, comprobada
+
+En la mesa, el modelo solo con las ayudas de Taguató, a 1.000 m, colocado
+equilibrado y con el gas que sostiene esa velocidad nivelado; medio minuto sin
+tocar nada, con el compensador en cero y con el de equilibrio:
+
+| Caso | Compensador en cero | Compensado |
+|---|---|---|
+| JAZ 20, 114,5 kt | 96,1 kt, 80 m más arriba | 114,5 kt, 0 m (−0,068) |
+| JAZ 25, 106,9 kt | 86,2 kt, 107 m más arriba | 106,9 kt, 0 m (−0,091) |
+| JAZ 40, 160,8 kt | 135,9 kt, 151 m más arriba | 160,8 kt, 0 m (−0,079) |
+
+Con el compensador puesto no se mueve ni un nudo ni un metro: no había nada
+más. Los metros no son los del navegador —la mesa coloca a 1.000 m y con la
+masa de la ficha—, pero el sentido sí. Y en el navegador, con el arreglo
+puesto y el compensador devuelto a cero a mano al empezar, vuelve lo de H40a
+(abajo).
+
+### Lo que se decidió (`dejarloCompensado` en `game.ts`)
+
+- **Una sola cuenta para dejar compensado un avión que nace volando**:
+  `dejarloCompensado(flaps)`, el compensador en `timonDeEquilibrio` con esos
+  flaps, solo donde hay compensador vivo (`compensadorVivo`: ni el modelo
+  sencillo ni el helicóptero). La usan los dos sitios donde nace un avión en
+  el aire sin que nadie lo haya compensado: el cambio de peldaño, que ya lo
+  hacía con su propia línea, y la colocación de `reiniciarEnFinal`, que no lo
+  hacía.
+- **Toda colocación nace equilibrada, con los flaps con los que empieza.** El
+  `equilibrado` iba en una lista de ejercicios de crucero que se alargaba con
+  cada uno, y se quedaban fuera el planeo, el de un motor y la final, que
+  nacían con el morro en el horizonte. Todo lo que coloca `reiniciarEnFinal`
+  está en el aire: limpio en un ejercicio, con los flaps de aterrizar en la
+  final configurada, con los que haya en la de tren fijo. La interfaz
+  `timonDeEquilibrio` dice ya que acepta flaps, que `fdm.ts` contaba desde
+  H29e.
+- **En la final, el que sostiene su velocidad, que es el de la senda**: tres
+  grados piden al ala el coseno, 0,9986 del peso, lo mismo que nivelado. El
+  gas pone la trayectoria y el compensador la velocidad.
+- **El planeo nace compensado a la de mejor planeo**, que es lo que se hace
+  de verdad cuando se para el motor; el de un motor, a la de circuito. Ni su
+  avería ni sus frases cambian.
+- **No se toca** el salto del vuelo largo (`ponerEnElEstado`), que nace
+  equilibrado y siempre en Guyrami, sin compensador; ni el reinicio en el
+  suelo, que pone la marca de despegue (`compensadorDeDespegue`).
+
+### Lo que no arregla el compensador: la final en Taguató
+
+Sin ayuda, en Taguató Ruvichá, la final compensada baja por su senda a su
+velocidad: el JAZ 20 a 96,2 nudos acaba a 94,3 y 71 m más abajo (la senda pide
+78); el JAZ 90 configurado, a 129, acaba a 130,2 y 106 m más abajo (104). En
+Taguató, no: al soltar, la ayuda de subida coge lo que lleva el avión entre
+nivelado y subiendo —«el objetivo nunca es un descenso», ver `trimClimb` en
+`fdm.ts`— y con el avión recién colocado eso es nivelado. La sostiene con su
+media autoridad por encima del compensador, y el gas de la senda no da para
+ir nivelado: en la mesa, a los treinta segundos, el JAZ 20 va a 81,7 nudos y
+solo 24 m más abajo, bajando 1,33 m/s. Es la regla de la ayuda, no el compensador, y cambiarla
+—que una final colocada sostenga su senda sola en los peldaños con ayuda,
+hasta el suelo— es una decisión de juego que no se ha tomado aquí.
+
+En el navegador parecía otra cosa —141 m más abajo en «medio minuto», y no
+24— y era el reloj del banco: ver abajo. Volada dos minutos, la mesa da 162 m
+más abajo, 79,5 nudos y bajando 1,55 m/s; la sonda en el navegador, renglón a
+renglón, 157 m, 79,6 nudos y 1,51 m/s, con la ayuda sosteniendo «nivelado»
+(`trimClimb` en cero) todo el rato y nadie más a los mandos. Es la misma
+final.
+
+### Las pruebas
+
+`colocado-y-compensado.test.ts` hace la colocación con el modelo solo: los
+tres nivelados en Taguató y en Taguató Ruvichá se quedan a menos de 3 nudos y
+30 m; con el compensador en cero, los tres se van más de 10 nudos y 50 m, que
+es lo que la prueba tiene que poder ver; y las dos finales, sin ayuda, bajan
+por la senda a su velocidad.
+
+### Volado en el navegador
+
+`scripts/ver-el-gas-al-colocar.mjs`, sus cuatro casos, en Taguató, sin viento
+y medio minuto de reloj sin tocar nada (19-11-2026, puerto 5685, la máquina
+cargada: carga de 26 en veinte núcleos). Cada caso, dos veces: como nace, y con el
+compensador devuelto a cero a mano al empezar, que es como nacía antes:
+
+| Caso | Nace con | Compensado, al medio minuto de reloj | Con el compensador a cero |
+|---|---|---|---|
+| JAZ 20, la deriva | 114,5 kt, −0,078 | 114,0 kt, 3 m más abajo | 88,0 kt, 224 m más arriba |
+| JAZ 25, la deriva | 106,9 kt, −0,090 | 107,2 kt, 3 m más abajo | 84,4 kt, 289 m más arriba |
+| JAZ 40, la deriva | 160,8 kt, −0,084 | 160,0 kt, 1 m más arriba | 122,4 kt, 541 m más arriba |
+| JAZ 20, la final del cangrejo | 96,2 kt, −0,023 | 81,0 kt, 141 m más abajo | 74,7 kt, 139 m más abajo |
+
+**El medio minuto del banco es del reloj de la página, no del vuelo**: el
+banco cuenta con `clock`, el `Clock` de three, que va con el tiempo de verdad,
+y pone el juego por cuatro (`OGA_VECES`). Así que mide unos dos minutos de
+vuelo: la sonda de la final contó 2,07 s de vuelo por cada medio segundo de
+reloj. Vale también para la tabla de H40a. No se ha cambiado el banco, que no
+se ha podido volver a volar; su comentario ya lo dice.
+
+Los tres de la deriva se quedan a su velocidad, a tres nudos como mucho en
+esos dos minutos, y a su altura. El gas con el que nacen no es el de la
+tabla de H40a (0,835 contra 0,801 en el JAZ 20; 0,732 contra 0,702 en el JAZ
+25), y no es de este cambio: se cuenta antes de compensar, y con él se quedan
+nivelados. La final del cangrejo es la de la mesa: ver arriba.
+
+Y la final del cangrejo con su piloto de banco (`ver-el-cruzado.mjs`, el JAZ
+20 en Taguató, con la tarjeta de verdad, Intel Iris Xe): 7 de 7, el cangrejo
+medido 9,6° contra 9,3° del triángulo, y toca derecho con el morro a 1,8° de
+la pista y el ala 4,8° al viento.
+
+No se han vuelto a volar `ver-el-gps.mjs`, `ver-la-deriva.mjs` ni
+`ver-seguir-la-aguja.mjs`: con la máquina cargada, el navegador fue solo para
+lo imprescindible. Sus colocaciones ya nacían equilibradas; lo único que les
+cambia es el compensador, y sus pilotos de banco enganchan el automático al
+empezar, que coge el timón con el que vuela el avión (`timonAhora`).
