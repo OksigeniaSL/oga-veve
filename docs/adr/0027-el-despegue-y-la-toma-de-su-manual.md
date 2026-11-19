@@ -4856,6 +4856,13 @@ corto, lo que lo apartaba ya no queda por medio.
 Con su dibujo y su botón en los tres, con la frase donde se lee y sin ella en
 Guyrami, y sin errores en la página.
 
+Y como `toca` se reescribió por dentro, un vuelo entero en Yvytu Rape con el
+JAZ 20 en Taguató Ruvichá (`verificar-vuelo-entero.mjs`, ×12 pedido y ×3,36 de
+verdad): despegue, circuito y toma a 0,81 m/s, 148 m pasado el umbral y a medio
+metro del eje, sin un árbol por medio; 54 de 56. Las dos que fallan son de la
+bici de la granja, que no salió a buscar al avión al dejar la pista: no tiene
+que ver con los árboles, y no se ha mirado si pasa igual en main.
+
 ### El monte de la pista corta, en la final de la 33
 
 El monte del ejercicio (`MONTE_DE_CADA_CAMPO`: SGOG, a 120 m pasado el final
