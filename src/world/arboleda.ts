@@ -37,6 +37,9 @@ export interface FormaDeArbol {
   readonly tronco: { readonly radio: number; readonly alto: number };
 }
 
+/** Lo más que se encoge una copa por la holgura, en parte de su semieje. Ver `toca`. */
+const PIEL = 0.4;
+
 /** Lo que se guarda de cada árbol, en números seguidos. */
 const CAMPOS = 11;
 const CELDA = 32;
@@ -106,9 +109,13 @@ export class Arboleda {
       const dz = pz - d[b + 2]!;
       // El tronco.
       if (dy >= 0 && dy <= d[b + 9]! && dx * dx + dz * dz <= d[b + 8]! * d[b + 8]!) return true;
-      const r = d[b + 5]! - holgura;
-      const h = d[b + 6]! - holgura;
-      if (r <= 0 || h <= 0) continue;
+      /*
+       * **La piel, y nunca más de dos quintos de la copa.** Con los dos metros
+       * de Tukã enteros, un naranjo o un karanday de la granja, con menos de
+       * dos de semialto, se quedaban sin copa que tocar: se volaba a través.
+       */
+      const r = d[b + 5]! - Math.min(holgura, d[b + 5]! * PIEL);
+      const h = d[b + 6]! - Math.min(holgura, d[b + 6]! * PIEL);
       const v = Math.abs(dy - d[b + 7]!) / h;
       if (v > 1) continue;
       if (d[b + 10] === 1) {

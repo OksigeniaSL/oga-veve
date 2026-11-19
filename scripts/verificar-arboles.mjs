@@ -98,8 +98,9 @@ try {
     const r = await page.evaluate(async (s) => {
       const o = globalThis.__oga;
       const espera = (ms) => new Promise((res) => setTimeout(res, ms));
-      const x0 = s.x - s.dx * 80;
-      const z0 = s.z - s.dz * 80;
+      // A cuarenta metros: más lejos, colocado sin subir, el avión se hunde y toca el campo antes que el árbol.
+      const x0 = s.x - s.dx * 40;
+      const z0 = s.z - s.dz * 40;
       const rumbo = Math.atan2(s.dx, -s.dz);
       o.colocar(x0, s.suelo + 6 + s.tren, z0, 30, rumbo);
       o.pilotar((c) => {

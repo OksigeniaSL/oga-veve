@@ -43,6 +43,18 @@ describe("el monte de la pista corta", () => {
   });
 });
 
+describe("una copa pequeña no se queda sin copa", () => {
+  it("con los dos metros de holgura, el corazón de un naranjo de la granja se sigue tocando", () => {
+    const a = new Arboleda();
+    // La bola del naranjo de `granja.ts`, a escala uno.
+    a.plantar(0, 100, 0, 1, 0, { copa: { tipo: "elipsoide", radio: 1.7, semialto: 1.5, centro: 2.3 }, tronco: { radio: 0.17, alto: 1.1 } });
+    expect(a.toca(0, 102.3, 0, holguraDeLaCopa(1))).toBe(true);
+    // Y lo de fuera, sí se perdona.
+    expect(a.toca(0, 103.6, 0, holguraDeLaCopa(1))).toBe(false);
+    expect(a.toca(0, 103.6, 0, 0)).toBe(true);
+  });
+});
+
 describe("lo que se perdona de la copa, por peldaño", () => {
   it("nada sin ayudas, dos metros con la tolerancia entera, y en medio, a proporción", () => {
     expect(holguraDeLaCopa(0)).toBe(0);
