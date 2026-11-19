@@ -2612,3 +2612,67 @@ arriba.
 - **El cangrejo se cuenta deprisa**: en los primeros cinco segundos buenos,
   a unos 170 m y con 75 kt, cuando pide 6 o 7°; en la corta, a 64 kt, son
   10. Lo que dice la tarjeta es verdad en ese rato.
+
+## Enmienda H34a (19-11-2026): el bimotor lento era del banco, y el reactor ya tiene piloto
+
+### El JAZ 40 a 60 nudos: la senda sobre el suelo de debajo
+
+Era del banco, no del juego. El piloto de `ver-el-cruzado.mjs` llevaba la
+senda sobre el suelo que tenía debajo, y la final de la 12 de Los Rodeos va
+sobre un terreno que sube hacia el campo: unos ochenta metros por debajo de la
+pista a tres kilómetros y medio, una treintena a dos y dos al cruzar el
+umbral (la traza del ala de un vuelo entero, que da las dos alturas). El
+ejercicio empieza en la senda de la pista, que sobre ese suelo son sesenta
+metros de más; el piloto se tiraba a por ellos —en la traza nueva, bajando a
+19 m/s con el gas fuera y la palanca a fondo— y luego, con el suelo
+subiendo a casi la mitad de la senda, volaba casi nivelado: el gas a fondo,
+el derrape del ala baja encima y hasta cuarenta y cinco metros por debajo de
+la senda de verdad. Así es como una tirada de H32b acabó en 56 nudos; en la
+de esta enmienda con la senda de antes se quedó en 79 a 81 con el gas a
+fondo, del lado bueno por poco.
+
+Que el avión sostiene su Vref se miró aparte, en la mesa (el modelo del
+juego, el JAZ 40 con los flaps de aterrizar, el tren, el alisio y el piloto
+del ala baja, en la cota de Los Rodeos): con la senda sobre la pista va de 82
+a 88 nudos de verdadera, con el gas entre 0,33 y 0,86 pasado el primer
+minuto y el derrape en 8°; y
+con un suelo que sube como el de la traza, el mismo picado al empezar y luego
+el gas a fondo. El bimotor puede; era el piloto.
+
+Lo cambiado: la senda del piloto del banco va sobre la cota de la pista en el
+punto de toma —la de un PAPI o de un ILS, la que vuela quien juega—, y el suelo
+de debajo queda para la recogida. Volado en el navegador, el ala baja con el
+JAZ 40: **5 de 5**, de 79 a 91 nudos toda la final, en la senda a un par de
+metros, contado a 216 m con 4,4° de ala de media.
+
+### El cangrejo del reactor
+
+La ley de alabeo del piloto, el camino hacia un punto a ciento cincuenta
+metros, se amortigua como √(g·L/2)/V: 0,8 a los 33 m/s de la avioneta y 0,4 a
+los 64 del JAZ 90, menos aún con el alabeo de un reactor. En un reactor el
+punto va ahora a `150·(V/33)²` metros, que deja el amortiguamiento de la
+avioneta, con quince grados de ala como mucho. Y la senda y la velocidad las
+lleva el automático del juego —el morro en la senda y los gases a la Vref y
+cinco nudos en indicada—, como `volarLaSenda` del vuelo entero: con la ley de
+palanca de la avioneta el morro del reactor se pelea con el gas. En la mesa,
+antes, eses de ±50 m y de bajar a 11,7 m/s a subir a 2,6; después, el eje a
+menos de seis metros, el camino a menos de dos grados y la bajada quieta en
+3,1 m/s, con el morro a 5,5° del viento.
+
+Volado en el navegador, dos veces: **7 de 7** y **6 de 7**. Contado a 180 m,
+4,7° cuando pedía 4,9, y 5,4 cuando pedía 5,6; toca derecho las dos veces. Y
+la JAZ 20 sigue igual con la senda nueva: **7 de 7**, 9,2° pedía 9,0.
+
+### Lo que queda
+
+- **En la corta del reactor, la tarjeta de cómo se aterriza tapa la del
+  pie.** El fallo de la segunda tirada no es del piloto: la primera tarjeta de
+  la corta fue «toma» —`contarComoSeAterriza`, que se arma con la muesca de
+  flaps y espera a que la tarjeta esté libre— y no «pie derecho». Los flaps
+  del reactor tardan en salir, el ejercicio ocupa la tarjeta toda la final, y
+  el consejo general sale justo cuando toca el pie. Es del juego: a diez
+  metros, con el viento cruzado, lo que se enseña es el pie. No se ha tocado.
+- **Al tocar, el JAZ 90 inclinado**: en una tirada, 11,9° de ala al viento
+  —la ley de enderezar con el pie es la de la avioneta—. El ejercicio lo
+  cuenta como derecho, que lo es de morro; un reactor de verdad no toca con
+  tanta ala.
