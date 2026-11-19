@@ -3305,4 +3305,5 @@ Y las pruebas, enteras: 536 ficheros, 10.833 pruebas.
   de los turbohélices, que se está mirando aparte (H37c); cuando cambie, la
   tabla lo seguirá sola.
 - La tormenta con el JAZ 50 (`verificar-tormenta.mjs rodear pettirossi
-  jaz-50`) se ha lanzado pero no se ha esperado aquí.
+  jaz-50`) no se ha volado: se quedó en la cola del navegador. La tabla de
+  arriba dice que entra a 168 nudos con gas 0,93 y 26 bajo el tope.
