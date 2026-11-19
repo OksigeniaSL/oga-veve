@@ -228,6 +228,7 @@ describe("el ejercicio de la pista corta", () => {
     indicada: 0,
     sobreElSuelo: 0,
     enElSuelo: true,
+    enLaPista: true,
     gas: 0,
     percance: false,
     ...l,
@@ -263,6 +264,13 @@ describe("el ejercicio de la pista corta", () => {
     expect(s.map((x) => x.que)).toEqual(["masDespacio"]);
     const pasa = volar(p, [{ gas: 1, enElSuelo: false, indicada: 74, pasadoElFinal: 121, sobreLasCopas: 4 }], 0.1);
     expect(pasa[0]).toMatchObject({ que: "pasaste", como: "justo" });
+  });
+
+  it("rodando hasta la pista con el gas alto no empieza la carrera", () => {
+    const p = nuevo();
+    const s = volar(p, [{ gas: 1, enLaPista: false }, { gas: 1, enLaPista: false, sobreElSuelo: 8 }, { gas: 0, enLaPista: false }]);
+    expect(s.map((x) => x.que)).toEqual(["presentar"]);
+    expect(p.fase).toBe("frenos");
   });
 
   it("pararse en la pista, rodando, también se cierra felicitando", () => {

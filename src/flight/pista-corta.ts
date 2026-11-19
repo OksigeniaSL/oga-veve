@@ -178,6 +178,11 @@ export interface LecturaDeLaPistaCorta {
   /** La velocidad sobre el suelo, m/s. */
   readonly sobreElSuelo: number;
   readonly enElSuelo: boolean;
+  /**
+   * **Si está en la pista**: rodando hasta ella con el gas alto no es la
+   * carrera, y pararse en la raya de espera no es renunciar a nada.
+   */
+  readonly enLaPista: boolean;
   /** El gas, de 0 a 1. */
   readonly gas: number;
   readonly percance: boolean;
@@ -261,6 +266,7 @@ export class PistaCorta {
     if (this.faseActual === "frenos" || this.faseActual === "carrera") {
       if (l.enElSuelo) {
         const quieto = l.sobreElSuelo < QUIETO;
+        if (!l.enLaPista && this.faseActual === "frenos") return sucesos;
         if (this.faseActual === "frenos" && quieto && l.gas >= A_TOPE && !this.soltaDicho) {
           this.soltaDicho = true;
           sucesos.push({ que: "solta" });

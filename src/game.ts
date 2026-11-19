@@ -26073,6 +26073,7 @@ export class Game {
         indicada: indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) / NUDO,
         sobreElSuelo: s.groundSpeed,
         enElSuelo: s.onGround,
+        enLaPista: s.onRunway,
         gas: this.input.controls.throttle,
         percance: this.percance !== null,
       },
