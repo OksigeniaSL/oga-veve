@@ -2574,17 +2574,21 @@ arriba.
   sin salirse— otra tirada también salió 5 de 5, contada a 130 m: la de la
   ronda fue de las que no llegan.
 
-
 ### Lo que queda
 
-- **El bimotor vuela la final del navegador de otra manera que en la mesa**,
+- **El bimotor vuela la final del navegador más despacio que en la mesa**,
   con el mismo piloto: a unos 60 kt en vez de los 86 de su aproximación, y
-  con 15 a 19° de derrape donde la mesa da 8. Con el morro y el camino a
-  menos de tres grados de la pista y 11,3 kt de costado más la racha, el
-  triángulo da de 10 a 14° de derrape a esa velocidad: el modelo dice más. No sale de la racha ni de los fotogramas (arriba). Lo siguiente es
-  poner lado a lado, paso a paso, el estado del modelo en la página y en la
-  mesa desde el mismo arranque. El ejercicio ya cuenta lo que se sostiene;
-  esto es del vuelo, y vale para cualquier final del JAZ 40.
+  con 15 a 19° de derrape donde la mesa da 8. El derrape es casi el que pide
+  el triángulo a 60 kt con el morro un grado a sotavento del camino —de 12 a
+  15°—; lo raro es la velocidad. No sale de la racha ni de los fotogramas
+  (arriba). Una pista sin comprobar: la verdadera se cae, de 90 a 56 kt en
+  unos veinte segundos, mientras el avión se queda a 145 m sobre el suelo de
+  debajo, y el piloto del banco lleva la senda sobre ese suelo y no sobre la
+  pista; con los flaps abajo y ese derrape, a 60 kt el bimotor está del lado
+  malo de la curva de potencia y el gas solo no lo saca. Lo siguiente es
+  trazar la cota y el gas en el banco, o llevar la senda sobre la cota de la
+  pista. El ejercicio ya cuenta lo que se sostiene; esto es del banco, o del
+  vuelo, no del cruzado.
 - **El cangrejo se cuenta deprisa**: en los primeros cinco segundos buenos,
   a unos 170 m y con 75 kt, cuando pide 6 o 7°; en la corta, a 64 kt, son
   10. Lo que dice la tarjeta es verdad en ese rato.
