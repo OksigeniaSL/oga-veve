@@ -2039,6 +2039,12 @@ export const ES_PY = {
    * V1 no es un susto: es el momento en que ya se despega, y eso se dice con
    * calma porque **calma es la información**. El susto se lo guarda la
    * instructora para cuando de verdad lo haya.
+   *
+   * **Y solo donde es verdad** (H37i): en V1 en los multimotores de turbina,
+   * que deciden con ella; en el bimotor de pistón, al meter el tren a 85
+   * nudos, que es cuando su manual deja seguir; y en los monomotores, nunca
+   * en V1, que no hay otro motor con el que seguir. Ver
+   * `flight/lo-que-se-dice-al-despegar.ts`.
    */
   "vuelo.comprometido": "Ya despegamos: seguí",
   "vuelo.despegando": "Motor a fondo",

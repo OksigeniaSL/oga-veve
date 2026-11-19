@@ -27,6 +27,7 @@
 import { HelicopteroComoModelo } from "../flight/fdm-helicoptero";
 import { velocidadesEnTierra } from "../flight/velocidades-en-tierra";
 import { esDeChorro, propulsionDe } from "../flight/aircraft";
+import { seSigueEnV1 } from "../flight/lo-que-se-dice-al-despegar";
 import { comoSeRecogen } from "../flight/flaps-de-despegue";
 import { codificarRejilla, ficheroDelPavimento } from "../world/pavimento-horneado";
 import {
@@ -602,6 +603,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * distinto, como sus manuales. Ver `verificar-emergencias.mjs`.
        */
       conUnMotor: juego.aircraft.motores > 1 ? conUnMotor(juego.aircraft).nombre : null,
+      /*
+       * Si su manual decide el despegue con V1, que es donde se dice «ya
+       * despegamos: seguí». Ver `flight/lo-que-se-dice-al-despegar.ts`.
+       */
+      seSigueEnV1: seSigueEnV1(juego.aircraft),
       /**
        * Y qué los mueve: hélice, chorro o rotor. El piloto del banco recoge un
        * turbohélice quitando el gas poco a poco y un reactor cortándolo de

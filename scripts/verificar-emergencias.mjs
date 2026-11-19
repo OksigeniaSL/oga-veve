@@ -590,6 +590,38 @@ try {
     `fase ${ej?.fase} · motor ${ej?.motorParado} · se para ${ej?.parar ?? ej?.antesDeV1} · ` +
       `V1 ${nudos(r.velocidades.v1)} Vr ${nudos(r.velocidades.vr)} V2 ${nudos(r.velocidades.v2)} Vmc ${nudos(r.velocidades.vmc)} kt`,
   );
+  /*
+   * **Y en el despegue se dice lo que es verdad en este avión** (H37i): «ya
+   * despegamos: seguí» —o «V one», arriba— en V1 solo donde se decide con
+   * ella. En el bimotor de pistón, al meter el tren a 85 nudos o más, que es
+   * cuando su manual deja seguir: en `tren`, antes de que falle el motor; en
+   * `carrera` no llega, que el tren no sube. Ver
+   * `flight/lo-que-se-dice-al-despegar.ts`.
+   */
+  if (MODO === "despues" || MODO === "carrera" || MODO === "tren") {
+    const enV1 = r.todoCantado.filter((c) => /^V one/.test(c));
+    const dicho = enV1.some((c) => /^V one→/.test(c));
+    const callado = enV1.some((c) => /no decide con V1/.test(c));
+    comprobar(
+      MODO === "despues"
+        ? "en V1 se dice «seguí», que este avión decide con ella"
+        : "en V1 no se dice «seguí»: su manual para a esa velocidad",
+      MODO === "despues" ? dicho && !callado : callado && !dicho,
+      enV1.join(" · ") || "nada apuntado en V1",
+    );
+  }
+  if (MODO === "tren" || MODO === "carrera") {
+    const sigue = r.todoCantado.findIndex((c) => /^tren arriba/.test(c));
+    const fallo = r.todoCantado.findIndex((c) => /^engine failure/.test(c));
+    comprobar(
+      MODO === "tren"
+        ? "y «ya despegamos: seguí» al meter el tren, antes del fallo"
+        : "y nadie dice «seguí»: el tren no llega a subir",
+      MODO === "tren" ? sigue >= 0 && (fallo < 0 || sigue < fallo) : sigue < 0,
+      `${sigue >= 0 ? r.todoCantado[sigue] : "no se dijo"}` +
+        `${fallo >= 0 ? ` · el fallo, ${sigue >= 0 && sigue < fallo ? "después" : "antes"}` : ""}`,
+    );
+  }
   comprobar(
     "sin percance: nadie se hace daño",
     !r.percance,
