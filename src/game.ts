@@ -18874,32 +18874,34 @@ export class Game {
      * primer fotograma, tarde para las dos cosas.
      */
     this.flight.ponerMasa?.(this.masaDeAhora());
+    /*
+     * Los flaps con los que empieza: limpio en un ejercicio, los de aterrizar
+     * en la final configurada, y en la de tren fijo, los que haya. Con ellos
+     * se equilibra el ala y se compensa; se ponen en los mandos más abajo.
+     */
+    const flapsDeEntrada =
+      colocacion && !this.aircraft.helicoptero
+        ? 0
+        : configurado && this.aircraft.llevaFlaps
+          ? 1
+          : this.input.controls.flaps;
     this.flight.reset({
       position: this.startPosition(),
       heading: enLaAguja ? enLaAguja.rumbo : MathUtils.degToRad(runway.heading),
       airspeed: entrada,
       /*
-       * Arriba, en crucero, con el ala sosteniendo lo que pesa: sin esto nace
-       * con el morro en el horizonte y lo primero que hace es caerse, que no
-       * es lo que se viene a practicar. Ver `InitialConditions.equilibrado`.
+       * **Con el ala sosteniendo lo que pesa, en todas las colocaciones**: sin
+       * esto nace con el morro en el horizonte y lo primero que hace es
+       * caerse, que no es lo que se viene a practicar. Ver
+       * `InitialConditions.equilibrado`.
+       *
+       * Iba en una lista que se alargaba con cada ejercicio de crucero, y se
+       * quedaban fuera el planeo, el de un motor y la final: todo lo que se
+       * coloca aquí está en el aire, y nace como lo dejaría un instructor
+       * (ADR 0002, nota H40b). El compensador, más abajo.
        */
-      ...(colocacion === "crucero" ||
-      colocacion === "tormenta" ||
-      colocacion === "aguja" ||
-      colocacion === "radial" ||
-      colocacion === "gps" ||
-      colocacion === "interceptar" ||
-      colocacion === "cruce" ||
-      colocacion === "ils" ||
-      colocacion === "deriva" ||
-      colocacion === "rumbo" ||
-      colocacion === "estima" ||
-      colocacion === "altimetro" ||
-      colocacion === "brujula" ||
-      colocacion === "giroscopo" ||
-      colocacion === "pitot"
-        ? { equilibrado: true }
-        : {}),
+      equilibrado: true,
+      flapsDelEquilibrio: flapsDeEntrada,
     });
     if (this.campoMontado !== this.scenario.id) this.montarElCampo(this.laCasa);
     /*
@@ -18960,6 +18962,16 @@ export class Game {
      */
     const porLaSenda = colocacion ? 0 : -(this.sendaDe(this.laCasa) * Math.PI) / 180;
     this.input.controls.throttle = this.flight.gasPara(entrada, this.input.controls, porLaSenda);
+    /*
+     * **Y compensado, como lo deja un instructor**: el gas pone la trayectoria
+     * y el compensador, la velocidad. `releaseAll` lo dejaba en cero, que en
+     * las avionetas sostiene unos 85 nudos, y sin nadie a los mandos el avión
+     * cambiaba velocidad por altura hasta llegar a ellos: el JAZ 20 en la
+     * deriva, de 114 a 87 nudos y 288 m más arriba en medio minuto. En la
+     * final, el que sostiene su velocidad por la senda, que pide al ala lo
+     * mismo que nivelado. Ver `dejarloCompensado` y la nota H40b del ADR 0002.
+     */
+    this.dejarloCompensado(flapsDeEntrada);
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
     this.otraVezLaLlegada(this.flight.state.position);
@@ -40237,6 +40249,27 @@ export class Game {
   }
 
   /**
+   * **Compensado, como lo deja un instructor**: el compensador en el timón que
+   * sostiene el avión a la velocidad de ahora, con los flaps que se digan.
+   *
+   * Un avión de verdad compensado y suelto sigue como iba; uno con el
+   * compensador en cero, no: el compensador fija el ángulo del ala, y el
+   * ángulo, la velocidad a la que vuela solo. Medido en Taguató sin tocar
+   * nada, el JAZ 20 colocado en la deriva a 114 nudos y con el compensador en
+   * cero se iba a 87 subiendo casi diez metros por segundo, que es lo que da
+   * ese compensador (ADR 0002, nota H40b).
+   *
+   * Lo piden los dos sitios donde nace un avión volando sin que nadie lo haya
+   * compensado: el cambio de peldaño, que construye un modelo nuevo, y la
+   * colocación en el aire de un ejercicio o de la final (`reiniciarEnFinal`).
+   * Solo lo tiene el modelo completo: en el sencillo y en el helicóptero no
+   * hay compensador vivo (`compensadorVivo`) y se queda donde está.
+   */
+  private dejarloCompensado(flaps = 0): void {
+    if (this.input.compensadorVivo) this.input.controls.trim = this.flight.timonDeEquilibrio?.(flaps) ?? 0;
+  }
+
+  /**
    * Sube o baja un peldaño de la escalera de dificultad.
    *
    * Cambia el motor de vuelo si hace falta, las unidades y los instrumentos.
@@ -40306,8 +40339,7 @@ export class Game {
     this.alturaPedidaAntes = null;
     this.nivelada = null;
     this.mandosConAutomatico.sostieneLaAltura = false;
-    if (!onGround && next.model !== "simple")
-      this.input.controls.trim = this.flight.timonDeEquilibrio?.() ?? 0;
+    if (!onGround) this.dejarloCompensado();
 
     this.hud.setUnits(next.units);
     this.hud.setEscalera(next.avisos);

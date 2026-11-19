@@ -389,8 +389,12 @@ export interface FlightModel {
    * unidades de mando: lo que hay que dejar puesto en el compensador para que
    * vuele solo. Solo lo sabe el modelo de coeficientes; el sencillo no tiene
    * timón que contar. Ver `InitialConditions.equilibrado`.
+   *
+   * Con los flaps que se digan, de 0 a 1 como `ControlInputs.flaps`; sin
+   * ellos, limpio. Los pide la final configurada, que se coloca con los de
+   * aterrizar (`reiniciarEnFinal` en `game.ts`).
    */
-  timonDeEquilibrio?(): number;
+  timonDeEquilibrio?(flaps?: number): number;
   /**
    * **El ángulo de ataque al que el ala no sostiene nada**, con los flaps del
    * último paso, rad: negativo, y más cuanto más flap. Lo pide el piloto
