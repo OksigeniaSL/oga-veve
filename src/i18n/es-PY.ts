@@ -3806,16 +3806,15 @@ export const ES_PY = {
    * camino y el plano sin el avión; se llega con el plan B, el VOR que ya
    * estaba en la NAV. Sin drama: no es una emergencia, el avión vuela igual.
    */
-  "ejercicio.gps.antes": "Hoy hay un NOTAM: pueden tapar el GPS. Por eso dejamos el VOR de casa en la NAV: es el plan B",
-  "ejercicio.gps.seFue": "Se fue el GPS, y el plano ya no sabe dónde estamos. No pasa nada: el avión vuela igual",
-  "ejercicio.gps.planB": "Vamos con el plan B. Girá el OBS hasta que la barra quede al medio con TO, y seguila",
+  "ejercicio.gps.antes": "Hay un NOTAM: pueden tapar el GPS. El plan B ya está puesto: el VOR de casa en la NAV",
+  "ejercicio.gps.seFue": "Se fue el GPS: el plano ya no sabe dónde estamos. El avión vuela igual",
+  "ejercicio.gps.planB": "Plan B: girá el OBS hasta que la barra quede al medio con TO, y seguila",
   "ejercicio.gps.sintonizar": "Volvé a poner el VOR de casa en la NAV",
   "ejercicio.gps.centrada": "¡Eso! Con la barra al medio, vamos derecho a la radio",
-  "ejercicio.gps.pasada": "¡Llegamos con la radio! Y volvió el GPS. El buen piloto siempre tiene un plan B",
+  "ejercicio.gps.pasada": "¡Llegamos con la radio, y volvió el GPS! El buen piloto siempre tiene plan B",
   // Lo que va escrito delante de la frase en la tarjeta. Los rótulos de cabina, sin traducir.
   "ejercicio.gps.nav": "NAV {id} {mhz}",
-  "ejercicio.gps.sinPosicion": "GPS sin señal",
-  "ejercicio.gps.obs": "OBS {curso} · TO",
+  "ejercicio.gps.obs": "OBS {curso}",
   "ejercicio.gps.integOk": "INTEG OK",
   // El panel del final: se lee, no se dice.
   "ejercicio.gps.cierre":

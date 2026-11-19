@@ -32066,7 +32066,14 @@ export class Game {
       });
       this.frasesDelGps.pedir(clave, vale);
     };
-    // La NAV escrita como en la caja: «NAV FTV 114.10». Es de Taguató Ruvichá: siempre con cifras.
+    /*
+     * La NAV escrita como en la caja: «NAV FTV 114.10». Es de Taguató Ruvichá:
+     * siempre con cifras. **Y la tarjeta, corta**: con la frase y lo de delante
+     * en más de cuatro renglones, a 1280 × 800 la tarjeta pisa el mando del gas
+     * y el reparto la deja en el dibujo solo (H26v, «Volado»). La presentación
+     * y el apagón van sin nada delante: el satélite lo dice, y la NAV se ve en
+     * el cuadro.
+     */
     const laNav = vor ? t("ejercicio.gps.nav", { id: vor.estacion.id, mhz: vor.mhz.toFixed(2) }) : "";
     const sinGps = (): boolean => this.gpsApagado?.fase === "sinGps";
     switch (suceso.que) {
@@ -32080,11 +32087,11 @@ export class Game {
         if (vor) radio.poner("nav", vor.mhz);
         const c = this.dondeEmpiezaElGps();
         if (c) radio.curso = c.obs;
-        return contar("gps-con-senal", "ejercicio.gps.antes", laNav, 20);
+        return contar("gps-con-senal", "ejercicio.gps.antes", "", 20);
       }
       case "seFue":
         // Sin sonido de aviso: no es una emergencia. Lo que se ve es el plano sin el avión.
-        return contar("gps-apagado", "ejercicio.gps.seFue", t("ejercicio.gps.sinPosicion"), 14);
+        return contar("gps-apagado", "ejercicio.gps.seFue", "", 14);
       case "planB": {
         const c = this.gpsApagado?.colocacion;
         return contar(

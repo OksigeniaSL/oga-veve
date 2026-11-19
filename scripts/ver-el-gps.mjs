@@ -195,6 +195,8 @@ try {
     r = await leer(page);
   }
   comprobar("pide el plan B con el CDI en la tarjeta y el curso escrito", /^cdi-/.test(r.tarjeta ?? "") && /OBS \d{3}/.test(r.texto ?? ""), `${r.tarjeta}: «${r.texto}»`);
+  // El OBS se gira con el reloj de verdad, como lo giraría una mano: la tarjeta de la barra centrada dura lo suyo.
+  await page.evaluate(() => globalThis.__oga.acelerar(1));
   for (let i = 0; i < 60 && r.curso !== c.alaRadio; i++) {
     await page.keyboard.press(centrado(c.alaRadio - r.curso) > 0 ? "Digit0" : "Digit9");
     await pausa(80);
@@ -202,6 +204,43 @@ try {
   }
   comprobar("el OBS en el curso a la radio, y dice TO", r.curso === c.alaRadio && r.toFrom === "TO", `OBS ${r.curso}, ${r.toFrom}, barra ${r.desviacion?.toFixed(1)}°`);
   let centradaVista = false;
+  /*
+   * **Volar con la barra corrigiendo el viento**, como un piloto: tres veces
+   * lo que se aparta y, encima, lo que se va sumando mientras sigue apartada,
+   * que es el ángulo que pide el viento. Solo con lo primero, el alisio de
+   * Fuerteventura deja la barra quieta a tres grados y medio del centro: la
+   * avioneta apunta al curso más diez grados y el viento se los come.
+   */
+  let alViento = 0;
+  let veces = 1;
+  let antes = Date.now();
+  const conLaBarra = (d) => {
+    // Lo sumado va por segundo de juego, con el reloj que lleve: igual por uno que por ocho.
+    const ahora = Date.now();
+    const deJuego = Math.min(3, ((ahora - antes) / 1000) * veces);
+    antes = ahora;
+    alViento = Math.max(-25, Math.min(25, alViento + 0.08 * d * deJuego));
+    return Math.max(-35, Math.min(35, 3 * d + alViento));
+  };
+  {
+    // La barra al medio llega girando el OBS, o al poco de seguirla: unos segundos con el reloj de verdad.
+    const hasta = Date.now() + 15000;
+    while (Date.now() < hasta && r.tarjeta !== "cdi-to") {
+      if (r.desviacion !== null && r.toFrom === "TO") {
+        const mag = r.curso + conLaBarra(r.desviacion);
+        await rumboAlAutomatico(page, (mag - r.declinacion) * GRADO);
+      }
+      await pausa(200);
+      r = await leer(page);
+    }
+    if (r.tarjeta === "cdi-to") {
+      centradaVista = true;
+      await pausa(600);
+      await foto("03-centrada-to");
+    }
+  }
+  await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
+  veces = VECES;
   let cerrada = null;
   let movido = 0;
   let planoQuieto = true;
@@ -209,7 +248,7 @@ try {
   while (Date.now() < fin3) {
     r = await leer(page);
     if (r.desviacion !== null && r.toFrom === "TO") {
-      const mag = r.curso + Math.max(-30, Math.min(30, 3 * r.desviacion));
+      const mag = r.curso + conLaBarra(r.desviacion);
       await rumboAlAutomatico(page, (mag - r.declinacion) * GRADO);
     }
     if (r.gps.fase === "sinGps") {
@@ -264,7 +303,8 @@ try {
     delGps.join(", ") || "nada",
   );
   await ajeno.comprobar(page, comprobar, /^cdi-|^gps-/);
-  await pausa(4000);
+  // El panel del final sale ocho segundos y medio de juego después de pasar.
+  await pausa(9000);
   await foto("05-final", false);
   comprobar("sin errores en la página", errores.length === 0, errores.join(" | "));
   await contexto.close();
