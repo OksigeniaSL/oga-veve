@@ -4206,10 +4206,12 @@ esta tanda (ver «Lo que queda»).
   segundos— y siete nudos de sobra: de cinco metros abajo fue a 1,5 m/s seis
   segundos seguidos.
 
+- **JAZ 20 en Guyrami a ×3**, que esto no debería tocar —ahí
+  `CON_EL_AUTOMATICO` es falso y la JAZ 20 ni es reactor ni pasa de treinta
+  metros de ala—: en verde entero, toca a 343 m y 1,21 m/s.
+
 La segunda del JAZ 50 no llegó a volarse en la tanda (el navegador es uno
-para toda la máquina), ni el JAZ 90 a ×1. Lo de Guyrami no lo toca nada de esto —ahí `CON_EL_AUTOMATICO`
-es falso y la JAZ 20 ni es reactor ni pasa de treinta metros de ala—; el JAZ 90
-a ×1 corre lo mismo que a ×12.
+para toda la máquina), ni el JAZ 90 a ×1, que corre lo mismo que a ×12.
 
 ### Lo que queda
 
