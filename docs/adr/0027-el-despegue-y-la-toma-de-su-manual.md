@@ -6033,3 +6033,189 @@ a tope, donde el manual da 622.
   es el mismo antes y después, y los 30 m de H37b caben en su cola: es del
   piloto del banco, y ya estaba. Y el pie no puede empujar de lado: `resistenciaDelTimon` se suma
   al coeficiente de resistencia, a lo largo del aire. No se ha tocado.
+
+## Enmienda H37h (19-11-2026): lo que gasta un avión de hélice sale de su potencia
+
+H37d dejó medido que el combustible de los cinco de hélice no cuadraba con sus
+manuales y dejó dicha la causa: se quemaba **el empuje por un consumo por
+newton**, y eso lleva escondida una velocidad —178 nudos el de pistón, 213 el
+turbohélice—. El lento gastaba de más, el rápido de menos, y lo que se planeaba
+salía del empuje parado entre tres, que no es el crucero de ninguno. **Se
+cambia la cuenta**, en un solo sitio para el vuelo y para el plan
+(`quemaPorSegundo` en `combustible.ts`), y los reactores siguen como estaban:
+su consumo sí va con el empuje.
+
+### Las cifras de su clase
+
+Las de cada manual que se ha podido leer, con la mezcla o el régimen que dice
+cada uno:
+
+- **El 172R** (*Model 172R Information Manual*, figura 5-8, a 2.450 lb y la
+  temperatura estándar): 8,6 gal/h al 75 % a 6.000 ft, 8,2 al 72 % a
+  10.000 ft, 7,5 al 65 % a 2.000 ft, 5,8 al 50 %. Del 50 al 80 % sale entre
+  0,260 y 0,265 kg/kWh: gasta en proporción a la potencia.
+- **El G-164A de 450 hp** («Cruise Performance», a 4.500 lb): 23,5 gal/h con
+  293 BHP a 5.000 ft y 119,5 mph; 25,1 con 314 a 2.500 ft y 118,6. Es 0,48
+  lb/hp·h en todas las filas de altura; al nivel del mar va más rico —33,7
+  gal/h con 340 BHP, 0,59—. Los 242 NM con 80 galones de H37d eran esa fila
+  del nivel del mar: 92 kg/h a 102 nudos, no 96 a 107.
+- **El Seneca III** (Piper, VB-1110, figura 5-45, y las de velocidad 5-53 a
+  5-57; el del Seneca II no se ha encontrado para leer): por motor a 10.000 ft
+  y 4.450 lb, 15,0 gal/h al 75 % y 177 nudos, con la mezcla a 1.525 °F de
+  gases (§ 4.37); 13,4 a 172 nudos; 10,0 a 152. El de turbo va rico: 0,55
+  lb/hp·h. Del TSIO-360-E de Continental (X30583) solo hay curvas sin cifras.
+- **El Twin Otter**, serie 400, tabla «Wheels» de De Havilland: a 10.000 ft,
+  600 lb/h a crucero máximo (182 nudos), 480 a crucero económico y 360 a su
+  velocidad de más autonomía, 94 nudos indicados; 390 esperando a 5.000 ft,
+  sin velocidad. Y 468,2 lb/h a 146 nudos a 10.000 ft, del folleto del
+  Guardian 400.
+- **El 1900D**, hoja de especificaciones de Raytheon: 888 lb/h a 280 nudos a
+  20.000 ft, a crucero rápido.
+
+### Lo que se cambia
+
+1. **La potencia al eje de cada uno en su ficha** (`potenciaAlEje`, W, la de
+   todos los motores y la de su placa): 160 hp el JAZ 20, 450 el JAZ 25,
+   2 × 200 el JAZ 40, 2 × 620 shp el JAZ 50 y 2 × 1.279 el JAZ 60. Sin ella el
+   avión gasta por el empuje, como un reactor; el helicóptero la deja sin poner,
+   porque su empuje ya es la potencia de sus turboejes contada como empuje.
+2. **Lo que gasta por potencia, por clase de motor** (`POR_KILOVATIO_Y_HORA`):
+   0,262 kg/kWh el de pistón sin turbo, del 172R; 0,332 el de pistón con turbo,
+   del Seneca III; 0,292 el radial, de las filas de altura del G-164A.
+3. **El turbohélice, con una parte que no baja con el mando**: gasta
+   `0,308 · (0,48 · lo que puede dar ahí + 0,52 · lo que da)`, en kilovatios.
+   Una turbina gasta, además de por la potencia, por el aire que mueve, y a
+   vueltas de vuelo ese aire es casi el mismo con el mando arriba o abajo; en
+   la altura mueve menos. Con dos cifras —el 0,308 y el 0,48— pasa a menos de
+   un 7 % de las cinco de los dos turbohélices, que son de dos generaciones
+   del PT6A. Con un consumo fijo por potencia no se podía: el del Twin Otter
+   a 146 nudos y el del 1900D a 280 se separan un 40 %.
+4. **En vuelo**, la parte de la potencia que se está dando es el empuje entre
+   lo que empujaría a esa velocidad con toda la de su placa:
+   `empuje / (maxThrust · parteDelEmpuje(v))`, porque el modelo hace el empuje
+   como el mando por lo que da el motor con ese aire por la ley de su hélice.
+   Así lo que da el motor a esa altura (`loQueDaElMotor`, por tipo de motor
+   desde H37g) queda dentro. La velocidad sale del Mach y de la θ que ya se
+   pasaban, y `DondeQuema` lleva ahora la densidad (σ) para el turbohélice.
+   El modelo sencillo de los peldaños de abajo, que no tiene empuje, lo
+   reconstruye con esa misma ley de la hélice (`empujeCon` en `arcade.ts`).
+5. **Al planear**, el crucero de su ficha —su verdadera a su altura— con la
+   potencia que pide su polar ahí, y nunca más de la que da el motor a esa
+   altura (`quemaDeCrucero`): lo que se planea es lo que se quema volando ese
+   crucero. Y **la media hora de maniobra**, que se vuela abajo, a lo que más
+   gaste de crucero o esperando: en el JAZ 60 esperar a 1.500 ft gasta más que
+   su crucero a 25.000 ft. En los demás sigue siendo el crucero.
+6. **El empuje parado del fumigador vuelve a los 4.500 N de su manual**: los
+   4.700 de H37c eran para que el plan, del empuje parado, no se quedara corto.
+7. **El nivel que ahorra** (`nivel-que-ahorra.ts`) cuenta con la misma
+   `quemaPorSegundo`, y no con el consumo por newton.
+
+### La mesa
+
+Nivelado con la polar de la ficha, a la masa de la fila de su manual:
+
+| | Fila de su manual | Antes | Ahora | Su manual |
+|---|---|---|---|---|
+| JAZ 20 | 115 kt a 6.000 ft | 33,9 kg/h | **23,0** | 23,4 |
+| JAZ 20 | 116 kt a 10.000 ft | 31,9 | **21,8** | 22,3 |
+| JAZ 20 | 104 kt a 2.000 ft | 32,4 | **20,6** | 20,4 |
+| JAZ 25 | 104 kt a 5.000 ft | 138,1 | **68,3** | 64,0 |
+| JAZ 25 | 103 kt a 2.500 ft | 142,0 | **70,0** | 68,4 |
+| JAZ 25 | 102 kt al nivel del mar | 146,0 | **71,6** | 91,8, la fila rica |
+| JAZ 40 | 177 kt a 10.000 ft | 64,6 | **81,7** | 81,8 |
+| JAZ 40 | 172 kt a 10.000 ft | 62,0 | **76,3** | 73,0 |
+| JAZ 50 | 179 kt a 10.000 ft | 333,5 | **271,5** | 272,2 |
+| JAZ 50 | 146 kt a 10.000 ft | 250,4 | **203,6** | 212,4 |
+| JAZ 50 | 109 kt a 10.000 ft | 203,2 | **174,6** | 163,3 |
+| JAZ 50 | 100 kt indicados a 5.000 ft | 207,3 | **181,3** | 176,9 |
+| JAZ 60 | 280 kt a 20.000 ft | 340,7 | **380,5** | 402,8 |
+
+Y en el crucero de cada ficha, lo volado y lo planeado:
+
+| | Crucero de la ficha | Volado antes | Planeado antes | Volado y planeado ahora |
+|---|---|---|---|---|
+| JAZ 20 | 117 kt a 9.843 ft | 32 | 26 | **22,0 y 22,0** |
+| JAZ 25 | 107 kt a 8.202 ft | 117 | 78 | **59,0 y 59,0** |
+| JAZ 40 | 189 kt a 18.045 ft | 59 | 50 | **79,4 y 79,4** |
+| JAZ 50 | 182 kt a 10.000 ft | 342 | 400 | **281,5 y 271,7**: la polar pide ahí más de lo que da el motor, y a fondo va a 179 |
+| JAZ 60 | 274 kt a 24.934 ft | 296 | 467 | **327,8 y 327,8** |
+
+Esperando a 1.500 ft, que es de lo que salen la reserva final y lo que cuesta
+un cambio: 27 → **15** kg/h el JAZ 20, 91 → **40** el JAZ 25, 44 → **34** el
+JAZ 40, 202 → **176** el JAZ 50 y 238 → **347** el JAZ 60. La reserva final
+queda en 11, 30, 25, 88 y 174 kg, donde eran 20, 68, 33, 101 y 119.
+
+**El JAZ 40 gasta ahora más que antes**, y es lo de su manual: un pistón con
+turbo va rico, y su polar pide el 80 % de sus 400 hp para su crucero de la
+ficha, donde el Seneca II da 189 nudos con el 75 %.
+
+### Lo que cambia de rebote
+
+**La carga de cada destino**, en los 280 tramos de los cinco (salida, destino y
+su alternativo; ningún destino aparece ni desaparece, porque `cabe.ts` no mira
+el combustible):
+
+- **JAZ 20**: entre 0,67 y 0,83 veces lo de antes. La vuelta al campo, de 42 a
+  **28 kg**; de Estigarribia a Pettirossi, de 154 —el depósito lleno— a 128,
+  y ya no topa con el peso. **Con quien pilota y tres adultos**, que le dejan
+  32 kg, ahora **da la vuelta al campo** y no va a ningún sitio (a Yvytu Rape,
+  el más cerca de Pettirossi, pide 58): con las plazas llenas se quedaba uno
+  en tierra en todos los tramos, y ahora en ninguno de los 21 locales.
+- **JAZ 25**: entre 0,54 y 1. La vuelta al campo, de 138 a **74 kg**. Salía
+  con los depósitos llenos en 30 tramos y ahora en 8.
+- **JAZ 40**: entre 1,31 y 1,47 veces. La vuelta al campo, de 73 a **99 kg**.
+  **Pettirossi ↔ Estigarribia**, con su alternativo de vuelta, pide 289 y
+  315 kg, más de los 280 de sus depósitos, y el peso máximo con la carga de
+  la ficha le deja 259: sale a sus 4.570 lb con el viaje y la maniobra, y sin
+  reserva para el tramo del alternativo (ver `loQueDejaElPeso`).
+- **JAZ 50**: entre 0,68 y 0,71. La vuelta al campo, de 500 a **340 kg**; los
+  cuatro tramos de Pedro Juan, que salían llenos (1.168), ahora con 802 a 831.
+  Con sus diecinueve plazas llenas, se quedaban en tierra 263 personas entre
+  los 51 tramos y ahora 130: de 3 a 1 en la vuelta al campo, de 10 a 6 a
+  Pedro Juan, de 5 a 3 de Tenerife Norte a Gran Canaria.
+- **JAZ 60**: entre 0,75 y 0,79. La vuelta al campo, de 583 a **463 kg**. Con
+  las diecinueve plazas llenas, de Pettirossi a Pedro Juan pide 893 kg donde
+  pedía 1.194 y **se queda uno en tierra**, no cuatro; su hoja da 382 NM con
+  diecinueve a bordo contando cien de alternativo, y ese plan son 358 con el
+  suyo. Los otros once tramos en que se quedaba gente —de Pettirossi, Guaraní,
+  Encarnación y Pedro Juan entre ellos, y La Palma y Fuerteventura a Tenerife
+  Norte y Gran Canaria— salen ahora con todos, menos los tres de Pedro Juan,
+  con uno.
+
+**Lo que no se cuenta**: el despegue de un turbohélice, que en la fórmula
+gasta lo que su crucero máximo y de verdad algo más —la tabla del PT6A-27 da
+0,603 lb/eshp·h al nivel del mar, un 21 % más que la cuenta a plena potencia—,
+porque la fórmula sale de cifras a diez y veinte mil pies; y la fila rica del
+radial al nivel del mar, un 22 % por encima de la cuenta.
+
+### Volado
+
+- **El vuelo entero en Tenerife Norte, en Taguató, con la avioneta**
+  (`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-20`, reloj por uno
+  y ×1,00 de verdad), **58 de 58**, 2 sin medir: sube al 9,2 % hasta los cien
+  metros, sin el avisador de pérdida; final estabilizada a 500 ft a 71 nudos,
+  toca a 1,1 m/s, a 0,3 m del eje y 287 m pasado el umbral, y apaga en su
+  puesto a los 999 s. Ni aviso de reserva ni llamada de combustible en todo
+  el vuelo, con los 28 kg de la vuelta al campo. El banco no lee los kilos
+  de un vuelo local: lo que se gasta volando está en la mesa.
+- **El JAZ 50** no se ha volado en el navegador: la cola del navegador no
+  llegó a su turno dentro del tope de este encargo.
+
+### Lo que queda
+
+- **El vuelo entero con el JAZ 50 en el navegador** (ver arriba).
+- **El despegue del turbohélice**, un 21 % corto en la cuenta (ver arriba).
+- **El 1900D esperando abajo**, 347 kg/h en la cuenta, sin cifra suya con la
+  que compararlo.
+- **El JAZ 25 sin la fila rica del nivel del mar**, y su techo con los 4.500 N:
+  12.500 ft a 4.500 lb (`techo.test.ts`), 500 por debajo de la más baja de
+  las dos cifras de su clase, donde con 4.700 eran 13.200 (H37g); sube 752
+  ft/min al nivel del mar, 432 a 6.000 y 125 a 12.000, donde eran 811, 480 y
+  162. Rueda 618 ft hasta la Vr a 4.500 lb, los 615 de su manual. Entre la
+  carrera de su manual y el techo de una revista gana el manual, y la prueba
+  del techo pasa a pedir un 5 % de los 13.000. Subirle el rendimiento de la
+  hélice no lo arregla barato: con el 75 % en vez del 70 % llega a 12.900.
+- **El turbohélice al ralentí en tierra**, que en la cuenta gasta casi la
+  mitad de su crucero máximo —la parte fija—, cuando un PT6A al ralentí de
+  tierra gasta más o menos la mitad de eso; son minutos de rodaje. Y con un
+  motor parado, la parte fija sigue contando los dos.

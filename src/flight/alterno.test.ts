@@ -21,7 +21,8 @@ import {
   cargaParaLaRuta,
   loQueCabe,
   loQueDejaElPeso,
-  quemaPorSegundo,
+  quemaDeCrucero,
+  quemaEsperando,
   RESERVA_SEGUNDOS,
 } from "./combustible";
 import { aircraftById } from "./aircraft";
@@ -76,16 +77,26 @@ describe("la carga para un destino", () => {
   const ARASUNU = aircraftById("jaz-60");
   const campos = camposDesde("gran-canaria");
   const casa = porId(campos, "gran-canaria");
-  const crucero = (a: typeof PYKASU) => quemaPorSegundo(a, a.maxThrust / 3);
+  const crucero = (a: typeof PYKASU) => quemaDeCrucero(a);
 
   it("son los dos tramos, la maniobra y la reserva, y nada más", () => {
     const tramos = tramosDelPlan(casa, porId(campos, "fuerteventura"), campos);
-    const segundos =
-      (tramos.alDestino + tramos.alAlterno) / ARASUNU.cruiseSpeed +
-      30 * 60 +
-      RESERVA_SEGUNDOS;
+    /*
+     * Los tramos a crucero; la maniobra, abajo, que en el 1900D gasta más que
+     * su crucero a 25.000 ft; y la reserva final, lo de un cambio y la
+     * contingencia, que en él pasan de los cuarenta y cinco minutos a crucero.
+     */
+    const abajo = Math.max(crucero(ARASUNU), quemaEsperando(ARASUNU));
+    const viaje =
+      crucero(ARASUNU) * ((tramos.alDestino + tramos.alAlterno) / ARASUNU.cruiseSpeed) +
+      abajo * 30 * 60;
+    const reserva = Math.max(
+      crucero(ARASUNU) * RESERVA_SEGUNDOS,
+      quemaEsperando(ARASUNU) * (30 + 15 + 5) * 60,
+    );
+    expect(quemaEsperando(ARASUNU) * 5 * 60).toBeGreaterThan(0.05 * viaje);
     expect(cargaParaElPlan(ARASUNU, tramos)).toBeCloseTo(
-      Math.min(loQueCabe(ARASUNU), crucero(ARASUNU) * segundos),
+      Math.min(loQueCabe(ARASUNU), viaje + reserva),
       3,
     );
   });

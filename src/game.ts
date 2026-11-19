@@ -1325,6 +1325,7 @@ import {
   airDensity,
   type Aire as AireDelDia,
   indicatedAirspeed,
+  SEA_LEVEL_DENSITY,
   temperaturaExterior,
   trueFromIndicated,
   velocidadDelSonido,
@@ -23950,6 +23951,8 @@ export class Game {
       ? quemaPorSegundo(this.aircraft, empuje, {
           mach: s0.airspeed / velocidadDelSonido(s0.position.y, aire),
           theta: (temperaturaExterior(s0.position.y, aire) + 273.15) / 288.15,
+          // Lo que puede dar ahí el motor de hélice. Ver `quemaConPotencia`.
+          sigma: airDensity(s0.position.y, aire) / SEA_LEVEL_DENSITY,
         })
       : 0;
     this.combustible = Math.max(0, antes - this.quemaDeAhora * dt);

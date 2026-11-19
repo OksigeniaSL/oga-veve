@@ -20,29 +20,28 @@
  *
  * ## Cómo se gasta
  *
- * Por el empuje que se está dando, no por el gas que se pide: un motor a
+ * **Un reactor, por el empuje que está dando**, no por el gas que se pide: a
  * fondo arriba, donde el aire es cuarto de denso, da mucho menos empuje y
  * gasta mucho menos. Con el consumo atado al empuje, subir a volar alto sale
- * a cuenta — y eso es exactamente la lección de por qué se vuela alto.
+ * a cuenta — y eso es exactamente la lección de por qué se vuela alto. El
+ * número que lo ata es el **consumo específico** de su ficha de motor, kilos
+ * por newton y por hora: 0,061 en el turbofán, los 0,6 lb/lbf·h de uno de la
+ * época del JT9D pasados a SI.
  *
- * El número que lo ata es el **consumo específico**: kilos por newton y por
- * hora. Es el dato con el que se compara un motor con otro en cualquier
- * ficha, y por eso se pone ése y no un litro por hora inventado:
+ * **Uno de hélice, por la potencia que está dando**, que es como lo da su
+ * manual: galones o libras a la hora a tal porcentaje de potencia. La hélice
+ * convierte la potencia en empuje mejor cuanto más despacio va, así que un
+ * consumo por newton —era 0,03 kg/N·h el de pistón y 0,05 el turbohélice—
+ * llevaba escondida una velocidad, 178 y 213 nudos: el avión lento gastaba
+ * de más y el rápido de menos, y lo planeado, del empuje parado, no era lo
+ * que se quemaba (ADR 0027, enmiendas H37d y H37h). Ver `POR_KILOVATIO_Y_HORA`.
+ * En crucero, contra su manual:
  *
- *   - **turbofán**: 0,061 — los 0,6 lb/lbf·h de un turbofán de la época del
- *     JT9D, pasados a unidades SI.
- *   - **turbohélice** y **radial**: 0,05.
- *   - **pistón**: 0,03.
- *
- * Y los tres últimos son **mucho más bajos** que el del reactor, que es lo
- * contrario de lo que parece: una hélice saca mucho más empuje de la misma
- * potencia a poca velocidad. Comprobado contra lo que gastan de verdad, con
- * el motor a un tercio de su empuje estático, que es el crucero de estos
- * aviones:
- *
- *   JAZ 20 Pykasu       26 kg/h   ·  una avioneta de escuela: 27
- *   JAZ 25 Mainumby     87 kg/h   ·  un monomotor de trabajo: 90
- *   JAZ 60 Arasunu     233 kg/h   ·  un turbohélice de 19 plazas: 200
+ *   JAZ 20 Pykasu       22 kg/h   ·  el 172R a 10.000 ft, 8,2 gal/h: 22
+ *   JAZ 25 Mainumby     68 kg/h   ·  el G-164A a 5.000 ft y 104 kt: 64
+ *   JAZ 40 Panambi      82 kg/h   ·  el Seneca III a 10.000 ft y 177 kt: 82
+ *   JAZ 50 Tujuju      272 kg/h   ·  el Twin Otter a crucero máximo: 272
+ *   JAZ 60 Arasunu     381 kg/h   ·  el 1900D a 20.000 ft y 280 kt: 403
  *   JAZ 120 Yvága   12.500 kg/h   ·  un cuatrimotor clásico: 10.500
  *
  * **Y `maxThrust` es el empuje de todos los motores juntos**, no el de uno:
@@ -51,13 +50,14 @@
  * cometió el primer día, con un 747 gastando cincuenta toneladas a la hora.
  */
 
-import type { AircraftConfig } from "./aircraft";
+import { loQueDaElMotor, parteDelEmpuje, type AircraftConfig } from "./aircraft";
 import { tramosDelPlan, type CampoDelVuelo } from "./alterno";
 import { PARADO } from "./cambio-de-avion";
 import { DE_SU_CLASE } from "./ficha-tecnica";
 import {
   airDensity,
   GRAVITY,
+  SEA_LEVEL_DENSITY,
   temperaturaExterior,
   velocidadDelSonido,
 } from "./atmosphere";
@@ -65,7 +65,10 @@ import {
 /**
  * Consumo específico de cada clase de motor, kg por newton y por hora.
  *
- * Ver la cabecera: son los de las fichas de motor, pasados a SI.
+ * Es el de los que gastan por el empuje: los reactores, y el helicóptero, que
+ * cuenta la potencia de sus turboejes como un empuje (`NEWTON_POR_VATIO` en
+ * `fdm-helicoptero.ts`). Los de hélice gastan por la potencia: ver
+ * `POR_KILOVATIO_Y_HORA`.
  */
 const POR_NEWTON_Y_HORA: Record<AircraftConfig["sound"]["engine"], number> = {
   turbofan: 0.061,
@@ -81,6 +84,88 @@ const POR_NEWTON_Y_HORA: Record<AircraftConfig["sound"]["engine"], number> = {
 export interface DondeQuema {
   readonly mach: number;
   readonly theta: number;
+  /**
+   * **La densidad del aire**, en proporción a la del nivel del mar (σ): lo que
+   * puede dar ahí el motor de hélice. Sin decir, uno. Ver `quemaConPotencia`.
+   */
+  readonly sigma?: number;
+}
+
+/**
+ * **Lo que gasta un motor de hélice por la potencia que da**, kg por kilovatio
+ * y hora, por clase de motor y leído de su manual.
+ *
+ * Un motor de hélice no gasta por lo que empuja: gasta por la potencia que
+ * da, y la hélice la convierte en empuje mejor cuanto más despacio va. Con un
+ * consumo por newton, que es como se contaba, quedaba escondida una velocidad
+ * —la de 0,03 kg/N·h eran 178 nudos; la de 0,05, 213— y el avión más lento
+ * gastaba de más y el rápido de menos (ADR 0027, enmiendas H37d y H37h).
+ */
+const POR_KILOVATIO_Y_HORA = {
+  /**
+   * **El de pistón sin turbo**: el 172R, 8,6 galones a la hora al 75 % —120
+   * hp— a 6.000 ft con la mezcla empobrecida (*Model 172R Information Manual*,
+   * figura 5-8), 0,43 lb/hp·h. Del 50 al 80 % de potencia la tabla da entre
+   * 0,260 y 0,265: gasta en proporción a la potencia, sin más.
+   */
+  atmosferico: 0.262,
+  /**
+   * **El de pistón con turbo**, que va más rico: el Seneca III, 15,0 galones a
+   * la hora por motor al 75 % —165 hp— a 10.000 ft, con la mezcla a 1.525 °F
+   * de gases (Piper, VB-1110, figura 5-45 y § 4.37), 0,55 lb/hp·h.
+   */
+  turbo: 0.332,
+  /**
+   * **El radial**: el R-985 del G-164A de 450 hp, 23,5 galones a la hora con
+   * 293 BHP a 5.000 ft y 25,1 con 314 a 2.500 (*G-164A Cruise Performance*),
+   * 0,48 lb/hp·h en las filas de altura. Al nivel del mar su tabla va más rica
+   * —0,59 al 75 %— y aquí no se cuenta.
+   */
+  radial: 0.292,
+  /**
+   * **El turbohélice**, a la potencia que puede dar el motor ahí: ver
+   * `PARTE_FIJA_DEL_TURBOHELICE`.
+   */
+  turbohelice: 0.308,
+};
+
+/**
+ * **La parte de lo que gasta un turbohélice que no baja con el mando**: una
+ * turbina gasta, además de por la potencia que da, por el aire que mueve, y a
+ * vueltas de vuelo ese aire es casi el mismo con el mando arriba que abajo. Por
+ * eso su consumo por potencia sube al bajar la potencia, y en la altura, donde
+ * mueve menos aire, baja.
+ *
+ * Lo que gasta es `0,308 · (0,48 · lo que puede dar ahí + 0,52 · lo que da)`,
+ * en kilovatios, y pasa a menos de un 7 % de las cinco cifras que se han
+ * leído de los dos turbohélices: el Twin Otter a 10.000 ft, 600 lb/h a crucero
+ * máximo y 360 a su velocidad de más autonomía, 94 nudos indicados (De
+ * Havilland, serie 400, tabla «Wheels»), y 468,2 a 146 nudos (folleto del
+ * Guardian 400); 390 esperando a 5.000 ft (la misma tabla); y el 1900D,
+ * 888 lb/h a 280 nudos a 20.000 ft (hoja de especificaciones de Raytheon).
+ */
+const PARTE_FIJA_DEL_TURBOHELICE = 0.48;
+
+/**
+ * **Lo que quema un motor de hélice dando esa parte de su potencia**, kg/s.
+ * `parte` es la de la potencia de su placa (`potenciaAlEje`), y `sigma`, el
+ * aire de donde va, para lo que puede dar ahí el turbohélice.
+ */
+function quemaConPotencia(avion: AircraftConfig, parte: number, sigma: number): number {
+  const kw = (avion.potenciaAlEje ?? 0) / 1000;
+  const motor = avion.sound.engine;
+  if (motor === "turboprop") {
+    const tope = loQueDaElMotor(avion, sigma);
+    const fija = PARTE_FIJA_DEL_TURBOHELICE;
+    return (POR_KILOVATIO_Y_HORA.turbohelice * kw * (fija * tope + (1 - fija) * parte)) / 3600;
+  }
+  const porKw =
+    motor === "radial"
+      ? POR_KILOVATIO_Y_HORA.radial
+      : avion.alturaCritica !== null
+        ? POR_KILOVATIO_Y_HORA.turbo
+        : POR_KILOVATIO_Y_HORA.atmosferico;
+  return (porKw * kw * parte) / 3600;
 }
 
 /**
@@ -93,9 +178,9 @@ const THETA_DE_LA_TABLA = 216.65 / 288.15;
 /**
  * **El consumo específico de este motor aquí**, kg por newton y por hora.
  *
- * El de la tabla —ver `POR_NEWTON_Y_HORA`— es el de crucero, y para la
- * hélice y el pistón se queda así: su consumo va con la potencia y la cuenta
- * de este juego ya lo mide por el empuje. El de un turbofán, no: **cuesta más
+ * El de la tabla —ver `POR_NEWTON_Y_HORA`— es el de crucero, y para el
+ * helicóptero se queda así. Los de hélice no pasan por aquí: gastan por la
+ * potencia (`quemaPorSegundo`). El de un turbofán, no: **cuesta más
  * cada newton cuanto más deprisa va y cuanto más caliente es el aire que
  * traga**. Con la ley de un turbofán de doble flujo de Mattingly (*Elements
  * of Propulsion*, AIAA, 2006: el consumo va como `0,4 + 0,45·M` y como la
@@ -128,8 +213,65 @@ export function quemaPorSegundo(
   empuje: number,
   donde?: DondeQuema,
 ): number {
-  const especifico = consumoEspecifico(avion, donde);
-  return (Math.max(0, empuje) * especifico) / 3600;
+  if (avion.potenciaAlEje === undefined) {
+    const especifico = consumoEspecifico(avion, donde);
+    return (Math.max(0, empuje) * especifico) / 3600;
+  }
+  /*
+   * **Uno de hélice, por la potencia que está dando.** El modelo hace el empuje
+   * como el mando por lo que puede dar el motor con ese aire por lo que empuja
+   * la hélice a esa velocidad (`empujeLleno`), así que el empuje entre lo que
+   * empujaría a esa velocidad con toda la potencia de su placa es la parte de
+   * la potencia que se está dando. La velocidad sale del Mach y de la θ.
+   */
+  const v = donde
+    ? Math.max(0, donde.mach) * SONIDO_A_15_GRADOS * Math.sqrt(Math.max(0, donde.theta))
+    : avion.cruiseSpeed;
+  const parte = Math.max(0, empuje) / (avion.maxThrust * parteDelEmpuje(avion, v));
+  return quemaConPotencia(avion, parte, donde?.sigma ?? 1);
+}
+
+/** La velocidad del sonido a 15 °C, m/s: la de `velocidadDelSonido` con θ = 1. */
+const SONIDO_A_15_GRADOS = 20.0468 * Math.sqrt(288.15);
+
+/**
+ * **Lo que frena el avión limpio y nivelado** a esa altura y verdadera, N, con
+ * la polar de su ficha y su masa de la ficha.
+ */
+function resistenciaLimpia(avion: AircraftConfig, altura: number, verdadera: number): number {
+  const peso = avion.mass * GRAVITY;
+  const ar = (avion.wingSpan * avion.wingSpan) / avion.wingArea;
+  const k = 1 / (Math.PI * ar * avion.aero.oswald);
+  const qS = 0.5 * airDensity(altura) * verdadera * verdadera * avion.wingArea;
+  const cl = peso / Math.max(1, qS);
+  return qS * (avion.aero.cd0 + k * cl * cl);
+}
+
+/**
+ * **Lo que se quema en crucero**, kg/s: el número con el que se planea la carga.
+ *
+ * En uno de hélice, el de su crucero de la ficha —su velocidad verdadera a su
+ * altura, que es la fila de su manual— con la potencia que pide su polar ahí,
+ * y nunca más de la que da el motor a esa altura: así lo que se planea es lo
+ * que se quema volando ese crucero. Era el empuje parado entre tres, que no es
+ * el crucero de ninguno: el fumigador planeaba 78 kg/h y quemaba de 117 a 139,
+ * y el vuelo local llamaba «minimum fuel» a los 25 minutos (ADR 0027, enmienda
+ * H37h).
+ *
+ * En un reactor sigue siendo un tercio del empuje parado, por su consumo de
+ * crucero.
+ */
+export function quemaDeCrucero(avion: AircraftConfig): number {
+  if (avion.potenciaAlEje === undefined) return quemaPorSegundo(avion, avion.maxThrust / 3);
+  const h = avion.alturaDeCrucero;
+  const v = avion.cruiseSpeed;
+  const sigma = airDensity(h) / SEA_LEVEL_DENSITY;
+  const tope = avion.maxThrust * loQueDaElMotor(avion, sigma) * parteDelEmpuje(avion, v);
+  return quemaPorSegundo(avion, Math.min(resistenciaLimpia(avion, h, v), tope), {
+    mach: v / velocidadDelSonido(h),
+    theta: (temperaturaExterior(h) + 273.15) / 288.15,
+    sigma,
+  });
 }
 
 /**
@@ -200,9 +342,8 @@ function cuantoDura(avion: AircraftConfig, metros: number): number {
  * cuesta un cambio y la contingencia, que en los de pistón es más que esos
  * cuarenta y cinco minutos: ver `cargaParaLaRuta`.
  *
- * Se calcula con el motor a un tercio, que es el empuje de crucero de
- * cualquiera de estos aviones: a fondo solo se está en el despegue y son dos
- * minutos.
+ * Se calcula con lo que se quema en crucero —ver `quemaDeCrucero`—: a fondo
+ * solo se está en el despegue y son dos minutos.
  *
  * Y nunca más de lo que cabe: si la ruta no cabe en los depósitos, se llena.
  * Que la ruta no quepa es un problema de la ruta, y lo resuelve `cabe.ts`
@@ -244,6 +385,7 @@ export function quemaEsperando(avion: AircraftConfig): number {
   return quemaPorSegundo(avion, resistencia, {
     mach: v / velocidadDelSonido(ALTURA_DE_ESPERA),
     theta,
+    sigma: rho / SEA_LEVEL_DENSITY,
   });
 }
 
@@ -315,8 +457,17 @@ export function cargaParaLaRuta(
  */
 function loQuePideLaRuta(avion: AircraftConfig, metros: number): number {
   // `maxThrust` ya es el de todos los motores juntos. Ver la cabecera.
-  const crucero = quemaPorSegundo(avion, avion.maxThrust / 3);
-  const viaje = crucero * cuantoDura(avion, metros);
+  const crucero = quemaDeCrucero(avion);
+  /*
+   * **La maniobra se vuela abajo**, y abajo un turbohélice gasta más que en su
+   * crucero: el JAZ 60 quema esperando a 1.500 ft más que a 25.000 ft a 274
+   * nudos, porque su turbina mueve el aire que le entra y abajo le entra más.
+   * Así que la media hora de rodar, subir, el circuito y la aproximación va a
+   * lo que más gaste de las dos cosas. En los de pistón y en los reactores es
+   * el crucero, como siempre. Ver `PARTE_FIJA_DEL_TURBOHELICE`.
+   */
+  const abajo = Math.max(crucero, quemaEsperando(avion));
+  const viaje = crucero * cuantoDura(avion, metros) + (abajo - crucero) * MANIOBRA_SEGUNDOS;
   /*
    * **Y la reserva que se carga nunca es menos que la reserva final, lo que
    * cuesta un cambio y la contingencia**, contados como los cuenta el aviso.
@@ -343,12 +494,17 @@ function loQuePideLaRuta(avion: AircraftConfig, metros: number): number {
  * **Lo que deja cargar el peso máximo al despegue**, kg: el de su clase menos
  * la masa sin combustible. Un despacho de verdad carga lo que pide el plan
  * hasta donde llegue el primero de los dos topes, el depósito o el peso; con
- * la gente ya a bordo no hay más. Pasa en una sola ruta: la avioneta de
- * Mariscal Estigarribia a Asunción, con su alternativo de vuelta a casa
- * —475 kilómetros cada tramo—, pide más de los 154 kilos de su depósito y en
- * el peso le caben 148: sale con el viaje, la maniobra y la reserva final, sin
- * lo de un cambio. De verdad se dejaría en tierra una mochila; aquí la gente
- * ya va puesta. Ver `peso.test.ts`.
+ * la gente ya a bordo no hay más. Pasa en un solo tramo, en sus dos
+ * sentidos: el JAZ 40 entre Asunción y Mariscal Estigarribia, con su
+ * alternativo de vuelta a casa —836 y 951 km entre los dos—, pide 289 y 315
+ * kilos a su crucero, más de los 280 de sus depósitos, y en el peso le caben
+ * 259: sale con el viaje y la maniobra, y para el tramo del alternativo no le
+ * llega la reserva. De verdad ese vuelo se haría a menos potencia o con menos
+ * gente; aquí la gente ya va puesta. Ver `peso.test.ts`.
+ *
+ * Era la avioneta, de Estigarribia a Asunción, mientras el combustible se
+ * contó con el empuje: pedía 154 kilos y le cabían 148. Por la potencia pide
+ * 128 (ADR 0027, enmienda H37h).
  */
 export function loQueDejaElPeso(avion: AircraftConfig): number {
   const mtow = DE_SU_CLASE[avion.id]?.mtow;
