@@ -4392,3 +4392,129 @@ rojo; no se ha mirado.
 - **El JAZ 40 no se voló** en esta tanda. El cambio no puede tocarlo: sube por
   actitud de principio a fin (`SUBE_CON_EL_MORRO`) y vuelve de `subirDeVerdad`
   antes de llegar a `aQueSeSube`.
+
+## Enmienda H34c (19-11-2026): la avioneta del banco rota, nivela y frustra como su manual
+
+Lo que H34b dejó pendiente, y lo que la ronda de la tanda 17 volvió a enseñar:
+en la segunda de sus dos tiradas de `tenerife-norte taguato 1 jaz-20`
+(`c28/vuelo-jaz-20-taguato.log` del scratchpad) sonó «stall, stall» a 241 m,
+con 65 nudos indicados, α 13,5°, 1,65 g y los flaps arriba; la otra salió en
+verde. Son tres cosas del piloto del banco con la JAZ 20 en el modelo
+completo, y ninguna del juego: el avión hace lo que le pide la palanca. Todo
+va a `AVIONETA_COMPLETA` —la JAZ 20 de Tukã para arriba—; los que sube el
+automático y Guyrami no cambian. Las trazas y la mesa, en `h34c/` del
+scratchpad.
+
+### La mesa
+
+Con el modelo de vuelo del juego (`CoefficientFlightModel`, las capas de
+Taguató, Los Rodeos a 632 m y 21 °C) y las leyes del banco copiadas tal cual,
+antes y después. La racha es de cara, de ±3 m/s y siete segundos de periodo.
+
+| | Antes | Después |
+|---|---|---|
+| Rotar: morro máximo | 16,1° (la cola) | 11,4° |
+| Rotar: avisador por debajo de 15 m | 0,53 s, el ala 2,0° por encima | ninguno, 3,9° de margen |
+| Rotar: se va del suelo / pasa los 30 m | 279 m / 806 m | 327 m / 777 m |
+| Subir por velocidad, con racha: morro y carga | hasta 21,4°, 0,52–1,49 g | hasta 16,6°, 0,70–1,30 g |
+| Subir por velocidad, con racha: margen mínimo | 2,9–3,1° | 5,0–5,1° |
+| Nivelar, con racha: carga | 0,35–1,29 g | 0,68–1,15 g |
+| Nivelar, con racha: margen mínimo | 2,2–3,5° | 4,7–4,9° |
+| Frustrar desde 51 m: carga máxima | 1,79 g | 1,39 g (el primer fotograma, igual en las dos) |
+| Frustrar: margen mínimo | 1,8° a 50 m | 6,0° |
+
+Sin racha, nivelar ya era suave en la mesa (0,79–1,00 g): el tirón de verdad
+necesita aire que mueva el avión, y en Los Rodeos lo hay.
+
+### 1. Rotar a su ritmo
+
+`aSuRitmo` —tres grados por segundo hacia una actitud dos grados por debajo
+del avisador— era solo de los que sube el automático; la avioneta rotaba con
+ocho décimas sostenidas y el morro se paraba en el tope de la cola, 16,1°. Ahora
+rota igual que ellos, y la subida por actitud de los primeros 120 m lleva el
+mismo ritmo, que es lo que vale también al irse al aire desde la final. Se va
+del suelo 48 m más tarde y pasa los treinta metros 29 m antes: el ala sube
+más con el morro a doce que pegado a su pérdida.
+
+### 2. Nivelar parando el morro
+
+`aLaAltura` y la subida por velocidad mandaban la palanca solo con lo que
+faltaba: el morro llegaba con todo el giro encima y se pasaba. Ahora se oponen
+al giro del morro sobre el horizonte (`ritmoDelMorro`, `AMORTIGUA_EL_MORRO`):
+el de verdad, no `pitchRate`, que en un viraje de treinta grados gira cuatro
+grados por segundo con el morro quieto, y amortiguarlo sería empujar en cada
+viraje. Solo en la avioneta del modelo completo: en Guyrami esa palanca
+decide dónde se posa el avión, y los demás del modelo completo llevan la
+altura con el automático.
+
+### 3. La frustrada, muesca a muesca
+
+`flapsDeLaFrustrada`: al irse, la segunda muesca, veinte grados; la primera
+cuando la segunda ha llegado, sube y va a la de maniobra de la primera —60,6
+nudos con el peso de la mesa—; arriba del todo a la altura de aceleración y a
+1,3 veces su pérdida limpia, la de recoger los de despegue: 63,8 nudos con
+ese peso, unos 62 con el que lleva en el vuelo. Es el *Balked Landing* del 172:
+«RETRACT TO 20°», 60 nudos, diez grados hasta librar los obstáculos, y los
+últimos «after reaching a safe altitude and 65 KIAS». Y con los flaps de la
+frustrada aún fuera, por encima de los 120 m se sube a la limpia
+(`aQueSeSube`): a la de antes, 60 nudos, no se llegaba nunca a la de
+recogerlos.
+
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-20`, con la traza
+del ala, mientras otra ronda usaba el navegador: cada tirada esperó su turno.
+La primera con `OGA_PISTA_OCUPADA=1`, para que la torre mande irse al aire.
+
+| | Antes (H34b y c28) | 1, con la pista ocupada | 2, sin frustrada |
+|---|---|---|---|
+| Comprobaciones | c28: 57 de 58 y 58 de 58; H34b, la tercera, en rojo | 58 de 58 | 58 de 58 |
+| Avisador en vuelo | c28: 241 m, 65 kt, 1,65 g; H34b: 84 m en la frustrada | ni una muestra | ni una muestra |
+| Rotar: morro / avisador a 2 m | 16,1° / de 0,08 a 0,31 s | 9,7° al irse, 13,5° máximo por debajo de 30 m / ninguno, margen 4,4° | 9,3° al irse, 14,3° máximo por debajo de 30 m / ninguno, margen 3,5° |
+| Nivelar en el circuito | 1,09–1,52 g | 0,65–1,28 g, margen 5,4° | 0,62–1,32 g, margen 2,4° (ver abajo) |
+| Subir por velocidad: margen mínimo | 2,4–3,3° | 2,6° a 144 m, en una racha | 3,2° a 210 m |
+| Frustrada: flaps | todos de golpe | 30→20 a 61 m y 62 kt, 20→10 sin parar, en 10 a 76 m y 59 kt, de 10 a 0 desde 137 m y 62 kt | — |
+| Frustrada: margen y carga | 1,40 g y «stall, stall» a 84 m | margen 3,1° (una racha a 127 m), 1,56 g a 73 kt con el ala a 8,9° del avisador | — |
+| Toma | tras la frustrada de H34b, 2,75 m/s | 1,49 m/s, tras la frustrada | 1,84 m/s |
+
+El nivelado de la segunda es lo más cerca que se llegó del avisador en las
+dos: a 257 m `aLaAltura` empuja a −0,13, la carga baja a 0,62 g, y al
+soltar el avión vuelve solo a su ángulo de compensación y se pasa —1,32 g y
+el ala a 2,4° del avisador a 260 m, con la palanca en 0,06—. Es la misma
+altura y el mismo gesto que el «stall, stall» de c28, que se quedó en 1,65 g
+y α 13,5°, ahora con dos grados y medio de margen y sin que suene. En la
+primera, el mismo nivelado quedó a 5,4°.
+
+### Lo que queda
+
+- **La tercera tirada, Guyrami y el JAZ 40 no se volaron**: la otra ronda
+  tenía el navegador y no les llegó el turno dentro del tope de la tanda.
+  Guyrami y el JAZ 40 no pueden cambiar con esto: todo va detrás de
+  `AVIONETA_COMPLETA`, que es falsa en el modelo sencillo (`SENCILLO`) y en
+  los que sube el automático (`SUBE_CON_EL_MORRO`), y en los dos sitios donde
+  ya había una condición —rotar y `aQueSeSube`— la rama que toman es la de
+  antes.
+- **El empujón del nivelado.** Se empieza a nivelar quince metros antes de
+  la altura, subiendo a tres metros por segundo o más, y la ley pide de golpe
+  el metro y medio por segundo que toca a quince metros: −0,13 de palanca.
+  El 172 empieza a nivelar a un diez por ciento de lo que sube —a 600 pies
+  por minuto, sesenta pies antes— y baja el morro poco a poco. Empezar antes
+  según lo que se suba, en vez de a quince metros fijos, es lo que queda del
+  nivelado.
+- **La subida por velocidad sigue rozando los 2,6–3,2° de margen** en el
+  aire de Los Rodeos, como en H34b: en la mesa, con una racha regular, el
+  freno del morro la llevaba de 2,9° a 5,0°, pero en el vuelo las rachas que
+  la acercan suben el ala sin que la palanca haga nada —0,01 o 0,02 de
+  palanca, y el ala tres o cuatro grados arriba en medio segundo—. No es la
+  mano: es el aire, y con eso no suena.
+- **El tirón de la frustrada.** Con toda la potencia y los flaps saliendo, el
+  morro de la avioneta sube solo a diez grados por segundo y la carga llega a
+  1,56 g a 73 nudos: lejos de la pérdida, pero un tirón. `aSuRitmo` deja de
+  tirar cuando el morro va deprisa y no empuja; parar el morro también en la
+  subida por actitud —lo que ya hace `AMORTIGUA_EL_MORRO` arriba— es lo
+  siguiente, y pide volver a volar los despegues.
+- **Los flaps de despegue de la avioneta** se siguen quitando de golpe a los
+  treinta metros (`flapsDeDespegueFuera` es solo de los que sube el
+  automático). En la primera tirada no dio guerra: los quita a 62–64 nudos,
+  en su maniobra limpia. El 172 los quita por encima de los
+  obstáculos y a su velocidad; si vuelve a salir algo ahí, el sitio es ese.
