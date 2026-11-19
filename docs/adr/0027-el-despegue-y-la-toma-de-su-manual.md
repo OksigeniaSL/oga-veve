@@ -5322,3 +5322,176 @@ En el navegador, `verificar-vuelo-entero.mjs`, puerto 5687:
   (37.000 antes del régimen plano) donde el suyo se queda en 25.000. Por
   encima del régimen plano la potencia de una turbina cae algo más deprisa que
   la densidad, y el rendimiento de la hélice también, y no se cuenta.
+
+## Enmienda H37d (19-11-2026): el techo del Twin Otter, la nube del ILS y la mesa del combustible
+
+H37c dejó tres cosas por mirar con el JAZ 50: que subía a 34.500 ft donde el
+suyo se queda en 25.000, que el ILS de Fuerteventura daba 19 de 20 por la nube,
+y que el combustible del juego se cuenta con el empuje parado. **El techo se
+arregla**; **la nube era del banco**, y se arregla en el banco; **el
+combustible se mide y no se cambia**, y aquí queda lo que haría falta.
+
+### El techo: la cuenta
+
+El techo de servicio es la altura a la que, a tope de gas, limpio y a su mejor
+velocidad, el avión ya no sube cien pies por minuto. Se cuenta con lo mismo que
+vuela el modelo —`empujeLleno` contra `resistenciaNivelado`, el exceso de
+potencia partido por el peso, a la mejor verdadera de cada altura— y se
+comprueba volando con el modelo de coeficientes a dos mil pies del techo: la
+cuenta y el vuelo dicen lo mismo a un 10 % en los cinco, y en el JAZ 50 a un
+1 % (`techo.test.ts`).
+
+| | Masa | Techo del modelo, antes | Después | El suyo | Fuente |
+|---|---|---|---|---|---|
+| JAZ 20 (172R) | 1.111 kg, 2.450 lb | 22.400 ft | sin cambio | 13.500 | manual del 172R, la ficha |
+| JAZ 25 (Ag Cat G-164A) | 2.041 kg, 4.500 lb | 20.000 | sin cambio | sin cifra leída | — |
+| JAZ 40 (Seneca II) | 2.073 kg, 4.570 lb | 30.700 | sin cambio | 25.000 de norma | «Flight above 25,000 feet is not approved», manual del Seneca III, § 2.27 |
+| JAZ 50 (Twin Otter 400) | 6.350 kg, 14.000 lb | 28.900 | **24.500** | **25.000, a 100 ft/min** | folleto del Guardian 400 de Viking |
+| JAZ 50 | 5.670 kg, 12.500 lb | 32.000 | **26.800** | — | — |
+| JAZ 50 | 5.182 kg, la de la ficha | 34.400 | 28.700 | — | — |
+| JAZ 60 (1900D) | 7.766 kg, 17.120 lb | 38.400 | sin cambio | 25.000 de norma | «Maximum Operating Pressure-Altitude Limit for normal operation is 25,000 ft», CAA de Nueva Zelanda |
+
+Antes del régimen plano de H37c, con la ley de la casa desde el suelo, el
+JAZ 50 ya subía a 36.600 ft a la masa de la ficha y a 30.000 a 14.000 lb: **ya
+salía alto**, y el régimen plano lo subió dos mil pies más.
+
+### El techo: lo que se cambia
+
+Por encima de su altura crítica el motor perdía con la densidad a la uno
+(`loQueDaElMotor`), que es lo que dicen las curvas del TSIO-360-E del JAZ 40
+(ver la enmienda H37a) y no lo que hace un turbohélice: arriba la turbina
+pierde algo más deprisa que la densidad, y lo que se cuenta aquí es empuje, con
+la hélice moviendo menos aire en cada pala. H37c ya lo dejó escrito como lo que
+faltaba.
+
+El cambio es una cifra en la ficha, **`caidaSobreLaCritica`**, el exponente de
+esa pérdida: sin ella, uno, y el JAZ 40 se queda como estaba; el JAZ 50, 1,5.
+Y su régimen plano, de ocho mil a **nueve mil pies**, que con la caída nueva es
+lo que deja sus cruceros donde estaban:
+
+| JAZ 50 | Antes (8.000 ft, a la 1) | 8.000 ft, a la 1,5 | **9.000 ft, a la 1,5 (ahora)** | 10.000 ft, a la 1,5 | El suyo |
+|---|---|---|---|---|---|
+| Techo a 14.000 lb | 28.900 ft | 23.800 | **24.500** | 25.200 | 25.000 |
+| Techo a 12.500 lb | 32.000 | 26.100 | **26.800** | 27.500 | — |
+| A fondo, 0 / 5.000 / 10.000 ft | 170 / 176 / 178 | 170 / 176 / 177 | **170 / 176 / 179** | 170 / 176 / 181 | 170 / 181 / 182 |
+| Subida a 12.500 lb, 0 / 10.000 / 20.000 ft | 1.829 / 1.672 / 913 | 1.829 / 1.595 / 588 | **1.829 / 1.711 / 660** | 1.829 / 1.835 / 736 | 1.600 a nivel del mar |
+
+Diez mil pies de régimen plano encajarían algo mejor arriba, pero dejan la
+subida a diez mil pies igual que la de nivel del mar, y eso un turbohélice de
+620 shp no lo hace. Abajo no cambia nada: hasta nueve mil pies el motor da lo
+de nivel del mar, como daba hasta ocho.
+
+Los demás:
+
+- **JAZ 40 y JAZ 60**: su techo de 25.000 ft es de norma, no de motor —ni el
+  Seneca ni el 1900D se aprueban más arriba—, y el modelo llega a él a su peso
+  máximo. El juego no les pone tope: subir más
+  alto que lo aprobado no lo impide nada en el modelo, igual que nada lo impide
+  en el avión salvo quien lo vuela.
+- **JAZ 20 y JAZ 25**, de pistón sin turbo: **salen altos y no se tocan aquí.**
+  Pierden con la ley de la casa, la densidad a la 0,7, que es la de una
+  turbina; el atmosférico pierde más deprisa. Con la ley de Gagg y Farrar,
+  `σ − (1 − σ)/7,55`, que ya cita `loQueDaElMotor`, el JAZ 20 se queda en
+  15.200 ft a la masa de la ficha, y lo que sube de cero a doce mil pies, de
+  dos mil en dos mil, sale 712, 626, 542, 460, 379, 300 y 222 ft/min; el JAZ
+  25, a 4.500 lb, en 13.200. Lo que lo frena:
+  el JAZ 20 va a fondo a 117 nudos a diez mil pies con esa ley, y su crucero
+  es de 117 a 3.000 m: la marca de crucero pediría todo el gas, y eso se
+  decide con la velocidad de crucero de la ficha, que está tocando otro.
+
+### La nube del ILS: era del banco
+
+El banco medía la nube con `enLaNube`, que es **la de donde está el ojo**, y el
+ojo era la cámara de cola: seis décimas de envergadura por encima del avión.
+En el Twin Otter, con 19,81 m de ala, doce metros; en el Seneca, siete. Y la
+capa no acaba en su base: se deshilacha veinticinco metros por debajo
+(`BORDE_DE_LA_CAPA`). Con la base a 300 ft, la nube empieza a 218: a los
+mínimos, con el avión a 197 ft, la cámara del Twin Otter iba a unos 240, a
+medias dentro —el 0,51 de H37c—, y la del Seneca a unos 220, en el mismo borde
+y fuera a efectos; por eso el JAZ 40 daba 20 de 20. Quien pilota, a 197 ft y
+sentado, ya ha salido.
+
+No depende del motor ni de nada de H37c: la cámara y la nube son las mismas, así
+que **ya fallaba antes con el JAZ 50**, solo que no se había volado. No se ha
+vuelto a volar en `027d23af` para verlo: la cuenta de la cámara lo dice, y el
+navegador iba por turnos. El banco mide ahora desde el asiento: pone la vista de
+cabina, mira y vuelve a la de cola (`scripts/ver-ils-con-agujas.mjs`).
+
+### El combustible: la mesa
+
+Se cuenta en `combustible.ts`: lo que se quema es **el empuje de ahora por un
+consumo por newton** de su clase —0,03 kg/N·h el pistón, 0,05 el radial y el
+turbohélice—, y lo que se carga para el viaje sale del **empuje parado entre
+tres** por lo mismo (`cargaParaLaRuta`). En vuelo, nivelado, el empuje es la
+resistencia; así que lo que se gasta volando sale de la resistencia, y lo que se
+planea, del empuje parado.
+
+| | En crucero, volando | Kg/h del modelo | Planeado | El suyo |
+|---|---|---|---|---|
+| JAZ 20 | 117 kt a 9.843 ft | 32 (39 al nivel del mar) | 26 | sin cifra leída a mano |
+| JAZ 25 | 107 kt a 8.202 ft | 117 (139 al nivel del mar) | 78 | 242 NM con 80 gal al 75 % al nivel del mar: unos 96 kg/h si va a 107 kt (manual del G-164A, la ficha) |
+| JAZ 40 | 189 kt a 18.045 ft | 59 | 50 | el manual del Seneca III a mano está escaneado y su tabla de potencias no se lee entera |
+| JAZ 50 | 182 kt a 10.000 ft | 342 | 400 | — |
+| JAZ 50 | 146 kt a 10.000 ft | 250 | — | **212** (468,2 lb/h, «Fuel Burn at Economy Cruise», folleto del Guardian 400) |
+| JAZ 60 | 274 kt a 24.934 ft | 296 | 467 | sin cifra leída |
+
+**Por qué no cuadra.** Un motor de hélice no gasta por lo que empuja: gasta por
+la potencia que da, y la potencia es el empuje por la velocidad partido por el
+rendimiento de la hélice. Un consumo por newton **lleva escondida una
+velocidad**: con el consumo de un pistón, 0,43 lb/hp·h, y una hélice al 80 %,
+los 0,03 kg/N·h son los de un avión a 178 nudos; los 0,05 del turbohélice, con
+0,6 lb/shp·h, los de uno a 213. El que va más despacio que eso gasta de más, y
+el que va más deprisa, de menos: el fumigador a 107 nudos, un 45 % más que su
+manual; el Twin Otter a 146, un 18 % más.
+
+**Y por qué el empuje parado mandaba en el vuelo local.** El fumigador planea
+78 kg/h, del empuje parado, y quema 117-139 volando, de la resistencia: el
+vuelo local de media hora sale con menos de lo que va a gastar, y se come lo
+que lleva para un cambio. Por eso al bajar el empuje parado de 4,7 a 4,5 kN
+llamaba «minimum fuel» a los 25 minutos (H37c).
+
+**No se cambia aquí**, porque lo que se planea es la carga de cada destino y la
+hoja de carga la está tocando otro, y porque cambiarla mueve qué ruta cabe en
+qué depósito en los cinco de hélice. Lo que haría falta:
+
+1. **La potencia al eje de cada uno en su ficha**, W y de todos los motores:
+   160 hp, 450, 2 × 200, 2 × 620 shp y 2 × 1.279. El JAZ 25 y el JAZ 40 ya la
+   llevan dentro de `potenciaUtil`, multiplicada por el rendimiento.
+2. **Un consumo por potencia de cada clase**, con su fuente: el del pistón, el
+   del radial y el del turbohélice, que en este sube al bajar la potencia.
+3. **En vuelo**, lo que se quema: ese consumo por la potencia que da el motor,
+   que es la potencia de la ficha por `empuje / (maxThrust · parteDelEmpuje(v))`
+   —la parte del empuje lleno a esa velocidad que se está dando es la parte de
+   la potencia, porque el modelo hace el empuje como gas por caída por lleno—.
+   Pide la verdadera en `DondeQuema`.
+4. **Al planear**, el crucero a la potencia de crucero de su manual —el 75 % en
+   los de pistón, el crucero máximo en los turbohélices— en vez del empuje
+   parado entre tres; y la espera de la reserva, con la potencia que pide su
+   resistencia a esa velocidad.
+5. Medir otra vez `combustible-del-vuelo-local`, `combustible-del-ejercicio`,
+   `cabe*` y `peso`, y la carga de cada destino contra la hoja de carga.
+
+Los reactores no entran: su consumo sí va con el empuje.
+
+### Volado
+
+- **El ILS de Fuerteventura con el Twin Otter** (`OGA_AVION=jaz-50
+  ver-ils-con-agujas.mjs`, reloj por cuatro), **20 de 20**: captura la senda
+  desde abajo a 7,3 NM, a los mínimos con las agujas a −0,02 y −0,14 puntos
+  —lo peor desde mil pies, 0,11 y 0,30—, y desde el asiento, a 335 ft dentro
+  de la nube (1,00) y a 194 ft fuera (0,00) con la pista a la vista; aterriza
+  y cierra con la pista.
+- **El vuelo entero en Tenerife Norte, en Taguató, con el Twin Otter**
+  (`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-50`, reloj por uno
+  y ×1,00 de verdad), **57 de 57**, 4 sin medir: sube al 13,8 % hasta los cien
+  metros, toca a 1,54 m/s, a 0,2 m del eje y 248 m pasado el umbral, y apaga a
+  los 934 s. Lo mismo que en H37c: el plan va a nueve mil pies, el borde del
+  régimen plano nuevo, donde el motor da ahora un 3 % más que antes; por
+  encima, donde cambia de verdad, este vuelo no sube.
+
+### Lo que queda
+
+- **El techo del JAZ 20 y del JAZ 25**, con la ley del atmosférico (ver arriba).
+- **El combustible por potencia** en los cinco de hélice (ver arriba).
+- **El crucero del JAZ 50 a 5.000 ft**, 176 nudos donde el suyo va a 181:
+  con la recta, lo que gana arriba lo pierde por correr.
