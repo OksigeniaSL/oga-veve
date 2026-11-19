@@ -3819,7 +3819,7 @@ export const ES_PY = {
    * GPS). Lo demás es lo mismo.
    */
   "ejercicio.gps.loi": "LOI: el GPS ya no puede asegurar dónde estamos",
-  "ejercicio.gps.seFueDr": "Se fue el GPS. DR: el mapa sigue, pero a estima. El avión vuela igual",
+  "ejercicio.gps.seFueDr": "Se fue el GPS. DR: ahora calcula dónde estamos, a estima. El avión vuela igual",
   "ejercicio.gps.planBCrs": "Plan B: girá el CRS hasta que la barra quede al medio con TO, y seguila",
   // Lo que va escrito delante de la frase en la tarjeta. Los rótulos de cabina, sin traducir.
   "ejercicio.gps.nav": "NAV {id} {mhz}",

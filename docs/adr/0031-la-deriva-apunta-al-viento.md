@@ -3137,8 +3137,11 @@ Tres nuevas, para la instructora, en `es-PY.ts` y en `en.ts`, pedidas en fila
 (`FrasesEnFila`) como las de H26v:
 
 - `ejercicio.gps.loi` — «LOI: el GPS ya no puede asegurar dónde estamos».
-- `ejercicio.gps.seFueDr` — «Se fue el GPS. DR: el mapa sigue, pero a
-  estima. El avión vuela igual».
+- `ejercicio.gps.seFueDr` — «Se fue el GPS. DR: ahora calcula dónde estamos,
+  a estima. El avión vuela igual». Sin nombrar el mapa: la regla de no
+  nombrar lo que no se ve (`flight/lo-que-se-nombra.ts`) pediría una gemela
+  para cuando el cuadro no está a la vista, y lo que dice la frase vale igual
+  sin señalar la pantalla.
 - `ejercicio.gps.planBCrs` — «Plan B: girá el CRS hasta que la barra quede
   al medio con TO, y seguila».
 
