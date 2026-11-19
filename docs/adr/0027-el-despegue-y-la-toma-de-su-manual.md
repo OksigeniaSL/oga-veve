@@ -4938,6 +4938,14 @@ falta frases.
   desde que suelta el suelo hasta los cien metros, llega estabilizado a los
   500 ft a 88 nudos (Vref 86), toca a 597 m del umbral, a 0,2 m del eje y a
   1,88 m/s, y acaba apagado en su puesto a los 909 s.
+- **Un motor después de V1, en Gran Canaria** (`verificar-emergencias.mjs
+  despues gran-canaria jaz-40 taguato`), **7 de 10, con la recta y con la
+  hélice nueva**: el piloto del banco sube con un motor a 75–79 nudos, por
+  debajo de la línea azul (90), y vuelve al suelo. Con la recta no pasó de 12 m
+  en 80 s y tocó con el tren fuera; con la hélice nueva sube a 12 m en 8 s, mete
+  el tren y toca sin él. No es la hélice: es el piloto del banco, que con el
+  bimotor no acelera a la línea azul antes de subir. No se había volado nunca
+  con el JAZ 40. Queda por hacer.
 - La mesa del vuelo (`pista-corta.test.ts`, `motores.test.ts`,
   `despegue-y-toma-del-manual.test.ts`, `turbo.test.ts`, `prestaciones.test.ts`)
   vuela el modelo de vuelo entero y sin ayudas; las cifras de arriba son de
