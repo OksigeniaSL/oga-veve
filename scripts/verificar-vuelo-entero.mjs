@@ -2545,6 +2545,37 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     }
   };
 
+  /**
+   * **A qué se sube por encima de la altura de aceleración**, verdadera, m/s.
+   *
+   * La de subida de antes —la Vr y un quince por ciento— es de flaps de
+   * despegue, y la avioneta llega a esa altura limpia: este banco no le
+   * deja los de despegue —ver `flapsDeDespegueFuera`, que es solo de los que
+   * sube el automático— y `configurar` se los quita a los treinta metros. Así
+   * que de los ciento veinte metros para arriba se pedían 62,6 nudos
+   * verdaderos con el ala limpia, que en Los Rodeos son 58 o 59 indicados:
+   * 1,19 veces su pérdida limpia, de 49. Y se pedían de golpe: al dejar la
+   * actitud de doce grados el avión iba a 36 m/s, la palanca saltaba de cero a
+   * dos décimas en un segundo, el morro se iba a 25–30° y la velocidad caía a
+   * 30 m/s. Con la carga de ese tirón —1,47 y 1,57 g— el avisador sonaba entre
+   * 157 y 175 m (c25 y la tirada de H29n con el tope de 45), y en la de H29n
+   * otra vez a 266 m, a 70 nudos y 1,88 g, que es la altura a la que nivela la
+   * subida. En las que salían en verde pasaba igual —el morro a 23° en c26 y a
+   * 30° en la traza de antes de H34b—: lo que decidía el color era la racha
+   * (enmienda H34b del ADR 0027).
+   *
+   * Con el ala limpia se sube a lo de los demás, la limpia de `SUBIDA_LIMPIA`
+   * —1,35 veces la pérdida limpia, 66 nudos indicados—, que es además casi lo
+   * que ya trae de la actitud de doce grados: el relevo de una ley a la otra
+   * no tira de nada. Quien juega sube más deprisa aún, a la de subida que le
+   * pinta la escalera (`indicadaDeSubida`, 85 nudos), y el 172 de verdad a su
+   * Vy, 74. Con los flaps fuera, y en Guyrami, como estaba.
+   */
+  const aQueSeSube = (s) =>
+    !SENCILLO && suyas.llevaFlaps && (o.palancaDeFlaps?.() ?? 0) < 0.01
+      ? Math.max(VELOCIDAD_DE_SUBIDA, enVerdadera(s, SUBIDA_LIMPIA))
+      : VELOCIDAD_DE_SUBIDA;
+
   const subirDeVerdad = (s) => {
     /*
      * **Los primeros metros, por actitud.**
@@ -2571,7 +2602,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const falta = CABECEO_DE_SUBIDA - cabeceoDe(s);
       return ganancia(s) * Math.max(-0.35, Math.min(0.6, falta * 4));
     }
-    const base = palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA);
+    const base = palancaPorVelocidad(s, aQueSeSube(s));
     const falta = Math.max(0, 3 - s.verticalSpeed);
     /*
      * **Y el empujón entra en cuanto hay margen de pérdida, no cuando ya se ha
