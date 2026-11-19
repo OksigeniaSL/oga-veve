@@ -384,11 +384,14 @@ try {
         if (tramo === "subida") {
           c.throttle = 1;
           const v2 = vel.v2 ?? vref * 1.2;
-          if (deLineaAzul && ej?.fase !== "armada") {
+          if (deLineaAzul && (ej?.fase !== "armada" || modo === "tren")) {
             /*
              * Sin bajar de la Vr, subiendo lo justo mientras le falte para la
              * línea azul, y en ella, a ella. Los flaps, dentro cuando ya va
-             * deprisa para ir sin ellos: a diez nudos de la línea azul.
+             * deprisa para ir sin ellos: a diez nudos de la línea azul. Y en
+             * `tren`, también con los dos en marcha: ir a buscar los 92 nudos
+             * con el morro desde la Vr, a tres metros del suelo, era bajarlo
+             * once grados.
              */
             const vr = vel.vr ?? vref;
             c.elevator =
