@@ -338,6 +338,11 @@ de pistón, y `OGA_MOTOR=izquierdo|derecho` para elegir qué motor se para
   La compañera pone la bandera **a los 4,0 s del fallo**; sube a la línea
   azul —87 a 94 nudos, de 0,2 a 4,6 m/s— con el pie a 0,45, da la vuelta a
   mil pies y toca a 155 m del umbral, con MAYDAY, prioridad y bomberos.
+- **Los de turbina, con el código nuevo**, siguen igual: el JAZ 60 después de
+  V1 (`despues gran-canaria jaz-60`), **10 de 10**, con el izquierdo, toca a
+  311 m del umbral; el JAZ 90 (`despues gran-canaria jaz-90`, con
+  `OGA_MOTOR=derecho`), **10 de 10**, toca a 202 m. Ver el ADR 0027, enmienda
+  H37e, por qué el derecho.
 - **Las pruebas** (`practica.test.ts`): qué se ofrece a cada tipo; el de
   pistón para rodando pasada su V1 del juego y recién despegado con el tren
   fuera; si sigue con el tren fuera, se cierra contando que tocaba parar; con

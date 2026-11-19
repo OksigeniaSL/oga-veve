@@ -5842,3 +5842,26 @@ Los reactores no entran: su consumo sí va con el empuje.
 - **El combustible por potencia** en los cinco de hélice (ver arriba).
 - **El crucero del JAZ 50 a 5.000 ft**, 176 nudos donde el suyo va a 181:
   con la recta, lo que gana arriba lo pierde por correr.
+
+## Enmienda H37e (19-11-2026): lo que quedaba de H37b
+
+- **El ejercicio sigue con el bimotor donde su manual manda parar**: ya no.
+  El JAZ 40 no tiene V1 en su manual, y los ejercicios de antes y después de
+  V1 ya no se le ofrecen; tiene los suyos, «Motor en la carrera», que se para,
+  y «Motor con el tren arriba», que se sigue a la línea azul. Ver el ADR 0014,
+  enmienda H37e.
+- **La compañera pone la bandera a los quince metros**: ya no. Si el de
+  pistón sigue, el procedimiento empieza en el fallo y la bandera va a los
+  cuatro segundos. Volado: a los 4,0 s, con el motor parado a 98 m.
+- **El JAZ 90 con el motor derecho parado toca a 30 m del eje**: no es nuevo,
+  y no es del pie. Se voló la misma tirada (`despues gran-canaria jaz-90
+  taguato`) con el derecho parado a la fuerza (`OGA_MOTOR=derecho`, que el
+  banco aprende ahora) con el código de antes de H37b, 027d23af, y con el de
+  ahora: las dos pasan 10 de 10, y las dos hacen la misma final con un motor,
+  que culebrea de un lado al otro del eje en el último par de kilómetros —con
+  el de antes, de 18 m a la izquierda a 14 a la derecha, y toca a 301 m del
+  umbral; con el de ahora, de 26 a la izquierda a 12 a la derecha, y toca a
+  202—. Es una tirada de cada, así que no es una estadística; pero el vaivén
+  es el mismo antes y después, y los 30 m de H37b caben en su cola: es del
+  piloto del banco, y ya estaba. Y el pie no puede empujar de lado: `resistenciaDelTimon` se suma
+  al coeficiente de resistencia, a lo largo del aire. No se ha tocado.
