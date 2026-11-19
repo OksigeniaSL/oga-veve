@@ -3642,6 +3642,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * lo contó la primera versión de esto —un cercano «sin una palabra» en
    * Pettirossi que corrido a uno se habría informado—, y es la trampa de
    * siempre de este banco: ver la memoria sobre la regla de medir.
+   *
+   * Por eso cada uno lleva su cuenta y no su hora de empezar: la que va
+   * detrás de la información de otro no corre. Ver «detrás de la de otro».
    */
   const cercanoDesde = new Map();
   const CERCANO_SIN_INFORMAR = 12;
@@ -4843,6 +4846,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         // a empezar su cuenta. Ver `enLaBandaDesde`.
         for (const id of [...enLaBandaDesde.keys()])
           if (!enLaBandaAhora.has(id)) enLaBandaDesde.delete(id);
+        /*
+         * **Y detrás de la de otro, su reloj espera** (H29l). Las informaciones
+         * van de una en una —la segunda, cuando la primera se acaba de oír y
+         * un respiro; ver `ENTRE_DOS` en `flight/informacion-de-trafico.ts`—,
+         * y eso es cola, no silencio. Subiendo de Los Rodeos con el JAZ 50
+         * (c26), dos del circuito se pusieron cerca a la vez: la torre nombró a
+         * EC-JBS y EC-HOJ salió «sin una palabra» a los doce segundos con la
+         * información en «entre dos», a punto de nombrarlo. Así que mientras
+         * suena la de otro, o espera turno la de otro, o va su respiro, el
+         * reloj de este no corre; el de la que va delante sí, y si la boca la
+         * retiene, salta en ella.
+         */
+        const callaLaInformacion = o.porQueCallaLaInformacion?.() ?? null;
+        const contadosAhora = new Set(o.informacionDeTrafico?.() ?? []);
         if (!s.onGround && s.heightAboveGround > 152)
           for (const b of pintados) {
             if (b.clase === "otro") {
@@ -4850,8 +4867,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               continue;
             }
             const pared = performance.now() / 1000;
-            if (!cercanoDesde.has(b.id)) cercanoDesde.set(b.id, pared);
-            if (pared - cercanoDesde.get(b.id) > CERCANO_SIN_INFORMAR && !informados.has(b.id) && !cercanosSinInformar.has(b.id)) {
+            if (!cercanoDesde.has(b.id)) cercanoDesde.set(b.id, { cuenta: 0, ultima: pared });
+            const reloj = cercanoDesde.get(b.id);
+            const detrasDeOtra =
+              !informados.has(b.id) &&
+              !contadosAhora.has(b.id) &&
+              (callaLaInformacion === "sonando" ||
+                callaLaInformacion === "entre dos" ||
+                (callaLaInformacion?.startsWith("esperando turno") ?? false));
+            if (!detrasDeOtra) reloj.cuenta += pared - reloj.ultima;
+            reloj.ultima = pared;
+            if (reloj.cuenta > CERCANO_SIN_INFORMAR && !informados.has(b.id) && !cercanosSinInformar.has(b.id)) {
               cercanosSinInformar.add(b.id);
               radar.cercanosSinInformar = (radar.cercanosSinInformar ?? 0) + 1;
               radar.cercanosSinInformarDonde ??= `${t.toFixed(0)} s en «${fase}»: ${b.id} a ${Math.round(b.relativa / 0.3048)} ft · la información: ${o.porQueCallaLaInformacion?.() ?? "?"} · informados: ${[...informados].join(", ") || "nadie"} · contados: ${(o.informacionDeTrafico?.() ?? []).join(", ") || "nadie"}`;
