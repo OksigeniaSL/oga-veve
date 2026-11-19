@@ -1306,8 +1306,8 @@ Taguató, no: al soltar, la ayuda de subida coge lo que lleva el avión entre
 nivelado y subiendo —«el objetivo nunca es un descenso», ver `trimClimb` en
 `fdm.ts`— y con el avión recién colocado eso es nivelado. La sostiene con su
 media autoridad por encima del compensador, y el gas de la senda no da para
-ir nivelado: en la mesa, el JAZ 20 acaba a 81,7 nudos y solo 24 m más abajo,
-bajando 1,33 m/s. Es la regla de la ayuda, no el compensador, y cambiarla
+ir nivelado: en la mesa, a los treinta segundos, el JAZ 20 va a 81,7 nudos y
+solo 24 m más abajo, bajando 1,33 m/s. Es la regla de la ayuda, no el compensador, y cambiarla
 —que una final colocada sostenga su senda sola en los peldaños con ayuda,
 hasta el suelo— es una decisión de juego que no se ha tomado aquí.
 
