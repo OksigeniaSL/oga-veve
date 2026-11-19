@@ -5987,3 +5987,26 @@ Pedro Juan Caballero o a 30 °C en Asunción, tampoco, y ahora un 12,4 y un
 
 La subida en Los Rodeos, a dos mil pies y a 2.450 lb, baja de 647 a 613 ft/min
 a tope, donde el manual da 622.
+
+### Volado
+
+- **El vuelo entero en Tenerife Norte, en Taguató, con la avioneta**
+  (`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-20`, reloj por uno
+  y ×1,00 de verdad, 21 °C y viento 040/12), **58 de 58**, 2 sin medir: sube
+  al 8,4 % desde que suelta el suelo hasta los cien metros, sin el avisador de
+  pérdida ni una vez; final estabilizada a 500 ft a 72 nudos, toca a
+  1,75 m/s, a 0,7 m del eje y 244 m pasado el umbral, y apaga en su puesto a
+  los 990 s.
+- **El despegue en Los Rodeos** (`verificar-despegue.mjs tenerife-norte
+  guyrami "" jaz-20`, con el tiempo de casa y 1.019 kg al soltar frenos),
+  **19 de 19**: del puesto al punto de espera en 41 s, rota a 33,5 m/s a
+  354 m del punto de espera con 3.168 m de pista, y en el aire sube a
+  1,4 m/s de media de los 8 a los 18 s, sin bajar de donde se soltó.
+
+### Lo que queda
+
+- **Los 1.500 ft de techo que le sobran al JAZ 20** (ver arriba): no es el
+  motor; la hélice de paso fijo arriba, o la polar.
+- **El JAZ 25 subiendo por altura**, sin tabla con la que compararlo: su techo
+  cae entre las dos cifras de su clase, y la subida al nivel del mar sigue
+  siendo la de H37c.
