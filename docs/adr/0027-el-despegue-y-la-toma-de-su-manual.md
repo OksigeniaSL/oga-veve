@@ -5842,3 +5842,148 @@ Los reactores no entran: su consumo sí va con el empuje.
 - **El combustible por potencia** en los cinco de hélice (ver arriba).
 - **El crucero del JAZ 50 a 5.000 ft**, 176 nudos donde el suyo va a 181:
   con la recta, lo que gana arriba lo pierde por correr.
+
+## Enmienda H37g (19-11-2026): la avioneta y el fumigador, con la ley del motor atmosférico
+
+H37d dejó medido que la avioneta subía a 22.400 ft y el fumigador a 20.000, y
+dejó dicha la causa: `loQueDaElMotor` les bajaba la potencia con la densidad a
+la 0,7, que es la ley de una turbina. **Se cambia la ley** y no se toca nada
+más: el crucero de la ficha del JAZ 20 resulta ser la fila de su manual a esa
+altura, y el del JAZ 25 no tiene tabla que lo contradiga.
+
+### Las cifras de su clase
+
+Del *Model 172R Information Manual* de Cessna (original del 2 de diciembre de
+1996, la copia de la Civil Air Patrol), a 2.450 lb:
+
+- **Techo de servicio, 13.500 ft**, y 720 ft/min al nivel del mar
+  («Performance - Specifications»). 160 hp a 2.400 vueltas, hélice de paso
+  fijo.
+- **La subida a cada altura**, «Maximum Rate-of-Climb at 2450 Pounds», a tope
+  y sin flaps (figura 5-6), leída a la temperatura estándar de cada altura
+  entre sus columnas de −20, 0, 20 y 40 °C: 721, 622, 564, 466, 367, 268 y
+  169 ft/min de cero a doce mil pies, de dos mil en dos mil, a 79, 77, 76, 74,
+  72, 71 y 69 nudos indicados. Los 712, 626… de H37d eran la cuenta del
+  modelo con esta ley a la masa de la ficha, no la tabla.
+- **La tabla de crucero** (figura 5-8), a la temperatura estándar, en
+  vueltas, potencia y verdadera —con carenados de rueda; sin ellos, dos nudos
+  menos—:
+
+  | Altura | Vueltas | Potencia | Verdadera |
+  |---|---|---|---|
+  | 2.000 ft | 2.250 / 2.200 / 2.100 | 79 / 74 / 65 % | 115 / 112 / 106 kt |
+  | 6.000 ft | 2.350 / 2.300 / 2.250 | 80 / 75 / 71 % | 120 / 117 / 114 kt |
+  | 10.000 ft | **2.350** / 2.300 / 2.200 | **72** / 68 / 61 % | **118** / 115 / 108 kt |
+  | 12.000 ft | **2.350** / 2.300 | **69** / 65 % | **117** / 113 kt |
+
+  **A diez mil pies no hay fila del 75 %**: la más alta es el 72 %, porque el
+  motor ya no da más. El crucero de una avioneta así, a esa altura, es a
+  fondo.
+- **La rodadura de despegue**, «Short Field Takeoff Distance at 2450 Pounds»
+  (figura 5-5): 945 ft al nivel del mar a 15 °C; 1.104 a dos mil pies, 1.301
+  a cuatro mil, 1.539 a seis mil y 1.827 a ocho mil, cada una a su
+  temperatura estándar; 1.135 al nivel del mar a 40 °C y 1.275 a dos mil pies
+  a 30 °C.
+
+Del Ag Cat G-164A de 450 hp, **ninguna tabla**: «Ceiling 14,000» en la ficha
+de *Plane & Pilot* («Gulfstream American Super Ag-Cat», 2010), la misma de la
+que sale su velocidad a fondo, y 13.000 ft en la de flugzeuginfo.net para el
+G-164A con el R-985. El manual del G-164A que se ha leído no da techo ni
+subida por altura.
+
+### La mesa
+
+Con lo que vuela el modelo, como en H37d: `empujeLleno` contra
+`resistenciaNivelado`, a la mejor verdadera de cada altura.
+
+| JAZ 20 a 2.450 lb | Densidad a la 0,7 (antes) | Gagg y Farrar (ahora) | Su manual |
+|---|---|---|---|
+| Techo | 22.400 ft | **15.000** | 13.500 |
+| Subida a 0 / 2.000 / 4.000 ft | 699 / 647 / 595 | **699 / 613 / 530** | 721 / 622 / 564 |
+| Subida a 6.000 / 8.000 ft | 543 / 491 | **448 / 368** | 466 / 367 |
+| Subida a 10.000 / 12.000 ft | 438 / 385 | **289 / 211** | 268 / 169 |
+| Lo que da el motor a 10.000 / 12.000 ft | 81 / 77 % | **70 / 65 %** | 72 / 69 %, la fila más alta |
+| Al 75 %, a 2.000 / 6.000 ft | 111,6 / 115,9 kt | **111,6 / 115,9** | 112,6 / 117 |
+| A fondo, a 10.000 ft | 125,2 kt | **116,4** | 116-118, al 72 % |
+| A fondo, al nivel del mar | 125,0 kt | 125,0 | 123 |
+| Rodadura a 2.000 / 4.000 / 6.000 / 8.000 ft, en veces la de abajo | 1,12 / 1,26 / 1,42 / 1,60 | **1,16 / 1,34 / 1,56 / 1,83** | 1,17 / 1,38 / 1,63 / 1,93 |
+| Rodadura a 40 °C abajo y a 30 °C a dos mil pies | 1,17 / 1,26 | **1,23 / 1,34** | 1,20 / 1,35 |
+
+| JAZ 25 a 4.500 lb | Antes | Ahora | Su clase |
+|---|---|---|---|
+| Techo | 19.900 ft | **13.200** | 13.000-14.000 |
+| Subida a 0 / 6.000 / 12.000 ft | 811 / 608 / 397 | **811 / 480 / 162** | sin tabla |
+
+La subida cae ahora a cada altura a menos de 45 ft/min de la del manual, y la
+rodadura crece con la altura del campo y con el calor a menos de un 6 % de la
+suya; con la ley de antes se quedaba un 17 % corta a ocho mil pies. **Las dos
+cosas son la misma**, el motor que pierde con el aire, vista desde el techo y
+desde la pista.
+
+### Lo que se cambia
+
+En `loQueDaElMotor`, el de pistón sin turbo —el motor `piston` o `radial`
+sin `alturaCritica`— pierde con la ley de Gagg y Farrar, `σ − (1 − σ)/7,55`,
+que ya estaba citada allí y no se usaba. Se decide por el motor, como la
+reversa (`tieneReversa`), y no por una lista. No cambia nada más:
+
+- **El JAZ 40**, con turbo, sigue entero hasta su altitud crítica y a la uno
+  por encima, como en las curvas de Continental (`turbo.test.ts`).
+- **El JAZ 50**, con su régimen plano y su `caidaSobreLaCritica` de H37d.
+- **El JAZ 60 y los reactores**, con la densidad a la 0,7.
+- **Al nivel del mar en un día estándar no cambia nada**, porque las dos leyes
+  dan uno: lo que se decide con ese día —qué avión cabe en qué pista, el
+  puesto de salida de cada campo— sigue igual.
+
+**El techo del JAZ 20 se queda un 11 % alto**, 15.000 ft contra 13.500, y no
+es el motor: arriba el manual le da más potencia que esta ley —72 y 69 %
+donde da 70 y 65—, por el aire que la marcha mete en la toma. Lo que falta
+estará en la hélice de paso fijo, que arriba pierde vueltas, o en la polar.
+No se busca aquí.
+
+### El crucero de la ficha: no se toca
+
+H37d temía que con esta ley el JAZ 20 fuera a fondo a 117 nudos a diez mil
+pies, que es su crucero de la ficha a tres mil metros, y que la marca del gas
+pidiera todo. **Lo pide, y es lo que dice su manual**: a diez mil pies la fila
+más alta de la tabla es el 72 %, 2.350 vueltas y 118 nudos con carenados
+—116 sin ellos—, y no hay fila del 75 % porque no se llega. Los 116,6 nudos de
+la ficha son esa fila. La velocidad de crucero de la tabla del juego
+(`velocidadDeCrucero`, H39a) los da a tres mil metros con el gas a 0,995 en
+un día estándar; con veinte grados más, 116,4, porque ni a fondo llega, igual
+que en la columna de veinte grados sobre la estándar del manual, donde la fila
+más alta se queda en el 68 % y 117 nudos.
+
+El JAZ 25 va a su crucero de 107 nudos a dos mil quinientos metros con 0,79 de
+gas, donde iba con 0,70: sigue habiendo margen, y no hay tabla de su manual
+que diga otra cosa. **Ninguna ficha cambia**, y con ella no cambian ni la
+hélice de paso fijo del JAZ 20 (`velocidadSinEmpuje`, 2,4 veces el crucero) ni
+los cruceros del modelo sencillo.
+
+### Lo que cambia de rebote
+
+En los campos altos, la carrera de la avioneta y del fumigador se alarga, y la
+pista que pide hoy la hoja de carga (`pistaNecesariaHoy`) con ella:
+
+| Hasta la Vr, en un día estándar | JAZ 20, 1.100 kg | JAZ 25, 1.500 kg |
+|---|---|---|
+| Nivel del mar | 225 m, igual | 128 m, igual |
+| Pedro Juan Caballero, 571 m | 250 → **257 m** | 141 → **145** |
+| Tenerife Norte, 633 m | 253 → **261 m** | 142 → **147** |
+| Cuatro Vientos, 692 m | 256 → **265 m** | 144 → **149** |
+| Tenerife Norte a 30 °C | 284 → **303 m** | 158 → **169** |
+| Cuatro Vientos a 35 °C | 296 → **320 m** | 164 → **177** |
+
+Y «caliente y alto» pesa más en ellos, que es lo que enseña cualquier escuela
+de avionetas: a 30 °C en Tenerife Norte la carrera de la avioneta sale un
+16,2 % más larga que en un día estándar en el mismo campo, donde salía un
+12,4 %; a 38 °C en Asunción, un 21,1 % donde salía un 16,2. **Y el aviso
+salta antes**: en cuanto el día pasa de los quince grados sobre el estándar
+(`CALOR_QUE_SE_CUENTA`), la carrera de los dos ya sale más de una décima más
+larga (`CARRERA_QUE_SE_CUENTA`). Antes no siempre: a 26 °C en Tenerife Norte la
+avioneta no lo oía y ahora sale un 12,6 %; el fumigador a 4.500 lb, a 27 °C en
+Pedro Juan Caballero o a 30 °C en Asunción, tampoco, y ahora un 12,4 y un
+12,8 %.
+
+La subida en Los Rodeos, a dos mil pies y a 2.450 lb, baja de 647 a 613 ft/min
+a tope, donde el manual da 622.
