@@ -168,6 +168,7 @@ export class Practica {
   private desdeElFallo = 0;
   private desdeQueAsegura = 0;
   private yaCorrio = false;
+  private conElTrenFuera = false;
   private comoCerro: Cierre | null = null;
 
   constructor(
@@ -202,6 +203,14 @@ export class Practica {
    */
   get parar(): boolean {
     return this.tocaParar;
+  }
+
+  /**
+   * Si falló subiendo **con el tren todavía fuera**: el de «Motor con el tren
+   * arriba» cuando nadie lo mete. Ver `sinTrenA` en `Momento`.
+   */
+  get trenFueraAlFallar(): boolean {
+    return this.conElTrenFuera;
   }
 
   /** Si ya se aseguró el motor parado. */
@@ -243,6 +252,7 @@ export class Practica {
     this.desdeElFallo = 0;
     this.desdeQueAsegura = 0;
     this.yaCorrio = false;
+    this.conElTrenFuera = false;
     this.comoCerro = null;
     this.elegida = this.sortear();
   }
@@ -268,6 +278,8 @@ export class Practica {
         this.cual = this.elegida.que === "motor" ? this.cualSePara() : null;
         this.tocaParar = this.seParaAqui(l);
         this.falloEnElSuelo = l.enElSuelo;
+        this.conElTrenFuera =
+          this.elegida.cuando.en === "subida" && !!this.elegida.cuando.sinTrenA && l.tren === "fuera";
         sucesos.push({
           que: "fallo",
           averia: this.elegida.que,
@@ -317,7 +329,12 @@ export class Practica {
      * el juego.
      */
     const despegando = this.elegida.cuando.en !== "aire";
-    if (!this.dichaLaVelocidad && !todos && !l.enElSuelo && despegando) {
+    /*
+     * Y si falló con el tren fuera, no hasta que entre: «con un motor se sube
+     * despacio, pero se sube» no es verdad con las patas colgando.
+     */
+    const limpio = !this.conElTrenFuera || l.tren !== "fuera";
+    if (!this.dichaLaVelocidad && !todos && !l.enElSuelo && despegando && limpio) {
       const subiendo = l.vertical > 0.5 || !this.falloEnElSuelo;
       if (subiendo && this.desdeElFallo > 2) {
         this.dichaLaVelocidad = true;
@@ -383,7 +400,10 @@ export class Practica {
         !l.enElSuelo &&
         l.sobreElCampo >= m.metros &&
         l.vertical > 0 &&
-        (!m.trenDentro || l.tren === "dentro")
+        (!m.trenDentro ||
+          l.tren === "dentro" ||
+          // Y si no entra, a su altura falla igual: ver `sinTrenA`.
+          (m.sinTrenA !== undefined && l.tren === "fuera" && l.sobreElCampo >= m.sinTrenA))
       );
     return !l.enElSuelo && this.segundos >= m.segundos;
   }

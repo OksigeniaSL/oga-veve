@@ -25106,10 +25106,35 @@ export class Game {
     const derecho = ladoDelMotor(this.aircraft, motor) === "izquierdo";
     const pie: TranslationKey = derecho ? "ejercicio.pieDerecho" : "ejercicio.pieIzquierdo";
     const explica = laInstructoraLoExplica(this.tier.avisos);
+    /*
+     * **Y con el tren todavía fuera, meterlo es parte del procedimiento**: el
+     * de «Motor con el tren arriba» cuando nadie lo metió y falló igual (ver
+     * `sinTrenA` en `flight/ejercicios.ts`). Después del pie, que el avión se
+     * sujeta primero: «Gear — retract» va en su *Engine Securing Procedure*
+     * antes de identificar y poner la bandera. Con las frases de siempre, que
+     * están grabadas: «gear up» arriba y «metélo, el tren te frena» abajo.
+     */
+    const trenFuera = this.practica?.trenFueraAlFallar === true;
     this.agenda.luego(tras, () => {
       this.cantarDelEjercicio("engine failure", dicho, "mando");
       if (explica) this.decirDelEjercicio(pie, "mando");
+      if (trenFuera && this.input.trenQueSePide)
+        this.cantar("gear up", t("vuelo.meteElTren"), "vuelo.meteElTren", "mando");
     });
+    if (trenFuera)
+      this.agenda.luego(tras + 8, () => {
+        if (!this.input.trenQueSePide) return;
+        this.hud.senal.mostrar(
+          "tren",
+          this.rotulo("vuelo.meteElTren", "palabra.tren"),
+          null,
+          {
+            segundos: SE_QUEDA_EL_ARO,
+            prioridad: IMPORTANTE,
+            tecla: nombreDeTecla(this.input.preferredKey("tren")),
+          },
+        );
+      });
     this.agenda.luego(tras + 4, () =>
       this.hud.senal.mostrar(
         derecho ? "pie-derecho" : "pie-izquierdo",
