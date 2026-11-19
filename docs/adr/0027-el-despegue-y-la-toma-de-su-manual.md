@@ -4195,17 +4195,33 @@ esta tanda (ver «Lo que queda»).
   y 1,27.
 - **JAZ 50 a ×1**: en verde entero. La puerta a 75 nudos; toca a 312 m y 1,14
   m/s, con la racha de arriba en la recogida.
-- **JAZ 90 a ×12**: en verde entero. La puerta a 121 nudos; recoge a 10,3 m,
-  19 m pasado el umbral, y toca a 369 m y 0,75 m/s sin flotar.
+- **JAZ 90 a ×12**, dos veces: **una en verde y otra no**. La primera, la
+  puerta a 121 nudos, recoge a 10,3 m, 19 m pasado el umbral, y toca a 369 m y
+  0,75 m/s sin flotar. La segunda toca a **627 m**, a 1 m/s, y sin las gafas.
+  No flotó por debajo del perfil, así que la regla de arriba no tenía nada que
+  hacer: a cien metros del umbral le entró una racha de cara de tres metros
+  por segundo, la verdadera subió de 65 a 68 m/s y la bajada se quedó en 2,0
+  m/s cuando la senda pide 3,3. La recogida empezó así, en el umbral a 10,3 m,
+  con un perfil de 2,0 a 0,61 m/s repartido en toda esa altura —nueve
+  segundos— y siete nudos de sobra: de cinco metros abajo fue a 1,5 m/s seis
+  segundos seguidos.
 
-Las segundas del JAZ 90 a ×12 y del JAZ 50 no llegaron a volarse en la tanda
-(el navegador es uno para toda la máquina), y tampoco Guyrami con la JAZ 20 ni
-el JAZ 90 a ×1. Lo de Guyrami no lo toca nada de esto —ahí `CON_EL_AUTOMATICO`
+La segunda del JAZ 50 no llegó a volarse en la tanda (el navegador es uno
+para toda la máquina), ni el JAZ 90 a ×1. Lo de Guyrami no lo toca nada de esto —ahí `CON_EL_AUTOMATICO`
 es falso y la JAZ 20 ni es reactor ni pasa de treinta metros de ala—; el JAZ 90
 a ×1 corre lo mismo que a ×12.
 
 ### Lo que queda
 
+- **El JAZ 90 que llega a recoger con una racha de cara.** La altura de la
+  recogida sale de lo que baja la senda (`caidaDeSenda`, que nunca es menos)
+  y el perfil empieza en lo que baja ese instante: si una racha lo ha dejado
+  bajando a 2,0, recoge a la altura de quien baja a 3,3 un perfil que casi no
+  tiene nada que quitar, y lo alarga. Un piloto con siete nudos de más y la
+  senda aplanada por una racha no la aguanta: deja que el avión vaya a la
+  pista. Lo que falta es medir en la mesa, con las rachas de Los Rodeos, si
+  basta con empezar el perfil en lo que pide la senda o hace falta bajar la
+  altura con lo que baja de verdad, sin volver a las tomas de más de 2 m/s.
 - **La racha de los últimos metros del JAZ 50**: medir en la mesa, con el
   modelo y las rachas de Los Rodeos, cuántas recogidas pasan de 2 m/s y qué
   mano —más proporcional cuando se hunde, o el gas antes— las baja, sin hacer
