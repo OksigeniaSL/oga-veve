@@ -43,7 +43,14 @@
 import { masaDe, type AircraftConfig } from "./aircraft";
 import { SEA_LEVEL_DENSITY, GRAVITY } from "./atmosphere";
 import { empujeLleno } from "./fdm";
-import { areaDelMotor, llevaBandera, motorCritico } from "./motores";
+import {
+  areaDelMotor,
+  llevaBandera,
+  motorCritico,
+  parDeLosMotores,
+  resistenciaDelTimon,
+  type EstadoDelMotor,
+} from "./motores";
 import { resistenciaDelTren } from "./tren";
 import {
   anguloDePerdida,
@@ -430,6 +437,11 @@ export function minimaDelAutomatico(a: AircraftConfig, flaps: number): number {
  * flaps que se digan, los demás a tope y el parado como quede asegurado —en
  * bandera si se puede, en molinete si no—. Al nivel del mar y con el derrape
  * a cero, que es como se vuela.
+ *
+ * **Y con el pie que lo sujeta**: el timón que hace falta contra el par de
+ * los motores, y lo que ese timón frena (`resistenciaDelTimon`). Sin él la
+ * cuenta y el avión subían unos 70 ft/min más que el Seneca II con uno. ADR
+ * 0027, enmienda H37b.
  */
 export function subidaConUnMotor(
   a: AircraftConfig,
@@ -447,12 +459,16 @@ export function subidaConUnMotor(
     a.aero.cd0 +
     (cl * cl) / (Math.PI * alargamiento(a) * a.aero.oswald) +
     resistenciaDeLosFlaps(a, flaps);
-  const area = areaDelMotor(
-    a,
-    parado === "asegurado" && llevaBandera(a) ? "bandera" : "molinete",
-  );
-  const empuje = (empujeLleno(a, rho, v) * (n - 1)) / n;
-  const resistencia = q * (a.wingArea * cd + area);
+  const estado: EstadoDelMotor =
+    parado === "asegurado" && llevaBandera(a) ? "bandera" : "molinete";
+  const area = areaDelMotor(a, estado);
+  const cadaUno = empujeLleno(a, rho, v) / n;
+  const empuje = cadaUno * (n - 1);
+  const k = motorCritico(a);
+  const estados = a.motoresA.map((_, i): EstadoDelMotor => (i === k ? estado : "marcha"));
+  const par = parDeLosMotores(a, estados, cadaUno, q);
+  const pie = par / (q * a.wingArea * a.wingSpan * a.aero.cnRudder);
+  const resistencia = q * (a.wingArea * (cd + resistenciaDelTimon(pie)) + area);
   return ((empuje - resistencia) * v) / peso;
 }
 

@@ -671,10 +671,13 @@ export function conMasa(a: AircraftConfig, masa: number): AircraftConfig {
  *
  * - **En molinete**, la hélice o el fan giran movidos por el viento. Una
  *   hélice así, con las palas en paso fino, es un disco que se come el aire:
- *   el manual de vuelo de la FAA para bimotores (*Airplane Flying Handbook*,
- *   FAA-H-8083-3, capítulo de bimotores) cuenta que una hélice en molinete le
- *   quita a un bimotor ligero del orden de doscientos pies por minuto de
- *   subida con un motor, que es a menudo casi toda la que tiene. El fan de un
+ *   «a propeller windmilling at high speed in the low range of blade angles
+ *   can produce parasite drag as great as the parasite drag of the entire
+ *   airframe», y hasta que se pone en bandera «airplane climb performance is
+ *   marginal or even non-existent» (FAA, *Airplane Flying Handbook*,
+ *   FAA-H-8083-3C, pp. 13-3 y 13-30). En el bimotor de la flota son unos
+ *   doscientos cuarenta pies por minuto, casi toda la subida que tiene con
+ *   uno. El fan de un
  *   turbofán en molinete frena bastante menos: la cuenta de Torenbeek
  *   (*Synthesis of Subsonic Airplane Design*, 1982, apéndice G), con la toma
  *   y la tobera de su motor.
@@ -2102,19 +2105,21 @@ export const PANAMBI: AircraftConfig = {
   /*
    * **La hélice que se pone en bandera a mano**, que es la lección entera de
    * un motor parado en un bimotor de pistón. Treinta y cinco decímetros
-   * cuadrados en molinete son los doscientos pies por minuto que cuenta el
-   * manual de la FAA a su velocidad de mejor subida con un motor —y a este
-   * avión, con uno, le sobraban unos ciento setenta—; en bandera, una décima
-   * parte. O sea: en molinete no subía, en bandera sí.
+   * cuadrados en molinete, siete décimas partes de lo que frena el avión
+   * entero sin sustentar (`cd0` por el ala, 0,49 m²): «a propeller
+   * windmilling at high speed in the low range of blade angles can produce
+   * parasite drag as great as the parasite drag of the entire airframe»
+   * (FAA, *Airplane Flying Handbook*, FAA-H-8083-3C, p. 13-3). En bandera,
+   * una décima parte.
    *
-   * **Con su hélice de paso variable (H37a) sube con uno 340 ft/min en
-   * bandera y 140 en molinete**: la diferencia sigue siendo la de la FAA, pero
-   * en molinete ya sube. El manual del Seneca III da unos 385 en bandera, a
-   * 4.300 lb, al nivel del mar y con sus 220 hp de despegue (VB-1110, figura
-   * 5-33); el II tiene veinte caballos menos en el motor bueno, y del suyo no
-   * hay cifra leída. Lo que el modelo no cuenta es lo que frena volar con el
-   * pie y el alabeo sujetando el motor bueno: con él, en molinete apenas
-   * subiría. ADR 0027, enmienda H37a.
+   * **Con el pie que lo sujeta (H37b) sube con uno 270 ft/min en bandera a
+   * los 2.000 kg de la ficha, y 230 a las 4.570 lb del Seneca II**, que según
+   * su hoja de datos sube 225 y según *Aviation Consumer*, 235. **En molinete,
+   * 30, y a su peso máximo nada**: «climb performance is marginal or even
+   * non-existent» (el mismo manual, p. 13-30). La hélice de paso variable
+   * (H37a) lo había dejado subiendo 340 y 140, porque al modelo le faltaba lo
+   * que frena el timón pisado: ver `RESISTENCIA_DEL_TIMON`. ADR 0027,
+   * enmiendas H37a y H37b.
    */
   motorParado: { molinete: 0.35, bandera: 0.03, autoBandera: false },
   /*

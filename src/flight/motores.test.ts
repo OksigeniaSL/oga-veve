@@ -18,6 +18,7 @@ import {
   MEDIDOS,
   ARAI,
   ARASUNU,
+  PANAMBI,
   PYKASU,
   YVAGA,
   conMasa,
@@ -32,6 +33,7 @@ import {
   V2_SOBRE_LA_VMC,
   conUnMotor,
   perdidaCon,
+  subidaConUnMotor,
   velocidadesDeDespegue,
   vmc,
 } from "./velocidades-de-despegue";
@@ -321,6 +323,57 @@ describe("con un motor parado, el avión vuela y sube", () => {
       expect(timon / muestras).toBeLessThan(0.95);
     });
   }
+
+  /*
+   * **Lo que sube el bimotor de pistón con uno, como el suyo.** El Seneca II
+   * sube con un motor 225 ft/min a su peso máximo, 4.570 lb, al nivel del mar
+   * y con la hélice en bandera, según su hoja de datos, y 235 según *Aviation
+   * Consumer*. Y en molinete, «climb performance is marginal or even
+   * non-existent» (FAA, *Airplane Flying Handbook*, FAA-H-8083-3C, p. 13-30).
+   * Lo que faltaba era el pie: ver `RESISTENCIA_DEL_TIMON`. Enmienda H37b del
+   * ADR 0027.
+   */
+  it("jaz-40: con uno sube lo del Seneca II, y en molinete casi nada", () => {
+    const FPM = 0.00508;
+    const pesado = conMasa(PANAMBI, 4570 * 0.45359237);
+    const volada = (a: AircraftConfig, enBandera: boolean): { sube: number; pie: number } => {
+      const v = conUnMotor(a).velocidad;
+      const m = modelo(a);
+      m.reset({ position: new Vector3(0, 30, 0), heading: 0, airspeed: v });
+      const k = motorCritico(a);
+      m.pararMotor(k);
+      if (enBandera) m.asegurarMotor(k);
+      const piloto = pilotoConUnMotor(m, a, v, 0);
+      let sube = 0;
+      let pie = 0;
+      let n = 0;
+      for (let i = 0; i < Math.round(90 / DT); i++) {
+        piloto.paso(DT);
+        m.step(DT, piloto.mandos);
+        if (i * DT > 45) {
+          sube += m.state.verticalSpeed;
+          pie += Math.abs(piloto.mandos.rudder);
+          n++;
+        }
+      }
+      return { sube: sube / n, pie: pie / n };
+    };
+    const bandera = volada(pesado, true);
+    expect(bandera.sube / FPM).toBeGreaterThan(215);
+    expect(bandera.sube / FPM).toBeLessThan(250);
+    // Y la cuenta de la línea azul dice lo mismo que el avión.
+    const cuenta = subidaConUnMotor(pesado, conUnMotor(pesado).velocidad);
+    expect(Math.abs(cuenta - bandera.sube)).toBeLessThan(0.1);
+    // Con el pie que pide su par, como un piloto: ni todo ni nada.
+    expect(bandera.pie).toBeGreaterThan(0.3);
+    expect(bandera.pie).toBeLessThan(0.6);
+    // En molinete, a su peso máximo, no sube; a los 2.000 kg de la ficha, casi nada.
+    expect(volada(pesado, false).sube / FPM).toBeLessThan(30);
+    expect(volada(PANAMBI, false).sube / FPM).toBeLessThan(80);
+    // Y la línea azul, la de su clase: 91 nudos el Seneca I, 92 el III.
+    expect(conUnMotor(PANAMBI).velocidad / 0.514444).toBeGreaterThan(90);
+    expect(conUnMotor(PANAMBI).velocidad / 0.514444).toBeLessThan(95);
+  });
 
   it("y en la Vmc hace falta el timón entero: la cuenta y el avión dicen lo mismo", () => {
     for (const a of BIMOTORES_MEDIDOS) {

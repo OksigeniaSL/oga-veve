@@ -75,6 +75,7 @@ import {
   enMarcha,
   llevaBandera,
   parDeLosMotores,
+  resistenciaDelTimon,
   type EstadoDelMotor,
 } from "./motores";
 
@@ -1246,7 +1247,15 @@ export class CoefficientFlightModel implements FlightModel {
         machDe(speed, this.state.position.y, this.aire),
         ac.mmo,
         a.cd0,
-      );
+      ) +
+      /*
+       * **Y el pie, que tampoco es gratis.** El timón pisado tuerce porque la
+       * deriva empuja de lado, y empujar de lado frena. Con un motor parado
+       * se vuela así todo el rato, y es lo que le faltaba al bimotor de
+       * pistón para subir con uno lo que sube el suyo. Ver
+       * `resistenciaDelTimon` en `flight/motores.ts`.
+       */
+      resistenciaDelTimon(assisted.rudder);
     const cy = a.cyBeta * s.beta;
 
     // ── Pérdida, con histéresis y con paciencia ──────────────────────────
