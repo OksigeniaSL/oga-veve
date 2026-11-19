@@ -41,7 +41,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { CoefficientFlightModel, empujeLleno } from "./flight/fdm";
+import { CoefficientFlightModel, empujeLleno, perfilDeViento } from "./flight/fdm";
 import { pendienteBajoElTren } from "./world/pendiente-bajo-el-tren";
 import { ArcadeFlightModel, MOTOR_QUE_SOSTIENE } from "./flight/arcade";
 import {
@@ -21277,6 +21277,8 @@ export class Game {
       viento.z,
     );
     this.subeElAireAhora = racha.y + estela.vertical;
+    this.rachaAhora.x = racha.x;
+    this.rachaAhora.z = racha.z;
     this.flight.ponerRacha?.(
       racha.x,
       this.subeElAireAhora,
@@ -25654,8 +25656,9 @@ export class Game {
 
   /**
    * **Un paso de la final con viento cruzado.** Se monta la primera vez, con
-   * la pista de la final y el viento de ahora: de qué lado entra y cuánto
-   * cangrejo pide a la velocidad de aproximación de este avión.
+   * la pista de la final y el viento de ahora, que dice de qué lado entra; el
+   * cangrejo que pide lo cuenta en cada paso con la verdadera y el viento de
+   * ese paso.
    */
   private practicarElCruzado(dt: number): void {
     if (!this.finalConViento && this.cruzadoPedido) {
@@ -25669,7 +25672,7 @@ export class Game {
       const costado = -(aire.x * Math.cos(rad) + aire.z * Math.sin(rad));
       const deSiempre = cruzadoDelCampo(oaciDe(this.scenario));
       const lado: 1 | -1 = Math.abs(costado) > 0.5 ? (costado > 0 ? 1 : -1) : (deSiempre?.lado ?? -1);
-      this.finalConViento = new FinalConViento(this.cruzadoPedido, tecnica, pista, lado, Math.abs(costado));
+      this.finalConViento = new FinalConViento(this.cruzadoPedido, tecnica, pista, lado);
       this.cruzadoPedido = null;
     }
     const f = this.finalConViento;
@@ -25680,6 +25683,7 @@ export class Game {
     const sucesos = f.paso(
       {
         verdadera: s.airspeed,
+        viento: this.elVientoQueEmpuja(),
         vx: s.velocity.x,
         vz: s.velocity.z,
         rumbo: vuelta((s.heading * 180) / Math.PI),
@@ -25691,6 +25695,21 @@ export class Game {
       dt,
     );
     for (const suceso of sucesos) this.atenderAlCruzado(suceso);
+  }
+
+  /**
+   * **El viento que empuja al avión ahora**, m/s y hacia donde va el aire: el
+   * del parte donde está (`seguirElViento`) con la racha encima y frenado
+   * cerca del suelo, el mismo que mueve el modelo de vuelo —ver `ponerViento`
+   * y `perfilDeViento` en `flight/fdm.ts`—. El triángulo de la final se cuenta
+   * con este: con el del parte a secas, un rato de racha de costado movía el
+   * morro y no lo que pedía, y la medida y lo pedido salían de dos vientos
+   * distintos (H32b).
+   */
+  private elVientoQueEmpuja(): { readonly x: number; readonly z: number } {
+    const parte = this.vientoAqui?.aire ?? vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA);
+    const cuanto = perfilDeViento(this.flight.state.heightAboveGround);
+    return { x: (parte.x + this.rachaAhora.x) * cuanto, z: (parte.z + this.rachaAhora.z) * cuanto };
   }
 
   private atenderAlCruzado(suceso: SucesoDelCruzado): void {
@@ -31872,6 +31891,13 @@ export class Game {
    * `porElAire` en `flight/piloto-automatico.ts`.
    */
   private subeElAireAhora = 0;
+  /**
+   * La racha de lado de ahora, m/s en ejes del mundo: la que se suma al
+   * viento del parte en el modelo de vuelo. La lee la final con viento cruzado
+   * para contar el triángulo con el viento que de verdad empuja: ver
+   * `practicarElCruzado`.
+   */
+  private readonly rachaAhora = { x: 0, z: 0 };
   /** El gesto del señalero en la llegada al puesto, o `null`. */
   private gestoDelSenalero: Gesto = null;
   /**

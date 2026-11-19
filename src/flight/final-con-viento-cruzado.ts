@@ -50,6 +50,8 @@
  */
 
 import { centrado } from "./radio-de-navegacion";
+import { correccionDelViento } from "./deriva";
+import type { PuntoDelMundo } from "./seguir-la-aguja";
 import { CRUZADO_DEMOSTRADO, FRACCION_DE_CERTIFICACION } from "./viento-cruzado";
 import type { Ejercicio } from "./ejercicios";
 import { oaciDe, SCENARIOS } from "../world/scenarios";
@@ -148,7 +150,11 @@ export const MEDIO_CANGREJO = 0.5;
  * es otra cosa, un viraje—.
  */
 export const ALA_BAJA = 1;
-/** Lo que tiene que durar para darlo por hecho, s. */
+/**
+ * **El rato que se juzga**, s: cinco seguidos con el camino por el eje, y lo
+ * que cuenta es su media —el morro, el ala, el cangrejo y lo que pide—, no
+ * cada instante. Ver `paso`.
+ */
 export const SOSTENIDO = 5;
 /**
  * **Cuándo se pide el pie**, m sobre la pista: quince, unos cincuenta pies. A
@@ -167,6 +173,12 @@ const SIN_CONTAR_DEBAJO = 25;
 export interface LecturaDelCruzado {
   /** La verdadera, m/s: con ella y el viento de costado sale el cangrejo que pide el triángulo. */
   readonly verdadera: number;
+  /**
+   * El viento que empuja al avión ahora, m/s, hacia donde va el aire
+   * (`vientoComoVector`): el del parte donde está con la racha encima, el
+   * mismo que mueve el modelo de vuelo. Ver `elVientoQueEmpuja` en `game.ts`.
+   */
+  readonly viento: PuntoDelMundo;
   /** La velocidad sobre el suelo, m/s, con el viento dentro. */
   readonly vx: number;
   readonly vz: number;
@@ -221,6 +233,14 @@ export class FinalConViento {
   private toque: { readonly morro: number; readonly ala: number } | null = null;
   private pideAhora = 0;
   private pideMedido: number | null = null;
+  /**
+   * El morro, el cangrejo, el ala y lo que pedía, sumados por el tiempo
+   * mientras el camino va por el eje: se juzga y se mide la media.
+   */
+  private morroSumado = 0;
+  private cangrejoSumado = 0;
+  private alaSumada = 0;
+  private pideSumado = 0;
 
   constructor(
     readonly ejercicio: Ejercicio,
@@ -229,20 +249,20 @@ export class FinalConViento {
     readonly pista: number,
     /** De qué lado viene el viento, mirando a la pista: −1, izquierda; 1, derecha. */
     readonly lado: 1 | -1,
-    /** El viento de costado, m/s, sin signo. */
-    readonly cruzado: number,
   ) {}
 
   /**
-   * **El cangrejo que pide el triángulo ahora**, grados, con la verdadera de
-   * ahora: se cuenta con la de verdad y no con la de aproximación de la ficha,
-   * que la final empieza más deprisa y con los flaps arriba.
+   * **El cangrejo que pide el triángulo ahora**, grados al viento, con la
+   * verdadera y el viento de ahora: se cuenta con la de verdad y no con la de
+   * aproximación de la ficha, que la final empieza más deprisa y con los flaps
+   * arriba; y con el viento que sopla donde está el avión, que es el que lo
+   * empuja.
    */
   get pide(): number {
     return this.pideAhora;
   }
 
-  /** Y el que pedía cuando se contó el cangrejo, grados. */
+  /** Y el que pedía mientras se contó el cangrejo, grados: la media de esos cinco segundos. */
   get pidioAlContar(): number | null {
     return this.pideMedido;
   }
@@ -255,7 +275,11 @@ export class FinalConViento {
     return this.comoCerro;
   }
 
-  /** El cangrejo medido por el eje, grados al viento: lo mira el banco. */
+  /**
+   * El cangrejo medido por el eje, grados al viento: lo que el morro iba
+   * apartado del camino, de media en los cinco segundos que se sostuvo. Lo
+   * mira el banco.
+   */
   get cangrejo(): number | null {
     return this.morroMedido;
   }
@@ -278,7 +302,6 @@ export class FinalConViento {
   reiniciar(): void {
     this.faseActual = "final";
     this.presentada = false;
-    this.sostenido = 0;
     this.contado = false;
     this.pedido = false;
     this.seFue = false;
@@ -287,6 +310,15 @@ export class FinalConViento {
     this.alaMedida = null;
     this.toque = null;
     this.pideMedido = null;
+    this.empezarElRato();
+  }
+
+  private empezarElRato(): void {
+    this.sostenido = 0;
+    this.morroSumado = 0;
+    this.cangrejoSumado = 0;
+    this.alaSumada = 0;
+    this.pideSumado = 0;
   }
 
   paso(l: LecturaDelCruzado, dt: number): SucesoDelCruzado[] {
@@ -324,25 +356,59 @@ export class FinalConViento {
     }
 
     const suelo = Math.hypot(l.vx, l.vz);
-    const camino = (Math.atan2(l.vx, -l.vz) / GRADO + 360) % 360;
+    const rumboDelCamino = Math.atan2(l.vx, -l.vz);
+    const camino = (rumboDelCamino / GRADO + 360) % 360;
     const porElEje = suelo > 1 && Math.abs(centrado(camino - this.pista)) <= POR_EL_EJE;
-    this.pideAhora = anguloDeCangrejo(this.cruzado, l.verdadera);
+    /*
+     * **El cangrejo es lo que el morro va apartado del camino**, no de la
+     * pista, como la deriva en «Apuntá al viento» (`deriva.ts`): es la
+     * definición del triángulo de vientos, y lo que pide sale del mismo
+     * triángulo —el viento que empuja de costado a ese camino, partido por la
+     * verdadera de ese instante—. Con el camino por el eje las dos cosas casi
+     * coinciden, pero no del todo: los tres grados de la raya caben enteros en
+     * la diferencia, y contado desde la pista el número dependía de hacia qué
+     * lado de la raya iba el camino en esos cinco segundos (H32b).
+     */
+    const cangrejo = centrado(l.rumbo - camino) * this.lado;
+    this.pideAhora = suelo > 1 ? correccionDelViento(l.viento, rumboDelCamino, l.verdadera) * this.lado : 0;
 
-    if (!this.contado && l.altura > SIN_CONTAR_DEBAJO) {
+    if (!this.contado && l.altura > SIN_CONTAR_DEBAJO && porElEje) {
+      this.sostenido += dt;
+      this.morroSumado += morro * dt;
+      this.cangrejoSumado += cangrejo * dt;
+      this.alaSumada += ala * dt;
+      this.pideSumado += this.pideAhora * dt;
+    } else if (!this.contado) {
+      this.empezarElRato();
+    }
+    if (!this.contado && this.sostenido >= SOSTENIDO) {
+      /*
+       * **Se juzga la media de esos cinco segundos con el camino por el eje, y
+       * se mide la media**: la medida y lo que pide, del mismo rato y con la
+       * misma verdadera, que en la final va bajando y con ella sube el
+       * cangrejo que hace falta. Con el alisio de Los Rodeos, sobre el relieve,
+       * la racha de costado llega a quince nudos (`rafagas.ts`): en un instante
+       * suelto el morro o el ala caen donde los deje ella, y cinco segundos
+       * seguidos sin que ninguna los saque de su raya no llegaban con el JAZ 40
+       * por encima de los 25 m. Lo que se enseña es lo que se sostiene, y una
+       * racha que mece el ala un segundo no deshace el ala baja (H32b).
+       */
+      const t = this.sostenido;
+      const medio = { morro: this.morroSumado / t, cangrejo: this.cangrejoSumado / t, ala: this.alaSumada / t, pide: this.pideSumado / t };
       const hecho =
         this.tecnica === "cangrejo"
-          ? porElEje && morro >= this.pideAhora * MEDIO_CANGREJO
-          : porElEje && Math.abs(morro) <= MORRO_DERECHO && ala >= ALA_BAJA;
-      this.sostenido = hecho ? this.sostenido + dt : 0;
-      if (this.sostenido >= SOSTENIDO) {
+          ? medio.cangrejo >= medio.pide * MEDIO_CANGREJO
+          : Math.abs(medio.morro) <= MORRO_DERECHO && medio.ala >= ALA_BAJA;
+      if (!hecho) this.empezarElRato();
+      else {
         this.contado = true;
         if (this.tecnica === "cangrejo") {
-          this.morroMedido = morro;
-          this.pideMedido = this.pideAhora;
-          sucesos.push({ que: "enCangrejo", morro });
+          this.morroMedido = medio.cangrejo;
+          this.pideMedido = medio.pide;
+          sucesos.push({ que: "enCangrejo", morro: medio.cangrejo });
         } else {
-          this.alaMedida = ala;
-          sucesos.push({ que: "conElAlaBaja", ala });
+          this.alaMedida = medio.ala;
+          sucesos.push({ que: "conElAlaBaja", ala: medio.ala });
         }
       }
     }
