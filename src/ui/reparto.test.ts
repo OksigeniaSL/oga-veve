@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { type Caja, colocar, hastaDondeEnSuSitio, pisa, RESPIRO, tramosLibres, trasladar } from "./reparto";
+import {
+  type Caja,
+  colocar,
+  correrEnSuFila,
+  hastaDondeEnSuSitio,
+  pisa,
+  RESPIRO,
+  tramosLibres,
+  trasladar,
+} from "./reparto";
 
 const caja = (izq: number, arr: number, der: number, aba: number): Caja => ({ izq, arr, der, aba });
 const PANTALLA = caja(0, 0, 864, 330);
@@ -196,5 +205,55 @@ describe("hastaDondeEnSuSitio", () => {
 
   it("nunca más estrecha que la mitad de lo que mide entera", () => {
     expect(hastaDondeEnSuSitio(tarjeta, [caja(200, 0, 240, 64)])).toBeNull();
+  });
+});
+
+/*
+ * **Con el plano abierto, desde el asiento a 1280 × 800** (H31c), medido en el
+ * banco: el plano en su columna de la izquierda, de 16 a 338 y de 188 a 612;
+ * la tarjeta de la orden en el rincón, de 83 a 503 y de 130 a 270; la brújula
+ * del parabrisas, de 604 a 676 y de 70 a 172.
+ */
+describe("correrEnSuFila", () => {
+  const PORTATIL = caja(0, 0, 1280, 800);
+  const plano = caja(16, 188, 338, 612);
+  const brujula = caja(604, 70, 676, 172);
+
+  it("lo que no pisa nada no se corre", () => {
+    expect(correrEnSuFila(caja(400, 130, 560, 220), [plano], PORTATIL)).toBeNull();
+  });
+
+  it("se corre entera, en su fila, justo al otro lado del plano", () => {
+    const dibujo = caja(83, 130, 200, 226);
+    expect(correrEnSuFila(dibujo, [plano, brujula], PORTATIL)).toEqual(
+      caja(338 + RESPIRO, 130, 338 + RESPIRO + 117, 226),
+    );
+  });
+
+  it("no salta por encima de una segunda cosa: si al lado no cabe entera, no se corre", () => {
+    const tarjeta = caja(83, 130, 503, 270);
+    expect(correrEnSuFila(tarjeta, [plano, brujula], PORTATIL)).toBeNull();
+  });
+
+  it("va al lado más cerca de donde la pone la hoja", () => {
+    // En el rincón de la derecha, con el plano en medio: a su derecha no cabe.
+    const plano = caja(361, 114, 663, 507);
+    const crono = caja(492, 110, 654, 196);
+    const tarjeta = caja(662 + 7, 110, 781, 219);
+    expect(correrEnSuFila(crono, [plano, tarjeta], caja(0, 0, 1024, 600))).toEqual(
+      caja(361 - RESPIRO - 162, 110, 361 - RESPIRO, 196),
+    );
+  });
+
+  it("no se sale de la pantalla", () => {
+    const estrecha = caja(0, 0, 600, 900);
+    const plano = caja(53, 248, 547, 844);
+    expect(correrEnSuFila(caja(83, 507, 263, 611), [plano], estrecha)).toBeNull();
+  });
+
+  it("si su fila ya se sale por abajo, no se corre: espera", () => {
+    const estrecha = caja(0, 0, 600, 900);
+    const volumen = caja(16, 840, 196, 890);
+    expect(correrEnSuFila(caja(83, 858, 271, 958), [volumen], estrecha)).toBeNull();
   });
 });

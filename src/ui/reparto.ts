@@ -28,6 +28,13 @@
  *   lo que se lee, y en el teléfono la tarjeta de la orden le llegaba encima.
  *   El juego dice dónde cae en la pantalla (`Hud.ponerLaBrujula`) y aquí se
  *   esquiva como un botón más.
+ * - **Y el plano abierto tampoco se tapa** (H31c): un instrumento que se
+ *   consulta volando —el plano, el tiempo, la misión— es lo que quien juega
+ *   ha abierto para mirarlo, y su concha recoge los toques, así que entra en
+ *   la cuenta como lo que se toca (`data-tocable` en `armarPanel`). Lo que se
+ *   aparta es lo que se lee: la tarjeta de la orden y el cronómetro, que no
+ *   dejan su rincón por un botón, **se corren en su fila** hasta el lado del
+ *   plano (`correrEnSuFila`) antes de recogerse o esperar.
  *
  * Por qué midiendo y no con más CSS: lo que hay que esquivar depende de lo que
  * esté encendido en cada momento —el freno sale al tocar suelo, la barra se
@@ -50,7 +57,8 @@ export interface Caja {
  * teléfono, la rueda y la ventanilla del MCP, los mandos de la radio, las
  * piezas del cuadro que se explican al tocarlas, las palancas de pulgar
  * (`data-touch`) y lo que lleva la marca `data-tocable` —las tarjetas del gas
- * y del freno, el volumen—, que se tocan y no son un `<button>`. Lo que se
+ * y del freno, el volumen, la concha de un instrumento abierto, como el
+ * plano—, que se tocan y no son un `<button>`. Lo que se
  * añada mañana con una de estas formas entra solo. `npm run carteles` mide con
  * la misma regla, escrita allí aparte.
  */
@@ -85,6 +93,12 @@ export interface PiezaQueSeLee {
       mueve, y recogida perdía la frase entera por unos píxeles (H31a). Ver
       `hastaDondeEnSuSitio`. */
   readonly estrechaEnSuSitio?: boolean;
+  /** Si, cuando no se puede quedar en su sitio ni estrechada, **se corre en
+      su fila**, entera, hasta el lado de lo que pisa —antes de recogerse, y
+      recogida otra vez antes de esperar—: lo que vive en el rincón y no se
+      mueve por un botón, pero sí se aparta del plano que se acaba de abrir
+      encima (H31c). Ver `correrEnSuFila`. */
+  readonly seCorre?: boolean;
   /** Lo que es seguridad y no puede quedarse esperando: la lámpara. Lo que
       cede alto (`LO_QUE_CEDE`) se encoge para hacerle sitio, y si hacia donde
       crece no cabe, busca fila al otro lado (`Colocable.alOtroLado`). */
@@ -148,6 +162,7 @@ export const LO_QUE_SE_LEE: readonly PiezaQueSeLee[] = [
     mueve: false,
     espera: true,
     estrechaEnSuSitio: true,
+    seCorre: true,
     recoge: RECOGIDA,
   },
   /*
@@ -155,8 +170,19 @@ export const LO_QUE_SE_LEE: readonly PiezaQueSeLee[] = [
    * misma caja del rincón: no se mueve, y si pisa algo que se toca, espera.
    * El reloj del ejercicio sigue corriendo en el juego mientras espera, y al
    * salir enseña lo que queda de verdad. Ver `ui/cronometro.ts`.
+   *
+   * Y se corre al lado del plano, como la tarjeta (H31c): sin GPS, el plano
+   * abierto y el reloj son las dos cosas que se miran a la vez, y es
+   * justamente cuando el plano le caía encima.
    */
-  { que: "cronometro", sel: '[data-hud="cronometro"]', mueve: false, espera: true, cuentaSola: true },
+  {
+    que: "cronometro",
+    sel: '[data-hud="cronometro"]',
+    mueve: false,
+    espera: true,
+    cuentaSola: true,
+    seCorre: true,
+  },
   /*
    * **El subtítulo, al otro lado antes de esperar** (H31a). De pie y con
    * ratón va debajo del rincón, y el rincón crece con lo que lleva: con la
@@ -329,6 +355,45 @@ export function hastaDondeEnSuSitio(natural: Caja, ocupado: readonly Caja[]): nu
   if (!pisan.length || pisan.some((o) => o.izq - RESPIRO <= natural.izq)) return null;
   const hasta = Math.min(...pisan.map((o) => o.izq - RESPIRO));
   return hasta - natural.izq >= (natural.der - natural.izq) / 2 ? hasta : null;
+}
+
+/**
+ * **Dónde se corre en su fila una pieza del rincón** (H31c): la misma caja,
+ * con el mismo ancho y a la misma altura, justo al otro lado de todo lo que
+ * pisa —a la derecha de lo que acaba más a la derecha, o a la izquierda de lo
+ * que empieza más a la izquierda—, lo que quede más cerca de donde la pone la
+ * hoja. Solo eso: **se aparta lo justo**, y no salta por encima de una
+ * segunda cosa hasta el otro lado de la pantalla, que una tarjeta de la orden
+ * en mitad del parabrisas es justo lo que no tiene que pasar (apartado 5). Si
+ * al lado de lo que pisa tampoco cabe entera, o si su fila ya se sale de la
+ * pantalla —el cronómetro, debajo de una tarjeta larga que espera—, `null`: se
+ * recoge o espera.
+ *
+ * Entera y no estrechada: estrecharla en un hueco que no es el suyo la deja
+ * en un palillo, con la frase partida palabra a palabra al lado del plano, y
+ * su dibujo —recogida— cabe en casi cualquier sitio.
+ */
+export function correrEnSuFila(natural: Caja, ocupado: readonly Caja[], limites: Caja): Caja | null {
+  const pisan = ocupado.filter((o) => pisa(natural, o));
+  if (!pisan.length) return null;
+  const ancho = natural.der - natural.izq;
+  const izqs = [
+    Math.max(...pisan.map((o) => o.der + RESPIRO)),
+    Math.min(...pisan.map((o) => o.izq - RESPIRO)) - ancho,
+  ];
+  return (
+    izqs
+      .map((izq): Caja => ({ izq, der: izq + ancho, arr: natural.arr, aba: natural.aba }))
+      .filter(
+        (c) =>
+          c.izq >= limites.izq - 1 &&
+          c.der <= limites.der + 1 &&
+          c.arr >= limites.arr - 1 &&
+          c.aba <= limites.aba + 1 &&
+          !ocupado.some((o) => pisa(c, o)),
+      )
+      .sort((a, b) => Math.abs(a.izq - natural.izq) - Math.abs(b.izq - natural.izq))[0] ?? null
+  );
 }
 
 /**
@@ -523,7 +588,13 @@ export function repartirLoQueSeLee(
   const ocupado: Caja[] = [...tocables, ...delAvion];
   const hecho: Record<string, string> = {};
   vivas.forEach(({ d, el }, i) => {
-    const natural = naturales.get(el);
+    /*
+     * Lo que no se mueve vive en una caja de la hoja con otras —la tarjeta y
+     * el cronómetro, en el rincón—, y lo que se hizo con la de antes
+     * (estrecharla, recogerla) cambia dónde cae la de después: se mide ahora,
+     * no al empezar (H31c).
+     */
+    const natural = d.mueve ? naturales.get(el) : cajaDe(el.getBoundingClientRect());
     if (!natural) return;
     const cs = getComputedStyle(el);
     const px = (v: string): number => Number.parseFloat(v) || 0;
@@ -554,6 +625,18 @@ export function repartirLoQueSeLee(
         el.style.top = "auto";
       }
       return cajaDe(el.getBoundingClientRect());
+    };
+    /*
+     * Corrida en su fila con `translate`, como la radio: no cambia su maqueta
+     * ni la de lo que va con ella en el rincón. Ver `correrEnSuFila`.
+     */
+    const correr = (caja: Caja): boolean => {
+      const corrida = correrEnSuFila(caja, ocupado, limites);
+      if (!corrida) return false;
+      el.dataset.reparto = "1";
+      el.style.translate = `${(corrida.izq - caja.izq) / escala}px 0px`;
+      ocupado.push(corrida);
+      return true;
     };
     if (d.traslada) {
       const libre = !ocupado.some((o) => pisa(natural, o));
@@ -613,6 +696,10 @@ export function repartirLoQueSeLee(
         delete el.dataset.reparto;
       }
     }
+    if (d.seCorre && correr(natural)) {
+      hecho[d.que] = "corrida";
+      return;
+    }
     if (d.recoge) {
       /*
        * Recogida, se vuelve a buscar sitio con lo que mide así: la lámpara sin
@@ -639,6 +726,11 @@ export function repartirLoQueSeLee(
       if (el.dataset.reparto) {
         for (const p of PROPIEDADES) el.style.removeProperty(p);
         delete el.dataset.reparto;
+      }
+      // Su dibujo cabe al lado del plano donde la frase entera no cabía.
+      if (d.seCorre && correr(recogida)) {
+        hecho[d.que] = "recogida y corrida";
+        return;
       }
       el.classList.remove(d.recoge);
     }
@@ -670,6 +762,17 @@ export class Repartidor {
   /** Lo que el avión enseña y no se tapa: ver `ponerLoDelAvion`. */
   private delAvion: readonly Caja[] = [];
   private readonly alCambiarDeTamano = (): void => this.pedir(true);
+  /*
+   * **Y cuando acaba de entrar algo que se toca** (H31c). La concha del plano
+   * entra con un fundido de 160 ms desde la opacidad cero, y el reparto que
+   * pide la clase que pone al abrirse corre en el fotograma siguiente, con la
+   * concha aún transparente: lo que no se ve no es un mando que se tape, y la
+   * tarjeta se quedaba debajo hasta el reparto siguiente. Al acabar el
+   * fundido, otro.
+   */
+  private readonly alEntrar = (e: Event): void => {
+    if (e.target instanceof Element && e.target.matches(LO_QUE_SE_TOCA)) this.pedir(true);
+  };
   /**
    * **Lo que se lleva**, para que un banco lo mida con la CPU frenada (regla
    * 6): los fotogramas en que se miró la firma, las veces que se repartió y
@@ -709,6 +812,7 @@ export class Repartidor {
         });
     }
     addEventListener("resize", this.alCambiarDeTamano);
+    document.addEventListener("animationend", this.alEntrar);
     this.pedir(true);
   }
 
@@ -716,6 +820,7 @@ export class Repartidor {
     this.observador?.disconnect();
     this.observador = null;
     removeEventListener("resize", this.alCambiarDeTamano);
+    if (typeof document !== "undefined") document.removeEventListener("animationend", this.alEntrar);
     if (this.pedido) cancelAnimationFrame(this.pedido);
     this.pedido = 0;
   }

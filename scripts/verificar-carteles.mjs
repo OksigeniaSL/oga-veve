@@ -2394,6 +2394,216 @@ async function medirLoDelAsiento(ORDEN_LARGA) {
   return { encima, leidos, cuadro, orden: hecho.senal ?? "?" };
 }
 
+/** La orden de cuando se va el GPS, la de las capturas de H26v, sacada del castellano del juego. */
+const LA_ORDEN_DEL_GPS =
+  /"ejercicio\.gps\.seFue":\s*\n?\s*"((?:[^"\\]|\\.)*)"/.exec(readFileSync("src/i18n/es-PY.ts", "utf8"))?.[1] ??
+  "Se fue el GPS";
+
+/*
+ * **Y con el plano abierto, la tarjeta del rincón no queda debajo** (H31c).
+ * Desde el asiento, en el portátil, el plano va en la columna de la izquierda
+ * y el rincón también: el panel tapaba media tarjeta de la orden, la frase y
+ * el dibujo, y el reparto no lo veía porque solo contaba los botones del
+ * panel. Ahora la concha de un instrumento abierto cuenta como lo que se toca,
+ * y la tarjeta y el cronómetro se corren en su fila hasta su lado, se recogen
+ * a su dibujo o, si ni eso cabe, esperan a que se cierre.
+ *
+ * Se mira de dos maneras. Con lo más largo que lleva cada cosa —la orden más
+ * larga, el cronómetro, el subtítulo y la radio—, desde el asiento y de fuera,
+ * en el portátil, la tablet y el teléfono con el dedo y la ventana de pie: que
+ * nada de lo que se lee quede encima o debajo de la concha, y que en las tres
+ * apaisadas el dibujo de la orden se vea, que esperar es para cuando no cabe.
+ * Y con la tarjeta que pone el juego y sin forzar el reparto: la concha entra
+ * con un fundido desde transparente, y el reparto que corre al abrirla aún no
+ * la ve; el que la cuenta es el del final del fundido.
+ */
+for (const [ancho, alto, dedo] of [
+  [1280, 800],
+  [1024, 600, "dedo"],
+  [915, 412, "dedo"],
+  [600, 900],
+]) {
+  const donde = `${ancho}×${alto}${dedo ? " con el dedo" : ""}, con el plano abierto`;
+  const page = await navegador.newPage({
+    viewport: { width: ancho, height: alto },
+    hasTouch: !!dedo,
+    isMobile: !!dedo,
+  });
+  try {
+    await page.goto(
+      `${BASE}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=taguato&avion=jaz-20&meteo=`,
+    );
+    const arranco = await page
+      .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!arranco) {
+      comprobar(`${donde}: el juego arrancó`, false, "no arrancó en 60 s", "");
+      continue;
+    }
+    for (const vista of ["cockpit", "chase"]) {
+      const aqui = `${donde} ${vista === "cockpit" ? "desde el asiento" : "de fuera"}`;
+      await page.evaluate((v) => globalThis.__oga?.ponerVista?.(v), vista);
+      if (vista === "cockpit")
+        await page
+          .waitForFunction(() => !!globalThis.__oga?.juegoParaTrazas?.()?.hud?.cajaDeLaBrujula, null, {
+            timeout: 30000,
+          })
+          .catch(() => {});
+      await page.waitForTimeout(600);
+      const apaisada = ancho > alto;
+      const solo = await page.evaluate(medirElPlanoAbierto, [null, LA_ORDEN_DEL_GPS]);
+      comprobar(
+        `${aqui}: al abrir el plano, la tarjeta del GPS que pone el juego se aparta sin forzar el reparto` +
+          (apaisada ? ", y su dibujo se ve" : ""),
+        solo.plano && solo.salio && solo.encima.length === 0 && (!apaisada || solo.seVeLaOrden),
+        !solo.plano
+          ? "no se abrió el plano"
+          : !solo.salio
+            ? "no salió la tarjeta"
+            : [...solo.encima, ...(apaisada && !solo.seVeLaOrden ? ["la tarjeta espera"] : [])].join(" · ") ||
+              `libre (la orden: ${solo.orden})`,
+        "la concha entra transparente, y el reparto que la cuenta es el del final del fundido",
+      );
+      await page.waitForTimeout(300);
+      const m = await page.evaluate(medirElPlanoAbierto, [LA_ORDEN_MAS_LARGA, ""]);
+      comprobar(
+        `${aqui}: con lo más largo que llevan, nada de lo que se lee queda debajo del plano` +
+          (apaisada ? ", y el dibujo de la orden se ve" : ""),
+        m.plano && m.encima.length === 0 && (!apaisada || m.seVeLaOrden),
+        !m.plano
+          ? "no se abrió el plano"
+          : [...m.encima, ...(apaisada && !m.seVeLaOrden ? ["la tarjeta de la orden espera"] : [])].join(" · ") ||
+              `libre, con ${m.leidos} cosas que se leen (la orden: ${m.orden}; el cronómetro: ${m.crono})`,
+        "el plano es lo que quien juega ha abierto para mirarlo, y la tarjeta es lo que le dice la instructora: ninguno tapa al otro",
+      );
+      if (process.env.OGA_FOTOS)
+        await page.screenshot({
+          path: `${process.env.OGA_FOTOS}/plano-abierto-${ancho}x${alto}${dedo ? "-dedo" : ""}-${vista === "cockpit" ? "asiento" : "fuera"}.png`,
+        });
+      await page.evaluate(() => {
+        const mapa = globalThis.__oga?.juegoParaTrazas?.()?.hud?.mapa;
+        if (mapa?.visible) mapa.alternar();
+      });
+      await page.waitForTimeout(300);
+    }
+  } finally {
+    await page.close();
+  }
+}
+
+/**
+ * Corre en la página: abre el plano y mide lo que se lee contra su concha.
+ * Con la orden del juego, la pone él —la del GPS que se va, la de las
+ * capturas— y no se fuerza el reparto; con la larga, lo más largo de cada
+ * cosa puesto en cada fotograma —el juego lo vuelve a poner a su manera en
+ * cada uno— y el reparto forzado al final, como `medirLoQueSeLee`. Deja el
+ * plano abierto, para la foto.
+ */
+async function medirElPlanoAbierto([ORDEN_LARGA, ORDEN_DEL_JUEGO]) {
+  const SUB =
+    "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.";
+  const RADIO = "Tripulación, sentados para el despegue";
+  const juego = globalThis.__oga?.juegoParaTrazas?.();
+  const hud = document.querySelector(".hud");
+  const hint = document.querySelector('[data-hud="hint"]');
+  const senal = document.querySelector('[data-hud="senal"]');
+  const senalTexto = document.querySelector('[data-hud="senal-texto"]');
+  const radio = document.querySelector('[data-hud="radio"]');
+  const crono = document.querySelector('[data-hud="cronometro"]');
+  const conCrono = !!crono && !hud?.classList.contains("hud--pequenos");
+  const poner = () => {
+    if (!ORDEN_LARGA) return;
+    if (hint && hint.textContent !== SUB) hint.textContent = SUB;
+    if (senal) senal.hidden = false;
+    if (senalTexto && senalTexto.textContent !== ORDEN_LARGA) {
+      senalTexto.textContent = ORDEN_LARGA;
+      senalTexto.hidden = false;
+    }
+    if (radio) {
+      radio.hidden = false;
+      if (radio.textContent !== RADIO) radio.textContent = RADIO;
+    }
+    if (conCrono) {
+      crono.hidden = false;
+      const r = crono.querySelector('[data-hud="cronometro-rumbo"]');
+      const t = crono.querySelector('[data-hud="cronometro-reloj"]');
+      const d = crono.querySelector('[data-hud="cronometro-destino"]');
+      if (r && r.textContent !== "128°") r.textContent = "128°";
+      if (t && t.textContent !== "20:58") t.textContent = "20:58";
+      if (d && d.textContent !== "Filadelfia") d.textContent = "Filadelfia";
+    }
+  };
+  const mapa = juego?.hud?.mapa;
+  if (!mapa) return { plano: false, encima: [], leidos: 0 };
+  // La del GPS, como la pone el juego: hasta que cambie, y por delante de lo que hubiera.
+  if (ORDEN_DEL_JUEGO) {
+    juego.hud.senal.mostrar("gps-apagado", ORDEN_DEL_JUEGO, null, { segundos: Infinity, prioridad: 99 });
+    for (let i = 0; i < 10; i++) await new Promise((r) => requestAnimationFrame(() => r()));
+  }
+  if (!mapa.visible) mapa.alternar();
+  // Más que el fundido de la concha (160 ms), con lo largo puesto en cada fotograma.
+  for (let i = 0; i < 40; i++) {
+    poner();
+    await new Promise((r) => requestAnimationFrame(() => r()));
+  }
+  poner();
+  const hecho = ORDEN_LARGA ? (juego?.hud?.repartirAhora?.() ?? {}) : {};
+  const seVe = (el) => {
+    if (!el || el.closest("[hidden]")) return false;
+    if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 2 && r.height > 2 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
+  };
+  const concha = document.querySelector('[data-hud="mapa"] .concha');
+  if (!seVe(concha)) return { plano: false, encima: [], leidos: 0 };
+  const p = concha.getBoundingClientRect();
+  const encima = [];
+  let leidos = 0;
+  for (const [que, el] of [
+    ["la tarjeta de la orden", senal],
+    ["el cronómetro", crono],
+    ["el subtítulo", hint],
+    ["la radio", radio],
+    ["el tutor", document.querySelector('[data-hud="tutor"]')],
+    ["la lámpara", document.querySelector('[data-hud="torre"]')],
+  ]) {
+    if (!seVe(el)) continue;
+    leidos++;
+    const r = el.getBoundingClientRect();
+    if (
+      Math.min(r.right, p.right) - Math.max(r.left, p.left) > 1 &&
+      Math.min(r.bottom, p.bottom) - Math.max(r.top, p.top) > 1
+    )
+      encima.push(
+        `${que} y el plano (${Math.round(r.left)}–${Math.round(r.right)} × ${Math.round(r.top)}–${Math.round(r.bottom)}, ` +
+          `el plano en ${Math.round(p.left)}–${Math.round(p.right)} × ${Math.round(p.top)}–${Math.round(p.bottom)})`,
+      );
+  }
+  const orden = senal?.classList.contains("lee-espera")
+    ? "espera"
+    : senal?.classList.contains("lee-recogida")
+      ? "recogida"
+      : (hecho.senal ?? (seVe(senal) ? "se ve" : "no hay"));
+  // Y lo puesto a mano, como estaba; el plano se queda abierto para la foto.
+  if (ORDEN_LARGA) {
+    if (hint) hint.textContent = "";
+    if (radio) radio.hidden = true;
+  }
+  const salio = !!senal && !senal.hidden;
+  const seVeLaOrden = seVe(senal);
+  if (ORDEN_DEL_JUEGO) juego.hud.senal.limpiar();
+  return {
+    plano: true,
+    encima,
+    leidos,
+    salio,
+    seVeLaOrden,
+    orden: hecho.senal ?? orden,
+    crono: hecho.cronometro ?? (seVe(crono) ? "se ve" : "no se ve"),
+  };
+}
+
 /*
  * **Y los instrumentos del panel, libres de la barra del timón desde el
  * asiento** (H31b). Con el dedo la barra va abajo en el centro, que es donde
