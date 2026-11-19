@@ -7080,11 +7080,36 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * variómetro de ese segundo. Y desde que las hélices de Guyrami
            * vuelan la final configuradas, ellas también.
            */
+          /*
+           * **Y en el modelo completo, nunca desde menos de lo que pide la
+           * senda** (H32c). Una racha de cara a cien metros del umbral dejó al
+           * JAZ 90 de Los Rodeos bajando a 2,0 m/s cuando la senda pedía 3,3:
+           * la altura de la recogida sale de la senda —ver `caidaDeSenda`,
+           * arriba—, y el perfil, de lo que bajaba ese instante, así que se
+           * repartían dos metros por segundo en la altura de quien baja tres y
+           * pico. El perfil casi no tenía nada que quitar y la cola se alargaba:
+           * nueve segundos, y tocó a 627 m con la zona acabando en 600. Es lo
+           * del punto 254 de Guyrami, pillado en el valle de una racha y no de
+           * un escalón de la ley. Medido en la mesa (el modelo, el automático
+           * en la senda, el gas y las rachas del juego, con una de tres metros
+           * por segundo de cara a cien metros del umbral; cuarenta finales del
+           * JAZ 90, `h32c/mesa.ts` del scratchpad): en las dieciocho que
+           * empezaban a recoger bajando menos que la senda, se toca de 8 a 170
+           * m antes —53 de media— y no más fuerte: la peor, 2,47 donde era
+           * 2,48. Las dos que empezaban ciento sesenta metros antes del umbral,
+           * bajas, tocan más cortas, de 66 a 19 m y de 162 a 74: eso es llegar
+           * corto, y lo arregla el gas de la final, no la recogida. Las que
+           * bajan de más siguen como estaban, desde lo que baja y con la décima
+           * de margen.
+           */
           caida: Math.max(
             RITMO_AL_TOCAR,
             SENCILLO
               ? porElSuelo(s) * SENDA
-              : Math.min(6, -s.verticalSpeed, porElSuelo(s) * SENDA * 1.1),
+              : Math.min(
+                  6,
+                  Math.max(porElSuelo(s) * SENDA, Math.min(-s.verticalSpeed, porElSuelo(s) * SENDA * 1.1)),
+                ),
           ),
           palanca:
             CON_EL_AUTOMATICO && palancaMedia !== null

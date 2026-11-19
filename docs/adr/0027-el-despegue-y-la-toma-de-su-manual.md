@@ -4228,3 +4228,57 @@ para toda la máquina), ni el JAZ 90 a ×1, que corre lo mismo que a ×12.
   modelo y las rachas de Los Rodeos, cuántas recogidas pasan de 2 m/s y qué
   mano —más proporcional cuando se hunde, o el gas antes— las baja, sin hacer
   flotar las demás.
+
+## Enmienda H32c (19-11-2026): la recogida que empieza por debajo de la senda
+
+### Es del banco
+
+La recogida del JAZ 90 que tocó a 627 m es la del piloto del banco: el
+automático del juego lleva la senda hasta que el banco empieza a recoger
+(`rc 1` en la traza del ala), y desde ahí manda `recoger` en
+`verificar-vuelo-entero.mjs`. La altura a la que empieza sale de la senda
+—`caidaDeSenda`, que nunca es menos— y el perfil, de lo que baja ese
+instante. Con la racha de cara de H34a bajaba a 2,0 m/s cuando la senda pedía
+3,3: se repartían dos metros por segundo en la altura de quien baja tres y
+pico, el perfil casi no tenía nada que quitar y la cola hasta los 0,61 m/s del
+final se alargaba, nueve segundos.
+
+### Medido en la mesa
+
+`h32c/mesa.ts` del scratchpad, sobre la de H29g: el modelo, el automático en
+la senda, el gas del banco, las rachas del juego (σ 1 m/s) y la ley de
+`recoger` de hoy, cuarenta finales del JAZ 90, con y sin una racha de tres
+metros por segundo de cara a cien metros del umbral. La mesa no llega a los
+627 m —la toma más larga, 502—, así que mide la tendencia y no el caso.
+
+- Empezar el perfil en lo que pide la senda **siempre** —también cuando se
+  baja de más, con la décima de margen o sin ella— no baja las tomas de más
+  de 2 m/s: de 5 a 6 o a 4, ruido.
+- Bajar también la altura con lo que se baja: 7 duras de 39.
+- Empezarlo en la senda **solo cuando se baja de menos**, y lo de antes cuando
+  se baja de más: en las dieciocho finales con la racha que empezaban a
+  recoger bajando menos que la senda, se toca de 8 a 170 m antes —53 de
+  media— y no más fuerte (la peor, 2,47 donde era 2,48). Dos que empezaban
+  ciento sesenta metros antes del umbral, bajas, tocan más cortas: de 66 a 19
+  m y de 162 a 74. Las cuarenta, 5 duras como antes; sin la racha, ninguna, y
+  la mediana de 331 a 316 m.
+
+Es lo tercero lo que se ha puesto: lo del punto 254 de Guyrami —la recogida
+es la misma a la misma altura, no la que dicte el variómetro de ese
+segundo—, pillado en el valle de una racha.
+
+### El JAZ 50 es otra cosa
+
+Su traza de H34a empieza a recoger a 9,5 m bajando 3,1 m/s, por encima de los
+dos que pide su senda, y lo que la sube a 2 m/s es una racha que baja a cuatro
+metros del suelo. Con lo de arriba no cambia: empieza bajando de más. La mesa
+no sirve para él —su final se queda corta, hasta 276 m antes del umbral—, y
+afinar su mano contra esa racha sigue pendiente, como en H34a.
+
+### Lo que no se ha volado
+
+Nada de esta enmienda: el navegador estuvo ocupado y la tanda se pasó de
+tiempo. Quedan `tenerife-norte taguato 12 jaz-90` y `tenerife-norte taguato 1
+jaz-50` dos veces cada uno, y `taguato 1 jaz-90` y `guyrami 3 jaz-20` para ver
+que no se rompen; la primera tirada no llegó a despegar porque el worktree no
+tenía `node_modules/three`, que el banco importa por su ruta.
