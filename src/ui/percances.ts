@@ -194,15 +194,17 @@ const OCUPADA_AVION = lienzo(`
  * nadie se hizo daño.
  */
 const TREN = lienzo(`
-  ${CHISPAS}
-  <path d="M4 54 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q4 -4 8 0"
+  <path d="M20 16 l1.6 3.6 3.6 1.6 -3.6 1.6 -1.6 3.6 -1.6 -3.6 -3.6 -1.6
+           3.6 -1.6 Z" opacity="0.9" />
+  <g transform="translate(-6 8) rotate(-14 32 34)">${AVIONETA}</g>
+  <path class="percance__hueco" d="M2 51 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 V64 H2 Z" />
+  <path d="M2 51 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0 q6 -6 12 0"
         stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" />
-  <circle cx="13" cy="58" r="1.6" opacity="0.7" />
-  <circle cx="38" cy="59" r="1.3" opacity="0.6" />
-  <g transform="translate(-6 10) rotate(-14 32 34)">${AVIONETA}</g>
-  <circle cx="51" cy="45" r="4.2" />
-  <circle class="percance__hueco" cx="51" cy="45" r="1.5" />
-  <path d="M58 41 h4 M58 46 h3" stroke="currentColor" stroke-width="1.8"
+  <circle cx="12" cy="57" r="1.6" opacity="0.7" />
+  <circle cx="36" cy="58" r="1.3" opacity="0.6" />
+  <circle cx="51" cy="42.5" r="4.2" />
+  <circle class="percance__hueco" cx="51" cy="42.5" r="1.5" />
+  <path d="M57.5 38 h4 M57.5 43 h3" stroke="currentColor" stroke-width="1.8"
         stroke-linecap="round" fill="none" opacity="0.7" />
 `);
 
