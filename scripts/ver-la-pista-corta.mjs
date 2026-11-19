@@ -264,7 +264,13 @@ try {
     const tarjetas = await page.evaluate(() => globalThis.__tarjetas ?? []);
     console.log(`    tarjetas: ${tarjetas.join(" | ")}`);
     soltar = soltar || tarjetas.some((x) => x.startsWith("freno") && /solt|release|let go/i.test(x));
-    const alAngulo = tarjetas.some((x) => /empinado|Slow and steep/i.test(x));
+    /*
+     * **El ángulo, por su dibujo**: la tarjeta de la subida antes de pasar el
+     * monte. Por el texto no vale en Tukã, donde lleva una palabra («Steady»)
+     * y no la frase entera.
+     */
+    const pasoElMonte = tarjetas.findIndex((x) => x.startsWith("nariz-abajo"));
+    const alAngulo = tarjetas.some((x, i) => x.startsWith("subida") && (pasoElMonte < 0 || i < pasoElMonte));
     if (tecnica === "bien") comprobar("bien volado se cuenta el ángulo sostenido", alAngulo);
     else if (tecnica === "mal") comprobar("mal volado no se cuenta el ángulo, que solo se cruzó acelerando", !alAngulo);
     const enLaFila = perfil.find((x) => x.pasado >= (e?.pasadaLaPista ?? 120));
