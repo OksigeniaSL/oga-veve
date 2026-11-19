@@ -8627,6 +8627,438 @@ button.motor__tecla::after {
   background: var(--ocre);
 }
 
+/*
+ * ── La hoja de carga ──
+ *
+ * La gente y el depósito arriba; la báscula y la pista debajo. Todo a lo ancho
+ * de su caja: la barra que se sale de la pista tiene que verse salirse, y en un
+ * teléfono tumbado eso pide todo el ancho que haya. Los mandos, del tamaño del
+ * dedo. Ver `ui/hoja-de-carga.ts`.
+ */
+.hoja {
+  width: 100%;
+}
+
+/*
+ * La tarjeta, del barro de las fichas: el hangar va sobre el cielo y la hoja
+ * lleva cifras que tienen que leerse. Con sitio, en dos columnas —lo que se
+ * elige a la izquierda, lo que sale a la derecha—, que en un teléfono tumbado
+ * no hay alto para apilarlo todo; sin sitio, una debajo de otra. La vista se
+ * repinta entera y por eso sus piezas entran en la rejilla de la tarjeta con
+ * `display: contents`.
+ */
+.hoja__tarjeta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "mandos" "cabina" "bascula" "pista" "veredicto";
+  gap: 10px 18px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgb(228 226 218 / 0.14);
+  border-radius: var(--r-m);
+  background: var(--barro-claro);
+  background-image: var(--barniz);
+  box-shadow: var(--poso);
+}
+
+@media (min-width: 700px) {
+  .hoja__tarjeta {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    grid-template-areas:
+      "mandos bascula"
+      "mandos pista"
+      "cabina veredicto";
+    align-items: center;
+  }
+}
+
+.hoja__mandos {
+  grid-area: mandos;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.hoja__vista {
+  display: contents;
+}
+
+
+.hoja__fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.hoja__icono {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  color: var(--ocre);
+}
+
+.hoja__icono svg,
+.hoja__arreglo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.hoja__rotulo {
+  flex: none;
+  color: var(--tinta-suave);
+}
+
+.hoja__boton {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--r-m);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hoja__boton:focus-visible,
+.hoja__opcion:focus-visible,
+.hoja__arreglo:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 2px;
+}
+
+/* El deslizador, con el pulgar del tamaño de un dedo. */
+.hoja__deslizador {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  margin: 0;
+  accent-color: var(--ocre);
+  cursor: pointer;
+}
+
+.hoja__deslizador::-webkit-slider-thumb {
+  width: 32px;
+  height: 32px;
+}
+
+.hoja__opcion {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--r-m);
+  background: transparent;
+  color: var(--tinta-suave);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hoja__opcion[aria-checked="true"] {
+  border-color: var(--ocre);
+  background: rgb(221 146 63 / 0.16);
+  color: var(--tinta);
+}
+
+.hoja__tanque {
+  width: 44px;
+  height: 22px;
+  flex: none;
+}
+
+.hoja__tanque-caja {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.hoja__tanque-nivel {
+  fill: var(--ocre);
+}
+
+.hoja__nota {
+  margin: 0;
+  color: var(--tinta-suave);
+}
+
+/* Los asientos: vacíos, una raya; ocupados, rellenos. */
+.hoja__cabina {
+  grid-area: cabina;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.hoja__asientos {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+}
+
+.hoja__asiento {
+  fill: none;
+  stroke: var(--linea-fuerte);
+  stroke-width: 1.2;
+  transition: fill 0.15s;
+}
+
+.hoja__asiento--ocupado {
+  fill: #8fc3e8;
+  stroke: #8fc3e8;
+}
+
+.hoja__cuenta {
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+.hoja__cifras {
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 3px;
+  font-size: 15px;
+}
+
+/* La báscula: tres tramos seguidos y la raya del máximo. */
+.hoja__bascula {
+  grid-area: bascula;
+  width: 100%;
+}
+
+.hoja__pista {
+  grid-area: pista;
+  width: 100%;
+}
+
+.hoja__barra {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 26px;
+  border-radius: 8px;
+  background: rgb(228 226 218 / 0.08);
+  overflow: hidden;
+}
+
+.hoja__barra i {
+  display: block;
+  height: 100%;
+  flex: none;
+  transition: width 0.2s;
+}
+
+.hoja__vacio {
+  background: rgb(228 226 218 / 0.38);
+}
+
+.hoja__gente {
+  background: #8fc3e8;
+}
+
+.hoja__combustible {
+  background: var(--ocre);
+}
+
+.hoja__barra .hoja__demas {
+  position: absolute;
+  top: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--precaucion) 0 6px,
+    rgb(232 177 58 / 0.35) 6px 12px
+  );
+}
+
+/* La raya del peso máximo, más alta que la barra: es el tope, y se ve sin leer. */
+.hoja__balanza {
+  position: relative;
+  width: 100%;
+  padding: 5px 0;
+}
+
+.hoja__raya {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  margin-left: -2.5px;
+  border-radius: 2px;
+  background: var(--tinta);
+  box-shadow: 0 0 0 1.5px var(--barro);
+}
+
+.hoja__bascula--pasa .hoja__barra,
+.hoja__pista--corta .hoja__carrera {
+  animation: hoja-no-cabe 0.5s ease-in-out 1;
+}
+
+@keyframes hoja-no-cabe {
+  20% { transform: translateX(-4px); }
+  45% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoja__bascula--pasa .hoja__barra,
+  .hoja__pista--corta .hoja__carrera {
+    animation: none;
+  }
+}
+
+/* La pista: el asfalto de la TORA y la barra de lo que pide hoy. */
+.hoja__campo {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  border-radius: 6px;
+  background: rgb(94 140 84 / 0.35);
+}
+
+.hoja__asfalto {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 10px, #f2f1ec 10px 22px) center / 100% 2px no-repeat,
+    #4d5152;
+}
+
+.hoja__asfalto--hierba {
+  background: #6f9b56;
+}
+
+.hoja__fin {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--tinta);
+}
+
+.hoja__carrera {
+  position: relative;
+  width: 100%;
+  height: 26px;
+  margin-top: 4px;
+}
+
+.hoja__pide {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--ok);
+  transition: width 0.2s;
+}
+
+.hoja__avioncito {
+  position: absolute;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  transform: translateX(-60%);
+  transition: left 0.2s;
+}
+
+.hoja__avioncito svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--ok);
+}
+
+.hoja__pista--corta .hoja__pide {
+  background: var(--precaucion);
+}
+
+.hoja__pista--corta .hoja__avioncito svg {
+  fill: var(--precaucion);
+}
+
+/* El veredicto: el sello, la frase si el peldaño la lleva y el arreglo. */
+.hoja__veredicto {
+  grid-area: veredicto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+}
+
+.hoja__sello {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 800;
+  color: #10170f;
+}
+
+.hoja__veredicto--bien .hoja__sello {
+  background: var(--ok);
+}
+
+.hoja__veredicto--no .hoja__sello {
+  background: var(--precaucion);
+}
+
+.hoja__texto {
+  flex: 1;
+  min-width: 0;
+  color: var(--tinta);
+}
+
+.hoja__arreglo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  min-width: 64px;
+  height: 48px;
+  margin-left: auto;
+  padding: 8px 14px;
+  border: 2px solid var(--precaucion);
+  border-radius: var(--r-m);
+  background: rgb(232 177 58 / 0.14);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.hoja__arreglo svg {
+  width: 26px;
+  height: 26px;
+}
+
+.hoja__menos {
+  font-size: 26px;
+  line-height: 1;
+  color: var(--precaucion);
+}
+
 /* El circuito de la vuelta al campo, encima del plano de casa. */
 .ficha__circuito {
   position: absolute;

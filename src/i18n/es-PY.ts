@@ -3119,6 +3119,22 @@ export const ES_PY = {
   "hangar.adonde": "¿A dónde vas?",
   "hangar.vuelta": "Vuelta al campo",
   "hangar.combustible": "Combustible",
+  "hangar.carga": "¿Qué llevás?",
+  "hoja.gente": "Pasajeros",
+  "hoja.plan": "Lo del vuelo",
+  "hoja.llenos": "Tanques llenos",
+  "hoja.ficha": "Lleva la carga de siempre: de este avión no sabemos cuánto pesa vacío.",
+  "hoja.cabe": "¡Cabe!",
+  "hoja.pesado": "Pesado",
+  "hoja.corta": "Corta",
+  "hoja.cabe.largo": "Cabe todo: no pasa del peso máximo y sobra pista.",
+  "hoja.pesado.largo": "Sobran {kg}: bajá {n} pasajeros, o elegí un destino más cerca.",
+  "hoja.pesado.uno": "Sobran {kg}: bajá un pasajero, o elegí un destino más cerca.",
+  "hoja.pesado.combustible": "Sobran {kg}, y no es la gente: es el combustible. Elegí un destino más cerca.",
+  "hoja.corta.largo": "Hoy hacen falta {pide} de pista y hay {hay}: sacá carga o combustible.",
+  "hoja.pesado.llenos": "Con los tanques llenos sobran {kg}: cargá solo lo del vuelo.",
+  "hoja.quitar": "Bajar a los que sobran",
+  "hoja.mascerca": "Elegir un destino más cerca",
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro
   // modelos de avión, que es exactamente la confusión de la que avisa
   // `tiers.ts`. Un tramo no es una aeronave, son tus galones.

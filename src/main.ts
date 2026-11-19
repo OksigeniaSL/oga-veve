@@ -135,6 +135,7 @@ import { AIRCRAFT, type AircraftConfig } from "./flight/aircraft";
 import { ESCENARIO_DEL_HELICOPTERO, esHelicoptero, SUPER_PUMA_EN_EL_JUEGO } from "./flight/helicoptero-en-el-juego";
 import { aeronavePorId, laQueSeVuelaEn } from "./flight/aeronaves";
 import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
+import { pasajerosDeSuFicha, type Hoja } from "./flight/hoja-de-carga";
 import { vecinosQueSeMontan } from "./world/vecinos-del-vuelo";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { cerrarPilotos, elegirPiloto } from "./ui/pantalla-pilotos";
@@ -354,6 +355,18 @@ let avion: AircraftConfig =
  * ruta concreta sin dar clics. Sin nada, el juego propone el vecino más
  * cercano. Ver `Game.destinoDeSalida`.
  */
+/**
+ * **La hoja de carga**, elegida en el hangar, o puesta en la dirección:
+ * `?pasajeros=19&llenos=1`. Sin ninguna de las dos, el avión vuela con la carga
+ * de su ficha. Ver `flight/hoja-de-carga.ts`.
+ */
+let hojaElegida: (Hoja & { readonly avion?: string }) | undefined =
+  params.has("pasajeros") || params.has("llenos")
+    ? {
+        pasajeros: Number(params.get("pasajeros") ?? Number.NaN),
+        llenos: params.get("llenos") === "1",
+      }
+    : undefined;
 let destino: string | undefined = rearranque
   ? /*
      * El de antes, si lo había. Se descartaba con el argumento de que era del
@@ -481,6 +494,8 @@ if (!escenario) {
   // Y se recuerda en el propio hangar, al tocarlo: guardar aquí también lo
   // propuesto lo congelaría como si alguien lo hubiera elegido.
   destino = elegido.destino;
+  // La hoja de carga es de este avión: la gente y el combustible elegidos.
+  if (elegido.hoja) hojaElegida = { ...elegido.hoja, avion: elegido.aircraft.id };
   /*
    * El modo inicio es su propio vuelo —su sitio, su avión y su peldaño— y no
    * cambia lo que quien juega tenía elegido: ver `conInicio` más abajo.
@@ -846,6 +861,20 @@ const game = new Game({
   // Y los que se quedaron fuera por el avión, para poder decirlo en vuelo.
   noCaben: noCabenHoy,
   destino,
+  ...(hojaElegida && !conInicio
+    ? {
+        hojaDeCarga: {
+          // La del hangar, para el avión que se eligió; si al final vuela otro,
+          // ese otro no la usa. La de la dirección, para el que vuele.
+          avion: hojaElegida.avion ?? avion.id,
+          // Sin número en la dirección, la gente de su ficha.
+          pasajeros: Number.isFinite(hojaElegida.pasajeros)
+            ? hojaElegida.pasajeros
+            : pasajerosDeSuFicha(avion),
+          llenos: hojaElegida.llenos,
+        },
+      }
+    : {}),
   /*
    * `?curvatura=0` dibuja el mundo plano, para comparar: sin curva, el sol
    * se corta en la horizontal y la costa de la isla de enfrente se ve
