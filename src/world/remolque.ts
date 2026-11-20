@@ -259,14 +259,14 @@ export const DIRECCION_MAXIMA = 70 * GRADO;
 export const ENDEREZA = 8;
 
 /** Cuánto tiene que torcer la raya para que eso sea la calle, y no el puesto. */
-const LA_CALLE_TUERCE = 40 * GRADO;
+export const LA_CALLE_TUERCE = 40 * GRADO;
 /**
  * **Cuándo sale la raya del puesto de lado**, y no hacia atrás: los mismos cincuenta
  * grados que en `rumboEnElPuesto`, que con menos pone el avión en el eje de la raya.
  */
 const SALE_DE_LADO = 50 * GRADO;
 /** Cuántos metros de raya se miran para saber hacia dónde va la calle. */
-const MIRA_LA_CALLE = 30;
+export const MIRA_LA_CALLE = 30;
 /**
  * **Hasta dónde se busca la calle**, en largos del avión y nunca menos de cuarenta
  * metros: la calle de servicio de detrás de un puesto de contacto está a un largo
@@ -289,8 +289,19 @@ const BUSCA_LA_CALLE = 1.3;
  * ciento veinte metros son dos minutos a paso de persona, un empuje largo de los que
  * se ven en las plataformas grandes. Más allá, una raya recta es una calle que sale
  * de frente. Ver `trayectoriaDelEmpuje`.
+ *
+ * **Y la calle es la curva entera con la que acaba la recta** (H47), no el metro de
+ * después: la raya no tuerce en una esquina, sino en una curva de varios puntos, y
+ * la primera vez que lo que viene por delante se aparta los cuarenta grados de
+ * `LA_CALLE_TUERCE` cae unos metros dentro de ella. Con el metro de más, la calle se
+ * quedaba fuera en cuanto el primer tramo de la curva torcía poco: desde el 24 de Los
+ * Rodeos —que el plan elige desde que el grafo no suelda los cruces (H41c)—, la recta
+ * acaba a los 90 m con un tramo de 6°, los cuarenta se ven a los 94, y el empuje se
+ * hacía de frente: noventa grados a los 34 m y el avión atravesado a la raya, girando
+ * 78° en sus primeros treinta metros. Por eso se mira hasta `MIRA_LA_CALLE` más allá
+ * del final de la recta, que es lo que se mira para saber hacia dónde va la calle.
  */
-const RECTA_DE_LA_PLATAFORMA = 120;
+export const RECTA_DE_LA_PLATAFORMA = 120;
 /** Lo que puede torcer cada tramo de la raya y seguir siendo esa recta. */
 const SIGUE_RECTA = 5 * GRADO;
 /**
@@ -379,8 +390,12 @@ export function trayectoriaDelEmpuje(
   if (porLaPlataforma && Math.abs(diferencia(desde.rumbo + Math.PI, salida)) <= SALE_DE_LADO)
     for (let i = 1; i < raya.length && Math.abs(diferencia(salida, rumboEntre(raya[i - 1]!, raya[i]!))) <= SIGUE_RECTA; i++)
       recta = acum[i]!;
-  // El metro de más es el del punto donde acaba la recta, que es donde tuerce.
-  const alcance = Math.max(40, BUSCA_LA_CALLE * largoDelAvion, Math.min(recta, RECTA_DE_LA_PLATAFORMA) + 1);
+  /*
+   * Hasta el final de la curva que cierra la recta, si la recta cabe en la plataforma; si
+   * no, el metro de más del punto donde acaba, como antes. Ver `RECTA_DE_LA_PLATAFORMA`.
+   */
+  const cierraLaRecta = recta > 0 && recta <= RECTA_DE_LA_PLATAFORMA ? MIRA_LA_CALLE : 1;
+  const alcance = Math.max(40, BUSCA_LA_CALLE * largoDelAvion, Math.min(recta, RECTA_DE_LA_PLATAFORMA) + cierraLaRecta);
   let cruce: PuntoXZ | null = null;
   let calle = salida;
   /** El primer sitio donde tuerce la raya, a cualquier distancia, y hacia dónde va desde ahí. */
