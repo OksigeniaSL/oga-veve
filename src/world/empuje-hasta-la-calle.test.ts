@@ -227,12 +227,13 @@ function comoAcaba(c: Caso): ComoAcaba | null {
     const mejorEnElEje = mejor.aparte < SOBRE_LA_RAYA;
     if (enElEje ? !mejorEnElEje || torcido < mejor.torcido : !mejorEnElEje && aparte < mejor.aparte) mejor = { torcido, aparte };
   }
+  const alLado = aLos(raya, acum, sobreLaRaya(raya, acum, fin));
   return {
     ref: `${x.toFixed(0)},${z.toFixed(0)}`,
     deLado: Math.abs(diferencia(rumbo + Math.PI, salida)) > DE_ESPALDAS,
     // De la rueda de morro, que está en el punto del puesto, al tren principal hay una batalla.
     debajo: recta < c.avion.batalla,
-    lejos: Math.hypot(...((q) => [q.x - fin.x, q.z - fin.z])(aLos(raya, acum, sobreLaRaya(raya, acum, fin)))),
+    lejos: Math.hypot(alLado.x - fin.x, alLado.z - fin.z),
     ...mejor,
     largo: e.largo,
     giro: e.giro,
