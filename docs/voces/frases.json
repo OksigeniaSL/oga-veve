@@ -23304,5 +23304,19 @@
     "idioma": "es-PY",
     "texto": "Pasamos la altura más alta que tiene aprobada este avión. Más arriba el aire es tan finito que su manual no lo deja: bajá tranquilo un poco.",
     "para": "pasada a mano la altitud máxima de operación del avión, en los tres peldaños de abajo"
+  },
+  {
+    "id": "vuelo.sinRemontar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre nos dijo ir primero por la pista y dar la vuelta, para tener más pista por delante. Hoy alcanza igual: seguí",
+    "para": "con «backtrack» dado, quien se alinea en la boca y la pista le alcanza igual, en los tres peldaños de abajo"
+  },
+  {
+    "id": "vuelo.sinRemontarNoAlcanza",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre nos dijo ir primero por la pista y dar la vuelta: desde acá no alcanza la pista para despegar",
+    "para": "con «backtrack» dado, quien se alinea en la boca y desde allí no le alcanza la pista, en los tres peldaños de abajo"
   }
 ]

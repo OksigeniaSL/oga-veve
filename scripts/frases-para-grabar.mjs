@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.(?:compensadorParaDespegar|compensadorDeDespeguePuesto|avisoDeConfiguracionCompensador)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$|^vuelo\.altitudMaxima$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.(?:compensadorParaDespegar|compensadorDeDespeguePuesto|avisoDeConfiguracionCompensador)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$|^vuelo\.altitudMaxima$|^vuelo\.sinRemontar(?:NoAlcanza)?$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -3308,6 +3308,24 @@ const DE_LA_ALTITUD_MAXIMA = [
   ["vuelo.altitudMaxima", "pasada a mano la altitud máxima de operación del avión, en los tres peldaños de abajo"],
 ];
 for (const [id, para] of DE_LA_ALTITUD_MAXIMA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+
+/*
+ * **Y quien no remonta** (20-11-2026): con «backtrack» dado, quien se alinea
+ * en la boca y despega desde allí; la instructora cuenta qué dijo la torre y
+ * si hoy alcanza o no, en los tres peldaños de abajo. Detrás de todo, por lo
+ * mismo: lo ya grabado no se renumera. Ver `vigilarElRemonte` en
+ * `src/flight/vuelo.ts` y el ADR 0029, enmienda H41f.
+ */
+const DEL_REMONTE = [
+  ["vuelo.sinRemontar", "con «backtrack» dado, quien se alinea en la boca y la pista le alcanza igual, en los tres peldaños de abajo"],
+  ["vuelo.sinRemontarNoAlcanza", "con «backtrack» dado, quien se alinea en la boca y desde allí no le alcanza la pista, en los tres peldaños de abajo"],
+];
+for (const [id, para] of DEL_REMONTE) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });

@@ -3415,6 +3415,14 @@
       "ms": 2826,
       "h": "da397bcb3b"
     },
+    "vuelo.sinRemontar": {
+      "ms": 6207,
+      "h": "8f2c15c126"
+    },
+    "vuelo.sinRemontarNoAlcanza": {
+      "ms": 5207,
+      "h": "db164a0868"
+    },
     "vuelo.sobrevelocidad": {
       "ms": 1354,
       "h": "79cc0de92a"
@@ -6397,6 +6405,12 @@
     ],
     "vuelo.altitudMaxima": [
       "vuelo.altitudMaxima"
+    ],
+    "vuelo.sinRemontar": [
+      "vuelo.sinRemontar"
+    ],
+    "vuelo.sinRemontarNoAlcanza": [
+      "vuelo.sinRemontarNoAlcanza"
     ]
   }
 }

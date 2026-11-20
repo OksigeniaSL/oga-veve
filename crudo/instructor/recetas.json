@@ -2795,5 +2795,11 @@
   ],
   "vuelo.altitudMaxima": [
     "vuelo.altitudMaxima"
+  ],
+  "vuelo.sinRemontar": [
+    "vuelo.sinRemontar"
+  ],
+  "vuelo.sinRemontarNoAlcanza": [
+    "vuelo.sinRemontarNoAlcanza"
   ]
 }
