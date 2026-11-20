@@ -4956,7 +4956,13 @@ export class Hud {
   private quienLlevaElGas: "avion" | "ayuda" | null = null;
 
   setLuzDeTorre(
-    luz: "verde" | "roja" | null,
+    /**
+     * Y «rodar» son los destellos verdes, «autorizado para rodaje»: la de quien
+     * remonta la pista antes de despegar (H41h). Verde, con la flecha de
+     * seguir, y parpadeando; sin frase, que lo que se dice va por la radio.
+     * Ver `flight/luz-de-la-salida.ts`.
+     */
+    luz: "verde" | "roja" | "rodar" | null,
     /**
      * Qué dice la luz roja cuando no es la del punto de espera.
      *
@@ -5002,7 +5008,8 @@ export class Hud {
     const caja = this.torre;
     if (!caja) return;
     esconder(caja, luz === null);
-    caja.classList.toggle("torre--verde", luz === "verde");
+    caja.classList.toggle("torre--verde", luz === "verde" || luz === "rodar");
+    caja.classList.toggle("torre--destellos", luz === "rodar");
     caja.classList.toggle("torre--roja", luz === "roja");
     const enLaRoja = luz === "roja" && rojaDice !== "alAire";
     const enLaFila = enLaRoja ? delante : 0;
@@ -5043,7 +5050,7 @@ export class Hud {
             ? t(comoSeDiceAqui("torre.alAire", this.habla) as TranslationKey, {
                 indicativo,
               })
-            : luz
+            : luz === "roja"
               ? [
                   t(comoSeDiceAqui("torre.roja", this.habla) as TranslationKey, {
                     indicativo,
@@ -5068,7 +5075,7 @@ export class Hud {
      */
     const bombilla = caja.querySelector('[data-hud="torre-luz"]');
     const dibujo =
-      luz === "verde"
+      luz === "verde" || luz === "rodar"
         ? "seguir"
         : luz
           ? // Y el dibujo va con las palabras: la mano de parar para el punto
