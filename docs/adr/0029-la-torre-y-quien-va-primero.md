@@ -1002,10 +1002,85 @@ quitado ninguna.
 
 ### Lo que queda
 
-- **El chaflán que mira a la cabecera, en El Hierro con cola**: se entra por
-  él, se rueda unos metros pista abajo hacia la cabecera y se da la media
-  vuelta. Para la radio es una salida por intersección; para un control de
-  verdad, rodar hacia atrás por la pista es remontar, aunque sean diez metros.
-  No cambia lo que se despega, pero lo que se dice no es lo que se hace.
 - **El navegador**: `tenerife-norte taguato 1 jaz-90` no se voló; el candado
   tenía en cola otros tres bancos y no cabían en el tope de esta tanda.
+
+## Enmienda (20-11-2026, H41e): la boca que mira a la cabecera es de remontar
+
+### Lo que pasaba
+
+En El Hierro, por la 34 y con 4 m/s de cola, el JAZ 40 pide 740,7 m. Desde
+la 3A se llega a la pista por los dos chaflanes de la C: el que mira hacia
+donde se despega llega al eje con 724,9 m por delante, y el que mira a la
+cabecera, 23 m más atrás, con 748,1. `bocaDeEntrada` no veía bien ninguno
+—el primero se queda corto y el segundo llega al revés— y cogía el de menos
+rodaje, el segundo. Desde él la pista bastaba, así que no había remonte: se
+entraba mirando a la cabecera, se rodaban unos diez metros pista abajo hacia
+ella, se daba la media vuelta y se despegaba con unos 744 m. La radio lo
+llamaba salida por intersección, y la torre la ofrecía rodando con su TORA.
+
+Lo que se decía no era lo que se hacía (regla 4). Rodar por la pista en
+sentido contrario al del despegue es remontar —«backtrack», Doc 4444,
+12.3.4.7 p; «regreso por pista» en la fraseología española, RD 1180/2018,
+anexo V, 1.4.8, la que ya cita `vueltaDelBackTaxi`—, aunque sean diez metros.
+Y esos 748 no son la pista de la intersección de la C: la de la C es la del
+chaflán que mira hacia donde se despega, la que se tiene sin volver atrás.
+Un control de verdad, a quien le pide la C y no le basta, le autoriza a
+remontar, y quien remonta entra por el chaflán que mira hacia donde va a
+rodar, que es la cabecera.
+
+### Decisión
+
+- **Una boca a la que la calle llega mirando a la cabecera es de remontar**
+  (`remontaPorLaBoca` en `bocaDeEntrada`), aunque la pista que tiene por
+  delante bastara: para despegar desde ella hay que rodar por la pista hacia
+  atrás. El criterio es la geometría: el mismo coseno de la calle con el
+  rumbo de despegue que ya decide qué boca va «bien», al revés (≤ −0,2).
+  Nada de El Hierro.
+- **Y desde ella se remonta como se remonta** (`vueltaDelBackTaxi` con
+  `porLaBoca`): el de línea hasta el final, la avioneta su trozo; y si el
+  trozo quedaría a menos de 100 m de la boca, o por delante de ella
+  (`REMONTE_QUE_SE_ENTIENDE`), hasta el final, que un lazo pegado a la
+  entrada es otra vez el de Pilar. Si ni así queda nada que remontar —se
+  entra ya en la cabecera—, la boca sigue como estaba.
+- **Solo gana a las bocas que llegan mal.** Una que llega bien, para
+  entrar y despegar o para remontar, va antes que una al revés, y entre dos
+  que llegan bien sigue mandando el rodaje más corto. Así la elección solo
+  cambia donde antes ninguna boca iba bien.
+- **Lo que se dice sale de ahí, sin frases nuevas.** `comoSeSale`,
+  `comoSeSaldraDesdeLaEspera` y `pistaParaRemontar` hacen la misma cuenta,
+  así que rodando no se ofrece la intersección y con la verde se dice
+  remontar: «request backtrack» en la tira y «backtrack runway three four»
+  de la torre (`torre.canario.backtrack`, grabada), y la instructora
+  «vuelo.remontar.cola».
+
+### Lo medido
+
+Con un piloto perfecto, del puesto a la carrera, la 34 de GCHI y el JAZ 40
+(`remontar-por-el-chaflan.test.ts`, y la misma cuenta suelta):
+
+- **Con 4 m/s de cola** pide 740,7 m. Rodando se sabe ya que remonta, desde
+  la 3A con 748,1 m desde la entrada; con la verde, remonte hasta el final
+  y por la cola. Pisa el asfalto con 739 m por delante, va hacia la cabecera
+  hasta tener 1.229, da la vuelta allí (giro a 37 m de la punta) y suelta
+  frenos con 1.217,9 por delante. Antes, la misma prueba daba «interseccion».
+- **Con 5 m/s** pide 776,4 y hace lo mismo, como antes.
+- **Sin cola** pide 606,3: sale de la C por el chaflán que mira hacia donde
+  se despega, se dice intersección con 724,9 m, y no va hacia atrás ni un
+  metro (pisa con 736,1 por delante y suelta con 717,6).
+- **Lo que se dice es lo que se rueda** en El Hierro, La Gomera y Pilar, con
+  cada avión que cabe y por las dos cabeceras: quien sale desde la cabecera
+  o una intersección va hacia atrás por el asfalto menos de 5 m (cruzar el
+  borde por una calle que no llega a escuadra), y quien remonta, más de 100.
+- **La herradura de Pettirossi sin el otro ramal** (`entrada-al-reves.test.ts`)
+  ya remonta: la media vuelta que llega al revés se da en la cabecera de la
+  02, en fase de back-taxi, y la ayuda de Guyrami la toma igual. La prueba
+  mira ahora esa vuelta, con el tope de seis metros por segundo de
+  `back-taxi-vuelta.test.ts`.
+- `remontar-por-tipo.test.ts` pide ahora el remonte con 4 m/s, y su
+  comentario ya no cuenta el empate de rodaje de la H41c. Con ella,
+  `por-donde-se-sale-en-la-roja.test.ts`, `back-taxi.test.ts` y
+  `back-taxi-vuelta.test.ts`, en verde.
+- Vitest entero, una vez: 553 de 553 ficheros y 11.085 pruebas en verde y
+  29 saltadas, ninguna en rojo, en 1.115 s con dos hilos. Ahí van
+  `salida-tapada.test.ts` y los de Los Rodeos.

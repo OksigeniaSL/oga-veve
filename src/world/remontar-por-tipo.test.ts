@@ -335,18 +335,17 @@ describe("remontar la pista según el avión", () => {
   });
 
   /*
-   * **Con cuatro metros por segundo de cola ya no remonta, y es verdad.** Pide
+   * **Con cuatro metros por segundo de cola remonta, y es por el viento.** Pide
    * 741 m (ADR 0027: la de su manual con el 1,33 de escuela y la cola). Desde
    * la 3A se entra en la 34 por los dos chaflanes de la C: el que mira hacia
-   * donde se despega le deja 725 m, y el que mira a la cabecera, que llega al
-   * eje 23 m más atrás, 748.
-   * Ninguno le va bien sin media vuelta —por el primero hay que remontar; por
-   * el segundo se llega mirando a la cabecera—, y entre dos así se coge el de
-   * menos rodaje (`bocaDeEntrada` en `plan-de-vuelo.ts`). Con el grafo de la
-   * H41c el más corto es el segundo, y desde él, con la media vuelta dada, el
-   * avión queda alineado a unos 744 m del final: le basta. La prueba pedía el
-   * remonte por los 23 m de un empate, no por la pista. Con cinco metros por
-   * segundo pide 776, que no le da ninguno de los dos: remonta, y por el viento.
+   * donde se despega le deja 725 m, que no le bastan, y el que mira a la
+   * cabecera, que llega al eje 23 m más atrás, 748, pero al revés. Despegar
+   * desde ése es rodar por la pista hacia atrás, y eso es remontar aunque sean
+   * diez metros (H41e, `remontaPorLaBoca` en `bocaDeEntrada`): entra por él y
+   * remonta hasta el final. Con la H41c se quedaba ahí, daba la media vuelta y
+   * se decía intersección. Con cinco metros por segundo pide 776, que no le da
+   * ninguno de los dos: remonta igual, y por el viento. Lo que se rueda contra
+   * lo que se dice, en `remontar-por-el-chaflan.test.ts`.
    */
   it("y con viento de cola, también, y dice que es por el viento", () => {
     const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
@@ -354,8 +353,9 @@ describe("remontar la pista según el avión", () => {
     const r = entrada(EL_HIERRO, jaz40, 0, cola)!;
     expect(r.sale!.desde).toBe("remonte");
     expect(r.sale!.porQue).toBe("cola");
-    // Y con cuatro, por donde salga, la pista que tiene por delante le basta.
+    // Y con cuatro, también remonta, y sale con la pista que pide.
     const cuatro = entrada(EL_HIERRO, jaz40, 0, { ...cola, vientoDeFrente: -4 })!;
+    expect(cuatro.sale!.desde).toBe("remonte");
     expect(cuatro.sale!.porQue).toBe("cola");
     expect(cuatro.sale!.porDelante).toBeGreaterThanOrEqual(cuatro.sale!.necesitaHoy);
   });
