@@ -806,3 +806,107 @@ Vitest entero, una vez, con todo lo de arriba: 541 de 546 ficheros y 10.937
 de 10.978 pruebas en verde; 12 en rojo, en los cinco ficheros que se dicen
 aquí (`salida-tapada`, `de-frente-en-la-calle`, `puesto-de-salida-de-cada-campo`,
 `remolque` y `aerodromo-desplazado`).
+
+## Enmienda (20-11-2026, H41c): sin cosido, y la F sin cruces falsos
+
+### El caso
+
+La H41b dejó la paralela de Los Rodeos recta y a nadie remontando por la
+12, pero con doce pruebas en rojo, y la pieza frágil era el cosido de cada
+tramo a su nudo: movía geometría en todos los campos. Se quita, y se ataca
+lo que hacía falta coser.
+
+### Lo que había en el cruce de la F
+
+Dos cosas del nodado y de la soldadura, no de los datos:
+
+- **Una punta que ya estaba en una calle se metía en una tercera.** El
+  arranque del chaflán oeste de la F está en la R; caía a 11,5 m del
+  chaflán este, y el nodado lo metía en él: el chaflán este iba de la R al
+  arranque del otro y volvía a la F. Ese paso atrás de doce metros, junto al
+  camino del que venía detrás por la R, era ir de frente con él.
+- **Dos cruces de verdad se soldaban en uno.** El de la F con su chaflán y
+  el de la R con el otro están a 11,9 m, menos que una soldadura (12 m).
+
+### Decisión
+
+- **Fuera el cosido.** Cada tramo empieza y acaba en su punta, como antes de
+  la H41b.
+- **Una punta que ya está en otra calle** —a menos de un metro— **no se mete
+  en una tercera** que pasa a unos metros (`yaEnOtra` en `rodaje.ts`).
+- **Dos cruces de verdad** —el mismo punto, al milímetro, en dos calles— **a
+  más de media soldadura son dos nudos** (`nudoDe`, `CRUCES_DISTINTOS`). Más
+  cerca, como los arranques de dos rabos a tres o cuatro metros en la R, son
+  el mismo cruce dibujado dos veces. **En la pista se sueldan como siempre**:
+  sin soldar, en El Hierro el JAZ 20 que para a 815 m por la 16 volvía 291 m
+  por la pista para coger otra salida.
+- Se quedan la R recta (`colgadasDe`), la media vuelta de la H41, la pista
+  ocupada del que remonta (`ocupaLaPista`) y la roja por campo.
+
+### El puesto de salida
+
+`puesto-de-salida-de-cada-campo.json` se rehace después de mirar clave por
+clave lo que cambia. El plan elige el par puesto–doble raya que menos rueda de
+ida y de vuelta (`parDeSalida`), y lo que cambia son puestos vecinos casi
+empatados, y ninguna doble raya se mueve:
+
+| Campo | Cabecera | Aviones | Puesto | Doble raya |
+|---|---|---|---|---|
+| Los Rodeos | 12 | JAZ 20, 25 y 40 | 23 → 26 (81 m) | la misma |
+| Los Rodeos | 12, de contacto | JAZ 90, 110 y 120 | 23 → 24 (7 m) | la misma |
+| El Hierro | 16 | JAZ 20, 25 y 40 | 3A → 3 (22 m) | la misma |
+| El Hierro | 16 | JAZ 50, 60 y 90 (y el 90 de contacto) | 2 → 2A (24 m) | la misma |
+| Guaraní | 23 | JAZ 60 y 90 (y el 90 de contacto) | 3 → 1 (70 m) | la misma |
+
+### Pruebas que se vuelven a montar donde está su caso
+
+- **`remolque.test.ts`**: el empuje que se mide es el del 23, y el plan elige
+  ahora el 24; se pide el 23 con `reiniciarDesde`. Su empuje es el mismo de
+  antes: 39,4 m hasta el cruce, el morro a 0° de él y 5,2° de giro al soltar.
+- **`de-frente-en-la-calle.test.ts`, «pasa él y tu raya espera»**: por la 05
+  de Guaraní ya no se te cruza nadie en tu calle (EC-AAX, EC-ABX y EC-ACX,
+  saliendo de -20 a 60 s después de dejar tú la pista); por la 23, EC-ABX a
+  los 0 s sí.
+
+Y **una punta que ya está en otra calle solo se deja de meter en una tercera
+si esa tercera ya se toca con la suya** por otro sitio (`seTocan`). Sin esa
+condición, el anillo de plataforma de Pedro Juan Caballero, que pasa a unos
+metros del cruce de las calles que llegan a él y no tiene otra unión, se
+quedaba fuera del grafo con todas sus salidas (`salidas-a-un-puesto.test.ts`).
+
+Con eso, frente al fichero de main cambian 16 claves: las de Los Rodeos, El
+Hierro y Guaraní de la tabla. Barajas y Pedro Juan Caballero quedan como
+estaban.
+
+### Lo medido
+
+- En la mesa, Los Rodeos por la 12 con una llegada cada noventa segundos: sin
+  ningún remonte (antes de la H41b, dos por tirada); lo más deprisa hacia el
+  umbral, 8,1 m/s, en la curva de la salida de los 1.598 m.
+- `rodar-por-el-asfalto`, `remolque`, `aerodromo-desplazado`,
+  `salidas-a-un-puesto`, `trafico-que-da-la-vuelta` y
+  `puesto-de-salida-de-cada-campo`, en verde con lo último.
+- Construir el grafo de Barajas: 75 ms antes de la H41b y 121 ms ahora, en
+  el portátil y con una tanda de vitest al lado. La caja de cada calle en
+  `yaEnOtra` no cambia nada del grafo (la misma huella en los 19 campos) y
+  tampoco ese tiempo: lo que cuesta está en otra parte, y en una tablet no
+  se ha medido. Es al montar el campo, no en cada fotograma.
+
+### Lo que queda
+
+- **«Nadie de frente…» en Los Rodeos**, por la 12 con el JAZ 110 y EC-ADX
+  saliendo a los 40 s: 6,2 s parados de frente. No es la R ni la F. Con la R
+  recta, la raya pide en ella la velocidad de recta larga, 30 kt (15,4 m/s;
+  `rectaLarga` en `velocidades-en-tierra.ts`), donde el zigzag la dejaba en
+  5,1 m/s; quien juega llega 35 s antes a la Z y se encuentra a EC-ADX recién
+  salido del 23, parado a 37 m de su camino, mirando hacia él. Su raya se
+  corta a 67,7 m de él y él no se mueve —sin ceder ni esperar tramo— hasta
+  que, siete segundos después, se le marca «de frente» y recula. Qué lo tiene
+  parado esos siete segundos no está aislado: es una espera de los dos que
+  ya estaba ahí y que la llegada antes ha destapado.
+- **`remontar-por-tipo.test.ts`**: en El Hierro, el JAZ 40 con 4 m/s de cola
+  ya no remonta: entra por intersección. Sin mirar si la entrada que coge ahora
+  le deja de verdad la pista que pide.
+- **Las tres de El Hierro de `salida-tapada.test.ts`** que vio la H41, por la
+  media vuelta a su paso: siguen sin su caso. El caso medido sí vuelve a salir.
+- **El navegador**: el candado seguía ocupado por la ronda; no se voló.

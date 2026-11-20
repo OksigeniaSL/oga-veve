@@ -418,8 +418,29 @@ export function construirGrafo(
    * detrás por la R, era ir de frente con él (`tramoDeFrente`), y al que
    * acababa de aterrizar se le mandaba a remontar la pista (H41c).
    */
+  /*
+   * Y solo si las dos calles ya se tocan por otro sitio: un anillo de
+   * plataforma que pasa a unos metros del cruce de las calles que llegan a
+   * él —Pedro Juan Caballero— no tiene otra unión que esa, y sin ella se
+   * quedaba fuera del grafo con todas sus salidas.
+   */
+  const puntosDe = crudas.map((c) => new Set(c.path.map((q) => `${q[0]},${q[1]}`)));
+  const seTocan = (i: number, j: number): boolean => {
+    for (const k of puntosDe[j]!) if (puntosDe[i]!.has(k)) return true;
+    return false;
+  };
+  // Con la caja de cada calle, para no medir contra las setecientas de Barajas por punta.
+  const cajas = crudas.map((c) => {
+    const xs = c.path.map((q) => q[0]);
+    const ys = c.path.map((q) => q[1]);
+    return [Math.min(...xs) - PEGADA, Math.max(...xs) + PEGADA, Math.min(...ys) - PEGADA, Math.max(...ys) + PEGADA] as const;
+  });
   const yaEnOtra = puntas.map(({ calle: j, p }) =>
-    crudas.some((c, k) => k !== j && distanciaAlCamino(p, c.path) <= PEGADA),
+    crudas.some((c, k) => {
+      if (k === j) return false;
+      const [x0, x1, y0, y1] = cajas[k]!;
+      return p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1 && distanciaAlCamino(p, c.path) <= PEGADA;
+    }),
   );
   crudas.forEach((calle, i) => {
     const colgadas = colgadasDe(calle.path, puntas, i, largos);
@@ -439,7 +460,7 @@ export function construirGrafo(
           if (t <= 0.001 || t >= 0.999) continue;
           const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
           // La punta de lo que cuelga de esta calle no la tuerce. Ver `colgadasDe`.
-          if (d > PEGADA && (colgadas.has(j) || yaEnOtra[q])) continue;
+          if (d > PEGADA && (colgadas.has(j) || (yaEnOtra[q] && seTocan(i, j)))) continue;
           if (d <= SOLDADURA) encima.push({ t, p });
         }
         encima.sort((x, y) => x.t - y.t);
