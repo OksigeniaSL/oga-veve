@@ -487,9 +487,10 @@ export function construirGrafo(
   });
 
   const tramos: Tramo[] = [];
-  for (const t of trozos) {
-    const a = nudoDe(t.path[0]!);
-    const b = nudoDe(t.path[t.path.length - 1]!);
+  // Los nudos en el mismo orden de siempre: los números no cambian.
+  const conNudos = trozos.map((t) => ({ t, a: nudoDe(t.path[0]!), b: nudoDe(t.path[t.path.length - 1]!) }));
+  const deLaPista = new Set(conNudos.filter((x) => x.t.pista).flatMap((x) => [x.a, x.b]));
+  for (const { t, a, b } of conNudos) {
     if (a === b) continue;
     /*
      * **Y el tramo empieza y acaba en su nudo**, no en su punta. Una punta
@@ -500,8 +501,15 @@ export function construirGrafo(
      * camino del que venía detrás por la paralela, era ir de frente con él
      * (`tramoDeFrente`): al que acababa de aterrizar se le mandaba a remontar
      * la pista (H41b). Cosido a su nudo, el camino sigue sin saltos.
+     *
+     * **Menos en la pista.** Sus nudos van cada ochenta metros y la boca de
+     * una salida se suelda al más cercano: cosida a él, la salida empezaba
+     * hasta doce metros más allá por el eje, y en El Hierro el JAZ 20 que
+     * paraba a 815 m por la 16 volvía 291 m por la pista para coger otra.
+     * Ahí la punta se queda donde está, en el eje.
      */
-    const path: readonly Punto[] = [nudos[a]!, ...t.path.slice(1, -1), nudos[b]!];
+    const cose = (n: number, p: Punto): Punto => (t.pista || deLaPista.has(n) ? p : nudos[n]!);
+    const path: readonly Punto[] = [cose(a, t.path[0]!), ...t.path.slice(1, -1), cose(b, t.path[t.path.length - 1]!)];
     const largo = largoDe(path);
     /*
      * Y si el ala no pasa, el tramo se encarece. La pista nunca es estrecha:
