@@ -15,16 +15,16 @@ import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { dondeCae } from "../world/entre-aerodromos";
 import { PARAGUAY } from "../world/procedimientos-paraguay";
-import { AIRCRAFT } from "./aircraft";
+import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { ArcadeFlightModel } from "./arcade";
-import { indicadaDe, temperaturaExterior, velocidadDelSonido } from "./atmosphere";
+import { indicadaDe, indicatedAirspeed, temperaturaExterior, velocidadDelSonido } from "./atmosphere";
 import { masaConCombustible, quemaPorSegundo, reservaEnKilos } from "./combustible";
 import { neutralControls } from "./model";
 import { laRecogidaDe } from "./recogida";
 import { rutaDe, Seguimiento, type Fijo } from "./ruta";
 import { dondeVa, entradaDeLaLlegada, horarioDelDia, perfilDelVuelo, PETTIROSSI } from "./ruta-larga";
 import { caminoEnElMundo, cargaDelVueloLargo, DEJA_LA_ORTODROMICA, enElMundo, estadoDelSalto, quemadoEnElVuelo, resistenciaEnVuelo } from "./salto-bajo-tapa";
-import { EMPUJE, empujeQueSeQuema, enLosMandosDeLinea, VueloDeLinea, type LecturaDeLinea } from "./vuelo-de-linea";
+import { arribaDe, EMPUJE, empujeQueSeQuema, enLosMandosDeLinea, VueloDeLinea, type LecturaDeLinea } from "./vuelo-de-linea";
 
 const DT = 1 / 30;
 const GRADO = Math.PI / 180;
@@ -32,8 +32,9 @@ const PIE = 0.3048;
 const NUDO = 1852 / 3600;
 /** Desde dónde se mira que la velocidad sea la pedida, m hasta la pista. */
 const DESDE_PARA_LA_VELOCIDAD = 25_000;
-const AVION = AIRCRAFT.find((x) => x.id === "jaz-110")!;
-const CRUCERO = 40_000 * PIE;
+const JAZ_110 = AIRCRAFT.find((x) => x.id === "jaz-110")!;
+const AVION = JAZ_110;
+const CRUCERO_DEL_110 = 40_000 * PIE;
 const COTA = PETTIROSSI.elevacion;
 /** La cabecera de la 02 y su eje, del aeródromo del juego. */
 const UMBRAL = { x: -351, z: 1603.8 };
@@ -55,7 +56,12 @@ interface LoPeor {
   readonly pedida: number;
 }
 
-function volar(masa?: number): {
+/**
+ * Vuela la bajada con el JAZ 110 del vuelo largo o, con `otro`, con otro reactor
+ * desde su propio crucero —su altura y su velocidad de la ficha— por la misma
+ * ruta. Con otro avión hay que dar la masa: el depósito es del vuelo largo.
+ */
+function volar(masa?: number, otro?: AircraftConfig): {
   readonly muestras: readonly Muestra[];
   readonly bajaEn: number | null;
   readonly toque: { readonly t: number; readonly caida: number; readonly pasado: number; readonly lado: number } | null;
@@ -68,9 +74,12 @@ function volar(masa?: number): {
   /** Lo que se quemó de media volando el crucero, kg/s, o `null` si no se contó. */
   readonly quemaEnCrucero: number | null;
 } {
+  const avion = otro ?? JAZ_110;
   const perfil = perfilDelVuelo(horarioDelDia(new Date("2026-12-15T12:00:00Z")));
   const entrada = entradaDeLaLlegada(perfil);
-  const d = dondeVa(perfil, entrada);
+  const delPerfil = dondeVa(perfil, entrada);
+  const d = otro ? { ...delPerfil, altitud: otro.alturaDeCrucero, velocidad: otro.cruiseSpeed } : delPerfil;
+  const CRUCERO = otro ? otro.alturaDeCrucero : CRUCERO_DEL_110;
   const origen = { lat: PETTIROSSI.lat, lon: PETTIROSSI.lon };
   const inicio = enElMundo(perfil, origen, d.recorrido);
   const camino = caminoEnElMundo(perfil, origen, d.recorrido)
@@ -86,24 +95,25 @@ function volar(masa?: number): {
   const umbral: Fijo = { ...UMBRAL, nombre: "RW02", papel: "umbral", minima: null };
   const ruta = rutaDe([...camino, ...rama, umbral], COTA);
   const plan = new Seguimiento();
-  plan.poner(ruta, CRUCERO, AVION);
-  const m = new ArcadeFlightModel({ aircraft: AVION, ground: () => COTA });
+  plan.poner(ruta, CRUCERO, avion);
+  const m = new ArcadeFlightModel({ aircraft: avion, ground: () => COTA });
   m.reset({ position: new Vector3(inicio.x, d.altitud, inicio.z), heading: inicio.rumbo, airspeed: d.velocidad, equilibrado: true });
   /*
    * **El depósito, el de la cuenta del vuelo**, como `entrarEnElPerfil` en `game.ts`.
    * Con una masa pedida se mira la toma de un avión que pesa eso, y el depósito no
    * pinta: esa prueba no va de lo que queda.
    */
-  let kilos = estadoDelSalto(perfil, entrada, AVION, { en: 0, kilos: cargaDelVueloLargo(AVION, perfil) }).combustible;
-  m.ponerMasa(masa ?? masaConCombustible(AVION, kilos));
+  let kilos = estadoDelSalto(perfil, entrada, avion, { en: 0, kilos: cargaDelVueloLargo(avion, perfil) }).combustible;
+  m.ponerMasa(masa ?? masaConCombustible(avion, kilos));
   const c = { ...neutralControls(), engineOn: true, throttle: m.gasPara(d.velocidad, { flaps: 0, tren: 0 }), tren: 0, flaps: 0 };
   const tripulacion = new VueloDeLinea({
-    vr: AVION.rotationSpeed,
-    vref: AVION.approachSpeed,
-    alturaDeLaRecogida: laRecogidaDe(AVION).nariz,
-    alturaDelGas: laRecogidaDe(AVION).gas,
+    vr: avion.rotationSpeed,
+    vref: avion.approachSpeed,
+    alturaDeLaRecogida: laRecogidaDe(avion).nariz,
+    alturaDelGas: laRecogidaDe(avion).gas,
     reversa: true,
     trenQueSeMete: true,
+    arriba: arribaDe(avion),
   });
   tripulacion.ponerEnCrucero(d.velocidad, d.altitud);
   const [ux, uz] = [Math.sin(EJE), -Math.cos(EJE)];
@@ -142,9 +152,10 @@ function volar(masa?: number): {
       rumbo: s.heading,
       velocidad: s.airspeed,
       indicada: indicadaDe(s, m.aireDelDia()),
+      mach: s.airspeed / velocidadDelSonido(s.position.y, m.aireDelDia()),
       porElSuelo: s.groundSpeed,
       altitud: s.position.y,
-      altura: Math.max(0, s.heightAboveGround - AVION.gearHeight),
+      altura: Math.max(0, s.heightAboveGround - avion.gearHeight),
       vertical: s.verticalSpeed,
       motor: true,
       flaps: c.flaps,
@@ -201,7 +212,7 @@ function volar(masa?: number): {
         kilos = Math.max(
           0,
           kilos -
-            quemaPorSegundo(AVION, empujeQueSeQuema(m, manos, enCrucero ? resistenciaEnVuelo(AVION, q.position.y, q.airspeed, kilos) : null), {
+            quemaPorSegundo(avion, empujeQueSeQuema(m, manos, enCrucero ? resistenciaEnVuelo(avion, q.position.y, q.airspeed, kilos) : null), {
               mach: q.airspeed / velocidadDelSonido(q.position.y),
               theta: (temperaturaExterior(q.position.y) + 273.15) / 288.15,
             }) *
@@ -211,7 +222,7 @@ function volar(masa?: number): {
         enCruceroMedido.kilos += antes - kilos;
         enCruceroMedido.tiempo += DT;
       }
-      m.ponerMasa(masaConCombustible(AVION, kilos));
+      m.ponerMasa(masaConCombustible(avion, kilos));
       if (kilos <= 0 && c.engineOn) {
         c.engineOn = false;
         paradosA = l.faltaParaTocar;
@@ -227,6 +238,28 @@ function volar(masa?: number): {
       return { muestras, bajaEn, toque: { t, caida: e.caidaAlTocar ?? Infinity, pasado, lado }, kilos, paradosA, loPeor, quemaEnCrucero: quemaEnCrucero() };
   }
   return { muestras, bajaEn, toque: null, kilos, paradosA, loPeor, quemaEnCrucero: null };
+}
+
+/**
+ * **Lo más que marca la aguja por debajo de diez mil pies**, nudos, antes del área
+ * terminal: los 250 del control. Con la indicada de arriba, el avión tiene que
+ * llegar frenado. Ver `FRENAR_ANTES`.
+ */
+function aguja250(vuelo: ReturnType<typeof volar>): number {
+  const abajo = vuelo.muestras.filter((x) => x.altitud < 10_000 * PIE && x.falta > 30 * 1852);
+  expect(abajo.length).toBeGreaterThan(0);
+  return Math.max(...abajo.map((x) => indicatedAirspeed(x.velocidad, x.altitud) / NUDO));
+}
+
+/**
+ * **Lo más que se va de la senda del plan entre dieciséis y diez kilómetros de la
+ * pista**, m: el tramo nivelado a la altura del punto de final, que es donde tiene
+ * que llegar cualquier bajada antes de coger la senda de la pista.
+ */
+function alPuntoDeFinal(vuelo: ReturnType<typeof volar>): number {
+  const ahi = vuelo.muestras.filter((x) => x.senda !== null && x.falta > 10_000 && x.falta < 16_000);
+  expect(ahi.length).toBeGreaterThan(0);
+  return Math.max(...ahi.map((x) => Math.abs(x.altitud - x.senda!)));
 }
 
 describe("la bajada desde cuarenta mil pies", () => {
@@ -247,6 +280,14 @@ describe("la bajada desde cuarenta mil pies", () => {
   it("no frena de golpe al empezar a bajar: pierde la velocidad con la altura", () => {
     const b = vuelo.muestras.find((x) => x.senda !== null && x.altitud < 36_000 * PIE);
     expect(b!.velocidad).toBeGreaterThan(200);
+  });
+
+  it("por debajo de diez mil pies, a 250 de aguja como mucho (H38f)", () => {
+    expect(aguja250(vuelo)).toBeLessThan(255);
+  });
+
+  it("y antes del punto de final va por la senda, a la altura que toca (H38f)", () => {
+    expect(alPuntoDeFinal(vuelo)).toBeLessThan(30);
   });
 
   it("encuentra la senda antes de la aproximación: a unos cuarenta kilómetros ya va por ella", () => {
@@ -281,6 +322,37 @@ describe("la bajada desde cuarenta mil pies", () => {
     expect(ligero.toque).not.toBeNull();
     expect(ligero.toque!.caida).toBeLessThan(3);
     expect(ligero.toque!.pasado).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * **Y con los otros dos reactores de línea**, desde su crucero, por la misma ruta
+ * (H38f), con su peso de la ficha: el JAZ 90 desde treinta y seis mil pies y el
+ * JAZ 120 desde treinta y cinco mil. Suben ya en indicada y Mach; la bajada sigue
+ * en verdadera —ver `velocidadBajando` en `vuelo-de-linea.ts`—, y el JAZ 120 llega a
+ * los cuarenta kilómetros unos 650 m por encima de la senda del plan: la coge a unos
+ * quince, antes del punto de final. Lo que se mira aquí es que llegue a él a la
+ * altura que toca.
+ */
+describe.each(["jaz-90", "jaz-120"])("la bajada del %s desde su crucero", (id) => {
+  const otro = AIRCRAFT.find((x) => x.id === id)!;
+  const vuelo = volar(otro.mass, otro);
+
+  it("antes del punto de final va por la senda, a la altura que toca", () => {
+    expect(alPuntoDeFinal(vuelo)).toBeLessThan(30);
+  });
+
+  it("y por debajo de diez mil pies, a 250 de aguja como mucho", () => {
+    expect(aguja250(vuelo)).toBeLessThan(255);
+  });
+
+  it("y toca en la pista, a menos de tres metros por segundo", () => {
+    const t = vuelo.toque;
+    expect(t).not.toBeNull();
+    expect(t!.caida).toBeLessThan(3);
+    expect(t!.pasado).toBeGreaterThan(0);
+    expect(t!.pasado).toBeLessThan(1000);
+    expect(Math.abs(t!.lado)).toBeLessThan(10);
   });
 });
 

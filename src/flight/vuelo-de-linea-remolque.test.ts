@@ -5,8 +5,10 @@
  * `world/remolque.ts` y el ADR 0025.
  */
 import { describe, expect, it } from "vitest";
+import { AIRCRAFT } from "./aircraft";
 import {
   ARRANCA_EMPUJANDO,
+  arribaDe,
   ASIENTAN_LOS_MOTORES,
   BALIZA_ANTES_DE_EMPUJAR,
   motoresYaEnMarcha,
@@ -15,7 +17,15 @@ import {
   type PermisosDeLaEscena,
 } from "./vuelo-de-linea";
 
-const FICHA = { vr: 70, vref: 68, alturaDeLaRecogida: 9, alturaDelGas: 9, reversa: true, trenQueSeMete: true };
+const FICHA = {
+  vr: 70,
+  vref: 68,
+  alturaDeLaRecogida: 9,
+  alturaDelGas: 9,
+  reversa: true,
+  trenQueSeMete: true,
+  arriba: arribaDe(AIRCRAFT.find((a) => a.id === "jaz-90")!),
+};
 const DT = 0.1;
 const TODO: PermisosDeLaEscena = { arrancar: true, rodar: true, entrar: false, despegar: false };
 
@@ -29,6 +39,7 @@ function enElPuesto(remolque: LecturaDeLinea["remolque"], motor: boolean): Lectu
     rumbo: 0,
     velocidad: 0,
     indicada: 0,
+    mach: 0,
     porElSuelo: 0,
     altitud: 600,
     altura: 0,

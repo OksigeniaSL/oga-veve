@@ -1461,6 +1461,7 @@ import {
   type Punto as PuntoDelMundo,
 } from "./world/se-ve-desde-el-pasaje";
 import {
+  arribaDe,
   BALIZA_ANTES_DE_EMPUJAR,
   empujeQueSeQuema,
   enLosMandosDeLinea,
@@ -8621,6 +8622,7 @@ export class Game {
       reversa: tieneReversa(this.aircraft),
       trenQueSeMete: this.input.hayPalancaDeTren,
       ruedaDeMorro: morroDe(this.aircraft).rueda,
+      arriba: arribaDe(this.aircraft),
     });
     this.inicioCongelado = false;
     this.input.cerrarGas();
@@ -9062,6 +9064,7 @@ export class Game {
       rumbo: s.heading,
       velocidad: s.airspeed,
       indicada: this.indicadaAhora(),
+      mach: s.airspeed / velocidadDelSonido(s.position.y, this.flight.aireDelDia()),
       porElSuelo: s.groundSpeed,
       altitud: s.position.y,
       altura: Math.max(0, this.ruedasSobreElSuelo(s)),
