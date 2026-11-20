@@ -1585,8 +1585,18 @@ console.log(
  * **Y si el plan remonta, la torre te lo dice** (H41g), de Taguató para arriba,
  * que es donde habla la radio: una autorización de remontar que no se dice es
  * una instrucción que no se oye. Ver `contarPorDondeSeSale` en `game.ts`.
+ *
+ * **Y solo con las voces cargadas.** Lo que cuenta por dónde se sale va solo
+ * con su grabación —sin ella, la tira—, y sin un gesto el pack no se baja: en
+ * Taguató sin `OGA_CON_VOCES` la torre no suena grabada ninguna vez, y lo que
+ * se apunta de ella es lo que la frecuencia dice sin voz, el «backtrack» del
+ * tráfico entre ello. Con eso se leyó como tuyo el de EC-BRM en la H41e.
  */
-if (despegue.porLaPista.remonta && /^taguato/.test(TRAMO))
+if (
+  despegue.porLaPista.remonta &&
+  /^taguato/.test(TRAMO) &&
+  (TRAMO === "taguato-ruvicha" || process.env.OGA_CON_VOCES)
+)
   comprobar(
     "y si se remonta, la torre te dice «backtrack»",
     despegue.porDondeSeSale.some((d) => /^torre: .*backtrack/.test(d)),
