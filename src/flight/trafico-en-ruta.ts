@@ -32,7 +32,7 @@
  * delante del morro.
  */
 
-import { nivelPara } from "./nivel-de-crucero";
+import { nivelPara, type TablaDeNiveles } from "./nivel-de-crucero";
 import type { SiluetaDeAvion } from "./flota";
 
 /** Un punto del mundo, en metros. */
@@ -119,6 +119,21 @@ function sorteo(semilla: number, i: number): number {
 }
 
 /**
+ * **Dónde se vuela**, para la regla: la tabla de niveles del país y la
+ * declinación, en grados que se suman al rumbo verdadero.
+ *
+ * Con la tabla de la OACI y sin declinación iban siempre, y el plan propio
+ * mira la derrota magnética con la tabla del país (H49): en Canarias, entre
+ * 000° y 089° magnéticos, el plan iba a un par y los de frente también, y se
+ * cruzaban a la misma altura. Tienen que leer la regla igual que el plan,
+ * o la lección se da la vuelta. Ver `cruceroDelTramo`.
+ */
+export interface DondeSeVuela {
+  readonly tabla: TablaDeNiveles;
+  readonly declinacion: number;
+}
+
+/**
  * Quiénes andan por la ruta en este instante.
  *
  * `desde` y `hasta` son los dos aeropuertos en coordenadas del mundo; `ahora`
@@ -131,6 +146,7 @@ export function traficoEnRuta(
   hasta: Punto,
   ahora: number,
   semilla = 1,
+  donde: DondeSeVuela = { tabla: "oaci", declinacion: 0 },
 ): EnRuta[] {
   const dx = hasta.x - desde.x;
   const dz = hasta.z - desde.z;
@@ -193,7 +209,7 @@ export function traficoEnRuta(
         ? primero
         : (primero + 1 + Math.floor(sorteo(semilla, i * 7) * 2)) % 3;
     const pedido = 7000 + nivel * 2000;
-    const pies = nivelPara(rumbo, pedido);
+    const pies = nivelPara(rumbo + donde.declinacion, pedido, false, donde.tabla);
 
     /*
      * Dónde está: recorre la ruta de punta a punta y vuelve a empezar, con un

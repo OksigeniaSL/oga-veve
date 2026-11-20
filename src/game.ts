@@ -1861,7 +1861,7 @@ import {
   avisoDeLaTorre,
 } from "./flight/aviso-de-aves";
 import { dondeCae } from "./world/entre-aerodromos";
-import { cruceroDelTramo, finalDeLaPista, rutaDelTramo, type DelJuego } from "./world/ruta-del-tramo";
+import { cruceroDelTramo, dondeSeVuela, finalDeLaPista, rutaDelTramo, type DelJuego } from "./world/ruta-del-tramo";
 import { crearBarcos, luzDeLaEstela, type Barcos } from "./world/barcos";
 import {
   TraficoDeLasIslas,
@@ -7312,6 +7312,9 @@ export class Game {
         // Un corredor para empezar: el de verdad lo pone `ponerElCorredor`
         // en cuanto se sabe de dónde sale este tramo y a dónde va.
         { x: this.vecinos[0]!.campo.pista.x, z: this.vecinos[0]!.campo.pista.z },
+        1,
+        // Y en su nivel por la tabla del país, como el plan. Ver `DondeSeVuela`.
+        dondeSeVuela(this.scenario),
       );
       this.scene.add(this.avionesDeRuta.grupo);
       /*
@@ -13599,7 +13602,7 @@ export class Game {
       }
     }
     if (!a || a.id === de.id) return;
-    this.avionesDeRuta.ponerCorredor({ x: de.x, z: de.z }, { x: a.x, z: a.z });
+    this.avionesDeRuta.ponerCorredor({ x: de.x, z: de.z }, { x: a.x, z: a.z }, dondeSeVuela(de.escenario));
   }
 
   /** Qué tramo lleva puesto el corredor. Ver `ponerElCorredor`. */

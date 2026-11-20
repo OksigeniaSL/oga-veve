@@ -81,7 +81,18 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
     techo: suyo.alturaDeCrucero,
   };
   const ruta = rutaDelTramo(salida, llegada, juego);
-  const crucero = cruceroDelTramo(ruta, salida, juego);
+  /*
+   * El crucero como lo pone el juego, con la ficha y sus reglas de vuelo —ver
+   * `Game.cruceroDe`—, y no la regla sin avión, que el juego ya no vuela. Con
+   * ella, de El Hierro a La Gomera salía un impar, por la tabla de la OACI; en
+   * España, a 74° magnéticos, toca un par (H49), y con el par de esa regla el
+   * rato abierto se quedaba en 97 s.
+   */
+  const crucero = cruceroDelTramo(ruta, salida, {
+    ...juego,
+    visual: suyo.reglasDeVuelo === "visual",
+    ficha: suyo,
+  });
   const cotaSalida = sal.aerodrome!.elevationM ?? 0;
   const cotaLlegada = lle.aerodrome!.elevationM ?? 0;
   const conGente = conPasaje(suyo.mass);
@@ -285,10 +296,13 @@ describe("de El Hierro a La Gomera, lo que se ve", () => {
   const vuelo = volar("el-hierro", "la-gomera", "jaz-60", CANARIAS_OESTE);
 
   it("el crucero ya no es cabina estéril: hay rato para contar", () => {
-    // Dos minutos y medio largos de crucero en el 1900D, que va más deprisa
-    // que el Twin Otter con el que se escribió esto —eran cuatro—; con la
-    // regla de los treinta kilómetros, un rato suelto en medio del canal.
-    expect(vuelo.abierta).toBeGreaterThan(140);
+    // Minuto y medio largo de crucero en el 1900D, que va más deprisa que el
+    // Twin Otter con el que se escribió esto —eran cuatro—; con la regla de los
+    // treinta kilómetros, un rato suelto en medio del canal. Pedía dos y medio,
+    // medidos con la regla sin avión y un impar de la OACI, que el juego no
+    // vuela: con la ficha y la tabla de España va a FL100, el nivel que ya
+    // ponía el juego antes de H49, y quedan 97 s.
+    expect(vuelo.abierta).toBeGreaterThan(90);
   });
 
   it("y lo que se cuente, en crucero y sin repetir", () => {

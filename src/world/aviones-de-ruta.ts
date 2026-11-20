@@ -25,6 +25,7 @@ import { fabricarAeronave } from "./fabrica-de-aeronaves";
 import type { SiluetaDeAvion } from "../flight/flota";
 import {
   traficoEnRuta,
+  type DondeSeVuela,
   type EnRuta,
   type Punto,
 } from "../flight/trafico-en-ruta";
@@ -64,7 +65,7 @@ export interface AvionesDeRuta {
    * a nadie: se perdía la lección de la regla semicircular justo en la ruta
    * elegida. Ahora lo pone quien sabe de dónde se sale y a dónde se va.
    */
-  ponerCorredor(desde: Punto, hasta: Punto): void;
+  ponerCorredor(desde: Punto, hasta: Punto, donde?: DondeSeVuela): void;
   dispose(): void;
 }
 
@@ -90,6 +91,8 @@ export function crearAvionesDeRuta(
   desde: Punto,
   hasta: Punto,
   semilla = 1,
+  /** La tabla de niveles y la declinación del sitio. Ver `DondeSeVuela`. */
+  dondeAlEmpezar?: DondeSeVuela,
 ): AvionesDeRuta {
   const grupo = new Group();
   grupo.name = "aviones-de-ruta";
@@ -130,10 +133,11 @@ export function crearAvionesDeRuta(
 
   let de = desde;
   let hacia = hasta;
+  let donde = dondeAlEmpezar;
   return {
     grupo,
     paso(ahora, yo) {
-      ultimos = traficoEnRuta(de, hacia, ahora, semilla);
+      ultimos = traficoEnRuta(de, hacia, ahora, semilla, donde);
       /*
        * Los que ya no están en la lista —el corredor cambió— se apagan: sus
        * mallas se quedan para quien vuelva a salir, pero no se dejan flotando
@@ -174,9 +178,10 @@ export function crearAvionesDeRuta(
       }
     },
     quienes: () => ultimos,
-    ponerCorredor(otroDesde, otroHasta) {
+    ponerCorredor(otroDesde, otroHasta, otroDonde) {
       de = otroDesde;
       hacia = otroHasta;
+      if (otroDonde) donde = otroDonde;
     },
     dispose() {
       for (const g of geometrias.values()) g.dispose();

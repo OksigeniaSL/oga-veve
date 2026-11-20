@@ -11,9 +11,12 @@ import {
   haciaElEste,
   HASTA,
   MEDIO_NIVEL,
+  nivelesDelSentido,
   nivelPara,
+  tablaDe,
   UN_NIVEL,
   vaEnSuNivel,
+  vaPorLosImpares,
 } from "./nivel-de-crucero";
 
 describe("hacia dónde va este rumbo", () => {
@@ -79,6 +82,87 @@ describe("el nivel que toca", () => {
     expect(nivelPara(90, -5000)).toBeGreaterThan(0);
     expect(nivelPara(270, -5000)).toBeGreaterThan(0);
     expect(nivelPara(90, 99000)).toBeLessThanOrEqual(HASTA);
+  });
+
+  it("y los dos topes son niveles de la tabla, no un millar del otro sentido (H49)", () => {
+    /*
+     * El de abajo era un millar por encima del primero —el 20 hacia el este,
+     * que es par— y el de arriba `HASTA` a secas, el 290, también hacia el
+     * oeste, donde es impar.
+     */
+    expect(nivelPara(90, -5000)).toBe(1000);
+    expect(nivelPara(270, -5000)).toBe(2000);
+    expect(nivelPara(90, 99000)).toBe(29000);
+    expect(nivelPara(270, 99000)).toBe(28000);
+    expect(nivelPara(270, 30000)).toBe(28000);
+  });
+});
+
+/*
+ * **La tabla de España**, AIP España ENR 1.7, «Tabla de niveles de crucero»
+ * (enmienda 403/26): de 090° a 269° magnéticos, impares; de 270° a 089°,
+ * pares. Rige también en el FIR de Canarias. No es la de la OACI —Anexo 2,
+ * apéndice 3: de 000° a 179°, impares—, y las dos coinciden solo en la mitad
+ * de la rosa: de 090° a 179° impares, y de 270° a 359° pares.
+ */
+describe("la tabla de España, que parte el cielo de norte a sur", () => {
+  it("España tiene la suya; Paraguay y los campos inventados, la de la OACI", () => {
+    expect(tablaDe("es")).toBe("espana");
+    expect(tablaDe("py")).toBe("oaci");
+    expect(tablaDe("inventado")).toBe("oaci");
+  });
+
+  it("de 090 a 269, impares; de 270 a 089, pares", () => {
+    for (const r of [90, 135, 180, 225, 269]) expect(vaPorLosImpares(r, "espana"), `${r}`).toBe(true);
+    for (const r of [270, 315, 0, 45, 89]) expect(vaPorLosImpares(r, "espana"), `${r}`).toBe(false);
+  });
+
+  it("y la de la OACI, de 000 a 179 impares y de 180 a 359 pares", () => {
+    for (const r of [0, 45, 90, 179]) expect(vaPorLosImpares(r), `${r}`).toBe(true);
+    for (const r of [180, 225, 270, 359]) expect(vaPorLosImpares(r), `${r}`).toBe(false);
+  });
+
+  it("hacia el sudoeste, en España impares y con la OACI pares", () => {
+    // De Lanzarote a Fuerteventura, unos 200° magnéticos.
+    expect((nivelPara(200, 9000, false, "espana") / UN_NIVEL) % 2).toBe(1);
+    expect((nivelPara(200, 9000) / UN_NIVEL) % 2).toBe(0);
+    // Y hacia el nordeste, al revés: de Gran Canaria a Lanzarote, unos 50°.
+    expect((nivelPara(50, 9000, false, "espana") / UN_NIVEL) % 2).toBe(0);
+    expect((nivelPara(50, 9000) / UN_NIVEL) % 2).toBe(1);
+  });
+
+  it("y con su tabla, dos que se cruzan de frente tampoco coinciden", () => {
+    for (let rumbo = 0; rumbo < 180; rumbo += 15) {
+      const yo = nivelPara(rumbo, 9000, false, "espana");
+      const elDeEnfrente = nivelPara(rumbo + 180, 9000, false, "espana");
+      expect(Math.abs(yo - elDeEnfrente), `${rumbo}`).toBeGreaterThanOrEqual(UN_NIVEL);
+    }
+  });
+
+  it("y los visuales, quinientos más: 35, 55… y 45, 65…", () => {
+    expect(nivelesDelSentido(180, true, "espana").slice(1, 3)).toEqual([3500, 5500]);
+    expect(nivelesDelSentido(0, true, "espana").slice(1, 3)).toEqual([4500, 6500]);
+  });
+});
+
+describe("los niveles de un sentido, que son los que usa el plan", () => {
+  it("todos de la misma paridad, de dos mil en dos mil, hasta el tope", () => {
+    for (const tabla of ["oaci", "espana"] as const)
+      for (let r = 0; r < 360; r += 30) {
+        const n = nivelesDelSentido(r, false, tabla);
+        const impares = vaPorLosImpares(r, tabla);
+        expect(n[0], `${tabla} ${r}`).toBe(impares ? 1000 : 2000);
+        for (const pies of n) expect((pies / UN_NIVEL) % 2 === 1, `${tabla} ${r} ${pies}`).toBe(impares);
+        expect(n[n.length - 1]).toBeLessThanOrEqual(HASTA);
+      }
+  });
+
+  it("y nivelPara elige siempre uno de ellos", () => {
+    for (const tabla of ["oaci", "espana"] as const)
+      for (const visual of [false, true])
+        for (let r = 0; r < 360; r += 45)
+          for (let pedido = -2000; pedido < 33000; pedido += 700)
+            expect(nivelesDelSentido(r, visual, tabla)).toContain(nivelPara(r, pedido, visual, tabla));
   });
 });
 

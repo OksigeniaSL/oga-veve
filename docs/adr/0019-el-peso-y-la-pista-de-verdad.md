@@ -1022,3 +1022,117 @@ que el guion cuenta que dura un crucero entre islas.
   280 nudos de verdadera, y la charla del Teide cuelga del rato de la subida.
   Van a su encargo, con el banco otra vez; aquí no se tocan para no acortar
   nada de lo que la escena cuenta.
+
+## Enmienda H49 (20-11-2026): los niveles del plan, por la tabla de verdad
+
+`cruceroDelPlan`, cuando elegía por kilos —que es siempre en el juego: `Game.cruceroDe`
+le pasa la ficha—, contaba sus niveles legales por su cuenta, y empezaba un
+millar más arriba de lo que tocaba: **pares hacia el este e impares hacia el
+oeste**, al revés de la tabla. `nivel-de-crucero.ts` y `nivelPara` lo decían
+bien, y sus pruebas estaban en verde, pero el plan no los usaba. De Los Rodeos
+a La Palma, con derrota oeste, el plan subía a FL170.
+
+### La tabla, en su fuente, y que no es una sola
+
+- **OACI**, Anexo 2, apéndice 3, «Tabla de niveles de crucero», y la misma en
+  el apéndice 3 de SERA (Reglamento de Ejecución (UE) 923/2012): con derrota
+  magnética de 000° a 179°, impares —FL010, 030…—; de 180° a 359°, pares. Los
+  visuales, quinientos pies más: FL035, 055… y FL045, 065… Es la de Paraguay:
+  sus cartas de acuerdo con los centros vecinos remiten a ella.
+- **España**, AIP ENR 1.7, «Tabla de niveles de crucero» (enmienda 403/26, en
+  vigor desde el 19-feb-2026), que rige en todo el espacio español, Canarias
+  incluida: con derrota magnética de **090° a 269°, impares**, y de **270° a
+  089°, pares**. Es el semicírculo norte-sur y no el este-oeste. Las dos
+  tablas coinciden en media rosa —de 090° a 179° impares, de 270° a 359°
+  pares— y se dan la vuelta en la otra media.
+
+Por encima de FL290, con RVSM, las dos siguen de dos mil en dos mil hasta
+FL410; el juego no planea por encima de FL290 (`HASTA`).
+
+El código de antes, al revés de la OACI, coincidía por casualidad con la tabla
+española en los cuadrantes de 000° a 089° y de 180° a 269°. Por eso en Canarias
+salían bien catorce de veinte tramos, y en Paraguay ninguno.
+
+### Una sola regla
+
+- `nivel-de-crucero.ts` tiene la única pregunta —`vaPorLosImpares`, con la
+  tabla— y el único primer nivel, del que salen `nivelesDelSentido`, que es la
+  lista que usa el plan, y `nivelPara`. Los dos topes de `nivelPara` son ahora
+  niveles de la tabla: el de abajo era un millar por encima del primero —el 20
+  hacia el este— y el de arriba `HASTA` a secas, el 290 también hacia el oeste.
+- `tablaDe(pais)`: España, la suya; Paraguay y los campos inventados, la de la
+  OACI. `cruceroDelTramo` se la pasa a `cruceroDelPlan` con la del campo de
+  salida.
+- **La derrota magnética es la de verdad**: la declinación del plan sale del
+  WMM en el campo de salida (`declinacionDelCampo`, con `ANO_DE_HOY`), y no de
+  `Scenario.magneticVariation`, que está para que cuadren los números de las
+  pistas inventadas: en Los Rodeos vale 9° y el WMM da 3,5° W; en Asunción, 10°
+  frente a 15,7° W.
+- **El tráfico de la ruta lee la misma regla** (`DondeSeVuela`: la tabla y la
+  declinación del campo de salida, en `traficoEnRuta`). Iba con la tabla de la
+  OACI y el rumbo verdadero; con el plan por la tabla española, entre 000° y
+  089° el plan y los que vienen de frente habrían ido a la misma paridad.
+
+### Medido
+
+Sonda nueva, `niveles-del-plan.test.ts` con `H49_SONDA=<fichero>`: el nivel de
+cada tramo de los dos países con los ocho aviones, como lo pone el juego.
+
+| | Tramos (pares de campos) | Con algún nivel fuera de la tabla | Niveles fuera |
+|---|---|---|---|
+| Antes, Paraguay | 22 | 22 | 176 de 176 |
+| Antes, Canarias | 20 | 6 | 48 de 160 |
+| Ahora | 42 | 0 | 0 de 336 |
+
+Algunos, con el JAZ 90: Los Rodeos → La Palma (281° M) FL170 → FL160;
+Gran Canaria → Los Rodeos (305°) FL150 → FL160; Los Rodeos → Gran Canaria
+(128°) FL180 → FL170; Asunción → Ciudad del Este (110°) FL260 → FL270;
+Asunción → Pilar (219°) FL150 → FL160. Las avionetas, igual con su medio
+nivel: de Yvytu Rape a Asunción (270°), el JAZ 20 de 9.500 a 8.500.
+
+**La tercera escena** (`salto-corto-con-crucero.test.ts`, JAZ 90 con su
+tripulación y el modelo sencillo):
+
+| Los Rodeos → La Palma | Antes | Ahora |
+|---|---|---|
+| Por la 12, a la 36 | FL170, nivela a 380 s, 116 s de crucero | FL160, nivela a 355 s, 174 s |
+| Por la 12, a la 18 | FL170, 111 s | FL160, 168 s |
+| Por la 30, a la 36 | FL130, 109 s | FL120, 169 s |
+| Por la 30, a la 18 | FL130, 104 s | FL120, 163 s |
+
+Pruebas corregidas, con su porqué escrito:
+
+- `salto-corto-con-crucero.test.ts` pedía trece mil pies como poco, el FL130
+  impar que salía por la 30; pide doce mil y par.
+- `lo-que-se-ve-en-ruta.test.ts` volaba el crucero sin ficha, que el juego ya
+  no usa, y con él un impar de la OACI de El Hierro a La Gomera. Con la ficha
+  va a FL100, el nivel que el juego ya ponía, y el rato abierto es de 97 s: pide
+  noventa, no ciento cuarenta.
+
+`rutas-de-canarias`, `bajada-del-vuelo-largo`, `salto-bajo-tapa`,
+`partes-de-la-comandante`, `altitud-maxima`, `hora-del-plan` y `ruta-larga`, en
+verde sin tocarlos. Vitest entero: 562 ficheros, 11.211 pruebas, en verde.
+
+**En el navegador** (`verificar-vuelo-entero.mjs`, una vez cada uno, JAZ 90):
+de Gran Canaria a Los Rodeos, hacia el oeste (305° M), la comandante anuncia
+en la bienvenida `comandante.previsto.nivel.16`, el FL160 del plan (antes,
+FL150); de Los Rodeos a Gran Canaria, hacia el este (128° M),
+`comandante.previsto.nivel.17`, el FL170 del plan (antes, FL180). 77 de 77 en
+los dos. Los niveles del 3 al 29 ya están grabados, pares e impares: no hace
+falta ninguna frase nueva.
+
+### Lo que no
+
+- **La escena del modo inicio no se toca**: su guion contaba con FL170 —la
+  siesta, el kit y la charla del Teide cuelgan de la subida—, y el banco
+  `verificar-inicio-3.mjs` no se ha vuelto a pasar. Va a su encargo. Por la 30
+  el nivel, FL120, queda por debajo de la cumbre del Teide (12.188 ft): la ruta
+  no pasa por encima y la mínima en ruta lo deja, pero lo que se cuente del
+  Teide en esa escena tiene que mirarlo.
+- **El vuelo largo** (`ruta-larga.ts`) lleva sus niveles escritos, FL360, 380 y
+  400, pares por la tabla de la OACI con su derrota de 223° a 238°. En el tramo
+  español, con la tabla de España, esa derrota va por los impares; y el
+  corredor EUR/SAM reparte los suyos. No se ha tocado.
+- **Los isleños** de `trafico-de-las-islas.ts` usan `nivelPara` solo para el
+  techo de su banda, con el rumbo verdadero y la tabla de la OACI: no los pone
+  en un nivel, los separa del avión propio. No se ha tocado.

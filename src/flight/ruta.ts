@@ -31,7 +31,7 @@
  *   cada mil pies que haya que perder. Ver `distanciaDeDescenso`.
  */
 
-import { HASTA, haciaElEste, MEDIO_NIVEL, nivelPara, UN_NIVEL } from "./nivel-de-crucero";
+import { nivelesDelSentido, nivelPara, type TablaDeNiveles } from "./nivel-de-crucero";
 import {
   altitudDeLaSubida,
   nivelQueAhorra,
@@ -1642,7 +1642,8 @@ export function minimaEnCrucero(
  * sube uno en su sentido; si se pasa del techo del avión, se baja uno.
  *
  * `declinacion` es la del campo de salida, en grados, con el signo del
- * escenario: magnético = verdadero + declinación.
+ * escenario: magnético = verdadero + declinación. Y `tabla`, la de niveles de
+ * crucero del país: la de España no parte el cielo por donde la de la OACI.
  *
  * **Y quien vuela mirando por la ventana va a su medio nivel**: 4500, 6500…
  * con el mismo rumbo, que es lo que separa a los que van con reglas visuales
@@ -1656,6 +1657,8 @@ export function cruceroDelPlan(
     readonly techo: number;
     readonly cotaDeSalida: number;
     readonly declinacion: number;
+    /** La tabla de niveles de donde se vuela; sin ella, la de la OACI. Ver `tablaDe`. */
+    readonly tabla?: TablaDeNiveles;
     readonly visual?: boolean;
     /**
      * **La ficha del avión, para elegir por kilos.** Con ella el nivel es el
@@ -1673,20 +1676,20 @@ export function cruceroDelPlan(
   const visual = avion.visual === true;
   const verdadero = (Math.atan2(b.x - a.x, -(b.z - a.z)) * 180) / Math.PI;
   const magnetico = verdadero + avion.declinacion;
+  const tabla = avion.tabla ?? "oaci";
   const minimo = minima ?? 0;
   const tope = visual ? avion.techo : Math.max(avion.techo, minimo);
   const suelo = visual ? 1500 : 3000;
   if (avion.ficha) {
     /*
-     * Los niveles legales por el rumbo, de la mínima al techo: los mismos que
-     * da `nivelPara`, uno de cada dos millares.
+     * Los niveles legales por la derrota, de la mínima al techo: **los de la
+     * tabla**, y no una cuenta propia. Había una, que empezaba un millar más
+     * arriba de lo que tocaba y daba pares hacia el este e impares hacia el
+     * oeste (H49). Ver `nivelesDelSentido`.
      */
-    const legales: number[] = [];
-    const base = (haciaElEste(magnetico) ? UN_NIVEL : 0) + (visual ? MEDIO_NIVEL : 0);
-    for (let n = base + UN_NIVEL; n <= HASTA; n += 2 * UN_NIVEL) {
-      if (n < suelo || n * PIE < minimo - 1 || n * PIE > tope + 1) continue;
-      legales.push(n * PIE);
-    }
+    const legales = nivelesDelSentido(magnetico, visual, tabla)
+      .filter((n) => n >= suelo && n * PIE >= minimo - 1 && n * PIE <= tope + 1)
+      .map((n) => n * PIE);
     /*
      * La bajada que cuenta el plan, con su perfil: la del punto de descenso.
      * Con ella se mira que entre el T/C y el T/D quede crucero de verdad.
@@ -1703,7 +1706,7 @@ export function cruceroDelPlan(
     if (ahorra !== null) return ahorra;
   }
   const pedido = Math.max(cruceroPorLaDistancia(r, avion.techo, avion.cotaDeSalida), minimo);
-  let nivel = nivelPara(magnetico, pedido / PIE, visual);
+  let nivel = nivelPara(magnetico, pedido / PIE, visual, tabla);
   while (nivel * PIE < minimo - 1 && nivel * PIE < avion.techo) nivel += 2000;
   while (nivel * PIE > tope + 1 && nivel > suelo) nivel -= 2000;
   return nivel * PIE;
