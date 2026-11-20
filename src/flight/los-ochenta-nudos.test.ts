@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { AIRCRAFT, ARAI } from "./aircraft";
 import { LosOchentaNudos, OCHENTA_NUDOS } from "./los-ochenta-nudos";
 import { CANTOS_DEL_DESPEGUE, DEL_DESPEGUE, claveDeCabina, esDeUnaCaja, loDiceElAvion } from "../audio/cabina";
+import manifiesto from "../../data/voces/cabina/manifiesto.json";
+import { cantaLaCabina } from "./escalera";
+import { TAGUATO_RUVICHA, TIERS, type Tier } from "./tiers";
 
 const NUDO = 0.514444;
 
@@ -71,5 +74,50 @@ describe("qué tipo canta los ochenta nudos", () => {
     for (const c of DEL_DESPEGUE) expect(esDeUnaCaja(c), c).toBe(false);
     expect(CANTOS_DEL_DESPEGUE.embraer.has("cabina.eightyKnots")).toBe(true);
     expect(CANTOS_DEL_DESPEGUE.boeing.size).toBe(0);
+  });
+});
+
+/*
+ * **Y en Taguató Ruvichá con el JAZ 90, se oye** (H44b). El banco de despegue
+ * voló por primera vez ese peldaño en Los Rodeos y no apuntó ningún «eighty
+ * knots»; el banco salía de la pista antes de correr, pero la duda es si el
+ * juego lo habría dicho. Son las tres preguntas de `cantarLoGrabado` en
+ * `game.ts` —si en este peldaño canta la tripulación, si la de este avión lo
+ * lleva y si hay toma de cabina con que decirlo— y la carrera de verdad, con
+ * las fases por las que pasa: autorizado, alineando, despegando y
+ * comprometido.
+ */
+describe("los ochenta nudos en el peldaño de cabina, con el JAZ 90", () => {
+  const grabadas = new Set(Object.keys((manifiesto as { recetas: Record<string, unknown> }).recetas));
+  const clave = claveDeCabina("eighty knots")!;
+  const suena = (tier: Tier) =>
+    cantaLaCabina(tier.avisos, "tripulacion") && loDiceElAvion(clave, ARAI) && grabadas.has(clave);
+
+  it("suena en Taguató Ruvichá, con su toma de cabina, y en ningún peldaño de abajo", () => {
+    expect(grabadas.has(clave)).toBe(true);
+    for (const tier of TIERS) expect(suena(tier), tier.id).toBe(tier.id === TAGUATO_RUVICHA.id);
+  });
+
+  it("una vez en la carrera entera, al pasar la aguja por los ochenta", () => {
+    const c = new LosOchentaNudos();
+    // Lo que se lleva la entrada en pista, alineándose a paso de calle.
+    const fases: [string, number, number][] = [
+      ["autorizado", 0, 8],
+      ["alineando", 8, 14],
+      ["despegando", 14, 118],
+      ["comprometido", 118, 135],
+    ];
+    const cantados: number[] = [];
+    for (const [fase, desde, hasta] of fases)
+      for (let kt = desde; kt < hasta; kt += 0.5)
+        if (
+          c.paso({
+            corriendo: fase === "despegando" || fase === "comprometido",
+            enElSuelo: true,
+            indicada: kt * NUDO,
+          })
+        )
+          cantados.push(kt);
+    expect(cantados).toEqual([80]);
   });
 });
