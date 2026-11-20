@@ -70,6 +70,8 @@
  * Guyrami y el JAZ 90 de verdad sobre una pista y una ruta de mentira.
  */
 
+import type { AircraftConfig } from "./aircraft";
+import { indicadaDeSubida, machDeCrucero } from "./escalera-de-velocidades";
 import type { LoSacado } from "./model";
 import type { Fase } from "./vuelo";
 import { SueloBajoLasRuedas } from "./recogida";
@@ -131,6 +133,11 @@ export interface LecturaDeLinea {
    * manual. Ver `indicadaDe` en `atmosphere.ts`.
    */
   readonly indicada: number;
+  /**
+   * **Y el Mach**, el del EICAS: la verdadera entre la velocidad del sonido del
+   * aire del día. Contra él se sube por encima del cruce: ver `arribaDe`.
+   */
+  readonly mach: number;
   /** Y sobre el suelo, m/s. */
   readonly porElSuelo: number;
   readonly altitud: number;
@@ -203,6 +210,11 @@ export interface FichaDeLinea {
   readonly reversa: boolean;
   /** Si mete el tren. */
   readonly trenQueSeMete: boolean;
+  /**
+   * **A qué se sube por encima de diez mil pies**: una indicada, y un Mach
+   * desde el cruce. Ver `arribaDe`.
+   */
+  readonly arriba: ArribaDeLinea;
   /**
    * **Lo que va la rueda de morro por delante del centro del avión**, m: el punto
    * del puesto es donde para ella (#191), y la raya se sigue con el centro. Sin
@@ -419,17 +431,44 @@ const TOCA_A = 2.5 * PIE;
 /**
  * **Las velocidades**, m/s. Los 250 nudos por debajo de diez mil pies son los del
  * control, y van **en la aguja**, como los 210 de acercarse: ver `enLaAguja`.
- *
- * Los 280 de arriba no, y es a propósito: un reactor de verdad sube y baja ahí a
- * una indicada hasta que manda el Mach, y la bajada del vuelo largo —el punto de
- * descenso y la senda desde cuarenta mil pies— está hecha con estos 280 de
- * verdadera. Puestos en la aguja, a treinta mil pies son más de 450 de
- * verdadera, y el JAZ 110 llegaba a cuarenta kilómetros de la pista casi 1.900 m
- * por encima de la senda (`bajada-del-vuelo-largo.test.ts`). Pasarlos va con el
- * perfil de bajada del plan, y es otro encargo (enmienda H38e del ADR 0019).
+ * Subiendo por encima, la indicada y el Mach de cada tipo: ver `arribaDe`.
  */
 const V_250 = 250 * NUDO;
+/**
+ * **Los 280 nudos de verdadera de la bajada**, a los que se llega a diez mil
+ * pies: la bajada sigue en verdadera. Ver `velocidadBajando`.
+ */
 const V_ARRIBA = 280 * NUDO;
+
+/**
+ * **Lo que se pide por encima de diez mil pies**: la indicada de su escalera y,
+ * más arriba, su Mach. La indicada en m/s; el Mach, `null` en los de hélice,
+ * que no cruzan por Mach.
+ */
+export interface ArribaDeLinea {
+  readonly indicada: number;
+  readonly mach: number | null;
+}
+
+/**
+ * **La indicada y el Mach de este avión**, los mismos de su escalera de
+ * velocidades —`indicadaDeSubida` y `machDeCrucero`—, que son los que pide la
+ * ventanilla SPD y sostienen los gases automáticos cuando vuela quien juega: la
+ * tripulación y la cabina no pueden pedir dos cosas distintas en el mismo avión.
+ *
+ * Un reactor de verdad sube y baja así: a una indicada fija hasta que esa
+ * indicada da el Mach de crucero —el cruce, hacia los veintiocho mil pies— y a
+ * ese Mach por encima. Al subir la verdadera crece hasta el cruce y luego baja
+ * un poco con el frío. Era una verdadera fija de 280 nudos para todos, que a
+ * diez mil pies deja la aguja en 240 y a treinta y cinco mil en 156. Lo pide
+ * subiendo y en el crucero de un salto entre islas; la bajada sigue en
+ * verdadera, y por qué está en `velocidadBajando` (enmiendas H38e y H38f del ADR
+ * 0019).
+ */
+export function arribaDe(a: AircraftConfig): ArribaDeLinea {
+  return { indicada: indicadaDeSubida(a) * NUDO, mach: machDeCrucero(a) };
+}
+
 const V_BAJANDO_CERCA = 210 * NUDO;
 
 /**
@@ -649,12 +688,20 @@ export class VueloDeLinea {
 
   /**
    * **A qué velocidad se cruza**, m/s, si no es la de un salto entre islas: en
-   * un vuelo largo, la del perfil. `V_ARRIBA`, doscientos ochenta nudos, sería
-   * frenar el avión a la mitad nada más caer. Ver `ponerEnCrucero`.
+   * un vuelo largo, la del perfil, que es la que sale de la cuenta del vuelo y no
+   * la de la escalera. Ver `ponerEnCrucero`.
    */
   private velocidadDeCrucero: number | null = null;
   /** Y a qué altitud se llevaba, m: es de donde parte la bajada. Ver `velocidadBajando`. */
   private alturaDeCrucero = DIEZ_MIL + 1;
+  /**
+   * **Y de dónde se empezó a bajar sin crucero puesto**, en un salto entre
+   * islas: la verdadera y la altitud del punto de descenso. Con la subida en
+   * indicada, el crucero corto va más deprisa que los 280 de verdadera de la
+   * bajada, y frenar de golpe en el punto de descenso no lo hace nadie: se
+   * pierde con la altura, como en el vuelo largo. Ver `velocidadBajando`.
+   */
+  private arranqueDeLaBajada: { readonly velocidad: number; readonly altitud: number } | null = null;
 
   /** Un paso: lo que se lee, lo que deja la escena y lo que hacen las manos. */
   paso(dt: number, l: LecturaDeLinea, permisos: PermisosDeLaEscena): ManosDeLinea {
@@ -1072,7 +1119,7 @@ export class VueloDeLinea {
     let tren = false;
     if (this.tramo === "subida") {
       const conFlaps = sobreElCampo < RECOGE_LOS_FLAPS;
-      v = conFlaps ? aguja(this.ficha.vr + 10) : l.altitud < DIEZ_MIL ? aguja(V_250) : V_ARRIBA;
+      v = conFlaps ? aguja(this.ficha.vr + 10) : l.altitud < DIEZ_MIL ? aguja(V_250) : this.deArriba(l);
       /*
        * Y nunca por encima de lo que pide la carta de la salida hasta su punto: los 210
        * nudos de la CCS6L hasta MD039 eran 236 a 250 sin esto, que es lo que hace quien
@@ -1083,9 +1130,11 @@ export class VueloDeLinea {
       // El tren dentro en cuanto sube de verdad: unos diez metros.
       tren = l.altura < 10;
     } else if (!bajando) {
-      v = l.altitud < DIEZ_MIL ? aguja(V_250) : (this.velocidadDeCrucero ?? V_ARRIBA);
+      v = l.altitud < DIEZ_MIL ? aguja(V_250) : (this.velocidadDeCrucero ?? this.deArriba(l));
       if (l.topeDeVelocidad !== undefined) v = Math.min(v, l.topeDeVelocidad);
     } else {
+      if (this.velocidadDeCrucero === null && this.arranqueDeLaBajada === null && l.altitud >= DIEZ_MIL)
+        this.arranqueDeLaBajada = { velocidad: l.velocidad, altitud: l.altitud };
       v = l.altitud < DIEZ_MIL ? aguja(V_250) : this.velocidadBajando(l.altitud);
       if (falta < CONFIGURA.frena) v = Math.min(v, aguja(V_BAJANDO_CERCA));
       if (falta < CONFIGURA.flaps1) {
@@ -1134,19 +1183,41 @@ export class VueloDeLinea {
   }
 
   /**
-   * **A qué velocidad se baja por encima de los diez mil pies**, m/s. Entre islas,
-   * doscientos ochenta nudos desde el primer metro. En un vuelo largo eso sería
-   * frenar a más de la mitad en el punto de descenso, con los motores al ralentí y
-   * a cuarenta mil pies: se baja a la velocidad del crucero, y se va perdiendo con
-   * la altura hasta llegar a los doscientos ochenta en los diez mil. Es lo que hace
-   * el avión de verdad, que baja a Mach y luego a indicada, y la velocidad de
-   * verdad va cayendo sola.
+   * **A qué velocidad se baja por encima de los diez mil pies**, m/s de
+   * verdadera: desde la del crucero, perdiéndola con la altura hasta los 280 de
+   * verdadera a diez mil pies. En un vuelo largo, doscientos ochenta desde el
+   * primer metro sería frenar a más de la mitad en el punto de descenso, con los
+   * motores al ralentí y a cuarenta mil pies.
+   *
+   * **Sigue en verdadera, y no es lo de verdad** (enmienda H38f del ADR 0019): un
+   * reactor baja al Mach del crucero y después a su indicada, como sube. Puesta
+   * así, el modelo sencillo no sigue la senda de tres por mil: su punta a media
+   * altura queda por debajo de esa indicada —el JAZ 110 no pasa de unos 280
+   * nudos de aguja a veinticinco mil pies, con 320 en su escalera—, así que va
+   * con el gas a fondo, y con el gas a fondo no baja más de unos 1.760 pies por
+   * minuto, donde la senda le pide unos 2.400. Llegaba a cuarenta
+   * kilómetros de la pista 1.900 m por encima de la senda. Pasarla es cosa del
+   * modelo sencillo o del perfil del plan, y es otro encargo.
    */
   private velocidadBajando(altitud: number): number {
-    const arriba = this.velocidadDeCrucero;
-    if (arriba === null) return V_ARRIBA;
-    const k = Math.min(1, Math.max(0, (altitud - DIEZ_MIL) / (this.alturaDeCrucero - DIEZ_MIL)));
-    return V_ARRIBA + (arriba - V_ARRIBA) * k;
+    const largo = this.velocidadDeCrucero;
+    const desde = largo !== null ? { velocidad: largo, altitud: this.alturaDeCrucero } : this.arranqueDeLaBajada;
+    if (desde === null || desde.altitud <= DIEZ_MIL) return V_ARRIBA;
+    const k = Math.min(1, Math.max(0, (altitud - DIEZ_MIL) / (desde.altitud - DIEZ_MIL)));
+    return V_ARRIBA + (desde.velocidad - V_ARRIBA) * k;
+  }
+
+  /**
+   * **Lo que se pide subiendo por encima de diez mil pies**, y en el crucero de
+   * un salto entre islas, m/s de verdadera: la indicada del avión hasta que el
+   * Mach da menos, y el Mach desde ahí. Es el cruce de verdad, sin altitud
+   * escrita: sube a la indicada hasta que la verdadera llega al Mach. Ver
+   * `arribaDe`.
+   */
+  private deArriba(l: LecturaDeLinea): number {
+    const { mach } = this.ficha.arriba;
+    const indicada = enLaAguja(this.ficha.arriba.indicada, l);
+    return mach === null ? indicada : Math.min(indicada, enElMach(mach, l));
   }
 
   /**
@@ -1276,8 +1347,7 @@ export function empujeQueSeQuema(
  * son indicadas en cualquier manual y en cualquier control. Pedidas en verdadera,
  * en un campo alto o un día caliente el avión iba más despacio de lo que marca el
  * manual, y a nueve mil pies, a 250 nudos de verdadera, la aguja se quedaba en
- * 218 (enmienda H38e del ADR 0019). Los 280 de por encima de diez mil pies siguen
- * en verdadera: ver `V_ARRIBA`.
+ * 218 (enmienda H38e del ADR 0019). Y lo de arriba, con su Mach: ver `enElMach`.
  *
  * El modelo va a la verdadera que se le pide, así que se pasa con la proporción
  * de la propia lectura: `velocidad` e `indicada` salen del mismo estado y del
@@ -1286,6 +1356,15 @@ export function empujeQueSeQuema(
  */
 export function enLaAguja(indicada: number, l: Pick<LecturaDeLinea, "velocidad" | "indicada">): number {
   return l.indicada > 1 ? (indicada * l.velocidad) / l.indicada : indicada;
+}
+
+/**
+ * **La verdadera que da ese Mach, aquí**, m/s, con la misma proporción de la
+ * lectura que `enLaAguja`: `velocidad` y `mach` salen del mismo estado y del
+ * mismo aire. Parado no hay Mach que leer, y no se pone tope.
+ */
+export function enElMach(mach: number, l: Pick<LecturaDeLinea, "velocidad" | "mach">): number {
+  return l.mach > 0.01 ? (mach * l.velocidad) / l.mach : Infinity;
 }
 
 /** El rumbo de `a` a `b`, rad, cero al norte. Ver `rumbo` en `ruta.ts`. */

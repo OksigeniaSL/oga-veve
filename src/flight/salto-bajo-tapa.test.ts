@@ -10,7 +10,8 @@ import { AIRCRAFT } from "./aircraft";
 import { altitudDeCabina } from "./cabina-presurizada";
 import { Cinturon } from "./cinturon";
 import { loQueCabe } from "./combustible";
-import { VueloDeLinea, type LecturaDeLinea } from "./vuelo-de-linea";
+import { indicatedAirspeed, velocidadDelSonido } from "./atmosphere";
+import { arribaDe, VueloDeLinea, type LecturaDeLinea } from "./vuelo-de-linea";
 import {
   ANTES_DE_BAJAR,
   caminoEnElMundo,
@@ -244,17 +245,31 @@ describe("los niveles y el salto", () => {
 });
 
 describe("quien lleva el avión, al caer", () => {
-  const FICHA = { vr: 80, vref: 70, alturaDeLaRecogida: 9, alturaDelGas: 9, reversa: true, trenQueSeMete: true };
+  const JAZ_110 = AIRCRAFT.find((a) => a.id === "jaz-110")!;
+  const FICHA = {
+    vr: 80,
+    vref: 70,
+    alturaDeLaRecogida: 9,
+    alturaDelGas: 9,
+    reversa: true,
+    trenQueSeMete: true,
+    arriba: arribaDe(JAZ_110),
+  };
+  /** Lo que se lee a esa altitud y a esa verdadera: la aguja y el Mach, del mismo aire. */
+  const aqui = (altitud: number, velocidad = 230) => ({
+    altitud,
+    velocidad,
+    indicada: indicatedAirspeed(velocidad, altitud),
+    mach: velocidad / velocidadDelSonido(altitud),
+  });
   const ARRIBA: LecturaDeLinea = {
     enTierra: false,
     enPista: false,
     x: 0,
     z: 0,
     rumbo: 0,
-    velocidad: 230,
-    indicada: 230,
+    ...aqui(12192),
     porElSuelo: 230,
-    altitud: 12192,
     altura: 12000,
     vertical: 0,
     motor: true,
@@ -301,15 +316,17 @@ describe("quien lleva el avión, al caer", () => {
     t.ponerEnCrucero(230, 12000);
     t.paso(1 / 60, ARRIBA, PERMISOS);
     const bajando = { ...ARRIBA, ritmoPedido: -10, alturaPedida: 11900 };
-    const arriba = t.paso(1 / 60, { ...bajando, altitud: 12000 }, PERMISOS);
+    const arriba = t.paso(1 / 60, { ...bajando, ...aqui(12000) }, PERMISOS);
     expect(t.estado.tramo).toBe("bajada");
     expect(arriba.velocidad).toBeCloseTo(230, 0);
-    const aMedias = t.paso(1 / 60, { ...bajando, altitud: 7500 }, PERMISOS);
+    const aMedias = t.paso(1 / 60, { ...bajando, ...aqui(7500) }, PERMISOS);
     expect(aMedias.velocidad).toBeLessThan(230);
     expect(aMedias.velocidad).toBeGreaterThan(280 * 0.5144);
-    const alLlegar = t.paso(1 / 60, { ...bajando, altitud: 3050 }, PERMISOS);
+    const alLlegar = t.paso(1 / 60, { ...bajando, ...aqui(3050) }, PERMISOS);
     expect(alLlegar.velocidad).toBeCloseTo(280 * 0.5144, 0);
-    expect(t.paso(1 / 60, { ...bajando, altitud: 3000 }, PERMISOS).velocidad).toBeCloseTo(250 * 0.5144, 0);
+    // Y por debajo de diez mil pies, los 250 de aguja.
+    const abajo = t.paso(1 / 60, { ...bajando, ...aqui(3000) }, PERMISOS);
+    expect(indicatedAirspeed(abajo.velocidad, 3000)).toBeCloseTo(250 * 0.5144, 0);
   });
 
   it("el cartel, apagado aunque el vuelo empezara con él puesto", () => {

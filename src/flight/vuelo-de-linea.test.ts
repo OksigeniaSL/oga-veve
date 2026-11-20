@@ -15,7 +15,7 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { ArcadeFlightModel } from "./arcade";
-import { indicadaDe } from "./atmosphere";
+import { indicadaDe, velocidadDelSonido } from "./atmosphere";
 import { AIRCRAFT } from "./aircraft";
 import { neutralControls } from "./model";
 import { laRecogidaDe } from "./recogida";
@@ -23,6 +23,7 @@ import { bankAngleOf } from "../ui/actitud";
 import { avanzar, restante, rutaDe, type Fijo } from "./ruta";
 import type { Fase } from "./vuelo";
 import {
+  arribaDe,
   CONFIGURA,
   EMPUJE,
   enLaAguja,
@@ -106,6 +107,7 @@ function volar(): Vuelo {
     alturaDelGas: laRecogidaDe(ARAI).gas,
     reversa: true,
     trenQueSeMete: true,
+    arriba: arribaDe(ARAI),
   });
   const tramos: Vuelo["tramos"] = [];
   let fase: Fase = "estacionado";
@@ -176,6 +178,7 @@ function volar(): Vuelo {
       rumbo: s.heading,
       velocidad: s.airspeed,
       indicada: indicadaDe(s, m.aireDelDia()),
+      mach: s.airspeed / velocidadDelSonido(s.position.y, m.aireDelDia()),
       porElSuelo: s.groundSpeed,
       altitud: s.position.y,
       altura,
@@ -488,6 +491,7 @@ describe("con un tope de la salida por delante", () => {
     alturaDelGas: laRecogidaDe(ARAI).gas,
     reversa: true,
     trenQueSeMete: true,
+    arriba: arribaDe(ARAI),
   };
   const lectura = (cambios: Partial<LecturaDeLinea>): LecturaDeLinea => ({
     enTierra: false,
@@ -497,6 +501,7 @@ describe("con un tope de la salida por delante", () => {
     rumbo: 0,
     velocidad: ARAI.rotationSpeed + 5,
     indicada: ARAI.rotationSpeed + 5,
+    mach: (ARAI.rotationSpeed + 5) / 340,
     porElSuelo: ARAI.rotationSpeed + 5,
     altitud: 8,
     altura: 8,
