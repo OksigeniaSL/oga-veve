@@ -772,6 +772,99 @@ de Ara y tres de la tripulante—, en `PENDIENTE-VOCES-inicio-3.md`.
   alguna puede quedarse sin decir: es lo que pasa en un vuelo de verdad con
   un juego delante, y lo que tiene su momento se dice igual.
 
+### Enmienda H38i (20-11-2026): la subida a FL170 y lo que dejó de caber
+
+La tripulación sube ahora a su indicada y a su Mach, el modelo sencillo llega
+a esa velocidad y el plan sube como se vuela (ADR 0019, enmiendas H38f, H38g y
+H38h). De Los Rodeos por la 12 a La Palma por la 36 el salto nivela a FL170 a
+los 911 s de escena, con 97 s de crucero, y empieza a bajar a los 120,7 km de
+la pista; antes nivelaba a FL190 con 23 s de crucero y bajaba desde los 131.
+Por encima de los diez mil pies, de cruzarlos subiendo a cruzarlos bajando,
+se vuela unos dos minutos menos —de unos 710 s a unos 580—, y el banco de la
+escena pasó de 126 de 126 a 123. Lo que dejó de caber, cada cosa con su causa:
+
+- **La siesta adelanta menos, y era la vara.** Ara se duerme en cuanto la
+  comandante acaba lo de los diez mil pies y el Teide, y la despierta el *ding*
+  del «ya estamos arriba»: es lo que queda de subida, ahora 139 s de vuelo en
+  vez de 189, a unos 176 m/s por el suelo en vez de 142. Adelanta 24,5 km, el
+  avión del mapa se mueve 53 puntos de 480 y lo de al dormirse queda 24,5 km
+  atrás. El banco pedía 25 km, puestos con la subida de antes. Lo que manda es
+  lo del juego —una siesta de dos minutos de vuelo como poco, `SIESTA_MINIMA`,
+  que salió de que Enrique no notara minuto y medio— y que se note en el mapa:
+  el banco pide ahora esos dos minutos y lo que vuelan a la velocidad de
+  arriba, 20 km.
+- **«Armá tu avión» se quedaba sin rato, y era del juego.** El kit esperaba a
+  los 104 km de la pista, puestos con la bajada que empezaba a los 131, y se
+  recoge cruzando los diez mil pies, que con la bajada de FL170 llegan un
+  minuto antes: 159 s de kit, la luz verde entera son 131 —con la pausa de la
+  megafonía de La Gomera— y su canción 21, y a la tripulante pidiéndolo de
+  vuelta le quedaban 26 s detrás de la luz; el banco no llegaba ni a elegir el
+  avión. Ahora el kit llega en cuanto se ha contado lo que solo vale arriba
+  —el porqué del ralentí, detrás de los oídos—, con sus once segundos callados
+  delante; los 104 km se quedan de red por si ese porqué no se dice. Y el
+  porqué del ralentí espera cinco segundos callados detrás de los oídos, no
+  doce: es la respuesta a lo que Ara acaba de notar, como el del gas de subida,
+  que espera dos.
+- **«Más alto que el Teide» no se decía, y era del juego.** El Teide sí se
+  presentaba antes de pasarlo en altura: la comandante lo señala por la
+  ventanilla, con su historia, subiendo hacia los 10.700 pies, y la cumbre se
+  pasa medio minuto después. Lo que se perdía era decir que ya se vuela por
+  encima. Esa charla espera a que Ara se despierte, y luego trece segundos
+  callados; y solo vale por encima de la cumbre con 150 m de margen. El
+  crucero lo llenan el servicio, el baño y la tripulante con las nubes y el
+  plop; la bajada, los anuncios, los oídos, el ralentí y el kit, con el que ya
+  no se cuenta nada que venga a cuento. Los trece segundos no llegaban nunca.
+  Ahora Ara lo pregunta nada más abrir los ojos, detrás de su «me dormí» y con
+  el mapa de lo que se voló delante, antes del servicio
+  (`primeroAlDespertar`, `atenderAlDespertar` en `motor-del-pasaje.ts`). Solo
+  si quedan por delante veinte segundos de crucero para eso y, detrás, el
+  minuto que el guion cuenta para el servicio, el baño y la tripulante en el
+  asiento: con menos, espera su silencio como siempre, que con una bajada
+  larga lo encuentra. Con veinte más los veinticinco del baño, en un crucero
+  de un minuto la tripulante llegaba al asiento justo al quitar el gas para
+  bajar y saludaba entre el ralentí y el anuncio.
+
+#### Medido
+
+- `inicio-pasaje.test.ts`, con el vuelo medido de antes: lo de la tripulante
+  entero y en su orden con cruceros de 20 a 90 s y ahora también de 96, 104 y
+  120; con uno de 110, Ara pregunta la altura detrás del «me dormí» y el
+  servicio, el baño y la tripulante van enteros detrás; con uno de 60, no se
+  adelanta. El kit llega con diez segundos sin megafonía delante, no treinta.
+- **El banco de la escena** (`verificar-inicio-3.mjs`, reloj ×12, con la
+  tarjeta de verdad): **124 de 126**, de 123. La siesta, de 779 a 917 s, 139 s
+  de vuelo y 24,5 km: pasa. Ara pregunta la altura a los 933 s, siete después
+  del «me dormí», con el Teide por su ventanilla a 28,7 km; la comandante
+  contesta y Ara dice lo de las montañas de juguete; el servicio, el baño y la
+  tripulante, detrás: pasa. El kit llega a los 1.119 s, once segundos después
+  del porqué del ralentí, con 161 s hasta que se pide guardarlo (eran 159).
+
+#### Lo que no
+
+- **«Armá tu avión» sigue sin rato en el banco.** El kit ganó lo que esperaba
+  a su kilómetro —diecisiete segundos— y los siete del ralentí, pero la
+  pregunta de la altura empuja a la tripulante del crucero a la bajada: su
+  plop acaba a los 1.037 s, quince después del punto de descenso, y todo lo de
+  la bajada va quince segundos detrás. La luz verde acaba a los 1.252 s y su
+  canción suena hasta que la tripulante pide el kit, a los 1.285: el banco,
+  que vuelve a elegir con la canción ida, no llega a elegir el avión. Por
+  encima de los diez mil pies, despierta, Ara tiene unos 370 s; lo que cuenta
+  la escena y el kit con los dos juegos y algo de rato para las piezas piden
+  unos 400. Es una decisión, y no se ha tomado aquí: o la siesta deja de
+  comerse la subida entera, o el kit cuenta con un solo juego en el vuelo, o
+  el salto sube a otro nivel.
+- **El toque en el Teide ya no se prueba.** El banco toca el Teide en un
+  silencio, por su cristal y antes del kit; con el H38h lo hacía en los nueve
+  segundos libres al acabar el crucero, que ahora son de la pregunta de la
+  altura. El toque mientras alguien habla sí se prueba, y espera a que se
+  calle o se queda en su aro.
+- **Lo que tampoco se dice desde la subida a FL170**, sin vara en el banco: la
+  explicación del ala de la comandante —«cómo se sostiene en el aire un avión
+  tan pesado»—, que espera dieciséis segundos callados al despertar y no los
+  encuentra antes del kit, y la ruta que cuenta la tripulante bajando. Con
+  FL190 se decían las dos. Lo del ala lo cuenta Ara si se pone esa pieza en
+  «Armá tu avión», que es justo lo que se queda sin rato.
+
 ## La cuarta escena: el vuelo largo de Ara a casa
 
 Fecha: 2026-11-01
