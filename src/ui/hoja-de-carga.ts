@@ -25,6 +25,7 @@ import {
   type Hoja,
   type Pesada,
 } from "../flight/hoja-de-carga";
+import { loQueCabe } from "../flight/combustible";
 import { getLocale, t } from "../i18n";
 
 /** El idioma de las cifras: el guaraní escribe los números como el castellano de allí. */
@@ -95,10 +96,12 @@ const tanque = (lleno: boolean): string => `
 
 /**
  * Los asientos de pasaje, encendidos los que van ocupados. Hasta veinte en una
- * fila; más, en cuatro, como se ve una cabina desde arriba.
+ * fila; más, en cuatro, como se ve una cabina desde arriba; y en un avión de
+ * dos pasillos, en ocho, que con cuatro los asientos del 747 salían de un
+ * píxel.
  */
 function asientos(plazas: number, ocupados: number): string {
-  const filas = plazas > 20 ? 4 : 1;
+  const filas = plazas > 200 ? 8 : plazas > 20 ? 4 : 1;
   const columnas = Math.ceil(plazas / filas);
   const w = columnas * 10;
   const h = filas * 12;
@@ -185,18 +188,20 @@ type Arreglo =
   | { readonly como: "plan" }
   | { readonly como: "destino" };
 
+/** Si con esta hoja se sale: cabe en el peso, en la pista y llega con la reserva. */
+const sale = (r: Veredicto): boolean => r.pesada.cabe && r.cabePista && r.pesada.llega;
+
 /**
- * **El arreglo más pequeño que hace que quepa**, en este orden: si se llenaron
- * los depósitos y con lo del vuelo cabe, cargar lo del vuelo; si no, bajar a
- * los pasajeros justos para que quepan el peso y la pista; si ni sin nadie,
- * un destino más cerca, que pide menos combustible.
+ * **El arreglo más pequeño que hace que quepa**, en este orden: si el plan no
+ * cabe en los depósitos, un destino más cerca, que es lo único que lo arregla;
+ * si se llenaron los depósitos y con lo del vuelo cabe, cargar lo del vuelo; si
+ * no, bajar a los pasajeros justos para que quepan el peso y la pista; si ni
+ * sin nadie, un destino más cerca, que pide menos combustible.
  */
 function arregloDe(v: VueloDeLaHoja, r: Veredicto): Arreglo {
-  if (r.pesada.cabe && r.cabePista) return { como: "nada" };
-  const cabe = (h: Hoja): boolean => {
-    const otro = veredicto({ ...v, hoja: h });
-    return otro.pesada.cabe && otro.cabePista;
-  };
+  if (sale(r)) return { como: "nada" };
+  if (!r.pesada.llega) return { como: "destino" };
+  const cabe = (h: Hoja): boolean => sale(veredicto({ ...v, hoja: h }));
   if (v.hoja.llenos && cabe({ ...v.hoja, llenos: false })) return { como: "plan" };
   const n = Math.round(v.hoja.pasajeros);
   for (let quitar = 1; quitar <= n; quitar++)
@@ -214,7 +219,7 @@ export function vistaDeLaHoja(v: VueloDeLaHoja): string {
   const tipo = cargaDeSuTipo(v.avion);
   const n = tipo ? Math.max(0, Math.min(tipo.plazas, Math.round(v.hoja.pasajeros))) : 0;
   const gente = tipo ? n * tipo.porPersona : 0;
-  const bien = r.pesada.cabe && r.cabePista;
+  const bien = sale(r);
   const hierba = v.aire.superficie === "hierba";
 
   const que = arregloDe(v, r);
@@ -222,8 +227,22 @@ export function vistaDeLaHoja(v: VueloDeLaHoja): string {
   let texto = "";
   if (canales.texto) {
     if (canales.corto)
-      texto = t(bien ? "hoja.cabe" : !r.pesada.cabe ? "hoja.pesado" : "hoja.corta");
+      texto = t(
+        bien
+          ? "hoja.cabe"
+          : !r.pesada.llega
+            ? "hoja.nollega"
+            : !r.pesada.cabe
+              ? "hoja.pesado"
+              : "hoja.corta",
+      );
     else if (bien) texto = t("hoja.cabe.largo");
+    /*
+     * **No llega con la reserva**: lo primero, porque es lo que no se arregla
+     * con la gente ni con los tanques. Lo que pide el plan contra lo que cabe.
+     */
+    else if (!r.pesada.llega)
+      texto = t("hoja.nollega.largo", { pide: kg(r.pesada.pide), cabe: kg(loQueCabe(v.avion)) });
     else if (!r.pesada.cabe)
       texto =
         que.como === "plan"

@@ -1739,6 +1739,13 @@ export const PYKASU: AircraftConfig = {
    * adultos no se llenan los depósitos.
    */
   masaSinCombustible: 964,
+  /*
+   * **53 galones US utilizables** de los 56 de sus dos depósitos (manual de
+   * vuelo del 172R, Cessna, 1996, rev. 7, sección 1, «Fuel Capacity»), a 6 lb
+   * el galón de gasolina de aviación: 318 lb. Era la proporción de su clase,
+   * 154 kg.
+   */
+  combustibleUtilizable: Math.round(53 * 6 * 0.45359237),
   wingArea: 16.2,
   wingSpan: 11.0,
   chord: 1.5,
@@ -1930,6 +1937,13 @@ export const MAINUMBY: AircraftConfig = {
    * Ag Cat. Lo que lleva la tolva no se suelta en este juego.
    */
   masaSinCombustible: 1315,
+  /*
+   * **Los 80 galones US** con los que su manual da los 242 NM de alcance
+   * (manual del piloto del G-164A, Grumman American, 1977; ver su ficha en
+   * `ficha-tecnica.ts`), a 6 lb el galón: 480 lb. Era la proporción de su
+   * clase, 210 kg.
+   */
+  combustibleUtilizable: Math.round(80 * 6 * 0.45359237),
   wingArea: 24.0,
   wingSpan: 12.5,
   chord: 1.7,
@@ -3403,6 +3417,14 @@ export const ARAI: AircraftConfig = {
    * combustible.
    */
   masaSinCombustible: 26100,
+  /*
+   * **9.335 kg de combustible utilizable**, 11.625 l: «Maximum Usable Fuel» de
+   * la ficha de Embraer del E175, que lleva el mismo ala y los mismos
+   * depósitos que el 170, y la misma cifra que daba la del E170. Era la
+   * proporción de su clase, un tercio de su masa: 9.900 kg, más de lo que le
+   * cabe.
+   */
+  combustibleUtilizable: 9335,
   wingArea: 72.0,
   wingSpan: 26.0,
   chord: 3.0,
@@ -3828,6 +3850,13 @@ export const YVAGA: AircraftConfig = {
    * lejos de sus 735.000 lb.
    */
   masaSinCombustible: 231600,
+  /*
+   * **47.210 galones US utilizables**, 316.300 lb: «Usable Fuel Capacity» del
+   * 747-100 con JT9D-3A en el manual de aeropuertos de Boeing (D6-58326,
+   * 2.1.1). Era la proporción de su clase, un tercio de su masa de ficha:
+   * 84.400 kg, poco más de la mitad de lo que le cabe.
+   */
+  combustibleUtilizable: Math.round(316300 * 0.45359237),
   wingArea: 511,
   wingSpan: 59.64,
   chord: 8.32,

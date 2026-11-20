@@ -51,7 +51,13 @@ import {
 import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
 import { cargaParaElPlan, combustibleDelPlan, loQueCabe } from "../flight/combustible";
 import { cargaDeSuTipo, hojaDeSuFicha, type Hoja } from "../flight/hoja-de-carga";
-import { mandosDeLaHoja, PASO_CARGA, vistaDeLaHoja, type VueloDeLaHoja } from "./hoja-de-carga";
+import {
+  mandosDeLaHoja,
+  PASO_CARGA,
+  veredicto as veredictoDeLaHoja,
+  vistaDeLaHoja,
+  type VueloDeLaHoja,
+} from "./hoja-de-carga";
 import { leerMetar, pedirMetar, proxyDelParte, vientoDeCasa, type Meteo } from "../world/meteo";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { AERONAVES, aeronavePorId, laQueSeVuelaEn, seVuelaEn } from "../flight/aeronaves";
@@ -3349,6 +3355,24 @@ export function abrirHangar(
             : modo === "largo" || modo === "noche" || modo === "madrid"
               ? "largo"
               : "despegar";
+      /*
+       * **Sin el combustible legal no se sale.** Si el plan de este destino no
+       * cabe en los depósitos —el JAZ 40 de Pettirossi a Mariscal
+       * Estigarribia, con su alternativo—, despegar abre la hoja, que dice por
+       * qué y trae el arreglo: un destino más cerca. No es un castigo ni un
+       * cartel rojo: es lo que haría quien despacha, enseñado en vez de
+       * mandado.
+       */
+      if (
+        boton.hasAttribute("data-despegar") &&
+        !esHelicoptero(avion) &&
+        !veredictoDeLaHoja(vueloDeLaHoja()).pesada.llega
+      ) {
+        pantalla = "carga";
+        voz.ruido("clic");
+        pintar();
+        return;
+      }
       if (boton.hasAttribute("data-despegar") || conInicio) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);

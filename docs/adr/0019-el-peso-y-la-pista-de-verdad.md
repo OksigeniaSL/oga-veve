@@ -316,3 +316,125 @@ el tope del peso es `combustibleDelPlan`.
   manda.
 - **El viento**, en el hangar, en calma: es como se despacha (CAT.POL.A.230 b
   1); el del día lo cuenta el vuelo.
+
+## Enmienda H38c (19-11-2026): los flecos de la hoja de carga
+
+### Sin el combustible legal no se sale
+
+El JAZ 40 de Pettirossi a Mariscal Estigarribia, con su alternativo, pide más
+de lo que le cabe en los depósitos, y la hoja lo escondía: el plan llegaba ya
+recortado al depósito y el avión salía con los tanques a tope y sin la reserva
+del alternativo, con el sello verde. Un piloto de verdad no sale así.
+
+- `combustibleDelPlan` da ahora lo que pide el plan **sin ningún tope**, ni el
+  del peso ni el del depósito; lo que se carga lo recorta `pesar`, como antes.
+- `pesar` dice además **si llega con la reserva** (`llega`): si lo que pide el
+  plan cabe en los depósitos.
+- La hoja lo dice como lo que es, con el mismo sello ámbar y el mismo arreglo
+  que cuando el combustible no cabe en el peso, un destino más cerca: «No
+  llega» en el segundo peldaño y, desde el tercero, «No llega con la reserva:
+  el plan pide 315 kg y en los tanques caben 280 kg. Elegí un destino más
+  cerca.». Va primero, porque ni bajar gente ni dejar de llenar lo arreglan.
+- **Despegar con esa hoja abre la hoja** en vez de salir. No es un castigo ni
+  un cartel rojo: es lo que hace quien despacha, enseñado en vez de mandado.
+  Pasarse de peso sigue dejando salir, como decidió H38a; no llegar, no.
+- Sin hoja —un banco, una dirección— el avión sale como salía, con lo que
+  quepa: es como sale un ensayo.
+
+Los tramos que caen en lo mismo, con la flota de hoy y los depósitos de abajo:
+
+- **El JAZ 40**, Pettirossi ↔ Estigarribia: pide 289 y 315 kg, y le caben 280.
+- **El JAZ 25, el fumigador**, en ocho: Pettirossi a Pedro Juan (234 kg) y a
+  Estigarribia (333), Guaraní a Pedro Juan (251), Encarnación (242) y Ayolas
+  (225) a Pettirossi, Estigarribia a Pettirossi (369) y Pedro Juan a
+  Pettirossi (262) y a Guaraní (259), con 218 en sus depósitos. Ya le pasaba
+  con los 210 de la proporción de su clase, y nadie lo veía. Es lo de verdad:
+  su manual da 242 NM con 80 galones y sin reserva, que es como trabaja un
+  fumigador, de campo a campo; con un alternativo y la reserva de la ley no
+  hace esos tramos.
+- Ningún otro: al JAZ 20 le basta con 128 de 144, y a los de turbina les
+  sobra.
+
+### El combustible de cada manual
+
+«Tanques llenos» era la proporción de su clase en cinco fichas. Ahora es el
+utilizable de su manual en cuatro:
+
+| Avión | Era | Ahora | Fuente |
+|---|---|---|---|
+| JAZ 20, 172R | 154 kg | 144 kg, 53 gal | Manual de vuelo del 172R, Cessna, 1996, rev. 7, sección 1 |
+| JAZ 25, G-164A | 210 kg | 218 kg, 80 gal | Manual del piloto del G-164A, 1977: el de su alcance de 242 NM |
+| JAZ 90, Embraer 170 LR | 9.900 kg | 9.335 kg | Ficha de Embraer del E175, «Maximum Usable Fuel», los mismos depósitos |
+| JAZ 120, 747-100 | 84.400 kg | 143.471 kg, 47.210 gal | Boeing D6-58326, 2.1.1, «Usable Fuel Capacity», JT9D-3A |
+
+A 6 lb el galón de gasolina de aviación. **El Seneca II se queda con la
+proporción de su clase**, 280 kg: 93 galones utilizables de 98 es la cifra que
+circula, pero solo se ha leído en la limitación del Seneca III y en hojas de
+terceros; la ficha FAA A7SO, que la dice, no se ha podido abrir.
+
+**Lo que cambia de otras cuentas.** `cabe.ts` no mira el combustible y no
+cambia. El plan, solo donde el depósito era el tope: el del 747 ya no lo es, y
+**el vuelo largo de `salto-bajo-tapa.ts` le cabe** —136,7 t con sus dos
+reservas, de 143,5—, donde con 84 t no le cabía. El alcance de la ficha
+técnica es el de su manual y no sale del depósito. Lo que sí se mueve es la
+aguja: el indicador de combustible del cuadro y «tanques llenos» de la hoja,
+en estos cuatro.
+
+### La gente del 747
+
+El 747-100 tiene ya renglón de gente: 358.000 lb de peso operativo en vacío
+con su tripulación (D6-58326, 2.1.1, el de los JT9D-3A) y 452 de pasaje con su
+maleta. Su ficha es un chárter lleno con bodega, y lo que queda de su masa sin
+combustible con los 452 a bordo, unas 26 t, va en la bodega (`bodega`, que la
+hoja no elige). Sin pasaje y con los tanques llenos pesa 332 t, una por
+debajo de sus 735.000 lb (333,4 t); con los 452 y los tanques llenos, 375: en
+el 747 tampoco se lleva todo.
+
+**El Ag Cat, el Seneca II y el 787-9 siguen sin renglón**, y por lo mismo que
+en H38a: su masa en vacío no se ha leído en una fuente de primera mano. Del Ag
+Cat circulan 2.690 lb y 2.870; del Seneca II, 2.839, 3.015 y 3.212; del 787-9,
+unas 128,9 t, y el D6-58333 de Boeing remite expresamente a cada aerolínea. En
+el Ag Cat lo que tendría sentido no es gente —lleva a quien pilota y nadie
+más— sino **la tolva**: 300 galones de producto (TAR 2/21B/3 de la CAA de
+Nueva Zelanda, sobre la ficha FAA 1A16), cargada o a medias contra sus 4.500
+lb. Queda para cuando se lea su peso en vacío.
+
+### «V1, rotate»
+
+Con mucho peso la V1 llega a la Vr —no puede pasarla: o se para o se rota—,
+y entonces se cantan las dos seguidas. Vr esperaba a que se apagara el
+destello de V1, 1,6 s, y con las dos en la misma velocidad el avión podía
+estar ya en el aire cuando salía la segunda. Ahora, si V1 llega ya en la Vr, Vr
+sale 0,7 s detrás (`DE_V1_A_ROTATE` en `hud.ts`): se ven las dos y se oyen
+«V one» y «rotate». Con V1 por debajo de Vr, como siempre. Que coinciden se
+mira en las dos velocidades del día y no en la aguja, porque el destello de V1
+se dispara con la velocidad verdadera y a 40 °C salta antes de que la indicada
+llegue a la Vr.
+
+**Y el banco de La Gomera no pasa todavía**, y no por esto. Con el JAZ 90 a
+tope —37.426 kg— y 40 °C, `verificar-despegue.mjs` da 18 de 20: V1 destella a
+63,6 m/s de verdadera, y el piloto del banco tira cuando la **verdadera** pasa
+la Vr, 66,4 m/s; a 40 °C la indicada va un 6 % por debajo, así que el avión se
+va al aire a 70 m/s de verdadera y unos 65,8 de indicada, sin que la aguja
+llegue a la Vr antes de los 15 m en que el banco deja de mirar. Ni Vr ni su
+flecha llegan a salir. V1 y Vr no coinciden en este caso; lo que no coincide
+es con qué velocidad se mira cada una. Lo que toca, y queda para otro encargo:
+V1, Vr y el tirón del banco, los tres en indicada.
+
+### El teléfono tumbado
+
+En 800 × 360 la frase del veredicto, en la columna de la derecha, se iba a
+cuatro renglones y el arreglo quedaba debajo de la barra de despegar, a 138 px
+de rueda. Con poco alto (`max-height: 460px`), todo un poco más justo —menos
+lo que se toca, que sigue a 48 px— y el veredicto a lo ancho de la tarjeta, con
+los asientos debajo de los mandos; en todos los peldaños, sin `:has()`, que en
+el Firefox viejo pediría espejo. Mirado en foto, con el JAZ 60 a tope hacia
+Pedro Juan, el JAZ 40 hacia Estigarribia y el 747 en Los Rodeos, en los cuatro
+peldaños: en 800 × 360 la tarjeta acaba como mucho en el píxel 274 y la barra
+de despegar empieza en el 288; en 915 × 412, en el 268 y el 340. La rueda que
+queda, de 58 a 110 px, es el hueco que el hangar deja debajo para la barra, no
+la hoja. Y despegar con el JAZ 40 hacia Estigarribia deja la hoja abierta.
+`npm run carteles`, entero: 1.126 de 1.126, con la pista de la hoja contra
+los dos quintos del ancho que dejó H38a; pasado con la versión que llevaba
+`:has()`, y la de ahora, que solo cambia el peldaño de los dibujos, mirada en
+foto pero sin volver a pasarlo entero.

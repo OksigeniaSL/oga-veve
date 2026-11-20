@@ -456,6 +456,17 @@ export function cargaParaLaRuta(
  * tiene que enseñar. Ver `flight/hoja-de-carga.ts`.
  */
 function loQuePideLaRuta(avion: AircraftConfig, metros: number): number {
+  return Math.min(loQueCabe(avion), loQuePideSinTope(avion, metros));
+}
+
+/**
+ * **Lo que pide la ruta sin ningún tope**, kg: ni el del peso ni el del
+ * depósito. Si es más de lo que cabe, ese vuelo **no llega con la reserva**, y
+ * eso es lo que la hoja de carga tiene que decir antes de salir, no lo que
+ * tiene que esconder llenando hasta donde se pueda. Ver `pesar` en
+ * `flight/hoja-de-carga.ts`.
+ */
+function loQuePideSinTope(avion: AircraftConfig, metros: number): number {
   // `maxThrust` ya es el de todos los motores juntos. Ver la cabecera.
   const crucero = quemaDeCrucero(avion);
   /*
@@ -487,7 +498,7 @@ function loQuePideLaRuta(avion: AircraftConfig, metros: number): number {
     crucero * RESERVA_SEGUNDOS,
     reservaEnKilos(avion) + margenDelMinimo(avion) + contingencia(avion, viaje),
   );
-  return Math.min(loQueCabe(avion), viaje + reserva);
+  return viaje + reserva;
 }
 
 /**
@@ -499,8 +510,10 @@ function loQuePideLaRuta(avion: AircraftConfig, metros: number): number {
  * alternativo de vuelta a casa —836 y 951 km entre los dos—, pide 289 y 315
  * kilos a su crucero, más de los 280 de sus depósitos, y en el peso le caben
  * 259: sale con el viaje y la maniobra, y para el tramo del alternativo no le
- * llega la reserva. De verdad ese vuelo se haría a menos potencia o con menos
- * gente; aquí la gente ya va puesta. Ver `peso.test.ts`.
+ * llega la reserva. De verdad ese vuelo no sale: **la hoja de carga dice que
+ * no llega con la reserva** y despegar la vuelve a abrir, con el arreglo de un
+ * destino más cerca (ADR 0019, enmienda H38c). Sin hoja —un banco, una
+ * dirección— sale así, que es como sale un ensayo. Ver `peso.test.ts`.
  *
  * Era la avioneta, de Estigarribia a Asunción, mientras el combustible se
  * contó con el empuje: pedía 154 kilos y le cabían 148. Por la potencia pide
@@ -565,16 +578,18 @@ export function cargaParaElPlan(
  * es lo que cubre la maniobra, que para eso está.
  */
 /**
- * **Lo que pide el plan de un destino, sin el tope del peso**, kg: las cuatro
- * partidas de `cargaParaElPlan` con el tope del depósito y nada más. Es la
- * entrada de la hoja de carga, que pesa con la gente que se elija y no con la
- * de la ficha. Ver `flight/hoja-de-carga.ts`.
+ * **Lo que pide el plan de un destino, sin topes**, kg: las cuatro partidas de
+ * `cargaParaElPlan`, sin el tope del peso y sin el del depósito. Es la entrada
+ * de la hoja de carga, que pesa con la gente que se elija y no con la de la
+ * ficha, y que tiene que ver si el plan cabe en los depósitos: si no cabe, no
+ * se llega con la reserva, y un despacho de verdad no sale así. Lo que se
+ * carga lo recorta `pesar`. Ver `flight/hoja-de-carga.ts`.
  */
 export function combustibleDelPlan(
   avion: AircraftConfig,
   tramos: { readonly alDestino: number; readonly alAlterno: number },
 ): number {
-  return loQuePideLaRuta(avion, Math.max(0, tramos.alDestino) + Math.max(0, tramos.alAlterno));
+  return loQuePideSinTope(avion, Math.max(0, tramos.alDestino) + Math.max(0, tramos.alAlterno));
 }
 
 export function cargaDelEjercicio(
