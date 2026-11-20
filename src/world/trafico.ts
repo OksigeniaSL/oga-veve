@@ -3593,12 +3593,26 @@ export function crearTrafico(
    * «pushback approved»: el que rueda por detrás del puesto pasa primero. Quien
    * está parado esperando no cuenta como a punto de pasar, que si espera por
    * éste se esperarían los dos para siempre.
+   *
+   * **Y tú pasas primero por toda la raya que te han dado**, no solo por los
+   * metros de los próximos segundos. Un empuje coge la calle mucho más que
+   * eso —el empuje a paso de persona y, parado, el freno, soltar el tractor y
+   * el saludo: unos cuarenta segundos más— y al acabar el avión mira hacia
+   * donde va a rodar, que puede ser tu calle de frente. En Los Rodeos por la
+   * 12, con la R recta y la raya a treinta nudos, llegabas antes que el
+   * saludo: tu raya cortada por lo que barría y él esperando a su tractor, los
+   * dos parados y mirándoos, hasta que el saludo lo soltaba de frente a ti y
+   * tenía que recular. Tu raya es un camino que el control ya te ha dado (ver
+   * `EnTierra.ruta`), y no se autoriza un remolque que lo barre. Tu raya no
+   * espera por él —mientras está enganchado no reserva nada—, así que esto no
+   * deja a nadie esperando al otro.
    */
   const calleLibreParaEmpujar = (q: Volando, tu: EnTierra | null): boolean => {
     const zona = zonaDelEmpuje(q);
     if (tu) {
       if (aLaLinea(tu, zona) < tu.separacion) return false;
       if (tu.porDondeVa.some((p) => aLaLinea(p, zona) < tu.separacion)) return false;
+      if (tu.ruta?.some((p) => aLaLinea(p, zona) < tu.separacion)) return false;
     }
     for (const b of aviones.values()) {
       if (b === q || !porTierra(b)) continue;
