@@ -1724,3 +1724,177 @@ dos hilos.
   Hierro sería unos metros menor.
 - **Las tablas del AMC por tipo** no se han leído: la alineación sale de la
   raya que sigue el avión, no de ellas.
+
+## Enmienda (20-11-2026, H41g): los flecos de la TORA de la intersección
+
+Los tres que dejó la H41f.
+
+### El tráfico decidía con otra cuenta
+
+**Lo que pasaba.** `pistaDesde`, en `suelo-del-trafico.ts`, daba la TORA del
+AIP o la pista desde el nudo de la boca, sin restar la alineación. Con el
+mismo avión y por la misma boca, el tráfico y quien juega decidían con dos
+números: en El Hierro por la 34, por la boca a la que va el tráfico (la de la
+calle del 3A, a 238,5 m del centro), 865,6 m desde el nudo para el tráfico y
+855,5 al soltar frenos para quien juega —885,6 de TORA dicha y 30,1 de
+alineación—. Un día que pidiera 856 m, el tráfico salía desde la calle y a
+quien juega la torre le decía remontar.
+
+**Decisión: la misma cuenta, no una tercera.** `pistaDesdeLaBoca` sale de
+`PlanDeVuelo` a una función de módulo con lo que necesita como argumentos
+—la pista, la calle hasta el eje, el radio de giro del avión y la TORA que
+publica el AIP desde esa boca— y el método de la clase se queda en una
+llamada. El tráfico la usa con la calle por la que llega a la boca, y lo que
+decide es lo que queda al soltar frenos, sin pasar nunca de la TORA que
+publica la cabecera (la de Fuerteventura por la 19, que pierde mil metros).
+El radio de giro es el de la batalla del que sale de pasarela; los demás
+giran más cerrado de lo que redondea la raya, y la cuenta da lo mismo.
+
+Y con ella, la regla de la H41e: una calle que llega a la pista mirando a la
+cabecera, lejos de ella, es de remontar, con el mismo coseno que
+`bocaDeEntrada`. Sin eso, por el chaflán de la C que mira a la cabecera el
+tráfico salía desde la calle y quien juega remontaba.
+
+Como la alineación sale de la calle, el tráfico mira si una boca le da su
+pista después de buscarle camino, y no antes: lo que el AIP no deja sigue
+saltándose sin buscar.
+
+**La prueba** (`tora-de-la-interseccion.test.ts`): se pone a quien juega en
+la doble raya del tráfico, se le pregunta lo que dará la verde
+(`comoSeSaldraDesdeAqui`) y se le pide al tráfico la misma pista. A un metro
+por debajo de lo que queda al soltar frenos, los dos salen desde la calle; a
+un metro por encima, los dos remontan. Con la cuenta de antes, a un metro por
+encima el tráfico salía desde la calle.
+
+### La torre de El Hierro no decía «backtrack»
+
+**Lo medido**, con `verificar-despegue.mjs` instrumentado para esto en una
+copia del árbol, sin commitear: cuándo se cuenta por dónde se sale
+(`contarPorDondeSeSale`, con qué salida y si ya estaba contado), qué se le
+pide a la torre, qué hace la boca con ello —a la cola, le toca, se cae y por
+qué, se retira— y con qué piezas sonó cada frase de la torre.
+
+- **Se pide, y se escribe.** En El Hierro a 42 °C, con la verde detrás de
+  EC-RDY, la tira escribe «request backtrack» y, 3,8 s después, «ZP-PNB,
+  backtrack runway three four». En Los Rodeos por la E-2 la oferta se cuenta
+  rodando, con la salida por intersección.
+- **Pero a la torre no llega, ni a la cola de la boca**: en el banco de
+  Taguató ninguna frase de la torre suena grabada —en Los Rodeos, todas las de
+  su historial salen sin piezas—, porque el banco no hace ningún gesto y el pack
+  de voz se baja después del primero, como en el juego (H44b; solo lo cargan
+  Taguató Ruvichá y `OGA_CON_VOCES=1`). Y lo que cuenta `contarPorDondeSeSale`
+  va **solo con su grabación**, a propósito: sin ella, la tira, que una frase
+  de la torre sin grabar se le pasaría a la voz del navegador, que en Brave
+  para Linux es muda.
+- **El «backtrack» que se oyó en la tercera tirada de la H41e no era el
+  tuyo.** La torre también se lo dice al tráfico que remonta —«line up and
+  wait» dicho al que remonta, `AL_QUE_REMONTA`—, y esas sí se apuntan en el
+  historial aunque no haya pack. El banco apuntaba cualquier «backtrack» de
+  la torre: en aquella tirada la verde llegó detrás de EC-BRM, que salía
+  remontando; en la de hoy, detrás de EC-RDY, y su «backtrack runway three
+  four» es el que salía, a los 33,9 s de juego, mientras el tuyo, a los
+  264,2, solo se escribía. En la H41f la verde llegó a los 10,8 s sin nadie
+  por medio, y no había «backtrack» de nadie que apuntar.
+
+No es de la H41f ni de la H48: la cola de la tira no toca la voz, y a la de
+la boca la frase no llega sin su grabación. Lo que estaba mal era la medida.
+
+**Decisión: medir lo que se oye, y solo lo tuyo.**
+
+- El banco mira las piezas con que sonó cada frase de la torre y cuenta solo
+  las que llevan tu indicativo; las demás las escribe como «torre a otro».
+- Lee lo que decide el plan con la verde, y no al empezar la carrera, cuando
+  ya se ha borrado: en Los Rodeos salía «el plan: null» (H41e, H41f).
+- Y con las voces cargadas, de Taguató para arriba, comprueba que si el plan
+  remonta la torre te dice «backtrack».
+
+**Medido con las voces cargadas** (`OGA_CON_VOCES=1`), en El Hierro a 42 °C:
+la verde llega a los 267,4 s, detrás de EC-AWE, que sale remontando. Su
+«backtrack runway three four» suena con sus piezas (Echo Charlie Alfa
+Whiskey Echo) y el banco lo escribe como «torre a otro». El tuyo se le pide
+a la torre en `mando` unos cuatro segundos después de la verde, espera
+detrás de la verde en castellano y del «cleared for take-off», le toca a los
+15,1 s y suena entero con tus piezas; detrás, la instructora con
+`vuelo.remontar.cola` y `vuelo.backTaxi`. Nada se cae ni se retira.
+
+La segunda pasada con voces no llegó a volar en el tiempo de esta enmienda:
+el navegador lo tenían otras rondas.
+
+### Soltar frenos setenta metros más adelante
+
+**Lo medido**, con el mismo banco instrumentado: en cada paso desde la
+verde, la fase, dónde está el avión a lo largo y a lo ancho del eje, el
+rumbo, la velocidad que pide el juego y qué rama del piloto manda. El banco
+de verdad apunta ahora dónde queda el avión en el eje y mirando pista abajo
+(«en el eje en»). En El Hierro a 42 °C, con el
+código de main:
+
+- entra por el chaflán que mira a la cabecera en el −113, va pista abajo
+  **a doce metros del eje** —la raya de ida de la media vuelta centrada, la
+  de las pistas estrechas: la de El Hierro mide treinta y el JAZ 40 no cabe
+  en la apartada—, gira en el −590, llega hasta el −605 y sale de la vuelta
+  **a quince metros del otro lado**;
+- de ahí la raya vuelve al eje **en diagonal**, a diez grados: el avión pasa
+  de «back-taxi» a «alineando» en el −595 y no está en el eje y mirando pista
+  abajo hasta el **−523**, sesenta y ocho metros pista abajo del giro;
+- el banco sigue la raya hasta el eje (`EN_EL_EJE`, H44b), da gas ahí y la
+  fase pasa a «despegando» en el **−514**.
+
+Así que no es el codo ni la fase: es la raya. En la H41e el banco daba gas
+en cuanto el morro miraba pista abajo, con el avión todavía a catorce metros
+del eje, en el −586; desde la H44b sigue la raya hasta el eje, y la raya
+llegaba sesenta y ocho metros más allá del giro. Lo que se perdía lo perdía
+el juego: `backTaxiDesde` ponía detrás de la vuelta centrada un punto del eje
+a `4 · radio + 20` del giro, y la cuenta (`porDelante`, la pista desde el
+giro) no lo contaba.
+
+**Decisión: la centrada vuelve al eje con una ese.** Sigue la misma
+circunferencia de la media vuelta sesenta grados más, hacia el eje, y los
+deshace con otra del mismo radio: queda en el eje y mirando pista abajo a
+`√3 · radio` del giro. Con los doce metros del JAZ 40 en El Hierro, veintiún
+metros y no sesenta y ocho. Es lo que hace quien remonta una pista estrecha:
+termina la vuelta pegado al borde y se mete en el eje sin girar más cerrado
+de lo que ya giraba. La ese va marcada como geometría exacta, como la media
+vuelta, y se rueda a su velocidad.
+
+**Medido después**, en la misma tirada de El Hierro: el avión queda en el
+eje y mirando pista abajo en el **−559** y suelta frenos en el −558, con el
+giro en el −590: treinta y un metros pista abajo del giro, y no sesenta y
+ocho. La ese de la raya acaba a veintiuno; el piloto del banco, que mira doce
+metros por delante, la redondea. Desde ahí hay 1.185 m por delante, y no
+1.141.
+
+### Los Rodeos por la 12 y la E-2
+
+`verificar-despegue.mjs tenerife-norte taguato "120/08" jaz-90`, una pasada,
+**21 de 21**: la verde a los 10,6 s, sin nadie por medio y esperando la lista
+de antes de despegar. El plan, leído ya con la verde: salida por la E-2, la
+TORA que dice la torre **2.546 m, la del AIP**, alineación cero y 1.152 m que
+pide por el calor. Pisa la pista en el −1.128, queda en el eje en el −1.002 y
+suelta frenos en el −998, con 2.582 m por delante. Sin voces: lo que se
+comprueba en el navegador es la TORA que decide el plan, no que suene.
+
+### Vitest
+
+Entero, una vez, con el código de los tres flecos: 564 de 564 ficheros,
+11.228 pruebas en verde, 31 saltadas y una pendiente, ninguna en rojo, en
+1.816 s con dos hilos.
+
+### Lo que queda
+
+- **La cuenta del remonte sigue contando desde el giro.** `porDelante` es
+  `mitad − giro`, y con la ese el avión queda en el eje veintiún metros más
+  allá; por la regla de la máquina de fases —a menos de doce metros y ocho
+  grados— ya está alineado al acabar la media vuelta, así que la cuenta y la
+  fase dicen lo mismo. Restar la ese, como se resta la alineación en la
+  intersección, movería todas las decisiones de remontar un trozo; no se ha
+  hecho.
+- **La apartada y la raqueta** acaban ya en el eje: no se han tocado.
+- **A quien juega, la torre le dice «cleared for take-off» en la doble raya
+  y luego «backtrack»**: en El Hierro suena la verde, su fraseología con el
+  viento y detrás el remonte, y al acabar la vuelta otra vez la verde y el
+  «cleared for take-off». Al tráfico ya no se le hace (`remonta` en
+  `flight/radio.ts`: la pista para remontarla y la salida al dar la vuelta);
+  a quien juega, sí. No se ha tocado.
+- **El banco de Taguató sigue sin voces por defecto**: la comprobación del
+  «backtrack» solo corre con `OGA_CON_VOCES=1` o en Taguató Ruvichá.
