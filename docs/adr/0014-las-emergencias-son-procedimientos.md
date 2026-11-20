@@ -465,3 +465,119 @@ frena» y «gear up» ya estaban, y grabadas.
   qué se dice en V1 según el tipo (`seSigueEnV1` en la sonda `avion`), y el de
   las emergencias aprende `OGA_SIN_TREN=1`: en `tren`, nadie mete el tren
   hasta que lo piden después del fallo.
+
+## Enmienda H44a (20-11-2026): lo que el juego hace detrás del destello
+
+### Lo que pasaba
+
+H37i dejó bien lo que se **dice** en V1 según el tipo, y dejó tres cosas en las
+que el juego seguía **haciendo** lo del avión de turbina en los que no deciden
+con V1 —el JAZ 20, el JAZ 25 y el JAZ 40—:
+
+1. **El botón del freno se despedía en V1**, a 53 nudos en el 172 y a 66 en el
+   Seneca, que es justo donde su manual sigue mandando frenar si algo va mal.
+2. **La fase «comprometido»** —la de la pista que ya no da para parar,
+   calculada con la frenada— sacaba la tarjeta y la voz de «ya despegamos:
+   seguí». H37i la dejó con este argumento: «dice "seguí" en un despegue normal
+   en el que ya no cabe parar, y eso es verdad en todos». No lo es: la frase
+   cuenta una decisión —pase lo que pase, se sigue— y en esos aviones su
+   manual no la toma. El Seneca, sin pista para parar: «Throttles — CLOSED.
+   Brakes — APPLY max braking […] Continue straight ahead, turning to avoid
+   obstacles» (PA-34, sección 3, *Engine Failure During Takeoff*); el 172, gas
+   al ralentí y frenos rodando, y recién despegado, «Land STRAIGHT AHEAD»
+   (C172S, sección 3).
+3. **Los ochenta nudos no se cantaban en ningún avión**, y H37i lo dejó fuera.
+
+El destello de V1 en pantalla, en todos los aviones, sigue como Enrique lo
+pidió.
+
+### Un solo criterio
+
+`conV1` se ha ido de `ejercicios.ts` a `flight/decide-con-v1.ts`, que no
+depende de nada (los ejercicios lo reexportan). De ahí leen el HUD
+(`pasadaLaV1`: destello, freno y aviso de fin de pista), la máquina de fases
+(`decideConV1` en la `Situacion`, que pone el plan de vuelo) y lo que se dice
+al despegar. Ningún `if` por avión.
+
+### Qué hace cada tipo pasada la aguja por V1
+
+| | Destello y nota | Botón del freno | Fase de la carrera | «Se acaba la pista, frená» |
+|---|---|---|---|---|
+| JAZ 20, JAZ 25, JAZ 40 | sí | **se queda** hasta volar | **«despegando»** hasta volar: «motor a fondo», nunca «seguí» | calla mientras se siga con gas; **avisa a quien corta el gas** |
+| JAZ 50, 60, 90, 110, 120 | sí | se despide | «comprometido» si la pista ya no da para parar, como antes | calla, como antes |
+
+El aviso de fin de pista no puede pedir frenar en mitad de un despegue que va
+bien —en Yvytu Rape salía a la vez que el destello—, pero en el 172 y en el
+Seneca quien corta el gas pasado el destello está parando, que es lo que manda
+su manual, y a ése sí hay que decirle que la pista se acaba.
+
+En el JAZ 40 el «seguí» sigue llegando con el tren, como dejó H37i. Y el
+silencio de la tarjeta de «comprometido» en sus ejercicios del despegue
+(`elV1MentiriaEnElEjercicio`, H37e) se quita: esa tarjeta ya no puede salir
+en él.
+
+### Quién lee la fase «comprometido»
+
+Antes de quitársela a tres tipos se miraron todos: la torre (`CALLADAS` y
+`PISTA_TUYA` en `radio.ts`), la tripulación y la cabina de pasaje
+(`cinturon.ts`, `dependencia.ts`, `cabina-de-pasaje.ts`), el TCAS en tierra,
+el plan de vuelo, el cuaderno de despegues, los ejercicios (`corriendo`) y los
+bancos. Todos la tratan igual que «despegando», así que nada cambia para
+ellos. Los únicos que la leían sola eran la tarjeta y su voz, y el silencio
+del ejercicio de arriba. `flaps-de-despegue.ts` mira «despegando» para el
+aviso de configuración, que solo llevan los de transporte.
+
+### Los ochenta nudos, por tipo
+
+Son un canto de la tripulación —quien vigila, al ver pasar la aguja—, no de
+una caja, así que suben por la escalera: en inglés en el peldaño de cabina, y
+en los de abajo no los dice nadie, como los sesenta nudos de la carrera de
+aterrizaje. Se canta solo donde se ha leído en su manual (20-11-2026):
+
+| Tipo | Lo que canta | Fuente |
+|---|---|---|
+| JAZ 90 (clase E170) | **«eighty knots»**, quien vigila, al pasar de 80 KIAS; quien vuela contesta «checked» | SOPM-1755 de Embraer, rev. 19, 3-15-01, *Takeoff – Actions and Callouts*: «Airplane accelerates past 80 KIAS — EIGHTY KNOTS — CHECKED». Y su porqué, en 3-15-05: «pilot incapacitation check, airspeed crosscheck and the transition from Low to High Energy speed» |
+| JAZ 110 (clase 787) | nada | El FCTM del 777/787 (rev. 14, 2021, cap. 3) pide el empuje puesto «by 80 knots» y no escribe el canto; el FCOM no se ha leído |
+| JAZ 120 (clase 747-100) | nada | No se ha encontrado manual del 747 clásico, y el procedimiento de despegue del FCOM del 747-400 no se ha podido leer. Que se canta lo dicen foros y columnas, y eso no es fuente |
+| JAZ 60 (clase 1900D) | nada | No se ha leído su POH/AFM ni un SOP. La grabadora de un accidente (NTSB NYC97FA045, 1997) recoge «eighty knots cross checked»: es lo que hizo una tripulación, no lo que manda su manual |
+| JAZ 50 (DHC-6 -400) | nada | No se ha leído un SOP ni el AFM con sus cantos |
+
+Lo lleva `CANTOS_DEL_DESPEGUE` en `audio/cabina.ts`, con la misma familia de
+procedimiento que la carrera de aterrizaje (`cantosDeLaCarrera`), y cuándo se
+canta, `flight/los-ochenta-nudos.ts`: una vez por carrera, al pasar la aguja
+**del reloj** —con la funda del pitot no pasa nunca—, y se rearma al volar o
+al pararse, no con un reloj. Cuando se lea el FCOM de un Boeing, su canto
+entra en `CANTOS_DEL_DESPEGUE.boeing` y en nada más.
+
+### Frases
+
+Ninguna nueva ni cambiada en `es-PY.ts` ni en `en.ts`. Una toma de cabina por
+grabar: **`cabina.eightyKnots`**, «eighty knots», en `ESPERAN_SU_TOMA` y al
+final de la lista de `frases-para-grabar.mjs` para no renumerar las grabadas.
+Hasta que se grabe, `cantarLoGrabado` no la pide.
+
+### Comprobado
+
+- **Las pruebas**: `decide-con-v1.test.ts` —quién decide con V1, y que los
+  ejercicios leen el mismo `conV1`; pasada la V1, el destello en todos, el
+  freno que se queda en el JAZ 20, el 25 y el 40 y se va en el JAZ 90 y los
+  demás de turbina, y el aviso de fin de pista que en los de pistón calla con
+  gas y avisa sin él—; `vuelo.test.ts` —sin V1 no hay «comprometido» con 200 m
+  de pista por delante, con V1 sí, y la tarjeta de esa carrera es «motor a
+  fondo» con torre, AFIS o sin nadie—; `los-ochenta-nudos.test.ts` —una vez
+  por carrera, hacia arriba, ni en un bandazo ni en la carrera de aterrizaje
+  ni con la funda del pitot, y solo en el JAZ 90—. Y `cabina.test.ts` sujeta
+  que «eighty knots» espera su toma y solo se pide por `cantarLoGrabado`.
+- **Antes y después de la fase**, con la máquina de fases vieja y la nueva y
+  la situación de la prueba (el 172 a 100 km/h con 200 m de pista): antes,
+  «comprometido»; ahora, «despegando».
+- **`verificar-despegue.mjs yvytu-rape guyrami "" jaz-20`**, 22 de 22: el
+  destello de V1 a 26,1 m/s de aguja y el de Vr a 28,2, la flecha de tirar,
+  en V1 nada dicho, **el freno se quedó hasta volar** y la carrera fue
+  «alineando → despegando». El banco mira ahora el freno con las ruedas en el
+  suelo —al volar se va en todos— y, en los que no deciden con V1, que la
+  carrera no pase por «comprometido». En esta tirada rotó con 438 m por
+  delante, que le bastan para parar, así que ahí la fase no habría cambiado
+  tampoco con el código de antes: lo de la fase lo sujetan la prueba y la
+  comparación de arriba.
+- **El vitest entero**, 549 ficheros y 11.015 pruebas, en verde.
