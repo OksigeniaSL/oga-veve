@@ -519,11 +519,21 @@ describe("de vuelta al puesto en Guaraní, con el JAZ 90 y uno que sale", () => 
     expect(m.llego).toBe(true);
   });
 
+  /*
+   * **Por la 23.** Por la 05 se miraba con EC-AAX a los 10 s, y ahí rodaba ya
+   * por tu calle; sin los cruces falsos del grafo —las puntas que se metían en
+   * una tercera calle y los dos cruces a doce metros soldados en uno: ver
+   * `yaEnOtra` y `nudoDe` en `rodaje.ts`, H41c— ninguno de los que salen de
+   * -20 a 60 s se te cruza ya por la 05, ni EC-AAX, ni EC-ABX, ni EC-ACX. Por
+   * la 23, EC-ABX a los 0 s sí.
+   */
+  const por23 = conViento(guarani, { ...TIEMPO_DE_CASA, vientoDe: 180, vientoKt: 15 });
+
   it("y si ya rodaba por tu calle cuando se traza tu raya, pasa él y tu raya espera", () => {
     const repartos = new Set<string>();
     const mal: string[] = [];
-    for (const anuncio of [10, 15, 20, 25]) {
-      const m = vueltaConUnoQueSale(por05, jaz90, "EC-AAX", anuncio);
+    for (const anuncio of [0, 5, 10, 15]) {
+      const m = vueltaConUnoQueSale(por23, jaz90, "EC-ABX", anuncio);
       for (const r of m.repartos) repartos.add(r);
       if (m.deFrente > PARADOS_DE_FRENTE || m.coche || m.contacto || m.retirados.length || !m.llego)
         mal.push(`anuncio ${anuncio}: ${JSON.stringify({ ...m, repartos: [...m.repartos] })}`);

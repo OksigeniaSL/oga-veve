@@ -17,10 +17,12 @@
 import { describe, expect, it } from "vitest";
 import { Frecuencia } from "./radio";
 import { TurnoDePista, type DibujoDelTurno } from "./turno-de-pista";
-import { crearTrafico, tiposDelCampo } from "../world/trafico";
+import { crearTrafico, REMONTA_A, tiposDelCampo, VIRA_A } from "../world/trafico";
 import { sueloDelTrafico } from "../world/suelo-del-trafico";
 import { SCENARIOS } from "../world/scenarios";
 import type { Aerodrome } from "../world/aerodrome";
+import { enEjesDePista } from "../world/rumbo";
+import { desplazadoDe } from "../world/umbral-desplazado";
 
 const PASO = 0.5;
 /** Lo que tarda la torre en mirarte en la raya. Ver `TORRE_TARDA` en `vuelo.ts`. */
@@ -38,6 +40,43 @@ const TORRE_TARDA = 2.2;
  * `world/trafico.ts`.
  */
 const LA_MAS_LARGA = 170;
+
+/**
+ * **Y lo que remonta la pista el que aterriza delante**, donde la única salida
+ * le queda por detrás de donde frena: en Ayolas, por la 02, la calle está en
+ * la cabecera de aterrizar, y el reactor que frena a los 1.400 m da la vuelta
+ * y vuelve por la pista hasta ella. La roja dura lo que dura eso de verdad: la
+ * media vuelta casi parado, `VIRA_A`, y el remonte a veinte nudos, `REMONTA_A`
+ * —«Normal taxi speed is approximately 20 knots» (Boeing, *737 Flight Crew
+ * Training Manual*, Taxi Speed and Braking)—, que antes se daban a más de
+ * veinte metros por segundo (H41). Con eso, en Ayolas, 222 s medidos contra
+ * los 325 de la cuenta.
+ *
+ * La vuelta, media circunferencia de veinte metros de radio, que es la que da
+ * `mediaVuelta` en `suelo-del-trafico.ts`.
+ */
+function loQueRemonta(esc: (typeof CON_TORRE)[number]): number {
+  const aero = esc.aerodrome as Aerodrome;
+  const pista = esc.runway;
+  const ancho = aero.runways[0]?.widthM ?? 45;
+  const suelo = sueloDelTrafico(aero, pista, ancho);
+  if (!suelo) return 0;
+  const umbral = -pista.length / 2 + desplazadoDe(pista);
+  let mas = 0;
+  for (const t of tiposDelCampo(aero.id, pista.length)) {
+    const puede = t.toca + t.frena;
+    const camino = suelo.llegada(puede)?.camino ?? [];
+    const enLaPista = camino
+      .map((p) => enEjesDePista(p.x, p.z, pista.x, pista.z, pista.heading))
+      .filter((e) => Math.abs(e.across) < ancho / 2)
+      .map((e) => e.along - umbral);
+    if (enLaPista.length) mas = Math.max(mas, puede - Math.min(...enLaPista));
+  }
+  return mas > REMONTE_DE_VERDAD ? mas / REMONTA_A + (Math.PI * 20) / VIRA_A : 0;
+}
+
+/** Lo que se deja atrás frenando sin que sea remontar, m: lo frena un poco más fuerte. */
+const REMONTE_DE_VERDAD = 60;
 
 function dados(semilla: number): () => number {
   let x = semilla >>> 0;
@@ -101,7 +140,8 @@ function esperarLaVerde(a: ReturnType<typeof aeropuerto>, rodar: number): number
 
 describe("la roja dura lo que dura de verdad", () => {
   for (const esc of CON_TORRE) {
-    it(`${esc.id}: ninguna roja pasa de dos minutos y medio`, () => {
+    it(`${esc.id}: ninguna roja pasa de dos minutos y medio, más lo que remonte el que llega`, () => {
+      const limite = LA_MAS_LARGA + loQueRemonta(esc);
       const esperas: number[] = [];
       for (let semilla = 1; semilla <= 120; semilla++) {
         const a = aeropuerto(esc, semilla);
@@ -110,8 +150,8 @@ describe("la roja dura lo que dura de verdad", () => {
         a.trafico.dispose();
       }
       esperas.sort((x, y) => y - x);
-      expect(esperas[0], `${esc.id}: ${esperas.slice(0, 5).join(", ")}`).toBeLessThan(
-        LA_MAS_LARGA,
+      expect(esperas[0], `${esc.id}: ${esperas.slice(0, 5).join(", ")} (límite ${Math.round(limite)})`).toBeLessThan(
+        limite,
       );
     });
   }
