@@ -15,6 +15,7 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { ArcadeFlightModel } from "./arcade";
+import { indicadaDe } from "./atmosphere";
 import { AIRCRAFT } from "./aircraft";
 import { neutralControls } from "./model";
 import { laRecogidaDe } from "./recogida";
@@ -173,6 +174,7 @@ function volar(): Vuelo {
       z: p.z,
       rumbo: s.heading,
       velocidad: s.airspeed,
+      indicada: indicadaDe(s, m.aireDelDia()),
       porElSuelo: s.groundSpeed,
       altitud: s.position.y,
       altura,
@@ -493,6 +495,7 @@ describe("con un tope de la salida por delante", () => {
     z: -2000,
     rumbo: 0,
     velocidad: ARAI.rotationSpeed + 5,
+    indicada: ARAI.rotationSpeed + 5,
     porElSuelo: ARAI.rotationSpeed + 5,
     altitud: 8,
     altura: 8,
@@ -527,6 +530,22 @@ describe("con un tope de la salida por delante", () => {
     expect(manos.velocidad).toBeLessThanOrEqual(TOPE);
     expect(manos.velocidad).toBeCloseTo(ARAI.rotationSpeed + 10, 5);
     expect(manos.empuje).toBe(EMPUJE.despegue);
+  });
+
+  it("en la pista, rota cuando la aguja pasa la Vr, no cuando la pasa la verdadera (H38d)", () => {
+    const rodando = { enTierra: true, enPista: true, altura: 0, vertical: 0, fase: "despegando" as Fase };
+    const antes = en("carrera").paso(
+      DT,
+      lectura({ ...rodando, velocidad: ARAI.rotationSpeed + 3, indicada: ARAI.rotationSpeed - 2 }),
+      permisos,
+    );
+    expect(antes.subida).toBeNull();
+    const ya = en("carrera").paso(
+      DT,
+      lectura({ ...rodando, velocidad: ARAI.rotationSpeed + 5, indicada: ARAI.rotationSpeed + 0.1 }),
+      permisos,
+    );
+    expect(ya.subida).not.toBeNull();
   });
 
   it("sin tope, como siempre: el gas de despegue hasta los quince metros", () => {

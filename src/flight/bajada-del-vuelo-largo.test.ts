@@ -17,7 +17,7 @@ import { dondeCae } from "../world/entre-aerodromos";
 import { PARAGUAY } from "../world/procedimientos-paraguay";
 import { AIRCRAFT } from "./aircraft";
 import { ArcadeFlightModel } from "./arcade";
-import { temperaturaExterior, velocidadDelSonido } from "./atmosphere";
+import { indicadaDe, temperaturaExterior, velocidadDelSonido } from "./atmosphere";
 import { masaConCombustible, quemaPorSegundo, reservaEnKilos } from "./combustible";
 import { neutralControls } from "./model";
 import { laRecogidaDe } from "./recogida";
@@ -141,6 +141,7 @@ function volar(masa?: number): {
       z: s.position.z,
       rumbo: s.heading,
       velocidad: s.airspeed,
+      indicada: indicadaDe(s, m.aireDelDia()),
       porElSuelo: s.groundSpeed,
       altitud: s.position.y,
       altura: Math.max(0, s.heightAboveGround - AVION.gearHeight),

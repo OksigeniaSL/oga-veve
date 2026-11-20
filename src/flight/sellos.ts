@@ -363,7 +363,7 @@ export interface LecturaDeLosSellos {
   readonly porElSuelo: number;
   /** Altura sobre el suelo, m. */
   readonly altura: number;
-  /** Velocidad respecto al aire, m/s. */
+  /** Velocidad indicada, m/s: la que se compara con la Vref, que es indicada. */
   readonly velocidad: number;
   /** Velocidad vertical, m/s. */
   readonly vertical: number;

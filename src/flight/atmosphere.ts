@@ -207,6 +207,29 @@ export function indicatedAirspeed(
   );
 }
 
+/**
+ * **La indicada de un avión que vuela**, m/s: la de su estado, a su altura y
+ * con el aire del día.
+ *
+ * Es contra la que se mira **toda V de un manual**: V1, Vr, V2, Vref, la
+ * línea azul, las de los flaps. Un manual las da indicadas —calibradas, para
+ * ser exactos, y a estas velocidades es lo mismo—, porque son las que se leen
+ * en el anemómetro y las que ve el ala. Mirarlas contra `airspeed`, que es la
+ * verdadera, las canta antes de tiempo en cuanto el campo es alto o el día
+ * caliente: en La Gomera a 40 °C, V1 salía con la aguja un 6 % por debajo de
+ * la suya y la Vr se iba al aire sin que la aguja llegara (enmienda H38d del
+ * ADR 0019).
+ *
+ * Una sola cuenta para todos, para que el destello, la voz, la ayuda y los
+ * bancos digan la misma velocidad.
+ */
+export function indicadaDe(
+  estado: { readonly airspeed: number; readonly position: { readonly y: number } },
+  aire: Aire = AIRE_ESTANDAR,
+): number {
+  return indicatedAirspeed(estado.airspeed, estado.position.y, aire);
+}
+
 /** La velocidad real que corresponde a esa indicada a esa altura, m/s. */
 export function trueFromIndicated(
   indicada: number,

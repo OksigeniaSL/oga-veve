@@ -252,6 +252,7 @@ describe("quien lleva el avión, al caer", () => {
     z: 0,
     rumbo: 0,
     velocidad: 230,
+    indicada: 230,
     porElSuelo: 230,
     altitud: 12192,
     altura: 12000,
