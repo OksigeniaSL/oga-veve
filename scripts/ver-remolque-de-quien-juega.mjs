@@ -24,7 +24,9 @@
  *
  * Uso: `node scripts/ver-remolque-de-quien-juega.mjs carpeta`. Con `OGA_GPU=1`, con
  * la tarjeta de verdad; con `OGA_PRISA`, el reloj del juego más deprisa; con
- * `OGA_PUERTO`, el puerto de vite.
+ * `OGA_PUERTO`, el puerto de vite; con `OGA_ESCENARIO` y `OGA_AVION`, otro campo y otro
+ * avión; y con `OGA_VIENTO` (`300/10`), el viento a mano, que es lo que elige la
+ * cabecera y, con ella, el puesto del que se sale.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -42,6 +44,7 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5601);
 const PRISA = process.env.OGA_PRISA ? Number(process.env.OGA_PRISA) : null;
 const ESCENARIO = process.env.OGA_ESCENARIO ?? "tenerife-norte";
 const AVION = process.env.OGA_AVION ?? "jaz-90";
+const VIENTO = process.env.OGA_VIENTO ? `&viento=${process.env.OGA_VIENTO}` : "";
 
 const server = await createServer({
   root: process.cwd(),
@@ -107,7 +110,7 @@ try {
         if (x && globalThis.__radios.at(-1) !== x) globalThis.__radios.push(x);
       }, 50);
     });
-    await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&leccion=despegue&tramo=${tramo}&avion=${AVION}`);
+    await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&leccion=despegue&tramo=${tramo}&avion=${AVION}${VIENTO}`);
     await page.bringToFront();
     await page.waitForFunction(() => globalThis.__oga?.aeronave?.().deVerdad === true, null, { timeout: 120000 });
     const renderer = await page.evaluate(() => {

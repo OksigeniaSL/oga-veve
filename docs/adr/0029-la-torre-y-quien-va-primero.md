@@ -1266,3 +1266,158 @@ lo rueda el avión. Con los puestos que elige el plan:
   la raya, pero al lado de ella, porque ni con setenta grados de rueda el giro
   cabe: 7 m en La Palma por la 18 desde el 10, 14 m en Lanzarote por la 21 y
   20–24 m en Barajas desde el 329, con el JAZ 110 y el JAZ 120.
+
+## Enmienda (20-11-2026, H47b): el empuje sigue la raya hasta la calle
+
+### El caso
+
+Lo que dejó la H47 en «Lo que queda»: de los puestos que elige el plan, 19
+empujes salían «de frente» —noventa grados a medio camino y el avión
+atravesado a la raya— y los reactores grandes acababan con el morro bien
+pero al lado de ella. De verdad, el tractor deja el avión parado sobre la
+línea de rodaje, con el morro hacia donde va a rodar, y la tripulación
+arranca recto; si el puesto no lo permite con un empuje corto, el empuje
+sigue la línea pintada hasta la calle.
+
+### Por qué
+
+Tres causas, una por grupo:
+
+- **La recta de más de 120 m.** `RECTA_DE_LA_PLATAFORMA` dejaba fuera la
+  calle de Los Rodeos por la 30 desde el 13 (132 m de recta, la calle a los
+  142), la del puesto sin número con el JAZ 120 (138 y 149) y las de
+  Tenerife Sur desde el H43 (124 y 128) y el J8 (156 y 160).
+- **El quiebro.** La raya sale recta, se tuerce poco y sigue: Pettirossi
+  desde el 6 va 113 m recta, 110 m más a 34° y tuerce a los 234; La Palma
+  desde el 7 hace a los 56 m un quiebro de 15 m de lado y tuerce a los 114
+  (la raya acaba a los 119); Lanzarote desde el T2 va 124 m recta, se
+  aparta 17 m, sigue 91 m a 3° y tuerce a los 276. Ni la recta ni la
+  búsqueda de los cuarenta grados llegaban.
+- **La cuerda.** La calle era la dirección de los treinta metros siguientes
+  al primer punto donde la raya se aparta más de cuarenta grados, y ese
+  punto es el principio de la curva: dentro de ella la cuerda va a medio
+  torcer. En La Palma desde el 10 por la 18 la raya tuerce 90° en una curva
+  de 29 m y la cuerda iba a 45°; el JAZ 110 tenía que girar 134° hacia una
+  calle que no existe, con el cruce en el principio de la curva, a 12 m de
+  su centro, y ni con la rueda a setenta grados (radio 9,4 m, 22,7 m de
+  tangente) le cabía: acababa a 7 m de la raya. Lo mismo en Lanzarote por
+  la 21 y en Barajas desde el 329 por la 18. Y lo mismo, más pequeño, en
+  casi todos los puestos con la raya en curva: el morro mirando a mitad de
+  la curva, 10–15° torcido respecto a la calle de verdad.
+
+### Decisión
+
+En `trayectoriaDelEmpuje`, para el empuje de quien juega
+(`porLaPlataforma`) y con la raya saliendo del puesto de espaldas:
+
+1. **La calle es la raya cuando ha acabado de torcer.** Desde el primer
+   punto que tuerce, se sigue la curva hasta `MIRA_LA_CALLE` más allá y la
+   calle es el primer punto desde el que ya no se aparta más; el avión
+   acaba en el eje de lo que sale de la curva, por detrás de ella.
+2. **Si tuerce más lejos que la recta de la plataforma, el tractor sigue la
+   raya** (`SIGUE_LA_RAYA`, 300 m; `siguiendoLaRaya`): con sus quiebros,
+   hasta un largo de avión antes de la curva, y desde ahí la recta, el arco
+   y la recta de siempre. Trescientos metros son cinco minutos a paso de
+   persona; más allá, la raya es una calle que sale de frente.
+3. **Y si así acaba a más de un largo de avión de la raya, gira cerrado.**
+   Con una curva ancha, la calle que sale de ella se cruza con la recta que
+   llega lejos de la propia curva: desde el T2 de Lanzarote el JAZ 90
+   acababa a 33 m de la raya, más que su largo, que es lo que exige
+   `remolque-en-cada-campo.test.ts`. Con la rueda a setenta grados, 27.
+
+No cambia: el empuje del tráfico, que se empuja corto; la raya que sale del
+puesto de lado; la media vuelta, que no se empuja; ni nada de la H41b a la
+H47 —la R recta, los cruces sin soldar, el puesto que elige el plan y el
+remolque que espera a que pases—. Sí cambia dónde acaban los empujes que ya
+acababan en su calle, porque ahora miran a la calle de después de la curva y
+no a la mitad de ella: el 24 de Los Rodeos por la 12, con el JAZ 90, pasa de
+92 m y 133° a 99 m y 125°; el 23, de 90,5 m y 140° a 106 m y 124°.
+
+### La prueba
+
+`empuje-hasta-la-calle.test.ts` mira ahora también, **desde el puesto que
+elige el plan**, con los tres reactores y por las dos cabeceras de cada campo
+con pasarelas, que el avión acabe sobre la raya y mirando por ella. Se mide
+por delante del morro, sin la regla del empuje: de los 150 m de raya que
+tiene delante, el sitio que queda en su eje —a menos de 3 m— con la raya más
+alineada con el morro, que tiene que torcer menos de 5° en sus quince metros
+siguientes. Queda fuera solo la raya que sale del puesto de lado; y de la que
+tuerce debajo del avión —deja de ir recta más cerca del puesto que el tren
+principal— se mira solo el morro (ver «Lo que queda»).
+
+Y el barrido de la H47 vive ahora en el mismo fichero:
+`OGA_BARRIDO_DEL_EMPUJE=1 npx vitest run empuje-hasta-la-calle` saca la
+tabla de todos los empujes de contacto —los tres reactores, las dos
+cabeceras y cada puesto de contacto, 678—, medidos igual. Tarda minuto y
+medio con dos hilos.
+
+### Lo medido
+
+- **El barrido**, con la medida de arriba, que es más estricta que la de la
+  H47 (aquella comparaba con la cuerda y daba por buenos los morros a mitad
+  de curva):
+
+  | | Antes (cc0a35b5) | Después |
+  |---|---|---|
+  | Sobre la raya y mirando por ella | 121 de 678 | 539 de 678 |
+  | Atravesados, más de 60°, sin contar los que salen de lado | 106 | 18 |
+  | Torcidos 5–60°, ídem | 338 | 4 |
+  | Bien orientados pero a más de 3 m, ídem | 0 | 4 |
+  | Salen de lado, sin arreglar | 113 | 113 |
+  | **Del puesto que elige el plan** | **11 de 42** | **41 de 42** |
+
+  Ninguno de los que estaban bien pasa a estar mal. Los del plan que se
+  arreglan, con el JAZ 90: Los Rodeos por la 30 desde el 13, 152 m y 114°;
+  Tenerife Sur desde el H43, 133 m y −125°, y desde el J8, 160 m y 135°;
+  Pettirossi desde el 6, 247 m y −102°; La Palma desde el 7, 118 m y 115°,
+  y desde el 10, 58 m y −91°; Lanzarote desde el T2, 290 m y −89°. Con el
+  JAZ 110 y el JAZ 120, La Palma desde el 10, 52 m y −91° a 0,2 m de la
+  raya; Lanzarote por la 21, 38 m y 91°, a 0,2 m; Barajas desde el 329 por
+  la 18, 23 m y −91°, a 2 m. La H47 los medía a 7, 14 y 20 m.
+  De los 539 que salen bien, 4 son de la raya que tuerce debajo del avión:
+  miran por ella, pero a su lado (ver «Lo que queda»).
+- **Vitest de lo tocado**: los 12 ficheros del remolque, el tráfico
+  empujado, el puesto de salida, el rodaje y la vuelta a la raya, 305
+  pruebas en verde.
+- **Vitest entero**, una vez: 555 de 555 ficheros y 11.125 pruebas en verde
+  y 30 saltadas —una, el barrido—, ninguna en rojo, en 1.121 s con dos hilos.
+- **El navegador**, `ver-remolque-de-quien-juega.mjs` una vez en Los Rodeos
+  con el JAZ 90 y el viento del 300 (`OGA_VIENTO`, que el banco acepta desde
+  esta tanda), con la tarjeta Intel: sale del 13, **152 de 152 m empujado,
+  giro de 114° con radio 11,5 m, rumbo al acabar 112°, y gira 11° en Guyrami
+  y 0° en el de cabina en los primeros treinta metros rodando** —antes, 34 m,
+  noventa grados y atravesado—; ningún fotograma dentro de un edificio, y
+  las fases en su orden. Cae una cosa del de cabina: en la tira de la radio
+  no se ven la autorización de la ruta, el permiso de la torre ni el
+  «empezamos a empujar»; sí los dos últimos de la persona de tierra y, en su
+  lugar, un «cleared to land» de la 30. Son frases de antes de empujar o del
+  arranque del empuje, que no dependen de su forma; con la 30 hay tráfico
+  aterrizando y la torre está hablando. No se voló el mismo banco sin el
+  arreglo para compararlo: por la 30 no se había volado nunca.
+
+### Lo que queda
+
+- **La raya que tuerce debajo del avión**: Barajas desde el 329 por la 36
+  con el JAZ 120, que es del plan. La raya va 15 m recta y tuerce a −58° en
+  una curva; el tren principal está a 25,6 m de la rueda de morro, así que
+  la calle pasa entre los dos, y el morro tiene que acabar mirando hacia
+  donde va: 118°, con el centro a 6 m de la calle y alejándose de ella en
+  todo empuje que gira hacia ese lado. Ningún empuje de menos de media
+  vuelta lo deja en ella: acaba con el morro bien (4°) y a 11 m de la raya
+  (antes, 19–24). Igual el 306 de Barajas con los dos grandes, que no lo
+  elige el plan: a 6–7 m. Un tractor de verdad lo resolvería empujando y
+  volviendo a tirar, que aquí no se hace.
+- **La raya que sale de lado**: Barajas desde el 560 por la 36 con el JAZ
+  110, del plan, 26 m al lado y 9° torcido. La raya pasa por delante del tren
+  principal, a lo largo de la fachada; no se ha tocado.
+- **La raya que sigue alejándose del edificio**: con un tramo largo a menos
+  de cuarenta grados de la salida, el avión tendría que girar más de media
+  vuelta para mirar por ella, y se sigue empujando de frente. Son los 18
+  atravesados del barrido, ninguno del plan: Lanzarote desde el T6 y el T7
+  y Barajas desde el 350, el 370 y el 562. Y cuatro con un quiebro de lado
+  que sigue recto, Barajas desde el 346 y el 368 con los grandes, que
+  acaban mirando al quiebro.
+- **Empujes largos**: desde el T2 de Lanzarote, 290 m, casi cinco minutos;
+  desde el 6 de Pettirossi, 247; desde el J8 de Tenerife Sur, 160. Es lo
+  que da la raya de OpenStreetMap, que no trae las calles de servicio de la
+  plataforma; con ellas el empuje sería más corto.
