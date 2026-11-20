@@ -580,4 +580,13 @@ Hasta que se grabe, `cantarLoGrabado` no la pide.
   delante, que le bastan para parar, así que ahí la fase no habría cambiado
   tampoco con el código de antes: lo de la fase lo sujetan la prueba y la
   comparación de arriba.
+- **`verificar-despegue.mjs tenerife-norte guyrami "" jaz-90`**, 22 de 22:
+  destellos de V1 a 61,4 m/s y de Vr a 66,6, «V one» con «ya despegamos:
+  seguí» en V1 —119 nudos—, **el freno se despide en V1** con las ruedas en
+  la pista, y los ochenta nudos detectados a 80 de aguja y no dichos, que en
+  Guyrami no los dice nadie («abajo no lo explica nadie»).
 - **El vitest entero**, 549 ficheros y 11.015 pruebas, en verde.
+- **Sin volar**: el peldaño de cabina con el JAZ 90, donde «eighty knots»
+  saldría si estuviera grabado; hoy queda apuntado «sin grabar, no se pide».
+  Lo sujetan `cabina.test.ts` y `los-ochenta-nudos.test.ts`. Y el banco con el
+  código de antes no llegó a volar: la cola del navegador iba llena.
