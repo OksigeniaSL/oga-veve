@@ -521,7 +521,7 @@ export interface ComoSeSale {
  * para la media vuelta en la pista). La torre dice la primera; la cuenta de
  * si basta se hace con la segunda.
  */
-interface PistaDesdeLaBoca {
+export interface PistaDesdeLaBoca {
   /** La TORA publicada desde ahí, m: la del AIP si la da, y si no, la del borde de la calle. */
   readonly tora: number;
   /** La pérdida por alineación, m: del principio de esa TORA al avión alineado en el eje. */
@@ -535,6 +535,140 @@ interface PistaDesdeLaBoca {
  * Ver `pistaDesdeLaBoca`.
  */
 const EN_LA_RECTA = Math.cos(Math.PI / 180);
+
+/**
+ * **La TORA desde una boca y lo que se come alinearse** (H41f), por la calle
+ * `hastaElEje` —en coordenadas de fichero— que llega al eje en `along`. Ver
+ * `PistaDesdeLaBoca`.
+ *
+ * Lo que se decía y lo que se tenía eran dos cosas. La torre daba la pista
+ * desde el nudo del eje —725 m en la C de El Hierro con el JAZ 40—, la
+ * cuenta de si bastaba usaba ese mismo número, y el avión soltaba frenos
+ * con menos: 717,6 m con el piloto perfecto, porque para quedar en el eje
+ * la raya redondea el codo y eso se come unos metros pasado el nudo. Ni lo
+ * dicho era lo publicado ni la cuenta restaba la alineación.
+ *
+ * - **La TORA es la publicada.** `delAip` si el AIP la da para esa calle y
+ *   esa cabecera —Los Rodeos, La Gomera; ver `desdeLaInterseccion`—, y si
+ *   no, la que publicaría: desde el borde de la calle del lado de la
+ *   cabecera, donde la calle se junta con el borde de la pista. Una entrada a
+ *   menos de `EN_LA_CABECERA` del final es la de la cabecera: la pista entera.
+ * - **La pérdida por alineación es de este avión y de esta entrada**: del
+ *   principio de esa TORA a donde el avión queda en el eje siguiendo la
+ *   raya, alisada como la alisa `ponerRuta` con el radio de giro del avión
+ *   (`radio`). Como mucho, la de un codo de noventa grados: una calle que
+ *   llega mirando a la cabecera es de remontar (`bocaDeEntrada`), y desde
+ *   ella no se despega sin rodar hacia atrás.
+ *
+ * **Y es una sola para quien juega y para el tráfico** (H41g). El tráfico
+ * decidía con la TORA desde el nudo y sin restar nada, así que con el mismo
+ * avión y por la misma boca uno remontaba y el otro salía desde la calle:
+ * dos reglas para lo mismo, y la torre diciéndole a cada uno una distinta.
+ * Por eso vive fuera de `PlanDeVuelo`: ver `pistaDesde` en
+ * `suelo-del-trafico.ts`.
+ */
+export function pistaDesdeLaBoca(
+  pista: {
+    readonly x: number;
+    readonly z: number;
+    readonly heading: number;
+    readonly width: number;
+    /** Entre umbrales, m. */
+    readonly length: number;
+  },
+  along: number,
+  hastaElEje: readonly Punto[],
+  /** El radio de giro del avión, m: ver `radioDeGiro` en `flight/cabe.ts`. */
+  radio: number,
+  /** El ancho de la calle que pasa por un punto, m. Ver `anchoDeLaCalleEn`. */
+  anchoDeLaCalle: (p: Punto) => number,
+  /** La TORA que publica el AIP desde esa boca, m, o `null` si no la publica. */
+  delAip: number | null,
+): PistaDesdeLaBoca {
+  const mitad = pista.length / 2;
+  const semiancho = pista.width / 2;
+  const enEjes = (x: number, z: number) => enEjesDePista(x, z, pista.x, pista.z, pista.heading);
+  /*
+   * Donde el eje de la calle cruza el borde de la pista, mirado desde el
+   * nudo hacia atrás, y con qué ángulo: el borde de la calle cae medio
+   * ancho de calle más atrás, y más cuanto más en diagonal llega.
+   */
+  let principio = along;
+  for (let i = hastaElEje.length - 1; i > 0; i--) {
+    const fuera = hastaElEje[i - 1]!;
+    const a = enEjes(fuera[0], -fuera[1]);
+    const b = enEjes(hastaElEje[i]![0], -hastaElEje[i]![1]);
+    if (Math.abs(a.across) < semiancho || Math.abs(b.across) >= semiancho) continue;
+    const u = (Math.abs(a.across) - semiancho) / (Math.abs(a.across) - Math.abs(b.across));
+    const enElBorde = a.along + (b.along - a.along) * u;
+    const largo = Math.hypot(b.along - a.along, b.across - a.across);
+    const seno = largo > 0 ? Math.abs(b.across - a.across) / largo : 1;
+    principio = enElBorde - anchoDeLaCalle(fuera) / 2 / Math.max(seno, 0.5);
+    break;
+  }
+  if (along + mitad <= EN_LA_CABECERA) principio = -mitad;
+  principio = Math.max(-mitad, Math.min(principio, along));
+  /*
+   * Y dónde queda alineado: donde empieza la recta final de la raya que se
+   * va a seguir. Mirar solo el último tramo de la calle contra el eje daba
+   * poco —3 m de menos en la C de El Hierro—: el chaflán llega por varios
+   * codos, y la raya los redondea juntos.
+   */
+  const lejos = puntoDePista(pista, -Math.min(mitad - 60, along + 500));
+  const { puntos } = alisarRuta(
+    [...hastaElEje.map((p) => [p[0], -p[1]] as Punto), [lejos[0], lejos[1]]],
+    undefined,
+    Math.max(RADIO_CURVA / 2, radio),
+  );
+  /*
+   * La recta final se mide contra sí misma y no contra el rumbo de la pista:
+   * el nudo de la boca no siempre cae en el eje del juego —en la C de El
+   * Hierro, a 4,6 m— y la raya se acerca a él a lo largo de quinientos
+   * metros, como la que dibuja `alEjeDesde`.
+   */
+  const fin = puntos.at(-1)!;
+  const antesDelFin = puntos.at(-2) ?? fin;
+  const recta = Math.atan2(fin[1] - antesDelFin[1], fin[0] - antesDelFin[0]);
+  let alineado = along;
+  for (let i = puntos.length - 1; i > 0; i--) {
+    const a = puntos[i - 1]!;
+    const b = puntos[i]!;
+    if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 0.01) continue;
+    if (Math.cos(Math.atan2(b[1] - a[1], b[0] - a[0]) - recta) < EN_LA_RECTA) break;
+    alineado = enEjes(a[0], a[1]).along;
+  }
+  alineado = Math.min(alineado, along + Math.max(RADIO_CURVA, radio));
+  /*
+   * **Y con la del AIP, la alineación se cuenta desde donde empieza la
+   * suya**, que llega hasta el final de la pista como todas. En Los Rodeos
+   * la E-2 entra a doce grados, como la salida rápida que es para la 30:
+   * desde el borde de la calle en los datos de OpenStreetMap habría 2.705 m
+   * por la 12, y el AIP publica 2.546, que empiezan unos treinta metros
+   * pasado el sitio donde el avión ya queda alineado. Restarle a esa cifra
+   * los ciento treinta metros del chaflán sería contarlos dos veces.
+   */
+  if (delAip !== null) principio = mitad - delAip;
+  const tora = mitad - principio;
+  const alinearse = Math.max(0, alineado - principio);
+  return { tora, alinearse, alSoltarFrenos: tora - alinearse };
+}
+
+/**
+ * El ancho de la calle que pasa por `p`, m: el de los datos, o el que se
+ * dibuja si no lo traen. Ver `pistaDesdeLaBoca`.
+ */
+export function anchoDeLaCalleEn(aero: Aerodrome, p: Punto): number {
+  let cerca = Infinity;
+  let ancho = ANCHO_RODADURA;
+  for (const calle of aero.taxiways) {
+    const d = aLaPolilinea(p, calle.path);
+    if (d < cerca) {
+      cerca = d;
+      ancho = calle.widthM ?? ANCHO_RODADURA;
+    }
+  }
+  return ancho;
+}
 
 /**
  * Lo que tiene que quedar detrás de un remonte parcial para que compense no ir
@@ -5508,8 +5642,34 @@ export class PlanDeVuelo {
      * Y la centrada, enderezándose al eje antes de dar gas: acaba a `radio`
      * del eje, y ahí no se despega —ver «La media vuelta acaba en el eje» en
      * `vueltaDelBackTaxi`—.
+     *
+     * **Y se endereza con una ese, no con una diagonal de setenta metros**
+     * (H41g). Iba en recta hasta un punto del eje `4 · radio + 20` más allá
+     * del giro, a diez grados del eje: en El Hierro, con el JAZ 40 y doce
+     * metros de radio, el avión del banco quedaba en el eje sesenta y ocho
+     * metros pista abajo del giro y soltaba frenos en el metro −516 con el
+     * giro en el −590, cuando la cuenta le daba la pista desde el giro. Es
+     * pista que se pierde por cómo se dibuja la raya, no por cómo gira el
+     * avión: con el mismo radio de la media vuelta se sigue girando sesenta
+     * grados hacia el eje y se deshacen otros sesenta, y queda en el eje y
+     * mirando pista abajo a `√3 · radio` del giro, veintiún metros allí. Es
+     * lo que hace quien remonta una pista estrecha: termina la vuelta pegado
+     * al borde y se mete en el eje sin dar más que el giro que ya estaba dando.
      */
-    if (vuelta.forma === "centrada") puntos.push(enLaPista(giro + 4 * radio + 20, 0));
+    if (vuelta.forma === "centrada") {
+      // Sigue la misma circunferencia sesenta grados más, hacia el eje…
+      for (let g = 285; g <= 330; g += 15) {
+        const rad = (g * Math.PI) / 180;
+        puntos.push(enLaPista(giro + radio * Math.cos(rad), centro + radio * Math.sin(rad)));
+      }
+      // …y los deshace con otra del mismo radio, que acaba en el eje.
+      for (let h = 135; h >= 90; h -= 15) {
+        const rad = (h * Math.PI) / 180;
+        puntos.push(
+          enLaPista(giro + Math.sqrt(3) * radio + radio * Math.cos(rad), -radio + radio * Math.sin(rad)),
+        );
+      }
+    }
     // Y eje abajo, que es lo que dice hacia dónde se despega.
     puntos.push(enLaPista(Math.min(mitad - 60, giro + 620), 0));
     return { puntos, arco };
@@ -5757,117 +5917,25 @@ export class PlanDeVuelo {
 
   /**
    * **La TORA desde donde se entra y lo que se come alinearse** (H41f), por
-   * la calle `hastaElEje` que llega al eje en `along`. Ver `PistaDesdeLaBoca`.
-   *
-   * Lo que se decía y lo que se tenía eran dos cosas. La torre daba la pista
-   * desde el nudo del eje —725 m en la C de El Hierro con el JAZ 40—, la
-   * cuenta de si bastaba usaba ese mismo número, y el avión soltaba frenos
-   * con menos: 717,6 m con el piloto perfecto, porque para quedar en el eje
-   * la raya redondea el codo y eso se come unos metros pasado el nudo. Ni lo
-   * dicho era lo publicado ni la cuenta restaba la alineación.
-   *
-   * - **La TORA es la publicada.** La del AIP si la da para esa calle y esa
-   *   cabecera —Los Rodeos, La Gomera; ver `desdeLaInterseccion`—, y si no,
-   *   la que publicaría: desde el borde de la calle del lado de la cabecera,
-   *   donde la calle se junta con el borde de la pista. Una entrada a menos
-   *   de `EN_LA_CABECERA` del final es la de la cabecera: la pista entera.
-   * - **La pérdida por alineación es de este avión y de esta entrada**: del
-   *   principio de esa TORA a donde el avión queda en el eje siguiendo la
-   *   raya, alisada como la alisa `ponerRuta` con el radio de giro de este
-   *   avión. Como mucho, la de un codo de noventa grados: una calle que llega
-   *   mirando a la cabecera es de remontar (`bocaDeEntrada`), y desde ella no
-   *   se despega sin rodar hacia atrás.
+   * la calle `hastaElEje` que llega al eje en `along`, con este avión y la
+   * TORA que publique el AIP desde esa boca. La cuenta vive fuera de la clase
+   * porque el tráfico la hace igual: ver `pistaDesdeLaBoca` (la función).
    */
   private pistaDesdeLaBoca(along: number, hastaElEje: readonly Punto[]): PistaDesdeLaBoca {
     const mitad = this.largoDePista / 2;
-    const semiancho = this.pista.width / 2;
-    const enEjes = (x: number, z: number) =>
-      enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
-    /*
-     * Donde el eje de la calle cruza el borde de la pista, mirado desde el
-     * nudo hacia atrás, y con qué ángulo: el borde de la calle cae medio
-     * ancho de calle más atrás, y más cuanto más en diagonal llega.
-     */
-    let principio = along;
-    for (let i = hastaElEje.length - 1; i > 0; i--) {
-      const fuera = hastaElEje[i - 1]!;
-      const a = enEjes(fuera[0], -fuera[1]);
-      const b = enEjes(hastaElEje[i]![0], -hastaElEje[i]![1]);
-      if (Math.abs(a.across) < semiancho || Math.abs(b.across) >= semiancho) continue;
-      const u = (Math.abs(a.across) - semiancho) / (Math.abs(a.across) - Math.abs(b.across));
-      const enElBorde = a.along + (b.along - a.along) * u;
-      const largo = Math.hypot(b.along - a.along, b.across - a.across);
-      const seno = largo > 0 ? Math.abs(b.across - a.across) / largo : 1;
-      principio = enElBorde - this.anchoDeLaCalleEn(fuera) / 2 / Math.max(seno, 0.5);
-      break;
-    }
-    if (along + mitad <= EN_LA_CABECERA) principio = -mitad;
-    principio = Math.max(-mitad, Math.min(principio, along));
-    /*
-     * Y dónde queda alineado: donde empieza la recta final de la raya que se
-     * va a seguir. Mirar solo el último tramo de la calle contra el eje daba
-     * poco —3 m de menos en la C de El Hierro—: el chaflán llega por varios
-     * codos, y la raya los redondea juntos.
-     */
-    const lejos = puntoDePista(this.pista, -Math.min(mitad - 60, along + 500));
-    const { puntos } = alisarRuta(
-      [...hastaElEje.map((p) => [p[0], -p[1]] as Punto), [lejos[0], lejos[1]]],
-      undefined,
-      Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)),
-    );
-    /*
-     * La recta final se mide contra sí misma y no contra el rumbo de la pista:
-     * el nudo de la boca no siempre cae en el eje del juego —en la C de El
-     * Hierro, a 4,6 m— y la raya se acerca a él a lo largo de quinientos
-     * metros, como la que dibuja `alEjeDesde`.
-     */
-    const fin = puntos.at(-1)!;
-    const antesDelFin = puntos.at(-2) ?? fin;
-    const recta = Math.atan2(fin[1] - antesDelFin[1], fin[0] - antesDelFin[0]);
-    let alineado = along;
-    for (let i = puntos.length - 1; i > 0; i--) {
-      const a = puntos[i - 1]!;
-      const b = puntos[i]!;
-      if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 0.01) continue;
-      if (Math.cos(Math.atan2(b[1] - a[1], b[0] - a[0]) - recta) < EN_LA_RECTA) break;
-      alineado = enEjes(a[0], a[1]).along;
-    }
-    alineado = Math.min(alineado, along + Math.max(RADIO_CURVA, radioDeGiro(this.avion)));
-    /*
-     * **Y con la del AIP, la alineación se cuenta desde donde empieza la
-     * suya**, que llega hasta el final de la pista como todas. En Los Rodeos
-     * la E-2 entra a doce grados, como la salida rápida que es para la 30:
-     * desde el borde de la calle en los datos de OpenStreetMap habría 2.705 m
-     * por la 12, y el AIP publica 2.546, que empiezan unos treinta metros
-     * pasado el sitio donde el avión ya queda alineado. Restarle a esa cifra
-     * los ciento treinta metros del chaflán sería contarlos dos veces.
-     */
     const delAip =
       along + mitad > EN_LA_CABECERA
         ? (this.bocasPermitidas().find((b) => Math.abs(b.along - along) < MISMA_BOCA)?.tora ??
           null)
         : null;
-    if (delAip !== null) principio = mitad - delAip;
-    const tora = mitad - principio;
-    const alinearse = Math.max(0, alineado - principio);
-    return { tora, alinearse, alSoltarFrenos: tora - alinearse };
-  }
-
-  /**
-   * El ancho de la calle que pasa por `p`, m: el de los datos, o el que se
-   * dibuja si no lo traen. Ver `pistaDesdeLaBoca`.
-   */
-  private anchoDeLaCalleEn(p: Punto): number {
-    let cerca = Infinity;
-    let ancho = ANCHO_RODADURA;
-    for (const calle of this.aero.taxiways) {
-      const d = aLaPolilinea(p, calle.path);
-      if (d < cerca) {
-        cerca = d;
-        ancho = calle.widthM ?? ANCHO_RODADURA;
-      }
-    }
-    return ancho;
+    return pistaDesdeLaBoca(
+      { ...this.pista, length: this.largoDePista },
+      along,
+      hastaElEje,
+      radioDeGiro(this.avion),
+      (p) => anchoDeLaCalleEn(this.aero, p),
+      delAip,
+    );
   }
 
   /** Si un punto cae en la pista en uso, con el margen de `enElAsfalto`. */

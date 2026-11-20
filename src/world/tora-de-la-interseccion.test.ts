@@ -16,13 +16,14 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { Punto } from "./aerodrome";
+import type { Aerodrome, Punto } from "./aerodrome";
 import { PlanDeVuelo, type ComoSeSale } from "./plan-de-vuelo";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import { pistaNecesariaHoy, type DiaDeDespegue } from "../flight/carrera";
 import { enEjesDePista } from "./rumbo";
 import { conViento, EL_HIERRO, TENERIFE_NORTE, type Scenario } from "./scenarios";
 import { TIEMPO_DE_CASA } from "./meteo";
+import { sueloDelTrafico } from "./suelo-del-trafico";
 
 interface HastaLaCarrera {
   /** Lo que pone la verde. */
@@ -185,5 +186,87 @@ describe("la TORA de la intersección (H41f)", () => {
     expect(sale.desdeLaEntrada).toBe(2546);
     expect(sale.porDelante).toBeCloseTo(2546 - sale.alinearse, 6);
     expect(sale.porDelante).toBeGreaterThanOrEqual(sale.necesitaHoy);
+  });
+});
+
+/**
+ * **Y el tráfico decide con la misma cuenta** (H41g). El tráfico contaba la
+ * pista desde el nudo de la boca y sin restar la alineación, así que con el
+ * mismo avión y por la misma boca uno salía desde la calle y al otro la torre
+ * le decía remontar. Se pone a quien juega en la doble raya del tráfico, se
+ * le pregunta lo que dará la verde (`comoSeSaldraDesdeAqui`) y se le pide al
+ * tráfico la misma pista: a un metro por debajo de lo que queda al soltar
+ * frenos, los dos salen desde la calle; a un metro por encima, los dos
+ * remontan. Con la cuenta de antes, el tráfico tenía ahí diez metros más.
+ */
+describe("el tráfico y quien juega, por la misma boca (H41g)", () => {
+  it("El Hierro por la 34, con la pista del JAZ 40: deciden igual a un metro de cada lado", () => {
+    const pista = conViento(EL_HIERRO, { ...TIEMPO_DE_CASA, vientoDe: 0, vientoKt: 15 }).runway;
+    const aero = EL_HIERRO.aerodrome as Aerodrome;
+    const suelo = sueloDelTrafico(aero, pista, aero.runways[0]?.widthM ?? 45)!;
+    const suya = suelo.salida(undefined, undefined, 0)!;
+    // Su doble raya: a `espera` metros del principio de su camino.
+    let anda = 0;
+    let raya = suya.camino[0]!;
+    for (let i = 1; i < suya.camino.length; i++) {
+      const a = suya.camino[i - 1]!;
+      const b = suya.camino[i]!;
+      const d = Math.hypot(b.x - a.x, b.z - a.z);
+      if (anda + d >= suya.espera) {
+        const u = d > 0 ? (suya.espera - anda) / d : 0;
+        raya = { x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u };
+        break;
+      }
+      anda += d;
+    }
+    const decide = (dia: DiaDeDespegue) => {
+      const plan = new PlanDeVuelo(aero, pista, () => 0, jaz40);
+      plan.diaDeDespegue = () => dia;
+      plan.reiniciar();
+      plan.paso(
+        {
+          position: { x: raya.x, y: 0, z: raya.z },
+          velocity: { x: 0, y: 0, z: 0 },
+          heading: 0,
+          airspeed: 0,
+          groundSpeed: 0,
+          verticalSpeed: 0,
+          yawRate: 0,
+          onGround: true,
+          onRunway: false,
+        } as never,
+        0,
+        true,
+        0.1,
+      );
+      const pide = pistaNecesariaHoy(jaz40, dia);
+      const trafico = suelo.salida(undefined, undefined, pide)!;
+      return { yo: plan.comoSeSaldraDesdeAqui()!, trafico: trafico.remonte ? "remonte" : "sale" };
+    };
+    const sinViento = decide(cola(0)).yo;
+    expect(sinViento.desde).toBe("interseccion");
+    // Lo que queda al soltar frenos es menos que la pista desde el nudo, que es con lo que contaba.
+    const pisa = suya.camino.find(
+      (p) => Math.abs(enEjesDePista(p.x, p.z, pista.x, pista.z, pista.heading).across) < 3,
+    )!;
+    const desdeElNudo =
+      pista.length / 2 - enEjesDePista(pisa.x, pisa.z, pista.x, pista.z, pista.heading).along;
+    expect(desdeElNudo - sinViento.porDelante).toBeGreaterThan(3);
+    for (const [margen, debe] of [
+      [-1, "sale"],
+      [1, "remonte"],
+    ] as const) {
+      const quiere = sinViento.porDelante + margen;
+      let lo = -10;
+      let hi = 10;
+      for (let k = 0; k < 50; k++) {
+        const m = (lo + hi) / 2;
+        if (pistaNecesariaHoy(jaz40, cola(m)) < quiere) lo = m;
+        else hi = m;
+      }
+      const r = decide(cola(hi));
+      expect(r.trafico, `a ${margen} m`).toBe(debe);
+      expect(r.yo.desde, `a ${margen} m`).toBe(debe === "sale" ? "interseccion" : "remonte");
+    }
   });
 });

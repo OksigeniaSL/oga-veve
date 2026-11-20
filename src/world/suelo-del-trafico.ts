@@ -32,6 +32,8 @@ import {
 import { conLaRuedaEn, MORRO_DEL_TRAFICO, type MorroDelAvion } from "./rueda-de-morro";
 import { construirGrafo, puestosEnElPavimento, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
 import { delante, enEjesDePista } from "./rumbo";
+import { anchoDeLaCalleEn, pistaDesdeLaBoca } from "./plan-de-vuelo";
+import { GIRO_DE_MORRO } from "../flight/fdm";
 import { desplazadoDe } from "./umbral-desplazado";
 import { umbralPublicado } from "./umbrales-publicados";
 import {
@@ -502,17 +504,60 @@ export function sueloDelTrafico(
   const cabecera = cabeceraPorRumbo(aero, pista.heading);
   const toraDeLaCabecera = umbralPublicado(aero.id, cabecera)?.tora ?? pista.length;
   /**
-   * **La pista que se tiene por delante entrando por esa boca**, m, y si se
-   * puede despegar desde ella: la de la cabecera entrando por la cabecera, y
-   * desde una intersección solo si el AIP la deja y con la TORA que publica
-   * desde ahí. Cero si el AIP no la deja: desde ahí se entra a remontar,
-   * no a despegar. Ver `desdeLaInterseccion`.
+   * **La pista que se tiene por delante al soltar frenos entrando por esa
+   * boca**, m, por la calle `ruta` —en coordenadas de fichero, acabando en la
+   * boca— y con un avión que gira con `radio`. Cero si el AIP no deja salir
+   * desde ahí: desde ahí se entra a remontar, no a despegar. Ver
+   * `desdeLaInterseccion`.
+   *
+   * **Con la cuenta de quien juega** (H41g): la TORA que se publica desde esa
+   * boca, menos lo que se come alinearse siguiendo la calle, de
+   * `pistaDesdeLaBoca` en `plan-de-vuelo.ts`. Aquí se contaba la TORA del AIP
+   * o la pista desde el nudo, sin restar nada: en la C de El Hierro por la
+   * 34, 725 m donde quien juega, con el mismo avión, tiene 720 al soltar
+   * frenos. Con un día que pidiera 722, el tráfico salía desde la calle y a
+   * quien juega la torre le decía remontar.
+   *
+   * Y nunca más que la TORA que publica la cabecera, que es la que manda al
+   * final de la pista: en Fuerteventura por la 19 se pierden mil metros.
    */
-  const pistaDesde = (boca: { nudo: number; along: number }): number => {
-    if (boca.along + mitad <= EN_LA_CABECERA) return toraDeLaCabecera;
-    const aip = desdeLaInterseccion(aero, cabecera, calleDeLaBoca(grafo, boca.nudo));
-    if (!aip.permitida) return 0;
-    return Math.min(aip.tora ?? mitad - boca.along, toraDeLaCabecera);
+  const pistaDesde = (
+    boca: { nudo: number; along: number },
+    ruta: readonly Punto[],
+    radio: number,
+  ): number => {
+    const aip =
+      boca.along + mitad <= EN_LA_CABECERA
+        ? null
+        : desdeLaInterseccion(aero, cabecera, calleDeLaBoca(grafo, boca.nudo));
+    if (aip && !aip.permitida) return 0;
+    const desdeAhi = pistaDesdeLaBoca(
+      { ...pista, width: ancho },
+      boca.along,
+      ruta,
+      radio,
+      (p) => anchoDeLaCalleEn(aero, p),
+      aip?.tora ?? null,
+    );
+    return Math.min(desdeAhi.alSoltarFrenos, toraDeLaCabecera - desdeAhi.alinearse);
+  };
+  /**
+   * **Si la calle llega a la pista mirando a la cabecera** (H41g), lejos de
+   * ella: desde esa boca no se despega sin rodar por la pista hacia atrás, y
+   * eso es remontar, aunque la pista de por delante bastara. Es la regla de
+   * quien juega desde la H41e, con el mismo coseno: ver `bocaDeEntrada` en
+   * `plan-de-vuelo.ts`. Sin ella, por el chaflán de la C de El Hierro que
+   * mira a la cabecera el tráfico salía desde la calle, y quien juega, con el
+   * mismo avión y la misma boca, remontaba.
+   */
+  const llegaAlReves = (boca: { along: number }, ruta: readonly Punto[]): boolean => {
+    if (boca.along + mitad <= EN_LA_CABECERA) return false;
+    const n = ruta.length;
+    const a = ruta[Math.max(0, n - 4)]!;
+    const b = ruta[n - 1]!;
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    // Hacia delante en el fichero es (fx, −fz): la y es la z cambiada.
+    return l >= 1 && ((b[0] - a[0]) * fx - (b[1] - a[1]) * fz) / l <= -0.2;
   };
   /** Un punto de la pista, a `along` del centro y `lado` metros a la derecha del eje. */
   const enLaPista = (along: number, lado: number): EnElPlano => ({
@@ -1022,6 +1067,13 @@ export function sueloDelTrafico(
         const h = cortarEnLaRaya(puntos.map(alMundo), ejes, ancho, mitad);
         return !!h && !pisaLaPista(h.hastaLaRaya, 0, Infinity, ejes, ancho, mitad);
       };
+      /*
+       * El radio de giro de este avión, para lo que se come alinearse: el de
+       * su batalla si sale de pasarela, como `radioDeGiro` en `flight/cabe.ts`.
+       * Los demás giran más cerrado que lo que redondea la raya, así que con
+       * cero la cuenta da lo mismo. Ver `pistaDesde`.
+       */
+      const radio = pasarela ? pasarela.batalla / Math.tan(GIRO_DE_MORRO) : 0;
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;
@@ -1038,8 +1090,6 @@ export function sueloDelTrafico(
          */
         if (i >= BOCAS_DE_SALIDA && (deReserva || remonte || remonteEncima)) break;
         const boca = deCabecera[i]!;
-        const daSuPista = pistaDesde(boca) >= pistaQueNecesita;
-        if (!daSuPista && remonte) continue;
         const nudo = grafo.nudos[boca.nudo]!;
         /*
          * **Y de un puesto del que se llega a la doble raya por la calle**, sin pisar la
@@ -1059,6 +1109,13 @@ export function sueloDelTrafico(
           valeParaSalir,
         )?.puntos;
         if (!ruta) continue;
+        /*
+         * Si da su pista se mira ya con la calle por la que se llega, que es la
+         * que decide cuánto se come alinearse: ver `pistaDesde`.
+         */
+        const daSuPista =
+          !llegaAlReves(boca, ruta) && pistaDesde(boca, ruta, radio) >= pistaQueNecesita;
+        if (!daSuPista && remonte) continue;
         const hecha = cortarEnLaRaya(ruta.map(alMundo), ejes, ancho, mitad);
         if (!hecha) continue;
         // Y hasta la raya no pisa la pista: sin permiso no se entra.

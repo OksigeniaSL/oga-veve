@@ -1113,9 +1113,17 @@ const despegue = await page.evaluate(async () => {
    * radio. Rodar por la pista hacia atrás es remontar.
    */
   const porLaPista = { entra: null, masAtras: null, giro: null };
+  /*
+   * **Y lo que decide el plan, leído con la verde** (H41g): al empezar la
+   * carrera ya se ha borrado, y leído ahí salía «el plan: null» en Los Rodeos
+   * (H41f). Y lo que suelta frenos, dónde queda el avión en el eje: ver abajo.
+   */
+  let saleConLaVerde = null;
+  let enElEjeEn = null;
   for (let i = 0; i < 600; i++) {
     await new Promise((r) => setTimeout(r, 200));
     const s = o.estado();
+    saleConLaVerde ??= o.juegoParaTrazas?.()?.plan?.comoSeSale ?? null;
     if (s.onRunway) {
       const b = o.backTaxi?.();
       if (b) {
@@ -1158,6 +1166,21 @@ const despegue = await page.evaluate(async () => {
     const delEjeAhora =
       (s.position.x - pista.x) * Math.cos(rumboPista) + (s.position.z - pista.z) * Math.sin(rumboPista);
     const fueraDelEje = ruta.length > 1 && s.onRunway && Math.abs(delEjeAhora) > EN_EL_EJE;
+    /*
+     * **Y dónde queda el avión en el eje y mirando pista abajo** (H41g),
+     * siguiendo la raya, que es lo que hace perder pista al juego y no al
+     * banco: tras la media vuelta centrada, la raya volvía al eje en diagonal
+     * y se soltaba frenos setenta metros más adelante del giro.
+     */
+    if (
+      enElEjeEn === null &&
+      s.onRunway &&
+      o.fase() !== "back-taxi" &&
+      !remontePorDelante &&
+      Math.abs(delEjeAhora) <= EN_EL_EJE &&
+      Math.abs(alRumbo(s, rumboPista)) < 0.28
+    )
+      enElEjeEn = o.backTaxi?.()?.along ?? null;
     // Y los flaps de despegue, si la lista los pide: ver `losPideLaLista`.
     if (losPideLaLista()) o.pedirFlaps(1 / 3);
     if ((o.fase() === "back-taxi" || remontePorDelante || fueraDelEje) && ruta.length > 1) {
@@ -1233,7 +1256,9 @@ const despegue = await page.evaluate(async () => {
       break;
   }
   porLaPista.suelta = o.backTaxi?.()?.along ?? null;
-  const sale = o.juegoParaTrazas?.()?.plan?.comoSeSale ?? null;
+  porLaPista.enElEje = enElEjeEn;
+  const sale = saleConLaVerde ?? o.juegoParaTrazas?.()?.plan?.comoSeSale ?? null;
+  porLaPista.remonta = sale?.desde === "remonte";
   porLaPista.sale = sale
     ? `${sale.desde}${sale.desde === "remonte" ? (sale.hastaElFinal ? " hasta el final" : " un trozo") : ""}` +
       ` (pide ${Math.round(sale.necesitaHoy)} m, desde la entrada ${Math.round(sale.desdeLaEntrada)},` +
@@ -1489,13 +1514,34 @@ const despegue = await page.evaluate(async () => {
     fasesEnElSuelo: [...fasesEnElSuelo],
     porLaPista,
     // Lo que se dijo de por dónde se sale: la torre y la instructora.
-    porDondeSeSale: Object.entries(o.dichoTodo?.() ?? {}).flatMap(([quien, claves]) =>
-      claves
-        .filter((k) =>
-          /backtrack|ofreceInterseccion|\.tora|remontar|desdeLaInterseccion|backTaxi|sinRemontar/.test(k),
-        )
-        .map((k) => `${quien}: ${k}`),
-    ),
+    /*
+     * **Y a quién se lo dice la torre** (H41g). Se apuntaba cualquier
+     * «backtrack» de la torre, y la torre también se lo dice al tráfico que
+     * remonta: en El Hierro, con EC-RDY saliendo antes, el banco daba por oído
+     * el tuyo y el que había sonado era el suyo. Lo de la torre cuenta solo si
+     * sus piezas llevan tu indicativo.
+     */
+    porDondeSeSale: (() => {
+      const yo = (o.indicativo?.()?.yoDicho ?? "")
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((l) => `fonetico.${l}`)
+        .join(" ");
+      return Object.entries(o.dichoConPiezas?.() ?? {}).flatMap(([quien, dichas]) =>
+        dichas
+          .filter(({ clave }) =>
+            /backtrack|ofreceInterseccion|\.tora|remontar|desdeLaInterseccion|backTaxi|sinRemontar/.test(clave),
+          )
+          .map(({ clave, piezas }) =>
+            quien !== "torre"
+              ? `${quien}: ${clave}`
+              : yo && (piezas ?? []).join(" ").includes(yo)
+                ? `torre: ${clave}`
+                : `torre a otro: ${clave}`,
+          ),
+      );
+    })(),
     largoDePista: pista.length,
     // Lo que el propio juego calcula que le cuesta llegar a rotar, y su Vr:
     // es contra eso contra lo que hay que medir, no contra una fracción de la
@@ -1531,10 +1577,32 @@ console.log(
 console.log(`  masa al soltar frenos: ${Math.round(despegue.masa)} kg`);
 console.log(
   `  por la pista (m del centro): entra en ${despegue.porLaPista.entra}, lo más atrás ${despegue.porLaPista.masAtras}, ` +
-    `giro ${despegue.porLaPista.giro}, suelta frenos en ${despegue.porLaPista.suelta}` +
+    `giro ${despegue.porLaPista.giro}, en el eje en ${despegue.porLaPista.enElEje}, suelta frenos en ${despegue.porLaPista.suelta}` +
     ` · el plan: ${despegue.porLaPista.sale}` +
     ` · por dónde se sale, dicho: ${despegue.porDondeSeSale.join(" · ") || "nada"}`,
 );
+/*
+ * **Y si el plan remonta, la torre te lo dice** (H41g), de Taguató para arriba,
+ * que es donde habla la radio: una autorización de remontar que no se dice es
+ * una instrucción que no se oye. Ver `contarPorDondeSeSale` en `game.ts`.
+ *
+ * **Y solo con las voces cargadas.** Lo que cuenta por dónde se sale va solo
+ * con su grabación —sin ella, la tira—, y sin un gesto el pack no se baja: en
+ * Taguató sin `OGA_CON_VOCES` la torre no suena grabada ninguna vez, y lo que
+ * se apunta de ella es lo que la frecuencia dice sin voz, el «backtrack» del
+ * tráfico entre ello. Con eso se leyó como tuyo el de EC-BRM en la H41e.
+ */
+if (
+  despegue.porLaPista.remonta &&
+  /^taguato/.test(TRAMO) &&
+  (TRAMO === "taguato-ruvicha" || process.env.OGA_CON_VOCES)
+)
+  comprobar(
+    "y si se remonta, la torre te dice «backtrack»",
+    despegue.porDondeSeSale.some((d) => /^torre: .*backtrack/.test(d)),
+    despegue.porDondeSeSale.join(" · ") || "nada",
+    "con la verde enseguida, el «backtrack runway» de quien juega no sonaba: solo el del tráfico",
+  );
 comprobar(
   "a todo gas el avión despega",
   despegue.enElAire !== null,
