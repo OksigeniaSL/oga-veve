@@ -1005,7 +1005,16 @@ const despegue = await page.evaluate(async () => {
     const alFin = fin
       ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z)
       : 0;
-    if (o.fase() === "back-taxi" && ruta.length > 1) {
+    /*
+     * **Y si la torre dijo remontar, se remonta** (H41e): entrando por una
+     * calle que llega mirando a la cabecera, el avión pisa la pista todavía
+     * en «autorizado», y apuntar ahí al rumbo de despegue es no hacer caso
+     * del «backtrack»: el hecho gana al plan —ver `deducir` en
+     * `flight/vuelo.ts`— y se despega desde la boca. Con un remonte trazado,
+     * en la pista se sigue la raya.
+     */
+    const remontePorDelante = s.onRunway && (o.backTaxi?.()?.giro ?? null) !== null;
+    if ((o.fase() === "back-taxi" || remontePorDelante) && ruta.length > 1) {
       /*
        * **Salvo en el back-taxi, donde ir por la pista es el plan.**
        *
@@ -1070,6 +1079,7 @@ const despegue = await page.evaluate(async () => {
     if (
       s.onRunway &&
       o.fase() !== "back-taxi" &&
+      !remontePorDelante &&
       Math.abs(alRumbo(s, rumboPista)) < 0.25 &&
       i > 8
     )
