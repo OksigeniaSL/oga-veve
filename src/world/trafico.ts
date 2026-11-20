@@ -299,6 +299,12 @@ export interface Caminos {
      */
     readonly remonte?: { readonly entra: number; readonly vira: number } | null;
     /**
+     * **Dónde da media vuelta en la pista el que aterriza**, en metros de
+     * `llegada`: los vértices de la toma a dejarla libre en los que tuerce más
+     * de `VIRAJE_CERRADO`. Ver `alVirarEnLaPista`.
+     */
+    readonly virajes?: readonly number[];
+    /**
      * **Si sale empujado** de un puesto de contacto: el empuje del tractor, y
      * hasta qué metro de `salida` llega. Ver `empujado` en
      * `suelo-del-trafico.ts` y `empujar`.
@@ -840,6 +846,97 @@ export function alRemontar(
 }
 
 /**
+ * **Lo que tuerce un viraje que en la pista se da casi parado**, rad: más de
+ * cien grados. Una salida de verdad, recta o rápida, tuerce noventa o menos y
+ * se coge rodando; más que eso es dar media vuelta, en la pista o por una
+ * salida rápida trazada para la cabecera contraria.
+ */
+const VIRAJE_CERRADO = (100 * Math.PI) / 180;
+
+/**
+ * **Lo que frena en la pista el que va a dar media vuelta**, m/s²: una
+ * frenada firme, la de un autofreno medio, que deja la vuelta a `VIRA_A`.
+ */
+const FRENA_PARA_VIRAR = 2.5;
+
+/**
+ * **Lo que se mira a cada lado de un vértice para medir su viraje**, m. Los
+ * caminos traen tramos de centímetros —el de la salida empieza en el punto
+ * del eje donde acaba lo de antes, con un pelo de lado— y curvas en tramos de
+ * pocos metros: vértice a vértice, una media vuelta se partía en dos de
+ * noventa y no se veía. Con treinta metros a cada lado, una salida normal no
+ * llega nunca a cien grados —no tuerce tanto en total—, y una media vuelta en
+ * la pista, sí.
+ */
+const MIRA_EL_VIRAJE = 30;
+
+/**
+ * **Dónde tuerce más de `VIRAJE_CERRADO`** un camino, en sus metros, de
+ * `desde` a `hasta`: en cada vértice, el rumbo de los `MIRA_EL_VIRAJE` metros
+ * de antes contra el de los de después.
+ */
+export function virajesCerrados(
+  camino: readonly Sitio[],
+  desde: number,
+  hasta: number,
+): number[] {
+  const virajes: number[] = [];
+  let metros = 0;
+  for (let i = 1; i < camino.length - 1; i++) {
+    const a = camino[i - 1]!;
+    const b = camino[i]!;
+    metros += Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
+    if (metros < desde - 0.5 || metros > hasta + 0.5) continue;
+    const antes = porElCamino(camino, metros - MIRA_EL_VIRAJE)?.sitio;
+    const despues = porElCamino(camino, metros + MIRA_EL_VIRAJE)?.sitio;
+    if (!antes || !despues) continue;
+    const ux = b.x - antes.x;
+    const uz = b.z - antes.z;
+    const vx = despues.x - b.x;
+    const vz = despues.z - b.z;
+    const lu = Math.hypot(ux, uz);
+    const lv = Math.hypot(vx, vz);
+    if (lu < 1 || lv < 1) continue;
+    const coseno = Math.max(-1, Math.min(1, (ux * vx + uz * vz) / (lu * lv)));
+    if (Math.acos(coseno) > VIRAJE_CERRADO) virajes.push(metros);
+  }
+  return virajes;
+}
+
+/**
+ * **A cuánto puede ir el que aterrizó**, m/s, a `r` metros de su llegada, con
+ * las medias vueltas que le quedan por dar en la pista: frena para llegar a
+ * cada una a `VIRA_A` y, dada, rueda de vuelta a paso de remonte —veinte
+ * nudos, `REMONTA_A`— hasta dejar la pista en `fuera`. Fuera de eso, `v`.
+ *
+ * La velocidad del que aterriza bajaba en línea recta de la toma a la boca de
+ * su salida, contada por el camino. Con la salida por detrás de donde acaba
+ * de frenar —la que le deja en un puesto libre, en Los Rodeos la de los 590 m
+ * de la 12 para un turbohélice que frena hasta los 900—, ese camino incluye
+ * la vuelta, y la media vuelta se daba a 23 m/s y el remonte hacia el umbral
+ * a más de 20, de frente a quien venía en final (H41). Nadie da la vuelta en
+ * una pista a cuarenta y cinco nudos.
+ */
+export function alVirarEnLaPista(
+  v: number,
+  r: number,
+  virajes: readonly number[] | undefined,
+  fuera: number,
+): number {
+  if (!virajes?.length || r >= fuera) return v;
+  let tope = v;
+  for (const g of virajes) {
+    tope = Math.min(
+      tope,
+      g >= r
+        ? Math.sqrt(VIRA_A * VIRA_A + 2 * FRENA_PARA_VIRAR * (g - r))
+        : Math.min(REMONTA_A, Math.sqrt(VIRA_A * VIRA_A + 2 * AL_REMONTAR * (r - g))),
+    );
+  }
+  return tope;
+}
+
+/**
  * **Lo que le queda de remonte**, s, desde `r` metros de su salida hasta
  * alinearse: la recta a su paso y la media vuelta al suyo. La misma cuenta que
  * `alRemontar`, sumada a pasos de cinco metros.
@@ -1100,7 +1197,13 @@ export function trazar(
       enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza, tomaDeVerdad]);
       const boca = largoDelCamino([...hastaLaBoca, rodando[0]!]);
       fuera = boca + llega.pista;
-      enTierra = { boca, eje: 0, despega: 0, tipo: t };
+      enTierra = {
+        boca,
+        eje: 0,
+        despega: 0,
+        tipo: t,
+        virajes: virajesCerrados(llegada, enLaToma, fuera),
+      };
     }
     const sale = tierra.suelo.salida(
       tierra.evitar,
@@ -1155,6 +1258,7 @@ export function trazar(
       hastaElEje = sale.eje;
       enTierra = {
         boca: enTierra?.boca ?? 0,
+        virajes: enTierra?.virajes,
         eje: sale.eje,
         despega: sale.eje + t.carrera,
         tipo: t,
@@ -2554,10 +2658,11 @@ export function crearTrafico(
       if (!t || t.boca <= 0) return m.velocidad * FRENANDO;
       // Pasada la boca, lo que quede de pista se rueda a paso vivo: es
       // pista ocupada, y el que la ocupa la deja cuanto antes.
-      if (r >= t.boca) return r < c.fuera ? RUEDA_A * 2 : RUEDA_A;
+      if (r >= t.boca) return alVirarEnLaPista(r < c.fuera ? RUEDA_A * 2 : RUEDA_A, r, t.virajes, c.fuera);
       const f = (r - c.toca) / Math.max(1, t.boca - c.toca);
       const alTocar = t.tipo.aproximacion * 0.85;
-      return alTocar + (RUEDA_A * 1.5 - alTocar) * f;
+      // Y con media vuelta por delante, llega a ella casi parado. Ver `alVirarEnLaPista`.
+      return alVirarEnLaPista(alTocar + (RUEDA_A * 1.5 - alTocar) * f, r, t.virajes, c.fuera);
     }
     if (c && t && t.despega > 0 && m.camino === c.salida) {
       const deCarrera = enSuCarrera(t.tipo, r - t.eje, m.velocidad);
