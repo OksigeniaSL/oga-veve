@@ -2927,3 +2927,147 @@ que no van, no se leerían.
 - **El 747-100 en cristal**: lleva en el panel lo que llevan sus relojes de
   aguja —el curso, la senda y la aguja del ADF—, pero en pantallas. Viene de
   antes y no es de esta tanda.
+
+## Enmienda H42 (20-11-2026): el ILS del JAZ 50 y del JAZ 40 dejó de llegar a la pista, y era el piloto del banco
+
+### Lo que pasaba
+
+La ronda de la tanda 19 (una copia de main en `3cff2357`) voló el ILS de
+Fuerteventura con el alisio y dos aviones que H37d y H37a habían dejado en 20
+de 20:
+
+- **El JAZ 50, 15 de 20**: en la final, la senda a 1,09 puntos; lo peor
+  desde mil pies, 2,79; en los mínimos, la frustrada, a 196 ft y 81 nudos.
+  En la foto de la final iba a 79 nudos y por encima de la senda. El
+  ejercicio hizo lo que tiene que hacer —con la aguja fuera, al aire—; el
+  que no bajaba era el avión.
+- **El JAZ 40, 18 de 20**: bajó bien —la senda a 0,04 puntos en los
+  mínimos— pero, tocado a 84 nudos, rebotó hasta 11 ft, se fue del eje
+  hasta 1,46 puntos de localizador rodando y el ejercicio cerró con
+  `otraVez`.
+
+### El commit
+
+El ILS del JAZ 50 en una copia de cada uno, con la tarjeta de verdad (Intel
+Iris Xe por ANGLE):
+
+| Copia | Resultado | La senda, desde mil pies |
+|---|---|---|
+| `3166ce1d`, justo antes de H40b | 20 de 20, aterriza | 0,23 puntos como mucho |
+| `54eea3df`, el merge de H40b | 15 de 20, frustrada | 2,50 puntos |
+
+Entre los dos solo entra código en `18fa20b9`, «El avión colocado en el aire
+nace compensado (H40b)»; lo demás del merge son las notas del ADR 0002.
+
+### La causa, con números
+
+H40b hace nacer el ILS compensado (`dejarloCompensado`): a la de circuito,
+limpio y nivelado, el compensador en `timonDeEquilibrio(0)`. El JAZ 50 nace
+con **+0,163** (lo escribe ahora el banco); antes, `releaseAll` lo dejaba en
+cero. Con los flaps de aterrizar, a los 81 o 82 nudos de la final, el avión
+pide en total **entre −0,10 y −0,14** (en las dos tiradas arregladas, a 999
+ft: la mano en +0,02 y el compensador en −0,12; la mano en −0,01 y el
+compensador en −0,13). Sobre el compensador de la colocación, la mano tiene
+que dar **de −0,27 a −0,30** todo el rato.
+
+El piloto del banco no tocaba la rueda. Su mano es la proporcional —0,08 por
+metro por segundo de error de bajada— más lo que va sumando, y lo sumado
+tiene tope en 0,2. Con el compensador en cero le bastaba: la final pedía de
+−0,10 a −0,14 y lo sumado lo sostenía sin error. Con el de H40b faltan entre
+0,07 y 0,10 que solo puede dar la proporcional, con un error que no se va: de
+0,9 a 1,25 m/s de bajada de menos. Y su ley vertical pide la bajada de la
+senda más 1,2 m/s por punto de aguja, así que ese error solo aparece con el
+avión **un punto por encima de la senda**: medido, 1,07 y 1,09 puntos en la
+final de las dos tiradas rotas. Cerca de la pista la aguja se vuelve más
+sensible y los mismos metros por encima son más puntos —2,50 y 2,79—, el
+avión frena por ir con el morro alto (79 nudos) y en los mínimos el
+ejercicio, como tiene que hacer, manda al aire.
+
+**El JAZ 40 es otra cosa, y venía de antes.** Su final cabe en la mano: nace
+con +0,061 y configurado pide −0,12, y en las dos tiradas rotas llega a los
+mínimos con las agujas a 0,05 puntos o menos. Lo que falla es la carrera. El
+ejercicio da el aterrizaje por bueno con ocho segundos en el suelo
+(`EN_EL_SUELO`), y el piloto del banco rodaba con los pies quietos: con el
+alisio de la derecha el bimotor se va hacia el viento y sale del eje. En
+`3166ce1d`, antes de H40b, ya se iba —a los nueve segundos de tocar, a 0,95
+puntos de localizador— y cerró con la pista por poco: 20 de 20. En
+`3cff2357` iba a 1,46 puntos a los nueve segundos, y con el compensador ya
+arreglado, a 1,35 a los ocho: se salió y cerró con `otraVez`. Era una
+carrera que el banco ganaba por los pelos; no se ha partido commit a commit
+qué la inclinó. Volver a soltar el timón en el suelo con la superficie
+neutra, como antes de H40b, no la arregló.
+
+### El juego está bien
+
+Nacer compensado para lo que se hace al nacer es lo que hace un instructor, y
+H40b lo midió. Que al sacar los flaps cambie lo que pide el timón también
+es de verdad, y quien juega lo arregla como en un avión: tiene el mando
+entero, no tres décimas, y la rueda del compensador
+(`PASO_DE_TRIM`, un cuarto de recorrido por segundo). No hay nada que cambiar
+en el juego.
+
+### El cambio, en `scripts/ver-ils-con-agujas.mjs`
+
+- **Lo que la mano sostiene, se lo quita la rueda**: lo que el piloto lleva
+  sumado pasa al compensador, la mitad por segundo, y la mano vuelve a
+  moverse alrededor de lo compensado. Es lo que hace quien vuela, y vale
+  igual con el compensador en cero que con el de H40b.
+- **En el suelo, el timón en su sitio**: la mano deja la superficie neutra
+  (`elevator = −trim`), que es lo que hacía antes con el compensador en cero.
+- **Y en la carrera, el eje con los pies**, como quien aterriza: el rumbo de
+  la pista más seis grados por punto de localizador (ocho como mucho), el pie
+  que sostiene el viento y se va quedando puesto, y el giro que ya lleva. Es
+  la ley de la carrera de `verificar-vuelo-entero.mjs`, con la aguja en vez
+  de los metros al eje.
+- **Y el banco lo escribe**: con qué compensador nace, cómo va en la final a
+  mil pies —velocidad, gas, mano y compensador— y el compensador en el rastro
+  desde los mínimos.
+
+### La prueba
+
+`colocado-y-compensado.test.ts`, «el ILS colocado compensado, configurado y
+por la senda»: el modelo solo, colocado como el ILS, configurado y tres
+grados abajo con la ley vertical del banco. Con la rueda, el JAZ 20, el JAZ 40
+y el JAZ 50 bajan a menos de 2 m de la senda con la mano por debajo de 0,05.
+Sin la rueda, el JAZ 50 se lleva la mano a 0,28, con lo sumado en su tope:
+el mismo atasco, en la mesa sin viento a 13 m por encima de la senda.
+
+### Volado
+
+Fuerteventura, el ILS de la 01 con el alisio, la Intel por ANGLE, el banco
+sobre main en `426fed4d`. Primero con la rueda sola:
+
+- **El JAZ 50: 20 de 20**. A mil pies, 82,4 nudos, la mano en +0,02 y el
+  compensador en −0,12; lo peor desde mil pies, 0,22 puntos de senda y 0,10
+  de localizador; toca a 70 nudos en el eje y cierra con la pista.
+- **El JAZ 20: 19 de 19**, como en la ronda (lo peor desde mil pies, 0,06 y
+  0,18 contra 0,04 y 0,17). Nace con +0,056 y a mil pies va a 72,3 nudos con
+  la mano en 0,00 y el compensador en −0,12.
+- **El JAZ 40: 18 de 20**. Nace con +0,061; la final, perfecta —a mil pies,
+  la mano en −0,01 y el compensador en −0,11—, pero en la carrera, a los
+  ocho segundos, a 1,35 puntos de localizador, fuera de la pista y
+  `otraVez`. Es lo que llevó a los pies.
+
+Y con los pies:
+
+- **El JAZ 40: 20 de 20**. Toca a 84 nudos y rueda a 0,09 puntos del eje
+  como mucho, con hasta 0,37 de pie izquierdo contra el alisio; lo peor
+  desde mil pies, 0,09 de localizador y 0,13 de senda.
+- **El JAZ 50: 20 de 20**, otra vez. Nace con +0,163; a mil pies, 81,4
+  nudos, la mano en −0,01 y el compensador en −0,13; lo peor desde mil pies,
+  0,09 de localizador y 0,24 de senda; rueda a 0,05 puntos del eje como
+  mucho, con hasta 0,41 de pie izquierdo.
+- **El JAZ 20: 19 de 19**, como siempre: a mil pies, 72,2 nudos, la mano en
+  0,00 y el compensador en −0,13; lo peor desde mil pies, 0,05 y 0,22; rueda
+  a 0,03 puntos del eje, con hasta 0,37 de pie izquierdo.
+
+vitest entero, con la prueba nueva: 546 ficheros, 10.965 pruebas bien y 29
+saltadas.
+
+### Lo que queda
+
+- `verificar-planeo.mjs` y `verificar-cabecera.mjs` llevan la misma mano de
+  tres décimas sin rueda, y el planeo nace compensado desde H40b a la de
+  mejor planeo. No se han volado aquí.
+- Qué inclinó la carrera del JAZ 40 entre `3166ce1d` y `3cff2357`, con los
+  pies quietos: no se ha partido. Con los pies ya no decide nada.
