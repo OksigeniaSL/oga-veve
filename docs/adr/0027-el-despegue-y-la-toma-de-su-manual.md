@@ -6595,3 +6595,158 @@ nudos— o tocaba a 3,3–3,7 m/s.
   en la mesa.
 - **El 747 del FCTM**: la vara del JAZ 120 no se ha contrastado con el texto
   del manual.
+
+## Enmienda H37j (20-11-2026): los techos y el crucero de los de hélice contra su manual
+
+H37d, H37g y H38g dejaron apuntadas cuatro cosas: que el JAZ 40 y el JAZ 60
+suben por encima de su altitud máxima de operación, que el techo del JAZ 20
+sale a 15.000 ft donde su manual da 13.500, que el JAZ 50 al 75 % va a 168
+nudos a diez mil pies donde su ficha dice 182, y que el JAZ 120 cruza a M0,78
+donde el 747-100 cruza a 0,84. **La altitud máxima se escribe y se cuenta; el
+crucero del Twin Otter se arregla en lo que se le pedía; el techo del 172R y
+el Mach del 747 se miden y quedan escritos.**
+
+### La altitud máxima de operación
+
+No es lo que sube el motor: es lo que se aprueba, en la sección de
+limitaciones de cada manual. Con su fuente, en `flight/altitud-maxima.ts`:
+
+| | Altitud máxima | Fuente | Su motor, a su peso máximo (H37d) |
+|---|---|---|---|
+| JAZ 40 (Seneca II) | 25.000 ft | «Flight above 25,000 feet is not approved», manual del Seneca III, § 2.27 | 30.700 ft |
+| JAZ 50 (Twin Otter 400) | 25.000 ft | EASA.IM.A.575, A.III.10 | 26.800 ft |
+| JAZ 60 (1900D) | 25.000 ft | «Maximum Operating Pressure-Altitude Limit for normal operation is 25,000 ft», TAR 98/07 | 38.400 ft |
+| JAZ 90 (E-170) | 41.000 ft | ficha EASA | — |
+| JAZ 110 (787-9) | 43.100 ft | hoja de tipo EASA IM.A.115 | — |
+| JAZ 120 (747-100) | sin leer | la ficha FAA A20WE no se ha leído | — |
+
+El 172R y el Ag Cat no están: lo suyo es techo de servicio, que es lo que sube
+su motor.
+
+**Lo que hacía el juego, y sigue haciendo**, que es lo de los reactores:
+
+- **El plan no la elegía nunca.** Su techo es la altura de crucero de la ficha
+  (`alturaDeCrucero`): 18.045 ft el JAZ 40, 10.000 el JAZ 50 y 24.934 el JAZ
+  60, y en los reactores 36.089 y 39.000, por debajo de los 41.000 y 43.100 de
+  su ficha. La mínima en ruta puede subirlo por instrumentos, y la más alta
+  del juego es la del Teide, 4.315 m. No se ha tocado `cruceroDelPlan` ni
+  `nivel-que-ahorra.ts`; `altitud-maxima.test.ts` fija que el crucero del plan,
+  con la ficha y en un tramo de 420 millas hacia cada lado, no la pasa.
+- **La ventanilla del automático no la pasaba**: gira hasta la altura de
+  crucero, 24.000 ft en el JAZ 60 (`topeDeLaVentanilla`). El JAZ 40 no lleva
+  ventanilla, y su automático sostiene la altura que llevaba.
+- **A mano, ninguna pared.** El modelo no la conoce, y no se le pone: nada en
+  el avión impide subir. En el 1900D, con sus 5 psi, la cabina pasa de los
+  diez mil pies hacia los 26.500 ft, y ahí se enciende CABIN ALT, como en los
+  reactores por encima de su techo. **Lo que faltaba** es que ninguno lleva
+  una caja que avise de haber pasado su altitud máxima: **lo cuenta la
+  instructora**, en los tres peldaños de abajo, como toda explicación
+  (`laInstructoraLoExplica`), con la tarjeta del dibujo de bajar, una palabra
+  en Tukã y la frase desde Taguató. En el de cabina, el altímetro, como en el
+  avión. Se cuenta al pasarla, con la altitud de presión —la del altímetro con
+  1013, que es en la que se escribe el límite—, y lo rearma bajar mil pies
+  (`AvisoDeLaAltitudMaxima`, `Game.mirarLaAltitudMaxima`).
+
+Frases nuevas, por grabar: `vuelo.altitudMaxima` —«Pasamos la altura más alta
+que tiene aprobada este avión. Más arriba el aire es tan finito que su manual
+no lo deja: bajá tranquilo un poco.»—, y las escritas `hud.altitudMaxima` y
+`palabra.altitudMaxima`. Sin grabar, la tarjeta sale y la voz no
+(`decirLoGrabado`).
+
+### El crucero del Twin Otter: lo que se le pedía
+
+La tabla de crucero del juego (`velocidadDeCrucero`, H39a) pedía a todos los
+de hélice el 75 % de su potencia, que es la fila con la que se planea en un
+manual de avioneta. **Un turbohélice no tiene esa fila.** La del Twin Otter
+-400 a 10.000 ft va por crucero máximo, económico y de más autonomía:
+
+| A 10.000 ft | Su manual | La tabla del juego, antes (75 %) | Ahora (crucero máximo) |
+|---|---|---|---|
+| Crucero máximo | **182 kt**, 600 lb/h (De Havilland, *Classic 300-G Wheels Specifications*, 2025; Viking, 2018) | 167,9 kt | **179,9 kt** |
+| Crucero económico | **146 kt**, 468,2 lb/h (folleto del Guardian 400) | — | se sostiene con 0,52 de gas, la mitad de su placa |
+| Más autonomía | 94 kt indicados, 360 lb/h | — | — |
+
+Los 168 nudos no eran ninguna fila suya. El crucero máximo del PT6A-34 es la
+misma placa de 620 shp, 50 psi de par, que el despegue y la máxima continua
+(ver `alturaCritica` en su ficha), así que en el modelo es el gas entero. **Se
+cambia en la ficha**: `potenciaDeCrucero`, la fila de su manual con la que se
+cruza, 1 en el JAZ 50; sin decir, el 75 % de siempre.
+
+| JAZ 50, tabla del juego | 0 ft | 3.000 ft | 5.000 ft | 9.000 ft | 10.000 ft |
+|---|---|---|---|---|---|
+| Antes | 156,0 kt | 159,9 | 162,2 | 166,7 | 167,9 |
+| Ahora | 156,0 | 163,0 | 168,0 | 178,6 | 179,9 |
+
+Por debajo de diez mil pies manda su Vmo, 166 indicados, con los diez nudos de
+margen de `topeConMargen`: 156 indicados. Lo usan los ejercicios que empiezan
+en crucero (`laDeLaTabla`: la estima, los de radio, la brújula, el
+giróscopo, la despresurización y la tormenta). El vuelo entero no: el
+automático y la escalera de velocidades no pasan por aquí.
+
+**El JAZ 60 sigue al 75 %**: a su altura de crucero da ya el gas entero —su
+motor da allí el 57 %—, y por debajo no se ha leído qué placa de crucero tiene
+el PT6A-67D.
+
+### El techo del 172R: no se cierra
+
+- **Sus 13.500 ft son los de su propia figura 5-6**: la subida cae cien pies
+  por minuto cada dos mil pies de los ocho mil a los doce mil, y en recta
+  llega a los cien pies por minuto a 13.400.
+- **El modelo sube a su indicada**: la de mejor subida a cada altura es la de
+  la figura, 79, 77, 76, 74, 73, 71 y 70 nudos donde ella da 79, 77, 76, 74,
+  72, 71 y 69. Lo que sobra no es el sitio de la curva: es **la pendiente**.
+  El modelo pierde 41 ft/min cada mil pies y el manual 46: va 22 por debajo al
+  nivel del mar y 42 por encima a doce mil.
+- **La hélice que pierde vueltas** —la de paso fijo, con el motor a fondo y
+  el par constante, gira arriba como la raíz de lo que da el motor entre la
+  densidad: un 3 % menos a doce mil pies, y empuja a cada verdadera lo que
+  empujaría abajo a esa entre ese factor— se probó en la cuenta: **14.600 ft**,
+  con la subida de la figura a 38 ft/min. Pero quita 1,2 nudos a fondo a diez
+  mil pies y 1,5 a doce mil, donde el modelo ya va 0,5 y 3,7 por debajo de la
+  tabla de crucero (116,5 y 113,3 contra 116-118 y 115-117). No se pone.
+- **La polar**, con un Oswald de 0,70 en vez de 0,76: 14.000 ft, pero sube 62
+  ft/min menos que la figura a cuatro mil pies. Con 0,65, 13.100 y 90 menos.
+- Lo que lo cerraría es **una polar entera nueva** —menos resistencia de forma,
+  más inducida y el empuje que la compense— medida a la vez contra la figura
+  5-6, la tabla de crucero y la rodadura de la 5-5, que ya cuadran. Es otro
+  encargo. Se añaden a `techo.test.ts` la indicada de mejor subida de la
+  figura y el techo que sale de ella.
+
+### El crucero del 747-100: no se cambia
+
+La ficha B741 de SKYbrary, que sale de la base de prestaciones de Eurocontrol,
+da M0,84 y unos 500 nudos verdaderos; se leyó en el resumen del buscador,
+porque la página no se dejó abrir, y queda **por verificar**. No se ha
+encontrado una tabla de Boeing del 747 clásico que lo diga: los documentos de
+aeropuertos de Boeing no traen el crucero. Los 230 m/s a FL350 de la ficha
+salen de un caso de vuelo de la NASA (CR-2144), no de un crucero.
+
+**Y el cambio no es solo una cifra**: `empujeLleno` hace caer el empuje de un
+reactor con la velocidad partida por su crucero de la ficha, así que subir el
+crucero a 249 m/s le da más empuje a cualquier velocidad, también rodando, y
+mueve la carrera, la subida y la recogida que H46 acaba de dejar en su sitio.
+Lo que haría falta: **separar la caída del empuje del crucero**, como
+`heliceSinEmpujeA` en los de hélice, con el valor de hoy, y entonces subir el
+crucero; y mirar los quince sitios que lo leen —la punta del modelo sencillo,
+el Mach de crucero de la escalera, el vuelo de línea, el combustible—. En
+`escalera-de-velocidades.test.ts` queda la prueba pendiente.
+
+### Volado
+
+- **El vuelo entero en Tenerife Norte, en Taguató, con el Twin Otter**
+  (`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-50`, reloj por uno
+  y ×1,00 de verdad, 21 °C y viento 040/12), **57 de 57**, 4 sin medir: sube
+  al 14,4 % hasta los cien metros, toca a 1,36 m/s, a 2,1 m del eje y 345 m
+  pasado el umbral, y apaga en su puesto a los 725 s. El plan fue a cinco mil
+  pies, lejos de la altitud máxima, y no pasa por la tabla de crucero: lo que
+  prueba es que el vuelo entero sigue igual con la vigilancia nueva en cada
+  paso. Ni los ejercicios que empiezan en crucero con el JAZ 50 ni la frase
+  de la altitud máxima se han volado en el navegador.
+
+### Lo que queda
+
+- **Grabar `vuelo.altitudMaxima`.**
+- **La polar del JAZ 20**, para cerrar su techo (ver arriba).
+- **La placa de crucero del 1900D** por debajo de su altura de crucero.
+- **El M0,84 del JAZ 120**, con el empuje separado del crucero.
+- **La altitud máxima del 747-100**, en la ficha FAA A20WE.
