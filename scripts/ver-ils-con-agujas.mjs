@@ -121,6 +121,9 @@ const leer = (page) =>
  *   por debajo de los mínimos se mira afuera, se sigue al ritmo de la senda y
  *   a cinco metros se recoge;
  * - **el gas**, a la velocidad del circuito y luego a la de aproximación;
+ * - **el compensador**, como lo mueve quien vuela: lo que la mano sostiene un
+ *   rato pasa a la rueda (H42);
+ * - **en el suelo**, el timón de profundidad neutro y el eje con los pies;
  * - con `fuera`, apartado un punto y siete del localizador desde ochocientos
  *   pies; y si en los mínimos se pide la frustrada, como se vuela: gas a
  *   fondo, una muesca menos de flaps, a subir y, subiendo, el tren dentro.
@@ -206,11 +209,40 @@ const ponerElPiloto = (page, datos) =>
       const dt = b.antes === null ? 0 : Math.min(0.1, (ahora - b.antes) / 1000);
       b.antes = ahora;
       b.integral = Math.max(-0.2, Math.min(0.2, (b.integral ?? 0) + (vs - s.verticalSpeed) * 0.02 * dt));
+      /*
+       * **Y lo que la mano sostiene, se lo quita el compensador**, como hace
+       * quien vuela: lo sumado pasa a la rueda en un par de segundos y la mano
+       * vuelve a mover alrededor de lo compensado. El piloto no tocaba la
+       * rueda, y lo sumado tiene tope en dos décimas, que bastaban mientras
+       * el ejercicio nacía con el compensador en cero. Desde H40b nace
+       * compensado para su velocidad limpio —el JAZ 50, en +0,16— y la final
+       * con los flaps de aterrizar pide entre −0,10 y −0,14 en total: casi
+       * tres décimas de mano. Lo que no llegaba a sumar lo tenía que pedir la
+       * proporcional con un error que no se iba, metro por segundo y pico de
+       * bajada de menos, y la ley pide eso con la senda un punto por encima: a
+       * 1,09 puntos en la final, a 2,8 cerca del suelo, frenando hasta 79
+       * nudos, y al aire en los mínimos (ADR 0030, enmienda H42).
+       */
+      const alCompensador = b.integral * Math.min(1, 0.5 * dt);
+      c.trim = Math.max(-1, Math.min(1, c.trim + alCompensador));
+      b.integral -= alCompensador;
       c.elevator = Math.max(-0.3, Math.min(0.3, (vs - s.verticalSpeed) * 0.08 + b.integral));
       if (!b.alAire) c.throttle = quiereKt === 0 ? 0 : Math.max(0, Math.min(1, 0.45 + (quiereKt - s.airspeed) * 0.05));
       if (s.onGround) {
         c.throttle = 0;
-        c.elevator = 0;
+        // El timón en su sitio, compensado donde esté: la mano lo deja neutro, como antes de H40b.
+        c.elevator = -c.trim;
+        /*
+         * **Y en la carrera, el eje con los pies**, como quien aterriza: el
+         * rumbo de la pista más lo que diga la aguja del localizador, el pie
+         * que sostiene el viento y que se va quedando puesto, y el giro que ya
+         * lleva, para no pasarse. Con los pies quietos el bimotor se iba hacia
+         * el alisio y salía de la pista antes de los ocho segundos con los que
+         * el ejercicio da el aterrizaje por bueno (H42).
+         */
+        const falta = c0(d.rf + Math.max(-8, Math.min(8, 6 * (loc ?? 0))) - rumbo) * G;
+        b.pie = Math.max(-0.8, Math.min(0.8, (b.pie ?? 0) + falta * 2.5 * dt));
+        c.rudder = Math.max(-1, Math.min(1, falta * 3 + b.pie - (s.yawRate ?? 0)));
       }
     });
   }, datos);
@@ -328,6 +360,12 @@ try {
     `${reglas}: ${comoEsLaNube}`,
   );
   await foto("01-salida");
+  // Con qué nace: el compensador de la colocación, y el gas (H42).
+  const alNacer = await page.evaluate(() => {
+    const c = globalThis.__oga.juegoParaTrazas().input.controls;
+    return { gas: c.throttle, comp: c.trim, flaps: c.flaps };
+  });
+  console.log(`    nace con el gas ${alNacer.gas.toFixed(2)}, flaps ${alNacer.flaps.toFixed(2)} y el compensador ${alNacer.comp.toFixed(3)}`);
 
   await ponerElPiloto(page, {
     rf: RF,
@@ -442,6 +480,15 @@ try {
     if (!fotoEnCruz && r.ej.fase === "bajando" && h < 1000 * PIE && h > 600 * PIE) {
       fotoEnCruz = true;
       enCruz = { loc, senda, hsi: r.hsi, tarjeta: r.tarjeta };
+      // Y cómo va: la velocidad, el gas, la mano y el compensador (H42).
+      const v = await page.evaluate(() => {
+        const j = globalThis.__oga.juegoParaTrazas();
+        const c = j.input.controls;
+        return { kt: globalThis.__oga.estado().airspeed * 1.943844, gas: c.throttle, mano: c.elevator, comp: c.trim, flaps: c.flaps };
+      });
+      console.log(
+        `    en cruz: ${Math.round(h / PIE)} ft, ${v.kt.toFixed(1)} kt (vref ${(r.vref * 1.943844).toFixed(0)}), gas ${v.gas.toFixed(2)}, flaps ${v.flaps.toFixed(2)}, mano ${v.mano.toFixed(2)}, compensador ${v.comp.toFixed(2)}, senda ${senda?.toFixed(2)}`,
+      );
       await foto("04-en-cruz");
       /*
        * Y con `OGA_CABINA=1`, desde el asiento: la pantalla de navegación de
@@ -496,6 +543,8 @@ try {
           gas: j.input.controls.throttle,
           flaps: j.input.controls.flaps,
           tren: j.input.controls.tren,
+          comp: j.input.controls.trim,
+          pie: j.input.controls.rudder,
           plan: o.fase(),
           dicho,
         };
@@ -509,7 +558,7 @@ try {
       if (ahora - rastro.ultimo >= 1000) {
         rastro.ultimo = ahora;
         console.log(
-          `      ${t.seg.toFixed(1)} s · ${Math.round(t.pies)} ft, ${Math.round(t.kt)} kt, ${t.vs.toFixed(1)} m/s, gas ${t.gas.toFixed(2)}, flaps ${t.flaps.toFixed(2)}, tren ${t.tren.toFixed(2)}, ${r.ej.fase}, plan ${t.plan}, loc ${loc?.toFixed(2) ?? "—"}, NAV ${oye}`,
+          `      ${t.seg.toFixed(1)} s · ${Math.round(t.pies)} ft, ${Math.round(t.kt)} kt, ${t.vs.toFixed(1)} m/s, gas ${t.gas.toFixed(2)}, flaps ${t.flaps.toFixed(2)}, tren ${t.tren.toFixed(2)}, compensador ${t.comp.toFixed(2)}, pie ${t.pie.toFixed(2)}, ${r.ej.fase}, plan ${t.plan}, loc ${loc?.toFixed(2) ?? "—"}, NAV ${oye}`,
         );
       }
     }

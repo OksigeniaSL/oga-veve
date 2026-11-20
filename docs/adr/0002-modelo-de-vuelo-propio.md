@@ -1363,3 +1363,13 @@ No se han vuelto a volar `ver-el-gps.mjs`, `ver-la-deriva.mjs` ni
 lo imprescindible. Sus colocaciones ya nacían equilibradas; lo único que les
 cambia es el compensador, y sus pilotos de banco enganchan el automático al
 empezar, que coge el timón con el que vuela el avión (`timonAhora`).
+
+### Y el banco que no tocaba la rueda (H42)
+
+El que sí cambió fue `ver-ils-con-agujas.mjs`, que vuela a mano y no con el
+automático: su piloto movía el timón tres décimas como mucho y nunca el
+compensador, y con el de esta nota el JAZ 50 configurado pedía algo más. El
+ILS del JAZ 50 pasó de 20 de 20 a 15 de 20 con este cambio. El juego estaba
+bien; el banco compensa ahora como quien vuela. El del JAZ 40, que también
+dejó de posar en esta tanda, era la carrera con los pies quietos, y no de
+esta nota. Ver la enmienda H42 del ADR 0030.
