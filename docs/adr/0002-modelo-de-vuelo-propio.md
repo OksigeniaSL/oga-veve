@@ -1419,12 +1419,12 @@ Taguató Ruvichá no tiene ayuda: lo de antes es el fugoide de nacer nivelado
 con el gas de bajar, que se asentaba subiendo y bajando quince o veinte
 metros alrededor de la senda.
 
-Y lo mismo al cambiar de peldaño en el aire: el modelo nuevo nacía nivelado y
-equilibrado con el ala limpia, llevara los flaps que llevara, y compensado
-para ir limpio. Quince segundos por la senda en Taguató Ruvichá y se sube a
-Taguató: el JAZ 20 se iba de 97,0 a 80,7 kt y 57 m por encima; el JAZ 60,
-configurado, de 117,3 a 98,1 kt y 106 m por encima. Después: 0,4 kt y 2,8 m
-el JAZ 20, 0,9 kt y 9,5 m el JAZ 60, y en Tukã igual.
+Y lo mismo al cambiar de peldaño en el aire: el modelo nuevo nacía con una
+ayuda que no sabía nada de la vieja, y equilibrado y compensado para ir
+limpio, llevara los flaps que llevara. Quince segundos de final colocada en
+Taguató y se cambia a Tukã, o al revés, y cuarenta y cinco más sueltos: antes,
+de 16 a 28 kt más despacio y de 57 a 109 m por encima de la senda; después,
+1,0 kt y 6,1 m como mucho (el JAZ 90 de Tukã a Taguató).
 
 ### Lo que se decidió
 
@@ -1440,8 +1440,21 @@ el JAZ 20, 0,9 kt y 9,5 m el JAZ 60, y en Tukã igual.
 - **`reiniciarEnFinal` la pasa**: la senda de la cabecera en la final, cero
   en los ejercicios, que nacen nivelados y ahora la ayuda sostiene nivelado
   exacto en vez de lo que diera el primer segundo.
-- **`cycleTier` coloca con `comoIba`** (`flight/model.ts`): los flaps que
-  lleva y la trayectoria que llevaba, y el compensador con esos flaps.
+- **`cycleTier` coloca con `comoIba`** (`flight/model.ts`): nivelado, como
+  siempre, con los flaps que lleva y el compensador con ellos, y con
+  `InitialConditions.subidaPedida`, que es **lo que sostenía la ayuda del
+  modelo viejo** (`subidaQueSostiene`), o nada si no la había.
+- **Y no la trayectoria de ese momento**, que fue la primera versión: nacía
+  por ella y la pedía. En `verificar-cambio-de-peldano.mjs`, que quita el gas
+  un momento en cada cambio, el JAZ 120 en final llevaba esa bajada de un
+  peldaño al siguiente como petición, con el tope de cinco metros por
+  segundo, hasta tocar el suelo y que el percance le quitara el gas: 79 de
+  80. Una bajada que hay al cambiar puede ser un transitorio —el gas quitado,
+  un empujón—, que es justo lo que la ayuda no coge al soltar. Así que de
+  Taguató Ruvichá o de Guyrami, sin ayuda que sostuviera nada, la nueva coge
+  al soltar entre nivelado y subiendo, como siempre: **quien cambia de
+  Taguató Ruvichá a Taguató en plena final sigue cogiendo «nivelado»**. Eso
+  no lo arregla esta nota.
 - **No cambia lo de soltar tras pilotar**: si se coge la palanca, lo pedido
   se olvida, y al soltar se coge entre nivelado y subiendo, como siempre. Ni
   los toques del compensador, ni subir ni nivelar.
@@ -1455,9 +1468,11 @@ el JAZ 20, 0,9 kt y 9,5 m el JAZ 60, y en Tukã igual.
 `colocado-y-compensado.test.ts`: las finales colocadas en Tukã y Taguató con
 el JAZ 20, el JAZ 50, el JAZ 60 y el JAZ 90, cincuenta segundos sueltas, a
 menos de 5 kt de la velocidad de colocación y de 10 m de la senda en todo
-momento; el cambio de peldaño por la senda, con `comoIba`, a menos de 5 kt y
-12 m; y la regla de siempre: soltado tras empujar, la ayuda no sostiene la
-bajada del empujón. Las de antes colocan ya con la trayectoria, como el
+momento; el cambio entre Tukã y Taguató en plena final, con `comoIba`, a
+menos de 5 kt y 12 m; el cambio desde Taguató Ruvichá con el gas quitado, en
+el que la ayuda nueva no sostiene una bajada (con la primera versión
+sostenía unos −5 m/s); y la regla de siempre: soltado tras empujar, la ayuda
+no sostiene la bajada del empujón. Las de antes colocan ya con la trayectoria, como el
 juego; y la que mira que el compensador en cero se nota pasa a Taguató
 Ruvichá: en Taguató, con el nivelado colocado como petición, la ayuda tapaba
 media falta (6 a 8 kt en vez de más de 10), y esa prueba está para ver el
@@ -1486,3 +1501,11 @@ senda con el efecto suelo: en la mesa, colocados a 189 m sobre un llano, de
 Ruvichá), ninguno roto —el límite de Taguató es 11,6— y el JAZ 90 por debajo
 de los diez pies por segundo de una toma dura de transporte. Es lo que ya
 hacía el avión compensado sin ayuda.
+
+Y `verificar-cambio-de-peldano.mjs`, con la primera versión de `comoIba`: 79
+de 80, el fallo contado arriba. Con la que queda no se ha podido volver a
+volar en esta tanda —el navegador estaba en cola detrás de otras rondas—; en
+la mesa, el mismo recorrido del JAZ 120 por los cuatro peldaños con el gas
+quitado en cada cambio acaba a 147 m sobre el suelo, contra 58 con la
+primera versión y 203 con el código de antes, que al nacer con el morro del
+ala limpia y los flaps fuera subía un poco en cada cambio.
