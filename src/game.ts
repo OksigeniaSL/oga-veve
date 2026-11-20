@@ -1325,6 +1325,7 @@ import {
   aireDelParte,
   airDensity,
   type Aire as AireDelDia,
+  indicadaDe,
   indicatedAirspeed,
   SEA_LEVEL_DENSITY,
   temperaturaExterior,
@@ -9035,6 +9036,7 @@ export class Game {
       z: s.position.z,
       rumbo: s.heading,
       velocidad: s.airspeed,
+      indicada: this.indicadaAhora(),
       porElSuelo: s.groundSpeed,
       altitud: s.position.y,
       altura: Math.max(0, this.ruedasSobreElSuelo(s)),
@@ -9207,18 +9209,25 @@ export class Game {
     const s = this.flight.state;
     const c = this.input.controls;
     const i = this.input.intento;
+    const aire = this.flight.aireDelDia();
     const salida = inicio.paso(dt, {
       motor: c.engineOn,
       gas: c.throttle,
       intento: i,
-      velocidad: s.airspeed,
+      /*
+       * **La indicada, que es contra la que se lee la Vr de un manual.** Iba la
+       * verdadera, y en un campo alto o un día caliente el «¡ahora!» llegaba
+       * con la aguja por debajo de la Vr (enmienda H38d del ADR 0019).
+       */
+      velocidad: indicadaDe(s, aire),
       vr: this.aircraft.rotationSpeed,
       altura: Math.max(0, this.ruedasSobreElSuelo(s)),
       enTierra: s.onGround,
       alabeo: bankAngleOf(s.orientation),
       mando: this.input.ultimoMando,
       pistaQueQueda: this.runwayRemaining(),
-      gasQueSostiene: (v) => this.flight.gasParaRodar(v),
+      // Y el modelo, que rueda en verdadera, la recibe en verdadera.
+      gasQueSostiene: (v) => this.flight.gasParaRodar(trueFromIndicated(v, s.position.y, aire)),
     });
     const a = salida.ayuda;
     if (a.gas !== null && c.throttle < a.gas) this.input.servoDelGas(a.gas);
@@ -16818,7 +16827,8 @@ export class Game {
         enTierra: s.onGround,
         porElSuelo: s.groundSpeed,
         altura: s.heightAboveGround,
-        velocidad: s.airspeed,
+        // La indicada, que es contra la que se lee la Vref (H38d).
+        velocidad: this.indicadaAhora(),
         vertical: s.verticalSpeed,
         avisoDePerdida: avisaLaPerdida(s),
         vref: this.aircraft.approachSpeed,
@@ -31492,8 +31502,15 @@ export class Game {
 
   /** **La indicada de ahora**, nudos, la del anemómetro y con el aire del día: para los bancos. */
   get indicadaParaBanco(): number {
-    const s = this.flight.state;
-    return indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) / NUDO;
+    return this.indicadaAhora() / NUDO;
+  }
+
+  /**
+   * **La indicada de ahora**, m/s, con el aire del día: contra la que se mira
+   * toda V de un manual. Ver `indicadaDe` en `flight/atmosphere.ts`.
+   */
+  indicadaAhora(): number {
+    return indicadaDe(this.flight.state, this.flight.aireDelDia());
   }
 
   /**
@@ -36100,7 +36117,8 @@ export class Game {
     const s = this.flight.state;
     const antes = this.cargaDeFlaps;
     const ahora = cuidarLosFlaps(this.aircraft, antes, {
-      kt: s.airspeed * NUDOS,
+      // La indicada, como pide `AhoraMismo`: la VFE de la placa es indicada. Iba la verdadera (H38d).
+      kt: this.indicadaAhora() * NUDOS,
       flaps: this.input.controls.flaps,
       palanca: this.input.palancaDeFlaps,
       paradoEnTierra:

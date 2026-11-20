@@ -1122,7 +1122,14 @@ const despegue = await page.evaluate(async () => {
      * recorrido. Sin esto, con la marca puesta el morro subía de más, el avión
      * llegaba a los quince metros por debajo de su Vr y soltado bajaba (H21a).
      */
-    m.elevator = s.airspeed > ficha.rotacion ? Math.max(0, 0.5 - (o.controles().trim ?? 0)) : 0;
+    /*
+     * **Y en la aguja, no en la verdadera**: la Vr de un manual es indicada, y
+     * es con la indicada con la que el juego la canta. Tirando con la
+     * verdadera, en La Gomera a 40 °C con el JAZ 90 lleno el avión se iba al
+     * aire con la aguja un 6 % por debajo de la Vr, y ni Vr ni su flecha
+     * llegaban a salir antes de los quince metros (H38d).
+     */
+    m.elevator = o.indicada() > ficha.rotacion ? Math.max(0, 0.5 - (o.controles().trim ?? 0)) : 0;
   });
   let frenoSeFue = null;
   let enElAire = null;
@@ -1166,6 +1173,7 @@ const despegue = await page.evaluate(async () => {
    * distinguieron los dos salían igual: un destello mudo. Ver #105.
    */
   const dichos = [];
+  const agujaAlDecir = [];
   let flechaDeTirar = false;
   const inicio = o.estado().position.clone
     ? { x: o.estado().position.x, z: o.estado().position.z }
@@ -1194,7 +1202,7 @@ const despegue = await page.evaluate(async () => {
      * delante, que es lo que hace quien despega.
      */
     const boton = document.querySelector('[data-hud="brakes-touch"]');
-    if (frenoSeFue === null && boton?.hidden) frenoSeFue = s.airspeed;
+    if (frenoSeFue === null && boton?.hidden) frenoSeFue = o.indicada();
     if (inicio) {
       usado = Math.hypot(s.position.x - inicio.x, s.position.z - inicio.z);
     }
@@ -1206,7 +1214,11 @@ const despegue = await page.evaluate(async () => {
       const op = el ? Number(getComputedStyle(el).opacity) : 0;
       if (op > destelloV1) destelloV1 = op;
       const texto = el?.textContent?.trim() ?? "";
-      if (op > 0.05 && texto && !dichos.includes(texto)) dichos.push(texto);
+      if (op > 0.05 && texto && !dichos.includes(texto)) {
+        dichos.push(texto);
+        // Y con qué aguja salió cada uno, que es lo que se compara con su V (H38d).
+        agujaAlDecir.push(`${texto} ${o.indicada().toFixed(1)}`);
+      }
       /*
        * **Y se mira lo que se ve, no lo que pone en el HTML.**
        *
@@ -1239,7 +1251,7 @@ const despegue = await page.evaluate(async () => {
       if (s.onRunway) enPistaPasos += 1;
     }
     if (!s.onGround && s.heightAboveGround > 15) {
-      enElAire = { v: s.airspeed, usado };
+      enElAire = { v: s.airspeed, ias: o.indicada(), usado };
       break;
     }
   }
@@ -1268,6 +1280,7 @@ const despegue = await page.evaluate(async () => {
     enPistaPasos,
     destelloV1: +destelloV1.toFixed(2),
     dichos,
+    agujaAlDecir,
     flechaDeTirar,
     usado,
     // Lo que se pidió decir en V1, y si este avión decide con ella (H37i).
@@ -1326,10 +1339,11 @@ if (despegue.enElAire) {
    * pasar eso y caza lo que de verdad importa, que es un avión al que no se le
    * levanta el morro hasta el final de la pista.
    */
+  // En la aguja: la Vr es indicada, y a 40 °C la verdadera va un 6 % por encima (H38d).
   comprobar(
     "y rota cerca de su velocidad de rotación",
-    despegue.enElAire.v < despegue.vr * 1.35,
-    `a ${despegue.enElAire.v.toFixed(0)} m/s con la Vr en ${despegue.vr} · ${despegue.enElAire.usado.toFixed(0)} m desde el punto de espera, y su ficha dice ${despegue.carreraDeFicha.toFixed(0)} m de carrera`,
+    despegue.enElAire.ias < despegue.vr * 1.35,
+    `a ${despegue.enElAire.ias.toFixed(0)} m/s de indicada (${despegue.enElAire.v.toFixed(0)} de verdadera) con la Vr en ${despegue.vr} · ${despegue.enElAire.usado.toFixed(0)} m desde el punto de espera, y su ficha dice ${despegue.carreraDeFicha.toFixed(0)} m de carrera`,
     "irse al aire muy por encima de Vr alarga la carrera con el cuadrado de la velocidad",
   );
   /*
@@ -1361,7 +1375,7 @@ if (despegue.enElAire) {
   comprobar(
     "y detrás de V1 sale Vr, que es la que se usa de verdad",
     despegue.dichos.includes("V1") && despegue.dichos.includes("Vr"),
-    `destellos: ${despegue.dichos.join(" → ") || "ninguno"}`,
+    `destellos: ${despegue.agujaAlDecir.join(" → ") || "ninguno"} m/s de aguja, con la Vr en ${despegue.vr.toFixed(1)}`,
     "los dos momentos del despegue salían igual y no se distinguían",
   );
   /*

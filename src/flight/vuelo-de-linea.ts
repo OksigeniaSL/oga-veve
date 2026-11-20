@@ -126,6 +126,11 @@ export interface LecturaDeLinea {
   readonly rumbo: number;
   /** La velocidad respecto al aire, m/s. */
   readonly velocidad: number;
+  /**
+   * **Y la indicada**, m/s, la de la aguja: contra la que se lee la Vr del
+   * manual. Ver `indicadaDe` en `atmosphere.ts`.
+   */
+  readonly indicada: number;
   /** Y sobre el suelo, m/s. */
   readonly porElSuelo: number;
   readonly altitud: number;
@@ -950,7 +955,8 @@ export class VueloDeLinea {
   /** **La carrera de despegue**: gas de despegue, el eje con los pies, y rotar en la Vr. */
   private correr(dt: number, l: LecturaDeLinea): ManosDeLinea {
     const eje = this.alEje(l);
-    const rota = l.velocidad >= this.ficha.vr || !l.enTierra;
+    // En la aguja, como se rota de verdad: en un campo caliente, la verdadera la pasa antes (H38d).
+    const rota = l.indicada >= this.ficha.vr || !l.enTierra;
     if (rota) this.subidaPedida = Math.min(SUBE_ABAJO, this.subidaPedida + CAMBIA_EN_LA_ROTACION * dt);
     /*
      * **Ya en el aire y con un tope de la carta por delante**, la de la subida con flaps y

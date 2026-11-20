@@ -28,6 +28,7 @@ function enElPuesto(remolque: LecturaDeLinea["remolque"], motor: boolean): Lectu
     z: 0,
     rumbo: 0,
     velocidad: 0,
+    indicada: 0,
     porElSuelo: 0,
     altitud: 600,
     altura: 0,

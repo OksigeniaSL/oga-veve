@@ -142,9 +142,9 @@ export interface Lectura {
   /** El gas que hay, 0 a 1. */
   readonly gas: number;
   readonly intento: Intento;
-  /** La velocidad, m/s. */
+  /** La velocidad **indicada**, m/s: la de la aguja, que es contra la que se lee la Vr. */
   readonly velocidad: number;
-  /** La de rotación de este avión, m/s. */
+  /** La de rotación de este avión, m/s indicados, la de su manual. */
   readonly vr: number;
   /** De las ruedas al suelo, m. */
   readonly altura: number;
@@ -155,7 +155,7 @@ export interface Lectura {
   /** Los metros de pista que quedan por delante, o `Infinity` fuera de ella. */
   readonly pistaQueQueda: number;
   /**
-   * El gas que, rodando, deja el avión a esa velocidad, m/s: el del modelo de
+   * El gas que, rodando, deja el avión a esa indicada, m/s: el del modelo de
    * vuelo, que es quien sabe cuánto empuja cada palanca. Ver
    * `SOSTIENE_POR_DEBAJO`.
    */

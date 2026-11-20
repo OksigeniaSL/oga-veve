@@ -438,3 +438,81 @@ la hoja. Y despegar con el JAZ 40 hacia Estigarribia deja la hoja abierta.
 los dos quintos del ancho que dejó H38a; pasado con la versión que llevaba
 `:has()`, y la de ahora, que solo cambia el peldaño de los dibujos, mirada en
 foto pero sin volver a pasarlo entero.
+
+## Enmienda H38d (20-11-2026): las V del manual se leen en la aguja
+
+Lo que H38c dejó apuntado. **Las V del despegue de un manual —V1, Vr, V2— y
+la Vref son indicadas** (calibradas, para ser exactos; a estas velocidades es
+lo mismo): se leen en el anemómetro, y el ala entra en pérdida siempre a la
+misma indicada. En un campo alto o un día caliente la verdadera va por encima,
+así que una V mirada contra la verdadera se canta antes de tiempo. Es la regla
+4 —lo que se enseña es real—: quien vea alguna vez cantar V1 en una cabina la
+oirá cuando la aguja la marque, no antes.
+
+### Una sola cuenta
+
+`indicadaDe(estado, aire)`, en `flight/atmosphere.ts`: la indicada de un avión
+que vuela, a su altura y con el aire del día. La usan el HUD, el juego
+(`Game.indicadaAhora`, y de ahí `indicadaParaBanco`) y la sonda `indicada()`
+de los bancos, en m/s y sin redondear.
+
+### Dónde se miraba cada V, y dónde se mira ahora
+
+| Sitio | Qué compara | Antes | Ahora |
+|---|---|---|---|
+| Destello de V1 (`hud.ts`), y con él la voz «V one», el freno que se va y el «seguí» | V1 del día | verdadera | **indicada** |
+| Destello de Vr, la flecha de tirar y «rotate» (`hud.ts`, `onVelocidades`) | Vr | indicada | indicada |
+| Ejercicios de motor (`practica.ts`) | V1 y Vr del día | indicada | indicada |
+| «¡Ahora!» del primer despegue y el gas que sostiene la carrera (`inicio.ts`) | Vr | verdadera | **indicada** |
+| Rotación de la tripulación de línea, en el pasaje (`vuelo-de-linea.ts`) | Vr | verdadera | **indicada** |
+| Sello Mainumby, el vuelo lento (`sellos.ts`) | Vref × 1,1 | verdadera | **indicada** |
+| Alivio de flaps (`carga-de-flaps.ts`), que ya decía «indicada» en su tipo | VFE de la placa | verdadera | **indicada** |
+| Banda de la final (`bandaDeLaAproximacion`) | Vref pasada a verdadera | equivalente | igual |
+| El tren del helicóptero, que no se mete por debajo de su velocidad de aproximación (`atenderAlTren`) | Vref | indicada | igual |
+| «Rozar el monte no es llegar» (`vuelo.ts`) | pérdida pasada a verdadera | equivalente | igual |
+| La V2 de un motor (`pedirLaVelocidadDeUnMotor`) | solo se dice | — | — |
+| Tirón del banco de despegue (`verificar-despegue.mjs`) | Vr | verdadera | **indicada** |
+| «Rota cerca de su Vr», en el mismo banco | Vr × 1,35 | verdadera | **indicada** |
+| Banco del dedo (`verificar-dedo.mjs`), su `ias` | Vr | verdadera con nombre de indicada | **indicada** |
+| Banco del primer despegue (`verificar-inicio.mjs`) | Vr | verdadera | **indicada** |
+| Banco del vuelo entero: el tirón | Vr × 0,96 | indicada (`enVerdadera`) | igual |
+| Banco del vuelo entero: el empujón tras rotar | Vr × 1,05 | verdadera | **indicada** |
+
+### Medido
+
+- **La Gomera, el banco que H38c dejó en 18 de 20**: el JAZ 90 a 37.427 kg y
+  40 °C (`OGA_URL_EXTRA="&pasajeros=78&llenos=1&metar=GCGM 191400Z 00000KT
+  CAVOK 40/10 Q1013"`, codificado, y `verificar-despegue.mjs la-gomera guyrami
+  "" jaz-90`): **20 de 20**. V1 destella con la aguja en 61,8 m/s y Vr en 66,7,
+  con la Vr en 66,4 —el banco mira cada 200 ms, de ahí lo que pasa de cada
+  una—; sale la flecha de tirar, y el avión se va al aire a 68 m/s de indicada
+  y 72 de verdadera, a los 986 m de 1.491. Antes, V1 salía a 63,6 de verdadera,
+  o sea con la aguja hacia 60.
+- **Los Rodeos, un despegue de siempre**, con el tiempo de casa: el JAZ 20, 19
+  de 19 —V1 a 26,1 de aguja, Vr a 28,1 con la Vr en 28—; el JAZ 90 a 29.637
+  kg, 21 de 21 —V1 a 61,4, Vr a 66,9 con la Vr en 66,4—.
+- `v-del-manual.test.ts`: a nivel del mar, la aguja y la verdadera pasan V1 a
+  la vez; en Los Rodeos a 40 °C, con el JAZ 90 rodando sin tirar, V1 y Vr salen
+  con la aguja en la suya, con las ruedas en la pista, y por la verdadera V1
+  habría salido más de un segundo antes. Y en `vuelo-de-linea.test.ts`, la
+  tripulación no rota con la verdadera pasada y la aguja por debajo. Vitest
+  entero: 543 ficheros, 10.931 pruebas, en verde.
+
+### Lo que no
+
+- **El modelo sencillo deja subir con la verdadera**: en Guyrami, `canClimb`
+  de `arcade.ts` mira `speed >= rotationSpeed`, y `speed` es la verdadera. Un
+  niño que tira desde el principio se va al aire un poco antes de que salga la
+  flecha de Vr en un día caliente. Pasarlo a la indicada es tocar el modelo de
+  vuelo —alarga la carrera en caliente, que es lo de verdad, pero ese modelo
+  calibra su carrera con la del nivel del mar (`ritmoDeCarrera`) y no tiene el
+  resto de «caliente y alto»—, y queda para su propio encargo.
+- **Las velocidades que pide la tripulación de línea** —la Vr y diez de la
+  subida, la Vref de la final, los 250 nudos por debajo de diez mil pies— son
+  objetivos en verdadera para su gas. Por debajo de mil metros la diferencia
+  es de unos nudos; arriba, los 250 nudos se vuelan en verdadera y la aguja
+  marca menos. Es otro encargo, con su banco de pasaje.
+- **El tutor** (`ui/tutor.ts`) lleva una Vr fija de 30 m/s que no es de ningún
+  manual: es la barra de progreso de la lección, no una V que se cante.
+- **La fase «comprometido»** (`vuelo.ts`, `yaNoSePuedeParar`) es una cuenta de
+  frenada, no una V: va con la verdadera, que es la que hay que parar.

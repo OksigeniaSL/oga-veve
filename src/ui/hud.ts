@@ -28,7 +28,7 @@ import type { FlightState } from "../flight/model";
 import type { AudioLevel } from "../audio/audio";
 import {
   type Aire,
-  indicatedAirspeed,
+  indicadaDe,
   velocidadDelSonido,
 } from "../flight/atmosphere";
 import { topeDeLoSacado } from "../flight/limites";
@@ -3303,7 +3303,7 @@ export class Hud {
     // la que marcaría el instrumento de un avión real.
     const ias = mandos?.pitotTapado
       ? 0
-      : mandos?.pitotHelado ?? indicatedAirspeed(state.airspeed, state.position.y, mandos?.aire);
+      : mandos?.pitotHelado ?? indicadaDe(state, mandos?.aire);
 
     if (this.pictos.present) {
       // Fracciones, no unidades: aquí no hay nudos ni pies que valgan.
@@ -3530,8 +3530,16 @@ export class Hud {
      * el anemómetro, y el anemómetro marca cero. Y sin V1 el freno sigue a
      * mano, que es justo lo que hace falta para abortar.
      */
+    /*
+     * **Y se lee en la aguja, como la Vr**: la V1 de un manual es indicada.
+     * Se miraba contra la verdadera, y en un campo alto o un día caliente
+     * salía antes de tiempo: en La Gomera a 40 °C con el JAZ 90 lleno, a 63,6
+     * m/s de verdadera, con la aguja un 6 % por debajo. Y la Vr, que sí iba
+     * con la aguja, llegaba con el avión ya en el aire (enmienda H38d del
+     * ADR 0019).
+     */
     const despegando =
-      this.enLaCarrera && !mandos?.pitotTapado && state.airspeed > decisionSpeed;
+      this.enLaCarrera && !mandos?.pitotTapado && ias > decisionSpeed;
     this.comprometido = despegando;
     // La tecla del freno, la que se enseña para la mano elegida.
     const tecla = this.teclaDe?.("brakes") ?? "";
@@ -3570,8 +3578,8 @@ export class Hud {
     this.destelloRestante = Math.max(0, this.destelloRestante - dt);
     if (despegando && !this.dijoV1) {
       this.dijoV1 = true;
-      // Por las dos velocidades y no por la aguja: V1 se mira contra la verdadera y en un
-      // día de calor salta antes de que la indicada llegue a la Vr.
+      // Por las dos velocidades del día, que son de la misma aguja: si V1 está en la
+      // Vr, la aguja ya pasa las dos a la vez.
       this.v1EnLaVr = decisionSpeed >= this.vr - 0.5;
       this.destellar("V1");
       this.velocidadesHandler?.("V1");
