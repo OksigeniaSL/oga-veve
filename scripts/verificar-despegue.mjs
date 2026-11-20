@@ -24,6 +24,15 @@
  * exactamente lo que **no** promete Taguató, donde la curva es tuya. Correrlo
  * ahí saldría en rojo por la razón contraria a un fallo.
  *
+ * **Y en Taguató Ruvichá, con los pies del vuelo entero** (H44b). La primera
+ * tirada en ese peldaño, con el JAZ 90 en Los Rodeos, no despegó: el banco
+ * daba gas en cuanto el morro miraba a la pista, a veintisiete metros del eje,
+ * y en la carrera solo tenía el mando de alabeo, que sin ayudas y pasados los
+ * veintiocho metros por segundo no gira nada. Ahora se alinea como el banco
+ * del vuelo entero —por la raya hasta el eje— y fuera de Guyrami lleva la
+ * carrera con sus pies: `el-eje-de-la-carrera.mjs`. Y apunta los cantos de
+ * cabina de la carrera, que solo suenan en ese peldaño.
+ *
  * Uso: `node scripts/verificar-despegue.mjs [escenario] [tramo] [viento] [avión]`
  *
  * El viento va como en el juego —`000/14`, del norte a catorce nudos— y sirve
@@ -35,6 +44,7 @@
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
+import { elEjeDeLaCarrera } from "./el-eje-de-la-carrera.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -94,6 +104,37 @@ await page.goto(
     (process.env.OGA_URL_EXTRA ?? ""),
 );
 await page.waitForTimeout(16000);
+/*
+ * **Los pies de la carrera, los del vuelo entero** (H44b): ver «y en el modelo
+ * completo, con los pies» en la carrera de despegue, más abajo. Van a la
+ * página como texto, como en `verificar-vuelo-entero.mjs`.
+ */
+await page.addScriptTag({
+  content:
+    `globalThis.__elEjeDeLaCarrera = ${elEjeDeLaCarrera.toString()};\n` +
+    `globalThis.__tramoDelBanco = ${JSON.stringify(TRAMO)};`,
+});
+/*
+ * **Y en el peldaño de cabina, con las voces de verdad** (H44b). El pack se
+ * baja después del primer gesto, como en el juego, y este banco no hace
+ * ninguno: la primera tirada en Taguató Ruvichá apuntó «eighty knots: sin
+ * grabar, no se pide» y «V one» y «rotate» a la voz del navegador, con las
+ * tres tomas en el pack. Lo que se mide ahí es justo lo que suena, así que se
+ * hace lo de `verificar-tormenta.mjs`: una tecla que no hace nada y esperar
+ * al pack entero. En los de abajo, como estaba —sin voz, la radio va más
+ * deprisa y lo demás no cambia—; con `OGA_CON_VOCES=1`, también.
+ */
+if (TRAMO === "taguato-ruvicha" || process.env.OGA_CON_VOCES) {
+  await page.keyboard.press("Shift");
+  await page
+    .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, { timeout: 90000 })
+    .catch(() => {});
+  await page
+    .waitForFunction(() => (globalThis.__oga?.voz?.().pack ?? "listo") === "listo", null, {
+      timeout: 120000,
+    })
+    .catch(() => {});
+}
 
 const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
@@ -780,7 +821,20 @@ const torre = await page.evaluate(async () => {
   const noTeMira = new Set();
   const conRed = new Set();
   const t0 = o.reloj();
+  const real0 = performance.now();
   let corrido = false;
+  /*
+   * **Y cuándo empezó y acabó cada porqué, en los dos relojes** (H44b). En
+   * Los Rodeos con el JAZ 90 la verde llegó a los 292,7 s de juego esperando
+   * al número uno de la fila, más que los tres minutos de
+   * `PACIENCIA_EN_LA_FILA`, y el banco no decía qué parte era la fila, cuál
+   * la pista ocupada y cuál la radio. Con el reloj corrido a ocho veces la
+   * radio va a su ritmo —ver «el reloj acelerado no acelera lo que se oye» en
+   * `game.ts`—, así que cada segundo de voz son ocho de juego: se apuntan el
+   * del juego y el de pared, y si la boca hablaba.
+   */
+  const linea = [];
+  let firmaAntes = "";
   for (let i = 0; i < 240; i++) {
     await new Promise((r) => setTimeout(r, 250));
     // La clase del verde vive en la caja, no en la bombilla.
@@ -792,6 +846,20 @@ const torre = await page.evaluate(async () => {
     if (por) porques.add(`${por.porque}${por.numero ? ` (número ${por.numero})` : ""} ${por.matricula ?? ""}`);
     // Y por qué no te mira, aunque nadie lo diga: ver `noTeMira` (H48).
     const nm = o.noTeMira?.();
+    {
+      const boca = o.bocaAhora?.();
+      const firma =
+        `${por ? `${por.porque}${por.numero ? ` #${por.numero}` : ""} ${por.matricula ?? ""}` : "nadie"}` +
+        ` · ${nm ? `${nm.por ?? "mira"}[${nm.piezas.join(",")}]` : "mira"}` +
+        ` · fila ${(o.salenAntes?.() ?? []).join(",") || "-"}` +
+        ` · boca ${boca?.ocupada ? `habla ${boca.ultima}` : "calla"}`;
+      if (firma !== firmaAntes) {
+        firmaAntes = firma;
+        linea.push(
+          `${(o.reloj() - t0).toFixed(0)} s de juego, ${((performance.now() - real0) / 1000).toFixed(0)} de pared: ${firma}`,
+        );
+      }
+    }
     if (nm) noTeMira.add(`${nm.por ?? "mira"}${nm.piezas.length ? ` [${nm.piezas.join(", ")}]` : ""}${nm.lista ? " lista" : ""}`);
     /*
      * **Y lo que sujeta la roja sin nadie a quien nombrar, pero con su red**:
@@ -821,6 +889,8 @@ const torre = await page.evaluate(async () => {
   }
   return {
     verde,
+    real: (performance.now() - real0) / 1000,
+    linea,
     fase: o.fase(),
     luz: vistas,
     porques: [...porques],
@@ -837,6 +907,10 @@ const torre = await page.evaluate(async () => {
  * **Y si no la dio, por qué no miraba la torre**: la roja sin porqué de Los
  * Rodeos con el JAZ 90 en la tanda 20 no decía qué la sujetaba (H48).
  */
+if (torre.verde === null || torre.verde >= 12)
+  console.log(
+    `\n  la espera en la doble raya, ${torre.real.toFixed(0)} s de pared:\n    ${torre.linea.join("\n    ")}\n`,
+  );
 if (torre.verde === null)
   console.log(
     `  la torre no miraba por: ${torre.noTeMira.join(" → ") || "nada apuntado"}` +
@@ -937,6 +1011,18 @@ const despegue = await page.evaluate(async () => {
     return Math.max(-1, Math.min(1, e * 2));
   };
   const porElSuelo = (s) => Math.hypot(s.velocity.x, s.velocity.z);
+  /** A cuánto del eje se da gas, m: lo de `EN_EL_EJE` en el banco del vuelo entero. */
+  const EN_EL_EJE = 3;
+  /*
+   * **Los flaps de despegue, si la lista los pide**, como quien juega: en el
+   * peldaño de cabina no los pone la instructora, los pide la lista —«FLAPS —
+   * 5»— y el JAZ 90 salía sin ellos. Un tercio de palanca, como el banco del
+   * vuelo entero: la primera muesca en las palancas de cuatro y de tres.
+   */
+  const losPideLaLista = () =>
+    !!o.avion()?.llevaFlaps &&
+    (o.palancaDeFlaps?.() ?? 0) < 0.01 &&
+    (o.cantados?.() ?? []).some((c) => c.startsWith("flaps de despegue: los pide la lista"));
   /*
    * **Y el back-taxi se rueda como lo rueda el banco del vuelo entero**, que
    * sale de la granja con el JAZ 20 y éste no salía.
@@ -1060,7 +1146,21 @@ const despegue = await page.evaluate(async () => {
      * en la pista se sigue la raya.
      */
     const remontePorDelante = s.onRunway && (o.backTaxi?.()?.giro ?? null) !== null;
-    if ((o.fase() === "back-taxi" || remontePorDelante) && ruta.length > 1) {
+    /*
+     * **Y la raya se sigue hasta el eje, no hasta el borde** (H44b), como en
+     * el banco del vuelo entero: ver `EN_EL_EJE` en `verificar-vuelo-entero.mjs`.
+     * Entrando por la calle de Los Rodeos, el morro se ponía a menos de siete
+     * grados de la pista todavía pisando el borde y desde ahí se daba gas: en
+     * Taguató Ruvichá, con el JAZ 90, la carrera empezaba a veintisiete metros
+     * del eje y acababa a doscientos cincuenta, en la hierba. La raya del juego
+     * lleva al eje; se sigue hasta estar en él.
+     */
+    const delEjeAhora =
+      (s.position.x - pista.x) * Math.cos(rumboPista) + (s.position.z - pista.z) * Math.sin(rumboPista);
+    const fueraDelEje = ruta.length > 1 && s.onRunway && Math.abs(delEjeAhora) > EN_EL_EJE;
+    // Y los flaps de despegue, si la lista los pide: ver `losPideLaLista`.
+    if (losPideLaLista()) o.pedirFlaps(1 / 3);
+    if ((o.fase() === "back-taxi" || remontePorDelante || fueraDelEje) && ruta.length > 1) {
       /*
        * **Salvo en el back-taxi, donde ir por la pista es el plan.**
        *
@@ -1126,6 +1226,7 @@ const despegue = await page.evaluate(async () => {
       s.onRunway &&
       o.fase() !== "back-taxi" &&
       !remontePorDelante &&
+      !fueraDelEje &&
       Math.abs(alRumbo(s, rumboPista)) < 0.25 &&
       i > 8
     )
@@ -1160,12 +1261,43 @@ const despegue = await page.evaluate(async () => {
    * bueno durante meses fue una carrera de despegue que el juego no tiene.
    * Ver `pilotar` en `src/dev/sondas.ts`.
    */
+  /*
+   * **Y en el modelo completo, con los pies** (H44b): fuera de Guyrami, el pie
+   * y la mano del banco del vuelo entero —ver `el-eje-de-la-carrera.mjs`—. En
+   * Taguató Ruvichá el mando de alabeo, pasados los veintiocho metros por
+   * segundo, no gira nada, y este piloto no tenía otro volante. En Guyrami,
+   * como estaba: allí la ayuda de rodaje lleva el avión a la raya.
+   */
+  const conPies = globalThis.__tramoDelBanco !== "guyrami";
+  const conAyudaEnTierra = (o.juegoParaTrazas?.()?.flight?.layers?.autoRudder ?? 0) > 0;
+  let pieAcumulado = 0;
+  let relojDelPie = o.reloj();
+  if (losPideLaLista()) o.pedirFlaps(1 / 3);
   o.pilotar((m) => {
     const s = o.estado();
     m.engineOn = true;
     m.brakes = 0;
     m.throttle = 1;
-    if (s.onGround) {
+    if (s.onGround && conPies) {
+      const ahora = o.reloj();
+      const pies = globalThis.__elEjeDeLaCarrera({
+        rumboPista: rumboDeLaCarrera,
+        rumbo: s.heading,
+        desvio:
+          (s.position.x - pista.x) * Math.cos(rumboDeLaCarrera) +
+          (s.position.z - pista.z) * Math.sin(rumboDeLaCarrera),
+        porElSuelo: porElSuelo(s),
+        giro: s.yawRate,
+        derrape: s.beta,
+        acumulado: pieAcumulado,
+        paso: Math.max(0, ahora - relojDelPie),
+        conAyudaEnTierra,
+      });
+      relojDelPie = ahora;
+      pieAcumulado = pies.acumulado;
+      m.rudder = pies.rudder;
+      m.aileron = pies.aileron;
+    } else if (s.onGround) {
       /*
        * No basta con poner el morro en el rumbo de la pista: hay que ir al
        * eje. Con solo el rumbo, un avión que entra por una calle y queda
@@ -1186,6 +1318,7 @@ const despegue = await page.evaluate(async () => {
       );
     } else {
       m.aileron = 0;
+      if (conPies) m.rudder = 0;
     }
     /*
      * Y el tirón **a la Vr de este avión**, no a veintisiete metros por
@@ -1588,6 +1721,17 @@ const enVuelo = await page.evaluate(async () => {
     alto: s.heightAboveGround,
     sueltoA,
     ruta: o.ruta().length,
+    /*
+     * **Y los cantos de cabina de la carrera** (H44b): lo que se pidió por la
+     * voz de cabina —«eighty knots», «V one», «rotate»— y lo que sonó. Se
+     * miran aquí, dieciocho segundos después de irse al aire, para que
+     * «rotate» haya tenido su turno.
+     */
+    cantosDeLaCarrera: (o.cantados?.() ?? [])
+      .filter((c) => /^(eighty knots|V one|rotate)(→|:)/.test(c))
+      .map((c) => c.replace(/ \[.*$/, "")),
+    sonaronDeLaCarrera: (o.habladas?.() ?? []).filter((h) => / cabina\.(eightyKnots|v1|vr)$/.test(h)),
+    tiradasDeLaCarrera: (o.descartadas?.() ?? []).filter((d) => / cabina\.(eightyKnots|v1|vr):/.test(d)),
   };
 });
 /*
@@ -1641,6 +1785,46 @@ const enVuelo = await page.evaluate(async () => {
           `(a ${enVuelo.sueltoA.toFixed(0)} m), y a ${enVuelo.alto.toFixed(0)} m al final`,
     "soltando los mandos el avión se quedaba nivelado con el gas a tope, o volvía hacia la pista",
   );
+}
+/*
+ * **Los cantos de cabina de la carrera suenan, y en su orden** (H44b): lo que
+ * dice quien vigila al ver pasar la aguja —ochenta nudos, V1, rotar— por la
+ * voz de cabina, en el peldaño donde canta la tripulación. Qué tipo dice cada
+ * uno lo dicen `CANTOS_DEL_DESPEGUE` y `seSigueEnV1`: el JAZ 90 los tres.
+ * Abajo no se pide ninguno por esa voz, y no se mira.
+ */
+{
+  const ORDEN = ["cabina.eightyKnots", "cabina.v1", "cabina.vr"];
+  const pedidos = enVuelo.cantosDeLaCarrera
+    .map((c) => /→(cabina\.\w+)$/.exec(c)?.[1] ?? null)
+    .filter((c) => c !== null);
+  const sonaron = enVuelo.sonaronDeLaCarrera.map((h) => h.split(" ").pop());
+  console.log(
+    `  cantos de la carrera: ${enVuelo.cantosDeLaCarrera.join(" · ") || "nada apuntado"}` +
+      ` · sonaron: ${enVuelo.sonaronDeLaCarrera.join(" · ") || "nada"}` +
+      (enVuelo.tiradasDeLaCarrera.length ? ` · tiradas: ${enVuelo.tiradasDeLaCarrera.join(" · ")}` : ""),
+  );
+  if (TRAMO === "taguato-ruvicha" || pedidos.length) {
+    const enOrden = pedidos.every((c, i) => i === 0 || ORDEN.indexOf(c) > ORDEN.indexOf(pedidos[i - 1]));
+    // Los que tocan a este tipo: los ochenta, si los lleva; V1, si decide con ella; y rotar.
+    const tocan = ORDEN.filter(
+      (c) =>
+        (c !== "cabina.eightyKnots" ||
+          !enVuelo.cantosDeLaCarrera.includes("eighty knots: este avión no lo canta")) &&
+        (c !== "cabina.v1" || despegue.seSigueEnV1),
+    );
+    const losTres = tocan.every((c) => pedidos.includes(c));
+    comprobar(
+      "y los cantos de cabina de la carrera suenan, y en su orden",
+      despegue.enElAire !== null &&
+        losTres &&
+        enOrden &&
+        sonaron.length === pedidos.length &&
+        sonaron.every((c, i) => c === pedidos[i]),
+      `tocan ${tocan.join(" → ")} · pedidos ${pedidos.join(" → ") || "ninguno"} · sonaron ${sonaron.join(" → ") || "ninguno"}`,
+      "«eighty knots» no se había oído nunca en este banco: el peldaño de cabina no se volaba",
+    );
+  }
 }
 comprobar(
   "y la raya de rodaje desaparece, que volando no hay nada que rodar",

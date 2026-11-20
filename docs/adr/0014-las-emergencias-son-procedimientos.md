@@ -590,3 +590,113 @@ Hasta que se grabe, `cantarLoGrabado` no la pide.
   saldría si estuviera grabado; hoy queda apuntado «sin grabar, no se pide».
   Lo sujetan `cabina.test.ts` y `los-ochenta-nudos.test.ts`. Y el banco con el
   código de antes no llegó a volar: la cola del navegador iba llena.
+
+## Enmienda H44b (20-11-2026): la carrera del JAZ 90 en el peldaño de cabina
+
+### Lo que pasaba
+
+En la ronda de la tanda 20 se voló por primera vez el banco de despegue en
+Taguató Ruvichá —`verificar-despegue.mjs tenerife-norte taguato-ruvicha ""
+jaz-90`—, para oír el «eighty knots» de H44a, que solo suena en ese peldaño.
+Salió 11 de 14: el avión no despegó —empezó la carrera en «autorizado», siete
+grados torcido y veintisiete metros fuera del eje, llegó a 100,8 m/s sin rotar
+y acabó a doscientos cincuenta metros de la pista—, no se apuntó ningún
+«eighty knots», y la verde llegó a los 292,7 s de juego esperando detrás del
+primero de la fila, más que los tres minutos de `PACIENCIA_EN_LA_FILA`.
+
+### Del juego, los ochenta nudos: se cantan
+
+El JAZ 90 en Taguató Ruvichá pasa las tres preguntas de `cantarLoGrabado`:
+en ese peldaño canta la tripulación (`cantaLaCabina`), la del E-Jet los lleva
+(`CANTOS_DEL_DESPEGUE.embraer`) y la toma `cabina.eightyKnots` está en el pack
+de cabina desde que se grabó, después de H44a. En los tres peldaños de abajo
+no los dice nadie. Lo sujeta ahora `los-ochenta-nudos.test.ts`, con una
+carrera que pasa por las fases de verdad —autorizado, alineando, despegando y
+comprometido— y canta una vez, a los ochenta.
+
+Que el banco no los apuntara no era del juego: la carrera no lo era. Los
+ochenta se cuentan en «despegando» y «comprometido», como V1 y Vr, y un avión
+a veintisiete metros del eje está «alineando» —doce metros y ocho grados,
+`alineado` en `flight/vuelo.ts`—; lo más probable es que la aguja pasara por
+los ochenta antes de que el avión, cruzando el eje de lado, entrara en la
+carrera. No se ha cambiado.
+
+### Del juego, la fila: no es la red
+
+`PACIENCIA_EN_LA_FILA` no es lo más que se espera en la doble raya. Es la red
+del candado entre el dibujo y la frecuencia: pasados tres minutos detrás de
+uno de la fila al que la frecuencia no da su salida, ése deja de contar como
+fila. Lo demás que sujeta la roja sigue: la pista ocupada en el dibujo —el
+que se alinea y corre, el que aterriza y la deja— y la frecuencia. Medido en
+la mesa, como `fila-de-salida.test.ts` pero en Los Rodeos y con quien juega en
+el JAZ 90, con trescientas frecuencias sorteadas y el reloj a una vez, sin
+voz: de 223 con alguien delante, la verde llega con una mediana de 148 s, el
+percentil 90 en 228 y lo más largo en 280; la fila sola, hasta 166 s, y la
+pista ocupada en el dibujo, hasta 180. Los 292,7 s del banco caben en eso más
+la radio: con el reloj corrido a ocho veces la voz va a su ritmo —ver «el
+reloj acelerado no acelera lo que se oye» en `game.ts`— y cada segundo de
+voz son ocho de juego. Lo confirma la tercera tirada de abajo: 271,5 s de
+juego fueron 48 de pared, y los ratos de fila eran de radio. No se ha
+cambiado. El banco apunta ahora la espera en los dos relojes.
+
+### El banco
+
+`verificar-despegue.mjs` no tenía nada para el modelo completo sin ayudas:
+
+- **Se alinea por la raya hasta el eje**, como el del vuelo entero
+  (`EN_EL_EJE`, tres metros): daba gas en cuanto el morro miraba a la pista,
+  todavía pisando el borde.
+- **Fuera de Guyrami, lleva la carrera con los pies del vuelo entero.** Solo
+  tenía el mando de alabeo, que en Ruvichá pasados los veintiocho metros por
+  segundo no gira nada. El pie y la mano de la etapa «despegar» de
+  `verificar-vuelo-entero.mjs` están ahora en `scripts/el-eje-de-la-carrera.mjs`,
+  que vuelan los dos bancos —el del vuelo entero, sin cambiar una cuenta— y
+  que `el-eje-de-la-carrera.test.mjs` prueba contra el modelo: el JAZ 90 en la
+  12 de Los Rodeos con su viento de casa, desde el eje y desde doce metros y
+  ocho grados, llega a la Vr a menos de un metro del eje.
+- **Pone los flaps de despegue si la lista los pide**, que en el peldaño de
+  cabina no los pone la instructora.
+- **Apunta los cantos de cabina de la carrera** —«eighty knots», «V one»,
+  «rotate»: lo pedido por la voz de cabina, lo que sonó y lo que la boca
+  tiró— y comprueba que suenan los que tocan a ese tipo, y en ese orden.
+- **Y la espera en la doble raya, en los dos relojes**: cuándo empezó y acabó
+  cada porqué, con el de juego, el de pared y si la boca hablaba.
+
+### Comprobado
+
+- **`verificar-despegue.mjs tenerife-norte taguato-ruvicha "" jaz-90`**, con
+  el banco nuevo y sin voces: 21 de 22. Despega —se alinea por la raya y
+  suelta frenos 115 m más allá de donde pisa la pista, a 85,5 m/s a los quince
+  metros de altura, 1.091 m desde el punto de espera en una pista de 3.168, con los
+  destellos de V1 a 61,1 m/s de aguja y de Vr a 66,5, y sube a 26,6 m/s
+  soltando los mandos—, pero los tres cantos salieron «eighty knots: sin
+  grabar, no se pide» y «V one» y «rotate» a la voz del navegador: el pack se
+  baja con el primer gesto, y el banco no hacía ninguno. Ahora, en Ruvichá,
+  pulsa una tecla que no hace nada y espera al pack, como
+  `verificar-tormenta.mjs`. Quien juega ha hecho muchos gestos antes de
+  despegar, así que en el juego el pack siempre está.
+- **La misma, con las voces**: 22 de 22. «eighty knots» a 80 nudos de aguja,
+  «V one» a 119 y «rotate», pedidos por la voz de cabina y sonados en ese
+  orden —a los 290,5, 296,8 y 298,6 s de la conversación—; la carrera
+  «alineando → despegando → comprometido», a 84,8 m/s a los quince metros. La
+  torre dio la verde a los 14 s, esperando a uno que despegaba.
+- **Y otra vez, con las voces**: 22 de 22, los tres cantos en orden —a los
+  323,7, 329,8 y 331,9 s— y **con fila**: la verde a los 271,5 s de juego,
+  que fueron **48 s de pared**. La línea de la espera lo cuenta: hasta los 36
+  s de juego, uno que aterriza; de los 42 a los 148, la fila sola —número dos
+  detrás de EC-JVO—, que son 13 s de pared con la torre diciendo «pista
+  libre», «hold short, number two» y su explicación; a los 148, el «line up
+  and wait» de EC-JVO, a los 208 su «cleared for take-off», y a los 270 la
+  pista libre. La fila no llegó a la red de los tres minutos: ciento seis
+  segundos de juego, casi todos de radio.
+- **`verificar-despegue.mjs tenerife-norte guyrami "" jaz-90`**, para ver que
+  abajo no se rompe nada: 22 de 22, como en H44a. Allí no lleva los pies
+  nuevos —la ayuda de rodaje lleva el avión a la raya— pero sí se alinea por
+  la raya hasta el eje: suelta frenos 124 m más allá de donde pisa la pista,
+  a 73,7 m/s a los quince metros. «eighty knots: abajo no lo explica nadie»,
+  y «V one» y «rotate» los explica la instructora.
+- **Las pruebas**: `los-ochenta-nudos.test.ts` y `el-eje-de-la-carrera.test.mjs`,
+  nuevas, y el vitest entero, 560 ficheros y 11.180 pruebas en verde (32
+  saltadas).
+- **Sin comprobar**: el banco del vuelo entero con los pies desde su módulo;
+  las cuentas son las mismas, letra a letra, pero no se ha volado.

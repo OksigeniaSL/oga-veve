@@ -66,6 +66,7 @@ import {
 import { fasesATiempoReal } from "./reloj-del-banco.mjs";
 import { gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
 import { porLoQueAceleraElReactor } from "./recogida-del-reactor.mjs";
+import { elEjeDeLaCarrera } from "./el-eje-de-la-carrera.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -748,6 +749,13 @@ await page.addScriptTag({
  */
 await page.addScriptTag({
   content: `globalThis.__porLoQueAceleraElReactor = ${porLoQueAceleraElReactor.toString()};`,
+});
+/*
+ * **Y los pies de la carrera de despegue, desde su módulo** (H44b), que los
+ * vuela también el banco de despegue y los prueba `el-eje-de-la-carrera.test.mjs`.
+ */
+await page.addScriptTag({
+  content: `globalThis.__elEjeDeLaCarrera = ${elEjeDeLaCarrera.toString()};`,
 });
 
 const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida]) => {
@@ -6467,17 +6475,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
         );
       } else if (s.onGround) {
-        const mira = Math.max(60, 3 * porElSuelo(s));
-        const quiere = rumboPista - Math.atan2(desvio(s), mira);
-        const falta = error(quiere, s.heading);
-        const gira = Number.isFinite(s.yawRate) ? s.yawRate : 0;
-        const pide = falta * 3 + timonDeLaCarrera - gira;
-        if (Math.abs(pide) < 1 || Math.sign(falta) !== Math.sign(pide))
-          timonDeLaCarrera = Math.max(
-            -0.8,
-            Math.min(0.8, timonDeLaCarrera + falta * 2.5 * paso),
-          );
-        c.rudder = Math.max(-1, Math.min(1, pide));
+        /*
+         * Los dos, el pie y la mano, desde su módulo (H44b), que es el mismo
+         * que vuela el banco de despegue: ver `el-eje-de-la-carrera.mjs`.
+         */
         /*
          * **Y donde el juego ayuda con el timón en tierra, sin alerón al
          * viento.** Desde #196, en Tukã y Taguató el mando de alabeo en el
@@ -6490,12 +6491,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          */
         const conAyudaEnTierra =
           (o.juegoParaTrazas?.()?.flight?.layers?.autoRudder ?? 0) > 0;
-        c.aileron =
-          porElSuelo(s) > 28
-            ? conAyudaEnTierra
-              ? 0
-              : Math.max(-0.5, Math.min(0.5, (s.beta ?? 0) * 3))
-            : Math.max(-1, Math.min(1, falta * 1.2));
+        const pies = globalThis.__elEjeDeLaCarrera({
+          rumboPista,
+          rumbo: s.heading,
+          desvio: desvio(s),
+          porElSuelo: porElSuelo(s),
+          giro: s.yawRate,
+          derrape: s.beta,
+          acumulado: timonDeLaCarrera,
+          paso,
+          conAyudaEnTierra,
+        });
+        timonDeLaCarrera = pies.acumulado;
+        c.rudder = pies.rudder;
+        c.aileron = pies.aileron;
       } else c.rudder = 0;
       /*
        * **Se tira para rotar, y en cuanto se vuela se suelta.**
