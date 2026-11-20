@@ -96,7 +96,7 @@ import {
 } from "./world/superficies-de-mando";
 import { conV1, seOfrece, type Ejercicio } from "./flight/ejercicios";
 import { SE_DICE_HASTA, seSigueEnV1, yaSeSigue } from "./flight/lo-que-se-dice-al-despegar";
-import { loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
+import { faseQueVeLaTorre, loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
 import {
   alturaDelEjercicio,
@@ -13007,9 +13007,13 @@ export class Game {
     });
   }
 
-  /** La fase que ve la torre, a partir de la del plan. Ver `faseDeLaTorre`. */
+  /**
+   * La fase que ve la torre, a partir de la del plan. Ver `faseDeLaTorre`, y
+   * `faseQueVeLaTorre` para la final que no es suya con un ejercicio que calla
+   * la torre (H43).
+   */
   private faseParaLaTorre(fase: string): string {
-    return fase === "en-vuelo" && this.enLaFinalDeLaTorre ? "final" : fase;
+    return faseQueVeLaTorre(fase, this.enLaFinalDeLaTorre, this.loQueCalla);
   }
 
   /**
@@ -13206,6 +13210,16 @@ export class Game {
    * primero lo primero que llegó, y esto llega antes.
    */
   private decirleAOtro(dice: Transmision): string | null {
+    /*
+     * **Salvo con un ejercicio que calla la frecuencia** (H43): es la torre
+     * hablándole a otro, y no se oye, como el resto de la frecuencia —ver
+     * `oirElCampo`—. El turno decide igual, que el tráfico sigue volando; solo
+     * no suena. Esto salía por aquí sin pasar por lo que calla el ejercicio:
+     * el «cleared for take-off» al que esperaba, cuando la torre te veía en su
+     * final (ver `faseQueVeLaTorre`), y el «go around» al que tenía el permiso
+     * y se va al aire, que se dice siempre.
+     */
+    if (this.loQueCalla.laFrecuencia) return null;
     const montada = this.deTorre(dice.clave, dice.de);
     if (!montada) return null;
     this.nombrar(dice.clave, dice.de.matricula);

@@ -3307,3 +3307,189 @@ Y las pruebas, enteras: 536 ficheros, 10.833 pruebas.
 - La tormenta con el JAZ 50 (`verificar-tormenta.mjs rodear pettirossi
   jaz-50`) no se ha volado: se quedó en la cola del navegador. La tabla de
   arriba dice que entra a 168 nudos con gas 0,93 y 26 bajo el tope.
+
+## Enmienda H43 (20-11-2026): la torre veía en su final a quien seguía la aguja
+
+### Lo que se vio
+
+En la ronda de la tanda 19, `ver-seguir-la-aguja.mjs` dio 19 de 20. Con el
+alisio, «no se oye nada que no sea del ejercicio o de seguridad»:
+`torre.canario.clearedTakeoff`. La foto de al pasar por encima de FV lleva la
+tira de la radio con «Echo Charlie Oscar Juliett Juliett, runway zero one,
+cleared for take-off»: la torre de Fuerteventura dándole la salida a otro,
+justo al llegar a la radio. En la tanda 18, 20 de 20.
+
+### La causa: el ejercicio vuela en el techo de la final de la torre
+
+La torre ve a un avión en su final (`flight/final-de-la-torre.ts`) a menos de
+cinco millas del umbral, apuntando a la pista a menos de sesenta grados y por
+debajo de **tres mil pies sobre el campo** (`TECHO_DE_LA_FINAL`). Y en su
+final la pista es tuya: `alSerTuya` se la quita a quien la tuviera
+—«cleared for take-off» al que esperaba en la cabecera— y se pide tu permiso.
+
+«Seguí la aguja» va nivelado a `ALTURA_DE_LA_AGUJA`, que son **tres mil pies
+sobre la pista** o mil sobre lo más alto del camino, lo que dé más: el mismo
+número que el techo. Hasta H39a empezaba a 947 m, porque el camino de antes
+pedía más; desde H39a, que acerca el sitio de partida con la velocidad de la
+tabla, a 931: 914 m sobre el campo, el techo justo. Volado con el banco
+mirándolo: con el alisio, el camino del perro cruza el embudo de la 01
+apuntando a ella durante cincuenta lecturas, **entre 0,6 y 1,2 m por encima
+del techo**; en calma no pasa por él. Un metro que baje el automático con una
+racha, y la torre lo ve en su final. En la tanda 18, a 947 m, iba dieciséis
+por encima.
+
+Callar la torre en un ejercicio de radio (H26f) era callar su voz donde nace
+(`hayTorreQueHable`) y la frecuencia del campo (`oirElCampo`). Lo que le quita
+la pista a otro por vos no pasa por ninguna de las dos: lo dice el turno
+directamente (`decirAOtro`), porque es la mitad de tu permiso y no puede
+esperar. Es del juego.
+
+### Lo cambiado
+
+- **`faseQueVeLaTorre`** (`lo-que-calla-el-ejercicio.ts`): con un ejercicio
+  que calla la torre, la torre no te ve en su final; la del plan, «final»
+  también, pasa a «en vuelo». Quien sigue la aguja no viene a aterrizar: no se
+  le da la pista ni se le quita a nadie. Al cerrarse el ejercicio la torre lo
+  ve otra vez como siempre, que lo que se vuela después ya es un vuelo.
+  `faseParaLaTorre` en `game.ts` la usa.
+- **Y lo que la torre le dice a otro por su cuenta, callado con la
+  frecuencia** (`decirleAOtro`): además de la salida al que esperaba, el
+  turno manda por ahí el «go around» al que tenía el permiso y se va al aire,
+  que se dice siempre y tampoco pasaba por `oirElCampo`. El turno decide igual
+  y el tráfico vuela; solo no suena ni sale en la tira.
+- **El banco juzga lo dicho mientras dura**, como los demás de radio desde
+  H26g: lo de después de cerrar se apunta aparte. Y mira la final de la torre
+  en cada lectura con el ejercicio abierto —«y la torre no te da su final
+  mientras dura»—, con cuántas lecturas pasa el avión por el embudo de la
+  pista apuntando a ella y a qué altura: es lo que dice si la tirada podía
+  dar el fallo o no, que un 20 de 20 sin pasar por ahí no prueba nada. Con
+  `OGA_BAJAR` sigue la aguja esos metros más abajo, por debajo del techo, y
+  con `OGA_VUELOS=alisio`, solo ese vuelo.
+
+### Lo que se prueba
+
+`lo-que-calla-el-ejercicio.test.ts`: sin ejercicio, en la final de la torre la
+pista es tuya; con cada uno de los de radio abierto, no, ni con la fase
+«final» del plan, y cerrado, sí; los que acaban en la pista —el planeo, el de
+un motor, el ILS, el cangrejo, el ala baja, la pista corta…— siguen con su
+final; que `faseParaLaTorre` pasa por la regla, y que `decirleAOtro` mira la
+frecuencia callada antes de nada.
+
+### Volado
+
+Con la tarjeta del equipo (Intel Iris Xe, ANGLE sobre OpenGL), encima de main
+con H42:
+
+- **Antes del arreglo, dos veces: 20 de 20 y 22 de 22.** No se dio.
+- **Después, 22 de 22**, con la torre en su final 0 de 332 lecturas. Y el
+  banco dice por qué no se daba: con el alisio pasó cincuenta lecturas por el
+  embudo de la 01 apuntando a ella, a entre 915,0 y 915,6 m sobre el campo,
+  por encima del techo; en calma, ninguna. Para el fallo hace falta lo de la
+  tanda 19: un metro menos y alguien esperando para salir.
+- **Y por debajo del techo a propósito** (`OGA_BAJAR=5 OGA_VUELOS=alisio`),
+  **11 de 11**: el automático a 927 m, cincuenta lecturas en el embudo a entre
+  909,5 y 910,1 m sobre el campo y con el morro a 40° de la pista, y las
+  cincuenta **dentro de la final que ve la torre**. Con la regla de antes,
+  las cincuenta eran «final» y la pista, suya. Con la de ahora, ninguna; y
+  de la frecuencia, nada.
+
+### Lo que queda
+
+- **Al cerrarse, la torre lo vuelve a ver.** Si se cierra dentro del embudo y
+  por debajo del techo, la torre lo ve en su final en ese mismo paso y puede
+  darle la salida a otro encima del «pasamos la radio» de la instructora. Es
+  lo que se quiere —cerrado, lo que se vuela es un vuelo—, y el banco ya no lo
+  juzga como del ejercicio.
+- **Los otros ejercicios de radio con una pista debajo** quedan cubiertos por
+  la misma regla, pero solo se ha volado la aguja.
+
+## Enmienda H43 (20-11-2026): el cangrejo del reactor tocaba torcido por el ala del banco
+
+### Lo que se vio
+
+`ver-el-cruzado.mjs` con `OGA_TECNICA=cangrejo OGA_AVION=jaz-90`, en la ronda
+de la tanda 19: 6 de 7. Toca torcido: el morro a 4,6° de la pista y el ala a
+14,5° al viento. En la de la tanda 18, 7 de 7. Entre las dos entró la final
+colocada de H40a y H40b —nace con el gas de su senda y compensada—, y era lo
+primero que había que descartar: H42 encontró que el ILS del JAZ 50 se rompió
+por eso, porque la mano de su banco no movía la rueda.
+
+### No era la final colocada
+
+- **El compensador no le pesa**: en el reactor la senda y la velocidad las
+  lleva el automático del juego (`mandosPara`, H34a), que mueve el timón como
+  un servo y encuentra solo el que sostiene el avión. Volado con la traza, la
+  palanca del automático va entre −0,07 y +0,12 toda la final, y la indicada,
+  entre 112 y 122 nudos para los 123 que pide.
+- **El cangrejo es el de siempre**: medido 5,5° cuando pedía 5,6, y 5,2 cuando
+  pedía 5,3, como los 4,7 y 5,4 de H34a. El de la tanda 18, 3,8°, era el bajo:
+  la racha de ese rato.
+- **Ya fallaba así antes**: H32c dejó una toma torcida con 3,6° de morro y
+  11,8° de ala, y H34a apuntó como abierto que el JAZ 90 toca inclinado, con
+  la ley de enderezar de la avioneta.
+
+### Era el ala del banco
+
+Volado dos veces sin tocar nada, encima de main: **7 de 7** y **6 de 7**. La
+segunda, con la traza paso a paso de la corta, enseña el fallo entero:
+
+- el pie empieza a 8,3 m (`gearHeight` · 2,5) con el morro a −2,3° y lo lleva
+  a +1,8° en dos segundos —se pasa—;
+- a 6,7 m la recogida pone el gas a cero y la palanca de la avioneta, que
+  sube a 0,36: el avión se para en 4,8 m, sube a 5,6 y pierde de 115 a 101
+  nudos;
+- mientras flota, el ala que sujeta lo que se iría de lado pasa de +5,7° a
+  **−14,5°**, contra su tope de veinte; un avión inclinado vira, y el morro se
+  va otra vez contra el pie: toca con 3,2° de morro y 7,1° de ala.
+
+En la mesa —el modelo del juego, la corta del JAZ 90 con el automático en la
+senda, el timón automático de Taguató, 12 y 16 nudos de costado y rachas de
+seis de un lado y del otro en el segundo y medio del enderezar, 26 casos—, con
+el tope de veinte grados toca con el morro a 2,5° como mucho y 9,1° de ala: a
+medio grado del límite de `MORRO_DERECHO`, que la turbulencia del juego pasa.
+El amortiguamiento del pie no cambia nada (2,5°, 2,4°, 2,3° con 1,5, 3 y 4,5);
+el tope del ala, todo:
+
+| Tope del ala | Morro al tocar, peor | Ala al tocar, peor | Del eje, peor |
+| --- | --- | --- | --- |
+| 20° (el de la avioneta) | 2,5° | 9,1° | 4,7 m |
+| 12° | 1,5° | 5,7° | 7,7 m |
+| 10° | 1,2° | 5,2° | 9,0 m |
+| **8°** | **1,0°** | **4,4°** | **10,6 m** |
+| 6° | 0,9° | 3,2° | 12,5 m |
+
+### Lo cambiado
+
+El piloto del banco, en un reactor y enderezando el cangrejo, inclina el ala
+**ocho grados como mucho**. Un reactor de verdad toca con pocos grados de ala
+—los manuales de los de línea la limitan al tocar por la góndola y la punta
+del ala—, y se deja ir de lado un poco antes que tocar inclinado. La avioneta
+y el ala baja siguen con los veinte. Y con `OGA_TRAZA=1`, la corta paso a paso.
+
+El juego no cambia.
+
+### Volado
+
+Con la tarjeta del equipo, encima de main con H42:
+
+| Tirada | Resultado | Al tocar, morro y ala | Ala en la corta, como mucho |
+| --- | --- | --- | --- |
+| Sin cambio, 1 | 7 de 7 | −0,2° y 3,9° | 3,8° |
+| Sin cambio, 2 | **6 de 7** | **3,2° y 7,1°** | **14,5°** |
+| Con el tope de 8°, 1 | 7 de 7 | −1,5° y 1,0° | 2,8° |
+| Con el tope de 8°, 2 | 7 de 7 | 0,2° y 3,2° | 6,9° |
+
+En las cuatro el cangrejo medido es el del triángulo (5,5 y 5,6; 5,2 y 5,3;
+4,8 y 5,2; 5,2 y 5,5) y el pie sale a los 15 m con solo la recogida encima.
+
+### Lo que queda
+
+- **La recogida del reactor sale como sale.** Lo que la ley de la avioneta va
+  sumando mientras vuela el automático —el error contra una bajada que no es
+  la que vuela— se queda guardado, y en la recogida, a 6,7 m, sale de golpe:
+  en la segunda tirada sin cambio, la palanca a 0,36, el avión sube de 4,8 a
+  5,6 m y pierde de 115 a 101 nudos; en la primera con el tope, al revés, no
+  recoge —baja a 4,6 m/s hasta los 3,7 m y toca a 3,3—; en la segunda, sube
+  otra vez un metro y toca a 3,7 m/s. No es lo que tocaba torcido y no se ha
+  tocado: lo de un reactor sería empezar la recogida desde lo que lleva el
+  automático, sin lo sumado. Hay que volarlo.
