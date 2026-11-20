@@ -1222,6 +1222,16 @@ describe("rodando por la pista para ir a la cabecera", () => {
       // Y sin remonte por delante, la carrera es la de siempre.
       expect(sucesos(v, corriendo({ backTaxi: false }), 2)).toEqual([]);
     });
+
+    it("quien remontó y dio la vuelta antes del lazo, sí hizo lo que dijo la torre", () => {
+      const v = new Vuelo();
+      // Entra en el metro 0 y va hacia la cabecera ochenta metros.
+      for (let a = 0; a >= -80; a -= 2)
+        v.paso(enLaPista({ backTaxi: true, desalineado: 178, alLargoDePista: a }), 0.05);
+      expect(
+        sucesos(v, corriendo({ alLargoDePista: -70, pistaRestante: 800, pistaQueNecesita: 600 }), 2),
+      ).toEqual([]);
+    });
   });
 
   /*

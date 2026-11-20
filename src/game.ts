@@ -17919,14 +17919,15 @@ export class Game {
    * porqué, y eso crece con el peldaño como todo lo que se explica: en los
    * tres de abajo lo cuenta la instructora, con calma —la torre dijo ir
    * primero por la pista y dar la vuelta, para tener más pista por delante—,
-   * con la frase entera o la palabra en la tarjeta según se lea. Y solo con
-   * su grabación.
+   * y en la tarjeta la frase entera o la palabra, según se lea. La voz, solo
+   * con su grabación.
    *
-   * **La torre no dice nada**, en ningún peldaño. A un avión en la carrera de
-   * despegue no se le habla salvo por seguridad, y lo que diría entonces es
-   * «stop immediately» (Doc 4444, 12.3.4.10), que es una orden de emergencia
-   * para un peligro que ve la torre: aquí el peligro, si lo hay, es quedarse
-   * sin pista, y ése lo avisa la cabina. En el de arriba quedan la raya que
+   * **La torre no dice nada**, en ningún peldaño. La pista que necesita un
+   * avión es cosa de quien vuela, y lo que una torre le dice a uno que empieza
+   * la carrera cuando ve un peligro es «stop immediately» (Doc 4444,
+   * 12.3.4.10; SKYbrary, *Take-off without ATC clearance*): una orden de
+   * emergencia, no una lección. Aquí el peligro, si lo hay, es quedarse sin
+   * pista, y ése lo avisa la cabina. En el de arriba quedan la raya que
    * seguía hacia la cabecera y ese aviso.
    */
   private decirQueNoSeRemonto(como: "basta" | "noBasta"): void {

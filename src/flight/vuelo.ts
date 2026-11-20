@@ -215,6 +215,20 @@ const MARGEN_DE_PARADA = 1.4;
  */
 const REACCION = 3;
 
+/**
+ * Lo que se puede ir hacia la cabecera por la pista y seguir siendo entrar y
+ * alinearse, m: más es haber remontado, aunque sea poco. Ver `vigilarElRemonte`.
+ */
+const SIN_REMONTAR = 30;
+
+/**
+ * Derecho en el eje de la pista y mirando hacia donde se despega: a menos de
+ * ocho grados y doce metros. Es lo que pide la fase de despegar.
+ */
+function alineadoEnLaPista(s: Situacion): boolean {
+  return Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12;
+}
+
 /*
  * **Y solo en los aviones que deciden con V1** (H44a).
  *
@@ -231,14 +245,6 @@ const REACCION = 3;
  * «despegando», con su «motor a fondo», hasta que vuelan; y en el bimotor de
  * pistón el «seguí» llega con el tren, ver `lo-que-se-dice-al-despegar.ts`.
  */
-/**
- * Derecho en el eje de la pista y mirando hacia donde se despega: a menos de
- * ocho grados y doce metros. Es lo que pide la fase de despegar.
- */
-function alineadoEnLaPista(s: Situacion): boolean {
-  return Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12;
-}
-
 function yaNoSePuedeParar(s: Situacion): boolean {
   if (s.decideConV1 === false) return false;
   const v = s.estado.airspeed;
@@ -469,6 +475,8 @@ export class Vuelo {
   private avisadoDeLaLuz = false;
   /** Ya se vio empezar la carrera sin remontar. Ver `vigilarElRemonte`. */
   private remonteSaltado = false;
+  /** Dónde se pisó la pista, m del eje, y lo más atrás que se fue. Ver `vigilarElRemonte`. */
+  private pistaPisada: { entra: number; masAtras: number } | null = null;
   /** Ha usado un permiso. Entrar en pista después de eso no es saltarse nada. */
   private uso = false;
 
@@ -557,6 +565,7 @@ export class Vuelo {
     this.enElAire = 0;
     this.avisadoDeLaLuz = false;
     this.remonteSaltado = false;
+    this.pistaPisada = null;
     // Y a «todavía no se ha mirado», que es lo que hace que empezar dentro de
     // la pista no cuente como haber entrado. Ver `vigilarLaLuz`.
     this.estabaEnPista = null;
@@ -1084,8 +1093,22 @@ export class Vuelo {
    * `decirQueNoSeRemonto` en `game.ts`.
    */
   private vigilarElRemonte(s: Situacion): "basta" | "noBasta" | null {
-    if (this.remonteSaltado || !this.pisa || !s.enPista || !s.backTaxi) return null;
+    if (!s.enPista) {
+      this.pistaPisada = null;
+      return null;
+    }
+    // Dónde se pisó la pista y lo más hacia la cabecera que se ha ido desde ahí.
+    const pisada = this.pistaPisada ?? { entra: s.alLargoDePista, masAtras: s.alLargoDePista };
+    pisada.masAtras = Math.min(pisada.masAtras, s.alLargoDePista);
+    this.pistaPisada = pisada;
+    if (this.remonteSaltado || !this.pisa || !s.backTaxi) return null;
     if (!alineadoEnLaPista(s) || s.estado.airspeed < YA_ES_RODAJE) return null;
+    /*
+     * Y solo si no se fue hacia la cabecera: quien remontó y dio la vuelta un
+     * poco antes del lazo dibujado sí hizo lo que dijo la torre, y la bandera
+     * sigue puesta hasta llegar a él. Ver `giroDelBackTaxi` en `plan-de-vuelo.ts`.
+     */
+    if (pisada.entra - pisada.masAtras > SIN_REMONTAR) return null;
     this.remonteSaltado = true;
     return s.pistaRestante >= s.pistaQueNecesita ? "basta" : "noBasta";
   }

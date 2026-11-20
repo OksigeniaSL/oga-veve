@@ -1491,7 +1491,9 @@ const despegue = await page.evaluate(async () => {
     // Lo que se dijo de por dónde se sale: la torre y la instructora.
     porDondeSeSale: Object.entries(o.dichoTodo?.() ?? {}).flatMap(([quien, claves]) =>
       claves
-        .filter((k) => /backtrack|ofreceInterseccion|\.tora|remontar|desdeLaInterseccion|backTaxi/.test(k))
+        .filter((k) =>
+          /backtrack|ofreceInterseccion|\.tora|remontar|desdeLaInterseccion|backTaxi|sinRemontar/.test(k),
+        )
         .map((k) => `${quien}: ${k}`),
     ),
     largoDePista: pista.length,
