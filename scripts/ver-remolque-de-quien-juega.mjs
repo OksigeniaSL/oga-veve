@@ -25,8 +25,8 @@
  * Uso: `node scripts/ver-remolque-de-quien-juega.mjs carpeta`. Con `OGA_GPU=1`, con
  * la tarjeta de verdad; con `OGA_PRISA`, el reloj del juego más deprisa; con
  * `OGA_PUERTO`, el puerto de vite; con `OGA_ESCENARIO` y `OGA_AVION`, otro campo y otro
- * avión; y con `OGA_VIENTO` (`300/10`), el viento a mano, que es lo que elige la
- * cabecera y, con ella, el puesto del que se sale.
+ * avión; con `OGA_VIENTO` (`300/10`), el viento a mano, que es lo que elige la
+ * cabecera y, con ella, el puesto del que se sale; y con `OGA_TRAMO`, un peldaño solo.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -45,6 +45,8 @@ const PRISA = process.env.OGA_PRISA ? Number(process.env.OGA_PRISA) : null;
 const ESCENARIO = process.env.OGA_ESCENARIO ?? "tenerife-norte";
 const AVION = process.env.OGA_AVION ?? "jaz-90";
 const VIENTO = process.env.OGA_VIENTO ? `&viento=${process.env.OGA_VIENTO}` : "";
+// Y con `OGA_TRAMO`, solo ese peldaño: la radio de tierra solo habla en el de cabina.
+const TRAMOS = process.env.OGA_TRAMO ? [process.env.OGA_TRAMO] : ["guyrami", "taguato-ruvicha"];
 
 const server = await createServer({
   root: process.cwd(),
@@ -85,7 +87,7 @@ const tarjeta = (page) =>
   });
 
 try {
-  for (const tramo of ["guyrami", "taguato-ruvicha"]) {
+  for (const tramo of TRAMOS) {
     const t = (s) => `${tramo}: ${s}`;
     const page = await navegador.newPage({
       viewport: { width: 1280, height: 720 },
@@ -104,10 +106,19 @@ try {
        * el «desconecto» llegan casi juntos.
        */
       globalThis.__radios = [];
+      // Y con su hora, para contar la tira entera si falta algo (H48).
+      globalThis.__radiosConHora = [];
       setInterval(() => {
         const r = document.querySelector('[data-hud="radio"]');
         const x = r && !r.hidden ? (r.textContent ?? "").trim() : "";
         if (x && globalThis.__radios.at(-1) !== x) globalThis.__radios.push(x);
+        // Con la hora y si el reparto la tiene esperando, que entonces su reloj no corre.
+        const espera = !!r?.classList.contains("lee-espera");
+        const marca = `${x}${espera ? " [esperando sitio]" : ""}`;
+        if (marca !== globalThis.__ultimaMarca) {
+          globalThis.__ultimaMarca = marca;
+          globalThis.__radiosConHora.push(`${(performance.now() / 1000).toFixed(1)} s ${marca || "(escondida)"}`);
+        }
       }, 50);
     });
     await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&leccion=despegue&tramo=${tramo}&avion=${AVION}${VIENTO}`);
@@ -306,7 +317,15 @@ try {
         /freno de aparcamiento/,
         /Desconecto\. Miren mi señal/,
       ].map((re) => deLaSalida.findIndex((x) => re.test(x)));
-      if (orden.some((i) => i < 0)) fallos.push(t(`en cabina falta algo de la radio de tierra (${orden.join(", ")})`));
+      if (orden.some((i) => i < 0)) {
+        fallos.push(t(`en cabina falta algo de la radio de tierra (${orden.join(", ")})`));
+        /*
+         * **Y la tira entera, con su hora**: por la 30 de Los Rodeos faltaban tres
+         * frases y lo filtrado no decía qué las había tapado (H48).
+         */
+        const todas = await page.evaluate(() => globalThis.__radiosConHora);
+        console.log(t(`la tira entera:\n      ${todas.join("\n      ")}`));
+      }
       else if (orden.some((i, n) => n > 0 && i < orden[n - 1])) fallos.push(t(`la radio de tierra, fuera de orden (${orden.join(", ")})`));
       if (deLaSalida.filter((x) => /pushback/.test(x)).length > 1) fallos.push(t("el permiso de la torre se dijo más de una vez"));
     }
