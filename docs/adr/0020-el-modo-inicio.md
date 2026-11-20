@@ -1059,8 +1059,9 @@ lo que pone la ruta, no el nivel. La decisión que faltaba la tomó Enrique:
 - **Volado con el arreglo** (×12, la tarjeta de verdad, sin hangar ni kit con
   el dedo): la primera pasada, **99 de 99**. Ara lo dice a los 887 s, y la
   recta de lo mirado vuelve a pasar por el jirón —0 m densos—, con nube densa
-  en el 80 % de la vista. El vitest entero, 564 ficheros y 11.234 pruebas en
-  verde.
+  en el 80 % de la vista. La segunda, **99 de 99** también, con lo mismo a los
+  887 s y nube densa en el 84 % de la vista. El vitest entero, 564 ficheros y
+  11.234 pruebas en verde.
 
 ## La cuarta escena: el vuelo largo de Ara a casa
 
