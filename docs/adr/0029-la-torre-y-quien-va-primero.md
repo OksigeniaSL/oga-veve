@@ -641,3 +641,8 @@ En el navegador, puerto 5686:
   a los 1.243 de C29, y solo una llegada del tráfico cantó final; ninguna tocó
   delante. Ni tampoco la torre a los mínimos: no hubo pista ocupada en la
   final.
+- `tenerife-norte taguato 12 jaz-90`, con lo que se junta —el arreglo de la
+  torre solo—: 64 de 64, permiso a 285 m (935 ft) y «cleared to land» a
+  250 m. Tampoco aquí hubo pista ocupada en la final: la pista llevaba 320 s
+  libre al pedirlo. La altura de los mínimos con la pista recién soltada
+  queda sin ver en el navegador.
