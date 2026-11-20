@@ -2466,6 +2466,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * lo dé igual. Ver `porElViraje`.
      */
     anguloSinSustentacion: () => juego.anguloSinSustentacion().anguloSinSustentacion,
+    /**
+     * **La indicada de ahora**, m/s y sin redondear: la que se compara con las V
+     * del manual —V1, Vr, V2, Vref—, que son indicadas. Un banco que tira cuando
+     * la verdadera pasa la Vr rota antes que el juego en cuanto el campo es alto
+     * o el día caliente (H38d). Ver `indicadaDe` en `flight/atmosphere.ts`.
+     */
+    indicada: () => juego.indicadaAhora(),
     /** La velocidad que recibe la pantalla de la cabina, en nudos. */
     velocidadDeCabina: () =>
       Math.round(

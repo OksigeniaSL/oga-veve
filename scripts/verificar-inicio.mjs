@@ -187,6 +187,8 @@ const leer = (page) =>
       dibujo: d ? { mando: d.dataset.mando, gesto: d.dataset.gesto } : null,
       pos: p ? { x: p.x, y: p.y, z: p.z } : null,
       velocidad: o?.estado ? o.estado().airspeed : 0,
+      // La de la aguja, que es contra la que la escena mira la Vr (H38d).
+      indicada: o?.indicada ? o.indicada() : 0,
       altura: o?.estado ? o.estado().heightAboveGround : 0,
       alabeo: o?.actitud ? o.actitud().alabeo : 0,
       enTierra: o?.estado ? o.estado().onGround : true,
@@ -482,8 +484,8 @@ async function unaVuelta(cual) {
     if (!vistos.has(e.paso)) vistos.set(e.paso, (Date.now() - t0) / 1000);
     if (!salida && v.enTierra && v.velocidad > 0.5) salida = v.pos;
     const deLaCarrera = e.paso === "carrera" || (e.paso === "gas" && e.fase === "bien");
-    if (deLaCarrera && e.hablando) masRapidoHablando = Math.max(masRapidoHablando, v.velocidad);
-    if (e.paso === "despegar" && enElAhora === null) enElAhora = v.velocidad;
+    if (deLaCarrera && e.hablando) masRapidoHablando = Math.max(masRapidoHablando, v.indicada);
+    if (e.paso === "despegar" && enElAhora === null) enElAhora = v.indicada;
     if (salida && !despegue && !v.enTierra) despegue = v.pos;
     altura = Math.max(altura, v.altura);
     alabeoMin = Math.min(alabeoMin, v.alabeo);

@@ -409,7 +409,8 @@ async function unTelefono(quien) {
         faseRodaje: r.fase,
         restante: r.restante,
         v,
-        ias: s.airspeed,
+        // La de la aguja de verdad: se compara con la Vr, que es indicada (H38d).
+        ias: o.indicada(),
         alto: s.heightAboveGround,
         enSuelo: s.onGround,
         motor: o.controles().engineOn,

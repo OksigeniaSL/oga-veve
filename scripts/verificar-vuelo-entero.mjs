@@ -2837,7 +2837,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * para levantar el morro, y por debajo de eso el empujón sigue sin entrar,
      * que es lo que evita rotar demasiado pronto.
      */
-    const conMargen = s.airspeed > (suyas.rotacion ?? 28) * 1.05;
+    // En indicada, como la Vr: con la verdadera, en un campo caliente se empujaba antes (H38d).
+    const conMargen = s.airspeed > enVerdadera(s, (suyas.rotacion ?? 28) * 1.05);
     const extra = conMargen ? Math.min(0.25, falta * 0.05) : 0;
     /*
      * Y la avioneta, parando el morro: subiendo por velocidad con la racha de
