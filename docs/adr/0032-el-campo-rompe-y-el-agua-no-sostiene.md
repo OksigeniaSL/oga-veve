@@ -248,3 +248,43 @@ calles y de las superficies de aproximación.
 - Por debajo de `ROCE` el avión todavía pasa por dentro de un árbol, despacio.
   Rodar al paso contra un tronco no se para como contra un hangar; si un día
   hace falta, el sitio es el mismo que el de los edificios en Guyrami.
+
+## Enmienda H43 (20-11-2026): la franja que pisaba asfalto era del banco
+
+### Lo que se vio
+
+En la ronda de la tanda 19, `verificar-tren-y-agua.mjs` dio 8 de 9. Falló «ni
+por su franja, que es campo allanado»: sin percance, a 25,2 m/s como mucho y
+en el suelo todo el rato, pero **pisando asfalto**. En la tanda 18, 9 de 9.
+
+### La causa: se leía el suelo antes de que el juego lo mirase
+
+El juego decide de qué está hecho el suelo al principio de cada paso
+(`sueloEn` en `update`), y `colocar` no lo vuelve a mirar. Cada prueba posa
+el avión parado en la pista, lo coloca en su sitio y espera cuarenta
+milisegundos partidos por el reloj —diez, con el juego por cuatro— antes de
+la primera lectura. Si en esos diez milisegundos no ha corrido ningún
+fotograma, lo que se lee es lo de la pista de antes: asfalto.
+
+No es una sospecha. En la ronda de la tanda 18, la que pasó, salieron dos
+lecturas imposibles: «pisaba asfalto» rompiendo el tren en el campo, a ciento
+cincuenta metros del eje, y «pisaba asfalto» metido en el mar a nueve
+kilómetros y tres cuartos de la pista. Pasaron porque esas dos pruebas no
+miran el suelo; la de la franja sí lo mira, y en la tanda 19 le tocó a ella.
+El juego no ha cambiado aquí: ni la franja, ni el asfalto con sus márgenes,
+ni la regla del tren.
+
+### Lo cambiado
+
+El banco toma el suelo de la primera lectura con el reloj del juego ya en
+marcha desde que se colocó, que es cuando ya ha corrido un paso entero con el
+avión en su sitio, y apunta todo lo que se pisa (`pisadas`). Si lo de antes
+del primer paso era otra cosa, lo dice.
+
+### Volado
+
+Dos veces, **9 de 9** las dos. La franja, 49 de 49 lecturas en campo en la
+primera y 59 de 59 en la segunda; la pista, todo asfalto; el campo, campo
+hasta romper el tren a los 0,3 s. Ninguna de las catorce pruebas leyó otra
+cosa antes del primer paso, así que el fallo no se volvió a dar: lo que dice
+que era este es lo leído en la tanda 18.

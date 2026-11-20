@@ -100,13 +100,32 @@ function probar(page, que) {
       const desde = o.reloj();
       let vmax = 0;
       let superficie = null;
+      let antesDelPaso = null;
+      const pisadas = {};
       let enElSuelo = 0;
       let pasos = 0;
       while (o.reloj() - desde < segundos && !o.percance()) {
         await espera(40 / veces);
         const e = o.estado();
         vmax = Math.max(vmax, e.groundSpeed);
-        superficie ??= o.superficie();
+        /*
+         * **Lo que pisa, leído después de un paso del juego, no antes** (H43).
+         * El juego mira el suelo al principio de cada paso, y `colocar` no
+         * lo vuelve a mirar; si la espera de arriba —diez milisegundos con el
+         * reloj por cuatro— acaba antes de que corra un fotograma, lo que se
+         * lee es el suelo de `posarEnLaPista`, que es asfalto. En la ronda de
+         * la tanda 18 salió «pisaba asfalto» rompiendo el tren en el campo, a
+         * ciento cincuenta metros del eje, y metido en el mar a diez
+         * kilómetros; en la de la 19, en la franja, que es la única que lo
+         * comprobaba, y falló. Ahora cuenta lo leído con el reloj ya en marcha,
+         * y `pisadas` dice todo lo que se pisó.
+         */
+        antesDelPaso ??= o.superficie();
+        if (o.reloj() > desde) {
+          const s = o.superficie();
+          superficie ??= s;
+          pisadas[s] = (pisadas[s] ?? 0) + 1;
+        }
         pasos++;
         if (e.onGround) enElSuelo++;
       }
@@ -116,6 +135,8 @@ function probar(page, que) {
       return {
         percance,
         superficie,
+        antesDelPaso,
+        pisadas,
         v: +e.groundSpeed.toFixed(1),
         vmax: +vmax.toFixed(1),
         suelo: pasos ? +(enElSuelo / pasos).toFixed(2) : 0,
@@ -250,7 +271,9 @@ const fmt = (r) =>
   r.fallo
     ? r.fallo
     : `percance: ${r.percance ?? "ninguno"} · pisaba ${r.superficie} · a ${r.vmax} m/s como mucho` +
-      ` (${(r.vmax * 3.6).toFixed(0)} km/h), en el suelo el ${Math.round(r.suelo * 100)} %, ${r.tardo} s`;
+      ` (${(r.vmax * 3.6).toFixed(0)} km/h), en el suelo el ${Math.round(r.suelo * 100)} %, ${r.tardo} s` +
+      ` · pisadas ${JSON.stringify(r.pisadas)}` +
+      (r.antesDelPaso !== r.superficie ? ` · antes del primer paso se leía ${r.antesDelPaso}` : "");
 
 try {
   for (const c of casos) {
