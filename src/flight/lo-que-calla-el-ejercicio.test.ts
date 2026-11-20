@@ -165,6 +165,13 @@ describe("y el juego lo calla donde nace cada cosa", () => {
     expect(cuerpo).toMatch(/faseQueVeLaTorre\(fase, this\.enLaFinalDeLaTorre, this\.loQueCalla\)/);
   });
 
+  it("y lo que la torre le dice a otro por su cuenta —la salida, el «go around»— tampoco se oye (H43)", () => {
+    const cuerpo = cuerpoDe(/\n {2}private decirleAOtro\(dice: Transmision\): string \| null \{/);
+    expect(cuerpo, "no se encontró decirleAOtro en game.ts").not.toBe("");
+    // Lo primero, antes de montar la frase, apuntarla o ponerla en la tira.
+    expect(cuerpo).toMatch(/^\{\s*(\/\*[\s\S]*?\*\/\s*)?if \(this\.loQueCalla\.laFrecuencia\) return null;/);
+  });
+
   it("la frecuencia del campo no se oye, pero su tráfico sigue volando", () => {
     const cuerpo = cuerpoDe(/\n {2}private oirElCampo\(dt: number\): void \{/);
     expect(cuerpo, "no se encontró oirElCampo en game.ts").not.toBe("");

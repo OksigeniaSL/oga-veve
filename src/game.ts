@@ -13210,6 +13210,16 @@ export class Game {
    * primero lo primero que llegó, y esto llega antes.
    */
   private decirleAOtro(dice: Transmision): string | null {
+    /*
+     * **Salvo con un ejercicio que calla la frecuencia** (H43): es la torre
+     * hablándole a otro, y no se oye, como el resto de la frecuencia —ver
+     * `oirElCampo`—. El turno decide igual, que el tráfico sigue volando; solo
+     * no suena. Esto salía por aquí sin pasar por lo que calla el ejercicio:
+     * el «cleared for take-off» al que esperaba, cuando la torre te veía en su
+     * final (ver `faseQueVeLaTorre`), y el «go around» al que tenía el permiso
+     * y se va al aire, que se dice siempre.
+     */
+    if (this.loQueCalla.laFrecuencia) return null;
     const montada = this.deTorre(dice.clave, dice.de);
     if (!montada) return null;
     this.nombrar(dice.clave, dice.de.matricula);
