@@ -1503,9 +1503,11 @@ de los diez pies por segundo de una toma dura de transporte. Es lo que ya
 hacía el avión compensado sin ayuda.
 
 Y `verificar-cambio-de-peldano.mjs`, con la primera versión de `comoIba`: 79
-de 80, el fallo contado arriba. Con la que queda no se ha podido volver a
-volar en esta tanda —el navegador estaba en cola detrás de otras rondas—; en
-la mesa, el mismo recorrido del JAZ 120 por los cuatro peldaños con el gas
-quitado en cada cambio acaba a 147 m sobre el suelo, contra 58 con la
-primera versión y 203 con el código de antes, que al nacer con el morro del
-ala limpia y los flaps fuera subía un poco en cada cambio.
+de 80, el fallo contado arriba. Con la que queda, el JAZ 120, que es el que
+fallaba: 40 de 40, y en final a mano el gas sigue en 0,29 al llegar a cada
+peldaño. En la mesa, el mismo recorrido por los cuatro peldaños con el gas
+quitado en cada cambio acaba a 147 m sobre el suelo, contra 58 con la primera
+versión y 203 con el código de antes, que al nacer con el morro del ala
+limpia y los flaps fuera subía un poco en cada cambio. El JAZ 20 de ese banco
+no se ha vuelto a volar con la versión que queda (con la primera, sus 40
+pasaban).
