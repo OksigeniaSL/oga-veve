@@ -29,7 +29,14 @@
  */
 
 import { Euler, Quaternion, Vector3 } from "three";
-import { AIRE_ESTANDAR, type Aire, airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
+import {
+  AIRE_ESTANDAR,
+  type Aire,
+  airDensity,
+  GRAVITY,
+  indicadaDe,
+  SEA_LEVEL_DENSITY,
+} from "./atmosphere";
 import { actitudEnTierra, alturaSobreLasRuedas } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import {
@@ -659,7 +666,10 @@ export class ArcadeFlightModel implements FlightModel {
    */
   ponerViento(): void {}
 
-  /** El aire del día. Ver `ponerAire` en `model.ts`: aquí no mueve la física. */
+  /**
+   * El aire del día. Ver `ponerAire` en `model.ts`: aquí no mueve la física,
+   * pero lo lee la aguja, y con ella la Vr de irse del suelo. Ver `indicada`.
+   */
   private aire: Aire = AIRE_ESTANDAR;
 
   ponerAire(aire: Aire): void {
@@ -668,6 +678,15 @@ export class ArcadeFlightModel implements FlightModel {
 
   aireDelDia(): Aire {
     return this.aire;
+  }
+
+  /**
+   * **La indicada de ahora**, m/s: la de `indicadaDe`, con la velocidad de este
+   * modelo, su altura y el aire del día. La Vr de la ficha es de aguja, así que
+   * es contra ésta contra la que se mira. Ver `canClimb`.
+   */
+  private indicada(): number {
+    return indicadaDe({ airspeed: this.speed, position: this.state.position }, this.aire);
   }
 
   /** Lo que pesa ahora. Ver `ponerMasa` en `model.ts`. */
@@ -1481,9 +1500,19 @@ export class ArcadeFlightModel implements FlightModel {
      * Con la Vr de la ficha, el avión se va a la velocidad de su tipo, y la
      * carrera tiene sus dos momentos: la decisión y la rotación.
      */
+    /*
+     * **Y la Vr se mira en la aguja**, como toda V de un manual: ver
+     * `indicadaDe`. Con la verdadera, en Los Rodeos con 40 °C el JAZ 90 se iba
+     * del suelo con la aguja en 61,5 m/s y su Vr en 66,4, y el niño que tira
+     * desde el principio despegaba antes de que salieran la flecha de tirar y
+     * «rotate», que sí miran la aguja. A nivel del mar en un día estándar las
+     * dos son la misma y no cambia nada; en un campo alto o caliente hay que
+     * correr más para llegar a la misma indicada, que es la mitad de «caliente y
+     * alto» que este modelo sabe hacer (enmienda H38e del ADR 0019).
+     */
     const canClimb =
       !this.state.onGround ||
-      (this.speed >= this.aircraft.rotationSpeed &&
+      (this.indicada() >= this.aircraft.rotationSpeed &&
         this.state.onRunway &&
         !this.haTocado);
 
@@ -1740,8 +1769,10 @@ export class ArcadeFlightModel implements FlightModel {
      * alabeo de este modelo es de dibujo. Lo leen el cuello de quien va dentro
      * y el ala que se dobla. Ver `cameras/dentro.ts` y `world/ala-que-se-dobla.ts`.
      */
+    // El ala sostiene con la presión dinámica, que es la indicada: todo el peso
+    // justo a la Vr de la aguja, que es donde se puede ir. Ver `canClimb`.
     s.loadFactor = s.onGround
-      ? Math.min(1, (this.speed / Math.max(1, this.aircraft.rotationSpeed)) ** 2)
+      ? Math.min(1, (this.indicada() / Math.max(1, this.aircraft.rotationSpeed)) ** 2)
       : 1 + this.cargaDelAire;
     // Ni pérdida ni choque: en este peldaño no se puede perder.
     s.stalled = false;

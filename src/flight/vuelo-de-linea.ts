@@ -416,7 +416,18 @@ const CAMBIA_EN_LA_RECOGIDA = 1.6;
  */
 const TOCA_A = 2.5 * PIE;
 
-/** **Las velocidades**, m/s. */
+/**
+ * **Las velocidades**, m/s. Los 250 nudos por debajo de diez mil pies son los del
+ * control, y van **en la aguja**, como los 210 de acercarse: ver `enLaAguja`.
+ *
+ * Los 280 de arriba no, y es a propósito: un reactor de verdad sube y baja ahí a
+ * una indicada hasta que manda el Mach, y la bajada del vuelo largo —el punto de
+ * descenso y la senda desde cuarenta mil pies— está hecha con estos 280 de
+ * verdadera. Puestos en la aguja, a treinta mil pies son más de 450 de
+ * verdadera, y el JAZ 110 llegaba a cuarenta kilómetros de la pista casi 1.900 m
+ * por encima de la senda (`bajada-del-vuelo-largo.test.ts`). Pasarlos va con el
+ * perfil de bajada del plan, y es otro encargo (enmienda H38e del ADR 0019).
+ */
 const V_250 = 250 * NUDO;
 const V_ARRIBA = 280 * NUDO;
 const V_BAJANDO_CERCA = 210 * NUDO;
@@ -968,7 +979,7 @@ export class VueloDeLinea {
     const sujeta = !l.enTierra && l.topeDeVelocidad !== undefined;
     return {
       motor: true,
-      velocidad: sujeta ? Math.min(this.ficha.vr + 10, l.topeDeVelocidad!) : Infinity,
+      velocidad: sujeta ? Math.min(enLaAguja(this.ficha.vr + 10, l), l.topeDeVelocidad!) : Infinity,
       gas: sujeta ? "velocidad" : "despegue",
       subida: rota ? Math.max(2, this.subidaPedida) : null,
       alabeo: rota && !l.enTierra ? 0 : null,
@@ -1052,6 +1063,8 @@ export class VueloDeLinea {
       this.tramo === "recogida" ? 0 : acotar(INCLINA_POR_RUMBO * diferencia(l.rumbo, quiero), tope);
 
     // ── La velocidad y la configuración ──
+    // Lo que se pide es de aguja, y el modelo va a la verdadera: ver `enLaAguja`.
+    const aguja = (indicada: number): number => enLaAguja(indicada, l);
     const falta = l.faltaParaTocar;
     const bajando = this.tramo === "bajada" || this.tramo === "final" || this.tramo === "recogida";
     let v: number;
@@ -1059,7 +1072,7 @@ export class VueloDeLinea {
     let tren = false;
     if (this.tramo === "subida") {
       const conFlaps = sobreElCampo < RECOGE_LOS_FLAPS;
-      v = conFlaps ? this.ficha.vr + 10 : l.altitud < DIEZ_MIL ? V_250 : V_ARRIBA;
+      v = conFlaps ? aguja(this.ficha.vr + 10) : l.altitud < DIEZ_MIL ? aguja(V_250) : V_ARRIBA;
       /*
        * Y nunca por encima de lo que pide la carta de la salida hasta su punto: los 210
        * nudos de la CCS6L hasta MD039 eran 236 a 250 sin esto, que es lo que hace quien
@@ -1070,22 +1083,22 @@ export class VueloDeLinea {
       // El tren dentro en cuanto sube de verdad: unos diez metros.
       tren = l.altura < 10;
     } else if (!bajando) {
-      v = l.altitud < DIEZ_MIL ? V_250 : (this.velocidadDeCrucero ?? V_ARRIBA);
+      v = l.altitud < DIEZ_MIL ? aguja(V_250) : (this.velocidadDeCrucero ?? V_ARRIBA);
       if (l.topeDeVelocidad !== undefined) v = Math.min(v, l.topeDeVelocidad);
     } else {
-      v = l.altitud < DIEZ_MIL ? V_250 : this.velocidadBajando(l.altitud);
-      if (falta < CONFIGURA.frena) v = Math.min(v, V_BAJANDO_CERCA);
+      v = l.altitud < DIEZ_MIL ? aguja(V_250) : this.velocidadBajando(l.altitud);
+      if (falta < CONFIGURA.frena) v = Math.min(v, aguja(V_BAJANDO_CERCA));
       if (falta < CONFIGURA.flaps1) {
         flaps = 1 / 3;
-        v = Math.min(v, Math.max(this.ficha.vref + 30, 175 * NUDO));
+        v = Math.min(v, aguja(Math.max(this.ficha.vref + 30, 175 * NUDO)));
       }
       if (falta < CONFIGURA.flaps2) {
         flaps = 2 / 3;
-        v = Math.min(v, this.ficha.vref + 15);
+        v = Math.min(v, aguja(this.ficha.vref + 15));
       }
       if (falta < CONFIGURA.tren || l.enLaFinal) tren = true;
       if (falta < CONFIGURA.flapsTodos) flaps = 1;
-      if (falta < CONFIGURA.estabilizado) v = this.ficha.vref;
+      if (falta < CONFIGURA.estabilizado) v = aguja(this.ficha.vref);
     }
     const recogiendo = this.tramo === "recogida";
     return {
@@ -1254,6 +1267,26 @@ export function empujeQueSeQuema(
 }
 
 // ── Lo que queda ─────────────────────────────────────────────────────────
+
+/**
+ * **La verdadera que pone esa indicada en la aguja, aquí**, m/s.
+ *
+ * Las tripulaciones vuelan con la aguja: la Vr y diez de la subida, la Vref de la
+ * final, las de cada muesca de flaps y los 250 nudos por debajo de diez mil pies
+ * son indicadas en cualquier manual y en cualquier control. Pedidas en verdadera,
+ * en un campo alto o un día caliente el avión iba más despacio de lo que marca el
+ * manual, y a nueve mil pies, a 250 nudos de verdadera, la aguja se quedaba en
+ * 218 (enmienda H38e del ADR 0019). Los 280 de por encima de diez mil pies siguen
+ * en verdadera: ver `V_ARRIBA`.
+ *
+ * El modelo va a la verdadera que se le pide, así que se pasa con la proporción
+ * de la propia lectura: `velocidad` e `indicada` salen del mismo estado y del
+ * mismo aire —ver `indicadaDe` en `atmosphere.ts`—, y no hace falta otra cuenta
+ * del aire. Parado no hay aguja que leer, y se deja como está.
+ */
+export function enLaAguja(indicada: number, l: Pick<LecturaDeLinea, "velocidad" | "indicada">): number {
+  return l.indicada > 1 ? (indicada * l.velocidad) / l.indicada : indicada;
+}
 
 /** El rumbo de `a` a `b`, rad, cero al norte. Ver `rumbo` en `ruta.ts`. */
 export function rumboEntre(a: PuntoXZ, b: PuntoXZ): number {

@@ -40,12 +40,16 @@ const recienAterrizado = {
   celebrando: 0,
   haVolado: true,
 };
+/** La Vr de la avioneta, m/s. Sin viento ni altura, la aguja es la verdadera. */
+const VR = 28;
 const mirada = (state: FlightState, hayRaya: boolean, enFinal = false) => ({
   state,
   throttle: 0,
   dt: 0.1,
   hayRaya,
   enFinal,
+  indicada: state.airspeed,
+  vr: VR,
 });
 
 describe("después de aterrizar", () => {
@@ -99,6 +103,28 @@ describe("antes de volar, la raya no cambia nada", () => {
       throttle: 0.5,
     });
     expect(r.paso).toBe("pull");
+  });
+});
+
+/*
+ * **Se tira con la aguja en la Vr del avión** (H38e). Era una Vr fija de treinta
+ * metros por segundo contra la verdadera: en el JAZ 90, con la suya en 66,4, pedía
+ * tirar a menos de la mitad; y en Los Rodeos con calor, la verdadera pasa la Vr
+ * antes que la aguja, que es la que manda.
+ */
+describe("tirar, cuando la aguja llega a la Vr de este avión", () => {
+  const corriendo = { paso: "speed" as const, celebrando: 0, haVolado: false };
+  const JAZ_90 = 66.4;
+
+  it("en el reactor, a treinta metros por segundo todavía se corre", () => {
+    const r = pasoQueToca(corriendo, { ...mirada(enElSuelo(30), false), throttle: 1, vr: JAZ_90 });
+    expect(r.paso).toBe("speed");
+  });
+
+  it("con la verdadera pasada y la aguja por debajo, todavía se corre; con la aguja, se tira", () => {
+    const caliente = { ...mirada(enElSuelo(70), false), throttle: 1, vr: JAZ_90 };
+    expect(pasoQueToca(corriendo, { ...caliente, indicada: 65 }).paso).toBe("speed");
+    expect(pasoQueToca(corriendo, { ...caliente, indicada: JAZ_90 }).paso).toBe("pull");
   });
 });
 

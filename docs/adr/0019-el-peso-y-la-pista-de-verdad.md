@@ -516,3 +516,114 @@ de los bancos, en m/s y sin redondear.
   manual: es la barra de progreso de la lección, no una V que se cante.
 - **La fase «comprometido»** (`vuelo.ts`, `yaNoSePuedeParar`) es una cuenta de
   frenada, no una V: va con la verdadera, que es la que hay que parar.
+
+## Enmienda H38e (20-11-2026): lo que quedaba de las V del manual
+
+Lo que H38d dejó en «lo que no». Las tres cosas comparaban, o pedían, una V de
+manual en verdadera; ahora van con `indicadaDe`, sin otra cuenta del aire. Todo
+menos una velocidad: los 280 nudos que la tripulación de línea pide por encima
+de diez mil pies, que se quedan en verdadera por lo que se cuenta abajo.
+
+### El modelo sencillo se va del suelo con la aguja en la Vr
+
+`canClimb` (`arcade.ts`) miraba `speed >= rotationSpeed`, y `speed` es la
+verdadera. Ahora mira la indicada de este modelo —su velocidad, su altura y el
+aire del día, pasados a `indicadaDe`—, y la carga en tierra del ala, que ya era
+«todo el peso al rotar», va con la misma aguja. Tirando desde el principio en
+Los Rodeos a 40 °C, el JAZ 90 se soltaba con la aguja en 61,5 m/s y su Vr en
+66,4: antes de la flecha de tirar y de «rotate», que miran la aguja.
+
+**Y la calibración de la carrera.** `ritmoDeCarrera` sigue saliendo de
+`carreraHastaVr` a nivel del mar, así que ahí no cambia nada: la verdadera es la
+indicada y la carrera es la de siempre (243 m el JAZ 20, 636 el JAZ 90, gas a
+fondo y tirando desde parado). Arriba o con calor hace falta más verdadera para
+la misma aguja, y como la punta del suelo de este modelo no crece con la altura,
+llegar cuesta más: la carrera se alarga sola, sin tocar el ritmo.
+
+| Gas a fondo, tirando desde parado | Mar, 15 °C | Los Rodeos, 15 °C ISA | Los Rodeos, 40 °C |
+|---|---|---|---|
+| JAZ 20, modelo sencillo | 243 m | 273 m | 330 m |
+| JAZ 20, `carreraHastaVr` | 225 | 261 | 327 |
+| JAZ 90, modelo sencillo | 636 | 689 | 775 |
+| JAZ 90, `carreraHastaVr` | 629 | 703 | 830 |
+| JAZ 110, modelo sencillo | 1.109 | 1.202 | 1.354 |
+| JAZ 110, `carreraHastaVr` | 1.094 | 1.224 | 1.448 |
+
+Antes, las tres columnas del modelo sencillo eran la misma. Ahora crecen como la
+cuenta completa, algo menos: lo que falta es el motor, que en este modelo no
+pierde fuerza con el aire fino. Es la mitad de «caliente y alto» que este
+peldaño sabe hacer, y la que se ve: el avión corre más antes de irse.
+
+**Y nadie se queda sin despegar.** La punta del suelo no sube con la altura y la
+verdadera que hace falta, sí, así que hay un día en que no llega: en un campo
+de tierra (`campo`, el rozamiento de fuera de pista) a 632 m y 40 °C el JAZ 20
+ya no se va. Ninguna pista del juego es de eso —una pista es de asfalto o de
+hierba, ver `sueloEn`—, y en hierba, en Los Rodeos y a 45 °C, se va toda la
+flota de ala fija: lo vigila `arcade-vr-en-la-aguja.test.ts`, para que un niño
+de cuatro años no corra la pista entera tirando sin irse nunca.
+
+### Lo que pide la tripulación de línea va en la aguja
+
+`vuelo-de-linea.ts` pedía al gas, en verdadera, la Vr y diez de la subida con
+flaps, los 250 nudos por debajo de diez mil pies, los 210 de acercarse, los de
+cada muesca de flaps y la Vref de la final. Todas son de aguja en cualquier
+manual y en cualquier control: a nueve mil pies, 250 nudos de verdadera dejan
+la aguja en 218. `enLaAguja(indicada, l)` las pasa a la verdadera que se le
+pide al modelo **con la proporción de la propia lectura**: `velocidad` e
+`indicada` salen del mismo estado y del mismo aire (`indicadaDe`), así que no
+hay otra cuenta del aire en la tripulación. Siguen en verdadera lo que ya lo
+era: el crucero de un vuelo largo, que es la velocidad del modelo al entrar en
+él (`ponerEnCrucero`), y el tope de la salida publicada, que quien lee la carta
+ya pasa a verdadera.
+
+**Los 280 nudos de por encima de diez mil pies, no.** Se probaron en la aguja y
+la bajada del vuelo largo se rompió: a treinta mil pies son más de 450 de
+verdadera, el punto de descenso y la senda desde cuarenta mil pies están hechos
+con 280 de verdadera, y el JAZ 110 llegaba a cuarenta kilómetros de la pista
+casi 1.900 m por encima de la senda (`bajada-del-vuelo-largo.test.ts`, dos en
+rojo). Un reactor de verdad sube y baja ahí a una indicada hasta que manda el
+Mach; pasarlo va con el perfil de bajada del plan, y queda para su encargo. Con
+eso, lo que cambia en el vuelo es de diez mil pies para abajo.
+
+### El tutor tira con la Vr del avión
+
+`ui/tutor.ts` llevaba una Vr fija de 30 m/s, de ningún manual y contra la
+verdadera: en la avioneta pedía tirar dos metros por segundo después de su Vr, y
+en el JAZ 90, a menos de la mitad de la suya. Ahora el juego le da la indicada
+de ahora y la Vr de la ficha (`AgujaDelTutor`), la misma de la flecha de tirar,
+y con eso decide el «tirá» y llena la barra de correr.
+
+### El resto del inventario
+
+Buscado lo que compara `airspeed` con una V del manual
+(`grep -rn "airspeed" src --include=*.ts | grep -iE "vr|vref|v2|decision|approach|vfe|vle|vmo"`,
+y las comparaciones con `rotationSpeed`, `approachSpeed`, `decisionSpeed` y la
+VFE): lo que queda o ya va con la indicada —el helicóptero que viene a posarse,
+la recogida de flaps, el aviso de terreno, el destello de V1— o no es una V
+que se cante:
+
+- **La cola que se levanta** del avión de rueda de cola (`apoyo.ts`,
+  `actitudEnTierra`), a una parte de la Vr, con la velocidad que le pase cada
+  modelo, que es la verdadera. Es física del ala, no una V del manual: en un
+  día caliente la cola sube un poco antes de lo que subiría. Se deja.
+- **El avión de rueda de cola que nace sentado** (`fdm.ts`, la mitad de la Vr)
+  y las cuentas internas de `carrera.ts` y `mano.ts` (la Vr y un 20 %): son
+  puntos de partida de una cuenta, no V que se lean.
+
+### Medido
+
+- **Los Rodeos con el JAZ 20 en Guyrami**, con el tiempo de casa
+  (`verificar-despegue.mjs tenerife-norte guyrami "" jaz-20`): **20 de 20**. V1
+  destella con la aguja en 26,1 m/s y Vr en 28,1, con la Vr en 28; sale la
+  flecha de tirar, y el avión se va a los 403 m desde el punto de espera, de
+  3.168.
+- `arcade-vr-en-la-aguja.test.ts`: en Los Rodeos a 40 °C, el JAZ 20 y el JAZ 90,
+  tirando desde el principio, no se van hasta que la aguja llega a su Vr, con la
+  verdadera más de un 6 % por encima; a nivel del mar se van a la Vr de siempre;
+  arriba y con calor corren más de un 15 % más; y en hierba, en Los Rodeos y a
+  45 °C, despega toda la flota de ala fija. En `vuelo-de-linea.test.ts`, con
+  una lectura de verdadera un 13 % por encima de la aguja, la tripulación pide la
+  Vr y diez, los 250 nudos y la Vref de aguja, y el tope de la carta, igual. En
+  `tutor.test.ts`, en el JAZ 90 a 30 m/s todavía se corre, y con la verdadera
+  pasada se tira cuando la aguja llega. Vitest entero: 545 ficheros, 10.959
+  pruebas, en verde.

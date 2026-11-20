@@ -25,6 +25,7 @@ import type { Fase } from "./vuelo";
 import {
   CONFIGURA,
   EMPUJE,
+  enLaAguja,
   enLosMandosDeLinea,
   REDUCE_EL_GAS,
   RODAJE_EN_RECTA,
@@ -563,5 +564,41 @@ describe("con un tope de la salida por delante", () => {
     const arriba = { altitud: 900, altura: 900, flaps: 0 };
     expect(en("subida").paso(DT, lectura({ ...arriba, topeDeVelocidad: TOPE }), permisos).velocidad).toBeCloseTo(TOPE, 5);
     expect(en("subida").paso(DT, lectura(arriba), permisos).velocidad).toBeCloseTo(250 * NUDO, 1);
+  });
+
+  /*
+   * **Lo que pide va en la aguja** (H38e): la Vr y diez, los 250 nudos, la Vref.
+   * Arriba o con calor la verdadera va por encima de la indicada, y el modelo va a
+   * la verdadera que se le pide: pedidas en verdadera, la aguja se quedaba corta.
+   * Aquí, una lectura con la verdadera un 13 % por encima de la aguja, que es la
+   * de unos 2.500 m.
+   */
+  const ARRIBA = { velocidad: 130, indicada: 115 };
+  const enLaAgujaDe = (pedida: number): number => (pedida * ARRIBA.indicada) / ARRIBA.velocidad;
+
+  it("subiendo con los flaps dentro, los 250 nudos de aguja (H38e)", () => {
+    const manos = en("subida").paso(DT, lectura({ ...ARRIBA, altitud: 2500, altura: 2500, flaps: 0 }), permisos);
+    // El `NUDO` de esta prueba lleva seis cifras: de ahí las dos de aquí.
+    expect(enLaAgujaDe(manos.velocidad)).toBeCloseTo(250 * NUDO, 2);
+  });
+
+  it("recién despegada, la Vr y diez de aguja; y el tope de la carta, que ya viene en verdadera, igual (H38e)", () => {
+    const sinTope = en("carrera").paso(DT, lectura({ ...ARRIBA, topeDeVelocidad: 1000 }), permisos);
+    expect(enLaAgujaDe(sinTope.velocidad)).toBeCloseTo(ARAI.rotationSpeed + 10, 5);
+    const conTope = en("carrera").paso(DT, lectura({ ...ARRIBA, topeDeVelocidad: TOPE }), permisos);
+    expect(conTope.velocidad).toBeCloseTo(Math.min(TOPE, sinTope.velocidad), 5);
+  });
+
+  it("en la final, estabilizado, la Vref de aguja (H38e)", () => {
+    const manos = en("final").paso(
+      DT,
+      lectura({ ...ARRIBA, altitud: 300, altura: 300, flaps: 1, faltaParaTocar: CONFIGURA.estabilizado - 100 }),
+      permisos,
+    );
+    expect(enLaAgujaDe(manos.velocidad)).toBeCloseTo(ARAI.approachSpeed, 5);
+  });
+
+  it("y parado, sin aguja que leer, lo que pide se queda como está", () => {
+    expect(enLaAguja(70, { velocidad: 0, indicada: 0 })).toBe(70);
   });
 });

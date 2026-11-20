@@ -68,8 +68,21 @@ const DIBUJO_DEL_TUTOR = {
 } as const;
 type DibujoDelTutor = keyof typeof DIBUJO_DEL_TUTOR;
 
-/** Velocidad indicada a partir de la cual conviene rotar, en m/s. */
-const ROTATION_SPEED = 30;
+/**
+ * **La aguja y la Vr del avión que se vuela**, m/s: cuándo se pide tirar y cuánto
+ * le falta a la barra de correr.
+ *
+ * Era una Vr fija de treinta metros por segundo, de ningún manual y contra la
+ * verdadera: en la avioneta pedía tirar dos metros por segundo después de que el
+ * avión ya pudiera irse, y en el JAZ 90, con su Vr en 66, a menos de la mitad.
+ * Ahora es la Vr de la ficha —la misma de la flecha de tirar y de «rotate»— y la
+ * indicada con el aire del día, que es contra la que se lee toda V de un manual
+ * (enmienda H38e del ADR 0019). Ver `indicadaDe` en `flight/atmosphere.ts`.
+ */
+export interface AgujaDelTutor {
+  readonly indicada: number;
+  readonly vr: number;
+}
 
 type Step =
   | "colectivo"
@@ -145,7 +158,7 @@ interface StepView {
    * Ahora la barra es el mando: sube cuando sube el gas y baja cuando baja, y
    * lo que se mueve es la marca de dónde hay que llegar.
    */
-  progress: (state: FlightState, throttle: number) => number | null;
+  progress: (state: FlightState, throttle: number, aguja: AgujaDelTutor) => number | null;
   /** Dónde está el listón, de 0 a 1, para pintarlo en la barra. */
   objetivo?: (state: FlightState, throttle: number) => number | null;
 }
@@ -174,7 +187,7 @@ const STEPS: Record<Exclude<Step, "done">, StepView> = {
     cue: { kind: "dibujo", dibujo: "acelerar" },
     touchCue: { kind: "dibujo", dibujo: "acelerar" },
     key: "tutor.speed",
-    progress: (state) => Math.min(1, state.airspeed / ROTATION_SPEED),
+    progress: (_state, _throttle, aguja) => Math.min(1, aguja.indicada / aguja.vr),
   },
   pull: {
     cue: { kind: "action", accion: "pitchUp" },
@@ -325,6 +338,8 @@ export class Tutor {
     throttle: number,
     dt: number,
     enFinal: boolean,
+    /** La indicada de ahora y la Vr del avión. Ver `AgujaDelTutor`. */
+    aguja: AgujaDelTutor,
     /**
      * Si hay una raya verde pintada en el suelo a la que seguir.
      *
@@ -354,7 +369,7 @@ export class Tutor {
       return;
     }
 
-    this.step = this.nextStep(state, throttle, dt, enFinal, hayRaya, velocidad);
+    this.step = this.nextStep(state, throttle, dt, enFinal, aguja, hayRaya, velocidad);
 
     if (this.step === "done" || state.crashed) {
       esconder(this.root, true);
@@ -379,7 +394,7 @@ export class Tutor {
     }
     escribir(this.label, t(view.key));
 
-    const progress = view.progress(state, throttle);
+    const progress = view.progress(state, throttle, aguja);
     esconder(this.bar, progress === null);
     if (this.fill && progress !== null) {
       this.fill.style.width = `${Math.round(Math.min(1, Math.max(0, progress)) * 100)}%`;
@@ -404,6 +419,7 @@ export class Tutor {
     throttle: number,
     dt: number,
     enFinal: boolean,
+    aguja: AgujaDelTutor,
     hayRaya: boolean,
     velocidad: "lento" | "bien" | "rapido" | null,
   ): Step {
@@ -413,7 +429,7 @@ export class Tutor {
         celebrando: this.celebrating,
         haVolado: this.hasFlown,
       },
-      { state, throttle, dt, hayRaya, enFinal, velocidad, helicoptero: this.motor === "rotor" },
+      { state, throttle, dt, hayRaya, enFinal, velocidad, helicoptero: this.motor === "rotor", ...aguja },
     );
     this.celebrating = salida.celebrando;
     this.hasFlown = salida.haVolado;
@@ -463,7 +479,7 @@ export interface Memoria {
 }
 
 /** Lo que el tutor mira del mundo para decidir. */
-export interface Mirada {
+export interface Mirada extends AgujaDelTutor {
   readonly state: FlightState;
   readonly throttle: number;
   readonly dt: number;
@@ -565,7 +581,7 @@ export function pasoQueToca(
      * seguía pidiendo motor a ciento treinta por hora, con el avión ya listo
      * para volar, y contradecía a la pista que se veía por delante.
      */
-    if (state.airspeed >= ROTATION_SPEED)
+    if (mirada.indicada >= mirada.vr)
       return { paso: "pull", celebrando, haVolado };
     if (throttle < 0.85) return { paso: "throttle", celebrando, haVolado };
     return { paso: "speed", celebrando, haVolado };
