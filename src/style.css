@@ -10474,6 +10474,25 @@ button.motor__tecla::after {
 }
 
 /*
+ * **Y la de quien remonta, a destellos** (H41h): una serie de destellos
+ * verdes a un avión en tierra es «autorizado para rodaje», y la verde fija,
+ * «autorizado para despegar» (SERA, apéndice 1, tabla AP 1-1). Se rueda por la
+ * pista hasta dar la vuelta, y ahí la luz se queda fija. Encendida y apagada
+ * de golpe, como una lámpara de señales, no respirando como la fija. Ver
+ * `flight/luz-de-la-salida.ts`.
+ */
+.torre--destellos .torre__luz {
+  animation: torre-destellos 0.9s steps(1, end) infinite;
+}
+
+@keyframes torre-destellos {
+  50% {
+    background: #3a423d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+/*
  * En el peldaño de los pequeños **no se enseña ni una palabra**, y se corta
  * aquí y no en cada sitio que escribe.
  *
@@ -10555,6 +10574,20 @@ button.motor__tecla::after {
 }
 .sin-movimiento .torre--verde .torre__luz {
   animation: none;
+}
+/*
+ * Sin movimiento, los destellos no se ven: la luz de quien remonta lleva
+ * entonces un aro a trazos, para que no sea igual que la fija.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .torre--destellos .torre__luz {
+    outline: 3px dashed var(--ok);
+    outline-offset: 3px;
+  }
+}
+.sin-movimiento .torre--destellos .torre__luz {
+  outline: 3px dashed var(--ok);
+  outline-offset: 3px;
 }
 
 /*

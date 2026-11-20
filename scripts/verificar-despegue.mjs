@@ -1542,6 +1542,24 @@ const despegue = await page.evaluate(async () => {
           ),
       );
     })(),
+    /*
+     * **Y todo lo que la torre te dijo a ti, por orden** (H41h): con su
+     * indicativo en las piezas, que es lo único que dice de quién es. Ahí se
+     * ve si el «backtrack» va antes que la autorización de despegar y si ésta
+     * se dice una vez.
+     */
+    torreAMi: (() => {
+      const yo = (o.indicativo?.()?.yoDicho ?? "")
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((l) => `fonetico.${l}`)
+        .join(" ");
+      if (!yo) return [];
+      return (o.dichoConPiezas?.().torre ?? [])
+        .filter(({ piezas }) => (piezas ?? []).join(" ").includes(yo))
+        .map(({ clave }) => clave);
+    })(),
     largoDePista: pista.length,
     // Lo que el propio juego calcula que le cuesta llegar a rotar, y su Vr:
     // es contra eso contra lo que hay que medir, no contra una fracción de la
@@ -1603,6 +1621,39 @@ if (
     despegue.porDondeSeSale.join(" · ") || "nada",
     "con la verde enseguida, el «backtrack runway» de quien juega no sonaba: solo el del tráfico",
   );
+/*
+ * **Y la autorización de despegar, una vez y después del «backtrack»** (H41h).
+ * A quien remontaba, la torre le decía en la doble raya la verde y «cleared
+ * for take-off», luego «backtrack runway», y al dar la vuelta otra vez la
+ * verde y otra vez «cleared for take-off». Lo de verdad es autorizarle a
+ * remontar y, ya vuelto, a despegar: dos transmisiones, en ese orden (Doc
+ * 4444, 12.3.4.7 p y 7.9.3.4; RD 1180/2018, anexo V, 1.4.8 p y 1.4.12). Solo
+ * con las voces cargadas, como la de arriba: sin ellas, las frases no llevan
+ * piezas y no se sabe a quién van.
+ */
+const conVocesEnTaguato =
+  /^taguato/.test(TRAMO) && (TRAMO === "taguato-ruvicha" || process.env.OGA_CON_VOCES);
+if (conVocesEnTaguato) {
+  const aMi = despegue.torreAMi;
+  console.log(`  la torre, a ti: ${aMi.join(" · ") || "nada"}`);
+  const despegar = aMi.filter((c) => /clearedTakeoff/.test(c));
+  const verdes = aMi.filter((c) => /(^|\.)verde(\.|$)/.test(c));
+  const primeraDeDespegar = aMi.findIndex((c) => /clearedTakeoff|(^|\.)verde(\.|$)/.test(c));
+  const backtrack = aMi.findIndex((c) => /backtrack/.test(c));
+  comprobar(
+    "la torre te autoriza a despegar una vez",
+    despegar.length === 1 && verdes.length <= 1,
+    `${despegar.length} «cleared for take-off» y ${verdes.length} verdes en castellano`,
+    "a quien remontaba se le decía la verde y «cleared for take-off» en la doble raya y otra vez al dar la vuelta",
+  );
+  if (despegue.porLaPista.remonta)
+    comprobar(
+      "y a quien remonta, el «backtrack» antes que la autorización de despegar",
+      backtrack >= 0 && primeraDeDespegar > backtrack,
+      aMi.join(" · ") || "nada",
+      "la torre decía «cleared for take-off» en la doble raya y el «backtrack» detrás",
+    );
+}
 comprobar(
   "a todo gas el avión despega",
   despegue.enElAire !== null,

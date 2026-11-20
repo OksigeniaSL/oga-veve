@@ -99,6 +99,7 @@ import { SE_DICE_HASTA, seSigueEnV1, yaSeSigue } from "./flight/lo-que-se-dice-a
 import { LosOchentaNudos } from "./flight/los-ochenta-nudos";
 import { faseQueVeLaTorre, loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
+import { luzDeLaSalida, type LuzDeLaTorre } from "./flight/luz-de-la-salida";
 import {
   alturaDelEjercicio,
   colocacionDeLaTormenta,
@@ -13626,7 +13627,7 @@ export class Game {
    * segundo no es una torre, es una avería.
    */
   private luzDeTorre(
-    luz: "verde" | "roja" | null,
+    pedida: LuzDeLaTorre,
     rojaDice: "esperar" | "alAire" = "esperar",
     /**
      * Y por qué al aire, para la fraseología: la pista ocupada, o que se viene
@@ -13655,6 +13656,13 @@ export class Game {
      * `Aerodrome.afis`.
      */
     const afis = this.esAfisAqui();
+    /*
+     * **Y un AFIS no autoriza a remontar ni a despegar** (H41h): informa de
+     * que la pista está libre, una vez, y quien vuela dice que remonta. Para
+     * él los destellos de quien remonta son la misma pista libre que la verde
+     * de después, y no se repite al dar la vuelta. Ver `luzDeLaSalida`.
+     */
+    const luz: LuzDeLaTorre = afis && pedida === "rodar" ? "verde" : pedida;
     /*
      * **Y la verde nombra la pista**, en castellano: «pista dos cero,
      * autorizado para aterrizar», y lo mismo al despegar. La torre en casa
@@ -13725,6 +13733,23 @@ export class Game {
      * eso no es de tu lámpara. Ver `alSerTuya` en `flight/turno-de-pista.ts`.
      */
     this.turno.alCambiarLaLuz(this.misLetrasEnLaBoca);
+    /*
+     * **Los destellos verdes los dice la radio del remonte, no la lámpara**
+     * (H41h). Son «autorizado para rodaje» (SERA, apéndice 1, tabla AP 1-1):
+     * la torre te deja entrar en la pista para remontarla, y eso lo dice
+     * `contarPorDondeSeSale` con su «backtrack runway», en este mismo paso,
+     * y la instructora lo cuenta abajo. La autorización de despegar —la verde
+     * fija y su «cleared for take-off»— llega al dar la vuelta, una vez. En
+     * castellano no hay frase grabada para remontar, así que la lámpara no
+     * dice nada suyo: con «autorizado a despegar» diría lo que no es.
+     */
+    if (luz === "rodar") {
+      this.porQuesExplicados.clear();
+      this.vecesDelPorque.clear();
+      this.porQuePendiente = null;
+      this.filaPedida = null;
+      return false;
+    }
     /*
      * **Y la dice como se dice aquí.** La torre no habla el castellano del
      * juego: habla el de su campo, y en Canarias eso quiere decir sin vosear y
@@ -18283,7 +18308,12 @@ export class Game {
    *
    * **Remontar, en cambio, sigue esperando a la verde**: «backtrack runway one
    * two» es entrar en la pista, y dicho con la roja encendida la torre se
-   * contradiría a sí misma.
+   * contradiría a sí misma. Y esa verde, para quien remonta, son destellos:
+   * «autorizado para rodaje», no para despegar (H41h). La de despegar, fija
+   * y con su «cleared for take-off», llega al dar la vuelta, una vez. Así el
+   * «backtrack» es lo primero que la torre te dice al darte la pista, y no
+   * va detrás de una autorización de despegar que todavía no toca. Ver
+   * `flight/luz-de-la-salida.ts`.
    *
    * **Y en la roja se pregunta lo que dará la verde**, no `comoSeSale`, que
    * no existe hasta que la verde dibuja la entrada en la pista. Con eso, desde
@@ -30651,11 +30681,20 @@ export class Game {
     // aterrizar» — la torre la decía nada más rotar.
     // Y donde hay torre: en la pista de casa no hay lámpara, se mira. Ver
     // `guionSinTorre`.
+    /*
+     * **Y a quien remonta, destellos verdes hasta que da la vuelta** (H41h).
+     * La verde fija es la autorización de despegar, y se encendía en la doble
+     * raya también para quien tenía que remontar: la torre decía «cleared for
+     * take-off», luego «backtrack», y al dar la vuelta otra vez la verde. Lo
+     * de verdad es autorizarle a remontar y, ya vuelto, a despegar, una vez.
+     * Ver `flight/luz-de-la-salida.ts`.
+     */
     const enTierraEsperando =
       this.hayTorreQueHable() &&
       this.flight.state.onGround &&
       (vista.fase === "esperando" ||
         vista.fase === "autorizado" ||
+        vista.fase === "back-taxi" ||
         vista.fase === "alineando");
     /*
      * **Y no se toca mientras la lleve la torre.**
@@ -30669,13 +30708,9 @@ export class Game {
      */
     if (!this.laTorreMandaEnLaLuz) {
       this.luzDeTorre(
-        !enTierraEsperando
-          ? null
-          : vista.fase === "esperando"
-            ? "roja"
-            : vista.luzVerde
-              ? "verde"
-              : null,
+        enTierraEsperando
+          ? luzDeLaSalida(vista.fase, vista.luzVerde, this.plan.dondeSeGira !== null)
+          : null,
       );
     }
 
