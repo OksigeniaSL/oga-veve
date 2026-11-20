@@ -6757,3 +6757,161 @@ el Mach de crucero de la escalera, el vuelo de línea, el combustible—. En
 - **La placa de crucero del 1900D** por debajo de su altura de crucero.
 - **El M0,84 del JAZ 120**, con el empuje separado del crucero.
 - **La altitud máxima del 747-100**, en la ficha FAA A20WE.
+
+## Enmienda H45b (20-11-2026): el bimotor que flotaba con el gas de la racha
+
+H45 no bastó. La ronda 31 del vuelo entero de Los Rodeos llevaba el gas que se
+quita con el reloj, y el JAZ 40 recogió a 7,7 m de ruedas y 131 m del umbral,
+bajando 2,4 m/s a 85 nudos, y tocó a **740 m**; en la 30, sin H45, a 816, y en
+la 29, a 300. El número bajó y no llegó a cero, así que la hipótesis de H45
+era una parte. Esta vez se midió antes de cambiar nada.
+
+### Lo que se midió en el navegador
+
+La traza del ala lleva ahora, en la recogida y cada fotograma, lo que pide el
+perfil, lo que falta, lo acumulado, si se sostiene la palanca, si ha flotado y
+**el empuje que dio el modelo** en ese paso, además de la altura, la indicada,
+lo que baja, el ángulo, el cabeceo, la palanca, el gas y los flaps
+(`OGA_TRAZA_ALA`). Un vuelo entero del JAZ 40 con el código de main, en
+Taguató, reloj por uno, viento 040/12:
+
+- **La torre lo mandó al aire** a 60 m (pista ocupada), y el banco tiró de
+  golpe: la palanca de −0,14 a +0,19 en un fotograma, 2,04 g y 12,1° de ángulo
+  con el avisador en 11,9. Sonó «stall, stall»: **✗ «en un vuelo normal no
+  suena el avisador de pérdida»**, 57 de 58. Es la frustrada del banco, no la
+  recogida; queda apuntado abajo.
+- **En la segunda final, la recogida fue buena y tocó en la zona**, a 442 m.
+  Empezó a 8,1 m de ruedas y 218 m del umbral, bajando 2,36 m/s, a 91 nudos
+  indicados y con 0,38 de gas; siguió el perfil sin sostener la palanca —lo que
+  faltaba, entre −0,10 y +0,39 m/s—, y tocó a los 4,9 s (el perfil da 4,6), a
+  0,97 m/s y 87 nudos. Frenó 0,43 m/s² de media.
+- **El gas de la recogida es casi todo de la racha.** A 6,5 m el avión se
+  hundió 0,39 m/s más de lo pedido y el gas pasó de 0,38 a 0,62 —el de la senda
+  por la altura que quedaba, más uno por cada m/s de más—; el reloj lo bajó
+  luego a 0,19 a 3,8 m y a 0,08–0,11 desde los dos metros, y a cero al tocar.
+- **El gas llega al motor en el mismo paso**: 4.400 N por cada unidad de gas a
+  90 nudos (1.452 N con 0,33; 2.739 con 0,62), lo de la tabla de H45. El modelo
+  no tiene retraso de hélice —el empuje es el gas por el de a fondo a esa
+  velocidad, `empujeLleno` en `fdm.ts`— y no hacía falta buscarlo.
+- **Lo que se perdió antes de recoger.** A 22 m una racha de cola lo hundió a
+  3,7 m/s y le bajó la indicada a 83; el automático de la senda corrigió, y de
+  80 a 127 m pasado el umbral voló nivelado a 10,5 m. Cruzó el umbral a 11,6 m
+  de ruedas y empezó a recoger a 218 m, unos setenta más allá de donde le
+  tocaba. No es lo que flota, pero suma.
+
+Este vuelo no flotó: la final larga de la ronda 31 no se repitió en una tirada.
+Lo que sí deja la traza es dónde podía salir el gas de una flotada larga.
+
+### El avión, contra su manual
+
+- **La velocidad de la recogida es la de su manual.** El del Seneca III
+  (PA-34-220T, VB-1110, p. 4-33; el del Seneca II no se ha podido leer) pide la
+  final a 90 KIAS, 79 si va ligero, y 82 con los flaps a 40° para la pista
+  corta. El banco recoge a 85–91 nudos indicados con la Vref del juego en 86:
+  dentro de lo que dice el manual.
+- **El efecto suelo es el del libro.** Wieselsberger, con los tres puntos del
+  manual de la FAA (`efecto-suelo.ts`): con el ala del JAZ 40 a 1,46 m sobre
+  las ruedas, a 8 m de ruedas no hay ninguno, a 3,8 m la sustentación sube un
+  2 %, y con las ruedas en la pista un 8,8 %, con la inducida en el 60 %. Es lo
+  que dio la traza. No sostiene de más y no se toca.
+- **Al ralentí frena 1,5–1,7 m/s²** (la mesa de H45). Y la recogida empieza a
+  7,7–8,1 m, veinticinco pies: algo por encima de los diez a veinte del manual
+  de vuelo de la FAA, pero es la altura que dan tres segundos de senda, y con
+  ella el perfil toca en 4,6 s y unos 220 m. Tampoco es lo que flota.
+
+### El banco: el gas que volvía por la carga
+
+La ronda 31 sí flotó en la recogida: empezó donde tocaba, a 131 m, y al pasar
+el final de la zona iba todavía a 4 m de ruedas, a 78 nudos y tirando 1,36 g
+con 6,7° de ángulo (lo que cantó el juego en «toma larga»). De 85 nudos a
+unos 74 en seiscientos metros es frenar 0,4 m/s², donde al ralentí frena 1,5:
+**llevaba gas**. El de la senda ya no podía ser, que el reloj de H45 lo quita
+en 4,6 s. Solo queda **el de la racha** de H34d —gas entero por cada m/s que se
+hunde de más y por cada g que falta—, que no mira si el avión va por encima
+del perfil: cuando se pasa al recoger, la recogida le sostiene la palanca, el
+avión sube, la carga baja de un g al nivelarse y cada décima de g que falta
+vuelve como una décima de gas.
+
+En la mesa de la recogida (`h45b/` del scratchpad: el modelo, el automático
+en la senda, el gas del banco y las rachas del juego), las finales del JAZ 40
+que tocan pasados los 600 m llevan **la palanca sostenida diez segundos con
+dos décimas de gas y un globo de siete metros**; con σ_w 1,5, globos de veinte
+y treinta metros. Es lo que cantó el juego en la ronda 30: a 10 m de ruedas y
+78 nudos al pasar el final de la zona, dos más arriba de donde empezó a recoger.
+
+### Lo que se cambia, en el banco
+
+**Si el avión flota, el gas fuera del todo, y el de la senda ya no vuelve.**
+Flotar es bajar más de 0,6 m/s menos de lo que pide el perfil, la misma
+holgura con la que la recogida ya sostenía la palanca en vez de empujar.
+Mientras flota, gas cero, aunque la carga baje de un g; y desde que ha flotado
+una vez, lo de la senda no vuelve. La racha que lo hunde después sigue pidiendo
+su gas, como en H34d. Es el manual: «a smooth, gradual reduction of power on
+final approach, with the power fully off before the wheels touch the runway»
+(VB-1110, p. 4-33); y el de la FAA para el globo en la recogida, sostener y
+dejar que se asiente. Vive en `scripts/gas-de-la-recogida.mjs` (`FLOTA`), con
+su prueba en `gas-de-la-recogida.test.mjs`. Toca a los tres bimotores de
+hélice del banco, el JAZ 40, el 50 y el 60; la avioneta y los reactores no
+pasan por ahí. **El juego no cambia.**
+
+Se probó también sostener **la actitud** en vez de la palanca, que es lo que
+dice el manual de la FAA, y topar el gas de la racha en el de la senda. Lo
+primero baja las tomas duras con σ_w 1,5 (de 40 a 31) y no cambia las largas;
+lo segundo las sube (de 40 a 56). Ninguno se pone: lo primero toca la
+recogida de todos los aviones, y no se ha volado.
+
+| Mesa, σ_w 1 m/s | Pasadas de 600 m | La más larga | Mediana | Más de 2 m/s |
+|---|---|---|---|---|
+| JAZ 40, con H45 | 2 de 293 | 673 m | 278 m | 8, la peor 2,49 |
+| JAZ 40, y si flota, sin gas | **0 de 293** | 538 m | 263 m | 7, la peor 2,67 |
+| JAZ 50, con H45 | 0 de 272 | 443 m | 182 m | 31, la peor 3,30 |
+| JAZ 50, y si flota, sin gas | 0 de 272 | 435 m | 175 m | 40, la peor 3,66 |
+| JAZ 60, con H45 | 21 de 299 | 994 m | 356 m | 26, la peor 2,82 |
+| JAZ 60, y si flota, sin gas | 13 de 299 | 752 m | 335 m | 40, la peor 2,99 |
+
+| Mesa, σ_w 1,5 m/s | Pasadas de 600 m | La más larga | Más de 2 m/s |
+|---|---|---|---|
+| JAZ 40, con H45 | 9 de 260 | 875 m | 37, la peor 4,38 |
+| JAZ 40, y si flota, sin gas | 2 de 260 | 657 m | 40, la peor 3,99 |
+| JAZ 50, con H45 | 2 de 244 | 674 m | 68 |
+| JAZ 50, y si flota, sin gas | 0 de 244 | 475 m | 69 |
+| JAZ 60, con H45 | 42 de 294 | 1.257 m | 84 |
+| JAZ 60, y si flota, sin gas | 29 de 294 | 1.081 m | 88 |
+
+Con σ_w 1, el globo más alto del JAZ 40 en trescientas finales pasa de 9,6 m
+a 0,9. El precio está en los otros dos: el JAZ 50 y el JAZ 60 tocan algo más
+duro (de 31 a 40 y de 26 a 40 tomas de más de 2 m/s), porque el que ha flotado
+sin gas llega más despacio a la racha siguiente.
+
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-40`, reloj por uno,
+viento 040/12, con la traza del ala (`h45b/` del scratchpad):
+
+| | Recogida | Toca | Comprobaciones |
+|---|---|---|---|
+| Ronda 31, con H45 | 7,7 m, 131 m, 2,4 m/s, 85 kt | **740 m**, 1,08 m/s | 56 de 58: ✗ la zona, ✗ las gafas |
+| Con H45, instrumentado | 8,1 m, 218 m, 2,36 m/s, 91 kt | 442 m, 0,97 m/s, 87 kt | 57 de 58: ✗ el avisador en la frustrada |
+| Con el cambio | 9,4 m, 48 m, 3,0 m/s, 85 kt | **333 m**, 1,48 m/s, 81 kt, sin botes | **58 de 58** |
+
+En el vuelo con el cambio **el avión no llegó a flotar**: lo que faltaba se
+quedó entre −0,58 y +1,05 m/s, a dos centésimas de la holgura, y la regla
+nueva no entró. Una racha de cola de 3 a 6,5 m/s lo hundió al empezar a
+recoger y el gas de la racha se fue a uno ocho décimas de segundo, como pide
+H34d; tocó a los 6,2 s. Así que este vuelo prueba que el cambio no estropea
+una recogida normal, no que cure la flotada: eso lo dice la mesa. **El
+segundo vuelo del JAZ 40 no se ha volado**: con la cola del navegador, no
+cabía en el encargo.
+
+### Lo que queda
+
+- **La frustrada del banco tira de golpe**: dos g y el avisador de pérdida a
+  60 m cuando la torre manda al aire. Es otro encargo.
+- **La senda de los últimos treinta metros con racha**: nivela a diez metros y
+  retrasa la recogida unos setenta.
+- **Las tomas duras del JAZ 50 y el JAZ 60** que sube esto en la mesa, y
+  sostener la actitud en vez de la palanca, que las bajaba con σ_w 1,5.
+- **El JAZ 40 en el navegador con una recogida que flote**, para ver la regla
+  entrar: una tirada no la dio. Y el segundo vuelo entero.
+- **El JAZ 50 y el JAZ 60 en el navegador** con el cambio. El JAZ 20 no pasa
+  por aquí (un motor) y no cambia.
