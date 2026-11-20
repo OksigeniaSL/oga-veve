@@ -870,3 +870,155 @@ la 02 de Pettirossi):
   metros por segundo, a quince mil pies son unas dos millas y media por cada mil
   pies—, y queda para su encargo, con el banco otra vez. El morro hacia la raya
   al acabar ya fallaba antes, y es del rodaje.
+
+## Enmienda H38h (20-11-2026): el salto corto vuelve a tener crucero
+
+Lo que H38g dejó: de Los Rodeos a La Palma la tripulación pasaba de subir a
+bajar sin nivelar, y la tercera escena del modo inicio se quedaba sin el «ya
+estamos arriba», sin el servicio y sin lo que cuelga de ellos (117 de 126). Ya
+antes iba justa: el banco de la tanda 19 nivelaba a los 976 s y bajaba a los
+999, veintitrés segundos de crucero.
+
+### Dos cuentas de la subida, y ninguna era la que se vuela
+
+- **El plan** ponía el T/C y contaba la hora subiendo a dos millas por cada mil
+  pies (`MILLAS_POR_MIL_PIES_SUBIENDO`). La tripulación sube a 2.760 pies por
+  minuto hasta diez mil y a 2.360 por encima, a 250 nudos de aguja abajo y a la
+  indicada de su tipo arriba: el JAZ 90, a 280 nudos de aguja a FL150, lleva
+  353 de verdadera, y a ese ritmo cada mil pies son 2,5 millas; abajo, 1,6.
+- **El nivel** lo elige `nivelQueAhorra`, el de menos kilos de los que dejan un
+  tercio de ruta nivelado, y contaba la subida **con todo el gas de subida**:
+  el exceso de empuje del JAZ 90 da unos cinco mil pies por minuto, y FL190
+  salía a quince millas y media de la pista. La tripulación, que no sube a ese
+  ritmo sino al de línea, tardaba treinta y cinco millas, más tres de la
+  captura. Por la ruta del juego —105,7 millas: se sale por la 12 hacia el este
+  y se da la vuelta— el punto de descenso de FL190 cae a 71,2 millas del
+  umbral: entre los dos quedaban **menos cuatro millas** de crucero.
+
+### Una sola cuenta: la subida como se vuela
+
+- **La ley de la subida** —el ritmo de línea, la captura de la altura en
+  veinticinco segundos y el nivelado a treinta metros— sale de
+  `vuelo-de-linea.ts` a `subida-de-linea.ts`, y la leen la tripulación y el
+  plan.
+- **`subidaDelPlan`** (`nivel-que-ahorra.ts`) cuenta lo que se recorre subiendo:
+  tramo a tramo, a la velocidad que pide la escalera subiendo, pasada a
+  verdadera con el aire de esa altura, al ritmo de `ritmoDeSubida` —el de línea,
+  sin pasar de lo que da el avión con el gas de subida, que en una avioneta es
+  lo que manda—, y al final la captura.
+- **Con ella**, si el plan sabe qué avión lo vuela, se ponen el T/C
+  (`Seguimiento`), la altura del plan en la hora que se anuncia
+  (`segundosPorElPerfil`) y el coste de subir con el que se elige el nivel
+  (`costeDelTramo`, que quema lo que pide subir a ese ritmo). Sin avión —la
+  regla del crucero sin ficha, `libra` y el viraje de una salida sin carta,
+  que se pintan para cualquiera— siguen las dos millas.
+
+### El nivel: la mitad para bajar, y un minuto arriba
+
+El tercio nivelado de `nivelQueAhorra` se contaba con la subida de todo el gas,
+una milla por cada mil pies; con ella, dos tercios para subir a una y bajar a
+tres son **la mitad de la ruta para bajar**, que es la regla práctica de quien
+despacha un salto corto: no subir más de lo que deja bajar la mitad de la
+distancia. Se escribe como es (`MITAD_PARA_BAJAR`), sin la subida que nadie
+vuela, y se le pone al lado lo que ninguna de las dos miraba: **un minuto de
+crucero entre el T/C y el T/D del plan** como poco (`CRUCERO_MINIMO`),
+contados como los cuenta el plan —la subida de `subidaDelPlan` y la bajada de
+su perfil, con sus tramos para frenar y la aproximación, que `cruceroDelPlan`
+le pasa—. La mitad se cuenta como la cuenta un despachador, tres millas por
+cada mil pies hasta el campo, y el punto de descenso del plan cae antes: frena
+nivelado a diez mil quinientos pies y acaba en el punto de final. De los
+legales que cumplen las dos, el de menos kilos, como antes.
+
+**Se probó el tercio con la subida de verdad**, y el banco lo tumbó. De Los
+Rodeos a La Palma por la 12 daba FL150, con 222 s de crucero en el banco —el
+«ya estamos arriba», el servicio y Ara al baño, todo en su sitio—, pero la
+escena perdía dos cosas que no son del crucero: **la siesta de la subida**,
+que pide un rato largo por encima de los diez mil pies después de que la
+comandante cuente el gas de subida, y **el kit en la parte alta de la
+bajada**, que llega desde los 104 km y caduca por debajo de los 11.640 pies:
+con el punto de descenso a 110 km, lo que se dice al empezar a bajar se comía
+esa ventana, y la explicación del ralentí acabó a 12.127 pies. 110 de 125.
+Con la mitad sale FL170: la subida dura unos cincuenta segundos más y el punto
+de descenso cae a 120,7 km.
+
+Es lo que se vuela de verdad en ese salto: un E170 sube a un nivel bajo, del
+orden de FL150 a FL200, y lo mantiene un rato. En los saltos de Canarias
+medidos con los tres reactores —de Los Rodeos a La Palma, a Gran Canaria y a
+Lanzarote, de Fuerteventura a Gran Canaria y de Gran Canaria a La Palma, por
+todas sus cabeceras— el nivel que sale deja 6,3 millas de crucero como poco
+(de Los Rodeos por la 12 a la 18 de La Palma).
+
+| Los Rodeos → La Palma, JAZ 90 | Nivel | Subida | T/D, del umbral | Crucero |
+|---|---|---|---|---|
+| Por la 12, antes (plan de dos millas por mil) | FL190 | 33,8 nm en el plan, 38,9 volada | 71,2 nm | 0,6 nm en el plan, −4,4 volado |
+| Por la 12, con el tercio y la subida de verdad | FL150 | 28,2 nm, 331 s | 59,2 nm (110 km) | 18,3 nm |
+| Por la 12, ahora | FL170 | 33,6 nm, 384 s | 65,2 nm (120,7 km) | 6,9 nm, unos 70 s |
+| Por la 30, ahora | FL130 | 23,2 nm, 281 s | 53,2 nm | 9,1 nm, unos 96 s |
+
+### Lo que necesita la escena arriba
+
+Lo que cae en el crucero y caduca al empezar a bajar (`guion-tenerife-la-palma.ts`
+y `motor-del-pasaje.ts`): dos segundos nivelado antes del «ya estamos arriba»
+(`ARRIBA_Y_NIVELADO`), los cinco que dura, tres hasta el servicio
+(`HASTA_EL_SERVICIO`) y, para que Ara vaya al baño con la luz apagada,
+veinticinco de crucero por delante (`LO_QUE_PIDE_EL_BANO`): treinta y cinco
+segundos. Con veintitrés no iba nunca —«no fue: espera a aterrizar»—, y con
+treinta y cinco cabía sin un segundo de margen. Se pide un minuto, que es lo
+que el guion cuenta que dura un crucero entre islas.
+
+### Medido
+
+- `salto-corto-con-crucero.test.ts`, nuevo: el JAZ 90 con su tripulación de
+  línea y el modelo sencillo vuela el plan que traza el juego sobre el relieve
+  de verdad, de Los Rodeos por la 12 y por la 30 a La Palma por la 36 y por la
+  18, del final de la pista a la final. Por la 12 a la 36 nivela a FL170 a los
+  380 s y empieza a bajar a los 497: **117 s de crucero** (a la 18, 111). Por
+  la 30, FL130, de los 279 s a los 388: 109 s. En los cuatro nivela en el
+  crucero del plan, va nivelado un minuto como poco, nivela a 0,7 millas de lo
+  que el plan cuenta recorrer subiendo —lo que acelera al empezar, que el plan
+  cuenta ya a la velocidad de la escalera—, empieza a bajar en el punto de
+  descenso del perfil
+  y, a la 36, baja por la senda entre 16 m por debajo y 8 por encima desde los
+  cuarenta kilómetros. A la 18 no se mira la senda: su RNP A pide tres mil pies
+  hasta LA505 y el avión va por encima de la de tres grados hasta pasarlo,
+  como manda la carta.
+- `rutas-de-canarias.test.ts`: lo que se tarda volando el plan sube ahora
+  como sube el plan. De Los Rodeos por la 30 a la 03L de Gran Canaria, la
+  salida entera y la RNP por el sur, la hora del plan pasa de los treinta
+  minutos del bloque de Binter por tres segundos —por encima de diez mil pies
+  se suben dos millas y media por cada mil, no dos—; se mira lo que dice la
+  comandante, «unos treinta».
+- `bajada-del-vuelo-largo.test.ts`, `bajada-indicada-y-mach.test.ts`,
+  `salto-bajo-tapa.test.ts`, `arriba-indicada-y-mach.test.ts`,
+  `vuelo-de-linea.test.ts`, `hora-del-plan.test.ts`, `ruta.test.ts` y
+  `partes-de-la-comandante.test.ts`, en verde sin tocarlos.
+- Vitest entero: 557 ficheros, 11.160 pruebas, en verde.
+- **El banco de la tercera escena** (`verificar-inicio-3.mjs`, reloj ×12, con la
+  tarjeta de verdad): con el tercio y FL150, 110 de 125 —arriba, el servicio y
+  el baño en su sitio, 222 s de crucero; sin siesta y sin kit, y con ellos lo
+  que cuelga de los dos—. Con la mitad y FL170, **123 de 126**: nivela a los
+  911 s y baja a los 1008 (97 s de crucero), con el «ya estamos arriba», el
+  servicio y Ara al baño y de vuelta con la luz apagada; la siesta, de 765 a
+  904 s, despierta con el *ding*; el kit llega a 13.614 pies con 153 s para
+  jugar; y el morro hacia la raya al acabar el empuje ya pasa (H47). Fallan
+  tres: la siesta adelanta 24,5 km por la ruta y el banco pide 25; entre el
+  final de la luz verde (1246 s) y pedir el kit de vuelta (1272 s) no queda
+  rato para elegir pieza de «Armá tu avión»; y no sale la charla del Teide,
+  «más alto que él», que en el banco de FL150 sí salió.
+
+### Lo que no
+
+- **Las avionetas y los turbohélices** suben en el plan a lo que les da el
+  motor con el gas de subida (`ritmoDeSubida`), que en ellos queda por debajo
+  del ritmo de línea. No se ha volado contra el modelo sencillo de cada uno:
+  solo se ha medido el JAZ 90 con su tripulación.
+- **Sin avión siguen las dos millas**: la regla del crucero sin ficha
+  (`cruceroPorLaDistancia`), `libra` y el viraje de una salida sin carta
+  (`procedimientos.ts`). Se pintan para cualquiera, y para eso valen.
+- **La 18 de La Palma** llega por encima de la senda de tres grados hasta
+  LA505, como manda su carta: la prueba nueva no la mira ahí.
+- **Los tres fallos del banco** son de la escena, no del vuelo: la siesta y el
+  rato para «Armá tu avión» están medidos contra la subida larga de FL190 a
+  280 nudos de verdadera, y la charla del Teide cuelga del rato de la subida.
+  Van a su encargo, con el banco otra vez; aquí no se tocan para no acortar
+  nada de lo que la escena cuenta.
