@@ -1898,3 +1898,136 @@ Entero, una vez, con el código de los tres flecos: 564 de 564 ficheros,
   a quien juega, sí. No se ha tocado.
 - **El banco de Taguató sigue sin voces por defecto**: la comprobación del
   «backtrack» solo corre con `OGA_CON_VOCES=1` o en Taguató Ruvichá.
+
+## Enmienda (20-11-2026, H41h): a quien remonta, el «backtrack» primero y una sola autorización de despegar
+
+### El caso
+
+Lo que dejó la H41g. En El Hierro a 42 °C, con el JAZ 40 y las voces
+cargadas, cuando el plan de quien juega era remontar, la lámpara se ponía
+verde en la doble raya y la torre decía «pista tres cuatro, autorizado a
+despegar» y «runway three four, cleared for take-off» con el viento; unos
+cuatro segundos después se pedía el «backtrack runway three four», que sonaba
+15,1 s después de la verde, detrás de la autorización; y al acabar la media
+vuelta, otra vez la verde y otra vez «cleared for take-off». La lámpara se
+apagaba en el back-taxi y se volvía a encender en «alineando», y cada vez que
+se encendía hablaba (`luzDeTorre`). Al tráfico ya no le pasaba desde la
+`remonta` de `flight/radio.ts`: a él se le dice el «backtrack» y la salida al
+dar la vuelta.
+
+### Lo real
+
+Leído en el original, salvo lo que se dice:
+
+- **Son dos transmisiones, y el «backtrack» va primero.** La fraseología de
+  rodaje de la OACI tiene «REQUEST BACKTRACK», «BACKTRACK APPROVED» y
+  «BACKTRACK RUNWAY (number)» (Doc 4444, 16.ª ed., 12.3.4.7 n, o y p; en esa
+  edición, bajo la circunstancia de después del aterrizaje), y la española lo
+  mismo: «SOLICITO REGRESAR POR PISTA», «REGRESO POR PISTA APROBADO»,
+  «REGRESO POR PISTA (número)» (RD 1180/2018, anexo V, 1.4.8 n, o y p). La
+  autorización de despegar va aparte, en la suya: «RUNWAY (number) CLEARED FOR
+  TAKE-OFF» (12.3.4.11 a) y «PISTA (número) AUTORIZADO A DESPEGAR» (1.4.12 a).
+- **Y cuándo se da la de despegar**: «when the aircraft is ready for take-off
+  and at or approaching the departure runway, and the traffic situation
+  permits» (Doc 4444, 7.9.3.4). Quien todavía tiene que rodar la pista hacia
+  atrás no está listo para despegar.
+- **El CAP 413 británico** (ed. 24) da el «backtrack» con «report lined up»
+  —«BACKTRACK RUNWAY (designator) REPORT (LINED UP or LINING UP)»— y la salida
+  después, en otra transmisión. En ningún ejemplo de los tres textos van el
+  «backtrack» y el «cleared for take-off» juntos.
+- **Las luces**, a una aeronave en tierra (SERA, apéndice 1, 3.1.1, tabla AP
+  1-1): «verde fija: autorizado para despegar»; «serie de destellos verdes:
+  autorizado para rodaje». La verde fija y el «cleared for take-off» son lo
+  mismo dicho por dos canales; a quien entra en la pista para remontarla le
+  corresponden los destellos.
+
+No se ha leído el Doc 4444 de 2020 en adelante, ni el AIP-España GEN 3.4 ni el
+manual de fraseología de ENAIRE.
+
+### Decisión
+
+- **La luz de quien sale**, en un solo sitio: `luzDeLaSalida` en
+  `flight/luz-de-la-salida.ts`, con la fase, si la torre ya dio la pista y si
+  el plan tiene todavía la media vuelta del remonte por dar
+  (`PlanDeVuelo.dondeSeGira`, que se baja al acabarla). Roja en el punto de
+  espera; **destellos verdes** («rodar») en «autorizado» y en «back-taxi» con
+  la vuelta por dar; verde fija en «autorizado» y «alineando» sin ella. El
+  back-taxi entra ahora en las fases en que se mira la lámpara: antes se
+  apagaba en él, y por eso al volver la verde hablaba otra vez.
+- **Los destellos no dicen nada por la lámpara.** Lo que se dice al darte la
+  pista para remontarla es el «request backtrack» y el «backtrack runway» de
+  `contarPorDondeSeSale`, en el mismo paso, y la instructora lo cuenta en los
+  peldaños de abajo como antes. No hay frase grabada en castellano para
+  remontar, y «autorizado a despegar» diría lo que no es. La roja que había
+  se retira de la cola igual que con la verde (`alCambiarLaLuz`).
+- **La verde fija y su «cleared for take-off» llegan al dar la vuelta, una
+  vez**: el cambio de destellos a fija es un cambio de luz, y habla.
+- **En un AFIS**, que no autoriza nada, los destellos se tratan como la verde:
+  «pista libre» una vez en la doble raya, quien vuela dice «backtracking», y
+  al dar la vuelta no se repite.
+- **El HUD** pinta los destellos con el verde y la flecha de seguir, encendida
+  y apagada de golpe, sin frase escrita; sin movimiento no parpadea y lleva un
+  aro a trazos (`torre--destellos`).
+- **Quien no remonta** y despega desde la boca (H41f) no llega a tener la
+  verde fija: con la bandera del remonte puesta la fase es «back-taxi» hasta
+  que el hecho gana al plan, y de ahí pasa a «despegando», donde la lámpara se
+  apaga. Ni la torre ni la lámpara le autorizan lo que no se le autorizó; la
+  instructora cuenta lo de siempre (`decirQueNoSeRemonto`).
+
+### La prueba
+
+`la-verde-del-que-remonta.test.ts`, con el piloto perfecto de
+`remontar-por-el-chaflan.test.ts` del puesto a la carrera, apuntando la luz de
+cada paso: El Hierro por la 34 con el JAZ 40 y 4 m/s de cola, roja, destellos
+y una verde, ya vuelto; sin cola, por la C, roja y verde; Los Rodeos por la 12
+con el JAZ 90, roja y verde. Y en El Hierro, La Gomera y Pilar, con cada avión
+que cabe y por las dos cabeceras —30 casos, 15 de remonte—: una sola verde,
+nunca con la vuelta por dar, y destellos solo en los que remontan.
+
+`verificar-despegue.mjs` apunta ahora lo que la torre te dijo a ti, por orden
+y con tu indicativo en las piezas, y con las voces cargadas comprueba que la
+autorización de despegar se dice una vez y que, si se remonta, el
+«backtrack» va antes.
+
+### Lo medido
+
+**Vitest entero**, una vez y con el código de esta enmienda: 565 de 565
+ficheros, 11.266 pruebas en verde, 31 saltadas y una pendiente, ninguna en
+rojo, en 2.082 s con dos hilos.
+
+**En el navegador**, `verificar-despegue.mjs el-hierro taguato "" jaz-40` con
+`OGA_CON_VOCES=1` y
+`OGA_URL_EXTRA='&metar=GCHI%20201200Z%2015005KT%20CAVOK%2042%2F10%20Q1013'`:
+
+- **Primera pasada, 23 de 23.** La verde —ahora los destellos— a los 182,9 s
+  de juego, detrás de EC-UUL, que aterrizaba, y de la fila con EC-OCH. El
+  plan, remonte hasta el final por la cola: pide 734 m, 750 desde la entrada
+  y 1.217 por delante. Lo que la torre te dijo a ti, por orden:
+  `destino · roja · holdShortNumberTwo · holdShortLanding · backtrack · verde
+  · clearedTakeoff`. El «backtrack» es lo primero al darte la pista, y la
+  autorización de despegar, en castellano y en inglés, una vez y detrás. El
+  avión entra en el −113, va hasta el −605, gira en el −590, queda en el eje
+  en el −559 y suelta frenos en el −557, como en la H41g (−558); rota con
+  504 m de 1.254.
+- **La segunda pasada de El Hierro y Los Rodeos por la 12 y la E-2** (JAZ 90,
+  con voces) no llegaron a volar en el tiempo de esta enmienda: el navegador
+  lo tenían otras rondas. La intersección sin remonte está en
+  `la-verde-del-que-remonta.test.ts`, con roja y verde como antes, no en el
+  navegador.
+
+### Lo que queda
+
+- **No hay frase en castellano para remontar.** En Guyrami y Tukã la torre
+  no dice nada con los destellos —lo cuenta la instructora— y la caja de la
+  lámpara va sin texto. La que tocaría es «{indicativo}, regrese por pista»
+  (RD 1180/2018, anexo V, 1.4.8 p, «REGRESO POR PISTA (número)»), con las
+  dos voces de torre; no se ha escrito ni grabado.
+- **Quien da la vuelta antes del lazo dibujado** (H41f: si remontó más de
+  treinta metros, hizo lo que dijo la torre) sigue con la bandera del remonte
+  puesta, y la verde fija no le llega hasta que el hecho gana al plan, que ya
+  es «despegando»: despega sin oír su autorización. No se ha tocado; con
+  `mirandoLaPista` se le podría dar, pero en una entrada que llega mirando
+  pista abajo antes de remontar daría la verde antes de tiempo, que es justo
+  lo que se arregla aquí.
+- **«Report lined up»**: el CAP 413 lo pone con el «backtrack», y aquí no se
+  dice; la autorización llega sola al acabar la vuelta.
