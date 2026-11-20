@@ -22510,6 +22510,8 @@ export class Game {
         this.flight.state.position.x,
         this.flight.state.position.z,
       ) !== null,
+      // Y la aguja contra la Vr de este avión, como la flecha de tirar. Ver `AgujaDelTutor`.
+      { indicada: this.indicadaAhora(), vr: this.aircraft.rotationSpeed },
       /*
        * Y si hay raya verde a la que seguir. El último consejo del tutor es
        * «seguí la raya y salí de la pista», y en una pista en medio del campo
