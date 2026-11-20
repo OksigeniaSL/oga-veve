@@ -108,3 +108,71 @@ describe("colocado en el aire y compensado, suelto sigue como iba", () => {
     expect(r.sube, que).toBeGreaterThan(r.senda * 1.2);
   });
 });
+
+/*
+ * **Y el ILS, colocado compensado, se vuela por la senda con la mano y la
+ * rueda** (ADR 0030, enmienda H42). Nace como lo coloca `reiniciarEnFinal`: a
+ * la de circuito, limpio y compensado para ella. Al capturar la senda, flaps
+ * de aterrizar y tren, y tres grados abajo con la ley vertical del piloto de
+ * `ver-ils-con-agujas.mjs`: la mano, tres décimas como mucho, y lo que
+ * sostiene un rato, a la rueda. Sin tocar la rueda, el JAZ 50 se lleva la
+ * mano casi a su tope, que es donde el banco, con el alisio y su masa, se
+ * quedaba corto y se subía por encima de la senda.
+ */
+describe("el ILS colocado compensado, configurado y por la senda", () => {
+  const GRADO = Math.PI / 180;
+  const tope = (v: number, t: number) => Math.max(-t, Math.min(t, v));
+  function porLaSenda(id: string, rueda: boolean) {
+    const a = AIRCRAFT.find((x) => x.id === id)!;
+    const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: TAGUATO_RUVICHA.assists });
+    const alto = 600;
+    m.reset({
+      position: new Vector3(0, alto, 0),
+      heading: 0,
+      airspeed: a.velocidadDeCircuito,
+      equilibrado: true,
+      flapsDelEquilibrio: 0,
+    });
+    const c = { ...neutralControls(), flaps: 0, tren: a.trenRetractil ? 0 : 1, engineOn: true };
+    c.throttle = m.gasPara(a.velocidadDeCircuito, c, 0);
+    c.trim = m.timonDeEquilibrio(0);
+    c.flaps = 1;
+    c.tren = 1;
+    let integral = 0;
+    let senda = alto;
+    let lejos = 0;
+    let mano = 0;
+    for (let t = 0; t < 120; t += DT) {
+      const s = m.state;
+      const ritmo = -Math.hypot(s.velocity.x, s.velocity.z) * Math.tan(3 * GRADO);
+      senda += ritmo * DT;
+      const vs = ritmo + 0.1 * (senda - s.position.y);
+      integral = tope(integral + (vs - s.verticalSpeed) * 0.02 * DT, 0.2);
+      if (rueda) {
+        const pasa = integral * 0.5 * DT;
+        c.trim = tope(c.trim + pasa, 1);
+        integral -= pasa;
+      }
+      c.elevator = tope((vs - s.verticalSpeed) * 0.08 + integral, 0.3);
+      c.throttle = Math.max(0, Math.min(1, 0.45 + (a.approachSpeed * 1.25 - s.airspeed) * 0.05));
+      m.step(DT, c);
+      // El primer medio minuto es la captura: los flaps, el tren y frenar.
+      if (t > 30) {
+        lejos = Math.max(lejos, Math.abs(m.state.position.y - senda));
+        mano = Math.max(mano, Math.abs(c.elevator));
+      }
+    }
+    return { lejos, mano, que: `${id}: a ${lejos.toFixed(1)} m de la senda, la mano hasta ${mano.toFixed(2)}, compensador ${c.trim.toFixed(2)}` };
+  }
+
+  it.each(["jaz-20", "jaz-40", "jaz-50"])("el %s, compensando, baja por la senda con la mano en el centro", (id) => {
+    const r = porLaSenda(id, true);
+    expect(r.lejos, r.que).toBeLessThan(2);
+    expect(r.mano, r.que).toBeLessThan(0.05);
+  });
+
+  it("el jaz-50, sin tocar la rueda, se lleva la mano casi a su tope", () => {
+    const r = porLaSenda("jaz-50", false);
+    expect(r.mano, r.que).toBeGreaterThan(0.25);
+  });
+});
