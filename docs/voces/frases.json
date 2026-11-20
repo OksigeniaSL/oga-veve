@@ -22633,13 +22633,6 @@
     "para": "en el helicóptero, al entrar en el anillo turbillonario, en los peldaños de abajo: qué pasa y cómo se sale"
   },
   {
-    "id": "vuelo.altitudMaxima",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Pasamos la altura más alta que tiene aprobada este avión. Más arriba el aire es tan finito que su manual no lo deja: bajá tranquilo un poco.",
-    "para": "al pasar a mano la altitud máxima de operación de su manual, en los peldaños de abajo: ninguna caja lo avisa, y lo cuenta ella"
-  },
-  {
     "id": "ejercicio.autorrotacion.antes",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -23304,5 +23297,12 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "vuelo.altitudMaxima",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pasamos la altura más alta que tiene aprobada este avión. Más arriba el aire es tan finito que su manual no lo deja: bajá tranquilo un poco.",
+    "para": "pasada a mano la altitud máxima de operación del avión, en los tres peldaños de abajo"
   }
 ]

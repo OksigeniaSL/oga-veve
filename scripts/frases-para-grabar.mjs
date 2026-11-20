@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.(?:compensadorParaDespegar|compensadorDeDespeguePuesto|avisoDeConfiguracionCompensador)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.(?:compensadorParaDespegar|compensadorDeDespeguePuesto|avisoDeConfiguracionCompensador)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$|^vuelo\.altitudMaxima$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -3294,6 +3294,23 @@ for (const [id, para] of DEL_ALTIMETRO) {
     dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
     ajustes: AJUSTES_EN_CALMA,
   });
+  total += texto.length;
+}
+
+/*
+ * **Y la altitud máxima de operación** (20-11-2026): pasada a mano la altura
+ * más alta que tiene aprobada el avión, la instructora lo cuenta en los tres
+ * peldaños de abajo. Detrás de todo, por lo mismo que las de arriba: lo ya
+ * grabado no se renumera. Ver `src/flight/altitud-maxima.ts` y el ADR 0027,
+ * enmienda H37j.
+ */
+const DE_LA_ALTITUD_MAXIMA = [
+  ["vuelo.altitudMaxima", "pasada a mano la altitud máxima de operación del avión, en los tres peldaños de abajo"],
+];
+for (const [id, para] of DE_LA_ALTITUD_MAXIMA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
   total += texto.length;
 }
 

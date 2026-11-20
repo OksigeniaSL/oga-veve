@@ -2203,6 +2203,10 @@
       "ms": 5707,
       "h": "e0f24ea6b4"
     },
+    "vuelo.altitudMaxima": {
+      "ms": 7607,
+      "h": "e2bfb5db13"
+    },
     "vuelo.alto": {
       "ms": 1036,
       "h": "f8578207de"
@@ -6390,6 +6394,9 @@
     ],
     "ejercicio.seguidoConElTrenFuera": [
       "ejercicio.seguidoConElTrenFuera"
+    ],
+    "vuelo.altitudMaxima": [
+      "vuelo.altitudMaxima"
     ]
   }
 }
