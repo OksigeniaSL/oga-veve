@@ -10,22 +10,22 @@
  *
  * Nivelado, en Taguató, el peldaño del banco del navegador
  * (`ver-el-gas-al-colocar.mjs`), y en Taguató Ruvichá, sin ayuda ninguna. La
- * final, solo en Taguató Ruvichá: en Taguató, al soltar, la ayuda de subida
- * coge «nivelado» —nunca un descenso: ver `trimClimb` en `fdm.ts`— y la
- * sostiene por encima del compensador, así que allí la senda la lleva quien
- * vuela. Lo que se mira es el compensador, y sin ayuda manda él solo.
+ * final, aquí, solo en Taguató Ruvichá, que es donde manda el compensador
+ * solo; con la ayuda de subida de Tukã y Taguató, más abajo (nota H40c).
  *
  * Y con el compensador en cero, que es como lo dejaba `releaseAll`, no: las
  * avionetas se van hacia la velocidad que sostiene ese compensador, subiendo.
- * Eso también se mira, para que la prueba pueda ver el fallo.
+ * Eso también se mira, para que la prueba pueda ver el fallo, y sin ayuda: en
+ * Taguató, desde H40c, la ayuda de subida sostiene el nivelado colocado por
+ * encima del compensador y tapa media falta.
  */
 
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { AIRCRAFT } from "./aircraft";
 import { CoefficientFlightModel } from "./fdm";
-import { neutralControls } from "./model";
-import { TAGUATO, TAGUATO_RUVICHA, type Tier } from "./tiers";
+import { comoIba, neutralControls, type ControlInputs } from "./model";
+import { TAGUATO, TAGUATO_RUVICHA, TUKA, type Tier } from "./tiers";
 
 const NUDO = 0.514444;
 const DT = 1 / 60;
@@ -50,6 +50,7 @@ function suelto(o: {
     airspeed: o.kt * NUDO,
     equilibrado: true,
     flapsDelEquilibrio: o.flaps,
+    trayectoria: -(o.senda * Math.PI) / 180,
   });
   const c = { ...neutralControls(), flaps: o.flaps, tren: o.flaps > 0 || !a.trenRetractil ? 1 : 0, engineOn: true };
   c.throttle = m.gasPara(o.kt * NUDO, c, -(o.senda * Math.PI) / 180);
@@ -88,7 +89,7 @@ describe("colocado en el aire y compensado, suelto sigue como iba", () => {
     });
 
   it.each(nivelados)("con el compensador en cero, el $id no se queda: frena y sube", ({ id, kt }) => {
-    const r = suelto({ id, tier: TAGUATO, kt, alto: 1000, senda: 0, flaps: 0, trim: 0 });
+    const r = suelto({ id, tier: TAGUATO_RUVICHA, kt, alto: 1000, senda: 0, flaps: 0, trim: 0 });
     const que = `${id}: ${kt} → ${r.kt.toFixed(1)} kt, ${r.sube.toFixed(0)} m`;
     expect(kt - r.kt, que).toBeGreaterThan(10);
     expect(r.sube, que).toBeGreaterThan(50);
@@ -101,12 +102,136 @@ describe("colocado en el aire y compensado, suelto sigue como iba", () => {
   ])("sin ayuda, el $id en la final a $kt nudos con flaps $flaps baja por la senda a su velocidad", ({ id, kt, flaps }) => {
     const r = suelto({ id, tier: TAGUATO_RUVICHA, kt, alto: 300, senda: 3, flaps });
     const que = `${id}: ${kt} → ${r.kt.toFixed(1)} kt, ${r.sube.toFixed(0)} m (la senda, ${r.senda.toFixed(0)})`;
-    // Nace nivelado y con el gas de bajar: los primeros segundos se asienta, y se va a la suya.
+    // Nace por la senda, con su gas, y se queda en ella: el fugoide del avión suelto, como mucho.
     expect(Math.abs(r.kt - kt), que).toBeLessThan(3);
     expect(r.lejos, que).toBeLessThan(6);
     expect(r.sube, que).toBeLessThan(r.senda * 0.8);
     expect(r.sube, que).toBeGreaterThan(r.senda * 1.2);
   });
+});
+
+/*
+ * **Y con la ayuda de subida, la final colocada también baja por su senda**
+ * (ADR 0002, nota H40c).
+ *
+ * En Tukã y en Taguató, al soltar los mandos la ayuda de subida coge lo que
+ * lleva el avión entre nivelado y subiendo, nunca una bajada, para no
+ * memorizar un transitorio. Recién colocado eso era «nivelado», y con el gas
+ * de bajar el avión frenaba por encima de la senda: el JAZ 20 en Taguató, de
+ * 96 a 80 nudos y 59 m por encima en cincuenta segundos. Una colocación no es
+ * un transitorio: es una petición, como un toque del compensador
+ * (`InitialConditions.trayectoria`).
+ *
+ * La final es la de `reiniciarEnFinal`: el de tren fijo, limpio a vez y media
+ * su aproximación; el de tren que se recoge, configurado y a 1,1 veces. Con
+ * un avión de cada familia: el JAZ 20, los dos turbohélices y el JAZ 90. Y el
+ * cambio de peldaño en el aire, que coloca el modelo nuevo con `comoIba`.
+ */
+describe("la final colocada, con la ayuda de subida, sostiene su senda", () => {
+  const GRADO = Math.PI / 180;
+  const SENDA = -3 * GRADO;
+  const ALTO = 600;
+  /** Cuánto se aparta de la velocidad con la que empieza y de la senda, como mucho. */
+  function volar(m: CoefficientFlightModel, c: ControlInputs, segundos: number, v0: number, y0: number) {
+    let senda = y0;
+    let nudos = 0;
+    let metros = 0;
+    for (let t = 0; t < segundos; t += DT) {
+      m.step(DT, c);
+      const s = m.state;
+      senda += Math.hypot(s.velocity.x, s.velocity.z) * Math.tan(SENDA) * DT;
+      nudos = Math.max(nudos, Math.abs(s.airspeed - v0) / NUDO);
+      metros = Math.max(metros, Math.abs(s.position.y - senda));
+    }
+    return { nudos, metros, kt: m.state.airspeed / NUDO, sobre: m.state.position.y - senda };
+  }
+  function enFinal(id: string, tier: Tier) {
+    const a = AIRCRAFT.find((x) => x.id === id)!;
+    const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: tier.assists });
+    const flaps = a.trenRetractil && a.llevaFlaps ? 1 : 0;
+    const entrada = a.trenRetractil ? a.approachSpeed * 1.1 : m.velocidadDeEntradaEnFinal(a.approachSpeed);
+    m.reset({
+      position: new Vector3(0, ALTO, 0),
+      heading: 0,
+      airspeed: entrada,
+      equilibrado: true,
+      flapsDelEquilibrio: flaps,
+      trayectoria: SENDA,
+    });
+    const c = { ...neutralControls(), flaps, tren: 1, engineOn: true };
+    c.throttle = m.gasPara(entrada, c, SENDA);
+    c.trim = m.timonDeEquilibrio(flaps);
+    return { a, m, c, entrada, flaps };
+  }
+  const casos = [TUKA, TAGUATO].flatMap((tier) =>
+    ["jaz-20", "jaz-50", "jaz-60", "jaz-90"].map((id) => ({ tier, id, peldano: tier.id })),
+  );
+
+  it.each(casos)("en $peldano, el $id suelto cincuenta segundos", ({ tier, id }) => {
+    const { m, c, entrada } = enFinal(id, tier);
+    const r = volar(m, c, 50, entrada, ALTO);
+    const que = `${id} en ${tier.id}: ${(entrada / NUDO).toFixed(1)} → ${r.kt.toFixed(1)} kt, a ${r.sobre.toFixed(1)} m de la senda`;
+    expect(r.nudos, que).toBeLessThan(5);
+    expect(r.metros, que).toBeLessThan(10);
+  });
+
+  it.each(casos)("en $peldano, el $id que llega por la senda desde el otro peldaño con ayuda, sigue por ella", ({ tier, id }) => {
+    // Quince segundos por la senda en el otro peldaño con ayuda, y se cambia.
+    const { a, m, c, flaps } = enFinal(id, tier === TUKA ? TAGUATO : TUKA);
+    volar(m, c, 15, 0, ALTO);
+    const nuevo = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: tier.assists });
+    nuevo.reset(comoIba(m.state, flaps, m.subidaQueSostiene()));
+    // Lo que hace `dejarloCompensado` en `cycleTier`.
+    c.trim = nuevo.timonDeEquilibrio(flaps);
+    const v0 = nuevo.state.airspeed;
+    const r = volar(nuevo, c, 45, v0, nuevo.state.position.y);
+    const que = `${id} a ${tier.id}: ${(v0 / NUDO).toFixed(1)} → ${r.kt.toFixed(1)} kt, a ${r.sobre.toFixed(1)} m de la senda`;
+    expect(r.nudos, que).toBeLessThan(5);
+    expect(r.metros, que).toBeLessThan(12);
+  });
+
+  it.each(casos.filter((k) => k.id === "jaz-20" || k.id === "jaz-90"))(
+    "en $peldano, el $id que bajaba sin ayuda con el gas quitado no lleva esa bajada como petición",
+    ({ tier, id }) => {
+      // Lo de `verificar-cambio-de-peldano.mjs`: el gas quitado un momento, y se cambia de peldaño.
+      const { a, m, c, flaps, entrada } = enFinal(id, TAGUATO_RUVICHA);
+      c.throttle = 0;
+      volar(m, c, 6, entrada, ALTO);
+      const alCambiar = m.state.verticalSpeed;
+      const nuevo = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: tier.assists });
+      nuevo.reset(comoIba(m.state, flaps, m.subidaQueSostiene()));
+      c.trim = nuevo.timonDeEquilibrio(flaps);
+      volar(nuevo, c, 3, entrada, ALTO);
+      const pedida = nuevo.subidaQueSostiene();
+      const que = `${id} a ${tier.id}: ${alCambiar.toFixed(2)} m/s al cambiar, la ayuda sostiene ${pedida?.toFixed(2)}`;
+      expect(alCambiar, que).toBeLessThan(entrada * Math.sin(SENDA) * 1.3);
+      expect(pedida, que).not.toBeNull();
+      expect(pedida!, que).toBeGreaterThanOrEqual(0);
+    },
+  );
+
+  it.each(casos.filter((k) => k.id === "jaz-20" || k.id === "jaz-90"))(
+    "en $peldano, el $id soltado tras empujar no sostiene la bajada del empujón",
+    ({ tier, id }) => {
+      // Tras pilotar sigue la regla de siempre: al soltar coge nivelado, no la bajada que había.
+      const { m, c, entrada } = enFinal(id, tier);
+      c.elevator = -0.1;
+      volar(m, c, 3, entrada, ALTO);
+      const alSoltar = m.state.verticalSpeed;
+      c.elevator = 0;
+      volar(m, c, 10, entrada, ALTO);
+      let vs = 0;
+      const n = Math.round(10 / DT);
+      for (let k = 0; k < n; k++) {
+        m.step(DT, c);
+        vs += m.state.verticalSpeed / n;
+      }
+      const porLaSenda = entrada * Math.sin(SENDA);
+      const que = `${id} en ${tier.id}: ${alSoltar.toFixed(2)} m/s al soltar, ${vs.toFixed(2)} de media pasados diez segundos (la senda, ${porLaSenda.toFixed(2)})`;
+      expect(alSoltar, que).toBeLessThan(porLaSenda * 1.5);
+      expect(vs, que).toBeGreaterThan(porLaSenda * 0.5);
+    },
+  );
 });
 
 /*

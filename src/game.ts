@@ -1320,7 +1320,7 @@ import {
   type PorQueEsperas,
 } from "./flight/turno-de-pista";
 import type { ControlInputs } from "./flight/model";
-import { neutralControls } from "./flight/model";
+import { comoIba, neutralControls } from "./flight/model";
 import { conElVueloRecto } from "./flight/vuelo-recto";
 import {
   aireDelParte,
@@ -18981,6 +18981,13 @@ export class Game {
         : configurado && this.aircraft.llevaFlaps
           ? 1
           : this.input.controls.flaps;
+    /*
+     * **Y por dónde va**: un ejercicio, nivelado; la final, bajando por su
+     * senda. Con ella nace el avión, y con ella se pide el gas y la bajada a
+     * la ayuda de subida, que al soltar nunca coge una bajada (nota H40c del
+     * ADR 0002). Ver `InitialConditions.trayectoria`.
+     */
+    const porLaSenda = colocacion ? 0 : -(this.sendaDe(this.laCasa) * Math.PI) / 180;
     this.flight.reset({
       position: this.startPosition(),
       heading: enLaAguja ? enLaAguja.rumbo : MathUtils.degToRad(runway.heading),
@@ -18998,6 +19005,7 @@ export class Game {
        */
       equilibrado: true,
       flapsDelEquilibrio: flapsDeEntrada,
+      trayectoria: porLaSenda,
     });
     if (this.campoMontado !== this.scenario.id) this.montarElCampo(this.laCasa);
     /*
@@ -19056,7 +19064,6 @@ export class Game {
      * se para el motor, iba a 93. Ya no hace falta: es la misma cuenta (ADR
      * 0002, nota H40a).
      */
-    const porLaSenda = colocacion ? 0 : -(this.sendaDe(this.laCasa) * Math.PI) / 180;
     this.input.controls.throttle = this.flight.gasPara(entrada, this.input.controls, porLaSenda);
     /*
      * **Y compensado, como lo deja un instructor**: el gas pone la trayectoria
@@ -40491,18 +40498,21 @@ export class Game {
   private cycleTier(): void {
     const next =
       TIERS[(TIERS.indexOf(this.tier) + 1) % TIERS.length] ?? GUYRAMI;
-    const { position, heading, airspeed, onGround } = this.flight.state;
+    const { onGround } = this.flight.state;
     /*
      * Volando, el modelo nuevo nace **equilibrado**: con el ala sosteniendo
      * el peso. Sin eso nacía con el morro en el horizonte —sin sustentación—
      * y lo primero que hacía era caerse. Ver `InitialConditions.equilibrado`.
+     *
+     * **Y como iba**: con los flaps que lleva y con la ayuda de subida
+     * sosteniendo lo que sostenía la del modelo viejo. Ver `comoIba` y la
+     * nota H40c del ADR 0002.
      */
-    const carried = {
-      position: position.clone(),
-      heading,
-      airspeed,
-      equilibrado: !onGround,
-    };
+    const carried = comoIba(
+      this.flight.state,
+      this.input.controls.flaps,
+      this.flight.subidaQueSostiene?.() ?? null,
+    );
 
     this.tier = next;
     rememberTier(next);
@@ -40541,9 +40551,9 @@ export class Game {
      * - **La nivelada** de los peldaños de abajo se olvida: si toca, vuelve a
      *   capturar con el modelo nuevo.
      * - **El compensador**, en el modelo completo, se deja en el que sostiene
-     *   el avión nivelado —el sencillo no tiene—: lo que quedaba del modelo
-     *   viejo era el de otro avión, y soltar la palanca lo mandaba arriba o
-     *   abajo sin que nadie lo hubiera pedido.
+     *   el avión a su velocidad con los flaps que lleva —el sencillo no
+     *   tiene—: lo que quedaba del modelo viejo era el de otro avión, y soltar
+     *   la palanca lo mandaba arriba o abajo sin que nadie lo hubiera pedido.
      *
      * Lo comprueba `scripts/verificar-cambio-de-peldano.mjs`, en cada fase.
      */
@@ -40551,7 +40561,7 @@ export class Game {
     this.alturaPedidaAntes = null;
     this.nivelada = null;
     this.mandosConAutomatico.sostieneLaAltura = false;
-    if (!onGround) this.dejarloCompensado();
+    if (!onGround) this.dejarloCompensado(this.input.controls.flaps);
 
     this.hud.setUnits(next.units);
     this.hud.setEscalera(next.avisos);
