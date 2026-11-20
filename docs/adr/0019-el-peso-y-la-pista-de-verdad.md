@@ -756,8 +756,8 @@ abajo. Ahora, en un reactor y por encima de diez mil pies, la punta no baja de l
 velocidad de su programa —la indicada de `indicadaDeSubida` hasta el cruce y el
 Mach de `machDeCrucero` por encima, las mismas de la escalera y de la
 tripulación— (`programaDeArriba`). Lo que pone el techo a un reactor ahí no es el
-empuje sino su Vmo, y la escalera deja esa indicada siempre veinte nudos por
-debajo. Para que la punta no salte al cruzar los diez mil pies, la indicada va de
+empuje sino su Vmo, y la escalera deja esa indicada veinte nudos por debajo como
+poco. Para que la punta no salte al cruzar los diez mil pies, la indicada va de
 250 a la del tipo en los mil pies de encima, el mismo tramo en el que la escalera
 frena bajando. Por debajo de diez mil pies la recta de siempre ya da más de 250 en
 toda la flota, y no cambia nada.
@@ -835,3 +835,25 @@ la 02 de Pettirossi):
 - **El JAZ 90 y el JAZ 120**, desde su crucero: 71 m por encima de la senda como
   mucho, a cuarenta kilómetros a 9 y 1 m de ella (el JAZ 120 llegaba a 650 m por
   encima en verdadera), y tocan a 0,92 y 0,96 m/s.
+- `bajada-indicada-y-mach.test.ts`, nuevo: en los tres reactores, bajando a
+  FL350 se pide su Mach y a FL250 y FL150 su indicada, desde FL108 los 250, y es
+  lo que pide la ventanilla SPD a medio nudo; el modelo sencillo da esa velocidad
+  y, pidiéndole un cuarto más que la senda, baja más de un décimo por encima de
+  ella sin perder la aguja ni el Mach. Y en el vuelo largo, desde Mach 0,78, se
+  baja a ese Mach hasta FL250 y a 320 nudos a FL150.
+- `bajada-del-vuelo-largo.test.ts`, en verde y sin tocar sus umbrales; y además,
+  lo que se pide a FL350, FL250 y FL150 en los tres vuelos, y los cuarenta
+  kilómetros por la senda también en el JAZ 90 y el JAZ 120.
+- `salto-bajo-tapa.test.ts`: al empezar a bajar, el Mach del crucero, luego la
+  indicada del tipo y, desde once mil pies, los 250 de aguja.
+- `prestaciones-guyrami.test.ts`: la punta del JAZ 120 a su altura de crucero es
+  ahora la del Mach de su programa, 231,2 m/s, y no los 230 de la ficha: la
+  escalera redondea su Mach a 0,78 y los 230 m/s son 0,776. Lo mira la prueba,
+  junto con que no pase de un 1 % sobre la ficha.
+- Vitest entero: 555 ficheros, 11.123 pruebas, en verde.
+
+### Lo que no
+
+- **La ficha del 747** sigue en Mach 0,78. Un 747-100 cruza a unos 0,84, pero su
+  crucero entra en quince ficheros —el modelo completo, la carrera, el consumo, la
+  escalera—, y no hay a mano una fuente del -100 que lo diga. Va aparte.

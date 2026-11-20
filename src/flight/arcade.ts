@@ -907,7 +907,7 @@ export class ArcadeFlightModel implements FlightModel {
    * pasaba de 303 nudos indicados a nivel del mar a 282 a veinticinco mil pies,
    * con 320 en su escalera. Un reactor de verdad sube y baja ahí a su indicada,
    * y lo que le pone el techo no es el empuje sino su Vmo, que la escalera deja
-   * siempre veinte nudos por encima. Así que este modelo, que no sabía llegar,
+   * veinte nudos por encima como poco. Así que este modelo, que no sabía llegar,
    * iba con el gas a fondo toda la subida y toda la bajada (enmienda H38g del ADR
    * 0019).
    *
