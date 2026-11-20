@@ -1084,3 +1084,45 @@ Con un piloto perfecto, del puesto a la carrera, la 34 de GCHI y el JAZ 40
 - Vitest entero, una vez: 553 de 553 ficheros y 11.085 pruebas en verde y
   29 saltadas, ninguna en rojo, en 1.115 s con dos hilos. Ahí van
   `salida-tapada.test.ts` y los de Los Rodeos.
+
+### En el navegador
+
+`verificar-despegue.mjs el-hierro taguato "" jaz-40` con
+`OGA_URL_EXTRA='&metar=GCHI 201200Z 15005KT CAVOK 37/10 Q1013'` (y `42/10`
+en la tercera tirada). Cuatro
+metros por segundo de cola no se pueden pedir en el juego: con más de cinco
+nudos la 34 deja de ser la preferente y se opera por la 16
+(`COLA_QUE_SE_AGUANTA`), así que se aprieta con el calor: cinco nudos de
+cola y 37 °C, con los 1.945 kg de la hoja de carga, piden unos 722 m, al
+borde de los 724,9 del chaflán que mira hacia donde se despega. El banco
+cuenta ahora dónde pisa el avión la pista, lo más atrás que va, dónde suelta
+frenos, lo que decide el plan y lo que se dijo.
+
+- **Primera tirada, 20 de 20**, con 37 °C. La torre dijo
+  `torre.canario.backtrack` y nada de intersección ni de TORA. Pero el piloto del banco, ya en la pista
+  y todavía en «autorizado», apuntaba al rumbo de despegue: se alineó en la
+  boca —pisó con 739 m por delante y soltó frenos con 708— y el juego, donde
+  el hecho gana al plan si queda la pista que el avión necesita sin márgenes
+  (`deducir` en `flight/vuelo.ts`), lo dio por despegue. Lo dicho era
+  remontar y el que no remontó fue el banco: ahora, con un remonte trazado,
+  sigue la raya por la pista también en «autorizado».
+- **Segunda tirada, 20 de 20**, igual, con el banco ya siguiendo la raya, sin
+  tráfico y la verde a los 10,8 s: el plan dice intersección, pide 722 m y
+  la C le da 725. Entra por el chaflán que mira hacia donde se despega y no
+  va ni un metro hacia atrás (pisa con 739 por delante y lo más atrás es eso
+  mismo). La torre no dijo nada de la salida: con la verde no se ofrece, y
+  el rodaje fue de 71 m. En la primera, con la verde a los 287,6 s, la
+  torre dijo remontar; lo que pedía el plan entonces no se leyó: el banco lo
+  leía con la carrera ya empezada, cuando ya se ha borrado.
+- **Tercera tirada, 20 de 20, el caso**: a 42 °C pide 734 m, entre los
+  724,9 de un chaflán y los 748,1 del otro. El plan dice remonte hasta el
+  final, desde la entrada 748 y 1.217 por delante, por la cola. Entra por el
+  chaflán que mira a la cabecera (pisa con 740 por delante), rueda por la
+  pista hasta tener 1.232, da la vuelta en el giro de la cabecera (a 37 m de
+  la punta) y suelta frenos con 1.213. Se dijo `torre.canario.backtrack` y,
+  de la instructora, `vuelo.backTaxi`; nada de intersección ni de TORA.
+- **Y una cosa que se vio de paso**: en la intersección el avión suelta
+  frenos con menos pista de la que dice la torre —708 m en la segunda
+  tirada, 717,6 con el piloto perfecto, frente a 725—, porque la vuelta
+  para ponerse en el eje se come unos metros pasado el nudo. Le sobra con
+  el margen de escuela, pero no es la TORA que se cuenta.
