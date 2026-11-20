@@ -5642,8 +5642,34 @@ export class PlanDeVuelo {
      * Y la centrada, enderezándose al eje antes de dar gas: acaba a `radio`
      * del eje, y ahí no se despega —ver «La media vuelta acaba en el eje» en
      * `vueltaDelBackTaxi`—.
+     *
+     * **Y se endereza con una ese, no con una diagonal de setenta metros**
+     * (H41g). Iba en recta hasta un punto del eje `4 · radio + 20` más allá
+     * del giro, a diez grados del eje: en El Hierro, con el JAZ 40 y doce
+     * metros de radio, el avión del banco quedaba en el eje sesenta y ocho
+     * metros pista abajo del giro y soltaba frenos en el metro −516 con el
+     * giro en el −590, cuando la cuenta le daba la pista desde el giro. Es
+     * pista que se pierde por cómo se dibuja la raya, no por cómo gira el
+     * avión: con el mismo radio de la media vuelta se sigue girando sesenta
+     * grados hacia el eje y se deshacen otros sesenta, y queda en el eje y
+     * mirando pista abajo a `√3 · radio` del giro, veintiún metros allí. Es
+     * lo que hace quien remonta una pista estrecha: termina la vuelta pegado
+     * al borde y se mete en el eje sin dar más que el giro que ya estaba dando.
      */
-    if (vuelta.forma === "centrada") puntos.push(enLaPista(giro + 4 * radio + 20, 0));
+    if (vuelta.forma === "centrada") {
+      // Sigue la misma circunferencia sesenta grados más, hacia el eje…
+      for (let g = 285; g <= 330; g += 15) {
+        const rad = (g * Math.PI) / 180;
+        puntos.push(enLaPista(giro + radio * Math.cos(rad), centro + radio * Math.sin(rad)));
+      }
+      // …y los deshace con otra del mismo radio, que acaba en el eje.
+      for (let h = 135; h >= 90; h -= 15) {
+        const rad = (h * Math.PI) / 180;
+        puntos.push(
+          enLaPista(giro + Math.sqrt(3) * radio + radio * Math.cos(rad), -radio + radio * Math.sin(rad)),
+        );
+      }
+    }
     // Y eje abajo, que es lo que dice hacia dónde se despega.
     puntos.push(enLaPista(Math.min(mitad - 60, giro + 620), 0));
     return { puntos, arco };
