@@ -330,22 +330,22 @@ export function costeDelTramo(
 }
 
 /**
- * **Qué parte de la ruta se vuela nivelada como poco**: un tercio, la misma
- * que pedía la regla de antes. Sin ella, el nivel de menos kilos es casi
- * siempre el más alto al que da tiempo a subir y bajar sin un metro de
- * crucero —la cuenta es plana arriba—, y eso es un vuelo sin crucero: sin el
- * rato en que se cuenta el aire fino, se oye a la comandante y se mira por la
- * ventanilla. Ningún despachador planea así un salto, porque cualquier espera
- * en la llegada lo convierte en una bajada a destiempo.
+ * **Lo que se deja para bajar, como mucho**: la mitad de la ruta, a tres
+ * millas por cada mil pies hasta el campo de llegada. Es la regla práctica de
+ * quien despacha un salto corto —no subir más de lo que deja bajar la mitad de
+ * la distancia—, y la otra mitad es para subir y para el crucero. Sin ella, el
+ * nivel de menos kilos es casi siempre el más alto al que da tiempo a subir y
+ * bajar —la cuenta es plana arriba—, y eso es un vuelo sin crucero.
  *
- * **Y el tercio vale lo que valga la subida con la que se cuenta.** Contada
- * con todo el gas de subida —unos cinco mil pies por minuto en el JAZ 90,
- * quince millas y media hasta FL190—, de Los Rodeos a La Palma salía FL190
- * con su tercio, y volado al ritmo de línea —treinta y cinco millas— el punto
- * de descenso llegaba antes que el nivel. Con la subida que se vuela, sale
- * FL150 (enmienda H38h del ADR 0019).
+ * Era «un tercio de la ruta nivelado», contado con la subida de todo el gas de
+ * subida: unos cinco mil pies por minuto en el JAZ 90, una milla por cada mil
+ * pies. Con esa subida, dos tercios para subir a una y bajar a tres son la
+ * mitad para bajar: la misma regla, escrita sin la subida que nadie vuela. Con
+ * la que se vuela, el tercio bajaba de Los Rodeos a La Palma a FL150, y la
+ * tercera escena del modo inicio se quedaba sin la siesta de la subida y sin
+ * el kit en la parte alta de la bajada (enmienda H38h del ADR 0019).
  */
-export const PARTE_NIVELADA = 1 / 3;
+export const MITAD_PARA_BAJAR = 1 / 2;
 
 /**
  * **El crucero que tiene que quedar, como poco**, s: un minuto nivelado entre
@@ -355,11 +355,11 @@ export const PARTE_NIVELADA = 1 / 3;
  * lo suyo: el «ya estamos arriba», el servicio y el baño con la luz apagada,
  * treinta y cinco segundos sin margen.
  *
- * El tercio se cuenta como lo contaba un despachador —tres millas por cada
- * mil pies hasta mil quinientos sobre el campo—, y el punto de descenso del
- * plan cae antes: frena a 250 nudos nivelado a diez mil quinientos pies y
- * acaba en el punto de final, no sobre el campo. Así que el tercio no basta
- * para saber que queda crucero; esto sí, porque cuenta lo mismo que el plan.
+ * La mitad se cuenta como la cuenta un despachador —tres millas por cada mil
+ * pies hasta el campo—, y el punto de descenso del plan cae antes: frena a
+ * 250 nudos nivelado a diez mil quinientos pies y acaba en el punto de final.
+ * Así que la mitad no basta para saber que queda crucero; esto sí, porque
+ * cuenta lo mismo que el plan.
  */
 export const CRUCERO_MINIMO = 60;
 
@@ -381,8 +381,8 @@ function verdaderaEnCrucero(a: AircraftConfig, nivel: number): number {
  *
  * `niveles` son los legales —los del rumbo, por encima de la mínima y por
  * debajo del techo del avión—; de ellos, el de menos kilos de los que dejan
- * su tercio nivelado —ver `PARTE_NIVELADA`— y su minuto de crucero entre el
- * T/C y el T/D del plan —ver `CRUCERO_MINIMO`—. A igualdad de kilos, el más bajo, que se
+ * la mitad de la ruta para bajar —ver `MITAD_PARA_BAJAR`— y su minuto de
+ * crucero entre el T/C y el T/D del plan —ver `CRUCERO_MINIMO`—. A igualdad de kilos, el más bajo, que se
  * sube antes y se baja antes.
  *
  * `bajadaDelPlan` es lo que el plan cuenta de bajada desde ese nivel hasta el
@@ -408,7 +408,8 @@ export function nivelQueAhorra(
   let menos = Infinity;
   for (const n of [...niveles].sort((x, y) => x - y)) {
     const c = costeDelTramo(a, n, distancia, cotaDeSalida, cotaDeLlegada);
-    if (!c.cabe || distancia - c.subida - c.bajada < distancia * PARTE_NIVELADA) continue;
+    if (!c.cabe) continue;
+    if (Math.max(0, n - cotaDeLlegada) * BAJADA_POR_METRO > distancia * MITAD_PARA_BAJAR) continue;
     const bajada = bajadaDelPlan ? bajadaDelPlan(n) : c.bajada;
     const nivelado = distancia - distanciaDeSubida(a, cotaDeSalida, n) - bajada;
     if (nivelado < CRUCERO_MINIMO * verdaderaEnCrucero(a, n)) continue;
