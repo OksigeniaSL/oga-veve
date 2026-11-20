@@ -1,8 +1,8 @@
 /**
  * **El gas de un bimotor de hélice en la recogida**, el del piloto del vuelo
  * entero (`recoger` en `verificar-vuelo-entero.mjs`). Vive aparte para poder
- * probarlo: el banco lo mete en la página tal cual —ver `GAS_DE_LA_RECOGIDA`
- * allí— y `gas-de-la-recogida.test.mjs` lo vuela contra el modelo del juego.
+ * probarlo: el banco lo mete en la página tal cual, como texto, y
+ * `gas-de-la-recogida.test.mjs` lo vuela contra el modelo del juego.
  *
  * Un bimotor de hélice no corta el gas al empezar a recoger: lo va quitando,
  * y llega al ralentí al tocar (H34d, ver el comentario de `recoger`). Se
@@ -63,6 +63,7 @@ export function duracionDelPerfil(altura, caida, alTocar) {
  * }} p
  */
 export function gasDelBimotorEnLaRecogida(p) {
+  // La cuenta de `duracionDelPerfil`, repetida aquí porque esto viaja como texto.
   const a = Math.max(0.3, p.alTocar);
   let dura = p.altura / a;
   if (!(p.altura > 0)) dura = 0;
