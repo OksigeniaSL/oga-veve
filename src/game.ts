@@ -6603,8 +6603,21 @@ export class Game {
       const p = this.flight.state.position;
       return distanciaAlUmbral(this.elCampo(), p.x, p.z);
     },
-    alto: () =>
-      this.flight.state.position.y - this.cotaDelCampo(this.elCampo()),
+    /*
+     * **Y la altura, sobre el umbral, como los mínimos.** Se medía contra la
+     * cota del centro de la pista, y la decisión de la torre —irse al aire con
+     * la pista ocupada, el permiso a la vista— caía a otra altura que la que
+     * canta la máquina: en Los Rodeos el umbral de la 12 está 8,4 m por encima
+     * del centro, así que los sesenta metros del turno eran 51,6 sobre la
+     * pista, y un permiso que empezaba a sonar a 55 m —por debajo de los
+     * mínimos que se acababan de oír— no se veía tarde (H41). La aproximación
+     * mide contra `cotaDePistaEn`, que en final es la del umbral; esto, lo
+     * mismo. Ver `campoParaLaAproximacion`.
+     */
+    alto: () => {
+      const p = this.flight.state.position;
+      return p.y - this.cotaDePistaEn(this.elCampo(), p.x, p.z);
+    },
     enTierra: () => this.flight.state.onGround,
     // La de la ficha: ver `categoriaDeEstela` en `flight/estela.ts`.
     miEstela: () => categoriaDeEstela(this.aircraft.mass),
