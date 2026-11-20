@@ -229,8 +229,18 @@ const VECES = Number(process.env.OGA_VECES ?? 12);
 const DEMOSTRACION = process.env.OGA_DEMOSTRACION ?? "examen";
 /** Si se pone el modo rápido ⏩ en cuanto sale. Ver la cabecera. */
 const ADELANTAR = process.env.OGA_ADELANTAR === "1";
-/** **Lo que tiene que adelantar la siesta, como poco**, km por la ruta: que al despertar se note. */
-const SIESTA_KM = 25;
+/**
+ * **Lo que tiene que adelantar la siesta, como poco**, km por la ruta: que al
+ * despertar se note. Lo que se vuela en la siesta más corta que deja el juego
+ * —dos minutos, `SIESTA_MINIMA` en `flight/motor-del-pasaje.ts`— a lo que va
+ * el avión por el suelo al acabar la subida, unos 170 m/s. Eran 25, puestos con
+ * la subida a FL190 (189 s durmiendo a 142 m/s, 26,9 km); con la de FL170 (ADR
+ * 0019) Ara duerme menos, que la subida es más corta, y el avión va más
+ * deprisa: 139 s y 24,5 km, con el mapa movido 53 puntos (20-11-2026). Lo que
+ * Enrique vio que no se notaba era minuto y medio a la velocidad de antes, unos
+ * 13 km.
+ */
+const SIESTA_KM = 20;
 /** Tope de pared: el vuelo son unos treinta y cinco minutos de reloj del juego. */
 const TOPE_S = Number(process.env.OGA_TOPE ?? 1800);
 
@@ -1653,9 +1663,16 @@ async function elVuelo() {
   const movidoEnElMapa = siesta?.avionAntes && siesta?.avionDespues ? Math.hypot(siesta.avionDespues[0] - siesta.avionAntes[0], siesta.avionDespues[1] - siesta.avionAntes[1]) : 0;
   comprobar(
     `y al despertar se nota: ${SIESTA_KM} km de ruta como poco, el avión del mapa bien movido y lo de al dormirse, atrás`,
-    !!siesta && (siesta.km ?? 0) >= SIESTA_KM && movidoEnElMapa >= 20 && (siesta.atras ?? 0) >= 0.6 * SIESTA_KM,
+    // Y los dos minutos de vuelo durmiendo que pide el juego, que es lo que se ve en el mapa.
+    !!siesta &&
+      !!s0 &&
+      s0.hasta !== null &&
+      s0.hasta - s0.desde >= 120 &&
+      (siesta.km ?? 0) >= SIESTA_KM &&
+      movidoEnElMapa >= 20 &&
+      (siesta.atras ?? 0) >= 0.6 * SIESTA_KM,
     siesta
-      ? `${siesta.km?.toFixed(1) ?? "?"} km por la ruta · el avión del mapa, ${movidoEnElMapa.toFixed(0)} puntos de 480 · donde se durmió, ${siesta.atras?.toFixed(1) ?? "?"} km por detrás`
+      ? `${s0?.hasta != null ? `${(s0.hasta - s0.desde).toFixed(0)} s durmiendo · ` : ""}${siesta.km?.toFixed(1) ?? "?"} km por la ruta · el avión del mapa, ${movidoEnElMapa.toFixed(0)} puntos de 480 · donde se durmió, ${siesta.atras?.toFixed(1) ?? "?"} km por detrás`
       : "no se vio",
   );
   comprobar(

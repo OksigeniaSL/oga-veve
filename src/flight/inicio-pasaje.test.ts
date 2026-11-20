@@ -1893,9 +1893,15 @@ describe("el kit de viaje, en el vuelo", () => {
       "inicio.tripulacion.pasaje.cerca.kitRato",
       "inicio.ara.pasaje.kitGracias",
     ]);
-    // Ni megafonía en el medio minuto de antes ni en el minuto de después: la de La Gomera, más tarde, lo pausa.
+    /*
+     * Ni megafonía en los diez segundos callados de antes ni en el minuto de
+     * después: la de La Gomera, más tarde, lo pausa. Era el medio minuto de
+     * antes, con el kit esperando a los 104 km; ahora llega detrás del porqué
+     * del ralentí, que es de la comandante, con su silencio delante
+     * (20-11-2026). Lo mismo que mira el banco del navegador.
+     */
     const megafonia = m.dichas.filter((d) => d.linea.megafonia);
-    expect(megafonia.filter((d) => d.desde > dado - 30 && d.desde < dado + 60).map((d) => d.linea.clave)).toEqual([]);
+    expect(megafonia.filter((d) => (d.hasta ?? d.desde) > dado - 10 && d.desde < dado + 60).map((d) => d.linea.clave)).toEqual([]);
     // Bien por encima de los diez mil pies, y con más de tres minutos hasta que se pide guardarlo.
     expect(altitudA(dado)).toBeGreaterThan(3048 + 900);
     expect(cuando(m.dichas, "inicio.tripulacion.pasaje.cerca.kitGuardar") - dado).toBeGreaterThan(180);
