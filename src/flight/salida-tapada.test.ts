@@ -721,6 +721,19 @@ const SALEN: readonly (readonly number[])[] = [
   [360, 330],
 ];
 
+/**
+ * **Y en El Hierro, también a los 560 y 530 s.** El caso de estas pruebas es
+ * un tercero —una llegada del tráfico— que aterriza delante de ti mientras el
+ * que sale espera en tu salida. Desde que la media vuelta del que aterriza va
+ * a su paso de verdad (H41), con las cuatro horas de `SALEN` ese tercero ya
+ * no coincide con nadie en tu salida. Buscado con torre en 192 tiradas —las
+ * dos cabeceras, el JAZ 20 y el JAZ 90, doce parejas de los 700 a los 120 s y
+ * las semillas 1 a 4—, solo sale con los dos saliendo a los 560 y 530 s, y
+ * ahí sale en los tres juegos: con torre, la vuelta; sin darla, la vuelta y
+ * el aire; con un AFIS, el aviso y la propuesta (H41d).
+ */
+const SALEN_EN_EL_HIERRO: readonly (readonly number[])[] = [...SALEN, [560, 530]];
+
 /** Lo que falla de una medida, o nada. */
 function loQueFalla(m: Medida): string[] {
   const mal: string[] = [];
@@ -758,7 +771,7 @@ describe("con torre: te retrasa o te manda al aire, y el que sale sale", () => {
       let pedido = 0;
       for (const esc of cabeceras(SCENARIOS.find((e) => e.id === id)!))
         for (const avion of [AIRCRAFT[0]!, elMasGrande(esc)])
-          for (const salen of SALEN)
+          for (const salen of id === "el-hierro" ? SALEN_EN_EL_HIERRO : SALEN)
             for (const semilla of [1, 2, 3]) {
               const m = llegarConDosQueSalen(esc, avion, salen, semilla, true, false, undefined, true, null, null, false);
               const donde = `${id} ${Math.round(esc.runway.heading)}° ${avion.id}, salen ${salen.join("/")} s antes, semilla ${semilla}`;
@@ -781,7 +794,7 @@ describe("y si no das la vuelta", () => {
     let frustradas = 0;
     let vueltas = 0;
     for (const esc of cabeceras(SCENARIOS.find((e) => e.id === "el-hierro")!))
-      for (const salen of SALEN)
+      for (const salen of SALEN_EN_EL_HIERRO)
         for (const semilla of [1, 2, 3]) {
           const m = llegarConDosQueSalen(esc, AIRCRAFT[0]!, salen, semilla, true, false, undefined, false, null, null, false);
           const donde = `El Hierro ${Math.round(esc.runway.heading)}°, salen ${salen.join("/")} s antes, semilla ${semilla}`;
@@ -822,7 +835,7 @@ describe("con AFIS: te lo cuenta, y decide quien vuela", () => {
     let propuestas = 0;
     for (const esc of hierro)
       for (const avion of [AIRCRAFT[0]!, elMasGrande(esc)])
-        for (const salen of SALEN)
+        for (const salen of SALEN_EN_EL_HIERRO)
           for (const semilla of [1, 2, 3]) {
             const m = llegarConDosQueSalen(esc, avion, salen, semilla, true, true, "afis", true, null, null, false);
             const donde = `El Hierro ${Math.round(esc.runway.heading)}° ${avion.id}, salen ${salen.join("/")} s antes, semilla ${semilla}`;
