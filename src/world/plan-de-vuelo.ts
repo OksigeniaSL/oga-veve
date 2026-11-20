@@ -2029,6 +2029,16 @@ export class PlanDeVuelo {
     this.vuelo.listaPorLeer = si;
   }
 
+  /** Lo que lee el banco. Ver `Vuelo.listaPorLeer`. */
+  get listaPorLeer(): boolean {
+    return this.vuelo.listaPorLeer;
+  }
+
+  /** Por qué la torre no te mira ahora. Ver `Vuelo.noTeMiraPor` (H48). */
+  get noTeMiraPor(): string | null {
+    return this.vuelo.noTeMiraPor;
+  }
+
   /**
    * **El aire del día**, para pasar la pérdida a velocidad verdadera. Lo pone
    * el juego antes de cada paso, como `pistaDeOtros`. Ver `perdida` abajo.

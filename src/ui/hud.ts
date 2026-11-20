@@ -87,6 +87,7 @@ import { botonDeNoExplicar } from "./no-volver-a-explicar";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
 import { escucharLosToquesQueExplican } from "./tocar-para-explicar";
 import { type Caja, ESPERA, Repartidor } from "./reparto";
+import { cedeElTurno, encolarEnLaTira, type FraseDeLaTira } from "./cola-de-la-radio";
 // La ventana de las explicaciones se ofrece al registro al cargarse.
 import "./ventana-de-explicacion";
 import {
@@ -908,7 +909,7 @@ export class Hud {
   private radioReloj = 0;
   /** Desde cuándo está a la vista la frase de ahora, y las que esperan turno. Ver `radio`. */
   private radioDesde = 0;
-  private readonly radioEnCola: { texto: string; segundos: number; paraTi: boolean | null }[] = [];
+  private readonly radioEnCola: FraseDeLaTira[] = [];
   private radioTurno = 0;
   private hintTimer = 0;
 
@@ -5720,12 +5721,12 @@ export class Hud {
      * persona de tierra se oía y no se leía nunca. Para quien no oye, lo que no se
      * escribe no se dijo. Así que la nueva espera a que la de ahora lleve un rato a
      * la vista, y las que se junten salen en orden; tres como mucho, que si la
-     * frecuencia corre más que eso, lo viejo ya no importa.
+     * frecuencia corre más que eso, lo viejo ya no importa. Y lo que sobra es
+     * antes lo de los demás que lo tuyo (H48): ver `encolarEnLaTira`.
      */
     const falta = RADIO_A_LA_VISTA_MS - (performance.now() - this.radioDesde);
     if (!caja.hidden && (falta > 0 || this.radioEnCola.length > 0)) {
-      this.radioEnCola.push({ texto, segundos, paraTi });
-      if (this.radioEnCola.length > 3) this.radioEnCola.shift();
+      encolarEnLaTira(this.radioEnCola, { texto, segundos, paraTi });
       if (!this.radioTurno)
         this.radioTurno = window.setTimeout(() => this.siguienteDeLaRadio(), Math.max(0, falta));
       return;
@@ -5785,9 +5786,17 @@ export class Hud {
      * sin que nadie la hubiera visto: para quien no oye, no se dijo.
      */
     let queda = segundos * 1000;
+    /*
+     * **Y esperando sitio guarda su turno, pero no para siempre** (H48): con
+     * otras detrás, pasado `ESPERANDO_SITIO_COMO_MUCHO_MS` deja de guardarlo y
+     * pasa la siguiente. Ver `cedeElTurno`.
+     */
+    let esperandoSitio = 0;
     const mirar = (): void => {
-      if (caja.classList.contains(ESPERA)) this.radioDesde += RADIO_PASO_MS;
-      else queda -= RADIO_PASO_MS;
+      if (caja.classList.contains(ESPERA)) {
+        esperandoSitio += RADIO_PASO_MS;
+        if (!cedeElTurno(esperandoSitio, this.radioEnCola.length)) this.radioDesde += RADIO_PASO_MS;
+      } else queda -= RADIO_PASO_MS;
       if (queda <= 0) {
         caja.hidden = true;
         return;

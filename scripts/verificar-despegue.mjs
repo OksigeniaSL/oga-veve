@@ -777,6 +777,8 @@ const torre = await page.evaluate(async () => {
   let vistas = "";
   let pintada = false;
   const porques = new Set();
+  const noTeMira = new Set();
+  const conRed = new Set();
   const t0 = o.reloj();
   let corrido = false;
   for (let i = 0; i < 240; i++) {
@@ -788,6 +790,20 @@ const torre = await page.evaluate(async () => {
     if (caja && !caja.hidden && /torre--(verde|roja)/.test(clases)) pintada = true;
     const por = o.porQueEsperas?.();
     if (por) porques.add(`${por.porque}${por.numero ? ` (número ${por.numero})` : ""} ${por.matricula ?? ""}`);
+    // Y por qué no te mira, aunque nadie lo diga: ver `noTeMira` (H48).
+    const nm = o.noTeMira?.();
+    if (nm) noTeMira.add(`${nm.por ?? "mira"}${nm.piezas.length ? ` [${nm.piezas.join(", ")}]` : ""}${nm.lista ? " lista" : ""}`);
+    /*
+     * **Y lo que sujeta la roja sin nadie a quien nombrar, pero con su red**:
+     * la lista de antes de despegar, que espera a que calle la radio, y una
+     * «pista libre» de otro que todavía no ha sonado (H48). Con eso no hay
+     * porqué que contar y la verde tarda más de doce segundos sin que nada
+     * esté roto; lo que no puede es no llegar. Se corre el reloj, como con
+     * alguien por medio, y se exige que llegue antes que su red más un margen.
+     */
+    if (nm && !por && nm.por === "lista") conRed.add("la lista de antes de despegar");
+    if (nm && !por && nm.por === "otros" && nm.piezas.length && nm.piezas.every((p) => p === "pista libre por sonar"))
+      conRed.add("una «pista libre» de otro todavía sin sonar");
     if (conLampara ? clases.includes("torre--verde") : LIBRE.has(o.fase())) {
       verde = o.reloj() - t0;
       // Sin lámpara, un poco más mirando que no se pinte: la luz de dentro ya está verde.
@@ -795,22 +811,51 @@ const torre = await page.evaluate(async () => {
       break;
     }
     // A los quince segundos con alguien por medio, el reloj corrido.
-    if (i === 60 && porques.size && !corrido) corrido = o.acelerar(8) > 1;
-    if (i >= 60 && !porques.size) break;
+    if (i === 60 && (porques.size || conRed.size) && !corrido) corrido = o.acelerar(8) > 1;
+    if (i >= 60 && !porques.size && !conRed.size) break;
   }
   o.acelerar(1);
   if (!conLampara) {
     const caja = document.querySelector('[data-hud="torre"]');
     if (caja && !caja.hidden && /torre--(verde|roja)/.test(caja.className)) pintada = true;
   }
-  return { verde, fase: o.fase(), luz: vistas, porques: [...porques], conLampara, pintada };
+  return {
+    verde,
+    fase: o.fase(),
+    luz: vistas,
+    porques: [...porques],
+    conLampara,
+    pintada,
+    noTeMira: [...noTeMira],
+    conRed: [...conRed],
+    boca: o.bocaAhora?.(),
+    ocupan: o.ocupanLaPista?.(),
+    lista: (o.cantados?.() ?? []).filter((c) => /flaps de despegue|compensador de despegue/.test(c)),
+  };
 });
+/*
+ * **Y si no la dio, por qué no miraba la torre**: la roja sin porqué de Los
+ * Rodeos con el JAZ 90 en la tanda 20 no decía qué la sujetaba (H48).
+ */
+if (torre.verde === null)
+  console.log(
+    `  la torre no miraba por: ${torre.noTeMira.join(" → ") || "nada apuntado"}` +
+      ` · boca ${JSON.stringify(torre.boca)} · ocupan ${JSON.stringify(torre.ocupan)}` +
+      ` · lista: ${torre.lista.join(", ") || "nada"}`,
+  );
 const porAlguien = torre.porques.length > 0;
+/*
+ * Lo que sujeta la roja con su red tiene que soltarla antes que ella, más un
+ * margen: la lista, `LA_LISTA_COMO_MUCHO` en `flight/vuelo.ts`, y la «pista
+ * libre» sin sonar, `LO_QUE_SUELTA_COMO_MUCHO` en `flight/turno-de-pista.ts`.
+ */
+const TOPE_CON_RED = 90 + 15;
+const porSuRed = torre.conRed.length > 0 && torre.verde !== null && torre.verde < TOPE_CON_RED;
 comprobar(
   torre.conLampara
     ? "parando en la doble raya, la torre acaba autorizando"
     : "parando en la doble raya, sin torre, el juego da la pista por libre",
-  torre.verde !== null && (torre.verde < 12 || porAlguien),
+  torre.verde !== null && (torre.verde < 12 || porAlguien || porSuRed),
   (torre.verde === null
     ? torre.conLampara
       ? `nunca dio verde (fase «${torre.fase}», lámpara «${torre.luz}»)`
@@ -818,7 +863,8 @@ comprobar(
     : torre.conLampara
       ? `verde a los ${torre.verde.toFixed(1)} s de juego`
       : `«${torre.fase}» a los ${torre.verde.toFixed(1)} s de juego`) +
-    (porAlguien ? ` · esperando por ${torre.porques.join(", ")}` : " · sin nadie por medio"),
+    (porAlguien ? ` · esperando por ${torre.porques.join(", ")}` : " · sin nadie por medio") +
+    (torre.conRed.length ? ` · esperando ${torre.conRed.join(" y ")}, que tiene su red` : ""),
   "la torre miraba si habías llegado, no si estabas parado: se cruzaba a toda velocidad",
 );
 if (!torre.conLampara)

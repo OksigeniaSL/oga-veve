@@ -1421,3 +1421,138 @@ medio con dos hilos.
   desde el 6 de Pettirossi, 247; desde el J8 de Tenerife Sur, 160. Es lo
   que da la raya de OpenStreetMap, que no trae las calles de servicio de la
   plataforma; con ellas el empuje sería más corto.
+
+## Enmienda (20-11-2026, H48): la roja sin porqué y la radio de tierra que se perdía
+
+Dos fallos de la ronda de la tanda 20 en Los Rodeos con el JAZ 90.
+
+### La radio de tierra por la 30
+
+**El caso.** `ver-remolque-de-quien-juega.mjs` con el viento del 300 (el de
+la enmienda H47b), en el peldaño de cabina: en la tira no salían la
+autorización de la ruta, el «pushback and start-up approved» ni el «Cabina,
+tierra: empezamos a empujar»; sí los dos últimos de la persona de tierra.
+
+**Es del juego, y no de la tanda 20.** El banco escribe ahora, cuando falta
+algo, la tira entera con su hora y si el reparto la tiene esperando sitio. Se
+reprodujo a la primera (código de main, 50dce346):
+
+- a los 17 s, la bienvenida de la comandante —casi cuatrocientas letras— se
+  escribe y el reparto la deja esperando sitio; a los 42 s lo tiene, a los 44
+  lo vuelve a perder, y **espera hasta el segundo 111**;
+- esperando sitio, su reloj no corre (ADR 0030, enmienda H28g), así que no
+  suelta el turno: tus tres frases, pedidas al pedir el tractor y al echar a
+  andar, esperan detrás;
+- la cola guarda tres y tiraba la más vieja (b25b2120); llegan del tráfico de
+  la 30 «viento en cola», «rodando a la cabecera» y «hold short», y echan a
+  las tuyas. Al soltarse la bienvenida se escriben esas tres, de otros.
+
+Por la 12 hay menos tráfico hablando mientras se empuja y las tuyas salían
+detrás de la bienvenida: es lo que medía el banco hasta ahora. No empieza en
+ningún commit de la tanda 20: es la suma de la cola de tres (b25b2120) y la
+espera de sitio sin tope (0e80796a), y por la 30 no se había volado nunca.
+
+**Decisión** (`ui/cola-de-la-radio.ts`):
+
+1. **Si no caben, sobra antes lo de los demás.** Lo que se oye para otro es
+   ambiente; lo tuyo es lo que tienes que hacer. Se va lo de otros
+   (`paraTi: false`) de lo más viejo a lo más nuevo, y solo sin nada de eso,
+   lo más viejo.
+2. **La que espera sitio guarda su turno diez segundos**, no para siempre:
+   con otras detrás, pasado `ESPERANDO_SITIO_COMO_MUCHO_MS`, deja pasar a la
+   siguiente, que suele caber donde ella no. Es un candado entre la tira y el
+   reparto, y le faltaba la red.
+
+**La prueba**: `cola-de-la-radio.test.ts` monta la cola con las mismas frases
+y en el mismo orden que el banco, y mira la red de la espera de sitio.
+
+### La roja que no daba la verde
+
+**El caso.** `verificar-despegue.mjs tenerife-norte guyrami "" jaz-90`, 21 de
+22: parado en la doble raya, la torre no dio la verde en quince segundos, con
+la lámpara roja y sin porqué.
+
+**No se reprodujo.** Una tirada con el código de main y las sondas de abajo:
+22 de 22, verde a los 55 s detrás de EC-LQN, que despegaba. Las tiradas del
+mismo banco en las rondas anteriores dan lo mismo que el sorteo del tráfico:
+3,5 y 10,8 s sin nadie por medio; de 27 a 96 s detrás de uno que despega. Lo
+de la tanda 20 que toca la torre —la R recta, los cruces, la media vuelta, el
+remonte y el remolque que espera— cambia quién hay en la frecuencia al llegar
+a la raya, y no la cuenta de la verde (`atenderALaTorre` en `flight/vuelo.ts`
+no se tocó). Sin reproducirlo no se puede decir en qué commit empieza, ni si
+empieza en alguno.
+
+**Lo que sujeta la roja sin porqué.** El banco solo espera más de quince
+segundos si `porQueEsperas` nombra a alguien. Sin nadie a quien nombrar, la
+torre no te mira por una de estas, y ninguna lo decía:
+
+- **la lista de antes de despegar**, que espera a que calle la radio para
+  pedir o poner los flaps y el compensador; tiene su red, `LA_LISTA_COMO_MUCHO`;
+- **lo que le suelta la pista a otro sin sonar todavía**: la frecuencia da la
+  pista por libre al pedir su «pista libre» o su «cleared for take-off», y la
+  verde espera a oírlo para no dársela a dos (`sueltaLaPista` en
+  `audio/boca.ts`). Esa frase no caduca ni se cae de la cola, a propósito.
+  **Esta no tenía red en el suelo**: si la boca no la decía nunca, la roja
+  era para siempre. En el aire la tiene, la altura de decisión.
+
+**Decisión.**
+
+1. **La red** (`LO_QUE_SUELTA_COMO_MUCHO`, treinta segundos, en
+   `flight/turno-de-pista.ts`): parado en la doble raya, lo que suelta la
+   pista y no ha sonado en ese rato se retira de la boca, y con ello la roja.
+   Treinta segundos son tres o cuatro frases de la doble raya y lo de los
+   demás detrás; mucho menos de lo que tarda un niño en pensar que el juego
+   se ha colgado. Retirarla, y no solo dejar de esperarla, es porque sonando
+   detrás de tu verde diría otra cosa.
+2. **Que se diga por qué**: la sonda `noTeMira` —fuera de la raya, la pista
+   de otros y de qué está hecha pieza a pieza, la lista, o sin parar
+   todavía—, que el banco escribe cuando no llega la verde. La próxima vez que
+   falle dirá qué la sujetaba.
+3. **Y el banco no se rinde ante lo que tiene red**: con la lista o una
+   frase sin sonar, corre el reloj como con alguien por medio y exige que la
+   verde llegue antes que la red más un margen, ciento cinco segundos. Lo que
+   sigue exigiendo es lo mismo: sin nadie y sin nada pendiente, doce segundos.
+
+**La prueba**: `roja-sin-porque.test.ts`, con una boca que no dice nunca el
+«pista libre» ni el «cleared for take-off» del otro: mientras la espera la
+roja sigue, sin nadie a quien nombrar; a los treinta segundos se acaba y la
+frase se retira; y rodando hacia la raya no se cuenta. Sin la red, la roja
+dura los ciento veinte segundos de la prueba y los que hagan falta.
+
+### Lo medido
+
+- **El remolque por la 30**, `ver-remolque-de-quien-juega.mjs` con el viento
+  del 300 y el peldaño de cabina (`OGA_TRAMO`, que el banco acepta desde esta
+  enmienda), con la tarjeta Intel: antes, la tira de arriba y el fallo;
+  después, **todo en orden**: la ruta, el permiso de empujar, el «empezamos a
+  empujar», el freno y el «Desconecto», en su orden y una vez cada uno.
+- **El despegue de Los Rodeos con el JAZ 90 en Guyrami**, dos tiradas: con el
+  código de main y las sondas, 22 de 22 y verde a los 55 s detrás de EC-LQN;
+  con la red y el banco nuevo, 22 de 22 y verde a los 49 s detrás de EC-HHX.
+  Ninguna de las dos se quedó sin porqué, así que la red no se ha visto
+  actuar en el navegador: solo en `roja-sin-porque.test.ts`.
+- **El despegue de Los Rodeos en Taguató**, con la red y el banco nuevo: 20 de
+  20, verde a los 10,8 s sin nadie por medio, **esperando la lista**: la
+  sonda dice que esos diez segundos de siempre sin nadie por medio son la
+  lista —pedir los flaps, ocho segundos de paciencia y ponerlos— y no la
+  torre. Es lo más probable de la tanda 20: la lista espera a que calle la
+  radio para pedir y para poner, y con la frecuencia o la megafonía hablando
+  en la doble raya pasa de los quince segundos que esperaba el banco. No está
+  medido en esa tirada.
+- **Vitest**: las dos pruebas nuevas en verde; `roja-sin-porque.test.ts` sin
+  la red cae en dos de tres, con la roja a los 120 s de la prueba. El entero,
+  una vez: 558 de 558 ficheros, 11.150 pruebas en verde y 30 saltadas,
+  ninguna en rojo, en 1.169 s con dos hilos.
+
+### Lo que queda
+
+- **La roja de la tanda 20 sigue sin causa medida.** Con la sonda puesta, la
+  próxima vez que el banco no vea la verde escribirá qué la sujetaba: si es
+  la lista, la pista de otros pieza a pieza, o el avión sin parar.
+- **La red de la tira no se ha visto actuar sola en el navegador**: el banco
+  del remolque pasa con las dos piezas puestas, y no se voló con solo una.
+- **La roja larga del peldaño de cabina**: en la ronda de la tanda 20,
+  `verificar-despegue.mjs tenerife-norte taguato-ruvicha "" jaz-90` dio la
+  verde a los 293 s, esperando detrás de EC-MCM, primero en la fila y después
+  despegando. Tiene porqué y acaba, pero es mucho más que la paciencia de la
+  fila (`PACIENCIA_EN_LA_FILA`, 180 s); no se ha mirado.

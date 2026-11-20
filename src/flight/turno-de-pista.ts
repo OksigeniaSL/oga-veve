@@ -305,6 +305,29 @@ export const PACIENCIA_EN_LA_FILA = 180;
  */
 export const RETENCION_MAXIMA = 420;
 
+/**
+ * **Lo más que la roja espera a que suene lo que le suelta la pista a otro**,
+ * s parado en la doble raya (H48).
+ *
+ * Es un candado entre dos sistemas: la frecuencia da la pista por libre en
+ * cuanto pide el «pista libre», el «cleared for take-off» o el «go around» de
+ * otro, y la roja sigue hasta que la boca lo dice —ver `pistaDeOtros` y
+ * `sueltaLaPista` en `audio/boca.ts`—, porque la verde antes que eso es la
+ * torre dándosela a dos de viva voz. Y esa frase, a propósito, no caduca ni se
+ * cae de la cola. Así que si la boca no llegara a decirla nunca, la roja
+ * sería para siempre, y **sin nadie a quien nombrar**: ni en la pista ni en la
+ * frecuencia hay ya nadie por quien esperar, y la instructora no tiene nada
+ * que contar. En el aire hay salida —la altura de decisión—; en el suelo no
+ * la había. Es la roja de Pettirossi otra vez, por otro sitio.
+ *
+ * Treinta segundos: lo que se oye en la doble raya mientras tanto —la lista,
+ * el «hold short», el porqué de la instructora— son tres o cuatro frases, y
+ * lo de los demás va detrás de ellas; mucho menos de lo que tarda un niño en
+ * pensar que el juego se ha colgado. Pasados, la frase se retira: lo que
+ * decía pasó hace rato, y sonando detrás de tu verde diría otra cosa.
+ */
+export const LO_QUE_SUELTA_COMO_MUCHO = 30;
+
 /** Las llamadas con las que uno que llega entra en la frecuencia. */
 const ENTRA_A_ATERRIZAR: ReadonlySet<string> = new Set(["otro.enCola", "otro.final"]);
 
@@ -637,6 +660,24 @@ export class TurnoDePista {
   }
 
   /**
+   * **De qué está hecha `pistaDeOtros` ahora**, pieza a pieza, para el banco:
+   * la roja sin porqué de Los Rodeos con el JAZ 90 no decía cuál de ellas la
+   * sujetaba (H48).
+   */
+  get piezasDeLaPistaDeOtros(): string[] {
+    if (!this.conTorre) return [];
+    const piezas: string[] = [];
+    if (this.de.radio.pistaOcupada) piezas.push("frecuencia");
+    if (this.de.boca.esperaAlguna(sueltaLaPista)) piezas.push("pista libre por sonar");
+    if (this.ocupadaEnElDibujo) piezas.push("dibujo");
+    if (this.salenAntes.length > 0) piezas.push("fila");
+    if (this.esperaPorEstela !== null) piezas.push("estela");
+    if (this.conCalleUnica && this.de.radio.alguienEnLaCalle && !this.teEsperanEnLaCalle)
+      piezas.push("calle");
+    return piezas;
+  }
+
+  /**
    * **Los que salen antes que tú**, en orden: los dibujados que esperaban
    * listos en su doble raya cuando llegaste a la tuya y a los que la
    * frecuencia todavía no ha dado la salida.
@@ -671,6 +712,28 @@ export class TurnoDePista {
    * Ver `PACIENCIA_EN_LA_FILA`.
    */
   private readonly esperandoTrasDe = new Map<string, number>();
+
+  /**
+   * **Lo que lleva la roja esperando a que suene lo que suelta la pista**, s.
+   * Ver `LO_QUE_SUELTA_COMO_MUCHO`.
+   */
+  private sueltaSinSonar = 0;
+
+  /**
+   * La red de `LO_QUE_SUELTA_COMO_MUCHO`: parado en la doble raya, lo que
+   * suelta la pista y no ha sonado en ese rato se retira, y con ello la roja
+   * que sujetaba.
+   */
+  private soltarLoQueNoSuena(dt: number, fase: string): void {
+    if (fase !== "esperando" || !this.conTorre || !this.de.boca.esperaAlguna(sueltaLaPista)) {
+      this.sueltaSinSonar = 0;
+      return;
+    }
+    this.sueltaSinSonar += dt;
+    if (this.sueltaSinSonar <= LO_QUE_SUELTA_COMO_MUCHO) return;
+    this.de.boca.retirar(sueltaLaPista);
+    this.sueltaSinSonar = 0;
+  }
 
   /** Lo que se lleva esperando detrás de cada uno, en cada paso. */
   private contarLaFila(dt: number, fase: string): void {
@@ -823,6 +886,7 @@ export class TurnoDePista {
   ): Transmision | null {
     this.reloj += dt;
     this.contarLaFila(dt, ahora.fase);
+    this.soltarLoQueNoSuena(dt, ahora.fase);
     const momento: Momento = {
       ...ahora,
       esperandoLaPista: this.esperandoLaPista(ahora.fase),
@@ -1556,6 +1620,7 @@ export class TurnoDePista {
     this.enFinal = false;
     this.ocupadaDicha = false;
     this.esperandoTrasDe.clear();
+    this.sueltaSinSonar = 0;
     this.retenidoDesde.clear();
     this.retencionMasLarga = 0;
     this.tapada = null;
