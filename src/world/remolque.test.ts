@@ -401,40 +401,42 @@ describe("en los puestos de verdad", () => {
    * terminal, con noventa y seis metros rectos de plataforma hasta la Z; el empuje giraba
    * noventa grados a los veintinueve metros y al soltarlo el avión giraba 78° en sus
    * primeros treinta metros. Lo mide también el banco de `verificar-inicio-3.mjs`.
+   *
+   * **Y desde el 24, que es el que elige el plan** desde que el grafo no suelda los
+   * cruces (H41c): sale unos metros más corto, con noventa metros de recta y una curva
+   * cuyo primer tramo tuerce 6°. La calle se buscaba un metro más allá de la recta y se
+   * empujaba de frente, con los mismos 78° al soltarlo; ahora se mira la curva entera
+   * (H47, ver `RECTA_DE_LA_PLATAFORMA`). Se miran los dos.
    */
-  it("y de Los Rodeos, con pasaje, el JAZ 90 acaba con el morro hacia la calle: al soltarlo rueda casi recto", async () => {
-    const s = await conSuAerodromo(TENERIFE_NORTE);
-    const aero = s.aerodrome!;
-    const avion = AIRCRAFT.find((a) => a.id === "jaz-90")!;
-    const plan = new PlanDeVuelo(aero, s.runway, () => 600, avion);
-    plan.deContacto = true;
-    expect(plan.reiniciar()).toBe(true);
-    /*
-     * **Desde el 23, que es el que se mide.** El plan elige el puesto que menos
-     * rueda de ida y de vuelta (`parDeSalida`), y sin los cruces falsos del
-     * grafo (H41c) el 24, a siete metros, sale unos metros más corto: de él se
-     * sale de frente. El empuje del 23 es el mismo que antes.
-     */
-    const el23 = aero.parkingPositions!.find((p) => p.ref === "23")!;
-    expect(plan.reiniciarDesde(el23.xy)).toBe(true);
-    const [x, z] = plan.arranque()!;
-    const edificios = edificiosDePasarela(aero);
-    const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-    const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
-    const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
-    const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
-    const fin = e.poses.at(-1)!;
-    // El cruce con la calle, por delante del morro y en su eje.
-    const hastaElCruce = Math.hypot(e.cruce.x - fin.x, e.cruce.z - fin.z);
-    expect(hastaElCruce).toBeGreaterThan(5);
-    expect(Math.abs(diferencia(fin.rumbo, rumboEntre(fin, e.cruce)))).toBeLessThan(5 * GRADO);
-    // Y lo que sigue la raya desde el cruce, poco torcido respecto al morro.
-    const k = raya.findIndex((p) => p.x === e.cruce.x && p.z === e.cruce.z);
-    expect(k).toBeGreaterThan(0);
-    let j = k;
-    while (j < raya.length - 1 && Math.hypot(raya[j]!.x - e.cruce.x, raya[j]!.z - e.cruce.z) < 30) j++;
-    expect(Math.abs(diferencia(fin.rumbo, rumboEntre(e.cruce, raya[j]!)))).toBeLessThan(20 * GRADO);
-  });
+  it.each([["el del plan", null] as const, ["el 23", "23"] as const])(
+    "y de Los Rodeos, con pasaje, el JAZ 90 acaba con el morro hacia la calle: al soltarlo rueda casi recto (%s)",
+    async (_nombre, ref) => {
+      const s = await conSuAerodromo(TENERIFE_NORTE);
+      const aero = s.aerodrome!;
+      const avion = AIRCRAFT.find((a) => a.id === "jaz-90")!;
+      const plan = new PlanDeVuelo(aero, s.runway, () => 600, avion);
+      plan.deContacto = true;
+      expect(plan.reiniciar()).toBe(true);
+      if (ref) expect(plan.reiniciarDesde(aero.parkingPositions!.find((p) => p.ref === ref)!.xy)).toBe(true);
+      const [x, z] = plan.arranque()!;
+      const edificios = edificiosDePasarela(aero);
+      const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
+      const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
+      const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
+      const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
+      const fin = e.poses.at(-1)!;
+      // El cruce con la calle, por delante del morro y en su eje.
+      const hastaElCruce = Math.hypot(e.cruce.x - fin.x, e.cruce.z - fin.z);
+      expect(hastaElCruce).toBeGreaterThan(5);
+      expect(Math.abs(diferencia(fin.rumbo, rumboEntre(fin, e.cruce)))).toBeLessThan(5 * GRADO);
+      // Y lo que sigue la raya desde el cruce, poco torcido respecto al morro.
+      const k = raya.findIndex((p) => p.x === e.cruce.x && p.z === e.cruce.z);
+      expect(k).toBeGreaterThan(0);
+      let j = k;
+      while (j < raya.length - 1 && Math.hypot(raya[j]!.x - e.cruce.x, raya[j]!.z - e.cruce.z) < 30) j++;
+      expect(Math.abs(diferencia(fin.rumbo, rumboEntre(e.cruce, raya[j]!)))).toBeLessThan(20 * GRADO);
+    },
+  );
 });
 
 /** Lo que se aparta `p` de la recta `a`–`b`, m. */
