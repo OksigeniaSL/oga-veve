@@ -974,9 +974,24 @@ const despegue = await page.evaluate(async () => {
    * que son seiscientos y pico metros de pista a ocho metros por segundo antes
    * de poder pensar en despegar. Ver #151.
    */
+  /*
+   * **Y lo que el avión hace en la pista antes de la carrera** (H41e): dónde
+   * pisa el asfalto, hasta dónde va hacia la cabecera y dónde suelta frenos,
+   * en metros del eje desde el centro, para compararlo con lo que dice la
+   * radio. Rodar por la pista hacia atrás es remontar.
+   */
+  const porLaPista = { entra: null, masAtras: null, giro: null };
   for (let i = 0; i < 600; i++) {
     await new Promise((r) => setTimeout(r, 200));
     const s = o.estado();
+    if (s.onRunway) {
+      const b = o.backTaxi?.();
+      if (b) {
+        porLaPista.entra ??= b.along;
+        porLaPista.masAtras = Math.min(porLaPista.masAtras ?? b.along, b.along);
+        porLaPista.giro = b.giro ?? porLaPista.giro;
+      }
+    }
     c.throttle = s.groundSpeed < 8 ? 0.5 : 0;
     c.brakes = 0;
     /*
@@ -1060,6 +1075,13 @@ const despegue = await page.evaluate(async () => {
     )
       break;
   }
+  porLaPista.suelta = o.backTaxi?.()?.along ?? null;
+  const sale = o.juegoParaTrazas?.()?.plan?.comoSeSale ?? null;
+  porLaPista.sale = sale
+    ? `${sale.desde}${sale.desde === "remonte" ? (sale.hastaElFinal ? " hasta el final" : " un trozo") : ""}` +
+      ` (pide ${Math.round(sale.necesitaHoy)} m, desde la entrada ${Math.round(sale.desdeLaEntrada)},` +
+      ` por delante ${Math.round(sale.porDelante)}${sale.porQue ? `, por ${sale.porQue}` : ""})`
+    : null;
   const ficha = o.avion();
   // La carrera va por donde va la pista. Ver arriba.
   const rumboDeLaCarrera = rumboPista;
@@ -1274,6 +1296,13 @@ const despegue = await page.evaluate(async () => {
     enElAire,
     frenoSeFue,
     fasesEnElSuelo: [...fasesEnElSuelo],
+    porLaPista,
+    // Lo que se dijo de por dónde se sale: la torre y la instructora.
+    porDondeSeSale: Object.entries(o.dichoTodo?.() ?? {}).flatMap(([quien, claves]) =>
+      claves
+        .filter((k) => /backtrack|ofreceInterseccion|\.tora|remontar|desdeLaInterseccion|backTaxi/.test(k))
+        .map((k) => `${quien}: ${k}`),
+    ),
     largoDePista: pista.length,
     // Lo que el propio juego calcula que le cuesta llegar a rotar, y su Vr:
     // es contra eso contra lo que hay que medir, no contra una fracción de la
@@ -1307,6 +1336,12 @@ console.log(
 );
 
 console.log(`  masa al soltar frenos: ${Math.round(despegue.masa)} kg`);
+console.log(
+  `  por la pista (m del centro): entra en ${despegue.porLaPista.entra}, lo más atrás ${despegue.porLaPista.masAtras}, ` +
+    `giro ${despegue.porLaPista.giro}, suelta frenos en ${despegue.porLaPista.suelta}` +
+    ` · el plan: ${despegue.porLaPista.sale}` +
+    ` · por dónde se sale, dicho: ${despegue.porDondeSeSale.join(" · ") || "nada"}`,
+);
 comprobar(
   "a todo gas el avión despega",
   despegue.enElAire !== null,
