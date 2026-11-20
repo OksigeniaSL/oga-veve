@@ -1009,3 +1009,143 @@ quitado ninguna.
   No cambia lo que se despega, pero lo que se dice no es lo que se hace.
 - **El navegador**: `tenerife-norte taguato 1 jaz-90` no se voló; el candado
   tenía en cola otros tres bancos y no cabían en el tope de esta tanda.
+
+## Enmienda (20-11-2026, H47): el empuje del 24 de Los Rodeos, que acababa atravesado
+
+### El caso
+
+El banco de la tripulación de línea (`verificar-inicio-3.mjs`, Los Rodeos a
+La Palma con el JAZ 90, por la 12) pasó de 126 de 126 en la tanda 19 a 125
+de 126 en la tanda 20. Lo que cayó es que el empuje deje el avión con el
+morro hacia la raya:
+
+| Tanda | Puesto | Empujado | Giro | Rumbo al acabar | Gira rodando los primeros 30 m |
+|---|---|---|---|---|---|
+| 19 (3cff2357) | 23 | 90,5 m | 140°, radio 11,5 m | 217° | −8° |
+| 20 (92b3d1ba) | 24 | 33,8 m | 90°, radio 11,5 m | 166° | 78° |
+
+En un aeropuerto de verdad el tractor deja el avión parado en la calle, con
+el morro hacia donde va a rodar, y la tripulación arranca recto. Con 78° en
+los primeros treinta metros, el avión salía atravesado a la raya.
+
+### Por qué
+
+El remolque no cambió: cambió el puesto. Desde la H41c el grafo no suelda
+los cruces, y el 24, a siete metros del 23, pasó de tener una raya con un
+quiebro de ida y vuelta a los 85 m a tener una limpia: 90 m rectos por la
+plataforma (rumbo 256°) y una curva hacia la Z cuyos tramos se apartan 6°,
+20°, 35° y 49°. Sale unos metros más corto y el plan lo elige (`parDeSalida`;
+la tabla de «El puesto de salida» de la H41c). La H41c llevó la prueba de
+`remolque.test.ts` al 23 con `reiniciarDesde` y dejó escrito que «de él se
+sale de frente»: era esto.
+
+`trayectoriaDelEmpuje` busca la calle donde la raya tuerce más de cuarenta
+grados (`LA_CALLE_TUERCE`, mirando treinta metros por delante desde cada
+punto) y, si la raya sale de espaldas por la plataforma, la busca hasta donde
+acaba su recta —cada tramo a menos de 5° de la salida— más un metro
+(`RECTA_DE_LA_PLATAFORMA`). Desde el 24:
+
+- la recta acaba a los **90 m**, con el tramo de 6°;
+- la calle se busca hasta los **91 m**;
+- en el punto de los 90 m, lo que viene por delante va a 39,6°; en el de los
+  **94 m**, a 46,7°: la calle cae tres metros fuera;
+- y sin calle se empuja «de frente»: el cruce a medio largo de avión y quince
+  metros (29 m), noventa grados de giro, y el avión atravesado.
+
+Desde el 23 la misma cuenta salía por un metro: la recta acaba a los 96 m
+justo en la esquina, y los cuarenta grados se ven en ese mismo punto. El
+metro de más contaba con que la raya tuerce en una esquina, y tuerce en una
+curva de varios puntos.
+
+### Decisión
+
+**La calle se busca en la curva entera con la que acaba la recta**: hasta
+`MIRA_LA_CALLE` (30 m, lo que ya se mira para saber hacia dónde va la calle)
+más allá del final de la recta, si la recta cabe en la plataforma. Si es más
+larga que `RECTA_DE_LA_PLATAFORMA`, como antes. El tráfico, que busca la
+calle sin la recta de la plataforma (`porLaPlataforma` en falso), no cambia.
+
+Desde el 24, con el JAZ 90: **91,7 m empujado, 133° de giro con radio
+11,5 m y el morro a 209°**, con el cruce 35 m por delante y la raya que sigue
+desde él a 0°. Con el JAZ 110 y el JAZ 120, 78 m, 133° y radio 25,8 y 25,6 m.
+El 23 queda como estaba: 90,5 m, 140° y 217°.
+
+No se toca nada de la H41b a la H41d: la R recta, los cruces sin soldar, el
+puesto que elige el plan y el remolque que espera a que pases siguen igual.
+
+### La prueba
+
+`empuje-hasta-la-calle.test.ts` mira la raya y no la regla del empuje: si
+sale del puesto de espaldas, sigue recta —a menos de 3 m de su primera
+dirección— como mucho `RECTA_DE_LA_PLATAFORMA`, y antes de `MIRA_LA_CALLE`
+más allá ya va a más de cuarenta grados (mirado metro a metro sobre treinta
+metros, que un quiebro corto que vuelve no es una calle), el empuje tiene que
+acabar con el morro **a menos de 5°** de donde sigue la raya y con la calle
+por delante. Se mira con el JAZ 90 desde todos los puestos de contacto, por
+las dos cabeceras de cada campo con pasarelas —a cualquiera se puede llegar,
+y de cualquiera se sale empujado (`salirEmpujadoDeDondeSeLlego`)—, y con los
+tres reactores desde el que elige el plan. Y aparte, que el de este banco es
+de esos.
+
+Sin el arreglo se cae en cinco campos —Pettirossi, Los Rodeos, La Palma,
+Tenerife Sur y Gran Canaria—, con el morro a 77–90° de la raya, y en la de
+Los Rodeos del banco, a 90°. Con él, en verde, en unos 25 s con dos hilos.
+
+La prueba de Los Rodeos de `remolque.test.ts` vuelve a medir el puesto que
+elige el plan, el 24, y también el 23.
+
+### Lo medido
+
+- **Todos los empujes de contacto**, con un barrido fuera del repositorio: los
+  tres reactores, las dos cabeceras y cada puesto de contacto de los siete
+  campos donde se sale empujado, 678 empujes. Salían de frente 235 y salen
+  213: **22 acaban ahora en su calle** en lugar de a 77–90° de ella —el 24
+  de Los Rodeos por las dos cabeceras con los tres; el 17 de Los Rodeos; el
+  6A y el 5 de La Palma; el G10 y el H37 de Tenerife Sur por la 25 con los
+  tres; el T11 de Gran Canaria por la 03L con los tres, y el M01 y el M03—, y
+  ninguno de los que ya acababan en su calle cambia. De los puestos que elige
+  el plan, salían de frente 23 y salen 19: Los Rodeos por la 12 con los tres
+  y Pettirossi por la 02 con el JAZ 90.
+- **Vitest de lo tocado**, 21 ficheros del remolque, el tráfico empujado, el
+  puesto de salida y el rodaje: 539 pruebas en verde.
+- **Vitest entero**, una vez, con el arreglo: 554 de 554 ficheros y 11.083
+  pruebas en verde y 29 saltadas, ninguna en rojo, en 1.243 s con dos hilos
+  y el banco del navegador volando al lado.
+- **El navegador**, `verificar-inicio-3.mjs` una vez con el arreglo y con el
+  vitest entero al lado: lo del remolque, en verde —**91,7 de 91,7 m
+  empujado, giro 133° con radio 11,5 m, rumbo al acabar 209° y −5° en los
+  primeros treinta metros rodando**, y las fases en su orden—. El vuelo no
+  llegó al puesto de La Palma: con la máquina cargada se acabó el tope de
+  pared de 1.800 s en la recogida, a los 2.120 s de reloj del juego (la tanda
+  19 apagaba a los 2.455), y caen las 48 comprobaciones de lo que pasa
+  después o se cuenta al final: 77 de 125. Hasta la recogida, las fases de la
+  tripulación salen con pocos segundos de diferencia con la tanda 19, salvo
+  que no se apunta «crucero» entre la subida y la bajada (en la tanda 19 duró
+  23 s de juego) y la final empieza a los 1.760 s y no a los 1.935. No se
+  volvió a volar: no cabía en el tope de esta tanda. Los otros bancos de
+  rodaje (`npm run -s rodaje` y `ver-rodaje-y-cambios.mjs`) no se volaron: el
+  candado del navegador estuvo ocupado por otros bancos los veinte minutos que
+  quedaban.
+
+### Lo que queda
+
+Lo que sigue saliendo de frente es la raya que no tuerce cerca, y el empuje
+la deja atravesada a propósito (ADR 0025): se gira noventa grados y lo demás
+lo rueda el avión. Con los puestos que elige el plan:
+
+- **La recta de más de 120 m**: Los Rodeos por la 30 desde el 13 (132 m de
+  recta y la calle a los 142) con el JAZ 90 y el JAZ 110, y desde uno sin
+  número con el JAZ 120 (138 y 149); Tenerife Sur por la 07 desde el H43 (124
+  y 128) y por la 25 desde el J8 (156 y 160), con los tres reactores. Es el
+  tope de `RECTA_DE_LA_PLATAFORMA`: llevarlo a unos 160 m las metería en su
+  calle, con empujes de dos minutos y medio. Es una decisión del ADR 0025 y
+  aquí no se ha tocado.
+- **La recta que acaba en un quiebro y tuerce lejos**: Pettirossi por la 20
+  desde el 6 (113 m de recta, la calle a los 234), La Palma por la 36 desde
+  el 7 (56 y 114) y Lanzarote por la 03 desde el T2 (124 y 276). Ningún
+  empuje puede dejar ahí el morro hacia la raya sin llevar el avión hasta la
+  curva.
+- **El reactor grande con la calle muy cerca**: el morro acaba hacia donde va
+  la raya, pero al lado de ella, porque ni con setenta grados de rueda el giro
+  cabe: 7 m en La Palma por la 18 desde el 10, 14 m en Lanzarote por la 21 y
+  20–24 m en Barajas desde el 329, con el JAZ 110 y el JAZ 120.
