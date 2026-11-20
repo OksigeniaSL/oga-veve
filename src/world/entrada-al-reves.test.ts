@@ -14,12 +14,20 @@
  *
  * Aquí se rueda la raya con un piloto perfecto, como en
  * `back-taxi-vuelta.test.ts`, y se mira lo que el juego pide en la vuelta.
+ *
+ * **Y desde H41e esa media vuelta se da en la cabecera, remontando.** Entrar
+ * mirando a la cabecera y despegar desde ahí es rodar por la pista hacia
+ * atrás, y eso es remontar, aunque sean diez metros: la radio lo llamaba
+ * salida desde la cabecera y el avión daba la vuelta en la boca. Ahora la
+ * raya va por la pista hasta la cabecera de la 02, da allí la media vuelta y
+ * se dice remontar —ver `bocaDeEntrada` en `plan-de-vuelo.ts`—. Lo que se
+ * mira es lo mismo: que la ayuda toma una media vuelta que llega al revés.
  */
 
 import { describe, expect, it } from "vitest";
 import sgas from "../../data/aerodromes/sgas.aero.json";
 import type { Aerodrome, Punto } from "./aerodrome";
-import { PlanDeVuelo } from "./plan-de-vuelo";
+import { PlanDeVuelo, type ComoSeSale } from "./plan-de-vuelo";
 import { PYKASU } from "../flight/aircraft";
 import { enEjesDePista } from "./rumbo";
 import { PETTIROSSI, conViento } from "./scenarios";
@@ -34,7 +42,8 @@ import { vientoDeCasa } from "./meteo";
  * `plan-de-vuelo.ts`— y la salida se elige sin medias vueltas si las hay —ver
  * `elegirSalida`—, por la 02 ya no se entra por ahí dando la vuelta. Pero se
  * da en cualquier calle que llegue a la pista al revés sin tener otra, y la
- * ayuda tiene que saberla tomar.
+ * ayuda tiene que saberla tomar: desde H41e, en la cabecera, al final del
+ * remonte.
  *
  * Así que el campo de esta prueba es un trozo del de verdad: la pista, la
  * calle C desde su punta hasta la doble raya y el ramal de la herradura que
@@ -113,6 +122,9 @@ function estadoEn(p: Punto, rumbo: number, v: number) {
 /** Hacia donde llega la calle a la pista: al revés del despegue. */
 const AL_SUR = (PISTA.heading * Math.PI) / 180 + Math.PI;
 
+/** Lo que cuenta la verde de por dónde se sale. */
+let conLaVerde: ComoSeSale | null = null;
+
 function rodar(): Muestra[] {
   const plan = new PlanDeVuelo(AERO, PISTA, () => 0, PYKASU);
   plan.reiniciar();
@@ -131,6 +143,8 @@ function rodar(): Muestra[] {
       rumbo = Math.atan2(b[0] - a[0], -(b[1] - a[1]));
     }
     const vista = plan.paso(estadoEn(p, rumbo, v), 0, true, dt);
+    if (vista.fase !== "rodando" && vista.fase !== "esperando")
+      conLaVerde ??= plan.comoSeSale;
     if (vista.fase === "despegando") {
       muestras.push({ fase: vista.fase, p, rumbo, sugerida: 0, guyrami: 0, sinGirar: 0 });
       break;
@@ -173,7 +187,7 @@ function rodar(): Muestra[] {
 
 const muestras = rodar();
 const entrando = muestras.filter(
-  (m) => m.fase === "autorizado" || m.fase === "alineando",
+  (m) => m.fase === "autorizado" || m.fase === "back-taxi" || m.fase === "alineando",
 );
 const PISTA_RAD = (PISTA.heading * Math.PI) / 180;
 /**
@@ -188,7 +202,13 @@ const vuelta = (() => {
   const hasta = entrando.findIndex(
     (m, i) => i > desde && Math.abs(diferencia(m.rumbo, PISTA_RAD)) < 0.5,
   );
-  return entrando.slice(desde, hasta < 0 ? undefined : hasta);
+  // Desde la última vez que se va al sur: el remonte rueda al sur cientos de
+  // metros, y apartarse del eje para la ida no es la media vuelta.
+  const fin = hasta < 0 ? entrando.length : hasta;
+  let ultima = desde;
+  for (let i = desde; i < fin; i++)
+    if (Math.abs(diferencia(entrando[i]!.rumbo, PISTA_RAD + Math.PI)) < 0.35) ultima = i;
+  return entrando.slice(ultima, fin);
 })();
 /** Y en ella, los pasos en los que la raya gira de verdad. */
 const girando = vuelta.filter((m, i) => {
@@ -197,11 +217,26 @@ const girando = vuelta.filter((m, i) => {
   const metros = Math.hypot(s.p[0] - m.p[0], s.p[1] - m.p[1]);
   return metros > 0.01 && Math.abs(diferencia(s.rumbo, m.rumbo)) / metros > 0.05;
 });
+/**
+ * Y hacia qué lado gira la raya: +1 a la derecha. La de la boca giraba a la
+ * derecha; la del remonte, hacia donde la dibuja `backTaxiDesde`.
+ */
+const sentido = Math.sign(
+  vuelta.reduce(
+    (suma, m, i) => (i > 0 ? suma + diferencia(m.rumbo, vuelta[i - 1]!.rumbo) : suma),
+    0,
+  ),
+);
 
 describe("en Pettirossi por la 02, la raya entra en la pista dando media vuelta", () => {
   it("con la verde, la raya lleva a la pista y acaba alineada", () => {
     expect(entrando.length).toBeGreaterThan(20);
     expect(muestras[muestras.length - 1]!.fase).toBe("despegando");
+  });
+
+  it("y como se entra mirando a la cabecera, se remonta, y se dice (H41e)", () => {
+    expect(conLaVerde?.desde).toBe("remonte");
+    expect(muestras.some((m) => m.fase === "back-taxi")).toBe(true);
   });
 
   it("y esa vuelta es de verdad media vuelta: la raya llega mirando al revés de la pista", () => {
@@ -214,7 +249,8 @@ describe("en Pettirossi por la 02, la raya entra en la pista dando media vuelta"
 
   it("y se pide a paso de persona, no a los seis metros por segundo de una curva de calle", () => {
     expect(girando.length).toBeGreaterThan(5);
-    for (const m of girando) expect(m.sugerida).toBeLessThan(5);
+    // La del remonte, como en `back-taxi-vuelta.test.ts`: por debajo de seis.
+    for (const m of girando) expect(m.sugerida).toBeLessThan(6);
   });
 });
 
@@ -222,8 +258,9 @@ describe("y en Guyrami la ayuda de rodaje toma esa media vuelta", () => {
   it("con el avión quedándose corto, pide girar hacia donde va la raya en toda la vuelta", () => {
     expect(girando.length).toBeGreaterThan(5);
     for (const m of girando) {
-      // La raya gira a la derecha en la vuelta: de ir al sur a ir al norte.
-      expect(m.guyrami, `en (${m.p[0].toFixed(0)}, ${m.p[1].toFixed(0)})`).toBeGreaterThan(0.2);
+      // De ir al sur a ir al norte, hacia el lado al que gira la raya.
+      expect(sentido).not.toBe(0);
+      expect(m.guyrami * sentido, `en (${m.p[0].toFixed(0)}, ${m.p[1].toFixed(0)})`).toBeGreaterThan(0.2);
     }
   });
 
@@ -239,6 +276,6 @@ describe("y en Guyrami la ayuda de rodaje toma esa media vuelta", () => {
     );
     expect(pasada.length).toBeGreaterThan(3);
     for (const m of pasada)
-      expect(m.sinGirar, `en (${m.p[0].toFixed(0)}, ${m.p[1].toFixed(0)})`).toBeGreaterThan(0.2);
+      expect(m.sinGirar * sentido, `en (${m.p[0].toFixed(0)}, ${m.p[1].toFixed(0)})`).toBeGreaterThan(0.2);
   });
 });
