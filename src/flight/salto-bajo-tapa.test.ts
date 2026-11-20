@@ -292,7 +292,7 @@ describe("quien lleva el avión, al caer", () => {
 
   it("la tripulación queda en crucero, a la velocidad del perfil y sin subir ni bajar", () => {
     const t = new VueloDeLinea(FICHA);
-    t.ponerEnCrucero(230, 12000);
+    t.ponerEnCrucero(230);
     const m = t.paso(1 / 60, ARRIBA, PERMISOS);
     expect(t.estado.tramo).toBe("crucero");
     expect(m.velocidad).toBe(230);
@@ -304,29 +304,32 @@ describe("quien lleva el avión, al caer", () => {
 
   it("y sin nada que se lea como un cambio que acaba de pasar", () => {
     const t = new VueloDeLinea(FICHA);
-    t.ponerEnCrucero(230, 12000);
+    t.ponerEnCrucero(230);
     t.paso(1 / 60, ARRIBA, PERMISOS);
     expect(t.estado.potencia).toBe("subida");
     expect(t.estado.conEstaPotencia).toBeGreaterThan(600);
     expect(t.estado.enTramo).toBeGreaterThan(600);
   });
 
-  it("al empezar a bajar no frena de golpe: sale de la velocidad del crucero y la va perdiendo con la altura", () => {
+  it("al empezar a bajar no frena de golpe: baja al Mach del crucero, después a su indicada y, antes de los diez mil pies, a 250 (H38g)", () => {
+    const NUDO = 1852 / 3600;
     const t = new VueloDeLinea(FICHA);
-    t.ponerEnCrucero(230, 12000);
+    t.ponerEnCrucero(230);
     t.paso(1 / 60, ARRIBA, PERMISOS);
+    const machDelCrucero = ARRIBA.mach;
     const bajando = { ...ARRIBA, ritmoPedido: -10, alturaPedida: 11900 };
-    const arriba = t.paso(1 / 60, { ...bajando, ...aqui(12000) }, PERMISOS);
+    const a = (altitud: number) => t.paso(1 / 60, { ...bajando, ...aqui(altitud) }, PERMISOS).velocidad;
+    // Arriba, el Mach del crucero, que es la misma verdadera: no se frena.
+    expect(a(12000)).toBeCloseTo(machDelCrucero * velocidadDelSonido(12000), 1);
     expect(t.estado.tramo).toBe("bajada");
-    expect(arriba.velocidad).toBeCloseTo(230, 0);
-    const aMedias = t.paso(1 / 60, { ...bajando, ...aqui(7500) }, PERMISOS);
-    expect(aMedias.velocidad).toBeLessThan(230);
-    expect(aMedias.velocidad).toBeGreaterThan(280 * 0.5144);
-    const alLlegar = t.paso(1 / 60, { ...bajando, ...aqui(3050) }, PERMISOS);
-    expect(alLlegar.velocidad).toBeCloseTo(280 * 0.5144, 0);
-    // Y por debajo de diez mil pies, los 250 de aguja.
-    const abajo = t.paso(1 / 60, { ...bajando, ...aqui(3000) }, PERMISOS);
-    expect(indicatedAirspeed(abajo.velocidad, 3000)).toBeCloseTo(250 * 0.5144, 0);
+    // Más abajo, con ese Mach la aguja sube, y manda mientras no llega a su indicada.
+    expect(a(9000) / velocidadDelSonido(9000)).toBeCloseTo(machDelCrucero, 3);
+    // Pasado el cruce, la indicada del tipo.
+    expect(indicatedAirspeed(a(5000), 5000)).toBeCloseTo(FICHA.arriba.indicada, 3);
+    expect(indicatedAirspeed(a(3400), 3400)).toBeCloseTo(FICHA.arriba.indicada, 3);
+    // Y desde mil pies antes de los diez mil, los 250 de aguja, para cruzarlos frenado.
+    expect(indicatedAirspeed(a(3300), 3300)).toBeCloseTo(250 * NUDO, 3);
+    expect(indicatedAirspeed(a(3000), 3000)).toBeCloseTo(250 * NUDO, 3);
   });
 
   it("el cartel, apagado aunque el vuelo empezara con él puesto", () => {

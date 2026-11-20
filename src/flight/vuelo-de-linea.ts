@@ -71,10 +71,11 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
-import { indicadaDeSubida, machDeCrucero } from "./escalera-de-velocidades";
+import { FRENAR_ANTES, indicadaDeSubida, machDeCrucero } from "./escalera-de-velocidades";
 import type { LoSacado } from "./model";
 import type { Fase } from "./vuelo";
 import { SueloBajoLasRuedas } from "./recogida";
+import { MILLAS_POR_MIL_PIES } from "./ruta";
 
 const GRADO = Math.PI / 180;
 const NUDO = 1852 / 3600;
@@ -379,8 +380,33 @@ const ANTES_DE_APAGAR = 6;
  */
 export const SUBE_ABAJO = 14;
 export const SUBE_ARRIBA = 12;
-/** Y bajando, como mucho, m/s: unos dos mil pies por minuto. */
+/** Y bajando, como mucho, m/s: unos dos mil pies por minuto. Ver `bajaComoMucho`. */
 const BAJA_COMO_MUCHO = 11;
+/**
+ * **Lo que baja la senda del plan por cada metro**, la de tres millas por cada
+ * mil pies: ver `MILLAS_POR_MIL_PIES` en `ruta.ts`.
+ */
+const TRES_POR_MIL = (1000 * PIE) / (MILLAS_POR_MIL_PIES * 1852);
+/**
+ * **Cuánto más que la senda baja como mucho**, arriba: un cuarto. Es el margen
+ * para volver a ella desde encima.
+ */
+const MAS_QUE_LA_SENDA = 1.25;
+
+/**
+ * **Lo más que se baja a esta verdadera**, m/s.
+ *
+ * Los dos mil pies por minuto de `BAJA_COMO_MUCHO` son lo que pide la senda de
+ * tres por mil a unos 370 nudos sobre el suelo, y arriba se va más deprisa: a
+ * su indicada, el JAZ 110 lleva casi 480 nudos de verdadera a veinticinco mil
+ * pies, y la misma senda le pide unos 2.650. Es lo que baja un reactor de
+ * verdad ahí, al ralentí: la senda de tres por mil es su planeo, y el ritmo
+ * crece con la verdadera. Con el tope fijo se quedaba por encima desde el punto
+ * de descenso y no la cogía hasta abajo (enmiendas H38f y H38g del ADR 0019).
+ */
+function bajaComoMucho(velocidad: number): number {
+  return Math.max(BAJA_COMO_MUCHO, MAS_QUE_LA_SENDA * TRES_POR_MIL * Math.max(0, velocidad));
+}
 /** Diez mil pies, m: debajo, doscientos cincuenta nudos. */
 const DIEZ_MIL = 10000 * PIE;
 /**
@@ -431,14 +457,10 @@ const TOCA_A = 2.5 * PIE;
 /**
  * **Las velocidades**, m/s. Los 250 nudos por debajo de diez mil pies son los del
  * control, y van **en la aguja**, como los 210 de acercarse: ver `enLaAguja`.
- * Subiendo por encima, la indicada y el Mach de cada tipo: ver `arribaDe`.
+ * Por encima, subiendo y bajando, la indicada y el Mach de cada tipo: ver
+ * `arribaDe`.
  */
 const V_250 = 250 * NUDO;
-/**
- * **Los 280 nudos de verdadera de la bajada**, a los que se llega a diez mil
- * pies: la bajada sigue en verdadera. Ver `velocidadBajando`.
- */
-const V_ARRIBA = 280 * NUDO;
 
 /**
  * **Lo que se pide por encima de diez mil pies**: la indicada de su escalera y,
@@ -459,11 +481,10 @@ export interface ArribaDeLinea {
  * Un reactor de verdad sube y baja así: a una indicada fija hasta que esa
  * indicada da el Mach de crucero —el cruce, hacia los veintiocho mil pies— y a
  * ese Mach por encima. Al subir la verdadera crece hasta el cruce y luego baja
- * un poco con el frío. Era una verdadera fija de 280 nudos para todos, que a
- * diez mil pies deja la aguja en 240 y a treinta y cinco mil en 156. Lo pide
- * subiendo y en el crucero de un salto entre islas; la bajada sigue en
- * verdadera, y por qué está en `velocidadBajando` (enmiendas H38e y H38f del ADR
- * 0019).
+ * un poco con el frío; al bajar, lo contrario. Era una verdadera fija de 280
+ * nudos para todos, que a diez mil pies deja la aguja en 240 y a treinta y cinco
+ * mil en 156. Lo pide subiendo, en el crucero de un salto entre islas y bajando
+ * (enmiendas H38e, H38f y H38g del ADR 0019).
  */
 export function arribaDe(a: AircraftConfig): ArribaDeLinea {
   return { indicada: indicadaDeSubida(a) * NUDO, mach: machDeCrucero(a) };
@@ -673,13 +694,12 @@ export class VueloDeLinea {
    * potencia —la escena cuenta cada cambio que se oye— no puede leer el salto
    * como un cambio que acaba de pasar.
    */
-  ponerEnCrucero(velocidad: number, altitud: number): void {
+  ponerEnCrucero(velocidad: number): void {
     this.tramo = "crucero";
     this.enTramo = YA_LLEVA_UN_RATO;
     this.vioElAire = true;
     this.subidaPedida = 0;
     this.velocidadDeCrucero = velocidad;
-    this.alturaDeCrucero = altitud;
     if (this.potencia !== "subida") this.potencias.push({ potencia: "subida", desde: this.reloj });
     this.potencia = "subida";
     this.conEstaPotencia = YA_LLEVA_UN_RATO;
@@ -692,16 +712,11 @@ export class VueloDeLinea {
    * la de la escalera. Ver `ponerEnCrucero`.
    */
   private velocidadDeCrucero: number | null = null;
-  /** Y a qué altitud se llevaba, m: es de donde parte la bajada. Ver `velocidadBajando`. */
-  private alturaDeCrucero = DIEZ_MIL + 1;
   /**
-   * **Y de dónde se empezó a bajar sin crucero puesto**, en un salto entre
-   * islas: la verdadera y la altitud del punto de descenso. Con la subida en
-   * indicada, el crucero corto va más deprisa que los 280 de verdadera de la
-   * bajada, y frenar de golpe en el punto de descenso no lo hace nadie: se
-   * pierde con la altura, como en el vuelo largo. Ver `velocidadBajando`.
+   * **Y a qué Mach se iba en crucero**: es al que se empieza a bajar, hasta que
+   * manda la indicada. `null` sin crucero. Ver `deArriba`.
    */
-  private arranqueDeLaBajada: { readonly velocidad: number; readonly altitud: number } | null = null;
+  private machDelCrucero: number | null = null;
 
   /** Un paso: lo que se lee, lo que deja la escena y lo que hacen las manos. */
   paso(dt: number, l: LecturaDeLinea, permisos: PermisosDeLaEscena): ManosDeLinea {
@@ -714,6 +729,7 @@ export class VueloDeLinea {
     }
     this.ultimaVertical = l.vertical;
     if (l.enTierra) this.rodado += l.porElSuelo * dt;
+    if (this.tramo === "crucero" && !l.enTierra && l.mach > 0.05) this.machDelCrucero = l.mach;
     this.decidir(l, permisos);
     this.reloj += dt;
     this.conEstaPotencia += dt;
@@ -1078,7 +1094,7 @@ export class VueloDeLinea {
       const falta = l.alturaPedida - l.altitud;
       const tope = l.altitud < DIEZ_MIL ? SUBE_ABAJO : SUBE_ARRIBA;
       // Captura de la altura: llega frenando, como un automático.
-      subida = Math.max(-BAJA_COMO_MUCHO, acotar(l.ritmoPedido + falta / CAPTURA, tope));
+      subida = Math.max(-bajaComoMucho(l.velocidad), Math.min(tope, l.ritmoPedido + falta / CAPTURA));
     }
     /*
      * **Y lo que se pide cambia a ritmo de automático**: una décima de g para
@@ -1119,7 +1135,7 @@ export class VueloDeLinea {
     let tren = false;
     if (this.tramo === "subida") {
       const conFlaps = sobreElCampo < RECOGE_LOS_FLAPS;
-      v = conFlaps ? aguja(this.ficha.vr + 10) : l.altitud < DIEZ_MIL ? aguja(V_250) : this.deArriba(l);
+      v = conFlaps ? aguja(this.ficha.vr + 10) : l.altitud < DIEZ_MIL ? aguja(V_250) : this.deArriba(l, this.ficha.arriba.mach);
       /*
        * Y nunca por encima de lo que pide la carta de la salida hasta su punto: los 210
        * nudos de la CCS6L hasta MD039 eran 236 a 250 sin esto, que es lo que hace quien
@@ -1130,12 +1146,21 @@ export class VueloDeLinea {
       // El tren dentro en cuanto sube de verdad: unos diez metros.
       tren = l.altura < 10;
     } else if (!bajando) {
-      v = l.altitud < DIEZ_MIL ? aguja(V_250) : (this.velocidadDeCrucero ?? this.deArriba(l));
+      v = l.altitud < DIEZ_MIL ? aguja(V_250) : (this.velocidadDeCrucero ?? this.deArriba(l, this.ficha.arriba.mach));
       if (l.topeDeVelocidad !== undefined) v = Math.min(v, l.topeDeVelocidad);
     } else {
-      if (this.velocidadDeCrucero === null && this.arranqueDeLaBajada === null && l.altitud >= DIEZ_MIL)
-        this.arranqueDeLaBajada = { velocidad: l.velocidad, altitud: l.altitud };
-      v = l.altitud < DIEZ_MIL ? aguja(V_250) : this.velocidadBajando(l.altitud);
+      /*
+       * Bajando, al Mach del crucero hasta que la aguja llega a la indicada del
+       * tipo, y a ella desde ahí; y los 250 desde mil pies antes de los diez mil,
+       * para cruzarlos ya frenado: es el tramo nivelado que el plan pone ahí para
+       * frenar, y el mismo tope que la ventanilla SPD. Ver `FRENAR_ANTES` y
+       * `perfilDeLaBajada` en `ruta.ts`, que es de donde salen el punto de
+       * descenso y la senda con esas mismas velocidades.
+       */
+      v =
+        l.altitud < DIEZ_MIL + FRENAR_ANTES
+          ? aguja(V_250)
+          : this.deArriba(l, this.machDelCrucero ?? this.ficha.arriba.mach);
       if (falta < CONFIGURA.frena) v = Math.min(v, aguja(V_BAJANDO_CERCA));
       if (falta < CONFIGURA.flaps1) {
         flaps = 1 / 3;
@@ -1183,39 +1208,18 @@ export class VueloDeLinea {
   }
 
   /**
-   * **A qué velocidad se baja por encima de los diez mil pies**, m/s de
-   * verdadera: desde la del crucero, perdiéndola con la altura hasta los 280 de
-   * verdadera a diez mil pies. En un vuelo largo, doscientos ochenta desde el
-   * primer metro sería frenar a más de la mitad en el punto de descenso, con los
-   * motores al ralentí y a cuarenta mil pies.
+   * **Lo que se pide por encima de diez mil pies**, m/s de verdadera: la indicada
+   * del avión hasta que el Mach da menos, y el Mach desde ahí. Es el cruce de
+   * verdad, sin altitud escrita: sube a la indicada hasta que la verdadera llega
+   * al Mach, y baja al Mach hasta que la aguja llega a la indicada. Ver `arribaDe`.
    *
-   * **Sigue en verdadera, y no es lo de verdad** (enmienda H38f del ADR 0019): un
-   * reactor baja al Mach del crucero y después a su indicada, como sube. Puesta
-   * así, el modelo sencillo no sigue la senda de tres por mil: su punta a media
-   * altura queda por debajo de esa indicada —el JAZ 110 no pasa de unos 280
-   * nudos de aguja a veinticinco mil pies, con 320 en su escalera—, así que va
-   * con el gas a fondo, y con el gas a fondo no baja más de unos 1.760 pies por
-   * minuto, donde la senda le pide unos 2.400. Llegaba a cuarenta
-   * kilómetros de la pista 1.900 m por encima de la senda. Pasarla es cosa del
-   * modelo sencillo o del perfil del plan, y es otro encargo.
+   * Bajando, al Mach que se llevaba en crucero: en un vuelo largo es el de la
+   * cuenta del vuelo, más despacio que el de la escalera, y empezar a bajar no es
+   * frenar. Era una verdadera que iba de la del crucero a 280 nudos en los diez
+   * mil pies, porque el modelo sencillo no daba la indicada a media altura ni
+   * bajaba con ella lo que pide la senda (enmiendas H38f y H38g del ADR 0019).
    */
-  private velocidadBajando(altitud: number): number {
-    const largo = this.velocidadDeCrucero;
-    const desde = largo !== null ? { velocidad: largo, altitud: this.alturaDeCrucero } : this.arranqueDeLaBajada;
-    if (desde === null || desde.altitud <= DIEZ_MIL) return V_ARRIBA;
-    const k = Math.min(1, Math.max(0, (altitud - DIEZ_MIL) / (desde.altitud - DIEZ_MIL)));
-    return V_ARRIBA + (desde.velocidad - V_ARRIBA) * k;
-  }
-
-  /**
-   * **Lo que se pide subiendo por encima de diez mil pies**, y en el crucero de
-   * un salto entre islas, m/s de verdadera: la indicada del avión hasta que el
-   * Mach da menos, y el Mach desde ahí. Es el cruce de verdad, sin altitud
-   * escrita: sube a la indicada hasta que la verdadera llega al Mach. Ver
-   * `arribaDe`.
-   */
-  private deArriba(l: LecturaDeLinea): number {
-    const { mach } = this.ficha.arriba;
+  private deArriba(l: LecturaDeLinea, mach: number | null): number {
     const indicada = enLaAguja(this.ficha.arriba.indicada, l);
     return mach === null ? indicada : Math.min(indicada, enElMach(mach, l));
   }

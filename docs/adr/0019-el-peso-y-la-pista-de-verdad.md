@@ -736,3 +736,102 @@ cambiaría también el del automático de quien juega.
   la senda, y la coge a unos quince: no se le pide lo de los cuarenta.
 - `salto-bajo-tapa.test.ts`, la bajada desde el crucero con lecturas del mismo
   aire, y abajo los 250 de aguja.
+
+## Enmienda H38g (20-11-2026): la bajada, en Mach y en indicada
+
+Lo que H38f dejó: la tripulación de línea subía ya a la indicada y al Mach de su
+tipo, y **bajaba en verdadera**, de la del crucero a 280 nudos en los diez mil
+pies, porque el modelo sencillo no daba esa indicada a media altura y, yendo con
+el gas a fondo, no bajaba lo que pide la senda. Ahora baja como un reactor de
+verdad: **al Mach de su crucero hasta que la aguja llega a la indicada de su
+tipo, a ella desde ahí, y a 250 desde los once mil pies**. Para eso hubo que
+arreglar el modelo sencillo en la raíz, que es lo que H38f dejó escrito (nota
+H38g del ADR 0002).
+
+### El modelo sencillo llega a la indicada de su tipo
+
+La punta de `arcade.ts` crece con la altura desde el 62 % del crucero de la
+ficha hasta el crucero entero, **en verdadera**, y en la aguja eso es una cuesta
+abajo. Ahora, en un reactor y por encima de diez mil pies, la punta no baja de la
+velocidad de su programa —la indicada de `indicadaDeSubida` hasta el cruce y el
+Mach de `machDeCrucero` por encima, las mismas de la escalera y de la
+tripulación— (`programaDeArriba`). Lo que pone el techo a un reactor ahí no es el
+empuje sino su Vmo, y la escalera deja esa indicada siempre veinte nudos por
+debajo. Para que la punta no salte al cruzar los diez mil pies, la indicada va de
+250 a la del tipo en los mil pies de encima, el mismo tramo en el que la escalera
+frena bajando. Por debajo de diez mil pies la recta de siempre ya da más de 250 en
+toda la flota, y no cambia nada.
+
+| Punta, en la aguja (kt) | FL150 | FL250 | FL350 | Lo que pide su programa |
+|---|---|---|---|---|
+| JAZ 90, antes | 264 | 253 | 235 | 280 / M0,75 (241 a FL350) |
+| JAZ 90, ahora | 280 | 280 | 241 | |
+| JAZ 110, antes | 297 | 282 | 261 | 320 / M0,85 (273 a FL350) |
+| JAZ 110, ahora | 320 | 320 | 273 | |
+| JAZ 120, antes | 277 | 267 | 249 | 290 / M0,78 (250 a FL350) |
+| JAZ 120, ahora | 290 | 290 | 250 | |
+
+### Y baja lo que planea al ralentí
+
+Con la punta en su sitio el gas sigue casi a fondo a la velocidad del programa,
+porque en este modelo el gas **es** la velocidad; y con el gas a fondo el motor
+sube solo un tercio largo de su ascenso, que la palanca a fondo hacia delante
+solo podía restar: 1.764 pies por minuto en los tres, a cualquier altura. Un
+reactor de verdad baja ahí con los motores al ralentí y el morro sosteniendo la
+velocidad, a lo que planea a esa velocidad. Ahora, en un reactor, la palanca a
+fondo hacia delante baja **como poco su planeo al ralentí a esta velocidad y esta
+altura** (`loQueBajaLaPalanca` y `planeoAlRalenti`): la verdadera por la
+resistencia entre el peso, con el ala viendo la indicada y con lo que lleve
+sacado. Abajo y despacio ese planeo queda por debajo de la autoridad de siempre y
+no cambia nada; lo nota el reactor rápido y alto, que es el que bajaba poco. Los
+de hélice siguen como estaban: su programa no va contra la punta y bajan quitando
+gas.
+
+| A la velocidad de su programa, palanca a fondo (ft/min) | FL150 | FL250 | FL350 |
+|---|---|---|---|
+| Los tres, antes | 1.764 | 1.764 | 1.764 |
+| JAZ 90, ahora · la senda de tres por mil le pide | 2.724 · 1.961 | 3.229 · 2.322 | 2.861 · 2.400 |
+| JAZ 110, ahora · le pide | 2.948 · 2.239 | 3.495 · 2.656 | 3.028 · 2.722 |
+| JAZ 120, ahora · le pide | 2.507 · 2.033 | 2.971 · 2.406 | 2.866 · 2.500 |
+
+Es lo de verdad: la senda de tres millas por cada mil pies **es** el planeo de un
+reactor al ralentí, y arriba, con el aire fino, el margen es poco, un décimo largo.
+Medido sin tren ni flaps, con el peso de la ficha y en la atmósfera estándar.
+
+### La bajada de la tripulación
+
+- **Lo que pide** (`deArriba` en `vuelo-de-linea.ts`): la menor de dos
+  verdaderas, la de la indicada del tipo y la del Mach que se llevaba en crucero
+  (`machDelCrucero`, que se lee mientras se cruza; sin crucero, el del tipo). Es
+  el cruce de verdad sin una altitud escrita. Desde mil pies antes de los diez mil
+  (`FRENAR_ANTES`), los 250 de aguja, para cruzarlos ya frenado: es el tramo
+  nivelado a diez mil quinientos pies que pone el plan.
+- **Lo que baja como mucho** (`bajaComoMucho`): los once metros por segundo de
+  antes o un cuarto más que la senda a la verdadera de ahora, lo que sea más.
+- **De la misma cuenta**: el punto de descenso y la senda salen de
+  `perfilDeLaBajada`, con las velocidades de `velocidadesDeLaBajada`, que son las
+  de `velocidadQueToca`; y lo que pide la tripulación bajando es lo que pide la
+  ventanilla SPD, a medio nudo (`bajada-indicada-y-mach.test.ts`).
+- Se van `velocidadBajando`, `V_ARRIBA` y lo que guardaban para ella: la altitud
+  del crucero y el arranque de la bajada. `ponerEnCrucero` toma solo la velocidad.
+
+| Bajando | FL350 | FL250 | FL150 | Por debajo de FL110 |
+|---|---|---|---|---|
+| JAZ 90 | M0,75 | 280 kt | 280 kt | 250 kt |
+| JAZ 110 | M0,85 | 320 kt | 320 kt | 250 kt |
+| JAZ 110, vuelo largo desde M0,78 | M0,78 | M0,78 (314 kt) | 320 kt | 250 kt |
+| JAZ 120 | M0,78 | 290 kt | 290 kt | 250 kt |
+
+### Medido
+
+En la mesa del vuelo largo (`bajada-del-vuelo-largo.test.ts`, la ruta de MULSO a
+la 02 de Pettirossi):
+
+- **El JAZ 110**, desde cuarenta mil pies a M0,78: empieza a bajar a los 837 s,
+  baja a unos 2.550 pies por minuto, cruza a la indicada hacia FL240, se nivela a
+  diez mil quinientos para frenar a 250 y sigue. Se va de la senda 85 m por encima
+  como mucho, al empezar; a cuarenta kilómetros va a 1 m de ella (con la bajada en
+  indicada y el modelo de antes, 1.887 m), y toca a 0,93 m/s a 334 m del umbral.
+- **El JAZ 90 y el JAZ 120**, desde su crucero: 71 m por encima de la senda como
+  mucho, a cuarenta kilómetros a 9 y 1 m de ella (el JAZ 120 llegaba a 650 m por
+  encima en verdadera), y tocan a 0,92 y 0,96 m/s.

@@ -19590,7 +19590,7 @@ export class Game {
     this.input.ponerPalancaDeFlaps(0);
     c.flaps = 0;
     this.input.servoDelGas(this.flight.gasPara(e.velocidad, { flaps: 0, tren: 0 }));
-    this.tripulacionDeLinea?.ponerEnCrucero(e.velocidad, e.altitud);
+    this.tripulacionDeLinea?.ponerEnCrucero(e.velocidad);
     this.combustible = e.combustible;
     this.flight.ponerMasa?.(this.masaDeAhora());
     this.cabinaDelAvion.reiniciar(e.altitud, false, this.aircraft);

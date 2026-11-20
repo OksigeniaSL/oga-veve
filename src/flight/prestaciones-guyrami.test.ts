@@ -32,6 +32,8 @@ import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { ArcadeFlightModel } from "./arcade";
 import { AIRCRAFT, type AircraftConfig } from "./aircraft";
+import { velocidadDelSonido } from "./atmosphere";
+import { machDeCrucero } from "./escalera-de-velocidades";
 import { neutralControls, type ControlInputs } from "./model";
 import {
   ascensoMaximo,
@@ -153,7 +155,15 @@ describe("la punta depende de la altura", () => {
     });
     const arriba = m.velocidadMaxima();
     expect(abajo).toBeLessThan(a.cruiseSpeed * 0.7);
-    expect(arriba).toBeCloseTo(a.cruiseSpeed, 0);
+    /*
+     * El crucero de la ficha, o el Mach de su programa si da más (H38g): la
+     * escalera lo redondea a la centésima, y en el JAZ 120 los 230 m/s son Mach
+     * 0,776 y su programa pide 0,78. Ver `programaDeArriba` en `arcade.ts`.
+     */
+    const programa = machDeCrucero(a);
+    const crucero = Math.max(a.cruiseSpeed, programa === null ? 0 : programa * velocidadDelSonido(a.alturaDeCrucero));
+    expect(arriba).toBeCloseTo(crucero, 0);
+    expect(arriba).toBeLessThan(a.cruiseSpeed * 1.01);
   });
 
   it("y la avioneta no se entera, porque no sube ahí", () => {
