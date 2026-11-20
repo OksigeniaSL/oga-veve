@@ -123,7 +123,21 @@ export class Arboleda {
    */
   arbolEn(px: number, py: number, pz: number): ArbolDeLaArboleda | null {
     const i = this.cual(px, py, pz, 0);
-    if (i < 0) return null;
+    return i < 0 ? null : this.arbol(i);
+  }
+
+  /**
+   * **Todos los árboles**, cada uno entero. Es para medir un obstáculo —el
+   * monte de la pista corta contra la superficie de aproximación, ver
+   * `world/monte-del-final.ts`— una vez al plantarlo, no para cada fotograma.
+   */
+  arboles(): ArbolDeLaArboleda[] {
+    const todos: ArbolDeLaArboleda[] = [];
+    for (let i = 0; i < this.cuantos; i++) todos.push(this.arbol(i));
+    return todos;
+  }
+
+  private arbol(i: number): ArbolDeLaArboleda {
     const d = this.datos;
     const b = i * CAMPOS;
     return {
