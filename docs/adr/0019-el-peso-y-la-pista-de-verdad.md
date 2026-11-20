@@ -627,3 +627,112 @@ que se cante:
   `tutor.test.ts`, en el JAZ 90 a 30 m/s todavía se corre, y con la verdadera
   pasada se tira cuando la aguja llega. Vitest entero: 545 ficheros, 10.959
   pruebas, en verde.
+
+## Enmienda H38f (20-11-2026): los 280 nudos de arriba, subiendo
+
+Lo que H38e dejó: por encima de diez mil pies la tripulación de línea pedía 280
+nudos de **verdadera**, los mismos para los tres reactores, que a diez mil pies
+dejan la aguja en 240 y a treinta y cinco mil en 156. Ahora **sube** como un
+reactor de verdad: a la indicada de su tipo hasta que esa indicada da su Mach, y
+a ese Mach por encima. **La bajada sigue en verdadera**, y abajo se cuenta por qué.
+
+### El par de cada tipo, y de dónde sale
+
+La tripulación pide el mismo par que la ventanilla SPD y los gases automáticos
+cuando vuela quien juega —`indicadaDeSubida` y `machDeCrucero` de la escalera de
+velocidades, que `arribaDe` (`vuelo-de-linea.ts`) pasa a la ficha de la
+tripulación—: en un mismo avión, la cabina y la tripulación no pueden pedir dos
+velocidades distintas. La escalera saca el Mach del crucero de la ficha del avión
+y la indicada de ese Mach a veintiocho mil pies, a la decena de abajo, así que el
+cruce cae justo por encima.
+
+Contrastado con **WRAP**, el modelo cinemático abierto de la TU Delft hecho con
+vuelos de verdad leídos por ADS-B (J. Sun, J. M. Hoekstra y J. Ellerbroek, «WRAP:
+An open-source kinematic aircraft performance model», *Transportation Research
+Part C* 98, 2019; los datos, en `openap/data/wrap/` del repositorio OpenAP). No
+hay FCOM ni FCTM de los tres a mano: SKYbrary y la base de rendimiento de
+EUROCONTROL contestan 403 a una lectura automática, y el resumen del E190 de
+Regli que ya se cita en la escalera no trae el programa de subida, solo la VMO
+(300/320) y la de turbulencia (270 nudos / M 0,76). WRAP no lleva el E170 ni el
+747-100: van con el más parecido, el E190 y el 747-400.
+
+| Tipo | Lo que pide (indicada / Mach) | Cruce | WRAP, subida | WRAP, bajada |
+|---|---|---|---|---|
+| JAZ 90, E170 | 280 / 0,75 | FL285 | E190: 272 / 0,75 | E190: 0,77 / 288 |
+| JAZ 110, 787-9 | 320 / 0,85 | FL281 | 317 / 0,84 | 0,84 / 299 |
+| JAZ 120, 747-100 | 290 / 0,78 | FL286 | 747-400: 327 / 0,84 | 747-400: 0,83 / 296 |
+
+El E170 y el 787 caen dentro de lo que se vuela. **El 747 no**: su Mach sale del
+crucero de su ficha, 230 m/s a treinta y cinco mil pies (la CR-2144), que es Mach
+0,78, y un 747 cruza a 0,84 y sube a unos 330 nudos. Lo que falla es la ficha, no
+la tripulación, y corregirla mueve su escalera, su consumo y su crucero: queda
+apuntado.
+
+La indicada es la de la aguja del juego (`indicadaDe`, la verdadera por la raíz
+de la densidad), sin la corrección de compresibilidad de un anemómetro de verdad,
+que a veinticinco mil pies y 300 nudos son unos ocho. Es la misma para la aguja,
+la ventanilla y la tripulación.
+
+### Cómo se pide
+
+La lectura de la tripulación lleva ahora **el Mach** (`LecturaDeLinea.mach`, la
+verdadera entre la velocidad del sonido del aire del día), y `enElMach` lo pasa a
+verdadera con la proporción de la propia lectura, como `enLaAguja` con la
+indicada. Se pide la menor de las dos verdaderas: eso es el cruce, sin una
+altitud escrita. Subiendo por encima de diez mil pies y en el crucero de un salto
+entre islas; en un vuelo largo el crucero sigue siendo el de la cuenta del vuelo
+(`ponerEnCrucero`).
+
+Y en el salto entre islas, **la bajada sale de la velocidad del punto de
+descenso**: el crucero corto va ahora más deprisa que los 280 de verdadera de la
+bajada, y frenar de golpe en el punto de descenso no lo hace nadie. Se pierde con
+la altura hasta los 280 a diez mil pies, como ya hacía el vuelo largo desde su
+crucero (`velocidadBajando`).
+
+### La bajada en indicada y Mach, no: el modelo sencillo no la sigue
+
+Se probó la bajada al Mach del crucero y después a la indicada, con los 250
+desde once mil pies como la ventanilla. La senda del plan, la de tres millas por
+cada mil pies, **es la de verdad** —es el planeo de un reactor al ralentí, y el
+ritmo que pide crece con la verdadera: unos 2.400 pies por minuto a 430 nudos—, y
+el punto de descenso, la senda y el ritmo que se le pide al automático ya salen de
+la misma cuenta (`perfilDeLaBajada`, con el tramo para frenar a 250 medido con la
+indicada de la escalera). Lo que no da es el avión:
+
+- **La punta del modelo sencillo** crece con la altura desde el 62 % del crucero
+  de la ficha (`CRUISE_FRACTION`, `arcade.ts`), y a media altura queda por debajo
+  de la indicada del tipo: el JAZ 110 no pasa de unos 280 nudos de aguja a
+  veinticinco mil pies, con 320 en su escalera. Pidiéndole más, va con el gas a
+  fondo.
+- **Y con el gas a fondo baja poco**: unos 9 m/s, 1.760 pies por minuto, medidos
+  en el JAZ 110 y en el JAZ 120 (`mandoParaSubir`: lo que el gas sube de más se
+  resta de lo que la palanca baja).
+
+Medido en la mesa del vuelo largo: el JAZ 110 llegaba a los cuarenta kilómetros
+de la pista 1.887 m por encima de la senda y tocaba a 1.715 m del umbral; el JAZ
+90 y el JAZ 120, desde su crucero, 409 m y 1.000 m por encima a 39 y 36 km. Dejar a la
+tripulación bajar más deprisa con la verdadera (probado, hasta un cuarto más que
+la senda) no cambia nada: el tope es del modelo. Y el crucero del vuelo largo, de
+paso, va a Mach 0,78 (449 nudos a cuarenta mil pies), no al 0,85 de la ficha del
+787: sale de la cuenta del vuelo.
+
+Pasarla pide una de dos, y ninguna es de este encargo: que la punta del modelo
+sencillo llegue a la indicada de su tipo a media altura —es el modelo de vuelo, ADR
+0002—, o un perfil del plan que cuente con el ritmo que el avión puede dar a la
+verdadera de su escalera, que alejaría el punto de descenso cerca de un tercio y
+cambiaría también el del automático de quien juega.
+
+### Medido
+
+- `arriba-indicada-y-mach.test.ts`: en los tres reactores, subiendo y en el
+  crucero corto, a FL150 y FL250 se pide la indicada del tipo con el Mach por
+  debajo del suyo, y a FL350 su Mach con la aguja por debajo de su indicada; y es
+  lo que pide la ventanilla SPD a esa altura, a medio nudo.
+- `bajada-del-vuelo-largo.test.ts`, en verde y sin tocar sus umbrales; y además,
+  el JAZ 110, el JAZ 90 y el JAZ 120 desde su crucero llegan al tramo nivelado del
+  punto de final a menos de 30 m de la senda del plan, cruzan por debajo de diez
+  mil pies a 250 de aguja como mucho y tocan. El JAZ 120, que baja desde su
+  crucero en verdadera, llega a los cuarenta kilómetros unos 650 m por encima de
+  la senda, y la coge a unos quince: no se le pide lo de los cuarenta.
+- `salto-bajo-tapa.test.ts`, la bajada desde el crucero con lecturas del mismo
+  aire, y abajo los 250 de aguja.
