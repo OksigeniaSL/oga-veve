@@ -1022,6 +1022,46 @@ lo que pone la ruta, no el nivel. La decisión que faltaba la tomó Enrique:
   ha mirado cuál de las dos cuentas tiene razón. La segunda pasada no se voló:
   cada una tardó 23 minutos de pared con la máquina compartida.
 
+#### Nota H38m (20-11-2026): el mar de nubes, por lo que llena la vista
+
+- **Había mar de nubes.** Se voló el banco hasta el instante en que mide lo
+  nombrado, con la tarjeta de verdad (Iris Xe), y se sacó la captura: Ara
+  con la cara contra el cristal, la ventanilla llena de nube de borde a borde
+  y las cumbres de Tenerife asomando al fondo. La capa de ese vuelo es un BKN:
+  base a 1.520 m —900 sobre el campo—, techo a 1.970 y tapadura 0,7. Los ojos,
+  a 4.846 m; lo mirado, a 9,2 km.
+- **Las dos cuentas, sobre la misma recta.** La escena: la capa deja pasar
+  0,70 y lo de debajo no se distingue (0,23, con el listón en 0,45), así que
+  lo da por visto. El banco: las dos láminas de abajo con 0,24 y 0,28 de nube,
+  las otras tres limpias, y cuenta nube densa desde 0,3: 0 m. **La recta
+  pasaba por un jirón**, y cuatro segundos después la misma mirada dejaba
+  pasar 0,38 y cruzaba 400 m densos. La vista entera, medida con una rejilla
+  de 178 rectas de la cámara hacia abajo: en 158 la capa deja pasar menos de
+  0,85, en 162 lo de debajo no se distingue y 173 cruzan nube densa.
+- **El banco miraba mal**: un mar de nubes no es lo que cruza una recta, es
+  lo que llena la vista. Ahora tira veinticinco rectas desde la cámara, en un
+  cuadro de 0,8 de pantalla alrededor de lo mirado y hasta el mar o el
+  terreno, con su cuenta de siempre —cien metros por encima de 0,3, con el
+  desvanecido—, y pide dos de cada cinco (`nubeEnLaVistaParaBanco` en
+  `game.ts`). Sigue viendo un fallo: con unas nubes sueltas, una tapadura de
+  0,2, pasa tres veces de cada cien, y sin capa o con el mar debajo, nunca.
+- **Y la escena también miraba una recta**, que falla por el otro lado. Con
+  unas nubes sueltas, desde FL160, una de cada seis miradas cae en una, y como
+  el mar de nubes de Ara puede esperar a verse, acababa diciendo «nubes y más
+  nubes, como un mar de algodón» sobre un cielo casi limpio. Ahora
+  `seVeElMarDeNubes`, en `world/se-ve-desde-el-pasaje.ts`, mira cinco por
+  cinco puntos en un cuadro de un 27 % de la distancia a cada lado —lo que
+  cabe por la ventanilla con la cara contra el cristal— con la regla de antes
+  en cada uno, y pide nube en tres quintos: con el alisio (0,45) sale nueve
+  veces de cada diez, con 0,7 siempre y con 0,2 o 0,1 nunca. El toque de la
+  ventanilla viva, igual: una nube suelta tocada no es el mar de nubes. Las
+  pruebas, en `se-ve-desde-el-pasaje.test.ts`.
+- **Volado con el arreglo** (×12, la tarjeta de verdad, sin hangar ni kit con
+  el dedo): la primera pasada, **99 de 99**. Ara lo dice a los 887 s, y la
+  recta de lo mirado vuelve a pasar por el jirón —0 m densos—, con nube densa
+  en el 80 % de la vista. El vitest entero, 564 ficheros y 11.234 pruebas en
+  verde.
+
 ## La cuarta escena: el vuelo largo de Ara a casa
 
 Fecha: 2026-11-01
