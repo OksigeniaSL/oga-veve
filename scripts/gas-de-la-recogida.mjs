@@ -26,7 +26,35 @@
  * lo que hace cualquiera al que se le queda el avión en el aire. Lo que la
  * racha pide de más —gas entero por cada m/s que se hunde de más y por cada g
  * que falta, ver `BIMOTOR_EN_LA_RECOGIDA`— va encima, como iba.
+ *
+ * **Y si flota, el gas fuera del todo** (H45b). El reloj no bastaba: la ronda
+ * 31 llevaba H45, recogió a 7,7 m y 131 m del umbral y tocó a 740 m; al pasar
+ * el final de la zona iba todavía a 4 m de ruedas, a 78 nudos y tirando 1,36
+ * g. De 85 nudos a unos 74 en seiscientos metros es frenar 0,4 m/s², y al
+ * ralentí este avión frena 1,5: llevaba gas. El de la senda ya no podía ser
+ * —el reloj lo quita en 4,6 s—; solo queda el de la racha, que no mira si el avión
+ * va por encima del perfil: cada vez que se pasaba al recoger y la recogida
+ * le sostenía la palanca, el avión subía, la carga bajaba de un g al
+ * nivelarse, y cada décima de g que faltaba volvía como una décima de gas.
+ * En la mesa de la recogida, con el modelo y las rachas del juego, las finales
+ * que tocan pasados los 600 m llevan la palanca sostenida diez segundos con
+ * dos décimas de gas y un globo de siete metros. El manual del Seneca
+ * lo dice sin rodeos —«a smooth, gradual reduction of power on final
+ * approach, with the power fully off before the wheels touch the runway»
+ * (PA-34-220T, VB-1110, p. 4-33)— y el de la FAA, para el globo en la recogida, que
+ * se sostenga la actitud y se deje asentar. Así que mientras el avión baja
+ * más de `FLOTA` m/s menos de lo que pide el perfil —la misma holgura con la
+ * que la recogida sostiene la palanca—, gas cero; y desde que ha flotado una
+ * vez, el de la senda ya no vuelve. Lo de la racha que lo hunde después sigue
+ * pidiendo su gas, como en H34d.
  */
+
+/**
+ * **Cuánto menos de lo que pide el perfil tiene que bajar para flotar**, m/s:
+ * la holgura con la que la recogida sostiene la palanca en vez de empujar
+ * (ver `recoger` en `verificar-vuelo-entero.mjs`).
+ */
+export const FLOTA = 0.6;
 
 /**
  * **Lo que dura la recogida si el avión sigue su perfil**, s.
@@ -60,16 +88,20 @@ export function duracionDelPerfil(altura, caida, alTocar) {
  *   alTocar: number,      // lo que se busca bajar al tocar, m/s
  *   falta: number,        // lo que baja de más sobre lo que pide el perfil, m/s (positivo: se hunde)
  *   carga: number,        // el factor de carga, g
+ *   floto?: boolean,      // si en esta recogida ya ha flotado alguna vez (ver `FLOTA`)
  * }} p
  */
 export function gasDelBimotorEnLaRecogida(p) {
-  // La cuenta de `duracionDelPerfil`, repetida aquí porque esto viaja como texto.
+  // `FLOTA`, repetida aquí porque esto viaja como texto.
+  const flota = 0.6;
+  if (p.falta < -flota) return 0;
+  // La cuenta de `duracionDelPerfil`, repetida aquí por lo mismo.
   const a = Math.max(0.3, p.alTocar);
   let dura = p.altura / a;
   if (!(p.altura > 0)) dura = 0;
   else if (p.caida > a * 1.01) dura = (p.altura / (p.caida - a)) * Math.log(p.caida / a);
   const porElReloj = dura > 0 ? Math.max(0, 1 - p.segundos / dura) : 0;
-  const queda = Math.max(0, Math.min(1, p.quedaMasBaja, porElReloj));
+  const queda = p.floto ? 0 : Math.max(0, Math.min(1, p.quedaMasBaja, porElReloj));
   const deLaRacha = Math.max(0, p.falta) + Math.max(0, 1 - p.carga);
   return Math.max(0, Math.min(1, p.gas * queda + deLaRacha));
 }

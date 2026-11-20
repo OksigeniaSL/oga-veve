@@ -1040,6 +1040,29 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             al: Math.round(((o.actitud?.().alabeo ?? 0) * 180) / Math.PI),
             et: etapa,
             rc: recogida ? 1 : 0,
+            /*
+             * **Y la recogida por dentro** (H45b): lo que pide el perfil, lo
+             * que falta, lo acumulado, si se sostiene la palanca y desde
+             * cuándo se recoge; y el empuje que de verdad dio el modelo en el
+             * último paso, N —el gas pedido no dice si llegó—. Con esto se ve
+             * si flota porque el gas no se va, porque el ala sostiene de más
+             * o porque la mano tira.
+             */
+            ...(recogida
+              ? {
+                  rp: +(recogida.pide ?? 0).toFixed(2),
+                  rf: +(recogida.falta ?? 0).toFixed(2),
+                  ra: +(recogida.acumulado ?? 0).toFixed(3),
+                  rh0: +recogida.altura.toFixed(2),
+                  rsost: recogida.sostiene ? 1 : 0,
+                  rfl: recogida.floto ? 1 : 0,
+                  rs: +(ahora - (recogida.empezo ?? ahora)).toFixed(2),
+                }
+              : {}),
+            em: (() => {
+              const e = o.juegoParaTrazas?.()?.flight?.ultimoEmpuje;
+              return typeof e === "number" ? Math.round(e) : null;
+            })(),
           };
         } catch {
           return {};
@@ -1305,6 +1328,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       0,
       Math.min(2, recogida.acumulado + falta * dt),
     );
+    // Para la traza del ala (H45b): lo que pide y lo que falta, a la vista.
+    recogida.pide = pide;
+    recogida.falta = falta;
     /*
      * En el modelo completo, tres centésimas y media de radián de ángulo —dos
      * grados— por cada metro por segundo que falte y dos que acumulan,
@@ -1500,6 +1526,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     const aRas =
       (envergadura > 30 || RECOGIDA_DE_REACTOR) && ruedas < 1.5 && pide - contraLaPista < 0;
+    recogida.sostiene = (falta < -0.6 || aRas) && recogida.ultimoMando !== undefined;
     mandos.elevator =
       (falta < -0.6 || aRas) && recogida.ultimoMando !== undefined
         ? recogida.ultimoMando
@@ -1541,6 +1568,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * lo que deja el tiempo que dura el perfil, y lo quitado no vuelve. Ver
      * `scripts/gas-de-la-recogida.mjs`.
      */
+    /*
+     * **Y si flota, el gas fuera, y el de la senda ya no vuelve** (H45b): con
+     * la misma holgura con la que se sostiene la palanca. Ver
+     * `scripts/gas-de-la-recogida.mjs`.
+     */
+    if (falta < -0.6) recogida.floto = true;
     if (!SENCILLO)
       mandos.throttle = BIMOTOR_EN_LA_RECOGIDA
         ? globalThis.__gasDelBimotorEnLaRecogida({
@@ -1552,6 +1585,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             alTocar: ritmoAlTocar,
             falta,
             carga: s.loadFactor ?? 1,
+            floto: recogida.floto === true,
           })
         : RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR
             ? (recogida.gas ?? 0)
