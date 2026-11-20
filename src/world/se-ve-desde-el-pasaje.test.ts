@@ -24,6 +24,7 @@ import {
   miradaDe,
   SE_DISTINGUE,
   seVeDesdeFuera,
+  seVeElMarDeNubes,
   tomaDelPaisaje,
   type ElMundoQueSeMira,
 } from "./se-ve-desde-el-pasaje";
@@ -172,5 +173,67 @@ describe("la cara contra el cristal, mirando hacia lo que se nombra", () => {
     const pose = asomadoHacia(v, "izquierda", sitio, avion);
     const mira = miradaDe(pose, avion);
     expect(mira.x).toBeLessThan(0);
+  });
+});
+
+/*
+ * **El mar de nubes es lo que llena la vista, no lo que cruza una recta**
+ * (H38m). Ara dice «¡Mirá para abajo: nubes y más nubes, como un mar de
+ * algodón!», y eso es la vista entera. Se miraba una recta suelta, y falla
+ * por los dos lados: con el mar de nubes del alisio, una recta por un jirón
+ * fino —en el banco, 0 m de nube densa a 9,2 km— con la vista blanca
+ * alrededor; y con unas nubes sueltas, la recta que cae en una, que como el
+ * mar de nubes de Ara espera a verse, acababa diciéndose sobre un cielo
+ * casi limpio. Desde FL160 mirando abajo a 9,2 km, como en el banco.
+ */
+describe("el mar de nubes, por lo que llena la mirada (H38m)", () => {
+  const mirar = (tapadura: number, i: number) => {
+    const d = marDeNubes(tapadura);
+    const ojo = { x: (i * 911) % 6000, y: 4900, z: (i * 577) % 6000 };
+    const a = (i / 97) * Math.PI * 2;
+    const mirado = { x: ojo.x + Math.cos(a) * 7800, y: 0, z: ojo.z + Math.sin(a) * 7800 };
+    const m = mundo({ bruma: 0 });
+    const conLaCapa: ElMundoQueSeMira = {
+      ...m,
+      nubes: (desde, hasta) => transparenciaDeLaCapa(d, opacidadDeLaLamina(tapadura), RADIO, 0.45, desde, hasta),
+    };
+    const deja = conLaCapa.nubes(ojo, mirado);
+    // La regla de antes: la recta suelta, con la capa por medio y lo de debajo sin distinguirse.
+    const unaRecta = deja < 0.85 && claridad(ojo, mirado, conLaCapa) < SE_DISTINGUE;
+    return { unaRecta, porLaMirada: seVeElMarDeNubes(ojo, mirado, conLaCapa) };
+  };
+  const vuelta = (tapadura: number) => Array.from({ length: 400 }, (_, i) => mirar(tapadura, i));
+
+  it("con el mar de nubes del alisio, la recta que pasa por un jirón no quita el mar: alrededor sigue blanco", () => {
+    const jirones = vuelta(0.45).filter((v) => !v.unaRecta);
+    expect(jirones.length).toBeGreaterThan(40);
+    expect(jirones.filter((v) => v.porLaMirada).length / jirones.length).toBeGreaterThan(0.6);
+  });
+
+  it("y mirando abajo desde crucero se ve casi siempre", () => {
+    const todas = vuelta(0.45);
+    expect(todas.filter((v) => v.porLaMirada).length / todas.length).toBeGreaterThan(0.8);
+  });
+
+  it("con unas nubes sueltas, la que pasa por debajo de la mirada no es un mar de nubes", () => {
+    const enUna = vuelta(0.2).filter((v) => v.unaRecta);
+    // Con la regla de antes, una de cada siete miradas lo daba por mar.
+    expect(enUna.length).toBeGreaterThan(40);
+    expect(enUna.filter((v) => v.porLaMirada)).toHaveLength(0);
+    expect(vuelta(0.1).filter((v) => v.porLaMirada)).toHaveLength(0);
+  });
+
+  it("y un monte que asoma por encima de la capa no es nube", () => {
+    const d = marDeNubes(1);
+    const ojo = { x: 0, y: 4900, z: 0 };
+    const mirado = { x: 7800, y: 0, z: 0 };
+    const cubierta: ElMundoQueSeMira = {
+      ...mundo({ bruma: 0 }),
+      nubes: (desde, hasta) => transparenciaDeLaCapa(d, opacidadDeLaLamina(1), RADIO, 0.45, desde, hasta),
+    };
+    expect(seVeElMarDeNubes(ojo, mirado, cubierta)).toBe(true);
+    // El Teide entero en la mirada: por encima de la capa, roca y no algodón.
+    const teide: ElMundoQueSeMira = { ...cubierta, suelo: () => 3700 };
+    expect(seVeElMarDeNubes(ojo, mirado, teide)).toBe(false);
   });
 });

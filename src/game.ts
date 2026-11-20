@@ -1445,14 +1445,13 @@ import { cuantoSeAparta, debajoDelDedo, RADIO_DE_LO_TOCABLE, RADIO_POR_DEFECTO }
 import { conGracia, laDemostracion, type FormaDeLaDemostracion } from "./flight/demostracion-con-gracia";
 import {
   asomadoHacia,
-  claridad,
   ladoDe,
   miradaDe,
   ojosEnElMundo,
   POR_LA_VENTANILLA,
-  SE_DISTINGUE,
   seVeDesdeElAsiento,
   seVeDesdeFuera,
+  seVeElMarDeNubes,
   type ElMundoQueSeMira,
   type Punto as PuntoDelMundo,
 } from "./world/se-ve-desde-el-pasaje";
@@ -33169,7 +33168,8 @@ export class Game {
           const ojo = ojosEnElMundo(pose, avion);
           const capa = this.capaDeNubes;
           if (!capa || ojo.y < capa.techo || mundo.dentro(ojo) >= 0.35) continue;
-          if (mundo.nubes(ojo, p) < 0.85 && claridad(ojo, p, mundo) < SE_DISTINGUE) return visto(como, p, LADO_DE_ARA);
+          // Y lo que llena la mirada, no lo que cruza una recta: ver `seVeElMarDeNubes` (H38m).
+          if (seVeElMarDeNubes(ojo, p, mundo)) return visto(como, p, LADO_DE_ARA);
           continue;
         }
         const esMar = this.terrain.sampleSurface(p.x, p.z) < 5;
@@ -33446,7 +33446,8 @@ export class Game {
     if (!p) return null;
     const mundo = this.mundoQueSeMira;
     const capa = this.capaDeNubes;
-    if (capa && ojo.y > capa.techo && mundo.dentro(ojo) < 0.35 && mundo.nubes(ojo, p) < 0.85 && claridad(ojo, p, mundo) < SE_DISTINGUE) {
+    // El mar de nubes, si lo tocado está en uno: una nube suelta no lo es (H38m).
+    if (capa && ojo.y > capa.techo && mundo.dentro(ojo) < 0.35 && seVeElMarDeNubes(ojo, p, mundo)) {
       const t = (ojo.y - capa.techo) / -dir.y;
       return { que: "nubes", punto: { x: ojo.x + dir.x * t, y: capa.techo, z: ojo.z + dir.z * t }, delAvion: false };
     }
@@ -33904,6 +33905,7 @@ export class Game {
     readonly ojoEnNube: number;
     readonly nubeEnMedio: number;
     readonly nubeSinDesvanecer: number;
+    readonly nubeEnLaVista: number | null;
     readonly distancia: number;
   } | null {
     const punto = this.puntoDeLoNombrado(sitio as SitioDelPaisaje);
@@ -33941,8 +33943,51 @@ export class Game {
       ojoEnNube: this.sky.enLaNube,
       nubeEnMedio: nube,
       nubeSinDesvanecer: sinDesvanecer,
+      nubeEnLaVista: sitio === "nubes-abajo" ? this.nubeEnLaVistaParaBanco(p.x, p.y) : null,
       distancia: d,
     };
+  }
+
+  /**
+   * **Cuánto de la vista alrededor de lo mirado es nube densa**, de 0 a 1, o
+   * `null` si ninguna recta llega a nada: para el mar de nubes (H38m). Un mar
+   * de nubes no es lo que cruza una recta, es lo que llena la vista, y una
+   * recta sola por un jirón fino cuenta 0 m con la ventanilla blanca. Así que
+   * se tiran veinticinco rectas desde la cámara, en un cuadro de 0,8 de
+   * pantalla alrededor de lo mirado, hasta el mar o el terreno, y se cuenta
+   * cuántas cruzan cien metros de nube densa, con la misma cuenta y el mismo
+   * desvanecido que `nubeEnMedio`: otra regla que la de la escena, que mira lo
+   * que dejan pasar las láminas. Ver `scripts/verificar-inicio-3.mjs`.
+   */
+  private nubeEnLaVistaParaBanco(cx: number, cy: number): number | null {
+    const c = this.camera;
+    const ojo = c.position.clone();
+    const radio = radioDeLasNubes(this.scenario.size * 4);
+    const desde = radio * DESVANECE_DESDE;
+    const mirada = c.getWorldDirection(new Vector3());
+    const paso = 25;
+    let densas = 0;
+    let rayos = 0;
+    for (let i = -2; i <= 2; i++)
+      for (let k = -2; k <= 2; k++) {
+        const nx = cx + i * 0.2;
+        const ny = cy + k * 0.2;
+        if (Math.abs(nx) > 0.98 || Math.abs(ny) > 0.98) continue;
+        const dir = new Vector3(nx, ny, 0.5).unproject(c).sub(ojo).normalize();
+        const fin = this.dondeLlegaElRayo(ojo, dir);
+        if (!fin) continue;
+        const hasta = Math.min(ojo.distanceTo(new Vector3(fin.x, fin.y, fin.z)), radio);
+        const hondo = dir.dot(mirada);
+        let metros = 0;
+        for (let t = paso; t < hasta; t += paso) {
+          const densidad = this.sky.densidadEn(ojo.x + dir.x * t, ojo.y + dir.y * t, ojo.z + dir.z * t);
+          const f = MathUtils.clamp((t * hondo - desde) / (radio - desde), 0, 1);
+          if (densidad * (1 - f * f * (3 - 2 * f)) > 0.3) metros += paso;
+        }
+        rayos++;
+        if (metros >= 100) densas++;
+      }
+    return rayos ? densas / rayos : null;
   }
 
   /**
