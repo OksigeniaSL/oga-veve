@@ -323,8 +323,8 @@ export interface InitialConditions {
   flapsDelEquilibrio?: number;
   /**
    * **Por qué trayectoria se le coloca**, rad, en negativo bajando: la senda
-   * en la final, la que llevaba el avión al cambiar de peldaño en el aire,
-   * cero nivelado. Con `equilibrado`, nace con la velocidad por ella.
+   * en la final, cero nivelado. Con `equilibrado`, nace con la velocidad por
+   * ella.
    *
    * Y en el modelo completo es además **lo que se le pide a la ayuda de
    * subida**: colocar un avión bajando por la senda es pedir esa bajada, como
@@ -335,28 +335,39 @@ export interface InitialConditions {
    * H40c). Ver `trimClimb` en `fdm.ts`. Sin él, nivelado y sin petición.
    */
   trayectoria?: number;
+  /**
+   * **Y lo que se le pide a la ayuda, si no es la trayectoria**, m/s, o
+   * `null` para no pedirle nada y que coja al soltar, como siempre. Lo pone
+   * `comoIba` al cambiar de peldaño: lo que se pidió es lo que sostenía la
+   * ayuda del modelo viejo, si la había, y no la trayectoria de ese momento,
+   * que puede ser un transitorio —el gas quitado, un empujón—.
+   */
+  subidaPedida?: number | null;
 }
 
 /**
  * **El avión como iba, para que el modelo nuevo nazca igual**: lo que pide
  * `cycleTier` en `game.ts` al cambiar de peldaño. Volando, equilibrado con los
- * flaps que lleva y por la trayectoria que llevaba; en el suelo, donde está.
+ * flaps que lleva y con la ayuda de subida sosteniendo lo que sostenía la del
+ * modelo viejo (`pedida`, de `subidaQueSostiene`); en el suelo, donde está.
  *
- * Nacía nivelado y equilibrado con el ala limpia, llevara lo que llevara: en
- * una final, con los flaps fuera y bajando, el modelo nuevo salía sin bajar,
- * con el morro de ir limpio, y la ayuda de subida cogía «nivelado» (ADR 0002,
- * nota H40c).
+ * Nacía equilibrado con el ala limpia, llevara los flaps que llevara, y la
+ * ayuda nueva cogía al soltar: en una final con la ayuda bajando por la senda,
+ * «nivelado», y frenaba por encima de ella (ADR 0002, nota H40c).
+ *
+ * **Lo pedido no es la trayectoria de ese momento, ni nace por ella.** Se
+ * probó así, y en el banco del cambio de peldaño
+ * (`verificar-cambio-de-peldano.mjs`) el JAZ 120, en final y con el gas
+ * quitado un momento en cada cambio, llevaba la bajada de ese gas quitado de
+ * un peldaño al siguiente hasta tocar el suelo: es justo el transitorio que la
+ * ayuda no coge al soltar. Así que nace nivelado, como siempre, y sin ayuda en
+ * el modelo viejo —Taguató Ruvichá, o el sencillo de Guyrami— no hay nada
+ * pedido: la nueva coge al soltar.
  */
-export function comoIba(s: Readonly<FlightState>, flaps: number): InitialConditions {
+export function comoIba(s: Readonly<FlightState>, flaps: number, pedida: number | null = null): InitialConditions {
   const base = { position: s.position.clone(), heading: s.heading, airspeed: s.airspeed };
   if (s.onGround) return { ...base, equilibrado: false };
-  const seno = s.verticalSpeed / Math.max(1, s.airspeed);
-  return {
-    ...base,
-    equilibrado: true,
-    flapsDelEquilibrio: flaps,
-    trayectoria: Math.asin(Math.max(-1, Math.min(1, seno))),
-  };
+  return { ...base, equilibrado: true, flapsDelEquilibrio: flaps, subidaPedida: pedida };
 }
 
 /** Devuelve la cota del terreno, en metros, para unas coordenadas de mundo. */
@@ -431,6 +442,13 @@ export interface FlightModel {
    * aterrizar (`reiniciarEnFinal` en `game.ts`).
    */
   timonDeEquilibrio?(flaps?: number): number;
+  /**
+   * **Lo que sostiene ahora la ayuda de subida**, m/s, o `null` si no sostiene
+   * nada: sin la ayuda en el peldaño, con el mando en la mano o en el suelo.
+   * Lo lleva `comoIba` al modelo nuevo al cambiar de peldaño. Solo el modelo
+   * de coeficientes la tiene.
+   */
+  subidaQueSostiene?(): number | null;
   /**
    * **El ángulo de ataque al que el ala no sostiene nada**, con los flaps del
    * último paso, rad: negativo, y más cuanto más flap. Lo pide el piloto

@@ -40508,11 +40508,15 @@ export class Game {
      * el peso. Sin eso nacía con el morro en el horizonte —sin sustentación—
      * y lo primero que hacía era caerse. Ver `InitialConditions.equilibrado`.
      *
-     * **Y como iba**: con los flaps que lleva y por la trayectoria que
-     * llevaba, que es lo que sostiene la ayuda de subida al soltar. Ver
-     * `comoIba` y la nota H40c del ADR 0002.
+     * **Y como iba**: con los flaps que lleva y con la ayuda de subida
+     * sosteniendo lo que sostenía la del modelo viejo. Ver `comoIba` y la
+     * nota H40c del ADR 0002.
      */
-    const carried = comoIba(this.flight.state, this.input.controls.flaps);
+    const carried = comoIba(
+      this.flight.state,
+      this.input.controls.flaps,
+      this.flight.subidaQueSostiene?.() ?? null,
+    );
 
     this.tier = next;
     rememberTier(next);

@@ -175,12 +175,12 @@ describe("la final colocada, con la ayuda de subida, sostiene su senda", () => {
     expect(r.metros, que).toBeLessThan(10);
   });
 
-  it.each(casos)("en $peldano, el $id que llega por la senda en otro peldaño, sigue por ella", ({ tier, id }) => {
-    // Quince segundos por la senda en Taguató Ruvichá, sin ayuda, y se sube de peldaño.
-    const { a, m, c, flaps } = enFinal(id, TAGUATO_RUVICHA);
+  it.each(casos)("en $peldano, el $id que llega por la senda desde el otro peldaño con ayuda, sigue por ella", ({ tier, id }) => {
+    // Quince segundos por la senda en el otro peldaño con ayuda, y se cambia.
+    const { a, m, c, flaps } = enFinal(id, tier === TUKA ? TAGUATO : TUKA);
     volar(m, c, 15, 0, ALTO);
     const nuevo = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: tier.assists });
-    nuevo.reset(comoIba(m.state, flaps));
+    nuevo.reset(comoIba(m.state, flaps, m.subidaQueSostiene()));
     // Lo que hace `dejarloCompensado` en `cycleTier`.
     c.trim = nuevo.timonDeEquilibrio(flaps);
     const v0 = nuevo.state.airspeed;
@@ -189,6 +189,26 @@ describe("la final colocada, con la ayuda de subida, sostiene su senda", () => {
     expect(r.nudos, que).toBeLessThan(5);
     expect(r.metros, que).toBeLessThan(12);
   });
+
+  it.each(casos.filter((k) => k.id === "jaz-20" || k.id === "jaz-90"))(
+    "en $peldano, el $id que bajaba sin ayuda con el gas quitado no lleva esa bajada como petición",
+    ({ tier, id }) => {
+      // Lo de `verificar-cambio-de-peldano.mjs`: el gas quitado un momento, y se cambia de peldaño.
+      const { a, m, c, flaps, entrada } = enFinal(id, TAGUATO_RUVICHA);
+      c.throttle = 0;
+      volar(m, c, 6, entrada, ALTO);
+      const alCambiar = m.state.verticalSpeed;
+      const nuevo = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: tier.assists });
+      nuevo.reset(comoIba(m.state, flaps, m.subidaQueSostiene()));
+      c.trim = nuevo.timonDeEquilibrio(flaps);
+      volar(nuevo, c, 3, entrada, ALTO);
+      const pedida = nuevo.subidaQueSostiene();
+      const que = `${id} a ${tier.id}: ${alCambiar.toFixed(2)} m/s al cambiar, la ayuda sostiene ${pedida?.toFixed(2)}`;
+      expect(alCambiar, que).toBeLessThan(entrada * Math.sin(SENDA) * 1.3);
+      expect(pedida, que).not.toBeNull();
+      expect(pedida!, que).toBeGreaterThanOrEqual(0);
+    },
+  );
 
   it.each(casos.filter((k) => k.id === "jaz-20" || k.id === "jaz-90"))(
     "en $peldano, el $id soltado tras empujar no sostiene la bajada del empujón",

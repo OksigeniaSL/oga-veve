@@ -844,6 +844,11 @@ export class CoefficientFlightModel implements FlightModel {
     );
   }
 
+  /** Ver `subidaQueSostiene` en `model.ts`. */
+  subidaQueSostiene(): number | null {
+    return this.layers.climbHold > 0 ? this.trimClimb : null;
+  }
+
   /**
    * El timón que sostiene el avión nivelado a la velocidad de ahora: el que
    * anula el par de cabeceo con el ángulo de ataque de equilibrio. Ver
@@ -928,11 +933,18 @@ export class CoefficientFlightModel implements FlightModel {
      * mandos coge entre nivelado y subiendo, nunca una bajada, para no
      * memorizar un transitorio (ver `step`); pero una colocación no es un
      * transitorio: es lo que se ha pedido, como un toque del compensador, y
-     * con su mismo tope. Sin trayectoria, como siempre: coge al soltar.
+     * con su mismo tope. Sin trayectoria, como siempre: coge al soltar. Y si
+     * se dice otra cosa, eso: ver `InitialConditions.subidaPedida`.
      */
+    const pedida =
+      initial.subidaPedida !== undefined
+        ? initial.subidaPedida
+        : initial.trayectoria !== undefined
+          ? initial.airspeed * Math.sin(initial.trayectoria)
+          : null;
     this.trimClimb =
-      initial.equilibrado && initial.airspeed > MIN_AIRSPEED && initial.trayectoria !== undefined
-        ? clamp(initial.airspeed * Math.sin(initial.trayectoria), -SUBIDA_PEDIDA_TOPE, SUBIDA_PEDIDA_TOPE)
+      initial.equilibrado && initial.airspeed > MIN_AIRSPEED && pedida !== null
+        ? clamp(pedida, -SUBIDA_PEDIDA_TOPE, SUBIDA_PEDIDA_TOPE)
         : null;
     this.trimSettle = 0;
     this.trimVisto = null;
