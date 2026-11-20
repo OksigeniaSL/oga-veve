@@ -6219,3 +6219,137 @@ radial al nivel del mar, un 22 % por encima de la cuenta.
   mitad de su crucero máximo —la parte fija—, cuando un PT6A al ralentí de
   tierra gasta más o menos la mitad de eso; son minutos de rodaje. Y con un
   motor parado, la parte fija sigue contando los dos.
+
+## Enmienda H45 (20-11-2026): el bimotor que flotaba con el gas de la senda
+
+En la tanda 19 el JAZ 40 del vuelo entero de Los Rodeos recogió a 8 m de
+ruedas y 76 m del umbral, bajando 1,8 m/s a 89 nudos, y tocó a **816 m**, a 76
+nudos y 1,03 m/s: flotó unos 740 m perdiendo trece nudos, 0,39 m/s². En la
+tanda 18 recogía a 7,9 m y 85 m, a 87 nudos, y tocaba a 300 m. Entre las dos
+tandas el JAZ 40 cambió de hélice (H37a), de timón (H37b) y de combustible
+(H37h), y la pregunta era de quién era la flotada. **Es del banco.**
+
+### El avión, con su manual
+
+Mesa sin navegador (`h45/mesa/` del scratchpad): el modelo completo del JAZ 40
+en Taguató, a 640 m, con el tren y los flaps de aterrizar, nivelado.
+
+| | 76 kt | 86 kt | 90 kt |
+|---|---|---|---|
+| Lo que frena al ralentí | 1,50 m/s² | 1,63 m/s² | 1,70 m/s² |
+| L/D | 6,5 | 6,0 | 5,8 |
+| Empuje a fondo, antes (recta de paso fijo) | 3.956 N | 3.819 N | 3.764 N |
+| Empuje a fondo, ahora (velocidad constante) | 4.750 N | 4.552 N | 4.456 N |
+| Gas por la senda de 3°, antes / ahora | 0,50 / 0,42 | 0,58 / 0,49 | 0,63 / 0,53 |
+
+Al ralentí la hélice no empuja ni antes ni ahora (el empuje es el gas por el
+de a fondo), y lo que frena el avión es el mismo: la resistencia no cambió.
+Con el gas fuera frena tres o cuatro veces lo que frenó en la tanda 19. Lo que
+cambió es cuánto empuja **cada décima de gas**, un 19 % más a la velocidad de
+la final, que es lo que hace una hélice de velocidad constante (H37a).
+
+Y la vara: el Seneca II aterriza en 2.110 ft sobre cincuenta pies y rueda
+1.380 a 4.570 lb; son unos 220 m en el aire, de los cincuenta pies a tocar,
+con su técnica de pista corta. La cuenta del hangar del juego da 664 m sobre
+los cincuenta pies a 2.000 kg, donde el manual escalado da 621
+(`despegue-y-toma-del-manual.test.ts`). La mesa con la recogida del banco
+copiada tal cual, sin rachas, a la Vref más cinco: de los cincuenta pies a
+tocar, **321 m con el código de la tanda 18 y 322 con el de hoy**, tocando a
+302 y 303 m del umbral. Con rachas de σ_w 1 m/s, doscientas finales a cada
+lado: pasadas de 600 m, 2 y 2; mediana del toque, 265 y 274 m. El cambio del
+juego no mueve la recogida.
+
+### El banco: el gas que solo bajaba con la altura
+
+El bimotor de hélice no corta el gas al empezar a recoger: lo va quitando con
+la altura que queda (#192), `gas de la senda × ruedas/altura de la
+recogida`, y H34d le sumó lo que pide la racha. Mientras el avión baja es lo
+mismo que quitarlo con el tiempo. Si deja de bajar —se pasa un poco al
+recoger, una racha lo sube, o empieza a recoger bajando menos de lo que pide
+la senda: la tanda 19 empezó a 1,8 m/s donde la senda pedía 2,4—, la recogida
+sostiene la palanca, la
+altura no cambia y **el gas de la senda se queda puesto**. Es volar nivelado a
+ocho metros con el gas de una final: se frena lo que se frenaría bajando la
+senda, y el avión flota hasta que pierde lo que le sobra.
+
+Lo enseña la mesa de la recogida de H34d (el modelo, el automático en la
+senda, el gas del banco y las rachas del juego): con la ley de antes, 6 de 290
+finales del JAZ 40 tocan pasados los 600 m, la peor a 1.762 m, y en las
+trazas largas el gas se queda entre 0,4 y 0,9 mientras el avión sube hasta 32
+m sin que la recogida se entere. Y la prueba nueva lo mide con el modelo: el
+JAZ 40 aguantado a ocho metros desde los 89 nudos de la tanda 19 tarda
+**1.041 m** en perder trece nudos con el gas de antes, y **321 m** con el de
+ahora.
+
+### Lo que se cambia, en el banco
+
+El gas del bimotor en la recogida se quita **también con el reloj**: nunca más
+que lo que deja el tiempo que dura el perfil si se sigue
+—`(altura/(caída − 1,2))·ln(caída/1,2)`, 4,6 s en la recogida del JAZ 40—, y
+lo que ya se quitó no vuelve aunque el avión suba. Siguiendo el perfil no
+cambia nada: el perfil baja más deprisa que la recta del reloj y manda la
+altura, como antes. Flotando, a los cuatro o cinco segundos está al ralentí,
+que es lo que hace cualquier piloto al que se le queda el avión en el aire. Lo
+que pide la racha que hunde —gas entero por cada m/s de más y por cada g que
+falta— va encima, como iba. Vive en `scripts/gas-de-la-recogida.mjs`, que el
+banco mete en la página como texto, con su prueba en
+`gas-de-la-recogida.test.mjs`.
+
+| Mesa, 300 finales, σ_w 1 m/s | Pasadas de 600 m | La más larga | Más de 2 m/s |
+|---|---|---|---|
+| JAZ 40, gas con la altura | 6 de 290 | 1.762 m | 6 |
+| JAZ 40, y con el reloj | 2 de 293 | 673 m | 8 |
+| JAZ 50, gas con la altura | 1 de 268 | 3.513 m | 29 |
+| JAZ 50, y con el reloj | 0 de 272 | 443 m | 31 |
+| JAZ 60, gas con la altura | 31 de 296 | 4.380 m | 20, la peor 3,19 |
+| JAZ 60, y con el reloj | 21 de 299 | 994 m | 26, la peor 2,82 |
+| JAZ 40, la racha de cara de H34a, gas con la altura | 13 de 293 | 1.937 m | 9 |
+| JAZ 40, la racha de cara de H34a, y con el reloj | 5 de 293 | 709 m | 8 |
+| JAZ 40, σ_w 1,5, gas con la altura | 13 de 242 | 1.966 m | 33 |
+| JAZ 40, σ_w 1,5, y con el reloj | 9 de 260 | 875 m | 37, la peor 4,38 |
+
+Las medianas no se mueven (JAZ 40: 278 m y 1,23 m/s a los dos lados). Las
+tomas de más de 2 m/s suben un pelo, dentro de lo que cambia una tirada de la
+mesa a otra; quitarlo más despacio, en vez y media del perfil, no las baja (9)
+y deja más largas (4), y contar el reloj solo mientras el avión baja menos de
+lo pedido tampoco (7 y 4). Con σ_w 1,5, que es más de lo que da el alisio de
+Los Rodeos, una toma se va a 4,38 m/s donde la peor de antes era 3,02: queda
+apuntado abajo. Las mesas que tocan antes de los 150 m son de la final
+de la mesa, que llega más baja que la del banco (H29a), y no cambian.
+
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1`, reloj por uno, con la
+traza del ala (`h45/nav/` del scratchpad):
+
+| | Puerta de 500 ft | Recogida | Toca | Comprobaciones |
+|---|---|---|---|---|
+| JAZ 40, tanda 18 | 89 kt | 7,9 m, 85 m, 2,1 m/s, 87 kt | 300 m, 1,15 m/s | 58 de 58 |
+| JAZ 40, tanda 19 | 92 kt | 8 m, 76 m, 1,8 m/s, 89 kt | **816 m**, 1,03 m/s | 56 de 58: ✗ la zona, ✗ las gafas |
+| JAZ 40, con el reloj (a) | 90 kt | 7,8 m, 133 m, 1,9 m/s, 88 kt | 358 m, 1,37 m/s | 58 de 58 |
+| JAZ 40, con el reloj (b) | 89 kt | 8 m, 136 m, **1,1 m/s**, 89 kt | 408 m, 0,99 m/s | 58 de 58 |
+| JAZ 20, que no cambia | 69 kt | 7 m, 115 m, 2,2 m/s, 66 kt | 231 m, 1,86 m/s | 58 de 58 |
+
+La (b) empezó a recoger como la tanda 19, bajando bastante menos de lo que
+pedía la senda (1,1 m/s donde pedía 2,4): el gas, de 0,49 al empezar, llegó a
+cero a los 4,7 s, y tocó a los 6 s, a 80 nudos, sin botes.
+
+En la (a) una racha lo hundió a 6 m (de 1,7 a 3,0 m/s) y el gas subió a uno,
+como pide H34d; pasada, el reloj lo dejó en dos décimas, y en los dos últimos
+metros fue de 0,12 a 0,29, lo que pedía lo que bajaba de más. Tocó a los 5,0 s
+de empezar, con el perfil en 4,5, a 84 nudos y con un bote de 0,7 s.
+
+### Lo que queda
+
+- **Qué hizo flotar al de la tanda 19 y no al de la 18**, con una tirada de
+  cada una: la mesa da el mismo riesgo con el código de las dos. Llegó a
+  recoger dos nudos más rápido (las V contra la indicada, H38d) y bajando
+  menos que la senda; eso basta para que la palanca se sostenga desde el
+  principio, pero una tirada no es estadística. La (b) empezó así y con el
+  reloj no flotó; la misma final con el gas de antes no se ha volado en el
+  navegador con la traza del ala, por la cola.
+- **El JAZ 50 y el JAZ 60 en el navegador**: también son bimotores de hélice
+  y también cambian; solo se han medido en la mesa.
+- **La toma de 4,38 m/s de la mesa con σ_w 1,5**: una sola de 260, con una
+  racha más fuerte que la de Los Rodeos; con la de Los Rodeos, la peor es
+  2,49 donde era 2,17.

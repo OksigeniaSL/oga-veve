@@ -64,6 +64,7 @@ import {
   seSolapan,
 } from "./oido.mjs";
 import { fasesATiempoReal } from "./reloj-del-banco.mjs";
+import { gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -732,6 +733,15 @@ const conMegafonia = await page
   .catch(() => true);
 const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
 
+/*
+ * **El gas del bimotor en la recogida, desde su módulo** (H45), para que la
+ * prueba de `gas-de-la-recogida.test.mjs` vuele el mismo que este piloto. Va
+ * a la página como texto: la función no toca nada de fuera. Ver `recoger`.
+ */
+await page.addScriptTag({
+  content: `globalThis.__gasDelBimotorEnLaRecogida = ${gasDelBimotorEnLaRecogida.toString()};`,
+});
+
 const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida]) => {
   const o = globalThis.__oga;
   /*
@@ -1230,6 +1240,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     recogida.ultimo = ahora;
     const ruedas = alto(s) - (suyas.tren ?? 0);
     const queda = Math.max(0, Math.min(1, ruedas / recogida.altura));
+    recogida.quedaMasBaja = Math.min(recogida.quedaMasBaja ?? 1, queda);
     /*
      * **Y lo que baja, contra la pista y no contra el mar.** La de Los Rodeos
      * cae medio metro largo en los cien de la recogida: volando nivelado, las
@@ -1499,14 +1510,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * el gas sube con lo que se hunde de más y con la carga que falta. Ver
      * `BIMOTOR_EN_LA_RECOGIDA`.
      */
+    /*
+     * **Y se quita también con el reloj, no solo con la altura** (H45). Si el
+     * avión deja de bajar, la altura no cambia y el gas de la senda se quedaba
+     * puesto: el JAZ 40 de la tanda 19 recogió a 8 m y 76 m del umbral y tocó
+     * a 816, frenando 0,4 m/s² donde al ralentí frena 1,5. Ahora nunca más que
+     * lo que deja el tiempo que dura el perfil, y lo quitado no vuelve. Ver
+     * `scripts/gas-de-la-recogida.mjs`.
+     */
     if (!SENCILLO)
       mandos.throttle = BIMOTOR_EN_LA_RECOGIDA
-        ? Math.min(
-            1,
-            (recogida.gas ?? 0) * queda +
-              Math.max(0, falta) +
-              Math.max(0, 1 - (s.loadFactor ?? 1)),
-          )
+        ? globalThis.__gasDelBimotorEnLaRecogida({
+            gas: recogida.gas ?? 0,
+            quedaMasBaja: recogida.quedaMasBaja,
+            segundos: ahora - recogida.empezo,
+            altura: recogida.altura,
+            caida: recogida.caida,
+            alTocar: ritmoAlTocar,
+            falta,
+            carga: s.loadFactor ?? 1,
+          })
         : RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR
             ? (recogida.gas ?? 0)
             : 0;
@@ -7470,6 +7493,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               : 0,
           acumulado: 0,
           ultimo: o.reloj(),
+          // Cuándo empezó y lo más bajo que se ha visto, para el gas del bimotor (H45).
+          empezo: o.reloj(),
+          quedaMasBaja: 1,
           velocidad: s.airspeed,
           /*
            * **Y en Guyrami, el gas de la Vref, preguntado al modelo**, y no
