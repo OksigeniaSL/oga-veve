@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 import { CUANTOS_EN_RUTA, traficoEnRuta } from "./trafico-en-ruta";
-import { haciaElEste, UN_NIVEL } from "./nivel-de-crucero";
+import { haciaElEste, UN_NIVEL, vaPorLosImpares } from "./nivel-de-crucero";
 
 /** Tenerife Norte a Tenerife Sur, tal cual cae en el mundo: al sursuroeste. */
 const CASA = { x: 0, z: 0 };
@@ -36,6 +36,25 @@ describe("quiénes andan por la ruta", () => {
         haciaElEste(a.rumbo),
       );
     }
+  });
+
+  it("y en España, por la tabla de España y con la derrota magnética (H49)", () => {
+    /*
+     * De Los Rodeos a Tenerife Sur, a unos 205° verdaderos: con la tabla de la
+     * OACI serían pares, y con la de España —de 090° a 269° magnéticos,
+     * impares— son impares. Si el tráfico no mira la misma tabla que el plan,
+     * el plan va a un nivel y los de frente al mismo.
+     */
+    const donde = { tabla: "espana", declinacion: 4 } as const;
+    const todos = traficoEnRuta(CASA, ALLA, 0, 1, donde);
+    for (const a of todos) {
+      const impar = (a.pies / UN_NIVEL) % 2 === 1;
+      expect(impar, `rumbo ${a.rumbo.toFixed(0)} a ${a.pies} pies`).toBe(
+        vaPorLosImpares(a.rumbo + donde.declinacion, "espana"),
+      );
+    }
+    const ida = todos.filter((a) => Math.abs(a.rumbo - todos[0]!.rumbo) < 1);
+    expect(ida.every((a) => (a.pies / UN_NIVEL) % 2 === 1)).toBe(true);
   });
 
   it("y los que vienen de frente nunca van a mi altura", () => {

@@ -240,9 +240,17 @@ describe.each([
   const t = tramo(cs, cl);
   const v = volar(t);
 
-  it("el nivel es uno bajo, de salto entre islas, y por encima del Teide", () => {
-    expect(t.crucero / PIE).toBeGreaterThanOrEqual(13_000);
+  it("el nivel es uno bajo, de salto entre islas, y par: va hacia el oeste", () => {
+    /*
+     * Pedía trece mil pies como poco, que era el FL130 que salía por la 30: impar
+     * con derrota oeste, que la tabla no deja (H49; ver `nivel-de-crucero.ts`).
+     * Con la tabla, por la 12 sale FL160 y por la 30 FL120. Por la 30 la ruta
+     * sale al mar por el norte y la mínima en ruta lo deja: no pasa por encima
+     * del Teide, que con sus 12.188 pies queda por encima de ese nivel.
+     */
+    expect(t.crucero / PIE).toBeGreaterThanOrEqual(12_000);
     expect(t.crucero / PIE).toBeLessThanOrEqual(20_000);
+    expect((t.crucero / PIE / 1000) % 2).toBe(0);
   });
 
   it("la tripulación nivela en el crucero del plan", () => {

@@ -37,8 +37,12 @@ import {
   type PistaDeSalida,
   type Publicado,
 } from "./procedimientos";
-import { oaciDe } from "./scenarios";
+import { oaciDe, type Scenario } from "./scenarios";
 import { cabeceraEnUso } from "./terrain";
+import { tablaDe } from "../flight/nivel-de-crucero";
+import type { DondeSeVuela } from "../flight/trafico-en-ruta";
+import { ANO_DE_HOY } from "../flight/radio-de-navegacion";
+import { declinacion as declinacionWmm } from "../ui/carta/declinacion";
 
 /** Lo que el plan necesita saber del juego. */
 export interface DelJuego {
@@ -203,9 +207,35 @@ export function finalDeLaPista(salida: CampoEnElMundo): readonly [number, number
 }
 
 /**
+ * **La declinación del campo de salida para la regla semicircular**, en
+ * grados que se suman al verdadero: la del Modelo Magnético Mundial en el
+ * campo, la misma que usan las emisoras sin declinación publicada —ver
+ * `declinacionDeLaEstacion`—.
+ *
+ * No la de `Scenario.magneticVariation`, que está para que el número pintado
+ * en una pista inventada cuadre con su rumbo: en Los Rodeos vale nueve
+ * grados, y el WMM da tres y medio; en Asunción, diez, y el WMM casi
+ * dieciséis. El semicírculo se mide con la derrota magnética de verdad (H49).
+ */
+export function declinacionDelCampo(escenario: Pick<Scenario, "aerodrome" | "magneticVariation">): number {
+  const o = escenario.aerodrome?.origin;
+  return o ? -declinacionWmm(o.lat, o.lon, ANO_DE_HOY) : (escenario.magneticVariation ?? 0);
+}
+
+/**
+ * **Dónde se vuela saliendo de este campo**: la tabla de niveles de su país y
+ * su declinación. Lo que el plan mira para el crucero y lo que tiene que mirar
+ * el tráfico de la ruta para ir al nivel de enfrente. Ver `DondeSeVuela`.
+ */
+export function dondeSeVuela(escenario: Pick<Scenario, "aerodrome" | "magneticVariation" | "pais">): DondeSeVuela {
+  return { tabla: tablaDe(escenario.pais), declinacion: declinacionDelCampo(escenario) };
+}
+
+/**
  * **El crucero de este plan**, m: el que usa el plan para el punto de descenso
  * y el que anuncia la comandante, que es el mismo. Ver `cruceroDelPlan` en
- * `flight/ruta.ts`, con la mínima en ruta del relieve que conoce el juego.
+ * `flight/ruta.ts`, con la mínima en ruta del relieve que conoce el juego y
+ * la tabla de niveles del país de salida.
  */
 export function cruceroDelTramo(
   ruta: Ruta,
@@ -219,7 +249,7 @@ export function cruceroDelTramo(
     {
       techo: juego.techo,
       cotaDeSalida: juego.cotaDePista(salida, a.x, a.z),
-      declinacion: salida.escenario.magneticVariation ?? 0,
+      ...dondeSeVuela(salida.escenario),
       visual: juego.visual === true,
       ...(juego.ficha ? { ficha: juego.ficha } : {}),
     },
