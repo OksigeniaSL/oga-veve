@@ -14,13 +14,23 @@
  *
  * Lo de verdad: se frena hasta casi parar, se da la vuelta y se remonta a
  * paso de rodaje, unos veinte nudos. Ver `alVirarEnLaPista` en `trafico.ts`.
+ *
+ * Y en Los Rodeos no se remonta: tiene paralela. El de 590 m no era su salida
+ * por falta de camino, sino porque al tocar veía de frente al que rodaba
+ * delante de él por la R en su mismo sentido —la R iba en zigzag y la F tenía
+ * un salto—, y se le buscaba otra sin pasar por ella (H41b). Donde no hay
+ * paralela, como en Ayolas, se remonta, y la torre deja al de detrás en el
+ * circuito hasta que la pista queda libre. Ver `colgadasDe` en `rodaje.ts` y
+ * `ocupaLaPista` en `trafico.ts`.
  */
 import { describe, expect, it } from "vitest";
 import {
   alVirarEnLaPista,
   crearTrafico,
   REMONTA_A,
+  SEPARACION_ENTRE_LLEGADAS,
   tiposDelCampo,
+  trazar,
   VIRA_A,
   virajesCerrados,
   type Sitio,
@@ -31,6 +41,7 @@ import { SCENARIOS, conViento } from "./scenarios";
 import { TIEMPO_DE_CASA } from "./meteo";
 import { cabeceraEnUso } from "./terrain";
 import { sueloDelTrafico } from "./suelo-del-trafico";
+import { construirGrafo } from "./rodaje";
 
 const sitio = (x: number, z: number): Sitio => ({ x, y: 0, z });
 
@@ -75,10 +86,42 @@ describe("a cuánto va el que da media vuelta en la pista", () => {
   });
 });
 
+describe("la paralela de Los Rodeos es una recta, y nadie remonta la pista teniéndola", () => {
+  /*
+   * Los rabos de diez metros que salen de la R hacia la plataforma y los
+   * chaflanes del cruce de la F caen a menos de una soldadura de ella, y el
+   * nodado metía su punta lejana en la R: la paralela iba en zigzag entre su
+   * eje y el borde de la plataforma, y con una uve en la F. Ver `colgadasDe`
+   * en `rodaje.ts`.
+   */
+  it("la R del grafo va por la R dibujada", () => {
+    const aero = SCENARIOS.find((e) => e.id === "tenerife-norte")!.aerodrome!;
+    const dibujada = aero.taxiways.filter((c) => c.ref === "R").flatMap((c) => {
+      const tramos: [number, number, number, number][] = [];
+      for (let i = 1; i < c.path.length; i++) tramos.push([...c.path[i - 1]!, ...c.path[i]!] as [number, number, number, number]);
+      return tramos;
+    });
+    const aLaR = (x: number, y: number) =>
+      Math.min(
+        ...dibujada.map(([ax, ay, bx, by]) => {
+          const dx = bx - ax;
+          const dy = by - ay;
+          const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)));
+          return Math.hypot(x - ax - t * dx, y - ay - t * dy);
+        }),
+      );
+    const grafo = construirGrafo(aero, 14);
+    const deLaR = grafo.tramos.filter((t) => t.ref === "R");
+    expect(deLaR.length).toBeGreaterThan(10);
+    const peor = Math.max(...deLaR.flatMap((t) => t.puntos.map(([x, y]) => aLaR(x, y))));
+    expect(peor, "lo más que se aparta de la R dibujada, m").toBeLessThan(1);
+  });
+});
+
 describe("en Los Rodeos, con el campo llenándose, nadie corre por la pista hacia el umbral", () => {
   const esc0 = SCENARIOS.find((e) => e.id === "tenerife-norte")!;
-  // Con el viento del banco, 040/12, se aterriza por la 12; y con el contrario, por la 30.
-  for (const vientoDe of [40, 220]) {
+  // Con el viento del banco, 040/12, se aterriza por la 12; y con el de poniente, por la 30.
+  for (const vientoDe of [40, 270]) {
     it(`con viento de ${vientoDe}`, () => {
       const esc = conViento(esc0, { ...TIEMPO_DE_CASA, vientoDe, vientoKt: 12 });
       const aero = esc.aerodrome!;
@@ -86,6 +129,7 @@ describe("en Los Rodeos, con el campo llenándose, nadie corre por la pista haci
       const cota = aero.elevationM ?? 0;
       const suelo = (x: number, z: number) => rel(x, z) ?? cota;
       const pista = esc.runway;
+      expect(Math.round(pista.heading), "la cabecera en uso").toBe(vientoDe === 40 ? 111 : 291);
       const calles = sueloDelTrafico(aero, pista, aero.runways[0]?.widthM ?? 45);
       const h = (pista.heading * Math.PI) / 180;
       const ux = pista.x - (Math.sin(h) * pista.length) / 2;
@@ -104,8 +148,17 @@ describe("en Los Rodeos, con el campo llenándose, nadie corre por la pista haci
       /** Lo más deprisa que alguien corrió por la pista hacia el umbral de aterrizar, m/s. */
       let peor = 0;
       let donde = "";
-      /** Cuántas veces se vio a alguien volviendo por la pista: que la prueba mire algo. */
-      let volviendo = 0;
+      /**
+       * Lo más que alguien volvió por la pista hacia el umbral de aterrizar desde
+       * lo más lejos que llegó en ella, m. Con la paralela, ni por la 12 ni por
+       * la 30 se remonta: la torre saca a cada uno por la salida de delante, y
+       * por la R se rueda detrás del que va delante (H41b).
+       */
+      let remonto = 0;
+      let dondeRemonto = "";
+      const masLejos = new Map<string, number>();
+      /** Cuántos tocaron la pista: que la prueba mire algo. */
+      const aterrizaron = new Set<string>();
       for (let k = 0; k * PASO < 900; k++) {
         if (k % Math.round(90 / PASO) === 0)
           t.anuncia(matriculas[(k / Math.round(90 / PASO)) % matriculas.length]!, "otro.final", true);
@@ -115,9 +168,17 @@ describe("en Los Rodeos, con el campo llenándose, nadie corre por la pista haci
           antes.set(a.matricula, { x: a.x, z: a.z });
           if (!p) continue;
           const enLaPista = a.y - suelo(a.x, a.z) < 5 && Math.abs(across(a.x, a.z)) < 30;
+          // Cada vez que pisa la pista se cuenta de nuevo: la misma matrícula vuelve a llegar.
+          if (!enLaPista) masLejos.delete(a.matricula);
           if (!enLaPista) continue;
           const haciaElUmbral = -(along(a.x, a.z) - along(p.x, p.z)) / PASO;
-          if (haciaElUmbral > 1) volviendo++;
+          aterrizaron.add(a.matricula);
+          const lejos = Math.max(masLejos.get(a.matricula) ?? -Infinity, along(a.x, a.z));
+          masLejos.set(a.matricula, lejos);
+          if (lejos - along(a.x, a.z) > remonto) {
+            remonto = lejos - along(a.x, a.z);
+            dondeRemonto = `${(k * PASO).toFixed(1)} s ${a.matricula} ${a.tipo} a ${Math.round(along(a.x, a.z))} m del umbral`;
+          }
           if (haciaElUmbral > peor) {
             peor = haciaElUmbral;
             donde = `${(k * PASO).toFixed(1)} s ${a.matricula} ${a.tipo} a ${Math.round(along(a.x, a.z))} m del umbral`;
@@ -125,8 +186,42 @@ describe("en Los Rodeos, con el campo llenándose, nadie corre por la pista haci
         }
       }
       t.dispose();
-      if (vientoDe === 40) expect(volviendo, "por la 12 alguien da la vuelta").toBeGreaterThan(0);
+      expect(aterrizaron.size, "cuántos tocaron la pista").toBeGreaterThan(4);
+      /*
+       * Lo que retrocede, sin salir aún de la franja, quien coge casi parado una
+       * salida trazada para la otra cabecera —la E4 por la 30, la de los 1.598 m
+       * por la 12—, y nada más: 95 m medidos por la 30. Remontando hasta la
+       * de 590 m eran 1.144.
+       */
+      expect(remonto, dondeRemonto).toBeLessThan(120);
       expect(peor, donde).toBeLessThanOrEqual(REMONTA_A + 0.25);
     });
   }
+});
+
+describe("en un campo sin paralela, el de detrás espera a que el de delante remonte", () => {
+  /*
+   * En Ayolas, por la 02, la única calle está en la cabecera de aterrizar: el
+   * que llega frena, da la vuelta y vuelve por la pista hasta ella. Con dos
+   * minutos entre llegadas, el de detrás se lo encontraba de frente en su
+   * final corta. La torre no deja cruzar el umbral hasta que la pista queda
+   * libre (OACI, Doc 4444, 7.10.1.2), y la separación se hace en el circuito:
+   * al de detrás se le deja, en vez de los dos minutos de siempre, lo que el
+   * de delante tiene la pista ocupada. Ver `ocupaLaPista` y `detrasDe`.
+   */
+  const esc0 = SCENARIOS.find((e) => e.id === "ayolas")!;
+  const esc = conViento(esc0, { ...TIEMPO_DE_CASA, vientoDe: 10, vientoKt: 10 });
+
+  it("lo que tiene la pista ocupada quien remonta es más que la separación de siempre", () => {
+    expect(Math.round(esc.runway.heading), "por la 02").toBe(10);
+    const aero = esc.aerodrome!;
+    const calles = sueloDelTrafico(aero, esc.runway, aero.runways[0]?.widthM ?? 45)!;
+    const cota = aero.elevationM ?? 0;
+    const reactor = tiposDelCampo(aero.id, esc.runway.length).find((t) => t.id === "reactor")!;
+    const c = trazar(esc.runway, cota, "izquierda", 1, undefined, { suelo: calles, alto: () => cota, tipo: reactor });
+    const ocupa = c?.enTierra?.ocupa ?? 0;
+    // Del umbral a los 1.400 m, la vuelta y casi 1.400 m de vuelta a veinte nudos.
+    expect(ocupa).toBeGreaterThan(SEPARACION_ENTRE_LLEGADAS);
+    expect(ocupa).toBeLessThan(240);
+  });
 });

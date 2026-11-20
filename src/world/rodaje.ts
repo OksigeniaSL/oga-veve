@@ -191,6 +191,68 @@ const largoDe = (puntos: readonly Punto[]): number => {
  */
 const PASO_DE_PISTA = 80;
 
+/**
+ * **Lo que se aparta de una calle una punta que ya está en ella**, m: menos
+ * que esto, la punta se mete en la calle tal cual; más, es de otra cosa.
+ */
+const PEGADA = 1;
+
+/**
+ * **Lo más largo que puede ser lo que cuelga de una calle**, m: tres
+ * soldaduras. Un chaflán de cruce en T mide quince o veinte; un rabo, diez.
+ */
+const COLGADA = 3 * SOLDADURA;
+
+/**
+ * **Las calles que cuelgan de `camino`**: las que tienen las dos puntas a
+ * menos de una soldadura de él. Son los rabos de diez metros que OpenStreetMap
+ * deja al borde de una paralela —el arranque de una línea de entrada a la
+ * plataforma— y los chaflanes de un cruce en T: entran por un lado y acaban a
+ * unos metros, sin ir a ninguna parte que no se alcance ya por la otra punta.
+ *
+ * Su punta lejana no se mete en `camino`. Se metía, porque cae a menos de una
+ * soldadura, y la paralela de Los Rodeos se quedaba en zigzag entre su eje y
+ * el borde de la plataforma, diez metros, de rabo en rabo, con uves en el
+ * cruce de la F. El que rodaba por ella hacia el oeste, detrás de otro que
+ * torcía por la F, tenía un tramo que «volvía» hacia el norte junto al del
+ * otro, que bajaba: para `tramoDeFrente` iban de frente, y al que acababa de
+ * aterrizar se le buscaba otra salida sin pasar por la paralela, que era
+ * remontar la pista mil ciento cuarenta y cuatro metros hacia quien venía en
+ * final (H41b). Lo que cuelga queda unido por su otra punta, la que está en la
+ * calle; y su punta lejana, si es cruce de algo, por los cruces.
+ *
+ * Solo lo corto —`COLGADA`— y con una punta ya en la calle: una calle que sale
+ * y vuelve a entrar, o una que se queda a unos metros por las dos puntas, no
+ * cuelga de nada, y sus puntas se meten como siempre.
+ */
+function colgadasDe(
+  camino: readonly Punto[],
+  puntas: readonly { calle: number; p: Punto }[],
+  propia: number,
+  largos: readonly number[],
+): Set<number> {
+  const cerca = new Map<number, number>();
+  const pegadas = new Set<number>();
+  for (const { calle: j, p } of puntas) {
+    if (j === propia || largos[j]! > COLGADA) continue;
+    let d2 = Infinity;
+    for (let k = 0; k < camino.length - 1 && d2 > SOLDADURA * SOLDADURA; k++) {
+      const a = camino[k]!;
+      const b = camino[k + 1]!;
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const l2 = dx * dx + dy * dy;
+      const t = l2 > 0 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2)) : 0;
+      const ex = p[0] - (a[0] + t * dx);
+      const ey = p[1] - (a[1] + t * dy);
+      d2 = Math.min(d2, ex * ex + ey * ey);
+    }
+    if (d2 <= SOLDADURA * SOLDADURA) cerca.set(j, (cerca.get(j) ?? 0) + 1);
+    if (d2 <= PEGADA * PEGADA) pegadas.add(j);
+  }
+  return new Set([...cerca].filter(([j, n]) => n >= 2 && pegadas.has(j)).map(([j]) => j));
+}
+
 /** Parte una polilínea en trozos de como mucho `paso` metros. */
 function densificar(path: Punto[], paso: number): Punto[] {
   const salida: Punto[] = [path[0]!];
@@ -312,14 +374,17 @@ export function construirGrafo(
   // Se inserta **el punto de la punta**, no su proyección, para que las dos
   // calles compartan coordenadas exactas. El desvío es como mucho la
   // soldadura, doce metros, que sobre una calle de veintitrés de ancho no se
-  // nota y a cambio hace que el aeropuerto sea uno solo.
+  // nota y a cambio hace que el aeropuerto sea uno solo. Menos la punta
+  // lejana de lo que cuelga de la calle: ver `colgadasDe`.
   const puntas: { calle: number; p: Punto }[] = [];
   crudas.forEach((c, i) => {
     puntas.push({ calle: i, p: c.path[0]! });
     puntas.push({ calle: i, p: c.path[c.path.length - 1]! });
   });
 
+  const largos = crudas.map((c) => largoDe(c.path));
   crudas.forEach((calle, i) => {
+    const colgadas = colgadasDe(calle.path, puntas, i, largos);
     const nuevo: Punto[] = [calle.path[0]!];
     for (let k = 0; k < calle.path.length - 1; k++) {
       const a = calle.path[k]!;
@@ -334,6 +399,8 @@ export function construirGrafo(
           const t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2;
           if (t <= 0.001 || t >= 0.999) continue;
           const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+          // La punta de lo que cuelga de esta calle no la tuerce. Ver `colgadasDe`.
+          if (d > PEGADA && colgadas.has(j)) continue;
           if (d <= SOLDADURA) encima.push({ t, p });
         }
         encima.sort((x, y) => x.t - y.t);
@@ -424,20 +491,31 @@ export function construirGrafo(
     const a = nudoDe(t.path[0]!);
     const b = nudoDe(t.path[t.path.length - 1]!);
     if (a === b) continue;
-    const largo = largoDe(t.path);
+    /*
+     * **Y el tramo empieza y acaba en su nudo**, no en su punta. Una punta
+     * soldada a un nudo de hasta doce metros más allá dejaba un salto en el
+     * camino: en el cruce de la F con la paralela de Los Rodeos, el que bajaba
+     * por la F desde el oeste llegaba por la paralela hasta el nudo y volvía
+     * ocho metros hacia el este para coger la F, y ese paso atrás, junto al
+     * camino del que venía detrás por la paralela, era ir de frente con él
+     * (`tramoDeFrente`): al que acababa de aterrizar se le mandaba a remontar
+     * la pista (H41b). Cosido a su nudo, el camino sigue sin saltos.
+     */
+    const path: readonly Punto[] = [nudos[a]!, ...t.path.slice(1, -1), nudos[b]!];
+    const largo = largoDe(path);
     /*
      * Y si el ala no pasa, el tramo se encarece. La pista nunca es estrecha:
      * es lo más ancho que hay y además tiene su propia penalización.
      */
     const estrecho =
-      !t.pista && semiala > 0 && aprieta(t.path, estorbos, semiala);
+      !t.pista && semiala > 0 && aprieta(path, estorbos, semiala);
     const base = t.pista ? largo * PENALIZACION_PISTA : largo;
     tramos.push({
       a,
       b,
       largo,
       ref: t.ref,
-      puntos: t.path,
+      puntos: path,
       pista: !!t.pista,
       estrecho,
       coste: estrecho ? base * PENALIZACION_ESTRECHO : base,
