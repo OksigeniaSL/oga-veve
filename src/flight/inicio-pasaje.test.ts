@@ -1681,6 +1681,37 @@ describe("la siesta de Ara: arriba y sin nada que contar, se duerme un rato", ()
   });
 });
 
+describe("y con un crucero de minuto y medio largo, al despertarse Ara pregunta la altura lo primero (H38i)", () => {
+  /*
+   * Es el crucero de Los Rodeos a La Palma a FL170 (ADR 0019): «más alto que
+   * el Teide» esperaba trece segundos callados después de la siesta y no los
+   * encontraba antes de bajar de la cumbre. Ver `atenderAlDespertar`.
+   */
+  const m = volarElMedido(new VueloMedidoConRatos(110));
+  const r = m.escena.registro;
+  const cuando = (clave: string): number => r.find((d) => d.clave === clave)?.desde ?? NaN;
+  const claves = r.map((d) => d.clave);
+
+  it("detrás del «me dormí», la pregunta, la comandante y Ara, y después el servicio con el baño y la tripulante", () => {
+    expect(m.escena.estado.siestas[0]?.porQue).toBe("ding");
+    const despierta = claves.indexOf("inicio.ara.pasaje.despertarse");
+    // Y si el Teide no se señaló antes, la comandante lo presenta antes de decir que se vuela por encima.
+    expect(claves.slice(despierta, despierta + 2)).toEqual(["inicio.ara.pasaje.despertarse", "inicio.ara.pasaje.preguntaAlto"]);
+    expect(claves.indexOf("inicio.mama.pasaje.altoRapido")).toBeGreaterThan(despierta + 1);
+    expect(cuando("inicio.mama.pasaje.altoRapido")).toBeLessThan(cuando("inicio.tripulacion.pasaje.cerca.banoAhora"));
+    expect(cuando("inicio.tripulacion.pasaje.cerca.banoAhora")).toBeLessThan(cuando("inicio.tripulacion.pasaje.cerca.hola"));
+    expect(claves).toContain("inicio.tripulacion.pasaje.cerca.plop2");
+    expect(m.escena.estado.saltados).toEqual([]);
+    expect(m.escena.estado.terminado).toBe(true);
+  });
+
+  it("y con un crucero de un minuto, no se adelanta: espera su silencio como siempre", () => {
+    const corto = volarElMedido(new VueloMedidoConRatos(60)).escena.registro.map((d) => d.clave);
+    const despierta = corto.indexOf("inicio.ara.pasaje.despertarse");
+    expect(corto[despierta + 1]).not.toBe("inicio.ara.pasaje.preguntaAlto");
+  });
+});
+
 describe("y con un crucero largo, despierta a Ara la tripulante para bajar", () => {
   const m = volarElMedido(new VueloMedidoConRatos(420, true));
   const e = m.escena.estado;
@@ -1893,9 +1924,15 @@ describe("el kit de viaje, en el vuelo", () => {
       "inicio.tripulacion.pasaje.cerca.kitRato",
       "inicio.ara.pasaje.kitGracias",
     ]);
-    // Ni megafonía en el medio minuto de antes ni en el minuto de después: la de La Gomera, más tarde, lo pausa.
+    /*
+     * Ni megafonía en los diez segundos callados de antes ni en el minuto de
+     * después: la de La Gomera, más tarde, lo pausa. Era el medio minuto de
+     * antes, con el kit esperando a los 104 km; ahora llega detrás del porqué
+     * del ralentí, que es de la comandante, con su silencio delante
+     * (20-11-2026). Lo mismo que mira el banco del navegador.
+     */
     const megafonia = m.dichas.filter((d) => d.linea.megafonia);
-    expect(megafonia.filter((d) => d.desde > dado - 30 && d.desde < dado + 60).map((d) => d.linea.clave)).toEqual([]);
+    expect(megafonia.filter((d) => (d.hasta ?? d.desde) > dado - 10 && d.desde < dado + 60).map((d) => d.linea.clave)).toEqual([]);
     // Bien por encima de los diez mil pies, y con más de tres minutos hasta que se pide guardarlo.
     expect(altitudA(dado)).toBeGreaterThan(3048 + 900);
     expect(cuando(m.dichas, "inicio.tripulacion.pasaje.cerca.kitGuardar") - dado).toBeGreaterThan(180);
@@ -2528,6 +2565,8 @@ describe("lo que se oye cambiar se cuenta: el gas de los motores y los oídos", 
       ...Array.from({ length: 36 }, (_, i) => ({ crucero: 20 + 2 * i, antes: 0, cerca: 0 })),
       ...[28, 32, 36, 40, 44].map((crucero) => ({ crucero, antes: 12, cerca: 0 })),
       ...[20, 30, 36, 42, 58, 90].map((crucero) => ({ crucero, antes: 0, cerca: 9000 })),
+      // Y con el crucero largo de FL170, en el que Ara pregunta la altura nada más despertarse (H38i).
+      ...[96, 104, 120].map((crucero) => ({ crucero, antes: 0, cerca: 0 })),
     ];
     for (const { crucero, antes, cerca } of vuelos) {
       const m = volarApuntandoLaPotencia(

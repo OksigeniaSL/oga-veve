@@ -298,8 +298,14 @@ const SE_OYE_LA_MUSICA = 3;
 const MAZO_EMPIEZA_POR_ENCIMA = 110;
 const MAZO_YA_NO = 100;
 
-/** Lo que se calla la escena antes de que llegue la tripulante con el kit, s. */
-const CALLA_ANTES_DEL_KIT = 10;
+/**
+ * **Lo que se calla la escena antes de que llegue la tripulante con el kit**,
+ * s. Diez, y uno más: desde que llega detrás del porqué del ralentí, que es
+ * megafonía (20-11-2026), lo callado se cuenta a pasos del juego, y a doce
+ * veces el reloj un paso es un quinto de segundo; con diez justos la frase de
+ * la comandante podía acabar 9,8 s antes de la de la tripulante.
+ */
+const CALLA_ANTES_DEL_KIT = 11;
 /**
  * **Lo que puede esperar a que Ara se despierte**: lo que se cuenta porque
  * viene a cuento y sigue viniendo después —cómo se sostiene el avión, a qué
@@ -313,11 +319,21 @@ const PUEDEN_ESPERAR: ReadonlySet<CharlaDelPasaje> = new Set(["ala", "altoRapido
  * **Y lo que esperó, al despertar, con menos silencio delante**, s: arriba el
  * rato es justo —la bajada empieza al minuto, y lo de la altura deja de ser
  * verdad por debajo del Teide—. Detrás de la explicación del ralentí, que
- * contesta a lo que Ara acaba de notar —doce—, y la altura primero, que es la
+ * contesta a lo que Ara acaba de notar —cinco—, y la altura primero, que es la
  * que se acaba antes; el frío de fuera —catorce— detrás, que también se acaba
  * bajando; y el ala la última, que vale hasta los diez mil pies.
  */
 const TRAS_AL_DESPERTAR: Partial<Record<CharlaDelPasaje, number>> = { altoRapido: 13, ala: 16 };
+/**
+ * **Y lo que Ara pregunta nada más abrir los ojos** (20-11-2026): la altura,
+ * con el mapa de lo que se voló todavía delante. Con la subida nueva —FL170 de
+ * Los Rodeos a La Palma, ADR 0019— los trece segundos callados que esperaba no
+ * llegaban nunca por encima del Teide: el crucero lo llenan el servicio, el
+ * baño y la tripulante, y la bajada, los anuncios, los oídos, el ralentí y el
+ * kit. Y «más alto que el Teide» no se decía. Ver `atenderAlDespertar` en
+ * `motor-del-pasaje.ts`.
+ */
+const PRIMERO_AL_DESPERTAR: ReadonlySet<CharlaDelPasaje> = new Set(["altoRapido"]);
 /** Lo que se tiene que haber señalado, si se ve, antes de cerrar los ojos: lo más bonito de la ruta. */
 const SE_ENSENA_ANTES_DE_DORMIRSE = ["teide"] as const;
 
@@ -905,11 +921,22 @@ export const GUION_DEL_PASAJE: readonly DefMomento<MomentoDelPasaje, MomentoDelP
      * `kit-de-viaje.ts`.
      */
     id: "kit",
+    /*
+     * **En cuanto se ha contado lo que solo vale arriba**: el porqué del
+     * ralentí, que la comandante cuenta detrás de los oídos (20-11-2026). Antes
+     * esperaba además a los 104 km de la pista, puestos con la bajada de FL190,
+     * que empezaba a los 131 km; con la de FL170 empieza a los 120,7, el
+     * ralentí se explica hacia los 108 y el kit esperaba callado medio minuto
+     * a su kilómetro, mientras la bajada llegaba a los diez mil pies —donde se
+     * recoge— un minuto antes que con FL190: a la luz verde le quedaban
+     * veintiséis segundos detrás, y «Armá tu avión» no se llegaba ni a elegir.
+     * Los 104 km se quedan de red, por si el porqué del ralentí no se dice.
+     */
     cuando: (l, e) =>
       l.tramo === "bajada" &&
       !l.enTierra &&
       tripulanteEnElPasillo(e) &&
-      l.faltaParaTocar < BAJANDO.kit &&
+      (e.dichaLaCharla("bajando") || l.faltaParaTocar < BAJANDO.kit) &&
       e.callaDesde >= CALLA_ANTES_DEL_KIT &&
       !cabinaPreparada(l, e),
     // Y si ya lo tiene —el kit de prueba, en la mano desde el puesto: ver `kitDePrueba` en `game.ts`—, no se trae otra vez.
@@ -1349,7 +1376,12 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla<MomentoDelPasaje, CharlaDelP
      * lo que cuenta.
      */
     id: "bajando",
-    tras: 12,
+    /*
+     * Poco: es la respuesta a lo que Ara acaba de notar, como el gas de subida.
+     * Con doce, y con el kit esperándola detrás, la bajada desde FL170 se comía
+     * el rato de «Armá tu avión» (20-11-2026, ADR 0020, enmienda H38i).
+     */
+    tras: 5,
     cuando: (l, e) =>
       l.tramo === "bajada" &&
       l.altitud > DIEZ_MIL_PIES + 150 &&
@@ -1916,6 +1948,7 @@ export const GUION_TENERIFE_LA_PALMA: GuionDelPasaje<MomentoDelPasaje, CharlaDel
     laDespiertan: LA_DESPIERTAN,
     puedenEsperar: PUEDEN_ESPERAR,
     trasAlDespertar: TRAS_AL_DESPERTAR,
+    primeroAlDespertar: PRIMERO_AL_DESPERTAR,
     antesDeDormirse: SE_ENSENA_ANTES_DE_DORMIRSE,
   },
   senalado: {

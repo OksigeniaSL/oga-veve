@@ -419,6 +419,18 @@ export interface Senalado {
  */
 const LO_QUE_PIDE_EL_BANO = 25;
 /**
+ * **Lo que pide lo que Ara pregunta al despertarse**, s de crucero: la
+ * pregunta, la respuesta de la comandante y lo que dice Ara detrás, unos veinte
+ * segundos, y detrás el minuto de crucero que el guion cuenta para el servicio,
+ * el baño y la tripulante en el asiento (ADR 0019, enmienda H38h). Con menos
+ * por delante no se adelanta, y espera su silencio como siempre: con veinte
+ * más los veinticinco del baño, en un crucero de un minuto la tripulante
+ * llegaba al asiento justo cuando se quitaba el gas para bajar, y saludaba
+ * entre el ralentí y el anuncio. Ver `atenderAlDespertar`.
+ */
+const PREGUNTA_AL_DESPERTAR = 20;
+const CRUCERO_DETRAS_DE_LA_PREGUNTA = 60;
+/**
  * **Cuánto arriba, nivelado, antes de apagar el cartel**, s. Poco: en un salto
  * entre islas el crucero dura unos minutos, y el servicio va detrás.
  */
@@ -789,6 +801,15 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
     readonly laDespiertan: Linea;
     readonly puedenEsperar: ReadonlySet<C>;
     readonly trasAlDespertar: Readonly<Partial<Record<C, number>>>;
+    /**
+     * **Lo que Ara pregunta nada más abrir los ojos**, si esperó a que se
+     * despertara y sigue viniendo a cuento: va detrás de su «me dormí», antes
+     * que nada del guion. Es para lo que se acaba enseguida y no cabe en otro
+     * sitio: arriba el rato despierto es corto y lo llena el guion, y en
+     * cuanto llega el kit ya no se cuenta nada que venga a cuento. Ver
+     * `atenderAlDespertar`.
+     */
+    readonly primeroAlDespertar?: ReadonlySet<C>;
     readonly antesDeDormirse: readonly string[];
     /**
      * **Si esta siesta salta**, y adónde: los segundos de vuelo del siguiente
@@ -1265,6 +1286,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private bostezando = false;
   /** Si Ara se acaba de despertar con el *ding*: lo dice detrás del «ya estamos arriba». */
   private despiertaConElDing = false;
+  /** Si Ara acaba de decir que se durmió: lo primero que pregunta va detrás. Ver `atenderAlDespertar`. */
+  private recienDespierta = false;
   /** Lo que quedaba por contar, apartado para el anuncio de la bajada: va detrás de él. Ver `apartarParaLaBajada`. */
   private apartadoPorLaBajada: Linea[] | null = null;
   /**
@@ -1726,7 +1749,10 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     const s = this.siestaDeAhora;
     if (!s) return;
     this.despertar(s, "salto");
-    if (!this.guion.siesta.sigueOtroCapitulo) this.charla.decir([this.guion.siesta.seDespierta]);
+    if (!this.guion.siesta.sigueOtroCapitulo) {
+      this.charla.decir([this.guion.siesta.seDespierta]);
+      this.recienDespierta = true;
+    }
   }
 
   /** **Si del salto se cae en otro capítulo**. Ver `sigueOtroCapitulo`. */
@@ -2266,6 +2292,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
         return;
       }
     }
+    // Lo que Ara pregunta nada más abrir los ojos, antes que el guion. Ver `atenderAlDespertar`.
+    if (this.atenderAlDespertar(l)) return;
     const vista = def.cuando(l, this) ? this.vistaDe(def, l) : undefined;
     if (!def.cuando(l, this) || this.esperaSuFase(def, l) || vista === null || this.kitDejaPasar(def, l)) {
       /*
@@ -2327,6 +2355,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     if (this.despiertaConElDing) {
       this.despiertaConElDing = false;
       this.charla.decir([this.guion.siesta.seDespierta]);
+      this.recienDespierta = true;
     }
     /*
      * Y si lo que se acaba de pedir llega con el ralentí ya sonando, se mira
@@ -2705,6 +2734,40 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     return undefined;
   }
 
+  /**
+   * **Lo primero que pregunta Ara al despertarse** (20-11-2026): lo de
+   * `primeroAlDespertar` que siga viniendo a cuento, en el primer silencio
+   * detrás de su «me dormí» y antes que nada del guion; una vez, y si no
+   * viene a cuento en ese silencio, ya no se adelanta.
+   *
+   * Lo trajo la subida nueva (ADR 0020, enmienda H38i): de Los Rodeos a La
+   * Palma a FL170 el rato despierto por encima del Teide son el crucero y la
+   * parte alta de la bajada, y el crucero lo llenan el servicio, el baño y la
+   * tripulante con las nubes; la bajada, los anuncios, los oídos, el porqué del
+   * ralentí y el kit, con el que ya no se cuenta nada que venga a cuento. Lo de
+   * «más alto que el Teide», que esperaba trece segundos callados, no los
+   * encontraba nunca y se caducaba bajando: con FL190 cabía, bajando, delante
+   * del kit. Y al abrir los ojos con el mapa de la ruta delante es cuando le
+   * viene a la cabeza preguntar a qué altura y a qué velocidad van.
+   */
+  private atenderAlDespertar(l: LecturaDelPasaje): boolean {
+    if (!this.recienDespierta) return false;
+    this.recienDespierta = false;
+    const primero = this.guion.siesta.primeroAlDespertar;
+    if (!primero || this.kit.ocupaAAra || this.miraLaConsola) return false;
+    // Y solo si deja detrás su minuto de crucero: el servicio, el baño y la tripulante van pegados al cartel apagado.
+    if ((l.hastaLaBajada ?? 0) < PREGUNTA_AL_DESPERTAR + CRUCERO_DETRAS_DE_LA_PREGUNTA) return false;
+    for (const c of this.guion.charlas) {
+      if (!primero.has(c.id) || this.charlasDichas.includes(c.id) || !c.cuando(l, this) || c.caduca?.(l, this)) continue;
+      const vista = this.vistaDe(c, l);
+      if (vista === null) continue;
+      this.charlasDichas.push(c.id);
+      this.decirDe(c, l, vista);
+      return true;
+    }
+    return false;
+  }
+
   /** El silencio que espera una charla: el suyo, o menos si esperó a que Ara se despertara. */
   private trasDe(c: DefCharla<M, C>): number {
     return this.siestas.length > 0 && !this.durmiendo ? (this.guion.siesta.trasAlDespertar[c.id] ?? c.tras) : c.tras;
@@ -2929,6 +2992,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     this.despertar(s, paraBajar ? "tripulante" : "otra");
     const { laDespiertan, seDespierta } = this.guion.siesta;
     this.charla.decir(paraBajar ? [laDespiertan, seDespierta] : [seDespierta]);
+    this.recienDespierta = true;
   }
 
   /**
