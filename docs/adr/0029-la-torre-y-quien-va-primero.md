@@ -534,3 +534,115 @@ suena en la roja, que las aves suenan con el reloj a uno y que la tarjeta de
 tocar sale. Y una cosa que el banco tampoco podría probar en Los Rodeos: sin
 roja, la oferta sigue sonando detrás de la verde, en el orden de antes, solo
 que ahora sin caerse.
+
+## Enmienda (20-11-2026, H41): el que aterrizó delante, de frente, y el permiso a 55 m
+
+### El caso
+
+En la ronda C29, el banco del vuelo entero en Los Rodeos con viento 040/12
+—se aterriza por la 12— dio dos rojos que en C28 salían en verde. Entre las
+dos no se tocó nada del tráfico ni de la torre: cambió el ritmo del piloto
+del banco, que llega a la final en otro momento. Eran fallos viejos.
+
+- **«Y ningún tráfico viene de frente en la final»**, en
+  `tenerife-norte taguato 1 jaz-90` y con el Tuka: EC-TIX toca delante a los
+  614 s y a los 632 s, con el JAZ 90 en final a unos 1.500 m del umbral, se le
+  ve venir de frente a 2.365 m, a ras de pista. A los 644 s la torre manda al
+  aire por pista ocupada.
+- **«El permiso de aterrizar se oye antes de los 500 ft, o antes de la
+  decisión si la pista acababa de quedar libre»**, con el JAZ 20 en Guyrami y
+  el JAZ 90 en Taguató: el permiso empieza a sonar a 55 m (180 ft), por debajo
+  de los mínimos que la máquina acaba de cantar; en el JAZ 90, solo «podés
+  aterrizar», con el «cleared to land» retirado detrás.
+
+### Lo que hacía el de delante
+
+Toca a los 300 m, frena hasta los 900 y **da media vuelta en la pista** para
+volver a la salida de los 590 m. No es la que le toca por la geometría: con la
+pista vacía sale por la de los 1.598 m, hacia delante. Pero con dos o tres
+puestos cogidos por otros del tráfico, el que queda libre solo se alcanza desde
+la de 1.598 m rodando 1.144 m **por la pista hacia atrás** —el grafo de calles
+no tiene otro camino—, y `llegada` en `suelo-del-trafico.ts` la pone detrás de
+la de 590 m (coste 2.987 frente a 1.042). Volver por la pista es lo que se
+hace de verdad cuando no hay otra; lo que no se hace es a cuarenta y cinco
+nudos: la velocidad de la llegada bajaba en línea recta de la toma a la boca,
+**contada por el camino con la vuelta dentro**, así que la media vuelta se
+daba a 23 m/s y el remonte hacia el umbral, hacia quien venía en final, a más
+de 20. Un reactor la daba a 32. Medido en la mesa, con una llegada cada
+noventa segundos durante veintitrés minutos: de dos a tres medias vueltas a
+más de 20 m/s en cada una de tres tiradas, y la salida rápida de los 590 m
+cogida hacia atrás a 13,8 m/s por las avionetas.
+
+Y la torre no lo dejaba ir hacia nadie: lo veía en la pista y mandaba al aire
+a los mínimos, que es lo que toca. Lo que fallaba era el dibujo.
+
+### Por qué el permiso llegaba a 55 m
+
+El turno de pista decide a los sesenta metros —con la pista ocupada, al aire;
+con el permiso pedido y sin sonar, a la vista— con la altura que le da
+`game.ts`, y esa se medía contra la **cota del centro** de la pista
+(`cotaDelCampo`). La aproximación, que canta *minimums*, mide contra la cota
+de la pista bajo el avión, que en final es **la del umbral** (`cotaDePistaEn`).
+El umbral de la 12 está a 628,5 m y el de la 30 a 611,7: 8,4 m por encima del
+centro. Los sesenta metros del turno eran 51,6 sobre la pista, y lo que
+empezaba a sonar entre las dos alturas —el permiso que esperaba a que el de
+delante soltara la pista, o a que su «pista libre» sonara antes— salía después
+de oír *minimums*, sin que nadie lo viera tarde. En el JAZ 90, su fraseología
+sí se retiraba: al bajar de los sesenta del turno.
+
+No es que la boca retenga el permiso más de la cuenta: la espera a que suene
+antes lo que suelta la pista sigue siendo la de siempre, y a la decisión, o
+la pista es tuya y lo sabes, o te vas.
+
+### Decisión
+
+- **El turno mide la altura como la aproximación**, con `cotaDePistaEn`: la
+  decisión de la torre —al aire con la pista ocupada, el permiso a la vista—
+  cae donde se canta *minimums*. Ver `alto` en el turno de `game.ts`.
+- **La media vuelta del tráfico, todavía no.** El arreglo está hecho y medido
+  —la llegada sabe dónde tuerce más de cien grados entre la toma y dejar la
+  pista (`virajesCerrados`, mirando treinta metros a cada lado), frena para
+  llegar a cada media vuelta a `VIRA_A` con 2,5 m/s² y, dada, remonta a
+  `REMONTA_A` hasta dejar la pista (`alVirarEnLaPista`)—, pero no entra en
+  esta tanda: con el remonte a su paso de verdad la pista va ocupada más rato
+  en los campos de una sola salida, y lo que se calibró con el remonte a
+  cuarenta nudos deja de cuadrar. En Ayolas la roja más larga de
+  `roja-de-verdad.test.ts` pasa de menos de 170 s a 222 s (con el remonte a
+  14 m/s y acelerando a 1 m/s², 186 s), y en El Hierro tres pruebas de
+  `salida-tapada.test.ts` se quedan sin el caso que miden («expected 0 to be
+  greater than 0»). Lo que hay que decidir antes es cuánto dura de verdad la
+  roja detrás de una llegada que remonta —la de 170 s es de uno que sale por
+  una calle—, y volver a montar los casos de El Hierro con el remonte nuevo.
+  Queda en la rama `h41-media-vuelta`.
+- **No cambia** la elección de la salida: con los puestos libres solo al otro
+  lado, el tráfico de Los Rodeos sigue volviendo por la pista. Que busque otro
+  puesto antes que remontar con alguien en final es otra tanda.
+
+### Lo medido
+
+En la mesa:
+
+- **`la-torre-mide-sobre-el-umbral.test.ts`**, nueva: el umbral de la 12
+  está más de cinco metros por encima del centro, y la altura del turno y la
+  de la aproximación salen de `cotaDePistaEn`.
+- **La media vuelta**, en la rama `h41-media-vuelta`
+  (`trafico-que-da-la-vuelta.test.ts`): en Los Rodeos por la 12 y por la 30,
+  con una llegada cada noventa segundos durante quince minutos, lo más
+  deprisa que alguien corre por la pista hacia el umbral de aterrizar. Antes,
+  por la 12, 23,4 m/s (EC-HWR a 893 m del umbral); con el arreglo, como mucho
+  los 10,3 del remonte.
+
+En el navegador, puerto 5686:
+
+- `tenerife-norte taguato 1 jaz-90`, con los dos arreglos —el de la torre y
+  el de la media vuelta, sin juntar—: 62 de 62 comprobaciones, «nadie de
+  frente» y el permiso a 284 m (932 ft). **No prueba la media vuelta**: en
+  esta tirada el piloto del banco llegó a otro ritmo, en 901 s de vuelo frente
+  a los 1.243 de C29, y solo una llegada del tráfico cantó final; ninguna tocó
+  delante. Ni tampoco la torre a los mínimos: no hubo pista ocupada en la
+  final.
+- `tenerife-norte taguato 12 jaz-90`, con lo que se junta —el arreglo de la
+  torre solo—: 64 de 64, permiso a 285 m (935 ft) y «cleared to land» a
+  250 m. Tampoco aquí hubo pista ocupada en la final: la pista llevaba 320 s
+  libre al pedirlo. La altura de los mínimos con la pista recién soltada
+  queda sin ver en el navegador.
