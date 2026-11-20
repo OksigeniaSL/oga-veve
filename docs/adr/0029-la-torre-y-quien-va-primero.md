@@ -2009,11 +2009,17 @@ rojo, en 2.082 s con dos hilos.
   avión entra en el −113, va hasta el −605, gira en el −590, queda en el eje
   en el −559 y suelta frenos en el −557, como en la H41g (−558); rota con
   504 m de 1.254.
-- **La segunda pasada de El Hierro y Los Rodeos por la 12 y la E-2** (JAZ 90,
-  con voces) no llegaron a volar en el tiempo de esta enmienda: el navegador
-  lo tenían otras rondas. La intersección sin remonte está en
-  `la-verde-del-que-remonta.test.ts`, con roja y verde como antes, no en el
-  navegador.
+- **Segunda pasada, 23 de 23**, con la verde a los 49,8 s y sin nadie por
+  medio: `destino · roja · holdShort · backtrack · verde · clearedTakeoff`.
+  Entra en el −114, gira en el −590, queda en el eje en el −560 y suelta
+  frenos en el −557.
+- **Los Rodeos por la 12 y la E-2**, `tenerife-norte taguato "120/08" jaz-90`
+  con voces, **22 de 22**: la intersección sin remonte, como antes. Rodando,
+  la torre ofrece la E-2 y da la TORA, 2.546 m, la del AIP, alineación cero;
+  en la doble raya la roja, y con la verde a los 288,5 s —detrás de EC-JUO,
+  que aterrizaba, y de EC-HQC, que salía— la verde y «cleared for take-off»,
+  una vez. Pisa la pista en el −1.128, queda en el eje en el −1.001 y suelta
+  frenos en el −995. Sin destellos: no hay remonte por dar.
 
 ### Lo que queda
 
