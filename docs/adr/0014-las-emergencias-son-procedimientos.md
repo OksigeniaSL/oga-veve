@@ -349,3 +349,119 @@ de pistón, y `OGA_MOTOR=izquierdo|derecho` para elegir qué motor se para
   el tren fuera o entrando no falla el de la subida, y dentro sí; la bandera a
   los cuatro segundos a dieciséis metros; y la sesión de simulador del de
   pistón para los dos de la carrera y sigue el de la subida.
+
+## Enmienda H37i (19-11-2026): «ya despegamos: seguí», solo donde es verdad
+
+### Lo que pasaba
+
+H37e calló el «V one… ya despegamos: seguí» del JAZ 40 **solo dentro de sus
+ejercicios del despegue**. En un vuelo normal seguía sonando en su V1 del
+juego, que es su Vmc, 66 nudos: justo donde su manual manda cerrar los dos
+gases y parar. Y en los monomotores sonaba igual, con una frase que cuenta una
+decisión —«pase lo que pase, se vuela»— que en un avión de un motor no existe.
+
+El destello de V1 sale en todos los aviones porque así se pidió (ver
+`hud.ts`), y eso no se toca. Lo que tiene que ser verdad en cada tipo es lo
+que se **dice**.
+
+### Qué se dice en el despegue de cada tipo
+
+| | Antes, en V1 · en Vr | Su manual o su tripulación | Ahora |
+|---|---|---|---|
+| JAZ 20 (clase Cessna 172S), monomotor | destello y nota; «V one» arriba, «ya despegamos: seguí» abajo · «rotate» / «tirá para arriba» y la flecha | Sin V1, que es de la norma de transporte (14 CFR 1.2 y 25.107; CS-25.107). Motor que falla rodando: gas al ralentí y frenos; recién despegado, «Land STRAIGHT AHEAD» (C172S, manual de vuelo, sección 3). Se rota a 55 KIAS (sección 4) | V1: destello y nota, sin frase · Vr: igual |
+| JAZ 25 (clase Ag-Cat), monomotor | lo mismo | Lo mismo: un motor, nada con lo que seguir | V1: destello y nota, sin frase · Vr: igual |
+| JAZ 40 (clase PA-34 Seneca II), bimotor de pistón | lo mismo, callado solo en sus ejercicios (H37e) | Sin V1. Por debajo de 85 KIAS, «CLOSE both immediately. Stop straight ahead»; por encima con el tren fuera, parar si queda pista; seguir con la subida hecha y el tren arriba, a 92 (Seneca III, VB-1110, sección 3). «If the landing gear has not been selected up, the takeoff should be rejected, even if airborne» (FAA-H-8083-3C, p. 13-12) | V1: destello y nota, sin frase, siempre · Vr: igual · **con el tren pedido arriba, en el aire y a 85 nudos o más**: la tarjeta de «ya no se para» en los cuatro peldaños y «ya despegamos: seguí» de la instructora en los tres de abajo |
+| JAZ 50 (DHC-6 -400) | «V one» / «seguí» · «rotate» | V1 igual a la Vr (PSM 1-64-1A, fig. 4-1) | igual |
+| JAZ 60 (1900D) | igual | V1 de su AFM, 100 kt a 16.000 lb | igual |
+| JAZ 90, 110 y 120 | igual | V1 de transporte, CS-25.107 / 14 CFR 25.107 | igual |
+
+Los de turbina cantan además los ochenta nudos en sus procedimientos; el
+juego no los canta, ni antes ni ahora, y eso queda fuera de esta enmienda.
+
+### Por qué en el bimotor de pistón se dice con el tren
+
+La frase de V1 es «la decisión ya está tomada». En el Seneca esa decisión no
+se toma con una velocidad en la carrera sino **con el tren**: hasta que se pide
+arriba, un motor que falla se para —en la pista o en lo que quede de ella—, y
+desde que se pide arriba, con la subida hecha, se sigue. Los 85 nudos son los
+de su manual para la carrera, y son también los que pide sostener al asegurar
+un motor («Maintain direction and airspeed above 85 KIAS», *Engine Securing
+Procedure*) y su velocidad mínima para parar uno a propósito. El JAZ 40 rota
+a 72, así que con las ruedas en el suelo no llega nunca.
+
+Así que en ese avión «ya despegamos: seguí» se dice donde es verdad, con la
+misma frase de los de turbina, que está grabada: lo que se aprende es que en
+ese avión la decisión la marca el tren. Se dice una vez por despegue —no en
+una frustrada—, hasta mil quinientos pies, y no si el motor ya ha fallado en
+un ejercicio, que entonces lo que se dice es el procedimiento. En el peldaño
+de cabina no se canta nada: la tripulación de un Seneca ya ha dicho «positive
+rate, gear up», y un canto inventado habría que desaprenderlo.
+
+En los monomotores no se dice nada en su lugar. El momento de su despegue es
+la Vr, que ya tiene su canto y su flecha, y llega dos nudos después.
+
+La tarjeta de la fase «comprometido» —la de la pista que ya no da para parar,
+calculada con la frenada— no cambia: dice «seguí» en un despegue normal en el
+que ya no cabe parar, y eso es verdad en todos. En el JAZ 40 casi nunca sale,
+porque a su Vr le bastan 540 m para parar.
+
+### Y el ejercicio del tren arriba, si nadie lo mete
+
+«Motor con el tren arriba» fallaba solo con el tren dentro, y si nadie lo
+metía se quedaba armado el resto del vuelo. Ahora hace lo que un instructor:
+**a 650 pies sobre el campo, con el tren todavía fuera, falla igual**
+(`sinTrenA` en `ejercicios.ts`). Es una altura por la que se pasa siempre
+—por encima de donde se pide el tren en todos los peldaños, 60 m o 120, y por
+debajo del circuito, 250— y a la que ya no queda pista por delante para
+posarse y parar. Ahí su
+manual manda seguir y meter el tren: «If decision is made to continue,
+maintain heading. After establishing a climb, retract landing gear,
+accelerate to 92 KIAS and feather inoperative engine prop», y su *Engine
+Securing Procedure* pone «Gear — retract» antes de identificar.
+
+Se sigue como siempre —el pie, la bandera a los cuatro segundos, MAYDAY y la
+vuelta— con dos cosas más: después del pie, «gear up» arriba y «metélo, el
+tren te frena» abajo, y la tarjeta del tren; y «con un motor se sube despacio,
+pero se sube» espera a que el tren entre, que con él fuera no es verdad. Se
+ve por qué se mete: con un motor y el tren fuera, ese avión apenas sube.
+
+### Frases
+
+Ninguna nueva ni cambiada: «ya despegamos: seguí», «metélo, el tren te
+frena» y «gear up» ya estaban, y grabadas.
+
+### Comprobado
+
+- **Las pruebas**: `lo-que-se-dice-al-despegar.test.ts`, qué tipo dice qué y
+  dónde —«seguí» en V1 solo los de turbina; con el tren, solo el de pistón,
+  en el aire, con el tren pedido arriba, desde 85 nudos y hasta mil
+  quinientos pies—; y en `practica.test.ts`, el ejercicio del tren arriba sin
+  tren: nada a 190 m, nada entrando, falla a 200 m con el tren fuera, la
+  bandera a los cuatro segundos igual, «se sube» solo con el tren dentro, y
+  con el tren metido a tiempo, nada cambia.
+- **`verificar-emergencias.mjs tren gran-canaria jaz-40 taguato`**, 13 de 13:
+  en V1, a 65 nudos indicados, se calla y queda apuntado; «ya despegamos:
+  seguí» al meter el tren, a 103 nudos y 11 m, y el fallo después; la bandera
+  a los 4,0 s, MAYDAY y toca a 49 m del umbral.
+- **El mismo sin meter el tren** (`OGA_SIN_TREN=1`), 14 de 15: en V1 se
+  calla, nadie dice «seguí» porque el tren no sube antes del fallo, y el
+  motor falla a 198 m sobre el campo con el tren fuera; detrás de «engine
+  failure» se pide meter el tren, la bandera va a los 4,0 s, MAYDAY, y toca
+  a 135 m del umbral. La que no pasó era del banco y no del juego: medía la
+  altura desde la cota del umbral, siete metros por encima de la del campo,
+  y vio 191 m. Se le dio margen y no se ha vuelto a volar. Por el camino, el
+  piloto del banco, buscando la línea azul con el tren todavía entrando,
+  oyó «stall, stall» a 78 nudos: es su tirón, pero dice lo justo que va ese
+  avión con un motor y las patas fuera.
+- **`verificar-despegue.mjs tenerife-norte guyrami "" jaz-40`**, 20 de 20: el
+  destello de V1 y el de Vr salen, la flecha de tirar también, y en V1 —63
+  nudos indicados— no se dice nada. Y el JAZ 20, en el mismo sitio, 20 de
+  20: destello de V1 y de Vr, la flecha, y en V1 —48 nudos— nada dicho.
+- **Los de turbina no se han vuelto a volar** en esta enmienda: lo suyo no
+  cambia —`seSigueEnV1` es `conV1`, que ya decidía sus ejercicios— y lo
+  sujetan las pruebas. La tirada del JAZ 60 después de V1 se quedó en la
+  cola del navegador.
+- Los bancos del despegue, de las emergencias y del vuelo entero miran ahora
+  qué se dice en V1 según el tipo (`seSigueEnV1` en la sonda `avion`), y el de
+  las emergencias aprende `OGA_SIN_TREN=1`: en `tren`, nadie mete el tren
+  hasta que lo piden después del fallo.
