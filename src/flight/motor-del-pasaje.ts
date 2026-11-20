@@ -421,10 +421,15 @@ const LO_QUE_PIDE_EL_BANO = 25;
 /**
  * **Lo que pide lo que Ara pregunta al despertarse**, s de crucero: la
  * pregunta, la respuesta de la comandante y lo que dice Ara detrás, unos veinte
- * segundos. Con menos crucero por delante —más lo del baño—, no se adelanta, y
- * espera su silencio como siempre. Ver `atenderAlDespertar`.
+ * segundos, y detrás el minuto de crucero que el guion cuenta para el servicio,
+ * el baño y la tripulante en el asiento (ADR 0019, enmienda H38h). Con menos
+ * por delante no se adelanta, y espera su silencio como siempre: con veinte
+ * más los veinticinco del baño, en un crucero de un minuto la tripulante
+ * llegaba al asiento justo cuando se quitaba el gas para bajar, y saludaba
+ * entre el ralentí y el anuncio. Ver `atenderAlDespertar`.
  */
 const PREGUNTA_AL_DESPERTAR = 20;
+const CRUCERO_DETRAS_DE_LA_PREGUNTA = 60;
 /**
  * **Cuánto arriba, nivelado, antes de apagar el cartel**, s. Poco: en un salto
  * entre islas el crucero dura unos minutos, y el servicio va detrás.
@@ -2750,8 +2755,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     this.recienDespierta = false;
     const primero = this.guion.siesta.primeroAlDespertar;
     if (!primero || this.kit.ocupaAAra || this.miraLaConsola) return false;
-    // Y solo si deja detrás crucero para el servicio y el baño, que van pegados al cartel apagado.
-    if ((l.hastaLaBajada ?? 0) < PREGUNTA_AL_DESPERTAR + LO_QUE_PIDE_EL_BANO) return false;
+    // Y solo si deja detrás su minuto de crucero: el servicio, el baño y la tripulante van pegados al cartel apagado.
+    if ((l.hastaLaBajada ?? 0) < PREGUNTA_AL_DESPERTAR + CRUCERO_DETRAS_DE_LA_PREGUNTA) return false;
     for (const c of this.guion.charlas) {
       if (!primero.has(c.id) || this.charlasDichas.includes(c.id) || !c.cuando(l, this) || c.caduca?.(l, this)) continue;
       const vista = this.vistaDe(c, l);
