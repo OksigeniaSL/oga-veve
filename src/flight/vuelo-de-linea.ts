@@ -76,6 +76,7 @@ import type { LoSacado } from "./model";
 import type { Fase } from "./vuelo";
 import { SueloBajoLasRuedas } from "./recogida";
 import { MILLAS_POR_MIL_PIES } from "./ruta";
+import { CAPTURA, DIEZ_MIL, NIVELADO, SUBE_ABAJO, SUBE_ARRIBA } from "./subida-de-linea";
 
 const GRADO = Math.PI / 180;
 const NUDO = 1852 / 3600;
@@ -373,13 +374,11 @@ const YA_LLEVA_UN_RATO = 3600;
 const ANTES_DE_APAGAR = 6;
 
 /**
- * **La subida**: el ritmo de un reactor regional, m/s, abajo y arriba de diez
- * mil pies: unos dos mil setecientos pies por minuto y unos dos mil
- * trescientos. Con menos, en un salto entre islas no se llegaba nunca al nivel
- * del plan: el punto de descenso llegaba antes, y no había crucero.
+ * **La subida**: el ritmo y la captura de la altura viven en
+ * `subida-de-linea.ts`, porque con ellos cuenta también el plan dónde se
+ * nivela y a qué nivel cabe un crucero.
  */
-export const SUBE_ABAJO = 14;
-export const SUBE_ARRIBA = 12;
+export { SUBE_ABAJO, SUBE_ARRIBA };
 /** Y bajando, como mucho, m/s: unos dos mil pies por minuto. Ver `bajaComoMucho`. */
 const BAJA_COMO_MUCHO = 11;
 /**
@@ -407,15 +406,6 @@ const MAS_QUE_LA_SENDA = 1.25;
 function bajaComoMucho(velocidad: number): number {
   return Math.max(BAJA_COMO_MUCHO, MAS_QUE_LA_SENDA * TRES_POR_MIL * Math.max(0, velocidad));
 }
-/** Diez mil pies, m: debajo, doscientos cincuenta nudos. */
-const DIEZ_MIL = 10000 * PIE;
-/**
- * **La captura de la altura**, s: llegando a la del plan se sube lo que
- * falta partido por esto, como un automático, y se llega frenando. Y a
- * cuántos metros de ella se da por nivelado, que es cuando empieza el crucero.
- */
-const CAPTURA = 25;
-const NIVELADO = 30;
 
 /**
  * **Lo que falta para nivelar en el crucero**, s, con la ley de la subida de

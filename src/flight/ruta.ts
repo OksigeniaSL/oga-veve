@@ -32,7 +32,13 @@
  */
 
 import { HASTA, haciaElEste, MEDIO_NIVEL, nivelPara, UN_NIVEL } from "./nivel-de-crucero";
-import { nivelQueAhorra } from "./nivel-que-ahorra";
+import {
+  altitudDeLaSubida,
+  nivelQueAhorra,
+  quedaDeLaSubida,
+  subidaDelPlan,
+  type SubidaDelPlan,
+} from "./nivel-que-ahorra";
 import type { AircraftConfig } from "./aircraft";
 import { airDensity, SEA_LEVEL_DENSITY, type Aire } from "./atmosphere";
 import { esDeChorro } from "./aircraft";
@@ -1136,8 +1142,8 @@ const RECONTAR = 500;
  * qué altura va el plan y a qué velocidad toca ir ahí**:
  *
  * - **La altura**, con las mismas reglas con las que el plan pone el T/C y el
- *   T/D: dos millas por cada mil pies subiendo, tres bajando, y nivelado en
- *   medio sin pasar del crucero.
+ *   T/D: subiendo como se sube —ver `subidaDelPlan`—, bajando por su perfil,
+ *   y nivelado en medio sin pasar del crucero.
  * - **La velocidad**, la de la escalera: 250 nudos por debajo de diez mil
  *   pies, la de subida del tipo, su Mach, la de maniobra en el área terminal,
  *   la de los primeros flaps y la de final. Es la que pide la ventanilla SPD y
@@ -1167,8 +1173,8 @@ export function segundosPorElPerfil(
   const puntos: Punto[] = [{ x, z }, ...r.fijos.slice(i)];
   const falta = restante(r, i, x, z);
   if (falta <= 1) return 0;
-  const sube = (1000 * PIE) / (MILLAS_POR_MIL_PIES_SUBIENDO * MILLA);
   const techo = Math.max(p.crucero, p.altitud);
+  const laSubida = subidaDelPlan(p.avion, p.altitud, techo, p.atmosfera);
   /*
    * La bajada, con sus tramos para frenar: la misma que sigue el automático y
    * la que pone el punto de descenso. Ver `perfilDeLaBajada`.
@@ -1183,7 +1189,7 @@ export function segundosPorElPerfil(
     const bajada = altitudDelPerfil(perfil, queda);
     if (p.bajando)
       return { altitud: Math.min(p.altitud, bajada), subiendo: false, bajando: true };
-    const subida = p.altitud < techo ? p.altitud + hecho * sube : techo;
+    const subida = p.altitud < techo ? altitudDeLaSubida(laSubida, hecho) : techo;
     const altitud = Math.min(techo, subida, bajada);
     return {
       altitud,
@@ -1558,15 +1564,17 @@ export interface Progreso {
   /**
    * **Y dónde se acaba de subir**, el «T/C» de una pantalla de navegación:
    * el punto de la ruta en el que se llega al crucero, o `null` si ya se está
-   * en él o no cabe antes del descenso. Ver `DOS_MILLAS_POR_MIL_PIES`.
+   * en él o no cabe antes del descenso. Ver `subidaDelPlan`.
    */
   readonly puntoDeSubida: Punto | null;
 }
 
 /**
- * Las millas que se recorren subiendo mil pies, la regla con la que se planea
- * la subida: dos. Es la misma que usa el crucero —ver `cruceroPorLaDistancia`—
- * y la que mira `libra`, así que el T/C cae donde el plan cuenta que se sube.
+ * Las millas que se recorren subiendo mil pies **sin saber qué avión sube**:
+ * dos. La usan la regla del crucero sin ficha —ver `cruceroPorLaDistancia`—,
+ * `libra` y el viraje de una salida sin carta, que se pintan para cualquiera.
+ * Con el avión, el plan cuenta la subida como se vuela: ver `subidaDelPlan`
+ * (enmienda H38h del ADR 0019).
  */
 export const MILLAS_POR_MIL_PIES_SUBIENDO = 2;
 
@@ -1679,12 +1687,18 @@ export function cruceroDelPlan(
       if (n < suelo || n * PIE < minimo - 1 || n * PIE > tope + 1) continue;
       legales.push(n * PIE);
     }
+    /*
+     * La bajada que cuenta el plan, con su perfil: la del punto de descenso.
+     * Con ella se mira que entre el T/C y el T/D quede crucero de verdad.
+     */
+    const perfil = perfilDeLaBajada(r.cotaDelUmbral, velocidadesDeLaBajada(avion.ficha), finalDeLaRuta(r));
     const ahorra = nivelQueAhorra(
       avion.ficha,
       r.total,
       legales,
       avion.cotaDeSalida,
       r.cotaDelUmbral,
+      (nivel) => distanciaDelPerfil(perfil, nivel),
     );
     if (ahorra !== null) return ahorra;
   }
@@ -1757,6 +1771,13 @@ export class Seguimiento {
   private velocidades: VelocidadesDeLaBajada | null = null;
   /** El ángulo de la senda de la final en la pista del plan, grados. */
   private anguloDeLaFinal = 3;
+  /** La subida del plan, contada. Ver `laSubida`. */
+  private subidaContada: {
+    readonly desde: number;
+    readonly hasta: number;
+    readonly aire: Aire | undefined;
+    readonly subida: SubidaDelPlan;
+  } | null = null;
   /** La última vez que se contó la hora del perfil. Ver `horaDelPerfil`. */
   private contado: {
     readonly x: number;
@@ -1786,6 +1807,7 @@ export class Seguimiento {
     this.anguloDeLaFinal = anguloDeLaFinal;
     this.contado = null;
     this.ultimo = null;
+    this.subidaContada = null;
   }
 
 
@@ -2022,6 +2044,20 @@ export class Seguimiento {
   }
 
   /**
+   * **La subida del plan, contada una vez**: desde la altitud de ahora hasta
+   * el crucero, y se vuelve a contar solo si cambia el crucero o el aire, o si
+   * se baja de donde empezó. Contarla en cada fotograma son unas decenas de
+   * tramos con su escalera de velocidades. Ver `subidaDelPlan`.
+   */
+  private laSubida(avion: AircraftConfig, l: Lectura): SubidaDelPlan {
+    const c = this.subidaContada;
+    if (c && c.hasta === this.crucero && c.aire === l.atmosfera && l.altitud >= c.desde) return c.subida;
+    const subida = subidaDelPlan(avion, l.altitud, this.crucero, l.atmosfera);
+    this.subidaContada = { desde: l.altitud, hasta: this.crucero, aire: l.atmosfera, subida };
+    return subida;
+  }
+
+  /**
    * **El «T/C»**: dónde se llega al crucero, contado desde aquí con la regla
    * de la subida. Solo mientras queda por subir y si cae antes del punto de
    * descenso: en un salto tan corto que no llega a haber crucero, un T/C
@@ -2036,7 +2072,14 @@ export class Seguimiento {
     if (!r || this.yaBajando) return null;
     const queda = this.crucero - l.altitud;
     if (queda < 300 * PIE) return null;
-    const subida = (queda / PIE / 1000) * MILLAS_POR_MIL_PIES_SUBIENDO * MILLA;
+    /*
+     * Con el avión, como se sube de verdad —ver `subidaDelPlan`—: el T/C cae
+     * donde el avión nivela, que es lo que mira el punto de descenso para que
+     * haya crucero entre los dos.
+     */
+    const subida = this.avion
+      ? quedaDeLaSubida(this.laSubida(this.avion, l), l.altitud)
+      : (queda / PIE / 1000) * MILLAS_POR_MIL_PIES_SUBIENDO * MILLA;
     const alli = falta - subida;
     if (alli <= (descenso ?? 0)) return null;
     return puntoAFaltando(r, alli);

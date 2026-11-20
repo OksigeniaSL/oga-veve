@@ -24,6 +24,7 @@
 import { describe, expect, it } from "vitest";
 import fuenteDelJuego from "../game.ts?raw";
 import { AIRCRAFT } from "../flight/aircraft";
+import { altitudDeLaSubida, subidaDelPlan } from "../flight/nivel-que-ahorra";
 import {
   Seguimiento,
   altitudDelPerfil,
@@ -594,8 +595,8 @@ describe("lo que dura el vuelo", () => {
 
   /**
    * **Y lo que se tarda volándolo**, segundo a segundo y sin la cuenta de
-   * arriba: el avión va por la ruta subiendo a dos millas por mil pies,
-   * nivelado y bajando a tres, a la velocidad que pide la escalera en cada
+   * arriba: el avión va por la ruta subiendo como sube —ver `subidaDelPlan`—,
+   * nivelado y bajando por su perfil, a la velocidad que pide la escalera en cada
    * sitio y multiplicada por `ritmo` en crucero y bajando —uno, como se
    * planea; menos, como voló Enrique—. El seguimiento del juego va leyendo la hora como la
    * lee la pantalla, y se apunta lo que dice al pasar el punto de descenso.
@@ -604,7 +605,7 @@ describe("lo que dura el vuelo", () => {
     const r = t.ruta;
     const crucero = cruceroDe(t, avion);
     const cota = t.juego.cotaDePista(t.salida, 0, 0);
-    const sube = (1000 * 0.3048) / (2 * 1852);
+    const laSubida = subidaDelPlan(avion, cota, crucero);
     // La bajada, la del perfil del avión, con sus tramos para frenar si los
     // lleva: la que sigue el automático. Ver `perfilDeLaBajada`.
     const perfil = perfilDeLaBajada(r.cotaDelUmbral, velocidadesDeLaBajada(avion), finalDeLaRuta(r));
@@ -620,7 +621,7 @@ describe("lo que dura el vuelo", () => {
     let alBajar: { reloj: number; eta: number } | null = null;
     while (hecho < r.total && reloj < 4 * 3600) {
       const queda = r.total - hecho;
-      const subida = cota + hecho * sube;
+      const subida = altitudDeLaSubida(laSubida, hecho);
       const bajada = altitudDelPerfil(perfil, queda);
       const nuevo = Math.min(crucero, subida, bajada);
       const subiendo = subida < Math.min(crucero, bajada);
@@ -780,7 +781,14 @@ describe("lo que dura el vuelo", () => {
         const min = anunciado(t, JAZ_90) / 60;
         if (t.nombre in POR_LA_CARTA_ENTERA) {
           expect(min, t.nombre).toBeGreaterThan(bloque - 5);
-          expect(min, t.nombre).toBeLessThanOrEqual(bloque);
+          /*
+           * Lo que se dice cabe en el bloque. Medido al segundo no: desde que el
+           * plan sube como se vuela (enmienda H38h del ADR 0019), por encima de
+           * diez mil pies a dos millas y media por cada mil y no a dos, de Los
+           * Rodeos por la 30 a la 03L son 30,05 minutos —tres segundos más—, y
+           * la comandante dice «unos treinta».
+           */
+          expect(minutosDichos(min * 60), t.nombre).toBeLessThanOrEqual(bloque);
         } else {
           expect(min, t.nombre).toBeLessThanOrEqual(bloque - RODAR);
         }
