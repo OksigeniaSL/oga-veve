@@ -1222,6 +1222,11 @@ export const EN: Dictionary = {
   "vuelo.salidaSiguiente":
     "You missed the exit. No problem: keep rolling to the next one",
   "palabra.salidaSiguiente": "Next one",
+  "vuelo.sinRemontar":
+    "The tower told us to roll down the runway first and turn around, to have more runway ahead. There is enough today anyway: keep going",
+  "vuelo.sinRemontarNoAlcanza":
+    "The tower told us to roll down the runway first and turn around: from here there is not enough runway to take off",
+  "palabra.sinRemontar": "Turn around first",
   "vuelo.dasPaso":
     "We stop here: another plane is coming the other way down that taxiway, and only one goes through at a time. We let it pass and carry on",
   "vuelo.dasPasoEmpujado":

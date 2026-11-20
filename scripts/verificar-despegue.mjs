@@ -1237,6 +1237,8 @@ const despegue = await page.evaluate(async () => {
   porLaPista.sale = sale
     ? `${sale.desde}${sale.desde === "remonte" ? (sale.hastaElFinal ? " hasta el final" : " un trozo") : ""}` +
       ` (pide ${Math.round(sale.necesitaHoy)} m, desde la entrada ${Math.round(sale.desdeLaEntrada)},` +
+      // La TORA dicha y la alineación que se le resta (H41f): ver `pistaDesdeLaBoca`.
+      ` alinearse ${Math.round(sale.alinearse ?? 0)},` +
       ` por delante ${Math.round(sale.porDelante)}${sale.porQue ? `, por ${sale.porQue}` : ""})`
     : null;
   const ficha = o.avion();

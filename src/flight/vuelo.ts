@@ -171,6 +171,12 @@ export interface Paso {
    */
   readonly saltoLaLuz: boolean;
   /**
+   * **Se acaba de empezar la carrera sin remontar** lo que dijo la torre, y
+   * si desde ahí la pista basta: `basta` o `noBasta`. Una vez por vuelo.
+   * Ver `vigilarElRemonte`.
+   */
+  readonly sinRemontar: "basta" | "noBasta" | null;
+  /**
    * La lección de rodar está hecha: se ha parado sobre la doble raya.
    *
    * Solo en esa lección. Ver `acabaEnLaEspera`.
@@ -225,6 +231,14 @@ const REACCION = 3;
  * «despegando», con su «motor a fondo», hasta que vuelan; y en el bimotor de
  * pistón el «seguí» llega con el tren, ver `lo-que-se-dice-al-despegar.ts`.
  */
+/**
+ * Derecho en el eje de la pista y mirando hacia donde se despega: a menos de
+ * ocho grados y doce metros. Es lo que pide la fase de despegar.
+ */
+function alineadoEnLaPista(s: Situacion): boolean {
+  return Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12;
+}
+
 function yaNoSePuedeParar(s: Situacion): boolean {
   if (s.decideConV1 === false) return false;
   const v = s.estado.airspeed;
@@ -453,6 +467,8 @@ export class Vuelo {
   private enElAire = 0;
   /** Ya se ha avisado de que se saltó la luz. Se avisa una vez por vuelo. */
   private avisadoDeLaLuz = false;
+  /** Ya se vio empezar la carrera sin remontar. Ver `vigilarElRemonte`. */
+  private remonteSaltado = false;
   /** Ha usado un permiso. Entrar en pista después de eso no es saltarse nada. */
   private uso = false;
 
@@ -540,6 +556,7 @@ export class Vuelo {
     this.subidoEnFinal = 0;
     this.enElAire = 0;
     this.avisadoDeLaLuz = false;
+    this.remonteSaltado = false;
     // Y a «todavía no se ha mirado», que es lo que hace que empezar dentro de
     // la pista no cuente como haber entrado. Ver `vigilarLaLuz`.
     this.estabaEnPista = null;
@@ -603,6 +620,7 @@ export class Vuelo {
 
     this.atenderALaTorre(s, dt);
     const saltoLaLuz = this.vigilarLaLuz(s);
+    const sinRemontar = this.vigilarElRemonte(s);
 
     // ── Deducir, no avanzar ────────────────────────────────────────────────
     const pedida = this.deducir(s);
@@ -642,6 +660,7 @@ export class Vuelo {
       cambio: this.fase !== antes,
       luzVerde: this.verde,
       saltoLaLuz,
+      sinRemontar,
       leccionHecha: this.rodajeHecho,
     };
   }
@@ -909,7 +928,7 @@ export class Vuelo {
        * En cuanto se pasa el punto donde toca girar, el plan baja la bandera y
        * esto vuelve a ser lo de siempre: alinearse y despegar.
        */
-      const alineado = Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12;
+      const alineado = alineadoEnLaPista(s);
       /*
        * **Pero despegar es un hecho, y el back-taxi solo un plan.**
        *
@@ -1048,6 +1067,27 @@ export class Vuelo {
     if (!entra || !this.pisa) return false;
     this.avisadoDeLaLuz = true;
     return true;
+  }
+
+  /**
+   * **Si se acaba de empezar la carrera sin remontar** (H41f): con un remonte
+   * trazado y todavía sin dar la vuelta, derecho en el eje hacia donde se
+   * despega y más rápido de lo que rueda nadie. Es el mismo hecho que en
+   * `deducir` gana al plan si queda la pista que el avión necesita sin
+   * márgenes; aquí se apunta una vez, con si bastaba, para que se cuente.
+   *
+   * La torre dijo «backtrack» y se despegó desde la boca. De verdad eso es no
+   * hacer lo autorizado, y no es lo que se enseña; pero aquí nunca se castiga
+   * (AGENTS.md, «Las normas se muestran, no se imponen»): la máquina de fases
+   * sigue como estaba —despegue si la pista basta, rodaje si no, y entonces el
+   * aviso de que se acaba la pista— y el juego lo cuenta. Ver
+   * `decirQueNoSeRemonto` en `game.ts`.
+   */
+  private vigilarElRemonte(s: Situacion): "basta" | "noBasta" | null {
+    if (this.remonteSaltado || !this.pisa || !s.enPista || !s.backTaxi) return null;
+    if (!alineadoEnLaPista(s) || s.estado.airspeed < YA_ES_RODAJE) return null;
+    this.remonteSaltado = true;
+    return s.pistaRestante >= s.pistaQueNecesita ? "basta" : "noBasta";
   }
 
   /**
