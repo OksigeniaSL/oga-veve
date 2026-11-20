@@ -501,6 +501,12 @@ export interface ComoSeSale {
  */
 const TROZO_QUE_NO_COMPENSA = 300;
 
+/**
+ * Lo menos que se remonta, m, cuando se remonta por entrar mirando a la
+ * cabecera: menos es dar la vuelta pegado a la boca. Ver `vueltaDelBackTaxi`.
+ */
+const REMONTE_QUE_SE_ENTIENDE = 100;
+
 /** Cómo se da la media vuelta del back-taxi. Ver `vueltaDelBackTaxi`. */
 interface VueltaDelBackTaxi {
   readonly forma: "apartada" | "centrada" | "raqueta";
@@ -2859,7 +2865,7 @@ export class PlanDeVuelo {
     let remonta = Infinity;
     if (alEje) {
       const alinear = this.contraElDespegue(alEje.hastaElEje);
-      const giro = this.dondeSeDaLaVuelta(alEje.along);
+      const giro = this.dondeSeDaLaVuelta(alEje.along, alEje.remontaPorLaBoca);
       const mitad = this.largoDePista / 2;
       const paraDespegar = Math.min(PARA_DESPEGAR, this.largoDePista * 0.4);
       const entra = Math.max(-mitad + 40, Math.min(alEje.along, mitad - paraDespegar));
@@ -4982,14 +4988,23 @@ export class PlanDeVuelo {
    *   alinearse. Cabe siempre que el avión quepa en el campo: `cabeEn` ya
    *   pide sitio para dar la vuelta con las ruedas.
    */
-  private vueltaDelBackTaxi(along: number): VueltaDelBackTaxi | null {
+  private vueltaDelBackTaxi(
+    along: number,
+    /**
+     * Si se entra mirando a la cabecera: entonces se remonta aunque la pista
+     * de por delante bastara, porque para despegar hay que rodar por ella
+     * hacia atrás. Ver `bocaDeEntrada`.
+     */
+    porLaBoca = false,
+  ): VueltaDelBackTaxi | null {
     const mitad = this.largoDePista / 2;
     const soloLaCabecera = !this.sePuedeSalirDesde(along);
     // Si desde aquí ya queda pista de sobra, esto no es un back-taxi: es
     // entrar y despegar, que es lo que pasa en casi todos los aeródromos.
     // Salvo donde el AIP no deja salir por intersección: ver
     // `salidasPorInterseccion`.
-    if (!soloLaCabecera && mitad - along >= this.pistaParaNoRemontar()) return null;
+    if (!soloLaCabecera && !porLaBoca && mitad - along >= this.pistaParaNoRemontar())
+      return null;
     const umbral = -mitad + HUECO_PARA_GIRAR;
     /*
      * **Y donde el AIP limita las intersecciones, a la cabecera y no a medio
@@ -5042,7 +5057,15 @@ export class PlanDeVuelo {
      * la vuelta a ciento ochenta metros de la punta —el bimotor de pistón en
      * Encarnación— no ahorra nada y deja un lazo que no se entiende.
      */
-    const aLaCabecera = mitad - seQuiere <= umbral + RADIO_CURVA + TROZO_QUE_NO_COMPENSA;
+    /*
+     * **Y el remonte de quien entra mirando a la cabecera, tampoco pegado a la
+     * boca** (H41e). Ahí la pista de por delante ya bastaba, así que el trozo
+     * de la avioneta puede caer a pocos metros de la entrada, o delante de
+     * ella: sería otra vez el lazo de Pilar. Si es así, hasta el final.
+     */
+    const pegadoALaBoca = porLaBoca && along - (mitad - seQuiere) < REMONTE_QUE_SE_ENTIENDE;
+    const aLaCabecera =
+      pegadoALaBoca || mitad - seQuiere <= umbral + RADIO_CURVA + TROZO_QUE_NO_COMPENSA;
     const quiere = aLaCabecera ? Infinity : seQuiere;
 
     // Con apartadero en la cabecera y la pista entera por delante, por él.
@@ -5256,8 +5279,8 @@ export class PlanDeVuelo {
   }
 
   /** Ver `vueltaDelBackTaxi`. */
-  private dondeSeDaLaVuelta(along: number): number | null {
-    return this.vueltaDelBackTaxi(along)?.giro ?? null;
+  private dondeSeDaLaVuelta(along: number, porLaBoca = false): number | null {
+    return this.vueltaDelBackTaxi(along, porLaBoca)?.giro ?? null;
   }
 
   /**
@@ -5301,10 +5324,12 @@ export class PlanDeVuelo {
      * de hacia donde se va a rodar. Ver «Y si se llega de frente» abajo.
      */
     llegaDeFrente = false,
+    /** Si se remonta por llegar mirando a la cabecera. Ver `bocaDeEntrada`. */
+    porLaBoca = false,
   ): { puntos: Punto[]; arco: number | null } | null {
     this.giroDelBackTaxi = null;
     this.remonteHastaElFinal = false;
-    const vuelta = this.vueltaDelBackTaxi(along);
+    const vuelta = this.vueltaDelBackTaxi(along, porLaBoca);
     if (!vuelta) return null;
     const { giro, lado, radio } = vuelta;
     const mitad = this.largoDePista / 2;
@@ -5439,7 +5464,7 @@ export class PlanDeVuelo {
     // mira antes de cambiar de ruta: la de ahora es la que trajo hasta aquí.
     const calle = this.ruta?.letras.at(-1) ?? null;
     // Y la vuelta entera, si desde aquí no hay pista para despegar.
-    const vuelta = this.backTaxiDesde(alEje.along, alEje.llegaDeFrente);
+    const vuelta = this.backTaxiDesde(alEje.along, alEje.llegaDeFrente, alEje.remontaPorLaBoca);
     this.laSalidaDeHoy = this.comoSeSaleDesde(alEje.along, vuelta !== null, calle);
     const puntos: Punto[] = vuelta
       ? [...hastaElEje, ...vuelta.puntos]
@@ -5481,6 +5506,11 @@ export class PlanDeVuelo {
     ejeAbajo: Punto;
     /** Si se llega al eje mirando hacia donde se despega. */
     llegaDeFrente: boolean;
+    /**
+     * Si se llega mirando a la cabecera, y por eso se remonta aunque la pista
+     * de por delante bastara. Ver `bocaDeEntrada`.
+     */
+    remontaPorLaBoca: boolean;
   } | null {
     const x = desde[0];
     const z = -desde[1];
@@ -5617,6 +5647,7 @@ export class PlanDeVuelo {
         along: alongDeLaBoca,
         ejeAbajo: [masAlla[0], -masAlla[1]],
         llegaDeFrente: boca.deFrente,
+        remontaPorLaBoca: boca.remontaPorLaBoca,
       };
     }
     const porLaCalle = rodajeEntre(
@@ -5633,7 +5664,7 @@ export class PlanDeVuelo {
         ? [desde, enElEje]
         : null;
     if (!hastaElEje) return null;
-    return { hastaElEje, along, ejeAbajo, llegaDeFrente: false };
+    return { hastaElEje, along, ejeAbajo, llegaDeFrente: false, remontaPorLaBoca: false };
   }
 
   /** Si un punto cae en la pista en uso, con el margen de `enElAsfalto`. */
@@ -5649,16 +5680,36 @@ export class PlanDeVuelo {
    * la cabecera si desde ahí toca back-taxi. Si ninguno, el más cercano, y
    * ahí la raya da la media vuelta sobre la pista, como toca. `null` si no se
    * llega a ninguno sin pisar pista.
+   *
+   * **Y la que llega mirando a la cabecera es de remontar, sobre la pista
+   * que haya por delante** (H41e). Desde ella no se despega sin rodar por la
+   * pista hacia atrás: para ponerse mirando hacia donde se despega hay que ir
+   * hacia la cabecera y dar la media vuelta, y eso es remontar, aunque sean
+   * diez metros —«backtrack», Doc 4444, 12.3.4.7 p; en Canarias «regreso por
+   * pista», RD 1180/2018, anexo V, 1.4.8—. En El Hierro, por la 34, con
+   * cuatro metros por segundo de cola, el JAZ 40 pide 740,7 m: el chaflán de
+   * la C que mira hacia donde se despega le deja 724,9, y el que mira a la
+   * cabecera, 23 m más atrás, 748,1, pero mirando al revés. Se cogía el
+   * segundo por ser el de menos rodaje, se rodaban unos diez metros pista
+   * abajo hacia la cabecera, se daba la media vuelta y la radio lo llamaba
+   * «salida por intersección». Esos 748 no son la pista de la intersección
+   * —la de la C es la del chaflán que mira hacia donde se despega—, son lo
+   * que queda después de remontar un poco. Así que esa boca va como lo que
+   * es, una de remontar (`remontaPorLaBoca`), y desde ella se remonta como se
+   * remonta: hasta el final o el trozo de la avioneta, ver
+   * `vueltaDelBackTaxi`. Solo si ese remonte se puede dar, y detrás de las
+   * que no lo piden: una boca que llega bien no se cambia por una al revés.
    */
   private bocaDeEntrada(
     desde: Punto,
-  ): { nudo: Punto; ruta: Ruta; deFrente: boolean } | null {
+  ): { nudo: Punto; ruta: Ruta; deFrente: boolean; remontaPorLaBoca: boolean } | null {
     const [fx, fz] = delante(this.pista.heading);
     let mejor: {
       nudo: Punto;
       ruta: Ruta;
       deFrente: boolean;
       bien: boolean;
+      remontaPorLaBoca: boolean;
     } | null = null;
     /*
      * Los nudos **del eje**: las calles se cosen hasta él —ver «Coser las
@@ -5707,17 +5758,31 @@ export class PlanDeVuelo {
         this.pista.z,
         this.pista.heading,
       );
-      const haciaAtras = this.dondeSeDaLaVuelta(along) !== null;
+      const porLaPista = this.dondeSeDaLaVuelta(along) !== null;
+      // Llega mirando a la cabecera: lo contrario de lo que pide `bien` sin remontar.
+      const remontaPorLaBoca =
+        !porLaPista && coseno <= -0.2 && this.dondeSeDaLaVuelta(along, true) !== null;
+      const haciaAtras = porLaPista || remontaPorLaBoca;
       const bien = haciaAtras ? coseno < 0.2 : coseno > -0.2;
       if (
         !mejor ||
         (bien && !mejor.bien) ||
-        (bien === mejor.bien && ruta.largo < mejor.ruta.largo)
+        (bien === mejor.bien &&
+          remontaPorLaBoca !== mejor.remontaPorLaBoca &&
+          !remontaPorLaBoca) ||
+        (bien === mejor.bien &&
+          remontaPorLaBoca === mejor.remontaPorLaBoca &&
+          ruta.largo < mejor.ruta.largo)
       )
-        mejor = { nudo, ruta, deFrente: coseno > 0.5, bien };
+        mejor = { nudo, ruta, deFrente: coseno > 0.5, bien, remontaPorLaBoca };
     }
     return mejor
-      ? { nudo: mejor.nudo, ruta: mejor.ruta, deFrente: mejor.deFrente }
+      ? {
+          nudo: mejor.nudo,
+          ruta: mejor.ruta,
+          deFrente: mejor.deFrente,
+          remontaPorLaBoca: mejor.remontaPorLaBoca,
+        }
       : null;
   }
 
@@ -6419,7 +6484,7 @@ export class PlanDeVuelo {
     const giro = this.giroDelBackTaxi;
     const hastaElFinal = this.remonteHastaElFinal;
     const calle = this.ruta?.letras.at(-1) ?? null;
-    const vuelta = this.backTaxiDesde(alEje.along, alEje.llegaDeFrente);
+    const vuelta = this.backTaxiDesde(alEje.along, alEje.llegaDeFrente, alEje.remontaPorLaBoca);
     const sale = this.comoSeSaleDesde(alEje.along, vuelta !== null, calle);
     this.giroDelBackTaxi = giro;
     this.remonteHastaElFinal = hastaElFinal;
