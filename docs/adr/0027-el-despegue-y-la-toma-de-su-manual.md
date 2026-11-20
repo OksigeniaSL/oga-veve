@@ -4910,9 +4910,97 @@ campo. Si se quiere que se quede, que la 33 lo sepa: umbral desplazado de
 aeródromo y `world/umbral-desplazado.ts`), y el monte dentro de
 `arboles-de-la-senda`.
 
+### H35d (20-11-2026): la 33, con el umbral desplazado mientras esté el monte
+
+Se ha hecho la segunda salida, la que enseña algo. Quitar el monte al acabar
+el ejercicio sería quitarlo **a la vista**: el ejercicio acaba con el avión
+ya en el aire, pasado el monte, y el monte se ve en toda la vuelta del
+circuito; desaparecer en mitad del vuelo no es real. Y no plantarlo cuando no
+hace falta ya es lo que pasa: solo existe en este ejercicio, con el JAZ 20 y
+en la granja. Así que, desde que se ve el campo, el campo es así todo ese
+vuelo, y la cabecera que queda detrás del monte lo sabe.
+
+- **El monte se planta con el mundo**, en el constructor y justo después del
+  relieve, y no en el primer paso: con él cambia el aeródromo, y el plan, la
+  senda, las luces y el plano, que se montan más abajo, salen ya con el umbral
+  nuevo. Solo se rehace el dibujo del aeródromo, que ya estaba hecho; en la
+  granja es una pista de hierba.
+- **Cuánto se desplaza lo mide el juego**, no se escribe a mano
+  (`world/monte-del-final.ts`): cada copa del monte, por su punta y por su
+  borde de lado, contra la superficie de aproximación de la pista visual de
+  número de clave 1 —treinta metros antes del umbral, borde de sesenta, 10 %
+  de abertura y 5 % de pendiente—; el primer metro entero que la deja limpia.
+  Con el relieve de la granja salen **203 m** (la copa del eje, a 14,65 m
+  sobre la pista y a 120 del final: 14,65 / 0,05 + 30 − 120 = 203; los 202
+  de arriba eran de redondear). Quedan 697 m para aterrizar por la 33.
+- **Se pone en el fichero del aeródromo y en la pista del escenario**
+  (`conElUmbralDelMonte`), en una copia: el escenario del módulo lo comparten
+  todos los vuelos de la página. Del fichero lo lee el dibujo y `conViento`,
+  que vuelve a sacar la pista si el viento cambia de cabecera, así que el
+  umbral se queda en su punta pase lo que pase con el viento; de la pista, todo
+  lo demás —la senda, el embudo, el «ya podés tocar», el veredicto de la toma,
+  la distancia para aterrizar, la otra cabecera—, que ya sabía de umbrales
+  desplazados (`world/umbral-desplazado.ts`). Si el viento pone la 33 en uso,
+  la senda del juego nace del umbral nuevo.
+- **Y se ve como en un campo de hierba de verdad.** La hierba no se pinta
+  (`balizas`): el dibujo de un umbral desplazado —flechas por el eje cada
+  sesenta metros apuntando al umbral, la fila de puntas justo antes y la barra
+  de lado a lado— va **tendido a ras de suelo**, como se hace en un prado con
+  tiras blancas estaquilladas o con cal, que se ruedan sin notarlas: el trozo
+  de antes del umbral es pista para rodar y despegar. Por lo mismo, las
+  tablillas naranjas de la cabecera no pueden cruzar la pista en el umbral
+  nuevo: van a los lados, fuera de ella, tres por ala, que es lo que en el
+  asfalto son las barras de ala del umbral. El punto de mira se cuenta desde
+  el umbral nuevo. Las mismas figuras que en el asfalto (`FLECHA`, `PUNTA`),
+  porque es el dibujo que se reconoce desde la ventanilla en cualquier campo.
+- **Sin frases nuevas.** Nadie tiene que nombrar el umbral de la 33: en la
+  granja no hay torre, y la pista se nombra por su número, que no cambia.
+- **Por la 15 no cambia nada.** El monte asoma también por la superficie de
+  subida en el despegue de la 15 (tabla 4-2, clave 1: la misma pendiente del
+  5 % desde treinta metros pasado el final), y eso se queda así: es el
+  obstáculo del ejercicio, el que un campo de verdad publica para que cada
+  piloto haga su cuenta de despegue, y la técnica de pasarlo es lo que se
+  enseña.
+
+`arboles-de-la-senda.test.ts` planta ahora el monte como el juego, árbol por
+árbol (`arbolesDelMonte`, que salió de `ponerElMonte`), le desplaza el umbral
+y mide la senda desde el umbral de toma: con la 33 en la punta, ve el monte en
+la senda baja de la 320 a 120 m («monte, senda 320°, a 120 m»), y con el
+umbral nuevo, nada. Mira además que ninguna copa asome por la superficie y
+cuánto pasa la senda sobre la copa más alta: la de tres grados, de 7,4 m a
+18,0; la de 2,2°, de 1,5 a 9,3. La subida hacia el monte no se mira contra
+él: pasarlo es el ejercicio, y lo mide `pista-corta.test.ts`. Las cuentas
+sueltas de la superficie y del desplazado, en `monte-del-final.test.ts`.
+
+Volado, con la Intel y registros y fotos en `h35d/` del scratchpad:
+
+- `ver-la-pista-corta.mjs`, 23 de 23, con la comprobación nueva de que la
+  cabecera de enfrente lleva el umbral (15: 0 m; 33: 203 m, en el fichero y
+  tendido): bien volado pasa a 43,3 m de las copas, a la Vy desde el
+  principio a 11,0, y por debajo, el percance del árbol.
+- `verificar-arboles.mjs`, 12 de 12.
+- Una toma en la 33 con el monte puesto (`h35d/toma-en-la-33.mjs`): el viento
+  del 320 pone la 33 en uso, la pista sale con sus 203 m desplazados y la
+  senda de aros empieza a 3.200 m del umbral nuevo, como la de la 15 del suyo.
+  La final de tres grados al punto de visada, con el piloto de
+  `ver-el-cruzado.mjs`, pasa las copas con las ruedas a 16,7 m como poco y
+  toca a 403 m del umbral nuevo y a 0,8 del eje, sin percance y sin errores
+  en la página. En esa final salió la vaca de la pista ocupada —el sorteo de
+  los campos sin torre—, a 150 m pasado el umbral nuevo, que es donde la pone
+  `hastaElUmbralDeToma`.
+- Desde el aire, en la final de la 33, se ven las tres flechas, las dos puntas,
+  la barra y las tablillas naranjas a los lados, con las balizas de borde
+  siguiendo por la zona desplazada: es el dibujo de cualquier umbral
+  desplazado.
+
 ### Lo que queda
 
-- **El monte de la 33**, la propuesta de arriba, sin hacer.
+- **El dibujo del umbral desplazado en hierba** sigue el del asfalto, tendido
+  a ras de suelo. No se ha encontrado una norma que diga cómo se marca en una
+  pista sin pavimentar —el Anexo 14 lo escribe para pintura—; lo que se hace
+  en los campos de hierba es eso, tiras o cal, y el dibujo es el que se
+  reconoce. Si aparece la de un país (la CAP 168 británica, la TP 312
+  canadiense), mirarla.
 - El banco apunta a un árbol por peldaño y en dos campos. Que cada árbol se
   toca con la forma que se dibuja lo mira `arboleda.test.ts` con la
   vegetación entera; lo que el banco añade es que el juego, con todo puesto,

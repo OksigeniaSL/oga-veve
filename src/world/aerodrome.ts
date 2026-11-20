@@ -2881,10 +2881,18 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
    * aquí, además, el naranja ya quiere decir «aquí» en el resto del juego: la
    * flecha del sígame, los bastones del señalero, los galones.
    */
+  /**
+   * **Con el umbral desplazado, la puerta se abre a los lados** (H35d): tres
+   * tablillas a cada lado, fuera de la pista, a la altura del umbral nuevo.
+   * Cruzándola no pueden ir, porque el trozo de antes es pista para rodar y
+   * despegar, y lo que se planta donde ruedan aviones es algo con lo que se
+   * choca. Es lo que en el asfalto son las barras de ala del umbral.
+   */
+  const POR_ALA = 3;
   const puerta = new InstancedMesh(
     new BoxGeometry(2.6, 1.6, 0.5),
     new MeshLambertMaterial({ color: 0xe8752e }),
-    CRUZANDO * 2,
+    2 * Math.max(CRUZANDO, 2 * POR_ALA),
   );
   puerta.name = "cabeceras";
   const mira = new InstancedMesh(
@@ -2914,21 +2922,58 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
     malla.setMatrixAt(i, m);
   };
 
+  /*
+   * **Y el umbral desplazado, tendido en la hierba** (H35d): el mismo dibujo
+   * que en el asfalto —flechas por el eje apuntando al umbral, la fila de
+   * puntas justo antes y la barra de lado a lado donde empieza la parte en
+   * la que se toca—, porque es el que se reconoce desde la ventanilla en
+   * cualquier campo. En un prado no se pinta: se tiende a ras de suelo, con
+   * tiras blancas estaquilladas o con cal, que se ruedan por encima sin
+   * notarlas. Sin desplazado, nada de esto y todo como siempre. Ver
+   * `world/umbral-desplazado.ts`.
+   */
+  const dA = Math.max(0, Math.min(a.displacedM ?? 0, largo / 2));
+  const dB = Math.max(0, Math.min(b.displacedM ?? 0, largo / 2));
+  const tendido = new Pintura(altura);
+  /** Una figura tendida a `d` del umbral A y `lado` del eje, apuntando hacia B con `signo` uno y hacia A con menos uno. */
+  const tender = (d: number, lado: number, puntos: readonly Punto[], signo: number) => {
+    const cx = a.xy![0] + ux * d - uy * lado;
+    const cy = a.xy![1] + uy * d + ux * lado;
+    tendido.poner(puntos.map(([s, t]): Punto => [cx + ux * s * signo - uy * t, cy + uy * s * signo + ux * t]));
+  };
+  /** Las puntas de la fila de antes del umbral: dos en una pista de dieciocho metros, y no se pisan. */
+  const puntas = Math.max(1, Math.floor(ancho / 9));
+
   let p = 0;
   let q = 0;
-  for (const desde of [0, largo]) {
+  for (const [desde, desplazado] of [
+    [0, dA],
+    [largo, dB],
+  ] as const) {
     const dentro = desde === 0 ? 1 : -1;
-    for (let i = 0; i < CRUZANDO; i++) {
-      const lado = (i / (CRUZANDO - 1) - 0.5) * (ancho + 3);
-      plantar(puerta, p++, desde - dentro * ANTES, lado);
+    const umbral = desde + dentro * desplazado;
+    if (desplazado > 0) {
+      for (const ala of [-1, 1])
+        for (let i = 0; i < POR_ALA; i++) plantar(puerta, p++, umbral, ala * (ancho / 2 + 3.5 + i * 3.2));
+      for (let c = 40; c <= desplazado - 40; c += 60) tender(desde + dentro * c, 0, FLECHA, dentro);
+      if (desplazado > 30)
+        for (let i = 0; i < puntas; i++)
+          tender(umbral - dentro * 15, ((i + 0.5) / puntas - 0.5) * ancho, PUNTA, dentro);
+      // La barra: tres metros a lo largo, de borde a borde.
+      tender(umbral, 0, [[-1.5, -(ancho - 3) / 2], [1.5, -(ancho - 3) / 2], [1.5, (ancho - 3) / 2], [-1.5, (ancho - 3) / 2]], dentro);
+    } else {
+      for (let i = 0; i < CRUZANDO; i++) {
+        const lado = (i / (CRUZANDO - 1) - 0.5) * (ancho + 3);
+        plantar(puerta, p++, desde - dentro * ANTES, lado);
+      }
     }
-    // El punto de mira solo cabe si la pista da para él.
-    if (largo > PUNTO_DE_MIRA * 2.5) {
+    // El punto de mira, contado desde el umbral, y solo si la pista para aterrizar da para él.
+    if (largo - desplazado > PUNTO_DE_MIRA * 2.5) {
       for (const lado of [-1, 1]) {
         plantar(
           mira,
           q++,
-          desde + dentro * PUNTO_DE_MIRA,
+          umbral + dentro * PUNTO_DE_MIRA,
           lado * (ancho / 2 + 2.5),
         );
       }
@@ -2940,8 +2985,36 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
   mira.instanceMatrix.needsUpdate = true;
   grupo.add(puerta);
   if (q) grupo.add(mira);
+  const tendida = tendido.geometria();
+  if (tendida) {
+    const malla = new Mesh(tendida, new MeshLambertMaterial({ color: PINTURA, ...ENCIMA_PINTURA }));
+    malla.name = "umbral-desplazado";
+    grupo.add(malla);
+  }
   return grupo;
 }
+
+/**
+ * **Las figuras de la zona desplazada**, en metros: la flecha del eje, de
+ * treinta de largo, y la punta de flecha de la fila de antes del umbral. El
+ * primer número va a lo largo de hacia donde apuntan; el segundo, de lado.
+ * Las pinta `marcas` en el asfalto y las tiende `balizas` en la hierba.
+ */
+const FLECHA: readonly Punto[] = [
+  [-15, -0.45],
+  [5, -0.45],
+  [5, -2.25],
+  [15, 0],
+  [5, 2.25],
+  [5, 0.45],
+  [-15, 0.45],
+];
+const PUNTA: readonly Punto[] = [
+  [-4, -3.5],
+  [4, 0],
+  [-4, 3.5],
+  [-1.6, 0],
+];
 
 function marcas(
   pista: Pista,
@@ -3151,21 +3224,6 @@ function marcas(
    * que se ve desde la ventanilla en una cabecera así, y lo que dice sin una
    * palabra «por aquí se rueda, se toca pasada la barra».
    */
-  const FLECHA: Punto[] = [
-    [-15, -0.45],
-    [5, -0.45],
-    [5, -2.25],
-    [15, 0],
-    [5, 2.25],
-    [5, 0.45],
-    [-15, 0.45],
-  ];
-  const PUNTA: Punto[] = [
-    [-4, -3.5],
-    [4, 0],
-    [-4, 3.5],
-    [-1.6, 0],
-  ];
   for (const [desplazado, desde, signo] of [
     [dA, 0, 1],
     [dB, largo, -1],

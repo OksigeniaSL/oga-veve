@@ -1122,6 +1122,7 @@ import {
   tecnicaDe,
   type SucesoDelCruzado,
 } from "./flight/final-con-viento-cruzado";
+import { arbolesDelMonte, conElUmbralDelMonte, desplazadoPorElMonte } from "./world/monte-del-final";
 import {
   dondeAcabaLaPista,
   monteDelCampo,
@@ -7135,6 +7136,16 @@ export class Game {
     // Con el día del vuelo, que es de donde sale la luz cocida en el relieve.
     this.terrain = new Terrain(this.scenario, this.fechaDelVuelo());
     this.scene.add(this.terrain.group);
+    /*
+     * **El monte de la pista corta, con el mundo** y no en el primer paso:
+     * con él, la cabecera de enfrente lleva el umbral desplazado, y el plan,
+     * la senda, las luces y el plano que se montan más abajo tienen que salir
+     * ya con ella. Ver `ponerElMonte`.
+     */
+    if (this.pistaCortaPedida && subidaDe(this.aircraft)) {
+      const monte = monteDelCampo(oaciDe(this.scenario));
+      if (monte) this.ponerElMonte(monte);
+    }
     // El marco de la ventanilla del pasaje, apagado hasta que se mira por ella,
     // y el tinte de su cristal, cuando lo lleva.
     this.scene.add(this.marcoDeVentanilla.malla);
@@ -26391,29 +26402,25 @@ export class Game {
    * través, a lo que diga el campo pasado el final de la pista por la que se
    * sale —la de `cabeceraEnUso`, que va por el rumbo de la pista del
    * escenario—, el más alto sobre el eje. Guarda dónde está y su cima.
+   *
+   * **Y la cabecera de enfrente se entera** (H35d). El monte se planta al
+   * montar el vuelo y no se quita, así que desde que se ve el campo el campo
+   * es así, y el monte queda en la aproximación de la otra cabecera: con la
+   * senda de siempre, a seis metros de las copas. Un aeródromo de verdad
+   * desplaza ese umbral hasta que su superficie de aproximación pasa por
+   * encima, y eso se hace aquí, antes de montar lo demás: el dibujo, la
+   * senda, el plan y el plano salen ya con él. Ver `world/monte-del-final.ts`.
    */
   private ponerElMonte(monte: { readonly pasadaLaPista: number; readonly alto: number }): void {
     const pista = this.scenario.runway;
     const fin = dondeAcabaLaPista(pista, pista.heading);
     const agua = this.scenario.waterLevel ?? 0;
     const suelo = (x: number, z: number): number => Math.max(agua, this.terrain.sampleHeight(x, z));
-    // De través: a la derecha de quien sale.
+    this.arboledaDelMonte.vaciar();
+    this.scene.add(filaDeArboles(arbolesDelMonte(fin, monte, suelo), monte.alto, this.arboledaDelMonte));
+    // La cima: el suelo más alto de la primera fila cerca del eje, que es por donde se pasa, más los árboles.
     const tx = -fin.dz;
     const tz = fin.dx;
-    const puntos: { x: number; y: number; z: number }[] = [];
-    // El primero, sobre el eje: es el que mide `alto` justo. Ver `filaDeArboles`.
-    for (let fila = 0; fila < 3; fila++) {
-      const d = monte.pasadaLaPista + fila * 9;
-      for (let k = 0; k <= 36; k++) {
-        const lado = (k % 2 === 0 ? 1 : -1) * Math.ceil(k / 2) * 11 + (fila % 2) * 5.5;
-        const x = fin.x + fin.dx * d + tx * lado;
-        const z = fin.z + fin.dz * d + tz * lado;
-        puntos.push({ x, y: suelo(x, z), z });
-      }
-    }
-    this.arboledaDelMonte.vaciar();
-    this.scene.add(filaDeArboles(puntos, monte.alto, this.arboledaDelMonte));
-    // La cima: el suelo más alto de la primera fila cerca del eje, que es por donde se pasa, más los árboles.
     let cima = -Infinity;
     for (let lado = -30; lado <= 30; lado += 5) {
       const x = fin.x + fin.dx * monte.pasadaLaPista + tx * lado;
@@ -26421,15 +26428,23 @@ export class Game {
       cima = Math.max(cima, suelo(x, z) + monte.alto);
     }
     this.monteDeLaPista = { x: fin.x, z: fin.z, dx: fin.dx, dz: fin.dz, cima };
+    const desplazado = desplazadoPorElMonte(
+      this.arboledaDelMonte.arboles(),
+      fin,
+      this.terrain.cotaDeLaPista(fin.x, fin.z),
+      pista.length,
+    );
+    if (desplazado <= 0) return;
+    this.scenario = conElUmbralDelMonte(this.scenario, fin, desplazado);
+    this.terrain.rehacerAerodromo(this.scenario);
   }
 
-  /** **Un paso de la pista corta.** Se monta la primera vez, con su monte. */
+  /** **Un paso de la pista corta.** Se monta la primera vez, con el monte que se plantó al montar el vuelo. */
   private practicarLaPistaCorta(dt: number): void {
     if (!this.pistaCorta && this.pistaCortaPedida) {
       const subida = subidaDe(this.aircraft);
       const monte = monteDelCampo(oaciDe(this.scenario));
-      if (!subida || !monte) return;
-      this.ponerElMonte(monte);
+      if (!subida || !monte || !this.monteDeLaPista) return;
       this.pistaCorta = new PistaCorta(this.pistaCortaPedida, subida, monte);
       this.pistaCortaPedida = null;
     }

@@ -135,6 +135,28 @@ try {
       e0 && e0.monte && e0.pasadaLaPista === 120 && e0.alto === 15,
       `pista ${Math.round(inicio.largo)} m al ${Math.round(inicio.rumbo)}°, viento ${inicio.meteo?.vientoKt ?? "?"} kt, ${inicio.meteo?.temp ?? "?"} °C; cima ${e0?.monte?.cima?.toFixed(1)} m; el avión a ${Math.round(-r.pasado)} m del final`,
     );
+    /*
+     * **Y la cabecera de enfrente, con el umbral desplazado** (H35d): el monte
+     * queda en su aproximación todo el vuelo, y el campo la lleva como un
+     * aeródromo de verdad, con la superficie del Anexo 14 por encima de las
+     * copas. En la pista del escenario, en el fichero del aeródromo y tendido
+     * en la hierba.
+     */
+    const enfrente = await page.evaluate(() => {
+      const j = globalThis.__oga.juegoParaTrazas();
+      const umbrales = j.scenario.aerodrome?.runways[0]?.thresholds ?? {};
+      return {
+        desplazado: j.scenario.runway.desplazado ?? 0,
+        desplazadoEnfrente: j.scenario.runway.desplazadoEnfrente ?? 0,
+        enElFichero: Object.fromEntries(Object.entries(umbrales).map(([n, u]) => [n, u?.displacedM ?? 0])),
+        tendido: !!j.terrain.group.getObjectByName("umbral-desplazado"),
+      };
+    });
+    comprobar(
+      "la cabecera de enfrente lleva el umbral desplazado, tendido en la hierba",
+      enfrente.desplazado === 0 && enfrente.desplazadoEnfrente > 150 && enfrente.tendido,
+      `en uso ${enfrente.desplazado} m, enfrente ${enfrente.desplazadoEnfrente} m; fichero ${JSON.stringify(enfrente.enElFichero)}`,
+    );
     comprobar("se presenta con el dibujo del freno", r.tarjeta === "freno", `«${r.texto.slice(0, 80)}»`);
     await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
     // **Cada tarjeta que se pide**, con su dibujo y su texto: entre dos lecturas caben varias.
