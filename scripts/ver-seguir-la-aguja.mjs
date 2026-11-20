@@ -20,7 +20,8 @@
  * Capturas: la salida, la aguja sintonizada, el plano con la estela a media
  * curva, la aguja dando la vuelta encima de la radio y el panel del final con
  * la traza. El puerto, `OGA_PUERTO`; el reloj, acelerado por ocho
- * (`OGA_VECES`).
+ * (`OGA_VECES`); solo uno de los vuelos, `OGA_VUELOS=alisio`; y más abajo que
+ * el techo de la final de la torre, `OGA_BAJAR` (H43).
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -36,7 +37,14 @@ const VECES = Number(process.env.OGA_VECES ?? 8);
 const VUELOS = [
   { nombre: "alisio", viento: null },
   { nombre: "calma", viento: "000/0" },
-];
+].filter((v) => !process.env.OGA_VUELOS || process.env.OGA_VUELOS.split(",").includes(v.nombre));
+/**
+ * **Cuántos metros más abajo se sigue la aguja**, para probar la final de la
+ * torre (H43): el ejercicio va a tres mil pies sobre la pista, que es justo el
+ * techo de esa final, y de que entre o no deciden unos decímetros. Con
+ * `OGA_BAJAR=5` pasa por debajo siempre. Sin él, a su altura.
+ */
+const BAJAR = Number(process.env.OGA_BAJAR ?? 0);
 
 mkdirSync(SALIDA, { recursive: true });
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -83,14 +91,55 @@ const leerSolo = (page) =>
       // Lo que se le ha dicho a la torre del combustible, y lo que queda.
       llamada: j.llamadaDicha,
       kilos: j.combustible,
+      // Si la torre te ve en su final, y la fase que ve (H43).
+      enLaFinalDeLaTorre: j.enLaFinalDeLaTorreParaBanco,
+      faseDeLaTorre: j.faseDeLaTorre,
+      sobreElCampo: s.position.y - j.cotaDelCampo(j.elCampo()),
+      rumboPista: j.elCampo().pista.heading,
+      // A cuánto del umbral, dentro del embudo de la aproximación; null fuera. Ver `alUmbralEnLaAproximacion`.
+      alUmbral: globalThis.__guia?.alUmbralEnLaAproximacion(j.elCampo().pista, s.position.x, s.position.z) ?? null,
     };
   });
 
 /** Lo que no es del ejercicio, mirado en cada lectura mientras dura (H26f); uno por vuelo. */
 let ajeno = vigilarLoAjeno();
+/**
+ * **Lo dicho en la última lectura con el ejercicio abierto**: lo de después ya
+ * es un vuelo, y la torre vuelve a hablar (H26g, como en los demás bancos de
+ * radio). Este no lo llevaba, y juzgaba también lo que se oye en el segundo de
+ * juego que va de cerrarse a la foto: con el alisio, la torre de Fuerteventura
+ * autorizando a despegar a otro justo al pasar por encima de FV (H43).
+ */
+let dichoMientras = null;
+/**
+ * **Y la final de la torre, mientras dura** (H43): cuántas lecturas con el
+ * ejercicio abierto el avión estaba dentro de la final que ve la torre
+ * —a menos de cinco millas del umbral, por debajo de tres mil pies y
+ * apuntando a la pista— y en cuántas la torre lo trataba como suyo, que es
+ * cuando le quita la pista a otro («cleared for take-off») para dártela.
+ */
+let enLaFinal = { dentro: 0, suya: 0, lecturas: 0, alto: null, alto0: null, embudo: 0, bajo: Infinity, alto2: -Infinity };
 const leer = async (page) => {
   const r = await leerSolo(page);
-  await ajeno.mirar(page, r.aguja && r.aguja.fase !== "cerrada");
+  const abierto = r.aguja && r.aguja.fase !== "cerrada";
+  await ajeno.mirar(page, abierto);
+  if (abierto) {
+    dichoMientras = await page.evaluate(() => globalThis.__oga.dichoTodo());
+    enLaFinal.lecturas++;
+    enLaFinal.alto0 ??= `${Math.round(r.sobreElCampo)} m sobre el campo al empezar`;
+    const torcido = ((((r.rumbo * 180) / Math.PI - r.rumboPista) % 360) + 540) % 360 - 180;
+    // Donde la torre te vería en su final si fueras tres mil pies o menos sobre el campo: a cinco millas del umbral y apuntando a la pista.
+    if (r.alUmbral !== null && r.alUmbral <= 5 * 1852 && Math.abs(torcido) <= 60) {
+      enLaFinal.embudo++;
+      enLaFinal.bajo = Math.min(enLaFinal.bajo, r.sobreElCampo);
+      enLaFinal.alto2 = Math.max(enLaFinal.alto2, r.sobreElCampo);
+    }
+    if (r.enLaFinalDeLaTorre) {
+      enLaFinal.dentro++;
+      enLaFinal.alto ??= `${Math.round(r.sobreElCampo)} m sobre el campo y ${Math.round(torcido)}° de la pista`;
+    }
+    if (r.faseDeLaTorre === "final") enLaFinal.suya++;
+  }
   return r;
 };
 
@@ -106,6 +155,8 @@ try {
   for (const vuelo of VUELOS) {
     console.log(`\n${vuelo.nombre}`);
     ajeno = vigilarLoAjeno();
+    dichoMientras = null;
+    enLaFinal = { dentro: 0, suya: 0, lecturas: 0, alto: null, alto0: null, embudo: 0, bajo: Infinity, alto2: -Infinity };
     const contexto = await navegador.newContext({
       viewport: { width: 1280, height: 800 },
       deviceScaleFactor: 1,
@@ -120,6 +171,9 @@ try {
       `${BASE}/?escenario=fuerteventura&hora=12&tramo=taguato-ruvicha&avion=${AVION}&ejercicio=aguja${viento}`,
     );
     await page.waitForFunction(() => globalThis.__oga?.seguirLaAguja?.() != null, null, { timeout: 120000 });
+    await page.evaluate(async () => {
+      globalThis.__guia = await import("/src/world/runway-guide.ts");
+    });
     await pausa(3000);
     const foto = async (n) => {
       const ruta = `${SALIDA}/${vuelo.nombre}-${n}.png`;
@@ -155,7 +209,27 @@ try {
 
     // El automático, y el reloj por cuatro.
     await page.evaluate(() => globalThis.__oga.pilotoAutomatico(true));
+    if (BAJAR)
+      console.log(
+        `    el automático, ${BAJAR} m más abajo: a ` +
+          (await page.evaluate((m) => {
+            const j = globalThis.__oga.juegoParaTrazas();
+            j.objetivos = { ...j.objetivos, altitud: j.objetivos.altitud - m };
+            return Math.round(j.objetivos.altitud);
+          }, BAJAR)) +
+          " m",
+      );
     const puestas = await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
+    // El reloj del juego en el fotograma en que se cierra, para saber si lo que dice la radio va antes o después.
+    await page.evaluate(() => {
+      const o = globalThis.__oga;
+      globalThis.__cierreDeLaAguja = null;
+      const mira = () => {
+        if (o.seguirLaAguja()?.fase === "cerrada") globalThis.__cierreDeLaAguja = o.reloj();
+        else requestAnimationFrame(mira);
+      };
+      requestAnimationFrame(mira);
+    });
     console.log(`    reloj por ${puestas}`);
     let plano = false;
     let pasada = null;
@@ -197,8 +271,29 @@ try {
       comprobar("con el alisio, la estela se curva (la curva del perro)", parte > 0.04, `${Math.round(a.desvio)} m de ${Math.round(a.lejosAlEmpezar ?? 0)}: ${(parte * 100).toFixed(1)} %`);
     else
       comprobar("en calma, la estela sale recta", parte < 0.02, `${Math.round(a.desvio)} m de ${Math.round(a.lejosAlEmpezar ?? 0)}: ${(parte * 100).toFixed(1)} %`);
+    comprobar(
+      "y la torre no te da su final mientras dura: no le quita la pista a nadie para dártela",
+      enLaFinal.suya === 0,
+      `${enLaFinal.suya} de ${enLaFinal.lecturas} lecturas en su final; dentro del cono de la final, ${enLaFinal.dentro}` +
+        (enLaFinal.alto !== null ? `, la primera a ${enLaFinal.alto}` : "") +
+        ` (${enLaFinal.alto0}; a cinco millas del umbral y apuntando a la pista, ${enLaFinal.embudo} lecturas` +
+        (enLaFinal.embudo ? `, de ${enLaFinal.bajo.toFixed(1)} a ${enLaFinal.alto2.toFixed(1)} m sobre el campo` : "") +
+        `; el techo de la final de la torre, 914,4)`,
+    );
     // Nada que no sea del ejercicio (H26f): ni la fase del plan, ni la torre, ni la frecuencia, ni la ventanilla.
-    await ajeno.comprobar(page, comprobar, /^aguja-/);
+    await ajeno.comprobar(page, comprobar, /^aguja-/, null, dichoMientras);
+    const alCerrar = await page.evaluate(() => globalThis.__oga.dichoTodo());
+    const despues = Object.entries(alCerrar).flatMap(([quien, claves]) =>
+      claves.slice(dichoMientras?.[quien]?.length ?? 0).map((c) => `${quien}: ${c}`),
+    );
+    console.log(`    dicho al cerrar, ya en vuelo: ${despues.join(", ") || "nada"}`);
+    const porLaRadio = await page.evaluate(() => {
+      const cierre = globalThis.__cierreDeLaAguja;
+      if (cierre === null) return "sin cierre";
+      const cerca = globalThis.__oga.nombrados().lista.filter((n) => n.t > cierre - 30);
+      return cerca.map((n) => `${n.clave} a ${(n.t - cierre).toFixed(2)} s del cierre`).join(", ") || "nada";
+    });
+    console.log(`    la frecuencia del campo, desde medio minuto antes de cerrar: ${porLaRadio}`);
     // El panel del final, con la traza en el plano: ocho segundos y medio de juego después.
     await pausa(4000);
     await foto("05-final");

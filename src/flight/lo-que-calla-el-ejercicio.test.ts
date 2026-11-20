@@ -12,7 +12,8 @@
 import { describe, expect, it } from "vitest";
 import juego from "../game.ts?raw";
 import { EJERCICIOS, ejercicioPorId, type EjercicioId } from "./ejercicios";
-import { NO_CALLA_NADA, loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
+import { NO_CALLA_NADA, faseQueVeLaTorre, loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
+import { PISTA_TUYA } from "./radio";
 
 const TODO = {
   laFase: true,
@@ -99,6 +100,39 @@ describe("lo que calla un ejercicio que no acaba en la pista", () => {
     });
 });
 
+/*
+ * H43: «Seguí la aguja» en Fuerteventura con el alisio va a tres mil pies sobre
+ * la pista —el techo justo de la final de la torre— y cruza el embudo de la 01
+ * apuntando a ella: con un metro de menos, la torre lo veía en su final y le
+ * daba la salida a otro para dejarle la pista.
+ */
+describe("la final de la torre, con un ejercicio que la calla", () => {
+  it("sin ejercicio, dentro de su final la torre te ve en final, y la pista es tuya", () => {
+    expect(faseQueVeLaTorre("en-vuelo", true, NO_CALLA_NADA)).toBe("final");
+    expect(PISTA_TUYA.has(faseQueVeLaTorre("en-vuelo", true, NO_CALLA_NADA))).toBe(true);
+    expect(faseQueVeLaTorre("en-vuelo", false, NO_CALLA_NADA)).toBe("en-vuelo");
+    expect(faseQueVeLaTorre("final", false, NO_CALLA_NADA)).toBe("final");
+    expect(faseQueVeLaTorre("aterrizado", true, NO_CALLA_NADA)).toBe("aterrizado");
+  });
+
+  for (const id of DE_RADIO)
+    it(`«${id}», mientras dura, no está en la final de nadie: la pista no es suya; cerrado, sí`, () => {
+      const e = ejercicioPorId(id);
+      expect(e?.acabaEnElAire, id).toBe(true);
+      for (const fase of ["en-vuelo", "final"])
+        expect(PISTA_TUYA.has(faseQueVeLaTorre(fase, true, loQueCallaElEjercicio(e, false))), fase).toBe(false);
+      expect(faseQueVeLaTorre("en-vuelo", true, loQueCallaElEjercicio(e, true))).toBe("final");
+    });
+
+  for (const id of [...ACABAN_EN_LA_PISTA, "cangrejo", "ala-baja", "pista-corta"] as const)
+    it(`«${id}» acaba en la pista: su final es la de la torre`, () => {
+      const e = ejercicioPorId(id);
+      expect(e, id).not.toBeNull();
+      expect(faseQueVeLaTorre("en-vuelo", true, loQueCallaElEjercicio(e, false))).toBe("final");
+      expect(faseQueVeLaTorre("en-vuelo", true, loQueCallaElEjercicio(e, false, true))).toBe("final");
+    });
+});
+
 /** El cuerpo de un método de `game.ts`, de su firma a la llave que lo cierra. */
 function cuerpoDe(firma: RegExp): string {
   const m = firma.exec(juego);
@@ -123,6 +157,12 @@ describe("y el juego lo calla donde nace cada cosa", () => {
     const cuerpo = cuerpoDe(/\n {2}private hayTorreQueHable\(\): boolean \{/);
     expect(cuerpo, "no se encontró hayTorreQueHable en game.ts").not.toBe("");
     expect(cuerpo).toMatch(/!this\.loQueCalla\.laTorre/);
+  });
+
+  it("ni te ve en su final, que es lo que le quita la pista a otro por vos (H43)", () => {
+    const cuerpo = cuerpoDe(/\n {2}private faseParaLaTorre\(fase: string\): string \{/);
+    expect(cuerpo, "no se encontró faseParaLaTorre en game.ts").not.toBe("");
+    expect(cuerpo).toMatch(/faseQueVeLaTorre\(fase, this\.enLaFinalDeLaTorre, this\.loQueCalla\)/);
   });
 
   it("la frecuencia del campo no se oye, pero su tráfico sigue volando", () => {

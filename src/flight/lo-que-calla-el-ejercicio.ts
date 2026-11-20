@@ -24,7 +24,9 @@
  *   ejercicio. El tráfico sigue volando su circuito: solo deja de oírse.
  * - **La torre hablándote a vos**: el relevo de frecuencia, los permisos, la
  *   pista ocupada. En un ejercicio la torre contesta porque una emergencia se
- *   declara a ella, y en estos no se declara nada.
+ *   declara a ella, y en estos no se declara nada. Y tampoco te ve en su
+ *   final, que es lo que le hace quitarle la pista a otro por vos (H43, ver
+ *   `faseQueVeLaTorre`).
  * - **Lo que se ve por la ventanilla**: «a la izquierda, la Isla de Lobos» le
  *   tapó la tarjeta del ejercicio a quien estaba virando para coger el radial.
  *   Como con la tormenta del ejercicio por delante (`tormentaPorDelante`), no
@@ -161,4 +163,35 @@ export function loQueCallaElEjercicio(
    */
   if (ejercicio.escena === "pista-corta") return { ...NO_CALLA_NADA, laFase: true, lasExplicaciones: true };
   return seVaAlAire ? SOLO_LA_FASE : NO_CALLA_NADA;
+}
+
+/**
+ * **La fase que ve la torre**, a partir de la del plan: la misma, salvo en
+ * vuelo y dentro de su final —a menos de cinco millas del umbral, por debajo
+ * de tres mil pies y apuntando a la pista (`flight/final-de-la-torre.ts`)—,
+ * que para ella ya es «final». Y con la final, la pista es tuya: se la quita
+ * a quien la tuviera —«cleared for take-off» al que esperaba en la cabecera—
+ * y pide tu permiso (`PISTA_TUYA` y `alSerTuya` en `turno-de-pista.ts`).
+ *
+ * **Con un ejercicio que calla la torre, no hay final suya** (H43). Callar la
+ * torre era callar su voz donde nace (`hayTorreQueHable`) y la frecuencia
+ * (`oirElCampo`), pero lo que le quita la pista a otro por vos lo dice el
+ * turno directamente, y no pasaba por ninguna de las dos. Volando «Seguí la
+ * aguja» en Fuerteventura con el alisio, la torre le dio la salida a otro
+ * justo al llegar encima de FV: el ejercicio va nivelado a tres mil pies sobre
+ * la pista (`ALTURA_DE_LA_AGUJA`), que es justo el techo de esa final, y con
+ * el alisio cruza el embudo de la 01 apuntando a ella —cincuenta lecturas
+ * del banco— a entre 0,6 y 1,2 m por encima. Un metro que baje el
+ * automático y entra.
+ * Antes de H39a empezaba dieciséis metros más arriba y no entraba nunca.
+ * Quien sigue la aguja no viene a aterrizar: la torre no le da la pista ni
+ * se la quita a nadie, y al cerrarse el ejercicio la ve otra vez como siempre.
+ */
+export function faseQueVeLaTorre(
+  fase: string,
+  enLaFinalDeLaTorre: boolean,
+  calla: Pick<LoQueCalla, "laTorre">,
+): string {
+  if (calla.laTorre) return fase === "final" ? "en-vuelo" : fase;
+  return fase === "en-vuelo" && enLaFinalDeLaTorre ? "final" : fase;
 }

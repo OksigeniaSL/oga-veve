@@ -96,7 +96,7 @@ import {
 } from "./world/superficies-de-mando";
 import { conV1, seOfrece, type Ejercicio } from "./flight/ejercicios";
 import { SE_DICE_HASTA, seSigueEnV1, yaSeSigue } from "./flight/lo-que-se-dice-al-despegar";
-import { loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
+import { faseQueVeLaTorre, loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
 import {
   alturaDelEjercicio,
@@ -13007,9 +13007,13 @@ export class Game {
     });
   }
 
-  /** La fase que ve la torre, a partir de la del plan. Ver `faseDeLaTorre`. */
+  /**
+   * La fase que ve la torre, a partir de la del plan. Ver `faseDeLaTorre`, y
+   * `faseQueVeLaTorre` para la final que no es suya con un ejercicio que calla
+   * la torre (H43).
+   */
   private faseParaLaTorre(fase: string): string {
-    return fase === "en-vuelo" && this.enLaFinalDeLaTorre ? "final" : fase;
+    return faseQueVeLaTorre(fase, this.enLaFinalDeLaTorre, this.loQueCalla);
   }
 
   /**
