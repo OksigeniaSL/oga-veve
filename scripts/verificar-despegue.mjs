@@ -114,6 +114,27 @@ await page.addScriptTag({
     `globalThis.__elEjeDeLaCarrera = ${elEjeDeLaCarrera.toString()};\n` +
     `globalThis.__tramoDelBanco = ${JSON.stringify(TRAMO)};`,
 });
+/*
+ * **Y en el peldaño de cabina, con las voces de verdad** (H44b). El pack se
+ * baja después del primer gesto, como en el juego, y este banco no hace
+ * ninguno: la primera tirada en Taguató Ruvichá apuntó «eighty knots: sin
+ * grabar, no se pide» y «V one» y «rotate» a la voz del navegador, con las
+ * tres tomas en el pack. Lo que se mide ahí es justo lo que suena, así que se
+ * hace lo de `verificar-tormenta.mjs`: una tecla que no hace nada y esperar
+ * al pack entero. En los de abajo, como estaba —sin voz, la radio va más
+ * deprisa y lo demás no cambia—; con `OGA_CON_VOCES=1`, también.
+ */
+if (TRAMO === "taguato-ruvicha" || process.env.OGA_CON_VOCES) {
+  await page.keyboard.press("Shift");
+  await page
+    .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, { timeout: 90000 })
+    .catch(() => {});
+  await page
+    .waitForFunction(() => (globalThis.__oga?.voz?.().pack ?? "listo") === "listo", null, {
+      timeout: 120000,
+    })
+    .catch(() => {});
+}
 
 const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
