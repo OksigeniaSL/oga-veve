@@ -18,7 +18,7 @@ import { airDensity, SEA_LEVEL_DENSITY } from "../src/flight/atmosphere";
 import { mandosPara, memoriaNueva } from "../src/flight/piloto-automatico";
 import { muescaDeAterrizaje } from "../src/flight/flaps";
 import { pitchAngleOf } from "../src/ui/actitud";
-import { duracionDelPerfil, gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
+import { duracionDelPerfil, FLOTA, gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
 
 const NUDO = 0.514444;
 /** La recogida del JAZ 40 en la tanda 19: a 8 m, bajando lo que pide la senda. */
@@ -42,21 +42,43 @@ describe("el gas del bimotor en la recogida", () => {
     }
   });
 
-  it("y si el avión deja de bajar, al ralentí cuando el perfil ya habría tocado", () => {
+  it("y si el avión baja menos de lo pedido, al ralentí cuando el perfil ya habría tocado", () => {
     const dura = duracionDelPerfil(RECOGIDA.altura, RECOGIDA.caida, RECOGIDA.alTocar);
     expect(dura).toBeGreaterThan(4);
     expect(dura).toBeLessThan(5);
-    const flotando = (segundos) => ({ ...RECOGIDA, quedaMasBaja: 1, segundos, falta: -2.4, carga: 1 });
-    expect(gasDelBimotorEnLaRecogida(flotando(0))).toBeCloseTo(RECOGIDA.gas, 6);
-    expect(gasDelBimotorEnLaRecogida(flotando(dura / 2))).toBeCloseTo(RECOGIDA.gas / 2, 6);
-    expect(gasDelBimotorEnLaRecogida(flotando(dura))).toBe(0);
+    // Medio metro por segundo menos de lo pedido: se queda la altura, sin llegar a flotar.
+    const casiQuieto = (segundos) => ({ ...RECOGIDA, quedaMasBaja: 1, segundos, falta: -0.5, carga: 1 });
+    expect(gasDelBimotorEnLaRecogida(casiQuieto(0))).toBeCloseTo(RECOGIDA.gas, 6);
+    expect(gasDelBimotorEnLaRecogida(casiQuieto(dura / 2))).toBeCloseTo(RECOGIDA.gas / 2, 6);
+    expect(gasDelBimotorEnLaRecogida(casiQuieto(dura))).toBe(0);
     // La de antes se quedaba con el de la senda mientras no bajara.
-    expect(deAntes(flotando(dura * 3), 1)).toBeCloseTo(RECOGIDA.gas, 6);
+    expect(deAntes(casiQuieto(dura * 3), 1)).toBeCloseTo(RECOGIDA.gas, 6);
   });
 
   it("y lo quitado no vuelve aunque una racha lo suba", () => {
-    const p = { ...RECOGIDA, quedaMasBaja: 0.3, segundos: 1, falta: -1, carga: 1 };
+    const p = { ...RECOGIDA, quedaMasBaja: 0.3, segundos: 1, falta: -0.5, carga: 1 };
     expect(gasDelBimotorEnLaRecogida(p)).toBeCloseTo(RECOGIDA.gas * 0.3, 6);
+  });
+
+  /*
+   * **Y si flota, el gas fuera del todo** (H45b): bajando más de `FLOTA` m/s
+   * menos de lo que pide el perfil, cero, aunque la carga baje de un g al
+   * nivelarse —que con la cuenta de H34d volvía como gas—; y desde que ha
+   * flotado, el de la senda ya no vuelve: solo el de la racha que lo hunde.
+   */
+  it("y si flota, el gas fuera del todo, y el de la senda ya no vuelve", () => {
+    expect(FLOTA).toBe(0.6);
+    const flotando = { ...RECOGIDA, quedaMasBaja: 1, segundos: 0, falta: -2.4, carga: 0.8 };
+    expect(gasDelBimotorEnLaRecogida(flotando)).toBe(0);
+    // Con la cuenta de H45, el de la senda entero y dos décimas por la carga.
+    expect(deAntes(flotando, 1)).toBeCloseTo(RECOGIDA.gas + 0.2, 6);
+    // Justo en la holgura, todavía no flota.
+    expect(gasDelBimotorEnLaRecogida({ ...flotando, falta: -FLOTA, carga: 1 })).toBeCloseTo(RECOGIDA.gas, 6);
+    // Ya flotó: lo de la senda no vuelve aunque vuelva a bajar lo pedido…
+    const yaFloto = { ...RECOGIDA, quedaMasBaja: 0.8, segundos: 1, falta: 0, carga: 1, floto: true };
+    expect(gasDelBimotorEnLaRecogida(yaFloto)).toBe(0);
+    // …y si una racha lo hunde, su pelo de gas, como en H34d.
+    expect(gasDelBimotorEnLaRecogida({ ...yaFloto, falta: 0.3, carga: 0.9 })).toBeCloseTo(0.4, 6);
   });
 
   it("y la racha que lo hunde sigue pidiendo gas encima, como en H34d", () => {
