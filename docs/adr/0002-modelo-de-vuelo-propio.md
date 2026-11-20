@@ -1373,3 +1373,116 @@ ILS del JAZ 50 pasó de 20 de 20 a 15 de 20 con este cambio. El juego estaba
 bien; el banco compensa ahora como quien vuela. El del JAZ 40, que también
 dejó de posar en esta tanda, era la carrera con los pies quietos, y no de
 esta nota. Ver la enmienda H42 del ADR 0030.
+
+## Nota H40c (20-11-2026): la final colocada sostiene su senda también con la ayuda de subida
+
+### Lo que pasaba
+
+Lo dejó escrito H40b, arriba: en los peldaños con la ayuda de subida
+(`climbHold`: Tukã a uno, Taguató a 0,45; Guyrami lleva el modelo sencillo y
+Taguató Ruvichá no la lleva), la final colocada y sin nadie a los mandos no
+bajaba por la senda. Al soltar, la ayuda coge lo que lleva el avión entre
+nivelado y subiendo —«el objetivo nunca es un descenso», `trimClimb` en
+`fdm.ts`—, y el avión recién colocado nacía nivelado, con la velocidad
+horizontal y el gas de bajar: la ayuda cogía cero, y el avión frenaba hasta
+que la ley de la velocidad le bajaba el morro, por encima de la senda.
+
+La regla está bien para lo que se puso: que un transitorio al soltar no se
+memorice como bajada y el avión se vaya al suelo despacio y con obstinación.
+Pero una final colocada no baja por un transitorio: baja porque se ha
+colocado así. Es una petición, como un toque del compensador, que ya movía lo
+pedido hacia abajo.
+
+### La causa, en la mesa
+
+El modelo solo, colocado como `reiniciarEnFinal` a 600 m —el de tren fijo,
+limpio y a vez y media su aproximación; el de tren que se recoge,
+configurado y a 1,1 veces—, con el gas de su senda de tres grados y
+compensado, cincuenta segundos sin tocar nada. En cada casilla, la velocidad
+a los cincuenta segundos y, tras el punto y coma, lo más que se apartó de la
+de colocación y de la senda:
+
+| Peldaño | Avión | Antes | Después |
+|---|---|---|---|
+| Taguató | JAZ 20, 96,2 kt | 80,1 kt; 16,1 kt y 59,4 m | 96,0 kt; 0,2 kt y 1,1 m |
+| Taguató | JAZ 50, 104,6 kt | 86,6 kt; 18,1 kt y 58,7 m | 104,2 kt; 0,4 kt y 1,3 m |
+| Taguató | JAZ 60, 118,5 kt | 108,1 kt; 10,4 kt y 67,3 m | 118,0 kt; 0,4 kt y 3,1 m |
+| Taguató | JAZ 90, 129,5 kt | 117,1 kt; 12,3 kt y 39,9 m | 129,0 kt; 0,5 kt y 3,3 m |
+| Tukã | JAZ 20 | 73,2 kt; 23,0 kt y 74,8 m | 96,1 kt; 0,1 kt y 0,6 m |
+| Tukã | JAZ 50 | 78,9 kt; 25,8 kt y 74,8 m | 104,4 kt; 0,3 kt y 0,7 m |
+| Tukã | JAZ 60 | 106,3 kt; 12,2 kt y 76,2 m | 118,3 kt; 0,2 kt y 1,8 m |
+| Tukã | JAZ 90 | 114,5 kt; 14,9 kt y 46,7 m | 129,4 kt; 0,1 kt y 2,2 m |
+| Taguató Ruvichá | JAZ 20 | 96,7 kt; 3,9 kt y 11,4 m | 95,5 kt; 0,7 kt y 3,1 m |
+| Taguató Ruvichá | JAZ 90 | 128,5 kt; 4,9 kt y 19,3 m | 128,3 kt; 1,2 kt y 5,7 m |
+
+Taguató Ruvichá no tiene ayuda: lo de antes es el fugoide de nacer nivelado
+con el gas de bajar, que se asentaba subiendo y bajando quince o veinte
+metros alrededor de la senda.
+
+Y lo mismo al cambiar de peldaño en el aire: el modelo nuevo nacía nivelado y
+equilibrado con el ala limpia, llevara los flaps que llevara, y compensado
+para ir limpio. Quince segundos por la senda en Taguató Ruvichá y se sube a
+Taguató: el JAZ 20 se iba de 97,0 a 80,7 kt y 57 m por encima; el JAZ 60,
+configurado, de 117,3 a 98,1 kt y 106 m por encima. Después: 0,4 kt y 2,8 m
+el JAZ 20, 0,9 kt y 9,5 m el JAZ 60, y en Tukã igual.
+
+### Lo que se decidió
+
+- **`InitialConditions.trayectoria`**: por qué trayectoria se coloca el
+  avión, en radianes, negativa bajando. Con `equilibrado`, nace con la
+  velocidad por ella y el morro en el ángulo de ataque más la trayectoria.
+- **Y en el modelo completo es la petición de la ayuda**: `reset` pone
+  `trimClimb` en la velocidad por el seno de la trayectoria, con el tope de
+  los toques del compensador (`SUBIDA_PEDIDA_TOPE`, cinco metros por segundo
+  a cada lado; la senda más empinada de las publicadas, 3,45°, con el JAZ 120
+  a la suya, pide 4,96), y sin el margen de asentarse, que la volvería a
+  coger. Sin trayectoria, como siempre.
+- **`reiniciarEnFinal` la pasa**: la senda de la cabecera en la final, cero
+  en los ejercicios, que nacen nivelados y ahora la ayuda sostiene nivelado
+  exacto en vez de lo que diera el primer segundo.
+- **`cycleTier` coloca con `comoIba`** (`flight/model.ts`): los flaps que
+  lleva y la trayectoria que llevaba, y el compensador con esos flaps.
+- **No cambia lo de soltar tras pilotar**: si se coge la palanca, lo pedido
+  se olvida, y al soltar se coge entre nivelado y subiendo, como siempre. Ni
+  los toques del compensador, ni subir ni nivelar.
+- Es la decisión de juego que H40b dejó sin tomar: la final colocada y suelta
+  baja por su senda hasta el suelo en los tres peldaños del modelo completo,
+  como baja un avión compensado (Guyrami, con el sencillo, no se ha tocado). Lo que llega sin nadie a los mandos llega como en Taguató
+  Ruvichá, sin recogida.
+
+### Las pruebas
+
+`colocado-y-compensado.test.ts`: las finales colocadas en Tukã y Taguató con
+el JAZ 20, el JAZ 50, el JAZ 60 y el JAZ 90, cincuenta segundos sueltas, a
+menos de 5 kt de la velocidad de colocación y de 10 m de la senda en todo
+momento; el cambio de peldaño por la senda, con `comoIba`, a menos de 5 kt y
+12 m; y la regla de siempre: soltado tras empujar, la ayuda no sostiene la
+bajada del empujón. Las de antes colocan ya con la trayectoria, como el
+juego; y la que mira que el compensador en cero se nota pasa a Taguató
+Ruvichá: en Taguató, con el nivelado colocado como petición, la ayuda tapaba
+media falta (6 a 8 kt en vez de más de 10), y esa prueba está para ver el
+compensador solo.
+
+### Volado en el navegador
+
+`scripts/ver-el-gas-al-colocar.mjs`, la final del cangrejo de Los Rodeos sin
+viento y sin tocar nada, el juego por cuatro (20-11-2026, puerto 5686). Antes,
+con el código de antes de esta nota; después, con ella:
+
+| Caso | Antes | Después |
+|---|---|---|
+| JAZ 20, Taguató, a 96,2 kt | en el aire al medio minuto de reloj, a 79,6 kt (bajó a 76,7) | toca a los 18,8 s de reloj a 95,8 kt (entre 95,3 y 98,2) |
+| JAZ 50, Taguató, a 104,6 kt | toca a los 25,4 s a 86,5 kt (bajó a 84,3) | toca a los 17,2 s a 105,4 kt (entre 100,7 y 106,0) |
+| JAZ 90, Taguató, a 129,5 kt | toca a los 18,5 s a 116,7 kt (bajó a 115,7) | toca a los 14,8 s a 129,8 kt (entre 129,2 y 131,0) |
+| JAZ 20, Tukã, a 96,2 kt | en el aire al medio minuto, a 70,5 kt (bajó a 70,2) | toca a los 18,1 s a 95,4 kt (entre 94,7 y 97,2) |
+
+El JAZ 20 de antes en Taguató es el de la tabla de H40b (81,0 kt al medio
+minuto, 141 m más abajo): la misma final, otra tirada.
+
+Con el arreglo, los cuatro bajan por la senda a su velocidad hasta tocar, que
+es donde el banco se para. Tocan sueltos, sin recogida, a lo que baja la
+senda con el efecto suelo: en la mesa, colocados a 189 m sobre un llano, de
+2,40 a 2,99 m/s en Tukã y Taguató (de 2,13 a 2,36 sin ayuda, en Taguató
+Ruvichá), ninguno roto —el límite de Taguató es 11,6— y el JAZ 90 por debajo
+de los diez pies por segundo de una toma dura de transporte. Es lo que ya
+hacía el avión compensado sin ayuda.
