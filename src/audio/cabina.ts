@@ -190,9 +190,10 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
  * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen dos
  * pruebas de `cabina.test.ts`—, y estos son la excepción escrita: el juego ya
  * sabe cuándo decirlos y los pide solo si están en el pack. Cuando se graben,
- * salen de aquí; la prueba lo recuerda. Hoy no espera ninguno: el último fue
- * «flaps up», la orden de recoger los flaps del despegue (ADR 0027, enmienda
- * H14a), grabado el 16-11-2026.
+ * salen de aquí; la prueba lo recuerda. Hoy espera uno: «eighty knots», los
+ * ochenta nudos de la carrera de despegue del E-Jet (ADR 0014, enmienda
+ * H44a). El último que salió fue «flaps up», la orden de recoger los flaps
+ * del despegue (ADR 0027, enmienda H14a), grabado el 16-11-2026.
  */
 export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
   // Los ochenta nudos de la carrera de despegue del E-Jet (H44a, 20-11-2026).
