@@ -81,6 +81,18 @@ describe("la escalera de velocidades", () => {
       expect(machDeCrucero(a), a.id).toBeNull();
   });
 
+  /*
+   * **El 747-100 cruza a M0,84**, unos 500 nudos verdaderos: la ficha B741
+   * de SKYbrary, que sale de la base de prestaciones de Eurocontrol —leída en
+   * el resumen del buscador; la página no se dejó abrir, **por verificar**—.
+   * Los 230 m/s a FL350 de su ficha son M0,78, y salen de un caso de vuelo de
+   * la NASA (CR-2144), no de un crucero. No se ha encontrado una tabla de
+   * Boeing del 747 clásico que lo diga, y subirlo mueve la caída de su empuje
+   * con la velocidad, que en `empujeLleno` se cuenta con el crucero de la
+   * ficha: ver la enmienda H37j del ADR 0027.
+   */
+  it.todo("el JAZ 120 cruza al M0,84 de su clase, con el empuje separado del crucero");
+
   it("a FL290 el JAZ 120 va por Mach, a los 270–290 nudos que se ven de verdad", () => {
     // Enrique: «lo real a FL290 son unos 270–280 kt, M 0,80». No 185.
     const v = velocidadQueToca(de("jaz-120"), { ...subiendo(29000), subiendo: false });

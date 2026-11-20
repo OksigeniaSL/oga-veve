@@ -229,6 +229,26 @@ describe("la velocidad de la tabla de crucero", () => {
     expect(arriba).toBeLessThanOrEqual(a.cruiseSpeed);
   });
 
+  /*
+   * **El turbohélice cruza a crucero máximo, no al 75 %** (ADR 0027, enmienda
+   * H37j). La tabla del Twin Otter -400 a 10.000 ft: 182 nudos a crucero
+   * máximo con 600 lb/h (De Havilland, *Twin Otter Classic 300-G Wheels
+   * Specifications*, 2025; Viking, *Twin Otter Series 400 Technical
+   * Specifications*, 2018) y 146 a crucero económico con 468,2 lb/h (folleto
+   * del Guardian 400). No tiene fila del 75 %, y con él la tabla del juego le
+   * daba 168 nudos, que no es ninguna suya.
+   */
+  it("el JAZ 50 a diez mil pies va al crucero máximo de su manual, a un 2 %", () => {
+    const a = de("jaz-50");
+    const v = velocidadDeCrucero(a, { altura: 10000 * PIE, tren: 0 });
+    expect(v / NUDO).toBeGreaterThan(182 * 0.98);
+    expect(v).toBeLessThanOrEqual(a.cruiseSpeed);
+    // Y su crucero económico se sostiene con la mitad de la placa, más o menos.
+    const economico = gasQueSostiene(a, { altura: 10000 * PIE, verdadera: 146 * NUDO, flaps: 0, tren: 0, pendiente: 0 })!;
+    expect(economico).toBeGreaterThan(0.45);
+    expect(economico).toBeLessThan(0.6);
+  });
+
   it("un reactor abajo no da la de su ficha, que es la de arriba: se queda bajo su Vmo", () => {
     for (const id of ["jaz-90", "jaz-110", "jaz-120"]) {
       const a = de(id);

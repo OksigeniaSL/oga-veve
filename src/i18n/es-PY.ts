@@ -2646,6 +2646,7 @@ export const ES_PY = {
   "hud.terrInhibitPrendido": "Ya lejos de esa pista: el avión vuelve a avisar de los cerros de adelante",
   // El anillo turbillonario, en la tarjeta: lo que pasa y lo que se hace. Ver `vuelo.anillo`.
   "hud.anillo": "Te hundís en el viento de tu rotor: cíclico adelante y ganá velocidad",
+  "hud.altitudMaxima": "Más arriba de lo que tiene aprobado este avión: bajá tranquilo un poco",
   "hud.pulsaTerrInhibit": "Esta pista no está en la base del TAWS: apretá TERR INHIBIT",
   "hud.sueltaTerrInhibit": "A más de quince millas de la pista: volvé a apretar TERR INHIBIT",
   "hud.pilotoAutomatico": "Piloto automático",
@@ -2873,6 +2874,12 @@ export const ES_PY = {
    */
   "vuelo.anillo":
     "Estás bajando dentro del viento que echa tu rotor, y así no te sostiene. Subir el colectivo no te saca: cíclico adelante, ganá velocidad, y salís.",
+  /*
+   * **Pasada la altitud máxima de operación**, que ninguna caja avisa: lo
+   * cuenta ella, con el porqué y sin drama. Ver `flight/altitud-maxima.ts`.
+   */
+  "vuelo.altitudMaxima":
+    "Pasamos la altura más alta que tiene aprobada este avión. Más arriba el aire es tan finito que su manual no lo deja: bajá tranquilo un poco.",
   "vuelo.salenLosFrenosDeTierra":
     "¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan",
   "vuelo.sinFrenosDeTierra":
@@ -3040,6 +3047,7 @@ export const ES_PY = {
   "palabra.terrInhibitApagado": "Apagado",
   "palabra.terrInhibitPrendido": "Prendido",
   "palabra.anillo": "¡Adelante!",
+  "palabra.altitudMaxima": "¡Muy alto!",
   "vuelo.despacio": "Más despacio",
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la
   // tecla del freno. Sin eso, el gesto dice qué pero no cómo.

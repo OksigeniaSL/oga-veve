@@ -994,6 +994,17 @@ export interface AircraftConfig {
    */
   potenciaAlEje?: number;
   /**
+   * **La potencia con la que se cruza**, fracción de la de nivel del mar: la
+   * fila de la tabla de crucero de su manual con la que se planea un tramo.
+   *
+   * Sin decir, el 75 %, que es la de un manual de avioneta de pistón. Un
+   * turbohélice no tiene fila del 75 %: su tabla va por crucero máximo,
+   * económico y de más autonomía, y la del crucero de la ficha es la máxima.
+   * Ver `velocidadDeCrucero` en `gas-que-toca.ts` y el JAZ 50. ADR 0027,
+   * enmienda H37j.
+   */
+  potenciaDeCrucero?: number;
+  /**
    * A qué altura se hace ese crucero, m.
    *
    * **La cifra de crucero de un avión es verdad arriba y no abajo**, y sin esta
@@ -2564,6 +2575,19 @@ export const JAZ_50: AircraftConfig = {
   heliceSinEmpujeA: 130,
   // Los 620 shp de cada PT6A, los de su régimen plano: de lo que sale lo que gasta. Ver `potenciaAlEje`.
   potenciaAlEje: 2 * 620 * 745.7,
+  /*
+   * **Cruza a crucero máximo, que es toda su placa.** La tabla de su manual
+   * a 10.000 ft no tiene fila del 75 %: da 182 nudos a crucero máximo, con
+   * 600 lb/h (De Havilland, *Twin Otter Classic 300-G Wheels
+   * Specifications*, 2025; Viking, 2018), 146 a crucero económico, con
+   * 468,2 lb/h (folleto del Guardian 400), y 94 indicados a la de más
+   * autonomía. Y el crucero máximo es la misma placa de 620 shp, 50 psi de
+   * par, que el despegue y la máxima continua (ver `alturaCritica`). Con el
+   * 75 % de las avionetas la tabla del juego le daba 168 nudos a diez mil
+   * pies, que no es ninguna fila suya; con la placa entera, 180, y el modelo
+   * cruza a 146 con la mitad. ADR 0027, enmienda H37j.
+   */
+  potenciaDeCrucero: 1,
   /*
    * **1.168 kg de queroseno** en los depósitos de serie (De Havilland, 300-G,
    * 2025: «Standard Fuel Capacity 1,168 kg»), los de debajo del suelo de la
