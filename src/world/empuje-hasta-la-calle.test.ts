@@ -17,10 +17,12 @@
  * llegar y de cualquiera se sale empujado (`salirEmpujadoDeDondeSeLlego` en `game.ts`),
  * y con los tres reactores desde el puesto que elige el plan.
  *
- * Lo que queda fuera, a propósito, es la raya que no tuerce cerca: la que sigue recta
- * más de `RECTA_DE_LA_PLATAFORMA`, la que solo se tuerce poco y gira lejos, y la que sale
- * del puesto de lado. Ahí el empuje sale «de frente», como dice `trayectoriaDelEmpuje`,
- * y lo que se mide de ellas está en el ADR.
+ * Esa primera prueba deja fuera la raya que no tuerce cerca: la que sigue recta más de
+ * `RECTA_DE_LA_PLATAFORMA`, la que solo se tuerce poco y gira lejos, y la que sale del
+ * puesto de lado. **Desde el puesto que elige el plan** la segunda no deja fuera más que la
+ * que sale de lado (H47b): con los tres reactores, el avión acaba sobre la raya y con el
+ * morro por ella, y eso se mide por delante del morro, sin la regla del empuje. Y aparte,
+ * con `OGA_BARRIDO_DEL_EMPUJE`, la tabla de todos los empujes de contacto.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -159,6 +161,84 @@ function medir(c: Caso): { readonly tuerce: boolean; readonly torcido: number; r
   };
 }
 
+/** Lo que puede quedar el avión al lado de la raya al acabar el empuje, m: la tripulación lo rueda recto. */
+const SOBRE_LA_RAYA = 3;
+
+/** Cómo deja el empuje el avión respecto a la raya, mirado por delante del morro. */
+interface ComoAcaba {
+  /** Dónde arranca el avión, en metros del campo: lo que dice qué puesto es. */
+  readonly ref: string;
+  /** Si la raya sale del puesto de lado, a lo largo de la fachada. */
+  readonly deLado: boolean;
+  /** Si la raya tuerce debajo del avión: deja de ir recta más cerca del puesto que el tren principal. */
+  readonly debajo: boolean;
+  /** Lo que se aparta el morro de la raya en el sitio de ella más alineado con él, rad. */
+  readonly torcido: number;
+  /** Lo que queda ese sitio al lado del eje del avión, m. */
+  readonly aparte: number;
+  /** Lo que acaba el centro del avión de la raya, m. */
+  readonly lejos: number;
+  readonly largo: number;
+  readonly giro: number;
+}
+
+/**
+ * **Cómo acaba el empuje, sin mirar su regla**: de la raya por delante del morro —hasta
+ * ciento cincuenta metros—, el sitio que queda en el eje del avión (a menos de
+ * `SOBRE_LA_RAYA`) con la raya más alineada con el morro. Si no hay ninguno en el eje,
+ * el más cercano a él. La dirección de la raya, la de sus quince metros siguientes.
+ */
+function comoAcaba(c: Caso): ComoAcaba | null {
+  const aero = c.campo.aerodrome!;
+  const plan = new PlanDeVuelo(aero, { ...c.campo.runway, heading: c.rumboDePista }, () => 600, c.avion);
+  plan.deContacto = true;
+  if (!(c.puesto ? plan.reiniciarDesde(c.puesto) : plan.reiniciar())) return null;
+  const arranque = plan.arranque();
+  if (!arranque) return null;
+  const [x, z] = arranque;
+  const edificios = edificiosDePasarela(aero);
+  const morro = morroDe(c.avion);
+  if (!saleConRemolque(vaALaPasarela(c.avion), x, z, edificios, morro)) return null;
+  const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
+  const rumbo = rumboEnElPuesto(x, z, edificios, raya);
+  if (rumbo === null) return null;
+  const centro = conLaRuedaEn({ x, z }, rumbo, morro);
+  const e = trayectoriaDelEmpuje({ x: centro.x, z: centro.z, rumbo }, raya, c.avion.batalla);
+  if (!e) return null;
+  const fin = e.poses.at(-1)!;
+  const n = vector(fin.rumbo);
+  const acum = acumulado(raya);
+  const salida = rumboEntre(raya[0]!, aLos(raya, acum, 20));
+  // Lo que va recta la raya desde el puesto, sin apartarse más de `DE_SU_RECTA` de su primera dirección.
+  const ns = vector(salida);
+  let recta = 0;
+  for (let i = 1; i < raya.length; i++) {
+    if (Math.abs((raya[i]!.x - raya[0]!.x) * -ns.z + (raya[i]!.z - raya[0]!.z) * ns.x) > DE_SU_RECTA) break;
+    recta = acum[i]!;
+  }
+  let mejor = { torcido: Math.PI, aparte: Infinity };
+  for (let s = 0; s <= Math.min(acum.at(-1)!, 600); s += 1) {
+    const q = aLos(raya, acum, s);
+    const delante = (q.x - fin.x) * n.x + (q.z - fin.z) * n.z;
+    if (delante < 0 || delante > 150) continue;
+    const aparte = Math.abs((q.x - fin.x) * -n.z + (q.z - fin.z) * n.x);
+    const torcido = Math.abs(diferencia(fin.rumbo, rumboEntre(q, aLos(raya, acum, s + 15))));
+    const enElEje = aparte < SOBRE_LA_RAYA;
+    const mejorEnElEje = mejor.aparte < SOBRE_LA_RAYA;
+    if (enElEje ? !mejorEnElEje || torcido < mejor.torcido : !mejorEnElEje && aparte < mejor.aparte) mejor = { torcido, aparte };
+  }
+  return {
+    ref: `${x.toFixed(0)},${z.toFixed(0)}`,
+    deLado: Math.abs(diferencia(rumbo + Math.PI, salida)) > DE_ESPALDAS,
+    // De la rueda de morro, que está en el punto del puesto, al tren principal hay una batalla.
+    debajo: recta < c.avion.batalla,
+    lejos: Math.hypot(...((q) => [q.x - fin.x, q.z - fin.z])(aLos(raya, acum, sobreLaRaya(raya, acum, fin)))),
+    ...mejor,
+    largo: e.largo,
+    giro: e.giro,
+  };
+}
+
 describe("el empuje acaba con el morro hacia donde va la raya", async () => {
   const vistos = new Set<string>();
   const campos: Scenario[] = [];
@@ -194,10 +274,95 @@ describe("el empuje acaba con el morro hacia donde va la raya", async () => {
     }
   });
 
+  /*
+   * **Desde el puesto que elige el plan, sobre la raya y mirando por ella** (H47b): con
+   * los tres reactores y por las dos cabeceras, sin mirar cómo es la raya. Es el puesto
+   * del que sale el pasaje, y de él el tractor tiene que dejar el avión en la calle, con
+   * el morro hacia donde va a rodar: la tripulación arranca recto. Se mide hacia delante
+   * del morro, sin la regla del empuje: el sitio de la raya más alineado con él, que tiene
+   * que estar en su eje y torcer menos de `TORCIDO`.
+   *
+   * Lo que queda fuera es la raya que sale del puesto de lado, a lo largo de la fachada,
+   * y, de lo que queda al lado de la raya, la que tuerce debajo del avión —más cerca del
+   * puesto que su tren principal, como el 329 de Barajas con el JAZ 120—: la calle pasa
+   * entre la rueda de morro y el tren, y ningún empuje de menos de media vuelta deja el
+   * avión en ella con el morro hacia donde va. Ahí se mira solo que el morro acabe
+   * mirando por la raya. Ver el ADR 0029, enmienda H47b.
+   */
+  it.each(campos.map((c) => [c.aerodrome!.id, c] as const))("y desde el que elige el plan, sobre la raya: %s", (_id, campo) => {
+    for (const rumboDePista of [campo.runway.heading, (campo.runway.heading + 180) % 360])
+      for (const avion of AIRCRAFT.filter((a) => vaALaPasarela(a))) {
+        const m = comoAcaba({ campo, rumboDePista, avion, puesto: null, nombre: "" });
+        if (!m || m.deLado) continue;
+        const nombre = `${campo.aerodrome!.id} · ${avion.id} · ${rumboDePista.toFixed(0)}° · el puesto de ${m.ref}`;
+        expect(m.torcido / GRADO, `${nombre}: el morro, contra la raya`).toBeLessThan(TORCIDO / GRADO);
+        if (!m.debajo) expect(m.aparte, `${nombre}: el avión, fuera de la raya`).toBeLessThan(SOBRE_LA_RAYA);
+      }
+  });
+
   it("y el de Los Rodeos del banco de la tripulación de línea es de esos", () => {
     const campo = campos.find((c) => c.aerodrome!.id === "GCXO")!;
     const m = medir({ campo, rumboDePista: campo.runway.heading, avion: jaz90, puesto: null, nombre: "GCXO" })!;
     expect(m.tuerce).toBe(true);
     expect(m.torcido / GRADO).toBeLessThan(TORCIDO / GRADO);
   });
+});
+
+const entorno = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
+
+/*
+ * **El barrido de todos los empujes de contacto** (H47, H47b): los tres reactores, las dos
+ * cabeceras y cada puesto de contacto de cada campo con pasarelas, medidos como la prueba
+ * de arriba. No es una prueba —muchos de esos puestos no los elige nunca el plan, y lo
+ * que se exige está arriba—, sino la tabla para ver qué cambia un arreglo: tarda un minuto
+ * largo con dos hilos. `OGA_BARRIDO_DEL_EMPUJE=1 npx vitest run empuje-hasta-la-calle`; con
+ * `=jaz-90`, solo ese avión.
+ */
+describe.runIf(entorno.OGA_BARRIDO_DEL_EMPUJE)("el barrido de todos los empujes de contacto", () => {
+  it("la tabla", async () => {
+    const filas: string[] = [];
+    const cuenta = { todos: 0, bien: 0, deLado: 0, debajo: 0, elegidos: 0, elegidosBien: 0 };
+    const vistos = new Set<string>();
+    const solo = entorno.OGA_BARRIDO_DEL_EMPUJE!.startsWith("jaz-") ? entorno.OGA_BARRIDO_DEL_EMPUJE! : null;
+    for (const e of SCENARIOS) {
+      const campo = await conSuAerodromo(e);
+      const aero = campo.aerodrome;
+      if (!aero?.pasarelas?.hay || vistos.has(aero.id)) continue;
+      vistos.add(aero.id);
+      for (const avion of AIRCRAFT.filter((a) => vaALaPasarela(a) && (!solo || solo === a.id)))
+        for (const rumboDePista of [campo.runway.heading, (campo.runway.heading + 180) % 360]) {
+          const elegido = comoAcaba({ campo, rumboDePista, avion, puesto: null, nombre: "" });
+          const plan = new PlanDeVuelo(aero, { ...campo.runway, heading: rumboDePista }, () => 600, avion);
+          plan.deContacto = true;
+          const puestos = (plan as unknown as { puestosDeContacto(): { ref: string | null; xy: Punto }[] }).puestosDeContacto();
+          for (const p of puestos) {
+            const m = comoAcaba({ campo, rumboDePista, avion, puesto: p.xy, nombre: "" });
+            if (!m) continue;
+            const bien = m.torcido < TORCIDO && (m.aparte < SOBRE_LA_RAYA || m.debajo);
+            const delPlan = elegido?.ref === m.ref;
+            cuenta.todos++;
+            if (bien) cuenta.bien++;
+            if (m.deLado) cuenta.deLado++;
+            else if (m.debajo && m.aparte >= SOBRE_LA_RAYA) cuenta.debajo++;
+            if (delPlan) {
+              cuenta.elegidos++;
+              if (bien) cuenta.elegidosBien++;
+            }
+            filas.push(
+              `${bien ? "  bien" : "  MAL "} ${aero.id} ${avion.id} ${rumboDePista.toFixed(0).padStart(3)} ${(p.ref ?? "—").padEnd(5)} ${m.ref.padEnd(11)}${delPlan ? " (plan)" : "       "}` +
+                ` ${m.deLado ? "de lado " : m.debajo ? "debajo  " : "        "} torcido ${((m.torcido * 180) / Math.PI).toFixed(0).padStart(3)}°` +
+                ` aparte ${Number.isFinite(m.aparte) ? m.aparte.toFixed(1).padStart(5) : "  —  "} m` +
+                ` empuje ${m.largo.toFixed(0).padStart(3)} m giro ${((m.giro * 180) / Math.PI).toFixed(0).padStart(4)}°` +
+                ` a ${m.lejos.toFixed(0).padStart(3)} m de la raya`,
+            );
+          }
+        }
+    }
+    filas.push(
+      `\n${cuenta.todos} empujes: ${cuenta.bien} bien —${cuenta.debajo} de ellos con la raya torciendo debajo del avión,` +
+        ` mirando por ella pero a su lado—, y ${cuenta.todos - cuenta.bien} no; salen de lado ${cuenta.deLado}.` +
+        ` Del plan: ${cuenta.elegidosBien} de ${cuenta.elegidos}.`,
+    );
+    (globalThis as { process?: { stderr: { write(s: string): void } } }).process?.stderr.write(`\n${filas.join("\n")}\n`);
+  }, 900_000);
 });

@@ -302,6 +302,19 @@ const BUSCA_LA_CALLE = 1.3;
  * del final de la recta, que es lo que se mira para saber hacia dónde va la calle.
  */
 export const RECTA_DE_LA_PLATAFORMA = 120;
+/**
+ * **Y si la raya sale de espaldas y tuerce más lejos**, el tractor la sigue hasta su
+ * calle, con sus quiebros, como mucho estos metros (H47b). Es lo que se hace de verdad:
+ * el empuje sigue la línea pintada hasta la calle y deja el avión en ella, con el morro
+ * hacia donde va a rodar; girarlo noventa grados a medio camino lo dejaba atravesado a
+ * la raya, y lo demás lo tenía que rodar la tripulación girando en el sitio. Con el tope
+ * de `RECTA_DE_LA_PLATAFORMA` salían así, de los puestos que elige el plan, Los Rodeos
+ * por la 30 desde el 13 (la recta, 132 m), Tenerife Sur desde el H43 y el J8 (124 y
+ * 156) y, con un quiebro que sigue lejos, Pettirossi desde el 6 (la calle, a 234 m),
+ * La Palma desde el 7 (114) y Lanzarote desde el T2 (276). Trescientos metros son cinco
+ * minutos a paso de persona; más allá, la raya es una calle que sale de frente.
+ */
+export const SIGUE_LA_RAYA = 300;
 /** Lo que puede torcer cada tramo de la raya y seguir siendo esa recta. */
 const SIGUE_RECTA = 5 * GRADO;
 /**
@@ -338,9 +351,13 @@ export interface Empuje {
  *
  * - **La calle** es donde la raya tuerce: el primer punto en el que lo que
  *   viene por delante se aparta más de cuarenta grados de la salida del
- *   puesto. El morro acaba mirando hacia allí. Se busca a un largo de avión y
- *   poco más, o, si la raya sale de espaldas por la plataforma, hasta donde
- *   acaba esa recta: ver `RECTA_DE_LA_PLATAFORMA`.
+ *   puesto, seguido hasta donde acaba de torcer. El morro acaba mirando hacia
+ *   donde va desde ahí. Se busca a un largo de avión y poco más, o, si la raya
+ *   sale de espaldas por la plataforma, hasta donde acaba esa recta: ver
+ *   `RECTA_DE_LA_PLATAFORMA`.
+ * - **Y si sale de espaldas y tuerce más lejos**, con quiebros o sin ellos, el
+ *   tractor la sigue hasta un largo de avión antes de la curva y gira desde ahí:
+ *   ver `SIGUE_LA_RAYA` y `siguiendoLaRaya`.
  * - **El giro**, el del tren principal con la rueda de morro a cuarenta y cinco
  *   grados: un radio igual a la batalla. Si la calle está demasiado cerca para
  *   ese giro, se cierra hasta los setenta; y si ni así cabe, se empieza a girar
@@ -387,7 +404,8 @@ export function trayectoriaDelEmpuje(
    * estar al final de esa recta. Ver `RECTA_DE_LA_PLATAFORMA`.
    */
   let recta = 0;
-  if (porLaPlataforma && Math.abs(diferencia(desde.rumbo + Math.PI, salida)) <= SALE_DE_LADO)
+  const deEspaldas = Math.abs(diferencia(desde.rumbo + Math.PI, salida)) <= SALE_DE_LADO;
+  if (porLaPlataforma && deEspaldas)
     for (let i = 1; i < raya.length && Math.abs(diferencia(salida, rumboEntre(raya[i - 1]!, raya[i]!))) <= SIGUE_RECTA; i++)
       recta = acum[i]!;
   /*
@@ -405,9 +423,53 @@ export function trayectoriaDelEmpuje(
     const va = rumboEntre(enLaRaya(acum[k]!), enLaRaya(acum[k]! + MIRA_LA_CALLE));
     if (Math.abs(diferencia(salida, va)) > LA_CALLE_TUERCE) tuerce = { s: acum[k]!, k, va };
   }
+  /*
+   * **La calle es la raya cuando ha acabado de torcer** (H47b), y no la cuerda de los
+   * treinta metros desde donde empieza la curva: dentro de una curva de varios puntos esa
+   * cuerda va a medio torcer. En La Palma, desde el 10 por la 18, la raya tuerce 90° en una
+   * curva de veintinueve metros y la cuerda iba a 45°: el JAZ 110 giraba 134° hacia una
+   * calle que no existe, con el cruce en el principio de la curva, y no le cabía el giro.
+   * Acababa a 7 m de la raya. Se sigue la curva hasta `MIRA_LA_CALLE` más allá y la calle
+   * es el primer punto desde el que la raya ya no se aparta más. El tráfico, que se empuja
+   * corto (`porLaPlataforma` en falso), sigue con la cuerda, y la raya que sale del puesto
+   * de lado también: su curva no es la de una calle por detrás.
+   */
+  const acabaDeTorcer = (t: { readonly s: number; readonly k: number; readonly va: number }) => {
+    if (!porLaPlataforma || !deEspaldas) return t;
+    const lado = Math.sign(diferencia(salida, t.va)) || 1;
+    let mejor = t;
+    for (let k = t.k + 1; k < raya.length && acum[k]! <= t.s + MIRA_LA_CALLE; k++) {
+      const va = rumboEntre(enLaRaya(acum[k]!), enLaRaya(acum[k]! + MIRA_LA_CALLE));
+      if (lado * diferencia(salida, va) > lado * diferencia(salida, mejor.va) + GRADO) mejor = { s: acum[k]!, k, va };
+    }
+    return mejor;
+  };
   if (tuerce && tuerce.s <= alcance) {
-    cruce = raya[tuerce.k]!;
-    calle = tuerce.va;
+    const fin = acabaDeTorcer(tuerce);
+    cruce = raya[fin.k]!;
+    calle = fin.va;
+  } else if (
+    porLaPlataforma &&
+    tuerce &&
+    tuerce.s <= SIGUE_LA_RAYA &&
+    recta > 0 &&
+    Math.abs(diferencia(desde.rumbo + Math.PI, salida)) <= SIGUE_RECTA
+  ) {
+    /*
+     * **La raya sale de espaldas y tuerce lejos**: el tractor la sigue hasta la calle, con
+     * sus quiebros, y allí gira. Ver `SIGUE_LA_RAYA`.
+     */
+    const fin = acabaDeTorcer(tuerce);
+    const tramo = (i: number): number => rumboEntre(raya[i]!, raya[i + 1]!);
+    /*
+     * Donde empieza la curva de la calle: hacia atrás desde el primer punto que ya tuerce,
+     * mientras cada tramo tuerza más hacia la calle que el anterior. Un quiebro que se
+     * aparta y vuelve no es de la curva: lo sigue el tractor.
+     */
+    const lado = Math.sign(diferencia(salida, fin.va)) || 1;
+    let j = tuerce.k;
+    while (j > 1 && lado * diferencia(tramo(j - 2), tramo(j - 1)) > 2 * GRADO) j--;
+    return siguiendoLaRaya(desde, raya, acum, acum[j]!, largoDelAvion, raya[fin.k]!, fin.va, batalla);
   } else {
     /*
      * **La raya sale de frente**: sigue recta hacia atrás más allá de un largo de avión.
@@ -429,7 +491,105 @@ export function trayectoriaDelEmpuje(
       calle = salida + lado * (Math.PI / 2);
     }
   }
+  return rectaArcoRecta(desde, cruce, calle, batalla);
+}
 
+/**
+ * **Lo que el tractor sigue de la raya antes de girar a la calle** (H47b): desde el
+ * puesto, la raya tal cual, con sus quiebros, hasta un largo de avión antes de la curva
+ * de la calle (`curva`, en metros de raya); y desde ahí, la recta, el arco y la recta de
+ * `rectaArcoRecta`. Así la cola va por donde va la raya, y no campo a través por la
+ * plataforma, y al giro le queda el sitio que le queda en cualquier calle.
+ */
+function siguiendoLaRaya(
+  desde: Pose,
+  raya: readonly PuntoXZ[],
+  acum: readonly number[],
+  curva: number,
+  largoDelAvion: number,
+  cruce: PuntoXZ,
+  calle: number,
+  batalla: number,
+): Empuje {
+  const total = acum[acum.length - 1]!;
+  const enLaRaya = (s: number): PuntoXZ => {
+    const d = Math.max(0, Math.min(total, s));
+    let i = 1;
+    while (i < raya.length - 1 && acum[i]! < d) i++;
+    const a = raya[i - 1]!;
+    const b = raya[i]!;
+    const k = (d - acum[i - 1]!) / (acum[i]! - acum[i - 1]! || 1);
+    return { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k };
+  };
+  const atras = vector(desde.rumbo + Math.PI);
+  // Dónde está el avión sobre la raya: la cola sale por ella, de espaldas.
+  const s0 = Math.max(0, (desde.x - raya[0]!.x) * atras.x + (desde.z - raya[0]!.z) * atras.z);
+  const s1 = Math.max(s0, curva - largoDelAvion);
+  // Desde ahí, recto hacia el principio de la curva.
+  const deja = enLaRaya(s1);
+  const llega = rumboEntre(deja, enLaRaya(Math.max(curva, s1 + 1)));
+  const desdeAhi = s1 > s0 ? { ...deja, rumbo: llega + Math.PI } : desde;
+  let giro = rectaArcoRecta(desdeAhi, cruce, calle, batalla);
+  /*
+   * **Y sin alejarse de la raya más de un largo de avión**: si la raya tuerce en una curva
+   * ancha, la calle por la que sale se cruza con la recta que llega lejos de la propia
+   * curva, y el giro holgado acaba aún más allá —en Lanzarote desde el T2, a 33 m de la
+   * raya con el JAZ 90—. Entonces se gira tan cerrado como se puede, que es lo que hace el
+   * tractor para dejar el avión junto a la calle.
+   */
+  const fin = giro.poses.at(-1)!;
+  let lejos = Infinity;
+  for (let i = 1; i < raya.length; i++) {
+    const a = raya[i - 1]!;
+    const b = raya[i]!;
+    const l2 = (b.x - a.x) ** 2 + (b.z - a.z) ** 2 || 1;
+    const t = Math.max(0, Math.min(1, ((fin.x - a.x) * (b.x - a.x) + (fin.z - a.z) * (b.z - a.z)) / l2));
+    lejos = Math.min(lejos, Math.hypot(a.x + (b.x - a.x) * t - fin.x, a.z + (b.z - a.z) * t - fin.z));
+  }
+  if (lejos > largoDelAvion) giro = rectaArcoRecta(desdeAhi, cruce, calle, batalla, DIRECCION_MAXIMA);
+  if (s1 <= s0) return giro;
+  const enS0 = enLaRaya(s0);
+  const aparte = { x: desde.x - enS0.x, z: desde.z - enS0.z };
+  /** Lo que le queda al avión de lo que se aparta de la raya en el puesto, que se pierde en quince metros. */
+  const AL_ENTRAR = 15;
+  // Lo que sigue a la raya y, desde `deja`, la recta hacia la curva: sin esquina entre los dos.
+  const hacia = vector(llega);
+  const enElCamino = (s: number): PuntoXZ =>
+    s <= s1 ? enLaRaya(s) : { x: deja.x + hacia.x * (s - s1), z: deja.z + hacia.z * (s - s1) };
+  const poses: Pose[] = [];
+  // Una postura cada medio metro o algo menos, a pasos iguales: `poseDelEmpuje` cuenta con ello.
+  const n = Math.ceil((s1 - s0) / PASO);
+  for (let i = 0; i < n; i++) {
+    const s = s0 + ((s1 - s0) * i) / n;
+    const k = Math.max(0, 1 - (s - s0) / AL_ENTRAR);
+    const p = enLaRaya(s);
+    // Hacia dónde va la cola: la cuerda de seis metros alrededor, que dobla los quiebros sin saltos.
+    const va = rumboEntre(enElCamino(Math.max(s0, s - 3)), enElCamino(s + 3));
+    const rumbo = normalizar(va + Math.PI + k * diferencia(va + Math.PI, desde.rumbo));
+    poses.push({ x: p.x + aparte.x * k, z: p.z + aparte.z * k, rumbo });
+  }
+  poses[0] = { ...desde };
+  return {
+    poses: [...poses, ...giro.poses],
+    largo: s1 - s0 + giro.largo,
+    radio: giro.radio,
+    giro: diferencia(desde.rumbo, giro.poses.at(-1)!.rumbo),
+    cruce,
+  };
+}
+
+/**
+ * **La recta, el arco y la recta del empuje**: desde `desde` hacia atrás por su eje,
+ * girando para acabar en la recta que pasa por `cruce` con el morro hacia `calle`, con la
+ * rueda de morro a `direccion` en el giro si cabe.
+ */
+function rectaArcoRecta(
+  desde: Pose,
+  cruce: PuntoXZ,
+  calle: number,
+  batalla: number,
+  direccion = DIRECCION_EN_EL_GIRO,
+): Empuje {
   // ── Las dos rectas: la de la cola saliendo del puesto y la de la calle ──
   const atras = desde.rumbo + Math.PI;
   const b = vector(atras);
@@ -453,7 +613,7 @@ export function trayectoriaDelEmpuje(
 
   // ── El giro, con el radio que dé ──
   const medio = Math.tan(Math.abs(giro) / 2);
-  let radio = batalla / Math.tan(DIRECCION_EN_EL_GIRO);
+  let radio = batalla / Math.tan(direccion);
   const minimo = batalla / Math.tan(DIRECCION_MAXIMA);
   if (medio > 1e-3 && radio * medio > hastaElCruce - 1)
     radio = Math.max(minimo, (hastaElCruce - 1) / medio);
