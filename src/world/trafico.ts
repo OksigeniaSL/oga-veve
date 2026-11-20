@@ -305,6 +305,12 @@ export interface Caminos {
      */
     readonly virajes?: readonly number[];
     /**
+     * **Lo que tiene la pista ocupada el que aterriza y remonta**, s: de cruzar
+     * el umbral a dejarla libre, media vuelta incluida. Solo si da media
+     * vuelta en ella. Ver `ocupaLaPista`.
+     */
+    readonly ocupa?: number;
+    /**
      * **Si sale empujado** de un puesto de contacto: el empuje del tractor, y
      * hasta qué metro de `salida` llega. Ver `empujado` en
      * `suelo-del-trafico.ts` y `empujar`.
@@ -937,6 +943,52 @@ export function alVirarEnLaPista(
 }
 
 /**
+ * **El paso del que aterriza**, m/s, a `r` metros de su llegada: de lo que
+ * trae al tocar a paso de calle en la boca, con las medias vueltas que dé.
+ * Es lo que rueda en `velocidadDe`, suelto para poder contarlo antes.
+ */
+export function alAterrizar(
+  tipo: Pick<TipoDeTrafico, "aproximacion">,
+  r: number,
+  toca: number,
+  boca: number,
+  virajes: readonly number[] | undefined,
+  fuera: number,
+): number {
+  if (r >= boca) return alVirarEnLaPista(r < fuera ? RUEDA_A * 2 : RUEDA_A, r, virajes, fuera);
+  const f = (r - toca) / Math.max(1, boca - toca);
+  const alTocar = tipo.aproximacion * 0.85;
+  return alVirarEnLaPista(alTocar + (RUEDA_A * 1.5 - alTocar) * f, r, virajes, fuera);
+}
+
+/**
+ * **Cuánto tiene la pista ocupada el que aterriza y da media vuelta en
+ * ella**, s: lo que vuela del umbral a tocar, lo que rueda hasta la vuelta,
+ * la vuelta casi parado y el remonte a veinte nudos hasta dejarla libre.
+ *
+ * Es lo que la torre de un campo sin paralela deja entre dos llegadas: «a
+ * landing aircraft will not normally be permitted to cross the runway
+ * threshold on its final approach until [...] all preceding landing aircraft
+ * are clear of the runway-in-use» (OACI, Doc 4444, 7.10.1.2), y la separación
+ * se hace en el circuito (7.7.1.2), no en la final. Con dos minutos entre
+ * llegadas, el que venía detrás se encontraba al de delante remontando hacia
+ * él en su final corta (H41b). Ver `SEPARACION_ENTRE_LLEGADAS`.
+ */
+export function ocupaLaPista(
+  tipo: Pick<TipoDeTrafico, "aproximacion" | "toca">,
+  boca: number,
+  virajes: readonly number[],
+  toca: number,
+  fuera: number,
+): number {
+  const PASO = 5;
+  let s = tipo.toca / Math.max(1, tipo.aproximacion);
+  for (let r = toca; r < fuera; r += PASO)
+    s += Math.min(PASO, fuera - r) / Math.max(0.5, alAterrizar(tipo, r + PASO / 2, toca, boca, virajes, fuera));
+  return s;
+}
+
+/**
  * **Lo que le queda de remonte**, s, desde `r` metros de su salida hasta
  * alinearse: la recta a su paso y la media vuelta al suyo. La misma cuenta que
  * `alRemontar`, sumada a pasos de cinco metros.
@@ -1197,12 +1249,14 @@ export function trazar(
       enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza, tomaDeVerdad]);
       const boca = largoDelCamino([...hastaLaBoca, rodando[0]!]);
       fuera = boca + llega.pista;
+      const virajes = virajesCerrados(llegada, enLaToma, fuera);
       enTierra = {
         boca,
         eje: 0,
         despega: 0,
         tipo: t,
-        virajes: virajesCerrados(llegada, enLaToma, fuera),
+        virajes,
+        ...(virajes.length ? { ocupa: ocupaLaPista(t, boca, virajes, enLaToma, fuera) } : {}),
       };
     }
     const sale = tierra.suelo.salida(
@@ -1259,6 +1313,7 @@ export function trazar(
       enTierra = {
         boca: enTierra?.boca ?? 0,
         virajes: enTierra?.virajes,
+        ...(enTierra?.ocupa ? { ocupa: enTierra.ocupa } : {}),
         eje: sale.eje,
         despega: sale.eje + t.carrera,
         tipo: t,
@@ -1659,6 +1714,25 @@ export function antesDeTuPermiso(velocidad = VUELA_A): number {
  */
 export function separacionPara(velocidad: number): number {
   return Math.max(SEPARACION_ENTRE_LLEGADAS, TRES_MILLAS / Math.max(1, velocidad));
+}
+
+/** Uno de la fila de llegadas: ver `laFila` en `crearTrafico`. */
+interface EnLaFila {
+  hora: number;
+  velocidad: number;
+  sale: boolean;
+  prioridad?: boolean;
+  /** Si remonta la pista al aterrizar, lo que la tiene ocupada. Ver `ocupaLaPista`. */
+  ocupa?: number;
+}
+
+/**
+ * **Lo que se deja detrás de una llegada** a quien viene a `velocidad`, s:
+ * la separación de siempre o, si la de delante remonta la pista, lo que
+ * tarda en dejarla libre. Ver `ocupaLaPista`.
+ */
+function detrasDe(b: Pick<EnLaFila, "ocupa">, velocidad: number): number {
+  return Math.max(separacionPara(velocidad), b.ocupa ?? 0);
 }
 
 /**
@@ -2656,13 +2730,12 @@ export function crearTrafico(
     const t = c?.enTierra;
     if (c && m.camino === c.llegada && r >= c.toca) {
       if (!t || t.boca <= 0) return m.velocidad * FRENANDO;
-      // Pasada la boca, lo que quede de pista se rueda a paso vivo: es
-      // pista ocupada, y el que la ocupa la deja cuanto antes.
-      if (r >= t.boca) return alVirarEnLaPista(r < c.fuera ? RUEDA_A * 2 : RUEDA_A, r, t.virajes, c.fuera);
-      const f = (r - c.toca) / Math.max(1, t.boca - c.toca);
-      const alTocar = t.tipo.aproximacion * 0.85;
-      // Y con media vuelta por delante, llega a ella casi parado. Ver `alVirarEnLaPista`.
-      return alVirarEnLaPista(alTocar + (RUEDA_A * 1.5 - alTocar) * f, r, t.virajes, c.fuera);
+      /*
+       * Pasada la boca, lo que quede de pista se rueda a paso vivo: es pista
+       * ocupada, y el que la ocupa la deja cuanto antes. Y con media vuelta
+       * por delante, llega a ella casi parado. Ver `alAterrizar`.
+       */
+      return alAterrizar(t.tipo, r, c.toca, t.boca, t.virajes, c.fuera);
     }
     if (c && t && t.despega > 0 && m.camino === c.salida) {
       const deCarrera = enSuCarrera(t.tipo, r - t.eje, m.velocidad);
@@ -3750,13 +3823,14 @@ export function crearTrafico(
     sin: Volando | null,
     /** Si cuentas tú. Sin ti, para darle la salida a uno mientras te retrasan. */
     contigo = true,
-  ): { hora: number; velocidad: number; sale: boolean; prioridad?: boolean }[] => {
-    const fila: { hora: number; velocidad: number; sale: boolean; prioridad?: boolean }[] = [];
+  ): EnLaFila[] => {
+    const fila: EnLaFila[] = [];
     for (const b of aviones.values()) {
       if (b === sin) continue;
       const hora = horaDeUmbral(b);
+      const ocupa = b.caminos?.enTierra?.ocupa;
       if (hora !== null)
-        fila.push({ hora, velocidad: b.marca.velocidad, sale: false });
+        fila.push({ hora, velocidad: b.marca.velocidad, sale: false, ...(ocupa ? { ocupa } : {}) });
     }
     const tu = contigo ? opciones.quienJuega?.() : null;
     const velocidad = tu?.velocidad ?? VUELA_A;
@@ -3804,7 +3878,7 @@ export function crearTrafico(
   ): number => {
     let hora = natural;
     for (const b of laFila(sin)) {
-      const detras = b.sale ? QUIEN_SALE : separacionPara(velocidad) + colchon;
+      const detras = b.sale ? QUIEN_SALE : detrasDe(b, velocidad) + colchon;
       const delante = b.sale
         ? 0
         : separacionPara(b.velocidad) + colchon + (b.prioridad ? PRIORIDAD : 0);
@@ -3830,10 +3904,9 @@ export function crearTrafico(
   const demasiadoCerca = (quien: Volando): boolean => {
     const mia = horaDeUmbral(quien);
     if (mia === null) return false;
-    const detras = separacionPara(quien.marca.velocidad);
     for (const b of laFila(quien)) {
       if (b.hora > mia) continue;
-      if (mia - b.hora < (b.sale ? QUIEN_SALE : detras)) return true;
+      if (mia - b.hora < (b.sale ? QUIEN_SALE : detrasDe(b, quien.marca.velocidad))) return true;
     }
     return false;
   };
