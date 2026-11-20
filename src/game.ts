@@ -953,7 +953,7 @@ const CIERRE_DEL_EJERCICIO: Readonly<
 /**
  * **Y el del bimotor de pistón que siguió donde su manual manda parar**: no
  * fue antes de V1, que ese avión no la lleva, sino con el tren todavía fuera.
- * Ver `conV1` en `flight/ejercicios.ts`.
+ * Ver `conV1` en `flight/decide-con-v1.ts`.
  */
 const SEGUIDO_CON_EL_TREN_FUERA: TranslationKey = "ejercicio.seguidoConElTrenFuera";
 

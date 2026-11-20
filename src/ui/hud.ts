@@ -518,7 +518,7 @@ export class Hud {
    */
   private enLaCarrera = false;
   /**
-   * En la carrera de despegue, pasado V1 y volando: el aviso de fin de pista
+   * En la carrera de despegue, pasado V1 y siguiendo: el aviso de fin de pista
    * no puede pedir frenar justo cuando el juego enseña que se sigue. En los
    * que deciden con V1, pasada; en los demás, además con el gas metido, que
    * quien lo corta está parando. Ver `pasadaLaV1` en
