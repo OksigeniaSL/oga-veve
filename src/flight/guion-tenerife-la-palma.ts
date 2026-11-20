@@ -387,7 +387,7 @@ const SE_ENSENA_ANTES_DE_DORMIRSE = ["teide"] as const;
  * 4. A qué altura y a qué velocidad se va, más alto que el Teide: la pregunta
  *    de Ara, la comandante y lo que dice Ara, 30 s.
  * 5. Cómo se sostiene el avión, el ala de la comandante, 36 s.
- * 6. El kit de viaje, 165 s —ver `RATO_DEL_KIT`—: el juego tiene sentido
+ * 6. El kit de viaje, 166 s —ver `RATO_DEL_KIT`—: el juego tiene sentido
  *    educativo, y es para cuando el vuelo «dura un ratito».
  * 7. La siesta, 136 s como poco: el bostezo, dos minutos de vuelo durmiendo
  *    (`SIESTA_MINIMA`) y el «me dormí». Es lo último porque es justo lo que
