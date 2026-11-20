@@ -6441,3 +6441,157 @@ de empezar, con el perfil en 4,5, a 84 nudos y con un bote de 0,7 s.
 - **La toma de 4,38 m/s de la mesa con σ_w 1,5**: una sola de 260, con una
   racha más fuerte que la de Los Rodeos; con la de Los Rodeos, la peor es
   2,49 donde era 2,17.
+
+## Enmienda H46 (20-11-2026): la recogida de los reactores del banco
+
+El JAZ 120 del vuelo entero de Gran Canaria, con veinte nudos de cara, recogía
+igual en las dos tandas —a 13,4 m de ruedas, a la Vref más ocho— y fallaba por
+un lado o por el otro: en la tanda 18 empezó bajando 2,8 m/s 14 m antes del
+umbral y tocó a 319 m pero a **2,35 m/s**; en la 19 empezó bajando 3,5 a 31 m
+antes y tocó a
+1,97 m/s pero a **651 m**, pasada la zona (150–600 m). Y el JAZ 90 del banco
+del cangrejo (`ver-el-cruzado.mjs`) unas veces se pasaba y flotaba y otras no
+recogía (ADR 0031, «Lo que queda» de H43). **Las dos cosas son del banco.**
+
+### La vara
+
+- **E170/E190**: «30ft Idle · 20ft Flare», con el *retard* de los gases
+  durante la recogida (C. Regli, *Embraer EMB190 – Summary*, p. 2-26 y
+  p. 1-15, de la técnica del OM-A; ya citado en `RECOGIDA_DE_REACTOR`); la
+  toma, a unos 300–450 m, es la vara del encargo.
+- **747**: recogida hacia los 30 ft con el ralentí a la vez, toma a 300–450 m
+  y a menos de 2 m/s. Es la vara del encargo; el texto del FCTM del 747-400 no
+  se ha tenido delante en esta tanda —lo que se encuentra en abierto son foros
+  que lo citan: recoger a 30 ft subiendo el morro unos dos grados y llevar los
+  gases al ralentí para tocar con ellos ahí—, así que no se cifra más.
+
+### El avión puede
+
+Mesa sin navegador (`h46/mesa/` del scratchpad): el modelo del JAZ 120 a 24 m
+de cota, su automático en la senda con lo que le da el juego
+(`autoridadDelTimon`, el aire que sube), el gas del banco a la Vref más ocho,
+veinte nudos de cara con el perfil del viento del modelo, las rachas del
+juego, y la recogida del banco copiada tal cual. Con la final apuntada para
+que empiece a recoger donde en Gran Canaria —a 13,5 m y a −14 m del umbral—.
+
+Una recogida de manual —a 30 ft, el morro tres grados arriba a dos por
+segundo y sostenido, ralentí— en aire quieto toca a **323 m y 1,68 m/s**: el
+avión del juego recoge como su manual, y el juego no se toca. Con rachas esa
+recogida rígida es peor que la del banco (156 de 200 de más de 2 m/s con σ_w
+1 m/s), que es lo que se esperaba: un piloto no sostiene tres grados pase lo
+que pase.
+
+### El banco: el morro que llega tarde
+
+| JAZ 120, 200 finales, 20 kt de cara | Más de 2 m/s | Pasadas de 600 m | La más larga | Mediana |
+|---|---|---|---|---|
+| Aire quieto, la recogida de antes | — | — | — | 536 m, 0,07 m/s |
+| σ_w 1 m/s, la de antes | 51 | 44 | 3.662 m | 469 m, 1,50 m/s |
+| σ_w 1,5 m/s, la de antes | 79 | 31 | 5.631 m | 406 m, 1,81 m/s |
+
+Es la mezcla de las dos tandas, y en las trazas son una sola cosa. Al empezar
+a recoger el lazo pide subir el morro, y el morro de un ala de sesenta metros
+tarda: en una final dura (semilla 8) la palanca va de 0 a 0,12 en cuatro
+segundos, el morro de −2,7° a +0,1°, y el avión baja entre 3,2 y 2,3 m/s hasta
+el suelo —el acumulado llega a su tope de 2 a los tres metros—. En una larga
+(semilla 1) llega igual de tarde, se nivela a 0,6 m, y con la palanca
+sostenida y el efecto suelo sube a 2,3 m: toca a 710 m, de 156 a 134 nudos. Lo que decide cuál de las
+dos es la racha horizontal de los últimos seis metros: en las duras, de media
+0,3 m/s menos de cara; en las largas, 0,25 más.
+
+El término que lo nota antes que el variómetro —la carga contra lo que pide el
+perfil, «lo que nota en el asiento» (#192)— se afinó con el JAZ 90, y es el
+único de los que van por delante que no lleva el tamaño: lo que pide el
+perfil por delante (`porDelante`) va multiplicado por la envergadura entre
+treinta desde que el JAZ 110 se quedaba bajando a 3 m/s, porque el corto
+período crece con el largo del avión.
+
+Lo que no lo arregla, medido en la misma mesa con σ_w 1:
+
+| Probado | Más de 2 m/s | Pasadas de 600 m |
+|---|---|---|
+| Más mano: el proporcional y lo que acumula por el tamaño | 123 | 97 |
+| El doble de proporcional | 90 | 51 |
+| Recoger a 30 ft, con el ralentí a la vez | 101 | 15 |
+| Quitar el gas poco a poco, como el bimotor de H45 | 51 | 67 |
+| Sostener la actitud y no la palanca cuando no hay que tirar | 50 | 39 |
+| La palanca de partida, media de 5 s y no de 2 | 37 | 50 |
+| Buscar tocar a 0,9 m/s y no a 2 ft/s | 59 | 22 |
+| La velocidad que se pierde con su cuenta entera | 49 | 81 |
+
+Más ganancia hace pasarse antes y flotar; empezar más abajo o con menos gas
+cambia largas por duras. Lo que llega tarde no se arregla con más fuerza, sino
+llegando antes.
+
+### Lo que se cambia, en el banco
+
+**El término de la carga lleva el tamaño del avión**, como el de lo que pide
+el perfil: `porAngulo · 0,04 · max(1, envergadura/30) · (acelera − (n − 1) g)`.
+En el JAZ 90 (26 m) es el de siempre; en el JAZ 110 y el JAZ 120, el doble.
+Vive en `scripts/recogida-del-reactor.mjs`, que el vuelo entero mete en la
+página como texto, con su prueba en `recogida-del-reactor.test.mjs`: vuela la
+recogida con el modelo y las rachas del juego, sesenta finales del JAZ 120,
+con la de antes (9 largas y 17 duras) y la de ahora (5 y 6), y falla si el
+término no lleva el tamaño.
+
+| 200 finales, 20 kt de cara | Más de 2 m/s | Pasadas de 600 m | La más larga | Mediana |
+|---|---|---|---|---|
+| JAZ 120, aire quieto, antes / ahora | — | — | — | 536 m, 0,07 / 477 m, 0,79 |
+| JAZ 120, σ_w 1, antes / ahora | 51 / **20** | 44 / **14** | 3.662 / 1.752 m | 469 m, 1,50 / 459 m, 1,05 |
+| JAZ 120, σ_w 1,5, antes / ahora | 79 / 66 | 31 / 12 | 5.631 / 1.659 m | 406 / 395 m |
+| JAZ 110, σ_w 1, antes / ahora | 21 / 10 | 18 / 8 | | 480 / 455 m |
+| JAZ 110, 12 kt de cara, σ_w 1, antes / ahora | 30 / 13 | 7 / 6 | | 399 / 361 m |
+| JAZ 90, Los Rodeos, 12 kt, σ_w 1 (no cambia) | 9 de 199 | 0 | | 281 m, 1,13 |
+
+**Y el banco del cangrejo recoge un reactor como el vuelo entero.** Allí el
+JAZ 90 recogía con la ley de la avioneta: a los 6,7 m —dos veces la altura de
+su tren—, un escalón a 0,6 m/s con lo que esa ley había sumado mientras el
+automático volaba la senda, que no se ponía a cero. Quitarle lo sumado es peor
+(en la mesa, 4,70 m/s en aire quieto): la avioneta recogía con lo que había
+sumado por error, y eso es lo que salía unas veces de más y otras de menos.
+Ahora un reactor empieza a los tres segundos y pico de senda, desde la palanca
+media del automático, con la misma ley que `recoger` para una pista llana
+(`palancaDelReactorEnLaRecogida`, en el mismo módulo) y el ralentí a los
+treinta pies. La avioneta y las hélices siguen como estaban.
+
+| Mesa del cangrejo, JAZ 90, la corta de la 12 de Los Rodeos con 12 y 16 kt a 40°, 200 cortas | Más de 2 m/s | La peor | Toca, mediana (rango) |
+|---|---|---|---|
+| Aire quieto, antes / ahora | 0 / 0 | 1,26 / 1,76 m/s | 496 / 419 m |
+| σ_w 1, antes / ahora | 127 / 98 | 6,67 / 4,22 m/s | 417 (282–640) / 404 (264–585) m |
+| σ_w 1,5, antes / ahora | 141 / 129 | 7,16 / 5,15 m/s | 431 (248–805) / 401 (224–723) m |
+
+### Volado
+
+Una tirada de cada, reloj por uno (`h46/nav/` del scratchpad):
+
+| | Puerta de 500 ft | Recogida | Toca | Comprobaciones |
+|---|---|---|---|---|
+| JAZ 120, Gran Canaria, tanda 18 | 153 kt, 2,9 m/s | 13,4 m, −14 m, 2,8 m/s, 154 kt | 319 m, **2,35 m/s** | ✗ con recogida |
+| JAZ 120, Gran Canaria, tanda 19 | 155 kt, 4,1 m/s | 13,4 m, −31 m, 3,5 m/s, 155 kt | **651 m**, 1,97 m/s | ✗ la zona, ✗ las gafas |
+| JAZ 120, Gran Canaria, H46 | 155 kt, 4 m/s | 12,5 m, 3 m, 3,3 m/s, 145 kt | 475 m, 1,07 m/s, sin botes | 62 de 62 |
+| JAZ 90, Los Rodeos, H46 (no cambia) | 124 kt, 2,7 m/s | 10,7 m, −8 m, 3,4 m/s, 120 kt | 378 m, 0,86 m/s, sin botes | 62 de 62 |
+
+En Gran Canaria la final fue de rachas —tres «sink rate» entre los 300 y los
+200 ft, con la carga a 0,83 g— y la cuenta de los treinta a los diez pies duró
+tres segundos.
+
+El cangrejo del JAZ 90 (`OGA_TECNICA=cangrejo`, con la traza fina): 7 de 7. La
+recogida empezó a 10,6 m bajando 3,5 m/s, bajó a 1,8 m/s a los 3,5 m y, con el
+ala a 7,8° enderezando el morro, volvió a 2,6 m/s en el último metro; de 112
+a 110 nudos, sin subir. En H43 se pasaba —de 4,8 a 5,6 m y de 115 a 101
+nudos— o tocaba a 3,3–3,7 m/s.
+
+### Lo que queda
+
+- **La racha horizontal en los últimos metros del JAZ 120**: con σ_w 1,5, 66
+  de 200 siguen pasando de 2 m/s. Con σ_w 1 —lo del alisio de Gran Canaria—,
+  una de cada diez.
+- **El cangrejo con rachas**: la mitad de las cortas de la mesa con σ_w 1
+  tocan a más de 2 m/s, con el ala hasta 16° mientras se endereza el morro en
+  plena recogida, y la del navegador tocó a unos 2,6. El banco del cangrejo no
+  mide a cuánto se toca; lo que mide —el morro y el ala al tocar— no cambia en
+  la mesa (el morro peor, de 3,9° a 3,3°).
+- **El JAZ 110 en el navegador**: cambia como el JAZ 120 y solo se ha medido
+  en la mesa.
+- **El 747 del FCTM**: la vara del JAZ 120 no se ha contrastado con el texto
+  del manual.

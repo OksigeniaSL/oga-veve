@@ -30,6 +30,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { mkdirSync, readFileSync } from "node:fs";
 import { baseDe } from "./servidor.mjs";
+import { palancaDelReactorEnLaRecogida, porLoQueAceleraElReactor } from "./recogida-del-reactor.mjs";
 
 const SALIDA = process.argv[2] ?? "capturas-cruzado";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5687);
@@ -154,6 +155,13 @@ try {
 
   // Los flaps de aterrizar, como en la mesa: la final a la velocidad de aproximación.
   await page.evaluate(() => globalThis.__oga.pedirFlaps(1));
+  /*
+   * **La recogida de un reactor, desde su módulo** (H46), la del vuelo entero:
+   * ver `recogidaDelReactor` abajo. Va a la página como texto.
+   */
+  await page.addScriptTag({
+    content: `${porLoQueAceleraElReactor.toString()}\n${palancaDelReactorEnLaRecogida.toString()}\nglobalThis.__palancaDelReactorEnLaRecogida = palancaDelReactorEnLaRecogida;`,
+  });
   // **El piloto de la mesa**, en la página. Ver `final-con-viento-cruzado.test.ts`.
   await page.evaluate(
     async ({ tecnica, veces }) => {
@@ -195,6 +203,25 @@ try {
       const reactor = o.avion?.()?.propulsion === "chorro";
       let memoria = null;
       let reloj = null;
+      /*
+       * **Y un reactor recoge como en el vuelo entero** (H46), no con la ley de
+       * la avioneta. Esa ley —un escalón a 0,6 m/s a los 6,7 m— seguía
+       * sumando su error mientras el automático volaba la senda, y al recoger
+       * lo soltaba de golpe (H43): con la palanca a 0,36 el JAZ 90 se paraba en
+       * 4,8 m, subía a 5,6 y perdía catorce nudos; otras veces no recogía y
+       * tocaba a 3,3–3,7 m/s. Quitarle lo sumado es peor: en la mesa del
+       * cangrejo (el modelo, el automático, este piloto y las rachas del
+       * juego, doscientas cortas con 12 y 16 nudos) toca a 4,7 m/s en aire
+       * quieto, porque recogía con lo que había sumado por error. La del vuelo
+       * entero empieza a los tres segundos y pico de senda desde la palanca
+       * del automático y reparte el ritmo en la altura que queda: con σ_w 1
+       * m/s, de 127 tomas de más de 2 m/s a 98 y la peor de 6,7 a 4,2; en
+       * aire quieto, de 496 m y 1,26 m/s a 419 m y 1,76. Ver
+       * `scripts/recogida-del-reactor.mjs`.
+       */
+      let recogidaDelReactor = null;
+      let palancaMedia = null;
+      let gasDelAutomatico = null;
       o.pilotar((c) => {
         const s = o.estado();
         if (s.onGround) {
@@ -217,7 +244,10 @@ try {
         const tan3 = Math.tan((3 * Math.PI) / 180);
         const senda = -x * tan3;
         const sobreLaToma = s.position.y - cotaDeLaToma - a.gearHeight;
-        const recogida = hAlto < Math.max(4, a.gearHeight * 2);
+        const alturaDelReactor = Math.max(4, Math.min(15, 3.2 * Math.max(s.airspeed * tan3, -s.verticalSpeed)));
+        const recogida = reactor
+          ? recogidaDelReactor !== null || hAlto < alturaDelReactor
+          : hAlto < Math.max(4, a.gearHeight * 2);
         const vsQuiere = recogida ? -0.6 : -Math.hypot(s.velocity.x, s.velocity.z) * tan3 + 0.3 * (senda - sobreLaToma);
         const err = vsQuiere - s.verticalSpeed;
         integral = clamp(integral + err * dt, -5, 5);
@@ -268,6 +298,37 @@ try {
           );
           c.elevator = m.elevator;
           if (m.throttle !== null) c.throttle = gas = m.throttle;
+          palancaMedia = palancaMedia === null ? c.elevator : palancaMedia + (c.elevator - palancaMedia) * Math.min(1, paso / 2);
+          gasDelAutomatico = c.throttle;
+        }
+        if (reactor && recogida) {
+          if (recogidaDelReactor === null) {
+            const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
+            const p = o.avion?.()?.cabeceo;
+            recogidaDelReactor = {
+              altura: hAlto,
+              caida: Math.max(1.2, Math.min(6, Math.max(porElSuelo * tan3, Math.min(-s.verticalSpeed, porElSuelo * tan3 * 1.1)))),
+              palanca: palancaMedia ?? c.elevator,
+              acumulado: 0,
+              velocidad: s.airspeed,
+              // El del automático: la ley de la avioneta ya lo ha puesto a cero en este paso.
+              gas: gasDelAutomatico ?? c.throttle,
+              porAngulo: p && p.cmElevator ? Math.abs(p.cmAlpha / p.cmElevator) : Math.abs(a.aero.cmAlpha / a.aero.cmElevator),
+            };
+          }
+          c.elevator = globalThis.__palancaDelReactorEnLaRecogida({
+            ruedas: hAlto,
+            vertical: s.verticalSpeed,
+            verdadera: s.airspeed,
+            ritmoDeCabeceo: s.pitchRate,
+            carga: s.loadFactor ?? 1,
+            porAngulo: recogidaDelReactor.porAngulo,
+            envergadura: a.wingSpan,
+            dt,
+            rec: recogidaDelReactor,
+          });
+          // El gas, al ralentí a los treinta pies: ver `RECOGIDA_DE_REACTOR` en el vuelo entero.
+          c.throttle = gas = hAlto > 30 * 0.3048 ? recogidaDelReactor.gas : 0;
         }
         globalThis.__trazaDelPiloto = { gas, senda, sobreLaToma, hAlto, vs: s.verticalSpeed, vsQuiere, elev: c.elevator };
         // La corta, paso a paso, con `OGA_TRAZA=1`: lo de cada lectura no ve el enderezado, que dura un par de segundos.

@@ -65,6 +65,7 @@ import {
 } from "./oido.mjs";
 import { fasesATiempoReal } from "./reloj-del-banco.mjs";
 import { gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
+import { porLoQueAceleraElReactor } from "./recogida-del-reactor.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -741,6 +742,13 @@ const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
 await page.addScriptTag({
   content: `globalThis.__gasDelBimotorEnLaRecogida = ${gasDelBimotorEnLaRecogida.toString()};`,
 });
+/*
+ * **Y lo que nota en el asiento un reactor en la recogida, desde su módulo**
+ * (H46), por lo mismo: `recogida-del-reactor.test.mjs` vuela el mismo término.
+ */
+await page.addScriptTag({
+  content: `globalThis.__porLoQueAceleraElReactor = ${porLoQueAceleraElReactor.toString()};`,
+});
 
 const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida]) => {
   const o = globalThis.__oga;
@@ -1379,12 +1387,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       envergadura > 30
         ? Math.min(1, (enVerdadera(s, suyas.aproximacion ?? s.airspeed) / Math.max(1, s.airspeed)) ** 2)
         : 1;
-    // Ver `POR_LO_QUE_ACELERA`.
+    /*
+     * **Y lo que nota en el asiento**: la carga contra la aceleración que pide
+     * el perfil, con el tamaño del avión (H46). Ver
+     * `scripts/recogida-del-reactor.mjs`.
+     */
     const porLoQueAcelera =
       RECOGIDA_DE_REACTOR && recogida.porAngulo
-        ? recogida.porAngulo *
-          POR_LO_QUE_ACELERA *
-          (acelera - ((s.loadFactor ?? 1) - 1) * 9.81)
+        ? globalThis.__porLoQueAceleraElReactor({
+            porAngulo: recogida.porAngulo,
+            envergadura,
+            acelera,
+            carga: s.loadFactor ?? 1,
+          })
         : 0;
     /*
      * **Y un bimotor de hélice que se hunde, con el doble de mano** (H34d).
@@ -2393,18 +2408,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const ritmoAlTocar = RECOGIDA_DE_REACTOR ? 2 * 0.3048 : RITMO_AL_TOCAR;
   /** Las ruedas a las que un reactor pone el gas al ralentí, m. */
   const RETARD_DEL_REACTOR = 30 * 0.3048;
-  /**
-   * **Y lo que el avión ya está acelerando, en la recogida de un reactor**:
-   * cuatro centésimas de radián de ángulo por cada m/s² que falte para la
-   * aceleración hacia arriba que pide el perfil, medida con la carga —`n − 1`
-   * g—, pasadas a palanca con el cabeceo del avión como lo demás. Es lo que
-   * nota en el asiento un piloto al que una racha le quita el ala: que se hunde
-   * antes de que lo diga el variómetro. Sin esto el lazo solo veía el error de
-   * ritmo, que llega un segundo tarde; medido con la traza del ala del JAZ 90
-   * en Los Rodeos, una racha de cola de cinco metros por segundo al empezar a
-   * recoger lo dejó a 0,87 g durante segundo y medio, y tocó a 4,57 m/s.
+  /*
+   * **Y lo que el avión ya está acelerando, en la recogida de un reactor**: lo
+   * que nota en el asiento un piloto al que una racha le quita el ala, con el
+   * tamaño del avión desde H46. Vive en `scripts/recogida-del-reactor.mjs`.
    */
-  const POR_LO_QUE_ACELERA = 0.04;
   /**
    * **Y la senda, con el morro del automático en todo el modelo completo**,
    * no solo en los reactores.
