@@ -47,6 +47,8 @@ interface Muestra {
   readonly senda: number | null;
   readonly vertical: number;
   readonly velocidad: number;
+  /** La verdadera que pide la tripulación, m/s. */
+  readonly pedida: number;
 }
 
 /** Lo que le falta a la velocidad para la pedida en lo peor del tramo, y dónde. */
@@ -115,7 +117,7 @@ function volar(masa?: number, otro?: AircraftConfig): {
     trenQueSeMete: true,
     arriba: arribaDe(avion),
   });
-  tripulacion.ponerEnCrucero(d.velocidad, d.altitud);
+  tripulacion.ponerEnCrucero(d.velocidad);
   const [ux, uz] = [Math.sin(EJE), -Math.cos(EJE)];
   const muestras: Muestra[] = [];
   let bajaEn: number | null = null;
@@ -230,7 +232,7 @@ function volar(masa?: number, otro?: AircraftConfig): {
     }
     if (t >= siguiente) {
       siguiente = t + 30;
-      muestras.push({ t, falta: l.faltaParaTocar, altitud: s.position.y, senda, vertical: s.verticalSpeed, velocidad: s.airspeed });
+      muestras.push({ t, falta: l.faltaParaTocar, altitud: s.position.y, senda, vertical: s.verticalSpeed, velocidad: s.airspeed, pedida: manos.velocidad });
     }
     const e = tripulacion.estado;
     const quemaEnCrucero = (): number | null => (enCruceroMedido.tiempo > 0 ? enCruceroMedido.kilos / enCruceroMedido.tiempo : null);
@@ -249,6 +251,19 @@ function aguja250(vuelo: ReturnType<typeof volar>): number {
   const abajo = vuelo.muestras.filter((x) => x.altitud < 10_000 * PIE && x.falta > 30 * 1852);
   expect(abajo.length).toBeGreaterThan(0);
   return Math.max(...abajo.map((x) => indicatedAirspeed(x.velocidad, x.altitud) / NUDO));
+}
+
+/**
+ * **Lo que pide la tripulación bajando a ese nivel**: la aguja, en nudos, y el
+ * Mach, de la muestra de la bajada más cercana a él (H38g).
+ */
+function pideA(vuelo: ReturnType<typeof volar>, nivel: number): { readonly kt: number; readonly mach: number } {
+  const altitud = nivel * 100 * PIE;
+  const bajando = vuelo.muestras.filter((x) => x.senda !== null);
+  expect(bajando.length).toBeGreaterThan(0);
+  const x = bajando.reduce((a, b) => (Math.abs(b.altitud - altitud) < Math.abs(a.altitud - altitud) ? b : a));
+  expect(Math.abs(x.altitud - altitud)).toBeLessThan(1000 * PIE);
+  return { kt: indicatedAirspeed(x.pedida, x.altitud) / NUDO, mach: x.pedida / velocidadDelSonido(x.altitud) };
 }
 
 /**
@@ -290,6 +305,18 @@ describe("la bajada desde cuarenta mil pies", () => {
     expect(alPuntoDeFinal(vuelo)).toBeLessThan(30);
   });
 
+  it("baja al Mach de su crucero hasta que la aguja llega a sus 320 nudos, y a ellos desde ahí (H38g)", () => {
+    // El crucero del vuelo largo va a Mach 0,78, de la cuenta del vuelo: a FL250 eso son unos 314 de aguja.
+    for (const nivel of [350, 250]) {
+      const p = pideA(vuelo, nivel);
+      expect(p.mach).toBeCloseTo(0.78, 2);
+      expect(p.kt).toBeLessThan(320.5);
+    }
+    const abajo = pideA(vuelo, 150);
+    expect(abajo.kt).toBeCloseTo(320, 0);
+    expect(abajo.mach).toBeLessThan(0.78);
+  });
+
   it("encuentra la senda antes de la aproximación: a unos cuarenta kilómetros ya va por ella", () => {
     const cerca = vuelo.muestras.find((x) => x.falta < 40_000);
     expect(Math.abs(cerca!.altitud - cerca!.senda!)).toBeLessThan(200);
@@ -328,15 +355,28 @@ describe("la bajada desde cuarenta mil pies", () => {
 /**
  * **Y con los otros dos reactores de línea**, desde su crucero, por la misma ruta
  * (H38f), con su peso de la ficha: el JAZ 90 desde treinta y seis mil pies y el
- * JAZ 120 desde treinta y cinco mil. Suben ya en indicada y Mach; la bajada sigue
- * en verdadera —ver `velocidadBajando` en `vuelo-de-linea.ts`—, y el JAZ 120 llega a
- * los cuarenta kilómetros unos 650 m por encima de la senda del plan: la coge a unos
- * quince, antes del punto de final. Lo que se mira aquí es que llegue a él a la
- * altura que toca.
+ * JAZ 120 desde treinta y cinco mil. Bajan al Mach de su crucero y después a su
+ * indicada, como suben (H38g): en verdadera, el JAZ 120 llegaba a los cuarenta
+ * kilómetros unos 650 m por encima de la senda del plan.
  */
-describe.each(["jaz-90", "jaz-120"])("la bajada del %s desde su crucero", (id) => {
+describe.each([
+  { id: "jaz-90", kt: 280 },
+  { id: "jaz-120", kt: 290 },
+])("la bajada del $id desde su crucero", ({ id, kt }) => {
   const otro = AIRCRAFT.find((x) => x.id === id)!;
   const vuelo = volar(otro.mass, otro);
+
+  it("a FL350 pide el Mach de su crucero; a FL250 y FL150, su indicada (H38g)", () => {
+    // El de su crucero, que aquí es el de su ficha: Mach 0,75 y 0,78.
+    expect(pideA(vuelo, 350).mach).toBeCloseTo(otro.cruiseSpeed / velocidadDelSonido(otro.alturaDeCrucero), 2);
+    expect(pideA(vuelo, 350).kt).toBeLessThan(kt);
+    for (const nivel of [250, 150]) expect(pideA(vuelo, nivel).kt).toBeCloseTo(kt, 0);
+  });
+
+  it("a cuarenta kilómetros ya va por la senda (H38g)", () => {
+    const cerca = vuelo.muestras.find((x) => x.falta < 40_000);
+    expect(Math.abs(cerca!.altitud - cerca!.senda!)).toBeLessThan(200);
+  });
 
   it("antes del punto de final va por la senda, a la altura que toca", () => {
     expect(alPuntoDeFinal(vuelo)).toBeLessThan(30);

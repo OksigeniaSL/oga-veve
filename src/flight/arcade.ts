@@ -36,7 +36,17 @@ import {
   GRAVITY,
   indicadaDe,
   SEA_LEVEL_DENSITY,
+  trueFromIndicated,
+  velocidadDelSonido,
 } from "./atmosphere";
+import {
+  ALTITUD_DEL_TOPE,
+  FRENAR_ANTES,
+  indicadaDeSubida,
+  machDeCrucero,
+  NUDO as NUDO_DE_LA_ESCALERA,
+  TOPE_BAJO_EL_100,
+} from "./escalera-de-velocidades";
 import { actitudEnTierra, alturaSobreLasRuedas } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import {
@@ -61,7 +71,7 @@ import type {
   InitialConditions,
   LoSacado,
 } from "./model";
-import { conMasa, loQueDaElMotor, masaDe, parteDelEmpuje, type AircraftConfig } from "./aircraft";
+import { conMasa, esDeChorro, loQueDaElMotor, masaDe, parteDelEmpuje, type AircraftConfig } from "./aircraft";
 import { cargaPorRafaga } from "./rafagas";
 
 /**
@@ -72,7 +82,8 @@ import { cargaPorRafaga } from "./rafagas";
  * aire es la cuarta parte de denso, y a ras de suelo no llega ni de lejos —se
  * lo impide la presión dinámica, que es lo que rompe estructuras—. Así que este
  * modelo sale de una fracción del crucero y **sube hasta el crucero entero con
- * la altura**. Ver `alturaDeCrucero` en la ficha.
+ * la altura**. Ver `alturaDeCrucero` en la ficha. Y en un reactor, por encima de
+ * diez mil pies, como poco la velocidad de su programa: ver `programaDeArriba`.
  */
 const CRUISE_FRACTION = 0.62;
 /** Velocidad mínima rodando y a la que se separa del suelo, en m/s. */
@@ -450,8 +461,70 @@ export class ArcadeFlightModel implements FlightModel {
     const motor = this.ritmoDelMotor(gas);
     const falta = ritmo / bite - motor;
     // Tirando, con lo que se presta mientras sobra velocidad: ver `loQuePresta`.
-    const porPalanca = sube * (0.4 + 0.6 * gas) + (falta > 0 ? this.loQuePresta(gas) : 0);
+    // Empujando, lo que baja la palanca: ver `loQueBajaLaPalanca`.
+    const porPalanca =
+      falta < 0
+        ? this.loQueBajaLaPalanca(gas, motor)
+        : sube * (0.4 + 0.6 * gas) + (falta > 0 ? this.loQuePresta(gas) : 0);
     return clamp(falta / Math.max(0.01, porPalanca), -1, 1);
+  }
+
+  /**
+   * **Lo que baja la palanca a fondo hacia delante**, m/s, con este gas y lo que
+   * sube o baja el motor solo (`motor`, el de `ritmoDelMotor`).
+   *
+   * Lo de siempre es la misma autoridad que tirando, que crece con el gas. En
+   * un reactor arriba eso se quedaba corto, y es por cómo es este modelo: aquí
+   * el gas **es** la velocidad, así que a la de su programa —ver
+   * `programaDeArriba`— el gas va casi a fondo, el motor sube por su cuenta un
+   * tercio largo de su ascenso y la palanca solo podía restarle el resto: el
+   * JAZ 110 y el JAZ 120 no bajaban de unos 1.760 pies por minuto. Un reactor de
+   * verdad baja ahí con los motores al ralentí y el morro sosteniendo la
+   * velocidad, a lo que planea a esa velocidad: con su ficha, a veinticinco mil
+   * pies y 320 nudos indicados, el JAZ 110 unos 3.500 pies por minuto. Y la
+   * senda de tres millas por cada mil pies, que es eso mismo, le pide unos
+   * 2.650.
+   *
+   * Así que en un reactor la palanca a fondo baja **como poco su planeo al
+   * ralentí a esta velocidad y esta altura** (`planeoAlRalenti`): lo que el gas
+   * sostiene es la velocidad, que en el avión de verdad sostiene el morro. Abajo
+   * y despacio ese planeo queda por debajo de lo de siempre, y no cambia nada:
+   * lo nota el reactor rápido y alto, que es el que bajaba poco. Los de hélice,
+   * como estaban: su programa no va contra la punta, y bajan quitando gas.
+   */
+  private loQueBajaLaPalanca(gas: number, motor: number): number {
+    const deSiempre = ascensoMaximo(this.aircraft) * (0.4 + 0.6 * gas);
+    if (!esDeChorro(this.aircraft)) return deSiempre;
+    return Math.max(deSiempre, motor + this.planeoAlRalenti());
+  }
+
+  /**
+   * **Lo que baja este avión al ralentí a la velocidad de ahora**, m/s, con el
+   * aire de su altura y con lo que lleva sacado: la verdadera por la
+   * resistencia entre el peso.
+   *
+   * `caidaSinMotor` lo cuenta con el aire de abajo, y arriba hay que pasarlo: el
+   * ala ve la indicada, así que el coeficiente de sustentación y el de
+   * resistencia son los de la indicada a nivel del mar, y lo que se baja por
+   * segundo crece con la verdadera. Con la verdadera a nivel del mar, a
+   * veinticinco mil pies daba el doble.
+   */
+  private planeoAlRalenti(): number {
+    const verdadera = Math.max(1, this.speed);
+    const indicada = Math.max(1, this.indicada());
+    const deMas =
+      resistenciaDeLosFlaps(this.aircraft, this.sacado.flaps) +
+      resistenciaDelTren(
+        this.aircraft,
+        this.sacado.tren,
+        fraccionDeLosFlaps(this.aircraft, this.sacado.flaps),
+      ) +
+      resistenciaDeLosPaneles(this.aircraft, this.sacado.aerofrenos ?? 0, 0);
+    return (
+      (verdadera / indicada) * caidaSinMotor(this.aircraft, indicada) +
+      (verdadera * 0.5 * SEA_LEVEL_DENSITY * indicada * indicada * this.aircraft.wingArea * deMas) /
+        (masaDe(this.aircraft) * GRAVITY)
+    );
   }
 
   /**
@@ -817,11 +890,57 @@ export class ArcadeFlightModel implements FlightModel {
    */
   private punta(altura = this.state.position.y): number {
     const alto = clamp01(altura / this.aircraft.alturaDeCrucero);
-    return (
-      this.aircraft.cruiseSpeed *
-      (CRUISE_FRACTION + (1 - CRUISE_FRACTION) * alto)
+    return Math.max(
+      this.aircraft.cruiseSpeed * (CRUISE_FRACTION + (1 - CRUISE_FRACTION) * alto),
+      this.programaDeArriba(altura),
     );
   }
+
+  /**
+   * **Y en un reactor, por encima de diez mil pies, como poco la velocidad de su
+   * programa**, m/s de verdadera: la indicada de su tipo hasta el cruce y su Mach
+   * de crucero por encima, las de `indicadaDeSubida` y `machDeCrucero`. Cero en
+   * los de hélice y por debajo de diez mil pies.
+   *
+   * La recta de `punta` va de una fracción del crucero abajo al crucero entero
+   * arriba **en verdadera**, y en la aguja eso es una cuesta abajo: el JAZ 110
+   * pasaba de 303 nudos indicados a nivel del mar a 282 a veinticinco mil pies,
+   * con 320 en su escalera. Un reactor de verdad sube y baja ahí a su indicada,
+   * y lo que le pone el techo no es el empuje sino su Vmo, que la escalera deja
+   * veinte nudos por encima como poco. Así que este modelo, que no sabía llegar,
+   * iba con el gas a fondo toda la subida y toda la bajada (enmienda H38g del ADR
+   * 0019).
+   *
+   * Abajo no cambia nada: por debajo de diez mil pies se vuela a 250 como mucho,
+   * y la recta ya da más en toda la flota. Y para que la punta no salte al cruzar
+   * los diez mil, la indicada va de esos 250 a la del tipo en los mil pies de
+   * encima, el tramo en el que la escalera frena bajando (`FRENAR_ANTES`).
+   */
+  private programaDeArriba(altura: number): number {
+    if (altura <= ALTITUD_DEL_TOPE) return 0;
+    const programa = this.programa();
+    if (programa === null) return 0;
+    const t = clamp01((altura - ALTITUD_DEL_TOPE) / FRENAR_ANTES);
+    const bajoEl100 = TOPE_BAJO_EL_100 * NUDO_DE_LA_ESCALERA;
+    const indicada = bajoEl100 + (programa.indicada - bajoEl100) * t;
+    return Math.min(
+      trueFromIndicated(indicada, altura, this.aire),
+      programa.mach * velocidadDelSonido(altura, this.aire),
+    );
+  }
+
+  /** La indicada y el Mach del programa de un reactor, guardados por avión; `null` en los de hélice. */
+  private programa(): { readonly indicada: number; readonly mach: number } | null {
+    if (this.programaDe !== this.ficha) {
+      this.programaDe = this.ficha;
+      const mach = machDeCrucero(this.ficha);
+      this.programaGuardado =
+        mach === null ? null : { indicada: indicadaDeSubida(this.ficha) * NUDO_DE_LA_ESCALERA, mach };
+    }
+    return this.programaGuardado;
+  }
+  private programaDe: AircraftConfig | null = null;
+  private programaGuardado: { readonly indicada: number; readonly mach: number } | null = null;
 
   /**
    * El tope de verdad **también aquí**, aunque este modelo no llegue nunca.
@@ -1585,7 +1704,11 @@ export class ArcadeFlightModel implements FlightModel {
         ? controls.elevator * this.loQuePresta(gas)
         : 0;
     const mando =
-      controls.elevator * ascensoMaximo(this.aircraft) * (0.4 + 0.6 * gas) + prestado;
+      controls.elevator *
+        (controls.elevator < 0
+          ? this.loQueBajaLaPalanca(gas, planeo)
+          : ascensoMaximo(this.aircraft) * (0.4 + 0.6 * gas)) +
+      prestado;
     if (prestado > 0)
       this.speed = Math.max(
         1,

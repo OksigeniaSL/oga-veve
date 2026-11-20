@@ -2,8 +2,8 @@
  * **Por encima de diez mil pies, la indicada y el Mach de cada tipo** (H38f): lo
  * que pide la tripulación de línea a FL150, FL250 y FL350, subiendo y en el
  * crucero de un salto entre islas, en los tres reactores que vuela. Era una
- * verdadera fija de 280 nudos para todos. La bajada sigue en verdadera: ver
- * `velocidadBajando` en `vuelo-de-linea.ts`.
+ * verdadera fija de 280 nudos para todos. La bajada, igual desde H38g: ver
+ * `bajada-indicada-y-mach.test.ts`.
  *
  * Abajo del cruce manda la indicada; arriba, el Mach. Y es el mismo par que pide
  * la ventanilla SPD a quien juega (`velocidadQueToca`): la tripulación y la cabina

@@ -1511,3 +1511,46 @@ versión y 203 con el código de antes, que al nacer con el morro del ala
 limpia y los flaps fuera subía un poco en cada cambio. El JAZ 20 de ese banco
 no se ha vuelto a volar con la versión que queda (con la primera, sus 40
 pasaban).
+
+## Nota H38g (20-11-2026): el reactor del modelo sencillo, arriba, llega a su indicada y baja lo que planea
+
+### Lo que pasaba
+
+La punta del modelo sencillo (`punta` en `arcade.ts`) sube del 62 % del crucero de
+la ficha a nivel del mar al crucero entero a su altura, en verdadera. En la aguja
+eso baja con la altura, y a media altura quedaba por debajo de la indicada del
+programa de cada reactor: el JAZ 110 no pasaba de 282 nudos indicados a
+veinticinco mil pies, con 320 en su escalera. Así que la tripulación de línea, y
+los gases automáticos, iban con el gas a fondo toda la subida y toda la bajada. Y
+con el gas a fondo este modelo no baja más de 1.764 pies por minuto: el gas que
+pasa del que sostiene el nivel sube solo, y la palanca a fondo hacia delante solo
+le restaba su autoridad de siempre. La senda de tres millas por cada mil pies le
+pide a esa velocidad unos 2.650.
+
+### Lo que se decidió
+
+Dos cosas, solo en los reactores y solo donde se notaba:
+
+- **Por encima de diez mil pies, la punta no baja de la velocidad del programa**
+  del avión —la indicada de `indicadaDeSubida` hasta el cruce y el Mach de
+  `machDeCrucero` por encima—, que es lo que vuela un reactor de verdad ahí y lo
+  que le deja su Vmo (`programaDeArriba`). Entre diez y once mil pies la indicada
+  va de 250 a la del tipo, para que la punta no salte.
+- **La palanca a fondo hacia delante baja como poco el planeo al ralentí** a la
+  velocidad y la altura de ahora (`loQueBajaLaPalanca`, `planeoAlRalenti`): la
+  verdadera por la resistencia entre el peso, con el ala viendo la indicada. Lo
+  que el gas sostiene aquí es la velocidad, que en el avión de verdad sostiene el
+  morro con los motores al ralentí.
+
+### Lo que no cambia
+
+Por debajo de diez mil pies y en los de hélice, nada: medido a nivel del mar y a
+cinco mil pies en los tres reactores, y en el JAZ 20 y el JAZ 60 a todas sus
+alturas, la punta y lo que baja la palanca son los mismos números que antes. La
+carrera de despegue tampoco, que tiene su propia punta del suelo. Lo que sí se
+mueve un poco arriba es lo que muerde el mando muy despacio, que se mide contra la
+punta: un reactor al ralentí a 180 nudos de verdadera a veinticinco mil pies, con
+la aguja en 120, muerde algo menos.
+
+Las cifras, antes y después, y la bajada de la tripulación que esto deja hacer,
+en la enmienda H38g del ADR 0019.
