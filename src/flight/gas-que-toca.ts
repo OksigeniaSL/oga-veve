@@ -53,7 +53,8 @@ export function gasQueSostiene(a: AircraftConfig, p: ParaSostener): number | nul
  * **La potencia de crucero**, fracción de la de nivel del mar: el 75 %, la
  * fila de la tabla de crucero con la que se planea un tramo en cualquier
  * manual de avioneta, y la del crucero de la ficha del JAZ 40 (ver
- * `turbo.test.ts`).
+ * `turbo.test.ts`). La de quien no tiene fila del 75 % va en su ficha: ver
+ * `potenciaDeCrucero` y el JAZ 50 (ADR 0027, enmienda H37j).
  */
 export const POTENCIA_DE_CRUCERO = 0.75;
 
@@ -92,7 +93,9 @@ export function velocidadDeCrucero(
   const tope = Math.min(a.cruiseSpeed, topeConMargen(a, p.altura, aire));
   if (esDeChorro(a)) return tope;
   const motor = loQueDaElMotor(a, airDensity(p.altura, aire) / SEA_LEVEL_DENSITY);
-  const palanca = motor > 0 ? Math.min(1, POTENCIA_DE_CRUCERO / motor) : 1;
+  // La de su ficha, si su manual no cruza al 75 %: el turbohélice. Ver `potenciaDeCrucero`.
+  const potencia = a.potenciaDeCrucero ?? POTENCIA_DE_CRUCERO;
+  const palanca = motor > 0 ? Math.min(1, potencia / motor) : 1;
   const pide = (v: number): number =>
     gasQueSostiene(a, { altura: p.altura, verdadera: v, aire, flaps: 0, tren: p.tren, pendiente: 0 }) ?? Infinity;
   if (pide(tope) <= palanca) return tope;

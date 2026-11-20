@@ -1369,6 +1369,7 @@ import { DibujoDelRemolque } from "./world/tractor-de-remolque";
 import { barraAlTrenDe, conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
 import { AvisoDeLaRaya } from "./flight/aviso-de-la-raya";
 import { AvisoDeVelocidad } from "./flight/aviso-de-velocidad";
+import { altitudMaximaDe, AvisoDeLaAltitudMaxima } from "./flight/altitud-maxima";
 import {
   destinoEnLaRaya,
   elSitioDe,
@@ -4967,6 +4968,37 @@ export class Game {
 
   /** Si ya se avisó del anillo en esta entrada: lo rearma salir de la zona. Ver `mirarElAnillo`. */
   private anilloContado = false;
+
+  /**
+   * **Por encima de lo que se aprueba en este avión, lo cuenta la
+   * instructora.** Ninguno de la flota lleva una caja que avise de haber
+   * pasado su altitud máxima de operación, y nada impide subir más: ni pared
+   * en el modelo ni tope en los mandos, como en el avión. Lo que hay es su
+   * manual, y quien lo vuela. Así que en los tres peldaños de abajo, como toda
+   * explicación, la tarjeta con el dibujo de bajar y la voz; en el de cabina,
+   * nada más que el altímetro, como en el avión. Una vez por cada vez que se
+   * pasa: la rearma bajar mil pies. Ver `flight/altitud-maxima.ts`.
+   */
+  private mirarLaAltitudMaxima(): void {
+    const s = this.flight.state;
+    // La de presión: la que marca el altímetro con 1013, que es en la que se escribe el límite.
+    const presion = alturaIndicada(s.position.y, QNH_ESTANDAR, this.qnhDelSitio);
+    if (!this.avisoDeLaAltitudMaxima.toca(presion, altitudMaximaDe(this.aircraft), s.onGround || s.crashed)) return;
+    this.avisoDeLaAltitudMaxima.dicho();
+    if (!laInstructoraLoExplica(this.tier.avisos)) {
+      this.apuntarCanto(`altitud máxima: pasada a ${Math.round(presion / PIE_EN_METROS)} ft → callada, peldaño de cabina`);
+      return;
+    }
+    this.hud.senal.mostrar("descenso", this.rotulo("hud.altitudMaxima", "palabra.altitudMaxima"), null, {
+      segundos: 8,
+      prioridad: IMPORTANTE,
+    });
+    const dicha = this.decirLoGrabado("vuelo.altitudMaxima");
+    this.apuntarCanto(`altitud máxima: pasada a ${Math.round(presion / PIE_EN_METROS)} ft → ${dicha ? "dicho" : "tarjeta"}`);
+  }
+
+  /** «Ya pasamos lo más alto de este avión». Ver `mirarLaAltitudMaxima`. */
+  private readonly avisoDeLaAltitudMaxima = new AvisoDeLaAltitudMaxima();
 
   /** Para el banco: dónde está el rotor respecto al anillo. Ver `zonaDelAnillo`. */
   get anilloParaBanco(): { descenso: number; avance: number; zona: string } | null {
@@ -22576,6 +22608,7 @@ export class Game {
     this.updateHomeIndicator();
     this.mirarSiSePerdio();
     this.mirarElAnillo();
+    this.mirarLaAltitudMaxima();
     this.hud.tutor.update(
       this.flight.state,
       // En el helicóptero, el paso de las palas para despegar: ver `STEPS.colectivo`.

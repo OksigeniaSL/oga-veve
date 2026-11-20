@@ -178,6 +178,35 @@ describe("los de pistón sin turbo, con la ley de Gagg y Farrar", () => {
     }
   });
 
+  /*
+   * **Y sube más deprisa a la indicada de su manual**: la misma figura 5-6 da
+   * la de cada altura, 79, 77, 76, 74, 72, 71 y 69 nudos (ADR 0027, enmienda
+   * H37j). La forma de la polar y de la hélice está bien donde el manual la
+   * mide; lo que le sobra de techo es la pendiente, no el sitio.
+   */
+  const VY_DEL_172R = [79, 77, 76, 74, 72, 71, 69];
+  it("y la indicada de mejor subida a cada altura es la de su manual, a dos nudos", () => {
+    SUBIDA_DEL_172R.forEach(([pies], i) => {
+      const altura = pies * PIE;
+      const ias = (loMasQueSube(JAZ_20, altura).verdadera / KT) * Math.sqrt(airDensity(altura) / SEA_LEVEL_DENSITY);
+      expect(Math.abs(ias - VY_DEL_172R[i]!), `${pies} ft: ${ias.toFixed(1)} kt`).toBeLessThan(2);
+    });
+  });
+
+  /*
+   * **Sus 13.500 ft son los de su figura 5-6**: la tabla cae cien pies por
+   * minuto cada dos mil pies de los ocho mil a los doce mil, y sigue en recta
+   * hasta los cien pies por minuto a 13.400. El modelo pierde 78 cada dos mil
+   * arriba, y por eso llega a 15.000 (H37j).
+   */
+  it("y su techo de servicio sale de su propia tabla de subida", () => {
+    const [p8, s8] = SUBIDA_DEL_172R[4]!;
+    const [p12, s12] = SUBIDA_DEL_172R[6]!;
+    const pendiente = (s12 - s8) / (p12 - p8);
+    const suTecho = p12 + (100 - s12) / pendiente;
+    expect(Math.abs(suTecho - 13500)).toBeLessThan(200);
+  });
+
   it("y la cuenta es lo que vuela el modelo: a dos mil pies del techo sube cerca de lo que dice", () => {
     const altura = (techo(JAZ_20) - 2000) * PIE;
     const cuenta = loMasQueSube(JAZ_20, altura);
