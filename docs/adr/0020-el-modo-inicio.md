@@ -984,6 +984,44 @@ lo que pone la ruta, no el nivel. La decisión que faltaba la tomó Enrique:
 - **El banco se voló una vez**: 97 de 98, y el que falla, el toque mientras
   alguien habla, está contado arriba. No se ha vuelto a volar.
 
+#### Nota H38l (20-11-2026): el toque que se callaba y el rato que salía largo
+
+- **El `sinVer` del toque al Teide era un fallo de la escena.** Al volver a
+  mirar lo tocado después de esperar su turno, `sigueALaVista` preguntaba sin
+  plano cómo se veía, y sin plano el juego contesta cómo se enseña mejor: un
+  hito, con el avión por fuera (`mirarElSitio` en `game.ts`). Así el Teide que
+  se veía por el cristal de Ara salía «fuera» y el toque se callaba. Ahora se
+  pregunta cada pose con su plano —sentada en la ventanilla y con la cara
+  contra el cristal—, y el toque guarda lo que se vio al volver a mirarlo
+  (`VueltaAMirar`). La prueba de `inicio-pasaje.test.ts` lo reproduce con el
+  mundo como lo mira el juego: con la regla de antes, el toque que esperó
+  5,3 s con el Teide en el cristal salía `sinVer` con `como: "fuera"` y
+  `ventanilla: true`; con la de ahora se cuenta, y si de verdad deja de verse
+  por el cristal se sigue callando.
+- **El banco ya no se cree un `sinVer`**: en el fotograma en que la escena
+  contesta el toque de mientras alguien habla, mide por su lado si lo tocado
+  cae por el cristal, sin nube, y solo da por bueno un `sinVer` si él tampoco
+  lo ve desde el asiento.
+- **`hastaLosDiezMil`, medido**: el banco apunta cada vez que la escena mira
+  si algo cabe, con lo estimado y lo que de verdad quedaba. A la velocidad de
+  ahora por el suelo, a los 738 s, subiendo, estimaba 602 s y quedaban 551
+  (+51): la siesta, que pedía 601, cabía en la cuenta y no en el vuelo. El
+  ala, +11; la altura, −4; el kit, bajando, −12. Ahora se cuenta por el
+  perfil (`segundosHastaQueQueden` en `ruta.ts`): cada trozo a la velocidad
+  que toca, con el viento. El banco lo comprueba: como mucho 20 s por arriba.
+  Con el perfil, en el banco: la siesta −18, el ala −15, la altura −13 y el
+  kit −6, siempre por el lado corto.
+- **Volado una vez con el arreglo, 98 de 99** (×12, la tarjeta de verdad, sin
+  hangar ni kit con el dedo). El toque de mientras alguien habla salió
+  `ocupado` —la tripulante encadenó los dos plops— con el Teide a la vista
+  para el banco. Falla uno que no es de esto y ya fallaba antes de tocar la
+  escena, en el vuelo de medida, igual: **el mar de nubes de Ara**
+  (`marDeNubes`, a los 888 y 891 s, asomada hacia abajo a 9,2 km del punto
+  mirado). La escena lo da por visto con lo que deja pasar la capa —menos de
+  0,85— y el banco pide cien metros de nube densa por medio y cuenta 0. No se
+  ha mirado cuál de las dos cuentas tiene razón. La segunda pasada no se voló:
+  cada una tardó 23 minutos de pared con la máquina compartida.
+
 ## La cuarta escena: el vuelo largo de Ara a casa
 
 Fecha: 2026-11-01

@@ -1030,9 +1030,12 @@ async function elVuelo() {
       if (!viva.pisa && invitado && (arribaParaTocar || tramo === "puerta") && e.hablando && e.linea && vv?.suave && DE_ARRIBA.includes(vv.suave.que)) {
         viva.pisa = { que: vv.suave.que, t: e.segundos, antes: toques.length, clave: e.linea.clave };
         await clic(vv.suave.x, vv.suave.y);
+        await mirarAlContestar(page, viva.pisa);
       }
     }
-    // ── La pregunta de la música, con lo que suena al hacerla ──    // ── La pregunta de la música, con lo que suena al hacerla ──
+    // Lo que se vio del toque de mientras alguien habla, en cuanto la escena lo contestó.
+    if (viva.pisa && !viva.pisa.alContestar) viva.pisa.alContestar = await loQueSeVioAlContestar(page);
+    // ── La pregunta de la música, con lo que suena al hacerla ──
     if (preguntaDeLaMusica === null && e.linea?.clave === "inicio.ara.pasaje.musica" && e.hablando)
       preguntaDeLaMusica = { t: e.segundos, suena: m?.suena ?? null, tramo, pies: Math.round(altitud / 0.3048) };
     // ── La foto de una historia, solo con su voz ──
@@ -1271,6 +1274,41 @@ async function elVuelo() {
     `  por encima de los diez mil pies, omitido: ${
       omitidos.map((o) => `${o.que} a los ${o.a.toFixed(0)} s, ${o.porQue} (quedaban ${o.queda.toFixed(0)} s hasta los diez mil bajando, pedía ${o.pide.toFixed(0)})`).join(" · ") || "nada"
     }`,
+  );
+  /*
+   * **Lo que el juego estimaba que quedaba hasta los diez mil pies, y lo que
+   * quedaba de verdad** (H38l): en cada vez que la escena miró si algo cabía,
+   * `hastaLosDiezMil` contra el segundo en que el avión los cruzó bajando,
+   * medido aquí. Pasarse por arriba deja empezar algo que luego no cabe;
+   * quedarse corto solo deja fuera algo que habría cabido, que es el lado
+   * bueno (ADR 0020, enmienda H38k).
+   */
+  const cruzaBajando = (() => {
+    const n = altitudes.findIndex((x, k) => k > 0 && altitudes[k - 1].altitud >= 3048 && x.altitud < 3048);
+    if (n < 1) return null;
+    const a = altitudes[n - 1];
+    const b = altitudes[n];
+    return a.t + ((a.altitud - 3048) * (b.t - a.t)) / (a.altitud - b.altitud);
+  })();
+  const seMiro = (e?.seMiroSiCabe ?? []).map((d) => ({ ...d, deVerdad: cruzaBajando === null ? null : cruzaBajando - d.a }));
+  const deMas = seMiro.filter((d) => d.deVerdad === null || d.queda - d.deVerdad > 20);
+  const conSigno = (x) => `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(0)}`;
+  console.log(
+    `  si cabe, lo estimado hasta los diez mil pies bajando y lo de verdad (cruzados a los ${cruzaBajando?.toFixed(0) ?? "?"} s): ${
+      seMiro
+        .map(
+          (d) =>
+            `${d.que} a los ${d.a.toFixed(0)} s, ${d.cabe ? "cabe" : "no cabe"}: estimado ${d.queda.toFixed(0)} s, de verdad ${d.deVerdad?.toFixed(0) ?? "?"} s (${d.deVerdad === null ? "?" : conSigno(d.queda - d.deVerdad)}), pedía ${d.pide.toFixed(0)}`,
+        )
+        .join(" · ") || "no se miró nada"
+    }`,
+  );
+  comprobar(
+    "lo que el juego estima que queda hasta los diez mil pies bajando no se pasa: como mucho 20 s más de lo que de verdad quedaba, en cada vez que se mira si algo cabe",
+    seMiro.length > 0 && deMas.length === 0,
+    seMiro.length
+      ? `${seMiro.length} veces · ${deMas.length ? `se pasa: ${deMas.map((d) => `${d.que} a los ${d.a.toFixed(0)} s (${d.deVerdad === null ? "sin cruce" : conSigno(d.queda - d.deVerdad)} s)`).join(", ")}` : `lo más por arriba: ${conSigno(Math.max(...seMiro.map((d) => d.queda - d.deVerdad)))} s`}`
+      : "no se miró nada",
   );
   comprobar(
     "cada cosa en su momento, en el orden de un vuelo de verdad",
@@ -1868,13 +1906,46 @@ async function elVuelo() {
   const pisado = viva.pisa ? losToques.find((q, k) => k >= viva.pisa.antes && Math.abs(q.desde - viva.pisa.t) < 3) : null;
   const hablaba = viva.pisa ? registro.filter((d) => d.clave === viva.pisa.clave && d.desde <= viva.pisa.t + 0.5).at(-1) : null;
   const suPrimera = pisado?.dijo.length ? registro.find((d) => d.clave === pisado.dijo[0] && d.desde >= pisado.desde - 0.1) : null;
+  /*
+   * **Y si al contestarle ya no se veía** (H38l): un `sinVer` solo vale si el
+   * banco, midiendo por su lado en ese mismo fotograma, tampoco lo ve desde el
+   * asiento de Ara. Si el banco no pudo medir —la cámara fuera, un fundido—,
+   * no vale: lo que no se ha visto no se da por bueno.
+   */
+  const alContestar = viva.pisa?.alContestar ?? null;
+  const sinVerDeVerdad = pisado?.calla === "sinVer" && !!alContestar && alContestar.desdeElAsiento && !alContestar.seVe;
+  if (viva.pisa) {
+    const a = alContestar;
+    const mirado = a?.mirado ?? pisado?.mirado ?? null;
+    console.log(
+      `  el toque mientras alguien habla, al contestarle: ${
+        a
+          ? `a los ${a.segundos.toFixed(1)} s · ${a.dijo[0] ?? a.calla} · plano ${a.plano}${a.velo >= 0.02 ? ` (velo ${a.velo.toFixed(2)})` : ""} · la escena: ${
+              mirado
+                ? `esperó ${mirado.espero.toFixed(1)} s, como ${mirado.como ?? "nada"}, sentada ${mirado.ventanilla}, asomada ${mirado.asomado}`
+                : "no volvió a mirar"
+            } · el banco: ${
+              a.vista
+                ? `delante ${a.vista.delante}, cristal ${a.vista.porElCristal}, ojo en nube ${a.vista.ojoEnNube.toFixed(2)}, nube por medio ${a.vista.nubeEnMedio.toFixed(0)} m, a ${(a.vista.distancia / 1000).toFixed(1)} km`
+                : "sin vista"
+            }${a.donde ? ` · el dedo: se ve ${a.donde.seVe}, cristal ${a.donde.porElCristal}` : " · el dedo: sin mirada"} → ${a.seVe ? "se veía" : a.desdeElAsiento ? "no se veía" : "sin medida desde el asiento"}`
+          : "sin medida"
+      }`,
+    );
+  }
   comprobar(
     "un toque mientras habla alguien no le pisa: espera a que se calle, o se queda en su aro",
     !!viva.pisa &&
       !!pisado &&
-      (suPrimera ? !!hablaba && suPrimera.desde >= (hablaba.hasta ?? Infinity) - 1e-6 : ["ocupado", "contado"].includes(pisado.calla)),
+      (suPrimera ? !!hablaba && suPrimera.desde >= (hablaba.hasta ?? Infinity) - 1e-6 : ["ocupado", "contado"].includes(pisado.calla) || sinVerDeVerdad),
     viva.pisa
-      ? `${viva.pisa.que} a los ${viva.pisa.t.toFixed(0)} s con «${viva.pisa.clave}» sonando (acaba a los ${hablaba?.hasta?.toFixed(1) ?? "—"} s): ${pisado ? (suPrimera ? `${pisado.dijo[0]} a los ${suPrimera.desde.toFixed(1)} s` : pisado.calla) : "no llegó a la escena"}`
+      ? `${viva.pisa.que} a los ${viva.pisa.t.toFixed(0)} s con «${viva.pisa.clave}» sonando (acaba a los ${hablaba?.hasta?.toFixed(1) ?? "—"} s): ${
+          pisado
+            ? suPrimera
+              ? `${pisado.dijo[0]} a los ${suPrimera.desde.toFixed(1)} s`
+              : `${pisado.calla}${pisado.calla === "sinVer" ? (sinVerDeVerdad ? ", y el banco tampoco lo veía" : alContestar?.seVe ? ", y el banco lo veía" : ", sin medida del banco") : ""}`
+            : "no llegó a la escena"
+        }`
       : "no se tocó con nadie hablando",
   );
   const vistosDelViaje = e?.vistos ?? [];
@@ -3015,6 +3086,58 @@ const PELDANO_DE_LA_LUZ = { telefono: "dibujo", tablet: "cifra", portatil: "cabi
  * circuito y no en base ni en final —lo que miden sus alas en la pantalla—,
  * que de noche contesta con los faros y que se acaba.
  */
+/**
+ * **Lo que se ve de lo tocado en el instante en que la escena lo contesta**
+ * (H38l): en la página, fotograma a fotograma, se mira si el toque dejó de
+ * esperar —que diga algo o que calle, y por qué— y en ese mismo fotograma se
+ * mide por el lado del banco, con la cámara: si cae por el cristal de Ara, sin
+ * nube por medio ni los ojos dentro de una, y si la cuenta del dedo lo ve. Así
+ * un `sinVer` se puede comprobar en vez de creérselo. Se mira en la página y
+ * no esperándolo desde aquí: con la tarjeta ocupada, ×12 no llega a ×12, y la
+ * espera se comía las demás muestras. `loQueSeVioAlContestar` lo recoge.
+ */
+async function mirarAlContestar(page, pisa) {
+  await page
+    .evaluate(
+      ({ antes, t, que }) => {
+        globalThis.__ogaAlContestar = null;
+        const hasta = performance.now() + 60_000;
+        const mirar = () => {
+          const j = globalThis.__oga.inicio();
+          const q = (j?.estado?.toques ?? []).find((x, k) => k >= antes && x.que === que && Math.abs(x.desde - t) < 3);
+          if (q && (q.dijo.length > 0 || q.calla !== null)) {
+            globalThis.__ogaAlContestar = {
+              segundos: j.estado.segundos,
+              calla: q.calla,
+              dijo: [...q.dijo],
+              mirado: q.mirado ?? null,
+              plano: j.planoVisto ?? null,
+              velo: Number(j.velo) || 0,
+              vista: globalThis.__oga.paisajeALaVista?.(que) ?? null,
+              donde: globalThis.__oga.dondeTocar?.(que) ?? null,
+            };
+            return;
+          }
+          if (performance.now() < hasta) requestAnimationFrame(mirar);
+        };
+        requestAnimationFrame(mirar);
+      },
+      { antes: pisa.antes, t: pisa.t, que: pisa.que },
+    )
+    .catch(() => {});
+}
+
+/** Lo que apuntó `mirarAlContestar`, con el veredicto del banco, o `null` si todavía no. */
+async function loQueSeVioAlContestar(page) {
+  const m = await page.evaluate(() => globalThis.__ogaAlContestar ?? null).catch(() => null);
+  if (!m) return null;
+  const v = m.vista;
+  const desdeElAsiento = ["ventanilla", "asomado-motor", "asomado-abajo", "asomado-paisaje"].includes(m.plano) && m.velo < 0.02;
+  // Lo mismo que se pide a lo nombrado del paisaje, menos caer en la imagen: girando la cabeza también se ve.
+  const seVe = desdeElAsiento && !!v && v.delante && v.porElCristal === true && v.ojoEnNube < 0.35 && v.nubeEnMedio < 150;
+  return { ...m, desdeElAsiento, seVe };
+}
+
 async function jugarLaLuz(page, nombre, tocar) {
   const peldano = PELDANO_DE_LA_LUZ[nombre] ?? "dibujo";
   const kitDe = () => page.evaluate(() => globalThis.__oga.inicio().kit);

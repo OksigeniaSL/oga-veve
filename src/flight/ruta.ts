@@ -1116,6 +1116,11 @@ export interface Perfil {
   readonly atmosfera?: Aire;
   /** La velocidad verdadera de ahora, m/s, volando; `null` en tierra. */
   readonly verdadera: number | null;
+  /**
+   * **Hasta dónde se cuenta**, m del umbral: sin esto, hasta el umbral. Es lo
+   * que falta para cruzar una altitud bajando —ver `segundosHastaQueQueden`—.
+   */
+  readonly hastaQueQueden?: number;
 }
 
 /**
@@ -1227,6 +1232,7 @@ export function segundosPorElPerfil(
   }
 
   const paso = Math.max(TROZO, falta / TROZOS);
+  const parada = p.hastaQueQueden ?? 0;
   let hecho = 0;
   let s = 0;
   for (let k = 1; k < puntos.length; k++) {
@@ -1240,6 +1246,8 @@ export function segundosPorElPerfil(
     for (let j = 0; j < n; j++) {
       const medio = hecho + (j + 0.5) * d;
       const queda = Math.max(0, falta - medio);
+      // Los trozos van de aquí al umbral: pasada la parada, lo que queda ya no cuenta.
+      if (queda <= parada) return s;
       const plan = enElPlan(medio, queda);
       const toca = queToca(plan.altitud, queda, plan.subiendo, plan.bajando);
       if (tramoDeAhora !== null && toca.tramo !== tramoDeAhora) tramoDeAhora = null;
@@ -1781,6 +1789,19 @@ export class Seguimiento {
     readonly aire: Aire | undefined;
     readonly subida: SubidaDelPlan;
   } | null = null;
+  /** La última lectura del avión, la de `paso`: con ella se cuenta `segundosHastaQueQueden`. */
+  private lectura: Lectura | null = null;
+  /** La última vez que se contó lo que falta hasta una distancia del umbral. Ver `segundosHastaQueQueden`. */
+  private contadoHasta: {
+    readonly distancia: number;
+    readonly x: number;
+    readonly z: number;
+    readonly altitud: number;
+    readonly aire: number;
+    readonly activo: number;
+    readonly bajando: boolean;
+    readonly segundos: number;
+  } | null = null;
   /** La última vez que se contó la hora del perfil. Ver `horaDelPerfil`. */
   private contado: {
     readonly x: number;
@@ -1935,6 +1956,7 @@ export class Seguimiento {
    * punto de descenso, para que quien llame lo cuente una vez.
    */
   paso(l: Lectura): { readonly descenso: boolean; readonly cambio: boolean } {
+    this.lectura = l;
     const r = this.ruta;
     if (!r || r.fijos.length < 2) {
       this.ultimo = null;
@@ -2001,6 +2023,54 @@ export class Seguimiento {
       puntoDeSubida: this.dondeSeAcabaDeSubir(l, falta, descenso),
     };
     return { descenso: ahora, cambio: this.activo !== antes };
+  }
+
+  /**
+   * **Lo que falta para que queden `distancia` m de ruta hasta el umbral**, s,
+   * por el perfil: la subida que se va acelerando, el crucero y la bajada,
+   * cada trozo a la velocidad que toca y con el viento —ver
+   * `segundosPorElPerfil`—. `null` sin plan, sin avión, en tierra o ya pasado.
+   *
+   * Es el rato de lo que pasa por encima de los diez mil pies en la escena de
+   * pasaje (ADR 0020, enmienda H38k). Se contaba a la velocidad de ahora por
+   * el suelo, y subiendo eso sale largo, que arriba se va más deprisa: medido
+   * en el banco de la tercera escena (H38l), a los 738 s de un salto de Los
+   * Rodeos a La Palma decía 602 s y quedaban 551, y la siesta, que pedía 601,
+   * cabía en la cuenta y no en el vuelo. Se recuenta como la hora del perfil,
+   * y entre tanto se descuenta lo recorrido.
+   */
+  segundosHastaQueQueden(distancia: number): number | null {
+    const r = this.ruta;
+    const l = this.lectura;
+    const avion = this.avion;
+    if (!r || !l || !avion || l.enTierra) return null;
+    const falta = this.ultimo?.restante;
+    if (falta === undefined || falta <= distancia) return null;
+    const c = this.contadoHasta;
+    if (
+      c &&
+      c.distancia === distancia &&
+      c.activo === this.activo &&
+      c.bajando === this.yaBajando &&
+      Math.abs(l.altitud - c.altitud) < 100 &&
+      Math.abs(l.aire - c.aire) < 0.03 * c.aire
+    ) {
+      const movido = Math.hypot(l.x - c.x, l.z - c.z);
+      if (movido < RECONTAR) return Math.max(0, c.segundos - movido / Math.max(1, l.aire));
+    }
+    const segundos = segundosPorElPerfil(r, this.activo, l.x, l.z, {
+      avion,
+      altitud: l.altitud,
+      // El crucero, como en la hora del perfil: el planeado mientras no se baja.
+      crucero: this.yaBajando ? this.desde(l) : Math.max(this.desde(l), this.crucero),
+      bajando: this.yaBajando,
+      viento: l.viento,
+      ...(l.atmosfera ? { atmosfera: l.atmosfera } : {}),
+      verdadera: l.aire,
+      hastaQueQueden: distancia,
+    });
+    this.contadoHasta = { distancia, x: l.x, z: l.z, altitud: l.altitud, aire: l.aire, activo: this.activo, bajando: this.yaBajando, segundos };
+    return segundos;
   }
 
   /**

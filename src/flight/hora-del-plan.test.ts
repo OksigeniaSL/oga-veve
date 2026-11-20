@@ -143,4 +143,44 @@ describe("la hora del plan, de Fuerteventura a Gran Canaria", () => {
     const nivelado = seguir(0);
     expect(Math.abs(nivelado - subiendo) / subiendo).toBeLessThan(0.03);
   });
+
+  /*
+   * **Lo que falta hasta cruzar los diez mil pies bajando** (H38l): es el rato
+   * de lo que pasa por encima en la escena de pasaje. Contado a la velocidad
+   * de ahora, subiendo salía largo —en el banco de la tercera escena, 602 s
+   * donde quedaban 551—, que arriba se va más deprisa. Por el perfil, la
+   * subida, el crucero y la bajada van cada uno a la suya.
+   */
+  it("lo que falta hasta cruzar los diez mil pies bajando, por el perfil: subiendo no sale largo, y con lo de después suma la hora", () => {
+    const s = new Seguimiento();
+    s.poner(ruta, crucero, YVAGA);
+    const diezMil = s.distanciaBajandoA(10000 * PIE)!;
+    // Subiendo por los once mil pies, a la indicada de subida y todavía lejos de la bajada.
+    const b = ruta.fijos[1]!;
+    const l: Lectura = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, altitud: 11000 * PIE, vertical: 10, aire: tas(290, 11000 * PIE), enTierra: false, viento: null };
+    s.paso(l);
+    const p = s.progreso!;
+    const hasta = s.segundosHastaQueQueden(diezMil)!;
+    const aLaDeAhora = (p.restante - diezMil) / l.aire;
+    expect(hasta).toBeGreaterThan(0);
+    expect(hasta, `por el perfil ${hasta.toFixed(0)} s, a la de ahora ${aLaDeAhora.toFixed(0)} s`).toBeLessThan(aLaDeAhora);
+    // Y lo de después, desde ese punto de la ruta bajando, completa la hora entera.
+    let i = ruta.fijos.length - 1;
+    while (i > 1 && ruta.total - ruta.acumulado[i - 1]! < diezMil) i--;
+    const p0 = ruta.fijos[i - 1]!;
+    const p1 = ruta.fijos[i]!;
+    const resto = diezMil - (ruta.total - ruta.acumulado[i]!);
+    const largo = Math.hypot(p1.x - p0.x, p1.z - p0.z);
+    const despues = segundosPorElPerfil(ruta, i, p1.x + ((p0.x - p1.x) * resto) / largo, p1.z + ((p0.z - p1.z) * resto) / largo, {
+      avion: YVAGA,
+      altitud: 10000 * PIE,
+      crucero,
+      bajando: true,
+      viento: null,
+      verdadera: null,
+    });
+    expect(Math.abs(hasta + despues - p.segundos) / p.segundos, `${hasta.toFixed(0)} + ${despues.toFixed(0)} contra ${p.segundos.toFixed(0)} s`).toBeLessThan(0.03);
+    // Pasada la distancia, nada.
+    expect(s.segundosHastaQueQueden(p.restante + 1)).toBeNull();
+  });
 });
