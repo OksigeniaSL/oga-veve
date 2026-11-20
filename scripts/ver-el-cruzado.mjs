@@ -270,14 +270,47 @@ try {
           if (m.throttle !== null) c.throttle = gas = m.throttle;
         }
         globalThis.__trazaDelPiloto = { gas, senda, sobreLaToma, hAlto, vs: s.verticalSpeed, vsQuiere, elev: c.elevator };
+        // La corta, paso a paso, con `OGA_TRAZA=1`: lo de cada lectura no ve el enderezado, que dura un par de segundos.
+        const fina = (globalThis.__trazaFina ??= []);
+        if (hAlto < 20 && fina.length < 600 && !(o.reloj() - (fina.at(-1)?.t ?? -1) < 0.05)) {
+          fina.push({
+            t: o.reloj(),
+            h: hAlto,
+            morro: (morro * 180) / Math.PI,
+            ala: (ala * 180) / Math.PI,
+            guinada: (s.yawRate * 180) / Math.PI,
+            vs: s.verticalSpeed,
+            ias: o.velocidadDeCabina?.() ?? 0,
+          });
+        }
         const enderezar = tecnica === "cangrejo" && hAlto < Math.max(5, a.gearHeight * 2.5);
         const conElPie = tecnica === "ala-baja" || enderezar;
+        const ultima = globalThis.__trazaFina?.at(-1);
         if (conElPie) {
           pie = clamp(pie - (enderezar ? 3 : 1.5) * morro * dt, -1, 1);
           c.rudder = clamp(-(enderezar ? 4 : 3) * morro - 1.5 * s.yawRate + pie, -1, 1);
           const vyQuiere = clamp(-0.25 * y, -3, 3);
-          const alaQuiere = clamp(0.18 * (vyQuiere - vy), -0.35, 0.35);
+          /*
+           * **Y el reactor, con el ala de un reactor al tocar** (H43). Lo que
+           * se iría de lado se sujeta con el ala, y la ley de la avioneta deja
+           * hasta veinte grados. En el JAZ 90 eso es lo que tocaba torcido:
+           * las dos tomas torcidas que se han visto —H32c y la ronda de la
+           * tanda 19— llevaban 11,8° y 14,5° de ala, con el morro a 3,6° y
+           * 4,6° de la pista; un avión inclinado vira, y el morro se va contra
+           * el pie. En la mesa —el modelo del juego, la corta del JAZ 90 con
+           * el automático en la senda, el timón automático de Taguató, 12 y 16
+           * nudos de costado y rachas de seis de un lado y del otro en el
+           * segundo y medio del enderezar—, con veinte grados toca con el
+           * morro a 2,5° como mucho y 9,1° de ala; con ocho, a 1,0° y 4,4°, y
+           * a diez metros y medio del eje en el peor. Un reactor de verdad
+           * toca con pocos grados de ala: los manuales de los de línea la
+           * limitan al tocar por la góndola y la punta del ala. La avioneta y
+           * el ala baja, igual. Ver la enmienda H43 del ADR 0031.
+           */
+          const tope = reactor && enderezar ? (8 * Math.PI) / 180 : 0.35;
+          const alaQuiere = clamp(0.18 * (vyQuiere - vy), -tope, tope);
           c.aileron = clamp(3 * (alaQuiere - ala) - 0.6 * s.rollRate, -1, 1);
+          if (ultima && hAlto < 20) Object.assign(ultima, { pie: c.rudder, aleron: c.aileron });
         } else {
           const camino = Math.atan2(s.velocity.x, -s.velocity.z);
           /*
@@ -382,6 +415,18 @@ try {
     `${r.ejercicio.cierre}, al tocar morro ${r.ejercicio.alTocar?.morro.toFixed(1)}° y ala ${r.ejercicio.alTocar?.ala.toFixed(1)}° al viento; tarjeta ${r.tarjeta}, «${r.texto.slice(0, 70)}»`,
   );
   await foto("04-tocado");
+  if (TRAZA) {
+    const fina = await page.evaluate(() => globalThis.__trazaFina ?? []);
+    let antes = -1;
+    for (const p of fina) {
+      if (p.t - antes < 0.2 && p !== fina.at(-1)) continue;
+      antes = p.t;
+      console.log(
+        `    ~ ${p.t.toFixed(2)} s  ${p.h.toFixed(1)} m  morro ${p.morro.toFixed(1)}  ala ${p.ala.toFixed(1)}  guiñada ${p.guinada.toFixed(1)}°/s  vs ${p.vs.toFixed(1)}  ias ${p.ias} kt` +
+          (p.pie !== undefined ? `  pie ${p.pie.toFixed(2)}  alerón ${p.aleron.toFixed(2)}` : ""),
+      );
+    }
+  }
   comprobar("sin errores en la página", errores.length === 0, errores.join(" | "));
 
   /*
