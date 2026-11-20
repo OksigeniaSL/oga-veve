@@ -3493,3 +3493,65 @@ En las cuatro el cangrejo medido es el del triángulo (5,5 y 5,6; 5,2 y 5,3;
   otra vez un metro y toca a 3,7 m/s. No es lo que tocaba torcido y no se ha
   tocado: lo de un reactor sería empezar la recogida desde lo que lleva el
   automático, sin lo sumado. Hay que volarlo.
+
+## Nota H50 (20-11-2026): la línea de trayectoria, quitada en el paso que cierra
+
+### Lo que se vio
+
+En la ronda de la tanda 20, `ver-la-deriva.mjs` dio 18 de 19: «y la de
+delante, quitada al cerrar» con `"delante": 21`. En las nueve tiradas
+anteriores que quedan en los registros, la de la tanda 19 entre ellas,
+`"delante": 0`.
+
+### Era del juego, y venía de H26l
+
+Entre las dos tandas no se tocó nada de lo que pinta la línea: ni
+`practicarLaDeriva`, ni `flight/deriva.ts`, ni `world/raya-del-camino.ts`, ni
+el banco. El fallo estaba desde que entró la línea, en H26l: **la de delante
+se miraba antes del paso del ejercicio, y el ejercicio se cierra dentro de su
+paso**. En el paso que cerraba, la línea veía todavía «llegar», se quedaba
+tendida, y se quitaba en el paso siguiente. Con el reloj del banco a cuatro
+pasos por fotograma, si el que cerraba era el último del fotograma, ese
+fotograma se pintaba con la línea de un ejercicio ya cerrado, y el banco —que
+lee entre fotograma y fotograma— la veía si su lectura caía justo ahí. Casi
+nunca cae; en la tanda 20 cayó. Por eso no se buscó con `git bisect`: no hay
+commit en que empiece, y una ventana así no se acorrala con tiradas de
+navegador de cinco minutos.
+
+### Lo cambiado
+
+Las tres rayas pasan a `world/rayas-de-la-deriva.ts`, que **da el paso del
+ejercicio y después tiende o quita la de delante**: el orden lo fija la clase
+y no quien la llama. `game.ts` solo la crea, la pone en la escena y atiende a
+lo que dice el ejercicio; la estela del plano también mira ya la fase en que
+queda el paso. Lo demás, igual: la blanca de detrás y la magenta se quedan al
+cerrar, y la de delante se tiende cuatro veces por segundo.
+
+### Lo que se prueba
+
+`world/rayas-de-la-deriva.test.ts` vuela el ejercicio en calma hasta el
+puente, sin navegador, y lee la línea justo después de cada paso, que es donde
+puede caer la lectura del banco: tendida mientras dura, y a cero en el paso
+que cierra, a sesenta pasos por segundo, a treinta y a cuatro. Con el orden
+viejo, al cerrar quedaban 22 muestras.
+
+### Volado
+
+Con la tarjeta del equipo, encima de main en c6f98a4b, Pettirossi con el
+viento del sitio y la avioneta desde Taguató:
+
+| Tirada | Resultado | Al cerrar, «delante» | La blanca de detrás | Corrección: ejercicio, banco, triángulo |
+| --- | --- | --- | --- | --- |
+| Tanda 20, sin cambio | 18 de 19 | **21** | 167 | −4,0°, −4,0°, −4,0° |
+| Con el cambio, 1 | 19 de 19 | 0 | 168 | −4,2°, −3,7°, −4,0° |
+| Con el cambio, 2 | 19 de 19 | 0 | 168 | −4,3°, −4,4°, −4,0° |
+
+### Lo que queda
+
+- Que la línea se quite en el paso que cierra se ve en la prueba; en el banco,
+  solo se ve que no vuelve a fallar en dos tiradas, que es lo que se puede ver
+  de una ventana que casi nunca se abre.
+- `ver-la-estima.mjs` no se ha volado con el cambio: el navegador estaba
+  ocupado por otros bancos. No comparte código con esto —sus rayas son suyas,
+  en `practicarLaEstima`, con la misma cinta sin tocar—, pero hay que pasarlo
+  en la próxima ronda.
