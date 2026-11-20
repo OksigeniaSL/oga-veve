@@ -304,6 +304,14 @@ export interface LecturaDelPasaje {
    */
   readonly hastaLaBajada?: number;
   /**
+   * **Y lo que falta para cruzar los diez mil pies bajando**, s de vuelo:
+   * hasta donde los cruza la senda de la bajada del plan, a la velocidad de
+   * ahora por el suelo, como `hastaLaBajada`. Es el rato de lo que pasa por
+   * encima —ver `cabe`—: bajando se queda algo corto, que se va frenando, y
+   * subiendo algo largo, que arriba se va más deprisa. Sin esto, todo cabe.
+   */
+  readonly hastaLosDiezMil?: number;
+  /**
    * **La potencia de los motores**, la que se oye desde el asiento, y cuánto
    * lleva así, s: la pone la tripulación. Sin esto —las pruebas que no la
    * miran—, no se cuenta ningún cambio de gas: lo que no se sabe si sonó no se
@@ -533,6 +541,8 @@ const DESPIERTA_ANTES_DE_BAJAR = 22;
 /** **Lo que se deja tras el *ding* de la noche**, s: se oye, entra la lámina, y Ara abre los ojos. */
 const TRAS_EL_DING_DE_LA_NOCHE = 1.6;
 const LO_QUE_DURA_EL_BOSTEZO = 8;
+/** **Lo que dice Ara al despertar**, s: su «me dormí» con el mapa, en la cuenta de lo que pide la siesta. Ver `cabe`. */
+const LO_QUE_DICE_AL_DESPERTAR = 8;
 const ESPERA_A_LO_QUE_SE_VE = 25;
 /**
  * **El modo rápido** (⏩): los números. Ver `adelanto`.
@@ -787,6 +797,12 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
   readonly charlas: readonly DefCharla<M, C>[];
   /** Desde qué momentos se puede señalar algo por la ventanilla: el primero que se diga abre. */
   readonly seSenalaDesde: readonly M[];
+  /**
+   * **Lo que pasa por encima de los diez mil pies, por prioridad**: lo
+   * esencial primero y lo demás detrás, cada cosa con lo que dura. Lo que no
+   * es esencial empieza solo si cabe —ver `cabe`—. Sin lista, todo cabe.
+   */
+  readonly porEncima?: readonly LoDeArriba<M, C>[];
   /** Si la tripulante ya anda por el pasillo: entonces viene a lo que toca Ara. */
   tripulanteEnElPasillo(e: MotorDelPasaje<M, C>): boolean;
   /**
@@ -1049,6 +1065,8 @@ export interface EstadoDelPasaje<M extends string = string, C extends string = s
   /** **Lo que se marca en la pantalla del asiento**. Ver `DefMomento.marca`. */
   readonly marca: Sitio | null;
   readonly siestas: readonly Siesta[];
+  /** **Lo que no cupo por encima de los diez mil pies**, y no pasó entero. Ver `cabe`. */
+  readonly omitidos: readonly Omitido[];
   /** **La luz del cinturón, apagada en el puesto**, y la gente de la cabina. Ver `gente`. */
   readonly luzApagada: boolean;
   readonly gente: GenteDeLaCabina;
@@ -1079,6 +1097,42 @@ export interface Siesta {
    * para bajar, un salto bajo tapa que ya llegó o otra cosa que llegó.
    */
   readonly porQue?: "ding" | "tripulante" | "salto" | "otra";
+}
+
+/**
+ * **Una cosa de lo que pasa por encima de los diez mil pies**, en la lista
+ * por prioridad del guion: ver `GuionDelPasaje.porEncima` y `cabe`.
+ *
+ * - `momentos`, `charlas` y `siesta`: lo que la forma. Ya pasó cuando se han
+ *   dicho, saltado u omitido sus momentos, y sus charlas se han dicho o se han
+ *   pasado de su momento.
+ * - `dura`, s de vuelo: lo que pide entera, con los silencios que espera
+ *   delante. Medido en el banco.
+ * - `esencial`: lo de un vuelo de verdad, que pasa siempre y no mira si cabe;
+ *   lo demás empieza solo si cabe, y si no, se omite entero.
+ */
+export interface LoDeArriba<M extends string = string, C extends string = string> {
+  readonly momentos?: readonly M[];
+  readonly charlas?: readonly C[];
+  readonly siesta?: true;
+  readonly dura: number;
+  readonly esencial?: true;
+}
+
+/**
+ * **Lo que se omitió**, para el banco y las pruebas: qué, a qué segundo de
+ * escena, lo que quedaba hasta cruzar los diez mil pies bajando y lo que pedía
+ * con lo de delante, s de vuelo. Y por qué: `no cabe` con lo que tiene más
+ * prioridad —ver `cabe`—, o `sin rato`, la siesta que llegó a la bajada sin
+ * haber tenido sus dos minutos tranquilos antes de lo siguiente —ver
+ * `apuntarLaSiestaSinRato`—.
+ */
+export interface Omitido {
+  readonly que: string;
+  readonly a: number;
+  readonly queda: number;
+  readonly pide: number;
+  readonly porQue: "no cabe" | "sin rato";
 }
 
 /**
@@ -1209,6 +1263,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private readonly saltados: M[] = [];
   private readonly cuandoSeDijo = new Map<M, number>();
   private readonly charlasDichas: C[] = [];
+  /** Lo que no cupo por encima de los diez mil pies, y por qué. Ver `cabe`. */
+  private readonly omitidos: Omitido[] = [];
   private mira: QueMirar | null = null;
   private miraDesde = 0;
   private callada = 0;
@@ -1397,6 +1453,107 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     return this.saltados.includes(id as M);
   }
 
+  /** Si se omitió por no caber: el momento, la charla o la siesta. Ver `cabe`. */
+  omitido(que: string): boolean {
+    const x = this.deArribaCon(que);
+    return !!x && this.omitidos.some((o) => o.que === this.nombreDe(x));
+  }
+
+  /** **El nombre de una cosa de arriba**: su primer momento, su primera charla o «siesta». */
+  private nombreDe(x: LoDeArriba<M, C>): string {
+    return x.siesta ? "siesta" : (x.momentos?.[0] ?? x.charlas?.[0] ?? "");
+  }
+
+  /** **La cosa de arriba de la que es parte** ese momento, charla o «siesta», si está en la lista. */
+  private deArribaCon(que: string): LoDeArriba<M, C> | undefined {
+    return this.guion.porEncima?.find(
+      (x) => (que === "siesta" && x.siesta) || (x.momentos as readonly string[] | undefined)?.includes(que) || (x.charlas as readonly string[] | undefined)?.includes(que),
+    );
+  }
+
+  /**
+   * **Si una cosa de arriba queda por pasar**: no omitida, con algún momento
+   * sin decir ni saltar, alguna charla sin decir y todavía a tiempo, o la
+   * siesta sin dormir. Lo que ya no puede pasar no guarda sitio.
+   */
+  private quedaPorPasar(x: LoDeArriba<M, C>, l: LecturaDelPasaje): boolean {
+    if (this.omitidos.some((o) => o.que === this.nombreDe(x))) return false;
+    if (x.siesta) return this.siestas.length === 0 && !this.guion.siesta.sinSiesta;
+    if (x.momentos?.some((m) => !this.dicho(m) && !this.saltado(m))) return true;
+    return (
+      x.charlas?.some((c) => {
+        const def = this.guion.charlas.find((d) => d.id === c);
+        return !!def && !this.charlasDichas.includes(c) && !def.caduca?.(l, this);
+      }) ?? false
+    );
+  }
+
+  /**
+   * **Si cabe** (20-11-2026, ADR 0020, enmienda H38k): lo que no es esencial
+   * empieza solo si **ella y todo lo de más prioridad que queda por pasar**
+   * caben en lo que falta para cruzar los diez mil pies bajando —ver
+   * `hastaLosDiezMil`—, cada cosa con lo que dura. Ahí se recoge el kit, la
+   * comandante deja de hablar de lo que no es volar y empieza la llegada.
+   *
+   * Lo pidió Enrique al ver que la escena pedía unos 650 s por encima de los
+   * diez mil pies y el salto de Los Rodeos a La Palma, volado a sus
+   * velocidades y a su nivel de verdad, deja unos 570: «Pero si el vuelo es
+   * rápido no hay que entretener tanto al jugador». El vuelo no se toca para
+   * que quepa la escena; la escena va por prioridad, y lo que no cabe se
+   * omite **entero**: no se empieza para dejarlo a medias, ni se trae el kit
+   * para pedirlo de vuelta enseguida.
+   *
+   * Lo que no cabe una vez se apunta en `omitidos` y ya no se vuelve a mirar:
+   * el rato solo encoge, y una cosa que entra y sale de caber según el paso
+   * del juego es un filo, no una regla. Se llama solo cuando lo demás ya deja
+   * empezarla, que es cuando se decide.
+   */
+  private cabe(x: LoDeArriba<M, C>, l: LecturaDelPasaje, dura = x.dura): boolean {
+    const lista = this.guion.porEncima;
+    const queda = l.hastaLosDiezMil;
+    if (!lista || x.esencial || queda === undefined) return true;
+    const nombre = this.nombreDe(x);
+    if (this.omitidos.some((o) => o.que === nombre)) return false;
+    let pide = dura;
+    for (const y of lista) {
+      if (y === x) break;
+      if (this.quedaPorPasar(y, l)) pide += y.dura;
+    }
+    if (queda >= pide) return true;
+    this.omitidos.push({ que: nombre, a: this.reloj, queda, pide, porQue: "no cabe" });
+    return false;
+  }
+
+  /**
+   * **Y la siesta que no tuvo su rato**: si se empieza a bajar sin que Ara se
+   * haya dormido, ya no se duerme —bajando, nunca—, aunque no la parara la
+   * lista: no hubo los dos minutos tranquilos que pide antes de lo siguiente
+   * que hay que oír. Se apunta igual, con su porqué, que el banco dice qué se
+   * omitió y por qué. Solo con los números del juego.
+   */
+  private apuntarLaSiestaSinRato(l: LecturaDelPasaje): void {
+    const siesta = this.guion.porEncima?.find((x) => x.siesta);
+    if (!siesta || this.guion.siesta.sinSiesta || this.siestas.length > 0 || this.omitido("siesta")) return;
+    if (!bajando(l.tramo) || l.enTierra || l.hastaLosDiezMil === undefined) return;
+    this.omitidos.push({ que: "siesta", a: this.reloj, queda: l.hastaLosDiezMil, pide: siesta.dura, porQue: "sin rato" });
+  }
+
+  /**
+   * **Las charlas que el kit deja pasar delante**: las de su guion —lo que
+   * contesta a lo que Ara acaba de notar— y las que van antes que él en la
+   * lista de arriba, que tienen más prioridad.
+   */
+  private dejaPasarAlKit(): ReadonlySet<C> {
+    const kit = this.guion.kit;
+    const deArriba = kit ? this.deArribaCon(kit.momento) : undefined;
+    const antes = new Set<C>(kit?.dejaPasar ?? []);
+    for (const y of this.guion.porEncima ?? []) {
+      if (y === deArriba) break;
+      if (!y.esencial) for (const c of y.charlas ?? []) antes.add(c);
+    }
+    return antes;
+  }
+
   /** **El plano de ahora**: lo que deja como está lo que no cambia de toma. */
   get planoDeAhora(): Plano {
     return this.plano;
@@ -1569,6 +1726,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
         : null,
       marca: this.marca,
       siestas: this.siestas.map((s) => ({ ...s })),
+      omitidos: [...this.omitidos],
       luzApagada: this.luzApagadaEnElPuesto,
       gente: this.gente,
       fueAlBano: this.alBano,
@@ -2235,11 +2393,16 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   }
 
   private avanzar(l: LecturaDelPasaje): void {
-    // Lo que se pasa de su momento se salta, aunque haya alguien hablando.
-    while (this.def.id !== "fin" && this.def.caduca?.(l, this)) {
-      this.saltados.push(this.def.id);
+    /*
+     * Lo que se pasa de su momento se salta, aunque haya alguien hablando. Y
+     * lo omitido por no caber, entero: el kit que no se trajo tampoco se pide
+     * de vuelta. Ver `cabe`.
+     */
+    while (this.def.id !== "fin" && (this.omitido(this.def.id) || this.def.caduca?.(l, this))) {
+      if (!this.omitido(this.def.id)) this.saltados.push(this.def.id);
       this.indice++;
     }
+    this.apuntarLaSiestaSinRato(l);
     const def = this.def;
     this.laMegafoniaMandaSobreElCuento(def, l);
     if (def.id === "fin") {
@@ -2328,7 +2491,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       const charla =
         this.kit.ocupaAAra || this.miraLaConsola
           ? undefined
-          : this.charlaQueToca(l, esperan, this.kitAPuntoDeLlegar(def, l) ? (this.guion.kit?.dejaPasar ?? new Set()) : undefined);
+          : this.charlaQueToca(l, esperan, this.kitAPuntoDeLlegar(def, l) ? this.dejaPasarAlKit() : undefined);
       if (charla) {
         this.charlasDichas.push(charla.def.id);
         this.decirDe(charla.def, l, charla.vista);
@@ -2342,6 +2505,9 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       this.volverALaVentanilla();
       return;
     }
+    // Lo que no es esencial, solo si cabe entero; si no, se omite y el paso siguiente sigue con lo de detrás.
+    const deArriba = this.deArribaCon(def.id);
+    if (deArriba?.momentos?.[0] === def.id && !this.cabe(deArriba, l)) return;
     this.decirDe(def, l, vista ?? undefined);
     this.dichos.push(def.id);
     this.cuandoSeDijo.set(def.id, this.reloj);
@@ -2729,6 +2895,9 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
         continue;
       const vista = this.vistaDe(c, l);
       if (vista === null) continue;
+      // Y si es de las de arriba que no son esenciales, solo si cabe entera: ver `cabe`.
+      const deArriba = this.deArribaCon(c.id);
+      if (deArriba && !this.cabe(deArriba, l)) continue;
       return { def: c, ...(vista ? { vista } : {}) };
     }
     return undefined;
@@ -2761,6 +2930,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       if (!primero.has(c.id) || this.charlasDichas.includes(c.id) || !c.cuando(l, this) || c.caduca?.(l, this)) continue;
       const vista = this.vistaDe(c, l);
       if (vista === null) continue;
+      const deArriba = this.deArribaCon(c.id);
+      if (deArriba && !this.cabe(deArriba, l)) continue;
       this.charlasDichas.push(c.id);
       this.decirDe(c, l, vista);
       return true;
@@ -2860,7 +3031,9 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    * banco, el kit y el ala se podían decir en el mismo instante. Así que lo
    * que viene a cuento espera al kit; lo que tiene su momento —el guion, la
    * ventanilla— no. Y lo que contesta a lo que Ara acaba de notar, tampoco:
-   * ver `kitDejaPasar`.
+   * ver `kitDejaPasar`. Ni, desde la enmienda H38k, lo que va antes que el kit
+   * en la lista de arriba —la altura y el ala—, que si no cabe con él, el que
+   * se omite es el kit: ver `dejaPasarAlKit` y `cabe`.
    */
   private kitAPuntoDeLlegar(def: DefMomento<M, M, C>, l: LecturaDelPasaje): boolean {
     const kit = this.guion.kit;
@@ -2896,8 +3069,9 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private kitDejaPasar(def: DefMomento<M, M, C>, l: LecturaDelPasaje): boolean {
     const kit = this.guion.kit;
     if (kit === null || def.id !== kit.momento || this.miraLaConsola) return false;
+    const pasan = this.dejaPasarAlKit();
     return this.guion.charlas.some(
-      (c) => kit.dejaPasar.has(c.id) && !this.charlasDichas.includes(c.id) && c.cuando(l, this) && !c.caduca?.(l, this),
+      (c) => pasan.has(c.id) && !this.charlasDichas.includes(c.id) && !this.omitido(c.id) && c.cuando(l, this) && !c.caduca?.(l, this),
     );
   }
 
@@ -2913,7 +3087,16 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     if (!rato) return false;
     const despierta = rato.paraBajar ? DESPIERTA_ANTES_DE_BAJAR : 0;
     if (rato.segundos < (trasElBostezo ? 0 : LO_QUE_DURA_EL_BOSTEZO) + SIESTA_MINIMA + despierta) return false;
-    return trasElBostezo || soloElRato || this.callada >= ESPERA_A_LO_QUE_SE_VE || !this.quedaPorVer(l);
+    if (!(trasElBostezo || soloElRato || this.callada >= ESPERA_A_LO_QUE_SE_VE || !this.quedaPorVer(l))) return false;
+    /*
+     * **Y si cabe con lo que tiene más prioridad** (ADR 0020, enmienda H38k):
+     * la siesta es lo último de la lista de arriba, y dura hasta lo que la
+     * despierta, con el bostezo delante y el «me dormí» detrás. Se mira antes
+     * de bostezar; bostezado, ya no: un bostezo sin siesta es dejarla a medias.
+     */
+    if (trasElBostezo) return true;
+    const siesta = this.guion.porEncima?.find((x) => x.siesta);
+    return !siesta || this.cabe(siesta, l, Math.max(siesta.dura, LO_QUE_DURA_EL_BOSTEZO + rato.segundos + LO_QUE_DICE_AL_DESPERTAR));
   }
 
   /**

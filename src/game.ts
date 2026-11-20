@@ -9030,13 +9030,22 @@ export class Game {
    * descenso del plan a la velocidad de ahora por el suelo. Bajando ya, o sin
    * plan, nada: sin estos números Ara no se duerme.
    */
-  private ratosDelVuelo(linea: LecturaDeLinea): { hastaElCrucero?: number; hastaLaBajada?: number } {
+  private ratosDelVuelo(linea: LecturaDeLinea): { hastaElCrucero?: number; hastaLaBajada?: number; hastaLosDiezMil?: number } {
     const p = this.navegacion.progreso;
-    if (!p || p.descenso === null || this.navegacion.bajando || linea.enTierra) return {};
+    if (!p || linea.enTierra) return {};
     const suelo = Math.max(this.flight.state.groundSpeed, 40);
+    /*
+     * Y hasta cruzar los diez mil pies bajando, también bajando ya: es el rato
+     * de lo que pasa por encima, que la escena reparte por prioridad. Ver
+     * `cabe` en `flight/motor-del-pasaje.ts`.
+     */
+    const diezMil = this.navegacion.distanciaBajandoA(DIEZ_MIL_PIES);
+    const losDiezMil = diezMil !== null && p.restante > diezMil ? { hastaLosDiezMil: (p.restante - diezMil) / suelo } : {};
+    if (p.descenso === null || this.navegacion.bajando) return losDiezMil;
     const hastaLaBajada = Math.max(0, p.restante - p.descenso) / suelo;
     const tramo = this.tripulacionDeLinea?.estado.tramo;
     return {
+      ...losDiezMil,
       hastaLaBajada,
       ...(tramo === "subida"
         ? { hastaElCrucero: segundosHastaElCrucero(linea.altitud, linea.alturaPedida, linea.vertical) }
