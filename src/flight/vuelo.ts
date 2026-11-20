@@ -496,6 +496,14 @@ export class Vuelo {
   private rodajeHecho = false;
 
   /**
+   * **Por qué la torre no te está mirando ahora**, para el banco: fuera de la
+   * doble raya, la pista de otros, la lista o sin parar todavía; `null` si
+   * mira o ya dio la verde. Una roja que no se acaba sin decir por qué no se
+   * puede arreglar (H48). Ver `atenderALaTorre`.
+   */
+  noTeMiraPor: "raya" | "otros" | "lista" | "rodando" | null = null;
+
+  /**
    * **Si el avión pisa el suelo: peso en las ruedas, no una altura.**
    *
    * Esto era `sobreElSuelo <= EN_EL_AIRE`, y con eso el avión se daba por
@@ -974,9 +982,13 @@ export class Vuelo {
     // sin panel ni galón, y quien lo hizo bien sin enterarse de que lo había
     // hecho bien. Parar encima el mismo rato que la torre pide para mirarte
     // es terminar la lección.
-    if (this.haVolado || this.verde) return;
+    if (this.haVolado || this.verde) {
+      this.noTeMiraPor = null;
+      return;
+    }
     const enLaRaya = s.restante < LLEGADA && !s.enPista && this.pisa;
     if (!enLaRaya) {
+      this.noTeMiraPor = "raya";
       this.quieto = 0;
       this.mirando = 0;
       return;
@@ -987,9 +999,11 @@ export class Vuelo {
       return;
     }
     if (this.pistaDeOtros || (this.listaPorLeer && this.quieto < LA_LISTA_COMO_MUCHO)) {
+      this.noTeMiraPor = this.pistaDeOtros ? "otros" : "lista";
       this.mirando = 0;
       return;
     }
+    this.noTeMiraPor = this.quieto > ESPERA_MINIMA ? null : "rodando";
     if (this.quieto > ESPERA_MINIMA) this.mirando += dt;
     if (this.mirando > TORRE_TARDA) this.verde = true;
   }

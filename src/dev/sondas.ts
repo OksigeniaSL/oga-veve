@@ -1091,6 +1091,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     salenAntes: () => juego.salenAntesParaBanco,
     /** Por qué se espera en la roja, y por quién. Ver `porQueEsperasDe`. */
     porQueEsperas: () => juego.porQueEsperasParaBanco,
+    /** Por qué la torre no te mira en la doble raya. Ver `noTeMiraParaBanco`. */
+    noTeMira: () => juego.noTeMiraParaBanco,
     /** Que uno de la frecuencia salga ya a rodar. Ver `sacarARodar`. */
     sacarARodar: () => juego.sacarARodarParaBanco(),
     /** La retención más larga de la torre, s. Ver `retenidos` en `turno-de-pista.ts`. */

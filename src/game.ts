@@ -13279,6 +13279,19 @@ export class Game {
     return this.turno.salenAntes;
   }
 
+  /**
+   * **Por qué la torre no te mira en la doble raya**, para el banco: lo que
+   * dice el plan y, si es la pista de otros, de qué está hecha. Ver
+   * `noTeMiraPor` en `flight/vuelo.ts` (H48).
+   */
+  get noTeMiraParaBanco(): { por: string | null; piezas: string[]; lista: boolean } {
+    return {
+      por: this.plan?.noTeMiraPor ?? null,
+      piezas: this.turno.piezasDeLaPistaDeOtros,
+      lista: this.plan?.listaPorLeer ?? false,
+    };
+  }
+
   /** Por qué se espera, y por quién, para el banco. Ver `porQueEsperasDe`. */
   get porQueEsperasParaBanco(): EsperaPor | null {
     return this.turno.porQueEsperasDe;
