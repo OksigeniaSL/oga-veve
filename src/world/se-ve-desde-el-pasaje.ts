@@ -155,6 +155,56 @@ export function claridad(ojo: Punto, sitio: Punto, mundo: ElMundoQueSeMira): num
   return delSitio / (delSitio + bruma * (1 - nube) * BRILLA_LA_NUBE + (1 - bruma) * BRILLA_LA_BRUMA);
 }
 
+/**
+ * **Lo que abarca la mirada hacia abajo**, como fracción de la distancia a lo
+ * mirado: un cuadro de un 27 % de ella a cada lado, unos quince grados, que
+ * es lo que cabe por una ventanilla con la cara contra el cristal.
+ */
+export const ABARCA_LA_MIRADA = 0.27;
+
+/**
+ * **Cuánto de lo que se mira tiene que ser nube para llamarlo mar de nubes**,
+ * de 0 a 1: tres quintos. Con el mar de nubes del alisio —una tapadura de
+ * 0,45— lo llena casi siempre, y con unas nubes sueltas —0,2— nunca.
+ */
+export const ES_UN_MAR_DE_NUBES = 0.6;
+
+/**
+ * **Si lo que se ve hacia abajo es un mar de nubes**, y no una nube suelta
+ * que pasa por debajo de la mirada (H38m).
+ *
+ * «¡Mirá para abajo: nubes y más nubes, como un mar de algodón!» es la vista
+ * entera, y se miraba una recta: la que va de los ojos a lo mirado, con lo
+ * que deja pasar la capa por debajo de 0,85 y lo de debajo sin distinguirse.
+ * Una recta sola falla por los dos lados. Desde FL160 mirando abajo a unos
+ * nueve kilómetros, con el mar de nubes del alisio —0,45— una de cada cuatro
+ * pasa por un jirón fino con la vista blanca alrededor; y con unas nubes
+ * sueltas —0,2— una de cada seis cae en una, y como el mar de nubes de Ara
+ * puede esperar a verse, lo acababa diciendo sobre un cielo casi limpio. Así
+ * que se mira lo que cabe en la mirada —cinco por cinco puntos en un cuadro
+ * alrededor de lo mirado, ver `ABARCA_LA_MIRADA`— con la misma regla de cada
+ * recta, y tiene que ser nube en tres quintos de ellos: con el alisio sale
+ * nueve veces de cada diez, con 0,7 siempre y con nubes sueltas nunca. Lo
+ * midió el banco de la tercera escena con la captura delante: BKN a 1.520 m,
+ * la recta de lo mirado por un jirón, y 162 de 178 rectas de la vista
+ * blancas.
+ */
+export function seVeElMarDeNubes(ojo: Punto, mirado: Punto, mundo: ElMundoQueSeMira): boolean {
+  const lejos = Math.hypot(mirado.x - ojo.x, mirado.y - ojo.y, mirado.z - ojo.z);
+  const paso = (lejos * ABARCA_LA_MIRADA) / 2;
+  let nube = 0;
+  let puntos = 0;
+  for (let i = -2; i <= 2; i++)
+    for (let k = -2; k <= 2; k++) {
+      const x = mirado.x + i * paso;
+      const z = mirado.z + k * paso;
+      const q = { x, y: Math.max(0, mundo.suelo(x, z) ?? 0), z };
+      if (mundo.nubes(ojo, q) < 0.85 && claridad(ojo, q, mundo) < SE_DISTINGUE) nube++;
+      puntos++;
+    }
+  return nube >= puntos * ES_UN_MAR_DE_NUBES;
+}
+
 /** Los ojos de un asiento, en el mundo. */
 export function ojosEnElMundo(asiento: AsientoDePasaje, avion: ElAvionQueMira): Vector3 {
   return new Vector3(asiento.ojo.x, asiento.ojo.y, asiento.ojo.z)

@@ -917,8 +917,17 @@ async function elVuelo() {
       const v = medido.vista;
       const enLaImagen = !!v && v.delante && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1;
       const porElCristal = !v || !medido.plano || medido.plano.startsWith("fuera-") || v.porElCristal !== false;
-      // Y el mar de nubes, al revés: lo que se nombra es la nube, que tiene que estar por medio.
-      const nube = n.sitio === "nubes-abajo" ? !!v && v.nubeEnMedio >= 100 : !!v && v.nubeEnMedio < 150;
+      /*
+       * Y el mar de nubes, al revés: lo que se nombra es la nube, y tiene que
+       * llenar la vista, no cruzarse en una recta. Dos de cada cinco rectas
+       * alrededor de lo mirado con cien metros de nube densa: con unas nubes
+       * sueltas —una tapadura de 0,2— sale tres veces de cada cien, y con el
+       * mar de nubes del alisio, más de nueve de cada diez. Una recta sola
+       * pasaba por un jirón: a los 884 s, con un BKN a 1.520 m, 0,24 y 0,28 de
+       * nube en sus dos láminas, 0 m densos, y 4 s después la misma mirada
+       * cruzaba 400. Ver `nubeEnLaVistaParaBanco` en `game.ts` (H38m).
+       */
+      const nube = n.sitio === "nubes-abajo" ? !!v && (v.nubeEnLaVista ?? 0) >= 0.4 : !!v && v.nubeEnMedio < 150;
       // Y la lámina de lo que se explica, si está puesta, no encima de lo nombrado.
       if (medido.lamina && v && v.delante) {
         const x = ((v.x + 1) / 2) * medido.pantalla.ancho;
@@ -2402,7 +2411,7 @@ async function elVuelo() {
     console.log(
       `  ${n.ok ? "·" : "✗"} ${n.sitio} (${n.clave}) a los ${n.desde.toFixed(0)} s: ${n.como} por ${n.lado ?? "—"} · plano ${n.plano} · ` +
         (n.medido
-          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m (${(n.medido.nubeSinDesvanecer ?? 0).toFixed(0)} m sin el desvanecido) · a ${(n.medido.distancia / 1000).toFixed(1)} km`
+          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m (${(n.medido.nubeSinDesvanecer ?? 0).toFixed(0)} m sin el desvanecido)${n.medido.nubeEnLaVista != null ? ` · nube densa en ${(n.medido.nubeEnLaVista * 100).toFixed(0)} % de la vista` : ""} · a ${(n.medido.distancia / 1000).toFixed(1)} km`
           : "sin punto"),
     );
   comprobar(
