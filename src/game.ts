@@ -798,12 +798,6 @@ const RUMBO_DEL_PITOT = 360;
  * `enFaseDeTrabajo` en `flight/lo-que-se-ve.ts`.
  */
 const BANDA_EN_CRUCERO = 30;
-/**
- * **Lo largo de la línea de trayectoria** de «Apuntá al viento», m: cuatro
- * kilómetros por delante del avión, o hasta un poco pasado el sitio si está
- * más cerca. Ver `practicarLaDeriva`.
- */
-const LINEA_DE_TRAYECTORIA = 4000;
 const RATO_EN_CRUCERO = 20;
 
 /**
@@ -1138,6 +1132,7 @@ import {
   type SucesoDelRumbo,
 } from "./flight/rumbo-de-noche";
 import { BLANCO, CintaEnElSuelo, MAGENTA, PASO } from "./world/raya-del-camino";
+import { RayasDeLaDeriva } from "./world/rayas-de-la-deriva";
 /**
  * **Cada cuánto entra una muestra de la raya de la estima**, m: cien. El tramo
  * son setenta kilómetros y la raya solo se mira al final, desde arriba.
@@ -4196,16 +4191,11 @@ export class Game {
     readonly cima: number;
   } | null = null;
   /**
-   * **Las dos rayas del suelo** de la deriva: la blanca, por donde va el
-   * avión, y la magenta, la recta al sitio. Ver `world/raya-del-camino.ts`.
+   * **Las rayas del suelo** de la deriva: la blanca, por donde va el avión, y
+   * la que sigue por delante; y la magenta, la recta al sitio. Ver
+   * `world/rayas-de-la-deriva.ts`.
    */
-  private rayasDeLaDeriva: {
-    readonly camino: CintaEnElSuelo;
-    readonly recta: CintaEnElSuelo;
-    readonly delante: CintaEnElSuelo;
-  } | null = null;
-  /** Lo que falta para volver a tender la raya de delante, s. Ver `practicarLaDeriva`. */
-  private hastaLaRayaDeDelante = 0;
+  private rayasDeLaDeriva: RayasDeLaDeriva | null = null;
   /**
    * **«Rumbo de noche»**, si se eligió: el río con la última luz, la noche
    * que cae en el puente y el rumbo que queda. Ver `flight/rumbo-de-noche.ts`
@@ -14483,8 +14473,7 @@ export class Game {
     this.ils?.reiniciar();
     this.deriva?.reiniciar();
     this.finalConViento?.reiniciar();
-    this.rayasDeLaDeriva?.camino.vaciar();
-    this.rayasDeLaDeriva?.delante.vaciar();
+    this.rayasDeLaDeriva?.vaciar();
     // Y el cielo del rumbo de noche, otra vez con el sol recién puesto.
     this.rumboDeNoche?.reiniciar();
     if (this.rumboDeNoche?.colocacion) this.ponerHora(this.rumboDeNoche.colocacion.hora);
@@ -26114,57 +26103,24 @@ export class Game {
   }
 
   /**
-   * **Un paso de la deriva**: las dos rayas en el suelo —la recta, una vez;
-   * el camino, una muestra cada cincuenta metros— y la estela en el plano,
-   * como en los de radio. Las rayas se quedan al cerrar: lo que hay que mirar
-   * es justo la blanca que salió derecha, o la que se curvó.
+   * **Un paso de la deriva**: las rayas en el suelo y la estela en el plano,
+   * como en los de radio. La blanca y la magenta se quedan al cerrar: lo que
+   * hay que mirar es justo la blanca que salió derecha, o la que se curvó. La
+   * de delante, no. El paso del ejercicio lo da `RayasDeLaDeriva.paso`, que
+   * es quien sabe en qué orden (H50); la estela, después, con la fase en que
+   * queda el paso.
    */
   private practicarLaDeriva(dt: number): void {
     const d = this.deriva;
-    const c = d?.colocacion;
-    if (!d || !c) return;
+    if (!d?.colocacion) return;
     if (!this.rayasDeLaDeriva) {
       const agua = this.scenario.waterLevel ?? 0;
-      const suelo = (x: number, z: number): number => Math.max(agua, this.terrain.sampleHeight(x, z));
-      this.rayasDeLaDeriva = {
-        camino: new CintaEnElSuelo(suelo, BLANCO, 16),
-        recta: new CintaEnElSuelo(suelo, MAGENTA, 10),
-        delante: new CintaEnElSuelo(suelo, BLANCO, 10, LINEA_DE_TRAYECTORIA / PASO + 2),
-      };
+      this.rayasDeLaDeriva = new RayasDeLaDeriva((x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)));
     }
-    const rayas = this.rayasDeLaDeriva;
-    if (rayas.recta.muestras === 0) rayas.recta.recta(c, c.sitio);
-    rayas.recta.ponerEn(this.scene);
-    rayas.camino.ponerEn(this.scene);
-    rayas.delante.ponerEn(this.scene);
+    this.rayasDeLaDeriva.ponerEn(this.scene);
     const s = this.flight.state;
-    if (!s.onGround && d.fase !== "cerrada") rayas.camino.anadir(s.position.x, s.position.z);
-    /*
-     * **Y hacia dónde se va de verdad**, delante: la raya del camino que va
-     * dejando el avión queda detrás, y desde la cabina o desde fuera se mira
-     * hacia delante. Así que la blanca sigue también por delante del avión,
-     * por donde lo lleva el camino de ahora —la velocidad sobre el suelo, con
-     * el viento dentro—, como la línea de trayectoria de una pantalla de
-     * navegación o de un GPS. Con viento de costado se ve ir al lado del
-     * puente aunque el morro apunte a él; corrigiendo, acaba en él. Se tiende
-     * cuatro veces por segundo; cerrado el ejercicio, se quita.
-     */
-    this.hastaLaRayaDeDelante -= dt;
-    if (d.fase === "cerrada" || s.onGround) rayas.delante.vaciar();
-    else if (this.hastaLaRayaDeDelante <= 0) {
-      this.hastaLaRayaDeDelante = 0.25;
-      const v = Math.hypot(s.velocity.x, s.velocity.z);
-      if (v > 1) {
-        const lejos = Math.min(LINEA_DE_TRAYECTORIA, Math.hypot(c.sitio.x - s.position.x, c.sitio.z - s.position.z) + 600);
-        rayas.delante.recta(
-          { x: s.position.x, z: s.position.z },
-          { x: s.position.x + (s.velocity.x / v) * lejos, z: s.position.z + (s.velocity.z / v) * lejos },
-        );
-      }
-    }
-    this.hud.mapa.ponerEstela(d.fase === "cerrada" ? null : () => this.libreta.traza);
-    if (this.tarjetaDelTiempo?.abierta) return;
-    const sucesos = d.paso(
+    const sucesos = this.rayasDeLaDeriva.paso(
+      d,
       {
         x: s.position.x,
         z: s.position.z,
@@ -26176,7 +26132,9 @@ export class Game {
         percance: this.percance !== null,
       },
       dt,
+      !!this.tarjetaDelTiempo?.abierta,
     );
+    this.hud.mapa.ponerEstela(d.fase === "cerrada" ? null : () => this.libreta.traza);
     for (const suceso of sucesos) this.atenderALaDeriva(suceso);
   }
 
