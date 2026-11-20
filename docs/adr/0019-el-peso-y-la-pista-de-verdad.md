@@ -857,3 +857,16 @@ la 02 de Pettirossi):
 - **La ficha del 747** sigue en Mach 0,78. Un 747-100 cruza a unos 0,84, pero su
   crucero entra en quince ficheros —el modelo completo, la carrera, el consumo, la
   escalera—, y no hay a mano una fuente del -100 que lo diga. Va aparte.
+- **El salto corto se queda sin crucero.** El banco de la tercera escena del modo
+  inicio (`verificar-inicio-3.mjs`, Los Rodeos–La Palma en el JAZ 90, reloj ×12)
+  da 117 de 126: toca a 1,11 m/s y despega por el eje, pero la tripulación pasa de
+  la subida a la bajada a los 897 s sin nivelar, y con eso se pierden «arriba», el
+  servicio y lo que dice la comandante en crucero, y con el tiempo cambiado fallan
+  cosas de la escena que cuelgan de él. El banco de las 09:54 nivelaba a los 910 s
+  y bajaba a los 945: 35 s de crucero. Subiendo a la indicada del tipo con la
+  punta que ya llega, la verdadera es mayor, cada mil pies se comen más millas que
+  las dos que cuenta el plan (`MILLAS_POR_MIL_PIES_SUBIENDO`), y el punto de
+  descenso llega antes que el nivel. Lo que toca es el plan —a 280 nudos y doce
+  metros por segundo, a quince mil pies son unas dos millas y media por cada mil
+  pies—, y queda para su encargo, con el banco otra vez. El morro hacia la raya
+  al acabar ya fallaba antes, y es del rodaje.
