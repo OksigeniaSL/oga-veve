@@ -10,7 +10,7 @@
  *
  * - **Los multimotores de turbina** la toman en V1, que su manual calcula
  *   para cada despegue: antes se para, después se sigue con un motor. Ahí se
- *   dice, como siempre. Ver `conV1` en `ejercicios.ts`.
+ *   dice, como siempre. Ver `conV1` en `decide-con-v1.ts`.
  * - **Los monomotores no la tienen.** No hay otro motor con el que seguir: si
  *   el suyo falla rodando se para, y recién despegado se aterriza más o menos
  *   recto por delante (Cessna 172S, manual de vuelo, sección 3: *Engine
@@ -38,7 +38,7 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
-import { conV1 } from "./ejercicios";
+import { conV1 } from "./decide-con-v1";
 
 /** Un nudo, en m/s. */
 const NUDO = 0.514444;

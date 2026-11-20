@@ -17,7 +17,7 @@
  *
  * **En el bimotor de pistón no hay V1**, y lo que manda es su manual: con las
  * ruedas en el suelo, o recién despegado con el tren todavía fuera, se para;
- * con el tren dentro y subiendo, se sigue. Ver `conV1` en `ejercicios.ts`.
+ * con el tren dentro y subiendo, se sigue. Ver `conV1` en `decide-con-v1.ts`.
  * Aquí «antes de V1» quiere decir eso: **donde su manual manda parar**.
  *
  * **Pasada V1**, o ya en el aire: se vuela. Primero el avión —el pie del lado

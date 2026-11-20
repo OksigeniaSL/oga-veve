@@ -22619,6 +22619,13 @@
     "para": "tras despegar, a su altura y su velocidad: la orden de recoger los flaps"
   },
   {
+    "id": "cabina.eightyKnots",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "eighty knots",
+    "para": "en la carrera de despegue: el anemómetro pasa por ochenta nudos"
+  },
+  {
     "id": "vuelo.anillo",
     "voz": "instructor",
     "idioma": "es-PY",

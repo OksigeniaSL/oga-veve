@@ -96,6 +96,7 @@ import {
 } from "./world/superficies-de-mando";
 import { conV1, seOfrece, type Ejercicio } from "./flight/ejercicios";
 import { SE_DICE_HASTA, seSigueEnV1, yaSeSigue } from "./flight/lo-que-se-dice-al-despegar";
+import { LosOchentaNudos } from "./flight/los-ochenta-nudos";
 import { faseQueVeLaTorre, loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
 import {
@@ -952,7 +953,7 @@ const CIERRE_DEL_EJERCICIO: Readonly<
 /**
  * **Y el del bimotor de pistón que siguió donde su manual manda parar**: no
  * fue antes de V1, que ese avión no la lleva, sino con el tren todavía fuera.
- * Ver `conV1` en `flight/ejercicios.ts`.
+ * Ver `conV1` en `flight/decide-con-v1.ts`.
  */
 const SEGUIDO_CON_EL_TREN_FUERA: TranslationKey = "ejercicio.seguidoConElTrenFuera";
 
@@ -11042,6 +11043,27 @@ export class Game {
     }
   }
 
+  /**
+   * **Los ochenta nudos de la carrera de despegue**, que canta quien vigila
+   * al ver pasar la aguja: en el peldaño de cabina y solo en el tipo cuyo
+   * procedimiento leído los lleva, que hoy es el JAZ 90, de la clase del
+   * E170 (SOPM de Embraer, 3-15-01). Lo decide `loDiceElAvion`, por
+   * `cantarLoGrabado`; abajo no lo dice nadie, como los sesenta de la toma.
+   * Ver `flight/los-ochenta-nudos.ts` y el ADR 0014, enmienda H44a.
+   */
+  private cantarLosOchentaNudos(): void {
+    const fase = this.vistaActual?.fase;
+    const toca = this.losOchentaNudos.paso({
+      corriendo: fase === "despegando" || fase === "comprometido",
+      enElSuelo: this.flight.state.onGround,
+      indicada: this.indicadaDelReloj(),
+    });
+    if (toca) this.cantarLoGrabado("eighty knots", undefined, "mando");
+  }
+
+  /** Quien lleva la cuenta de los ochenta nudos. Ver `cantarLosOchentaNudos`. */
+  private readonly losOchentaNudos = new LosOchentaNudos();
+
   /** La carrera de aterrizaje de ahora, si se está en una. Ver `contarLaCarrera`. */
   private carrera: {
     t: number;
@@ -20625,6 +20647,7 @@ export class Game {
       this.yaTocoTierra = false;
     }
     this.contarLaCarrera(dt);
+    this.cantarLosOchentaNudos();
     this.celebrarLasGafasSiToca();
     this.mirarLosSellos(dt);
     this.celebrarLosSellosSiToca(dt);
@@ -25006,32 +25029,6 @@ export class Game {
    * los cuatro peldaños —la voz es el canal de quien no lee—, el dibujo del
    * ejercicio sale en la tarjeta y la frase, donde se lee.
    */
-  /**
-   * **Si el «ya despegamos: seguí» de V1 sería mentira en este ejercicio**: el
-   * bimotor de pistón practicando un fallo del despegue. Su V1 del juego es su
-   * Vmc, 66 nudos, y su manual para con el tren fuera por debajo de 85: en «Motor
-   * en la carrera» el motor falla tres nudos después, y la instructora diría
-   * «seguí» y «paramos» con un segundo de diferencia. El destello de V1 sale
-   * igual en pantalla, en todos los aviones, que así se pidió (ver `hud.ts`); lo
-   * que se calla es la voz y la tarjeta de «seguí», mientras dura el ejercicio.
-   * Ver `conV1` en `flight/ejercicios.ts`.
-   *
-   * Desde H37i la voz de V1 ya no se dice nunca en ese avión, ejercicio o no
-   * (ver `onVelocidades` y `flight/lo-que-se-dice-al-despegar.ts`); esto
-   * sigue callando la tarjeta de la fase «comprometido», la de la pista que
-   * ya no da para parar, mientras dura el ejercicio.
-   */
-  private elV1MentiriaEnElEjercicio(): boolean {
-    const p = this.practica;
-    return (
-      !!p &&
-      p.fase !== "cerrada" &&
-      p.averia.que === "motor" &&
-      p.averia.cuando.en !== "aire" &&
-      !conV1(this.aircraft)
-    );
-  }
-
   /** La frase del cuatrimotor, si la tiene: ver `CON_MAS_DE_DOS`. */
   private segunLosMotores(clave: TranslationKey): TranslationKey {
     return this.aircraft.motores > 2 ? (CON_MAS_DE_DOS[clave] ?? clave) : clave;
@@ -30677,8 +30674,7 @@ export class Game {
         this.elSenaleroLlevaLaLlegada(vista) ||
         this.elRemolqueLlevaLaSalida(vista) ||
         this.loQueCalla.laFase ||
-        trasIrse === "nada" ||
-        (vista.fase === "comprometido" && this.elV1MentiriaEnElEjercicio());
+        trasIrse === "nada";
       const soloLaTarjetaTrasIrse = trasIrse === "solo la tarjeta";
       /*
        * **Y alineado en la pista, su número.**

@@ -47,6 +47,7 @@ import type { AnuncioDelGps } from "../flight/gps-con-apagones";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
 import { PYKASU, propulsionDe, esDeChorro, type AircraftConfig } from "../flight/aircraft";
+import { GAS_DE_DESPEGUE, pasadaLaV1 } from "../flight/decide-con-v1";
 import { alturaSobreLasRuedas } from "../flight/apoyo";
 import { FRENO_DEL_HELICOPTERO, HELICOPTERO_DE_LA_TARJETA } from "./dibujos-del-helicoptero";
 import { Pictogramas, motorMas, motorMenos } from "./pictogramas";
@@ -517,11 +518,13 @@ export class Hud {
    */
   private enLaCarrera = false;
   /**
-   * En la carrera de despegue y pasado V1: ya no se frena, se vuela. Lo usa
-   * el aviso de fin de pista, que no puede pedir frenar justo cuando el juego
-   * enseña que ya no se frena. Ver `setWarning`.
+   * En la carrera de despegue, pasado V1 y siguiendo: el aviso de fin de pista
+   * no puede pedir frenar justo cuando el juego enseña que se sigue. En los
+   * que deciden con V1, pasada; en los demás, además con el gas metido, que
+   * quien lo corta está parando. Ver `pasadaLaV1` en
+   * `flight/decide-con-v1.ts` y `setWarning`.
    */
-  private comprometido = false;
+  private callaElFinDePista = false;
 
   /**
    * El aviso de terreno que decide el juego, el mismo que dice la voz.
@@ -3521,7 +3524,7 @@ export class Hud {
      * de vuelo, no la velocidad.
      */
     // Empezar la carrera sí pide las cuatro cosas a la vez; seguir en ella, no.
-    if (enDespegue && state.onRunway && throttle > 0.55)
+    if (enDespegue && state.onRunway && throttle > GAS_DE_DESPEGUE)
       this.enLaCarrera = true;
     if (!enDespegue || (enSuelo && state.airspeed < 5))
       this.enLaCarrera = false;
@@ -3538,9 +3541,23 @@ export class Hud {
      * con la aguja, llegaba con el avión ya en el aire (enmienda H38d del
      * ADR 0019).
      */
-    const despegando =
-      this.enLaCarrera && !mandos?.pitotTapado && ias > decisionSpeed;
-    this.comprometido = despegando;
+    /*
+     * **Y el freno se va solo donde V1 decide** (H44a). El destello sale en
+     * todos, que así se pidió; pero en la avioneta, el fumigador y el bimotor
+     * de pistón frenar sigue siendo lo que toca mientras quede pista —en el
+     * Seneca, aunque no quede—, y quitarles el botón a esa velocidad era
+     * enseñar justo lo que su manual no dice. Lo decide `pasadaLaV1`, con
+     * `conV1`: un solo criterio para el freno, la fase y lo que se dice.
+     */
+    const pasada = pasadaLaV1(this.ficha, {
+      enLaCarrera: this.enLaCarrera,
+      pitotTapado: !!mandos?.pitotTapado,
+      indicada: ias,
+      v1: decisionSpeed,
+      gas: throttle,
+    });
+    const despegando = pasada.destello;
+    this.callaElFinDePista = pasada.callaElFinDePista;
     // La tecla del freno, la que se enseña para la mano elegida.
     const tecla = this.teclaDe?.("brakes") ?? "";
     if (tecla && this.brakeKey.textContent !== tecla)
@@ -3634,7 +3651,7 @@ export class Hud {
     }
 
     const escondeBoton =
-      !enSuelo || (!sinLetras && !ESTO_ES_TACTIL) || despegando;
+      !enSuelo || (!sinLetras && !ESTO_ES_TACTIL) || pasada.seVaElFreno;
 
     // Y no se esfuma: **se va, y se ve adónde va.**
     //
@@ -3645,7 +3662,7 @@ export class Hud {
     // sin una sola palabra. Es una primera versión; la buena llevará su
     // animación y su voz.
     if (
-      despegando &&
+      pasada.seVaElFreno &&
       enSuelo &&
       !this.brakesTouch.hidden &&
       this.brakeExit <= 0
@@ -5870,7 +5887,7 @@ export class Hud {
       corta = "palabra.subi";
       arrow = "↑";
       blink = true;
-    } else if (!this.comprometido && runningOutOfRunway(state, runwayLeft)) {
+    } else if (!this.callaElFinDePista && runningOutOfRunway(state, runwayLeft)) {
       /*
        * **Y pasado V1, no.** Salía en la carrera de despegue de cualquier pista
        * corta —rápido, en el suelo y con poca pista delante es lo que es un
@@ -5878,6 +5895,10 @@ export class Hud {
        * vez que el destello de V1, y en el reactor «Runway ending» a la vez
        * que «ya volamos, seguí». Pasado V1 se vuela pase lo que pase; el aviso
        * es para la carrera de aterrizaje y para quien aborta antes de V1.
+       *
+       * Y en los que no deciden con V1 calla solo mientras se siga con gas:
+       * su manual para aunque la pista se acabe, y a quien corta el gas
+       * pasado el destello hay que decirle que se acaba (H44a).
        */
       // Se puede rodar por el campo hasta el fin del mundo sin que pase nada,
       // que en el peldaño de los pequeños está bien. Pero que no avise es

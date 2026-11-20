@@ -144,6 +144,7 @@ import { inclinacionDelCampo } from "./brujula-que-baila";
 import { cabeElCruzado, cruzadoDelCampo } from "./final-con-viento-cruzado";
 import { cabinaDelGps } from "./gps-con-apagones";
 import { monteDelCampo, subidaDe } from "./pista-corta";
+import { conV1 } from "./decide-con-v1";
 
 export type EjercicioId =
   | "planeo"
@@ -305,30 +306,11 @@ const DESDE_TUKA: readonly TierId[] = ["tuka", "taguato", "taguato-ruvicha"];
 const DESDE_TAGUATO: readonly TierId[] = ["taguato", "taguato-ruvicha"];
 const multimotor = (a: AvionDelEjercicio): boolean => a.motores > 1;
 /**
- * **Si su manual decide el despegue con V1**: los multimotores de turbina.
- *
- * El turbohélice y el reactor llevan V1 en su manual —el Twin Otter -400,
- * igual a la Vr (PSM 1-64-1A, figura 4-1); el 1900D y los reactores, la de
- * su categoría de transporte—: antes se para, después se sigue. El bimotor
- * de pistón **no la lleva**. Su manual decide con la velocidad y con el
- * tren: «If engine failure occurs during takeoff and 85 KIAS has not been
- * attained: Throttles — CLOSE both immediately. Stop straight ahead», y si
- * no queda pista, se para igual, esquivando lo que haya delante; y por
- * encima de 85 nudos con el tren todavía fuera, se para si queda pista
- * (Piper, PA-34-220T Seneca III, VB-1110, sección 3; el del Seneca I, lo
- * mismo con 100 mph). La FAA lo dice con el tren: «if the landing gear has
- * not been selected up, the takeoff should be rejected, even if airborne»
- * (*Airplane Flying Handbook*, FAA-H-8083-3C, p. 13-12). El JAZ 40 rota a
- * 72 nudos, así que en su despegue **todo fallo con el tren fuera se para**,
- * y solo se sigue con el tren dentro y subiendo. Con un motor en molinete y
- * el tren fuera no sube a ninguna velocidad (ADR 0027, enmienda H37b).
- *
- * El destello de V1 en pantalla sale igual en todos —ver `hud.ts`—: lo que
- * cambia es lo que se practica y lo que se dice. Ver el ADR 0027, enmienda
- * H37e.
+ * **Si su manual decide el despegue con V1**: los multimotores de turbina. Vive
+ * en `decide-con-v1.ts`, que es donde lo leen también el HUD y la máquina de
+ * fases; se reexporta aquí para quien ya lo leía de los ejercicios.
  */
-export const conV1 = (a: Pick<AircraftConfig, "motores" | "sound">): boolean =>
-  a.motores > 1 && a.sound.engine !== "piston" && a.sound.engine !== "radial";
+export { conV1 };
 /** El bimotor de pistón: el que decide con el tren y no con V1. */
 const bimotorDePiston = (a: AvionDelEjercicio): boolean => multimotor(a) && !conV1(a);
 /**

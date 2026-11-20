@@ -31,6 +31,12 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   "V one": "cabina.v1",
   rotate: "cabina.vr",
   /*
+   * Y los ochenta nudos, que canta quien vigila **solo en el tipo cuyo
+   * procedimiento leído los lleva**: ver `CANTOS_DEL_DESPEGUE` más abajo y
+   * `flight/los-ochenta-nudos.ts`.
+   */
+  "eighty knots": "cabina.eightyKnots",
+  /*
    * La cuenta del radioaltímetro, en pies, que es como la canta. Los dos de
    * arriba del todo entraron cuando la cuenta pasó a ser de la caja: antes se
    * recortaba por no tener toma. Ver `LA_CUENTA` en `flight/avisos-de-altura.ts`.
@@ -184,11 +190,15 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
  * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen dos
  * pruebas de `cabina.test.ts`—, y estos son la excepción escrita: el juego ya
  * sabe cuándo decirlos y los pide solo si están en el pack. Cuando se graben,
- * salen de aquí; la prueba lo recuerda. Hoy no espera ninguno: el último fue
- * «flaps up», la orden de recoger los flaps del despegue (ADR 0027, enmienda
- * H14a), grabado el 16-11-2026.
+ * salen de aquí; la prueba lo recuerda. Hoy espera uno: «eighty knots», los
+ * ochenta nudos de la carrera de despegue del E-Jet (ADR 0014, enmienda
+ * H44a). El último que salió fue «flaps up», la orden de recoger los flaps
+ * del despegue (ADR 0027, enmienda H14a), grabado el 16-11-2026.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
+  // Los ochenta nudos de la carrera de despegue del E-Jet (H44a, 20-11-2026).
+  "cabina.eightyKnots",
+]);
 
 /**
  * **Los cantos de la carrera de aterrizaje de cada familia**: no los dice
@@ -217,6 +227,38 @@ export const CANTOS_DE_LA_CARRERA: Readonly<Record<"boeing" | "embraer", Readonl
   boeing: new Set(["cabina.speedbrakesUp", "cabina.speedbrakesNotUp", "cabina.sixtyKnots"]),
   embraer: new Set<string>(),
 };
+
+/**
+ * **Los cantos de la carrera de despegue de cada familia**, además de «V one»
+ * y «rotate», que los canta cualquiera. La familia es la misma que la de la
+ * carrera de aterrizaje —el procedimiento de su fabricante, `cantosDeLaCarrera`
+ * en `flight/aircraft.ts`—, y lo que no se ha leído en su manual no se canta.
+ * Leídos el 20-11-2026 (H44a):
+ *
+ * - **Embraer**, los E-Jets: «EIGHTY KNOTS» de quien vigila cuando el avión
+ *   «accelerates past 80 KIAS», y «CHECKED» de quien vuela (SOPM-1755, rev. 19,
+ *   3-15-01, *Takeoff – Actions and Callouts*). Su porqué, en el mismo manual:
+ *   «the 80 kt callout has three main purposes: pilot incapacitation check,
+ *   airspeed crosscheck and the transition from Low to High Energy speed».
+ *   El «checked» lo dice quien juega, que es quien vuela.
+ * - **Boeing**: ninguno, por ahora. El FCTM del 777/787 pide el empuje puesto
+ *   «by 80 knots» y no escribe el canto; el FCOM del 747-400 —el del 747-100
+ *   no se ha encontrado— no se ha podido leer en su procedimiento de despegue.
+ *   Que la tripulación de un Boeing canta los ochenta lo cuentan foros y
+ *   columnas, y eso no es una fuente: hasta que se lea, no suena.
+ * - Los de hélice —el 1900D, el Twin Otter— no tienen familia aquí: de
+ *   ninguno se ha leído un procedimiento de tripulación con su canto. Del
+ *   1900D está la grabadora de un accidente (NTSB, informe factual
+ *   NYC97FA045, 1997: «eighty knots cross checked»), y eso dice lo que hizo
+ *   una tripulación de una compañía, no lo que manda su manual.
+ */
+export const CANTOS_DEL_DESPEGUE: Readonly<Record<"boeing" | "embraer", ReadonlySet<string>>> = {
+  boeing: new Set<string>(),
+  embraer: new Set(["cabina.eightyKnots"]),
+};
+
+/** **Todos los de la carrera de despegue que son de una familia.** Ver `loDiceElAvion`. */
+export const DEL_DESPEGUE: ReadonlySet<string> = new Set(["cabina.eightyKnots"]);
 
 /**
  * **Todos los de la carrera**, los cante o no alguna familia de la flota:
@@ -434,13 +476,16 @@ export function esDeUnaCaja(clave: string): boolean {
 /**
  * Si **este avión** tiene con qué decir este canto.
  *
- * Los de la tripulación, siempre, menos los de la carrera de aterrizaje, que
- * son de un procedimiento y no de todos: ver `DE_LA_CARRERA`. Los de las cajas,
+ * Los de la tripulación, siempre, menos los de la carrera de aterrizaje y
+ * los ochenta nudos del despegue, que son de un procedimiento y no de todos:
+ * ver `DE_LA_CARRERA` y `DEL_DESPEGUE`. Los de las cajas,
  * solo si las lleva. Ver `DE_LOS_AVISADORES`.
  */
 export function loDiceElAvion(clave: string, avion: EquipoDeCabina): boolean {
   if (DE_LA_CARRERA.has(clave))
     return !!avion.cantosDeLaCarrera && CANTOS_DE_LA_CARRERA[avion.cantosDeLaCarrera].has(clave);
+  if (DEL_DESPEGUE.has(clave))
+    return !!avion.cantosDeLaCarrera && CANTOS_DEL_DESPEGUE[avion.cantosDeLaCarrera].has(clave);
   if (clave === "cabina.traffic") return avion.tcas !== null;
   // La maniobra, solo el TCAS II: el TCAS I solo avisa. Ver `daLaManiobra`.
   if (DEL_RA.has(clave)) return avion.tcas === "TCAS II";

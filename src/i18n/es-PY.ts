@@ -3355,7 +3355,7 @@ export const ES_PY = {
   /*
    * **Los del bimotor de pistón**, que no lleva V1: su manual manda parar
    * con las ruedas en el suelo o el tren todavía fuera, y deja seguir solo
-   * con el tren dentro y subiendo. Ver `conV1` en `flight/ejercicios.ts`.
+   * con el tren dentro y subiendo. Ver `conV1` en `flight/decide-con-v1.ts`.
    */
   "ejercicio.en-la-carrera.antes":
     "Hoy practicamos un motor que falla corriendo por la pista, ya cerca de despegar. En este avión, con las ruedas en el suelo o el tren todavía fuera, se para: los dos gases atrás, frenos y derecho por la pista. Así lo dice su manual, y parar también es ganar",

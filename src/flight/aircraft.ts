@@ -1114,6 +1114,10 @@ export interface AircraftConfig {
    * - `null` en los demás. En los de hélice no hay nada que cantar de esto:
    *   unas llamadas de memoria, o las de otro fabricante, serían enseñar algo
    *   que luego habría que desaprender.
+   *
+   * Y la misma familia dice qué canta además en la carrera de **despegue**,
+   * que también es de su procedimiento: los ochenta nudos del E-Jet, por
+   * ahora. Ver `CANTOS_DEL_DESPEGUE` en `audio/cabina.ts` (H44a).
    */
   cantosDeLaCarrera: "boeing" | "embraer" | null;
   /**
