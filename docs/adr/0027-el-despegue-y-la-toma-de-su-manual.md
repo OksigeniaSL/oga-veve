@@ -6740,8 +6740,15 @@ el Mach de crucero de la escalera, el vuelo de línea, el combustible—. En
   pasado el umbral, y apaga en su puesto a los 725 s. El plan fue a cinco mil
   pies, lejos de la altitud máxima, y no pasa por la tabla de crucero: lo que
   prueba es que el vuelo entero sigue igual con la vigilancia nueva en cada
-  paso. Ni los ejercicios que empiezan en crucero con el JAZ 50 ni la frase
-  de la altitud máxima se han volado en el navegador.
+  paso.
+- **«Rumbo y reloj» con el Twin Otter** (`OGA_AVION=jaz-50 ver-la-estima.mjs`,
+  Estigarribia a Filadelfia con el viento del sitio, reloj por ocho), el que
+  empieza a la velocidad de la tabla: **todo en verde**, sin errores en la
+  página. Empieza a 1.500 ft sobre el campo, donde manda el tope de su Vmo;
+  vuela a 161 nudos verdaderos con el plan contando 163 sobre el suelo, y al
+  llegar el reloj a cero el pueblo queda debajo, a 332 m.
+- **La frase de la altitud máxima** no se ha volado en el navegador: ningún
+  banco sube por encima de los 25.000 ft.
 
 ### Lo que queda
 
