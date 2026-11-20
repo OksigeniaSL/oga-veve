@@ -321,6 +321,42 @@ export interface InitialConditions {
    * a un g (nota H29e del ADR 0002).
    */
   flapsDelEquilibrio?: number;
+  /**
+   * **Por qué trayectoria se le coloca**, rad, en negativo bajando: la senda
+   * en la final, la que llevaba el avión al cambiar de peldaño en el aire,
+   * cero nivelado. Con `equilibrado`, nace con la velocidad por ella.
+   *
+   * Y en el modelo completo es además **lo que se le pide a la ayuda de
+   * subida**: colocar un avión bajando por la senda es pedir esa bajada, como
+   * un toque del compensador, y no un transitorio de los que la ayuda no
+   * coge al soltar. Sin esto la ayuda cogía «nivelado» y, con el gas de bajar,
+   * el avión frenaba por encima de la senda: el JAZ 20 en la final de Taguató,
+   * de 96 a 80 nudos y 59 m por encima en cincuenta segundos (ADR 0002, nota
+   * H40c). Ver `trimClimb` en `fdm.ts`. Sin él, nivelado y sin petición.
+   */
+  trayectoria?: number;
+}
+
+/**
+ * **El avión como iba, para que el modelo nuevo nazca igual**: lo que pide
+ * `cycleTier` en `game.ts` al cambiar de peldaño. Volando, equilibrado con los
+ * flaps que lleva y por la trayectoria que llevaba; en el suelo, donde está.
+ *
+ * Nacía nivelado y equilibrado con el ala limpia, llevara lo que llevara: en
+ * una final, con los flaps fuera y bajando, el modelo nuevo salía sin bajar,
+ * con el morro de ir limpio, y la ayuda de subida cogía «nivelado» (ADR 0002,
+ * nota H40c).
+ */
+export function comoIba(s: Readonly<FlightState>, flaps: number): InitialConditions {
+  const base = { position: s.position.clone(), heading: s.heading, airspeed: s.airspeed };
+  if (s.onGround) return { ...base, equilibrado: false };
+  const seno = s.verticalSpeed / Math.max(1, s.airspeed);
+  return {
+    ...base,
+    equilibrado: true,
+    flapsDelEquilibrio: flaps,
+    trayectoria: Math.asin(Math.max(-1, Math.min(1, seno))),
+  };
 }
 
 /** Devuelve la cota del terreno, en metros, para unas coordenadas de mundo. */

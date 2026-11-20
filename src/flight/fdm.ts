@@ -215,6 +215,14 @@ const TRIM_SETTLE = 1.1;
 export const SUBIDA_POR_COMPENSADOR = 25;
 
 /**
+ * Lo más que se le pide a la ayuda de subida, hacia cada lado, en m/s: a
+ * toques del compensador o colocando el avión (`InitialConditions.trayectoria`).
+ * La senda más empinada de las publicadas, 3,45°, con el JAZ 120 a la suya,
+ * pide 4,96.
+ */
+const SUBIDA_PEDIDA_TOPE = 5;
+
+/**
  * Lo más que se mueve el compensador en un paso para que cuente como alguien
  * tocándolo. Un toque son dos centésimas; más que el triple de eso de golpe
  * es otra cosa —el piloto automático soltando, un vuelo nuevo—.
@@ -857,7 +865,15 @@ export class CoefficientFlightModel implements FlightModel {
     s.position.copy(initial.position);
     s.orientation.setFromAxisAngle(new Vector3(0, 1, 0), -initial.heading);
     this.updateBodyAxes();
-    s.velocity.copy(this.forward).multiplyScalar(initial.airspeed);
+    /*
+     * **Por la trayectoria colocada**, si se dice: la senda de la final nace
+     * bajando por ella, no nivelada con el gas de bajar y asentándose por
+     * encima. Ver `InitialConditions.trayectoria`.
+     */
+    const trayectoria =
+      initial.equilibrado && initial.airspeed > MIN_AIRSPEED ? (initial.trayectoria ?? 0) : 0;
+    s.velocity.copy(this.forward).multiplyScalar(initial.airspeed * Math.cos(trayectoria));
+    s.velocity.y = initial.airspeed * Math.sin(trayectoria);
     /*
      * **Y la velocidad pedida es respecto al aire**, como dice
      * `InitialConditions.airspeed`: volando, el aire se mueve, y el avión con
@@ -872,8 +888,9 @@ export class CoefficientFlightModel implements FlightModel {
     if (initial.airspeed > MIN_AIRSPEED && alto > this.aircraft.gearHeight + PEGADO_AL_SUELO)
       s.velocity.addScaledVector(this.viento, perfilDeViento(alto));
     /*
-     * Equilibrado: el morro arriba lo que pide el ala para sostener el peso, y
-     * la velocidad, horizontal. Ver `InitialConditions.equilibrado`.
+     * Equilibrado: el morro arriba lo que pide el ala para sostener el peso
+     * sobre la trayectoria, que es horizontal si no se dice otra. Ver
+     * `InitialConditions.equilibrado`.
      */
     if (initial.equilibrado && initial.airspeed > MIN_AIRSPEED)
       this.rotateAboutRight(
@@ -881,7 +898,7 @@ export class CoefficientFlightModel implements FlightModel {
           initial.airspeed,
           initial.position.y,
           initial.flapsDelEquilibrio ?? 0,
-        ),
+        ) + trayectoria,
       );
     /*
      * **Y el de rueda de cola, puesto en el suelo despacio, en sus tres
@@ -906,7 +923,17 @@ export class CoefficientFlightModel implements FlightModel {
     s.stallWarning = false;
     this.stallFor = 0;
     s.loadFactor = 1;
-    this.trimClimb = null;
+    /*
+     * **Y la ayuda de subida, con lo colocado como petición.** Al soltar los
+     * mandos coge entre nivelado y subiendo, nunca una bajada, para no
+     * memorizar un transitorio (ver `step`); pero una colocación no es un
+     * transitorio: es lo que se ha pedido, como un toque del compensador, y
+     * con su mismo tope. Sin trayectoria, como siempre: coge al soltar.
+     */
+    this.trimClimb =
+      initial.equilibrado && initial.airspeed > MIN_AIRSPEED && initial.trayectoria !== undefined
+        ? clamp(initial.airspeed * Math.sin(initial.trayectoria), -SUBIDA_PEDIDA_TOPE, SUBIDA_PEDIDA_TOPE)
+        : null;
     this.trimSettle = 0;
     this.trimVisto = null;
     // Un vuelo nuevo empieza con todos los motores en marcha.
@@ -1553,6 +1580,10 @@ export class CoefficientFlightModel implements FlightModel {
         // iba al suelo despacio y con obstinación. Al soltar, lo que se
         // memoriza es entre nivelado y subiendo: para bajar hay que empujar
         // el morro, y mientras se empuja no hay ayuda que valga.
+        //
+        // Salvo lo colocado, que llega ya puesto desde `reset` y no se vuelve
+        // a coger aquí: una final colocada baja por su senda porque se ha
+        // pedido así. Ver `InitialConditions.trayectoria`.
         if (this.trimClimb === null) {
           this.trimClimb = clamp(s.verticalSpeed, 0, 5);
           this.trimSettle = TRIM_SETTLE;
@@ -1588,8 +1619,8 @@ export class CoefficientFlightModel implements FlightModel {
         if (movido !== 0 && Math.abs(movido) <= PASO_QUE_SE_PIDE)
           this.trimClimb = clamp(
             this.trimClimb + movido * SUBIDA_POR_COMPENSADOR,
-            -5,
-            5,
+            -SUBIDA_PEDIDA_TOPE,
+            SUBIDA_PEDIDA_TOPE,
           );
 
         // Dos leyes que se mezclan, no un interruptor.
