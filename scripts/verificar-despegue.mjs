@@ -1270,6 +1270,9 @@ const despegue = await page.evaluate(async () => {
     dichos,
     flechaDeTirar,
     usado,
+    // Lo que se pidió decir en V1, y si este avión decide con ella (H37i).
+    cantosDeV1: (o.cantados?.() ?? []).filter((c) => /^V one/.test(c)),
+    seSigueEnV1: o.avion().seSigueEnV1,
   };
 });
 
@@ -1361,6 +1364,26 @@ if (despegue.enElAire) {
     `destellos: ${despegue.dichos.join(" → ") || "ninguno"}`,
     "los dos momentos del despegue salían igual y no se distinguían",
   );
+  /*
+   * **Y en V1 se dice lo que es verdad en este avión** (H37i). El destello
+   * sale en todos; «ya despegamos: seguí» —«V one» en el peldaño de cabina—
+   * solo en los que deciden con V1, los multimotores de turbina. En un
+   * monomotor no hay otro motor con el que seguir, y el bimotor de pistón
+   * para a esa velocidad: allí se calla, y se apunta que se calló. Ver
+   * `flight/lo-que-se-dice-al-despegar.ts`.
+   */
+  {
+    const dicho = despegue.cantosDeV1.some((c) => /^V one→/.test(c));
+    const callado = despegue.cantosDeV1.some((c) => /no decide con V1/.test(c));
+    comprobar(
+      despegue.seSigueEnV1
+        ? "y en V1 se dice «seguí», que este avión decide con ella"
+        : "y en V1 no se dice «seguí», que este avión no decide con ella",
+      despegue.seSigueEnV1 ? dicho && !callado : callado && !dicho,
+      despegue.cantosDeV1.join(" · ") || "nada apuntado en V1",
+      "a 66 nudos el bimotor de pistón oía «ya despegamos: seguí», y su manual manda parar ahí",
+    );
+  }
   comprobar(
     "y en Vr aparece la flecha de tirar, que se entiende sin leer",
     despegue.flechaDeTirar,

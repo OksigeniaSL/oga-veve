@@ -95,6 +95,7 @@ import {
   type PosicionDeLosMandos,
 } from "./world/superficies-de-mando";
 import { conV1, seOfrece, type Ejercicio } from "./flight/ejercicios";
+import { SE_DICE_HASTA, seSigueEnV1, yaSeSigue } from "./flight/lo-que-se-dice-al-despegar";
 import { loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
 import {
@@ -8118,8 +8119,18 @@ export class Game {
     this.hud.onVelocidades((cual) => {
       if (cual === "V1") {
         this.avisar("v1");
-        // Ver `elV1MentiriaEnElEjercicio`: el destello sale, el «seguí» no.
-        if (this.elV1MentiriaEnElEjercicio()) return;
+        /*
+         * **Y «ya despegamos: seguí» solo donde es verdad.** El destello y la
+         * nota salen en todos, que así se pidió; la frase, solo en los que
+         * deciden con V1. En los monomotores no hay otro motor con el que
+         * seguir, y en el bimotor de pistón su manual manda parar a esa
+         * velocidad: allí se dice al meter el tren, ver `decirQueYaSeSigue`.
+         * Ver `flight/lo-que-se-dice-al-despegar.ts`.
+         */
+        if (!seSigueEnV1(this.aircraft)) {
+          this.apuntarCanto("V one: este tipo no decide con V1, se calla");
+          return;
+        }
         this.cantar(
           "V one",
           t("vuelo.comprometido"),
@@ -20969,6 +20980,7 @@ export class Game {
     }
 
     this.atenderAlTren();
+    this.decirQueYaSeSigue();
     this.atenderALaListaDeAterrizaje();
     this.atenderAlTerrInhibit();
     // Con la mano de Jazlyn no hay toma larga: la toma la asegura ella.
@@ -24964,6 +24976,11 @@ export class Game {
    * igual en pantalla, en todos los aviones, que así se pidió (ver `hud.ts`); lo
    * que se calla es la voz y la tarjeta de «seguí», mientras dura el ejercicio.
    * Ver `conV1` en `flight/ejercicios.ts`.
+   *
+   * Desde H37i la voz de V1 ya no se dice nunca en ese avión, ejercicio o no
+   * (ver `onVelocidades` y `flight/lo-que-se-dice-al-despegar.ts`); esto
+   * sigue callando la tarjeta de la fase «comprometido», la de la pista que
+   * ya no da para parar, mientras dura el ejercicio.
    */
   private elV1MentiriaEnElEjercicio(): boolean {
     const p = this.practica;
@@ -25089,10 +25106,35 @@ export class Game {
     const derecho = ladoDelMotor(this.aircraft, motor) === "izquierdo";
     const pie: TranslationKey = derecho ? "ejercicio.pieDerecho" : "ejercicio.pieIzquierdo";
     const explica = laInstructoraLoExplica(this.tier.avisos);
+    /*
+     * **Y con el tren todavía fuera, meterlo es parte del procedimiento**: el
+     * de «Motor con el tren arriba» cuando nadie lo metió y falló igual (ver
+     * `sinTrenA` en `flight/ejercicios.ts`). Después del pie, que el avión se
+     * sujeta primero: «Gear — retract» va en su *Engine Securing Procedure*
+     * antes de identificar y poner la bandera. Con las frases de siempre, que
+     * están grabadas: «gear up» arriba y «metélo, el tren te frena» abajo.
+     */
+    const trenFuera = this.practica?.trenFueraAlFallar === true;
     this.agenda.luego(tras, () => {
       this.cantarDelEjercicio("engine failure", dicho, "mando");
       if (explica) this.decirDelEjercicio(pie, "mando");
+      if (trenFuera && this.input.trenQueSePide)
+        this.cantar("gear up", t("vuelo.meteElTren"), "vuelo.meteElTren", "mando");
     });
+    if (trenFuera)
+      this.agenda.luego(tras + 8, () => {
+        if (!this.input.trenQueSePide) return;
+        this.hud.senal.mostrar(
+          "tren",
+          this.rotulo("vuelo.meteElTren", "palabra.tren"),
+          null,
+          {
+            segundos: SE_QUEDA_EL_ARO,
+            prioridad: IMPORTANTE,
+            tecla: nombreDeTecla(this.input.preferredKey("tren")),
+          },
+        );
+      });
     this.agenda.luego(tras + 4, () =>
       this.hud.senal.mostrar(
         derecho ? "pie-derecho" : "pie-izquierdo",
@@ -39001,6 +39043,64 @@ export class Game {
       );
     }
   }
+
+  /**
+   * **«Ya despegamos: seguí» en el bimotor de pistón, cuando de verdad ya se
+   * sigue**: en el aire, con el tren pedido arriba y a los 85 nudos de su
+   * manual. Es la frase de V1 de los de turbina, dicha donde este avión toma
+   * esa decisión; en su V1 del juego, su Vmc, su manual manda parar y se
+   * calla. Ver `flight/lo-que-se-dice-al-despegar.ts`.
+   *
+   * La tarjeta, con la mano tachada de «ya no se para», en los cuatro
+   * peldaños; la voz, la de la instructora en los tres de abajo. En el de
+   * cabina no se canta nada, que la tripulación de un Seneca no tiene canto
+   * para eso. Una vez por despegue, y no en una frustrada, que no es un
+   * despegue.
+   */
+  private decirQueYaSeSigue(): void {
+    if (this.dePasaje) return;
+    const s = this.flight.state;
+    if (s.onGround) {
+      const fase = this.vistaActual?.fase;
+      this.seguiPorDecir = fase === "despegando" || fase === "comprometido";
+      return;
+    }
+    if (!this.seguiPorDecir) return;
+    const sobreElCampo = s.position.y - this.cotaDelCampo(this.elCampo());
+    // Pasada la salida ya no se dice, ni luego bajando con el tren dentro.
+    if (sobreElCampo > SE_DICE_HASTA) {
+      this.seguiPorDecir = false;
+      return;
+    }
+    const sigue = yaSeSigue(this.aircraft, {
+      enElAire: true,
+      trenPedidoArriba: this.aircraft.trenRetractil && !this.input.trenQueSePide,
+      indicada: indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()),
+      sobreElCampo,
+    });
+    if (!sigue) return;
+    this.seguiPorDecir = false;
+    // Con el motor ya parado, lo que se dice es el procedimiento: ver `fallaElMotor`.
+    if (this.practica?.fase === "fallo") return;
+    this.hud.senal.mostrar(
+      "nopara",
+      this.rotulo("vuelo.comprometido", "vuelo.comprometido"),
+      null,
+      { segundos: 5, prioridad: IMPORTANTE },
+    );
+    if (!laInstructoraLoExplica(this.tier.avisos)) {
+      this.apuntarCanto("tren arriba: ya se sigue, la cabina no canta nada");
+      return;
+    }
+    this.apuntarCanto("tren arriba→vuelo.comprometido");
+    this.instructor.decir(t("vuelo.comprometido"), "vuelo.comprometido", "mando");
+  }
+
+  /**
+   * Si queda por decir que ya se sigue en este despegue. Se arma corriendo
+   * por la pista para despegar y se gasta al decirlo. Ver `decirQueYaSeSigue`.
+   */
+  private seguiPorDecir = false;
 
   /** Lo recordado del tren en este despegue. Ver `recordarElTren`. */
   private recordadoDelTren: LoRecordado = NADA_RECORDADO;

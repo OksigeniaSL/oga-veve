@@ -8307,6 +8307,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     sinRayaPrimero,
     // Los cantos con sus números, para poder ver dónde se repite algo.
     cantados: o.cantados?.() ?? [],
+    // Si este avión decide con V1, que es donde se dice «seguí» (H37i).
+    seSigueEnV1: o.avion?.().seSigueEnV1 ?? true,
     // El tiempo que hizo: lo único que cambia entre pasadas. Ver el informe.
     meteo: o.meteo?.() ?? null,
     lejosDelCoche: Math.round(lejosDelCoche),
@@ -9839,9 +9841,18 @@ comprobar(
    * dos. Eso se pide por `cantar()` y queda apuntado siempre, suene o no.
    * Que además se oigan es cosa del pack de voz, y lo mide `verificar-voces`.
    */
-  ["cabina.v1", "V one", "vuelo.comprometido"].some((c) =>
-    vuelo.cantados?.some((x) => x.includes(c)),
-  ) &&
+  /*
+   * **Y V1 se anuncia solo donde se decide con ella** (H37i): en los
+   * monomotores y en el bimotor de pistón el destello sale y la frase se
+   * calla, y queda apuntado que se calló. Ver
+   * `flight/lo-que-se-dice-al-despegar.ts`.
+   */
+  (vuelo.seSigueEnV1 === false
+    ? vuelo.cantados?.some((x) => /^V one: este tipo no decide con V1/.test(x)) &&
+      !vuelo.cantados?.some((x) => /^V one→/.test(x))
+    : ["cabina.v1", "V one", "vuelo.comprometido"].some((c) =>
+        vuelo.cantados?.some((x) => x.includes(c)),
+      )) &&
     ["cabina.vr", "rotate", "vuelo.rotar"].some((c) =>
       vuelo.cantados?.some((x) => x.includes(c)),
     ),

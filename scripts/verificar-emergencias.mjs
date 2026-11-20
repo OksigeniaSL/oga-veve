@@ -63,6 +63,12 @@ const AVION =
 const PARA = MODO === "antes" || MODO === "carrera";
 /** Los que siguen volando con un motor. */
 const SIGUE = MODO === "despues" || MODO === "tren";
+/**
+ * Con `OGA_SIN_TREN=1`, en `tren` nadie mete el tren hasta que falla el motor
+ * (H37i): el ejercicio tiene que fallar igual a 650 ft, con el tren fuera, y
+ * pedir meterlo. El piloto del banco lo mete en cuanto se lo piden.
+ */
+const SIN_TREN = MODO === "tren" && process.env.OGA_SIN_TREN === "1";
 const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
 // Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
@@ -128,7 +134,7 @@ try {
   await page.waitForTimeout(12000);
 
   const r = await page.evaluate(
-    async ({ modo, tope }) => {
+    async ({ modo, tope, sinTren }) => {
       const o = globalThis.__oga;
       const espera = (ms) => new Promise((res) => setTimeout(res, ms));
       /*
@@ -226,6 +232,8 @@ try {
       let mandoAlAire = false;
       let pedalMaximo = 0;
       let desdeElFallo = null;
+      // Dónde y con qué tren falló: el de «sin tren» tiene que ser a 650 ft y fuera.
+      let alFallar = null;
       let aseguradoEn = null;
       let recorridoAlParar = null;
       const puntos = [
@@ -275,7 +283,12 @@ try {
         const ej = o.ejercicio();
         const p = enPista(s.position.x, s.position.z);
         const sobre = s.position.y - cota;
-        if (ej?.fase !== "armada" && desdeElFallo === null) desdeElFallo = ahora;
+        if (ej?.fase !== "armada" && desdeElFallo === null) {
+          desdeElFallo = ahora;
+          alFallar = { sobre, trenFuera: o.trenQueSePide() };
+        }
+        // Sin tren: se mete cuando lo piden, que es en cuanto falla.
+        if (sinTren && ej?.fase !== "armada" && !s.onGround && o.trenQueSePide()) o.pedirTren(false);
         if (ej?.asegurado && aseguradoEn === null) aseguradoEn = ahora;
 
         if (tramo === "crucero") {
@@ -370,7 +383,7 @@ try {
          * Y en `tren`, el despegue de siempre con los dos: el tren dentro con
          * la subida hecha, que es lo que el ejercicio espera para el fallo.
          */
-        if (!s.onGround && (ej?.fase !== "armada" || modo === "tren")) {
+        if (!s.onGround && (ej?.fase !== "armada" || (modo === "tren" && !sinTren))) {
           /*
            * «After establishing a climb»: en el de pistón, con la subida hecha
            * aunque sea poca. Y no antes: metido a un metro del suelo, con la
@@ -549,6 +562,7 @@ try {
         mandoAlAire,
         pedalMaximo,
         bandera: aseguradoEn !== null && desdeElFallo !== null ? aseguradoEn - desdeElFallo : null,
+        alFallar,
         recorridoAlParar,
         largo: pista.length,
         percance: o.percance(),
@@ -563,7 +577,7 @@ try {
         descartadas: o.descartadas(),
       };
     },
-    { modo: MODO, tope: TOPE },
+    { modo: MODO, tope: TOPE, sinTren: SIN_TREN },
   );
 
   const dice = (lista, trozo) => lista.some((k) => String(k).includes(trozo));
@@ -590,6 +604,62 @@ try {
     `fase ${ej?.fase} · motor ${ej?.motorParado} · se para ${ej?.parar ?? ej?.antesDeV1} · ` +
       `V1 ${nudos(r.velocidades.v1)} Vr ${nudos(r.velocidades.vr)} V2 ${nudos(r.velocidades.v2)} Vmc ${nudos(r.velocidades.vmc)} kt`,
   );
+  /*
+   * **Y en el despegue se dice lo que es verdad en este avión** (H37i): «ya
+   * despegamos: seguí» —o «V one», arriba— en V1 solo donde se decide con
+   * ella. En el bimotor de pistón, al meter el tren a 85 nudos o más, que es
+   * cuando su manual deja seguir: en `tren`, antes de que falle el motor; en
+   * `carrera` no llega, que el tren no sube. Ver
+   * `flight/lo-que-se-dice-al-despegar.ts`.
+   */
+  if (MODO === "despues" || MODO === "carrera" || MODO === "tren") {
+    const enV1 = r.todoCantado.filter((c) => /^V one/.test(c));
+    const dicho = enV1.some((c) => /^V one→/.test(c));
+    const callado = enV1.some((c) => /no decide con V1/.test(c));
+    comprobar(
+      MODO === "despues"
+        ? "en V1 se dice «seguí», que este avión decide con ella"
+        : "en V1 no se dice «seguí»: su manual para a esa velocidad",
+      MODO === "despues" ? dicho && !callado : callado && !dicho,
+      enV1.join(" · ") || "nada apuntado en V1",
+    );
+  }
+  if (MODO === "tren" || MODO === "carrera") {
+    const sigue = r.todoCantado.findIndex((c) => /^tren arriba/.test(c));
+    const fallo = r.todoCantado.findIndex((c) => /^engine failure/.test(c));
+    const alMeterlo = MODO === "tren" && !SIN_TREN;
+    comprobar(
+      alMeterlo
+        ? "y «ya despegamos: seguí» al meter el tren, antes del fallo"
+        : "y nadie dice «seguí»: el tren no sube antes del fallo",
+      alMeterlo ? sigue >= 0 && (fallo < 0 || sigue < fallo) : sigue < 0,
+      `${sigue >= 0 ? r.todoCantado[sigue] : "no se dijo"}` +
+        `${fallo >= 0 ? ` · el fallo, ${sigue >= 0 && sigue < fallo ? "después" : "antes"}` : ""}`,
+    );
+  }
+  if (SIN_TREN) {
+    const fallo = r.todoCantado.findIndex((c) => /^engine failure/.test(c));
+    const meteloTras = fallo >= 0 && r.todoCantado.slice(fallo).some((c) => /^gear up/.test(c));
+    /*
+     * Con margen, porque el banco mide desde la cota del umbral y el juego
+     * desde la del campo: en Gran Canaria, siete metros de diferencia. La
+     * primera tirada falló así: «a 191 m (627 ft)», con el juego cantando el
+     * fallo a 198. Lo que se mira es que falle alto y con el tren fuera, no a
+     * los quince metros de siempre ni nunca.
+     */
+    comprobar(
+      "sin meter el tren, a 650 ft falla igual, con el tren fuera",
+      r.alFallar?.trenFuera === true && r.alFallar.sobre >= 650 * 0.3048 - 15,
+      r.alFallar
+        ? `a ${Math.round(r.alFallar.sobre)} m (${Math.round(r.alFallar.sobre / 0.3048)} ft) con el tren ${r.alFallar.trenFuera ? "fuera" : "pedido dentro"}`
+        : "no falló",
+    );
+    comprobar(
+      "y detrás del fallo se pide meter el tren",
+      meteloTras,
+      r.todoCantado.slice(Math.max(0, fallo)).filter((c) => /^(engine failure|gear up)/.test(c)).join(" · ") || "no",
+    );
+  }
   comprobar(
     "sin percance: nadie se hace daño",
     !r.percance,

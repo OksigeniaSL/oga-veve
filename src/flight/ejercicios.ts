@@ -193,8 +193,17 @@ export type Momento =
    * además con el tren ya dentro del todo: el fallo de después de despegar
    * del bimotor de pistón, el único del despegue en que su manual deja
    * seguir. Ver `en-la-carrera` y `tren-arriba`.
+   *
+   * Y `sinTrenA`, m sobre el campo: si el tren no ha entrado al llegar a esa
+   * altura, falla igual, con el tren fuera. Es lo que hace un instructor: el
+   * ejercicio no se queda armado para siempre porque nadie meta el tren.
    */
-  | { readonly en: "subida"; readonly metros: number; readonly trenDentro?: boolean }
+  | {
+      readonly en: "subida";
+      readonly metros: number;
+      readonly trenDentro?: boolean;
+      readonly sinTrenA?: number;
+    }
   /** Ya en el aire desde el principio, a los segundos que se digan. */
   | { readonly en: "aire"; readonly segundos: number };
 
@@ -402,8 +411,27 @@ export const EJERCICIOS: readonly Ejercicio[] = [
      * que su manual deja seguir. Desde quince metros, la altura a la que la
      * práctica da el avión por volando; el juego pide el tren a los sesenta
      * (`meteElTrenA`), así que falla en cuanto acaba de entrar.
+     *
+     * **Y si nadie mete el tren, falla igual a seiscientos cincuenta pies**,
+     * como lo haría un instructor: el ejercicio no se puede quedar armado el
+     * resto del vuelo. Es una altura por la que se pasa siempre —por encima
+     * de donde el juego pide el tren en todos los peldaños, 60 m o 120, y
+     * por debajo del circuito, 250— y a la que ya no queda pista por delante
+     * para posarse y parar. Ahí su manual manda seguir y meter el tren:
+     * «If decision is made to continue, maintain heading. After establishing
+     * a climb, retract landing gear, accelerate to 92 KIAS and feather
+     * inoperative engine prop» (Seneca III,
+     * VB-1110, sección 3; y en su *Engine Securing Procedure*, «Gear —
+     * retract» antes de identificar). Y se ve por qué se mete: con un motor y
+     * el tren fuera, ese avión apenas sube. Ver `fallaElMotor` en `game.ts` y
+     * el ADR 0014, enmienda H37i.
      */
-    averias: [{ que: "motor", cuando: { en: "subida", metros: 15, trenDentro: true } }],
+    averias: [
+      {
+        que: "motor",
+        cuando: { en: "subida", metros: 15, trenDentro: true, sinTrenA: 650 * 0.3048 },
+      },
+    ],
     ensena:
       "con el tren dentro y subiendo se sigue: el pie del lado del bueno, la línea azul, y la compañera identifica, verifica y pone en bandera enseguida",
   },

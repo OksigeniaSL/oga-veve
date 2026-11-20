@@ -265,6 +265,47 @@ describe("el bimotor de pistón: lo de su manual, sin V1", () => {
     ]);
   });
 
+  /*
+   * Lo que haría un instructor: el ejercicio no se queda armado el resto del
+   * vuelo. A 650 ft ya no queda pista para posarse, y su manual manda seguir
+   * y meter el tren (Seneca III, VB-1110, sección 3). Ver `sinTrenA`.
+   */
+  it("y si nadie mete el tren, a 650 ft falla igual, con el tren fuera, y se sigue", () => {
+    const p = dePiston("tren-arriba", () => 0.9);
+    p.paso(QUIETO, 0.1);
+    p.paso({ ...corriendo, indicada: 37 }, 0.1);
+    const aire = { ...QUIETO, enElSuelo: false, enPista: false, parado: false, vertical: 3, indicada: 45 };
+    expect(durante(p, { ...aire, sobreElCampo: 190 }, 5)).toEqual([]);
+    // Entrando a esa altura tampoco: falla al llegar dentro, como siempre.
+    expect(durante(p, { ...aire, sobreElCampo: 210, tren: "entrando" }, 1)).toEqual([]);
+    expect(p.trenFueraAlFallar).toBe(false);
+    expect(p.paso({ ...aire, sobreElCampo: 200 }, 0.1)).toEqual([
+      { que: "fallo", averia: "motor", motor: 1, parar: false, enElSuelo: false },
+    ]);
+    expect(p.trenFueraAlFallar).toBe(true);
+    // La bandera, enseguida igual; «con un motor se sube», no con el tren fuera.
+    expect(cuales(durante(p, { ...aire, sobreElCampo: 195, vertical: -0.5 }, 4.2))).toEqual(["asegurar"]);
+    // Metido el tren, sí.
+    expect(cuales(durante(p, { ...aire, sobreElCampo: 195, vertical: 1, tren: "dentro" }, 1))).toEqual(["velocidad"]);
+    expect(cuales(durante(p, { ...aire, sobreElCampo: 220, tren: "dentro" }, 4))).toEqual(["declarar"]);
+    durante(p, { ...aire, enFinal: true }, 1);
+    durante(p, QUIETO, 2);
+    expect(p.cierre).toBe("vuelta");
+    // Y el vuelo siguiente empieza limpio.
+    p.reiniciar();
+    expect(p.trenFueraAlFallar).toBe(false);
+  });
+
+  it("y con el tren metido a tiempo no cambia nada: falla al entrar, y no con él fuera", () => {
+    const p = dePiston("tren-arriba");
+    p.paso(QUIETO, 0.1);
+    p.paso({ ...corriendo, indicada: 37 }, 0.1);
+    const aire = { ...QUIETO, enElSuelo: false, enPista: false, parado: false, vertical: 3, indicada: 45 };
+    p.paso({ ...aire, sobreElCampo: 90, tren: "dentro" }, 0.1);
+    expect(p.fase).toBe("fallo");
+    expect(p.trenFueraAlFallar).toBe(false);
+  });
+
   it("y la compañera pone la bandera enseguida, sin esperar a los 400 ft ni a nada", () => {
     const p = dePiston("tren-arriba", () => 0.9);
     p.paso(QUIETO, 0.1);
