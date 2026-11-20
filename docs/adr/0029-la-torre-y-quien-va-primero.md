@@ -694,7 +694,11 @@ que va en sentido contrario, y `tramoDeFrente` mira sentido a sentido.
   en Fuerteventura, 9 en Cuatro Vientos, 4 en Barajas, 2 en El Hierro y 1 en
   Gran Canaria. Ninguno cambia de salida con la pista vacía.
 - **Cada tramo empieza y acaba en su nudo**, no en su punta: el camino sigue
-  sin saltos por las soldaduras.
+  sin saltos por las soldaduras. **Menos lo que toca un nudo de la pista**,
+  que van cada ochenta metros: cosida a él, la boca de una salida empezaba
+  hasta doce metros más allá por el eje, y en El Hierro, por la 16, el JAZ 20
+  que para a 815 m volvía 291 m por la pista para coger otra
+  (`rodar-por-el-asfalto.test.ts`, que lo vio).
 - **La media vuelta, con la velocidad de la H41** —frena a 3 m/s para darla y
   remonta como mucho a veinte nudos—, ya junta. Con la pista vacía la dan,
   porque la única salida les queda detrás de donde frenan: Ayolas por la 02
@@ -758,6 +762,35 @@ En la mesa:
   puesto por otro camino, a los 689 s en vez de a los 768, y ya no pasas a
   25,8 m de EC-FCB, que espera en su doble raya. Hay que buscar con
   `VER_CASO` dónde vuelve a darse el caso y montarlo ahí.
+- **Dos de `de-frente-en-la-calle.test.ts` en Los Rodeos, en rojo por el
+  grafo nuevo**, cada una por una de sus dos piezas (medido cambiando solo
+  una cada vez):
+  - «Y si ya rodaba por tu calle cuando se traza tu raya, pasa él y tu raya
+    espera» se queda sin el caso: nadie llega a «pasar». Lo quita el cosido
+    de los tramos a su nudo; con la R recta y sin coser, sale.
+  - «Nadie de frente…» por la 12 con el JAZ 110 y EC-ADX saliendo a los 40 s
+    de dejar tú la pista: 6,2 s parados de frente. Lo trae la R recta, con
+    cosido o sin él; y con el cosido y la R en zigzag, el coche del sígame
+    se mete en EC-ADX a 18,6 m.
+  Las dos son de quien juega volviendo por la R mientras uno del tráfico
+  sale por ella hacia la cabecera: la R en zigzag también movía dónde se ven
+  de frente quien juega y el tráfico, y lo que se calibró con ella hay que
+  volver a mirarlo con la R recta.
+- **`puesto-de-salida-de-cada-campo.test.ts`** se cae en Los Rodeos, El
+  Hierro y La Gomera: compara el puesto y la doble raya de quien juega con
+  el fichero de `1438bc99` al centímetro, y el grafo nuevo los mueve. Es la
+  caída que esa prueba pide cuando se cambia a propósito; falta mirar que
+  cada cambio sea el querido y rehacer el fichero con `OGA_REHACER_SALIDAS=1`.
+- **`remolque.test.ts`**: «de Los Rodeos, con pasaje, el JAZ 90 acaba con el
+  morro hacia la calle: al soltarlo rueda casi recto», en rojo: la raya ya
+  no pasa por el punto exacto del cruce del empuje. Y
+  **`aerodromo-desplazado.test.ts`**: la misma ruta con el aeródromo corrido
+  mide 95,19 m en vez de 95,80. Las dos apuntan al cosido: los cruces se
+  cuentan en una rejilla fija (`clave`), y coser a un nudo que depende de
+  ella deja de ser lo mismo en cualquier sitio. El cosido es la pieza
+  frágil de esta enmienda: lo que hace falta de verdad es que dos cruces
+  distintos a doce metros —el de la F con su chaflán y el de la R con el
+  otro chaflán— no se suelden en uno, y eso queda por hacer.
 - **Quien juega** detrás de uno que remonta sigue sin que se le alargue el
   circuito: la torre le manda al aire en los mínimos si la pista sigue
   ocupada. Al tráfico sí se le separa.
@@ -768,3 +801,8 @@ En la mesa:
 - **El navegador**: `tenerife-norte taguato 1 jaz-90` no llegó a volar; el
   candado del navegador tenía delante dos bancos de otros encargos y el
   tope de esta tanda no daba para esperarlos.
+
+Vitest entero, una vez, con todo lo de arriba: 541 de 546 ficheros y 10.937
+de 10.978 pruebas en verde; 12 en rojo, en los cinco ficheros que se dicen
+aquí (`salida-tapada`, `de-frente-en-la-calle`, `puesto-de-salida-de-cada-campo`,
+`remolque` y `aerodromo-desplazado`).
