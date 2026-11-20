@@ -409,6 +409,14 @@ describe("en los puestos de verdad", () => {
     const plan = new PlanDeVuelo(aero, s.runway, () => 600, avion);
     plan.deContacto = true;
     expect(plan.reiniciar()).toBe(true);
+    /*
+     * **Desde el 23, que es el que se mide.** El plan elige el puesto que menos
+     * rueda de ida y de vuelta (`parDeSalida`), y sin los cruces falsos del
+     * grafo (H41c) el 24, a siete metros, sale unos metros más corto: de él se
+     * sale de frente. El empuje del 23 es el mismo que antes.
+     */
+    const el23 = aero.parkingPositions!.find((p) => p.ref === "23")!;
+    expect(plan.reiniciarDesde(el23.xy)).toBe(true);
     const [x, z] = plan.arranque()!;
     const edificios = edificiosDePasarela(aero);
     const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));

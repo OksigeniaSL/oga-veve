@@ -192,6 +192,14 @@ const largoDe = (puntos: readonly Punto[]): number => {
 const PASO_DE_PISTA = 80;
 
 /**
+ * **A partir de qué distancia dos cruces son dos**, m: media soldadura. Más
+ * cerca, como los arranques de dos rabos a tres o cuatro metros en la R de Los
+ * Rodeos, son el mismo cruce dibujado dos veces y se sueldan como siempre; el
+ * de la F con su chaflán y el de la R con el otro, a doce, no. Ver `nudoDe`.
+ */
+const CRUCES_DISTINTOS = SOLDADURA / 2;
+
+/**
  * **Lo que se aparta de una calle una punta que ya está en ella**, m: menos
  * que esto, la punta se mete en la calle tal cual; más, es de otra cosa.
  */
@@ -251,6 +259,23 @@ function colgadasDe(
     if (d2 <= PEGADA * PEGADA) pegadas.add(j);
   }
   return new Set([...cerca].filter(([j, n]) => n >= 2 && pegadas.has(j)).map(([j]) => j));
+}
+
+/** Lo que hay de `p` a la polilínea `camino`, m. */
+function distanciaAlCamino(p: Punto, camino: readonly Punto[]): number {
+  let d2 = Infinity;
+  for (let k = 0; k < camino.length - 1; k++) {
+    const a = camino[k]!;
+    const b = camino[k + 1]!;
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const l2 = dx * dx + dy * dy;
+    const t = l2 > 0 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2)) : 0;
+    const ex = p[0] - (a[0] + t * dx);
+    const ey = p[1] - (a[1] + t * dy);
+    d2 = Math.min(d2, ex * ex + ey * ey);
+  }
+  return Math.sqrt(d2);
 }
 
 /** Parte una polilínea en trozos de como mucho `paso` metros. */
@@ -383,6 +408,19 @@ export function construirGrafo(
   });
 
   const largos = crudas.map((c) => largoDe(c.path));
+  /*
+   * **Y una punta que ya está en otra calle no se mete en una tercera** que
+   * pasa a unos metros. Ya está unida por la suya; metida en la tercera, la
+   * torcía hasta ella. En el cruce de la F de Los Rodeos, el arranque del
+   * chaflán del oeste, que está en la R, caía a once metros y medio del
+   * chaflán del este, y éste iba de la R al arranque del otro y volvía a la
+   * F: un paso atrás de doce metros que, junto al camino del que venía
+   * detrás por la R, era ir de frente con él (`tramoDeFrente`), y al que
+   * acababa de aterrizar se le mandaba a remontar la pista (H41c).
+   */
+  const yaEnOtra = puntas.map(({ calle: j, p }) =>
+    crudas.some((c, k) => k !== j && distanciaAlCamino(p, c.path) <= PEGADA),
+  );
   crudas.forEach((calle, i) => {
     const colgadas = colgadasDe(calle.path, puntas, i, largos);
     const nuevo: Punto[] = [calle.path[0]!];
@@ -394,13 +432,14 @@ export function construirGrafo(
       const l2 = dx * dx + dy * dy;
       if (l2 > 0) {
         const encima: { t: number; p: Punto }[] = [];
-        for (const { calle: j, p } of puntas) {
+        for (let q = 0; q < puntas.length; q++) {
+          const { calle: j, p } = puntas[q]!;
           if (j === i) continue;
           const t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2;
           if (t <= 0.001 || t >= 0.999) continue;
           const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
           // La punta de lo que cuelga de esta calle no la tuerce. Ver `colgadasDe`.
-          if (d > PEGADA && colgadas.has(j)) continue;
+          if (d > PEGADA && (colgadas.has(j) || yaEnOtra[q])) continue;
           if (d <= SOLDADURA) encima.push({ t, p });
         }
         encima.sort((x, y) => x.t - y.t);
@@ -426,6 +465,33 @@ export function construirGrafo(
       usos.set(k, (usos.get(k) ?? 0) + 1);
     }
   }
+
+  /*
+   * Y **qué puntos son cruce de verdad**: el mismo punto, al milímetro, en dos
+   * calles o más. Después del nodado lo son todos los cruces —la punta ajena
+   * se mete tal cual—, y no depende de la rejilla de `clave`, que no es la
+   * misma con el aeródromo corrido. Ver `nudoDe`.
+   */
+  const enCalles = new Map<string, number>();
+  for (const c of crudas) {
+    const vistos = new Set<string>();
+    for (const p of c.path) {
+      const k = `${p[0]},${p[1]}`;
+      if (vistos.has(k)) continue;
+      vistos.add(k);
+      enCalles.set(k, (enCalles.get(k) ?? 0) + 1);
+    }
+  }
+  /*
+   * Menos en la pista: sus cruces están en el eje, unidos por trozos de pista
+   * que cuestan seis veces lo suyo (`PENALIZACION_PISTA`), y dos bocas a unos
+   * metros se han soldado siempre en una. Sin soldar, en El Hierro el JAZ 20
+   * que para a 815 m por la 16 volvía 291 m por la pista para coger otra.
+   */
+  const deLaPista = new Set<string>();
+  for (const c of crudas) if (c.pista) for (const p of c.path) deLaPista.add(`${p[0]},${p[1]}`);
+  const esCruce = (p: Punto): boolean =>
+    (enCalles.get(`${p[0]},${p[1]}`) ?? 0) > 1 && !deLaPista.has(`${p[0]},${p[1]}`);
 
   // ── Partir por los cruces ────────────────────────────────────────────────
   const trozos: {
@@ -461,12 +527,29 @@ export function construirGrafo(
 
   // ── Soldar los nudos ─────────────────────────────────────────────────────
   const nudos: Punto[] = [];
+  /** Si cada nudo nació de un cruce de verdad. Ver `esCruce`. */
+  const deCruce: boolean[] = [];
+  /*
+   * **Y dos cruces distintos no son un nudo**, aunque estén a menos de una
+   * soldadura. La soldadura es para la punta de una calle que se queda corta
+   * o se pasa de la otra; un cruce ya está unido por sus calles. En el cruce
+   * de la F con la paralela de Los Rodeos, el de la F con su chaflán y el de
+   * la R con el otro chaflán están a doce metros, y soldados en uno, el que
+   * torcía por la F desde el oeste llegaba por la R hasta el nudo y volvía
+   * ocho metros hacia el este para coger la F: ese paso atrás, junto al
+   * camino del que venía detrás por la R, era ir de frente con él
+   * (`tramoDeFrente`), y al que acababa de aterrizar se le mandaba a remontar
+   * la pista (H41b, H41c).
+   */
   const nudoDe = (p: Punto): number => {
+    const cruce = esCruce(p);
     for (let i = 0; i < nudos.length; i++) {
       const n = nudos[i]!;
-      if (Math.hypot(n[0] - p[0], n[1] - p[1]) <= SOLDADURA) return i;
+      const d = Math.hypot(n[0] - p[0], n[1] - p[1]);
+      if (d <= SOLDADURA && !(cruce && deCruce[i] && d > CRUCES_DISTINTOS)) return i;
     }
     nudos.push(p);
+    deCruce.push(cruce);
     return nudos.length - 1;
   };
 
@@ -487,29 +570,11 @@ export function construirGrafo(
   });
 
   const tramos: Tramo[] = [];
-  // Los nudos en el mismo orden de siempre: los números no cambian.
-  const conNudos = trozos.map((t) => ({ t, a: nudoDe(t.path[0]!), b: nudoDe(t.path[t.path.length - 1]!) }));
-  const deLaPista = new Set(conNudos.filter((x) => x.t.pista).flatMap((x) => [x.a, x.b]));
-  for (const { t, a, b } of conNudos) {
+  for (const t of trozos) {
+    const a = nudoDe(t.path[0]!);
+    const b = nudoDe(t.path[t.path.length - 1]!);
     if (a === b) continue;
-    /*
-     * **Y el tramo empieza y acaba en su nudo**, no en su punta. Una punta
-     * soldada a un nudo de hasta doce metros más allá dejaba un salto en el
-     * camino: en el cruce de la F con la paralela de Los Rodeos, el que bajaba
-     * por la F desde el oeste llegaba por la paralela hasta el nudo y volvía
-     * ocho metros hacia el este para coger la F, y ese paso atrás, junto al
-     * camino del que venía detrás por la paralela, era ir de frente con él
-     * (`tramoDeFrente`): al que acababa de aterrizar se le mandaba a remontar
-     * la pista (H41b). Cosido a su nudo, el camino sigue sin saltos.
-     *
-     * **Menos en la pista.** Sus nudos van cada ochenta metros y la boca de
-     * una salida se suelda al más cercano: cosida a él, la salida empezaba
-     * hasta doce metros más allá por el eje, y en El Hierro el JAZ 20 que
-     * paraba a 815 m por la 16 volvía 291 m por la pista para coger otra.
-     * Ahí la punta se queda donde está, en el eje.
-     */
-    const cose = (n: number, p: Punto): Punto => (t.pista || deLaPista.has(n) ? p : nudos[n]!);
-    const path: readonly Punto[] = [cose(a, t.path[0]!), ...t.path.slice(1, -1), cose(b, t.path[t.path.length - 1]!)];
+    const path = t.path;
     const largo = largoDe(path);
     /*
      * Y si el ala no pasa, el tramo se encarece. La pista nunca es estrecha:
