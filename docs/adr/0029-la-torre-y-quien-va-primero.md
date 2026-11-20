@@ -646,3 +646,125 @@ En el navegador, puerto 5686:
   250 m. Tampoco aquí hubo pista ocupada en la final: la pista llevaba 320 s
   libre al pedirlo. La altura de los mínimos con la pista recién soltada
   queda sin ver en el navegador.
+
+## Enmienda (20-11-2026, H41b): la paralela de Los Rodeos, y quien remonta donde no la hay
+
+### El caso
+
+La H41 dejó escrito que en Los Rodeos, por la 12, el turbohélice que aterriza
+con los puestos de su lado cogidos solo llega al que queda libre desde la
+salida de los 1.598 m «rodando 1.144 m por la pista hacia atrás: el grafo de
+calles no tiene otro camino». Los Rodeos tiene calle paralela a toda la pista,
+la R, y un avión de verdad que aterriza por la 12 no remonta la pista con otro
+en final: sale por delante y rueda por la paralela.
+
+### Por qué no había camino
+
+El camino sí estaba. Lo que pasaba es que, al tomar tierra, el turbohélice
+veía **de frente** al que había aterrizado noventa segundos antes y rodaba por
+la R hacia el mismo sitio, delante de él y en su mismo sentido. `repartirLosTramos`
+le buscaba entonces otra salida con el otro como estorbo de 38 m de radio
+encima de la R, que es lo único que une la E3 con la plataforma, y la única
+otra era volver por la pista hasta la de 590 m.
+
+Y lo veía de frente por dos cosas del grafo, no de los datos:
+
+- **La R iba en zigzag.** OpenStreetMap trae, al borde de la R, once rabos de
+  diez metros —el arranque de las líneas de entrada a la plataforma— y los dos
+  chaflanes del cruce de la F. Sus dos puntas caen a menos de una soldadura
+  (12 m) de la R, y el nodado metía también la lejana en ella: la paralela iba
+  de su eje al borde de la plataforma y vuelta, diez metros cada vez, con una
+  uve en la F.
+- **Las puntas soldadas dejaban un salto.** Un tramo que acaba a menos de doce
+  metros de un nudo se suelda a él, pero seguía empezando en su punta: el que
+  torcía por la F desde la R pasaba el nudo y volvía ocho metros hacia el este
+  para cogerla.
+
+Cualquiera de los dos pone, junto al camino del que viene detrás, un trocito
+que va en sentido contrario, y `tramoDeFrente` mira sentido a sentido.
+
+### Decisión
+
+- **Lo que cuelga de una calle no la tuerce** (`colgadasDe` en `rodaje.ts`):
+  una calle de menos de 36 m con una punta en otra y la otra a menos de una
+  soldadura de ella no mete su punta lejana en la de la que cuelga. Queda unida
+  por la que está dentro, y su punta lejana, si es cruce de algo, por los
+  cruces. Hecha la cuenta en los diecinueve campos, son puntas que torcían su
+  calle en ocho: 18 en Silvio Pettirossi, 16 en Los Rodeos, 12 en Guaraní, 12
+  en Fuerteventura, 9 en Cuatro Vientos, 4 en Barajas, 2 en El Hierro y 1 en
+  Gran Canaria. Ninguno cambia de salida con la pista vacía.
+- **Cada tramo empieza y acaba en su nudo**, no en su punta: el camino sigue
+  sin saltos por las soldaduras.
+- **La media vuelta, con la velocidad de la H41** —frena a 3 m/s para darla y
+  remonta como mucho a veinte nudos—, ya junta. Con la pista vacía la dan,
+  porque la única salida les queda detrás de donde frenan: Ayolas por la 02
+  (los tres tipos, el reactor 1.379 m), La Gomera por la 27 (505 m), El
+  Hierro por la 34 (343 m), Silvio Pettirossi por la 02 la avioneta (335 m),
+  Encarnación por la 20 el bimotor (255 m), La Palma por la 36 el reactor
+  (228 m), Cuatro Vientos por la 09 la avioneta (126 m) y Concepción por la
+  21 el turbohélice (93 m). Ninguno en Los Rodeos.
+- **Y la torre separa las llegadas por lo que tarda en dejar la pista el que
+  remonta** (`ocupaLaPista` en `trafico.ts`): «a landing aircraft will not
+  normally be permitted to cross the runway threshold on its final approach
+  until [...] all preceding landing aircraft are clear of the runway-in-use»
+  (OACI, Doc 4444, 7.10.1.2), y la separación se hace en el circuito
+  (7.7.1.2). El de detrás de uno que remonta deja, en vez de los dos minutos
+  de siempre, lo que éste tiene la pista ocupada: del umbral a dejarla, vuelta
+  incluida. Solo pasa de los dos minutos en Ayolas por la 02: 179 s el
+  reactor y 123 el turbohélice. Los demás remontes la dejan libre antes.
+- **Quien juega no cambia**: si llega detrás de uno que remonta y la pista
+  sigue ocupada a los mínimos, la torre le manda al aire, como antes. Lo que no
+  hace todavía es alargarle el viento en cola antes, como al tráfico.
+- **La roja detrás de uno que remonta dura lo que dura de verdad**: a los
+  170 s de `roja-de-verdad.test.ts`, que son los de quien espera a uno que
+  sale por una calle, se suma en cada campo la media vuelta a `VIRA_A` y el
+  remonte más largo de su tráfico a `REMONTA_A`, los veinte nudos del rodaje
+  normal («Normal taxi speed is approximately 20 knots», Boeing, *737 Flight
+  Crew Training Manual*, Taxi Speed and Braking).
+
+### Lo medido
+
+En la mesa:
+
+- **`trafico-que-da-la-vuelta.test.ts`**: la R del grafo no se aparta ni un
+  metro de la R dibujada (antes, más de nueve en cada rabo); en Los Rodeos, con una
+  llegada cada noventa segundos durante quince minutos, por la 12 nadie
+  vuelve por la pista y por la 30 lo más que alguien retrocede sin salir de
+  la franja son 95 m, cogiendo casi parado la E4, que está trazada para la
+  12; y nadie corre hacia el umbral a más de los 10,3 m/s del remonte. En
+  Ayolas por la 02, el reactor que remonta tiene la pista ocupada 179 s.
+- **La roja**, la más larga de 120 semillas por campo, con su límite: Ayolas
+  222 s (325), La Palma 132 (226), El Hierro 120,5 (224), Encarnación 128,5
+  (170), Silvio Pettirossi 112,5 (170), Los Rodeos 110 (170), Cuatro Vientos
+  95,5 (170), La Gomera 87 (170) y Concepción 83,5 (170). La separación por
+  la pista ocupada no mueve la de Ayolas: 222 s con ella y sin ella.
+
+### Lo que queda
+
+- **Los casos de El Hierro de `salida-tapada.test.ts`, sin volver a montar.**
+  Cuatro pruebas se quedan sin el caso que miden: las tres que vio la H41,
+  por la media vuelta a su paso, y «el caso medido: sin la regla sale el
+  fallo», que se va además con el cosido de los tramos a su nudo (con el
+  grafo de antes sigue saliendo). Buscado en sesenta combinaciones —las dos
+  cabeceras, el JAZ 20 y el JAZ 90, los dos que salen de 300 a 700 s antes
+  de tu toma con treinta segundos entre ellos y las semillas 1 a 3—: ni
+  vueltas ni idas al aire con torre, ni avisos con AFIS, ni el fallo sin la
+  regla; y en otras 168 —los dos que salen de 180 a 600 s antes, siete
+  pares, semillas 1 a 6, con el JAZ 20 y el más grande que cabe—, ni el
+  fallo sin la regla ni nada pedido con ella: el caso no se da en El Hierro
+  con nada de lo probado. En el caso medido —por la 16, JAZ 20, salen a los 600 y 560 s,
+  semilla 1— la frecuencia y la torre dicen lo mismo con los dos grafos;
+  lo que cambia es tu rodaje: con los tramos cosidos a su nudo llegas a tu
+  puesto por otro camino, a los 689 s en vez de a los 768, y ya no pasas a
+  25,8 m de EC-FCB, que espera en su doble raya. Hay que buscar con
+  `VER_CASO` dónde vuelve a darse el caso y montarlo ahí.
+- **Quien juega** detrás de uno que remonta sigue sin que se le alargue el
+  circuito: la torre le manda al aire en los mínimos si la pista sigue
+  ocupada. Al tráfico sí se le separa.
+- **Por la 30 de Los Rodeos** el turbohélice sale por la E4, trazada para la
+  12, con un viraje de casi ciento cincuenta grados, porque `llegada` la pone
+  por delante de la rápida de la E3. No remonta, pero no es la que daría una
+  torre.
+- **El navegador**: `tenerife-norte taguato 1 jaz-90` no llegó a volar; el
+  candado del navegador tenía delante dos bancos de otros encargos y el
+  tope de esta tanda no daba para esperarlos.
