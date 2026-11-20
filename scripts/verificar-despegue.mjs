@@ -1132,6 +1132,8 @@ const despegue = await page.evaluate(async () => {
     m.elevator = o.indicada() > ficha.rotacion ? Math.max(0, 0.5 - (o.controles().trim ?? 0)) : 0;
   });
   let frenoSeFue = null;
+  // Y las fases por las que pasa la carrera con las ruedas en el suelo (H44a).
+  const fasesEnElSuelo = new Set();
   let enElAire = null;
   let usado = 0;
   // Desde dónde se empieza la carrera y hasta dónde se llega: si no despega,
@@ -1201,8 +1203,15 @@ const despegue = await page.evaluate(async () => {
      * metro de altura. Se apunta a un punto del eje trescientos metros por
      * delante, que es lo que hace quien despega.
      */
+    /*
+     * **Y se mira en el suelo**: al volar el botón se va en todos, que en el
+     * aire no hay nada que frenar. Lo que distingue a un tipo de otro es si
+     * se despide —o ya se fue— con las ruedas todavía en la pista (H44a).
+     */
     const boton = document.querySelector('[data-hud="brakes-touch"]');
-    if (frenoSeFue === null && boton?.hidden) frenoSeFue = o.indicada();
+    const seVa = boton?.hidden || boton?.classList.contains("freno--se-va");
+    if (frenoSeFue === null && seVa && s.onGround) frenoSeFue = o.indicada();
+    if (s.onGround) fasesEnElSuelo.add(o.fase());
     if (inicio) {
       usado = Math.hypot(s.position.x - inicio.x, s.position.z - inicio.z);
     }
@@ -1264,6 +1273,7 @@ const despegue = await page.evaluate(async () => {
     acabo: `${fin.onRunway ? "en pista" : "fuera"}, a ${Math.abs(across).toFixed(0)} m del eje, ${fin.airspeed.toFixed(1)} m/s`,
     enElAire,
     frenoSeFue,
+    fasesEnElSuelo: [...fasesEnElSuelo],
     largoDePista: pista.length,
     // Lo que el propio juego calcula que le cuesta llegar a rotar, y su Vr:
     // es contra eso contra lo que hay que medir, no contra una fracción de la
@@ -1285,9 +1295,16 @@ const despegue = await page.evaluate(async () => {
     usado,
     // Lo que se pidió decir en V1, y si este avión decide con ella (H37i).
     cantosDeV1: (o.cantados?.() ?? []).filter((c) => /^V one/.test(c)),
+    // Y los ochenta nudos, que solo canta el tipo que los lleva (H44a).
+    cantosDeOchenta: (o.cantados?.() ?? []).filter((c) => /^eighty knots/.test(c)),
     seSigueEnV1: o.avion().seSigueEnV1,
   };
 });
+
+console.log(
+  `  ochenta nudos: ${despegue.cantosDeOchenta.join(" · ") || "nada apuntado"}` +
+    ` · fases en el suelo: ${despegue.fasesEnElSuelo.join(" → ")}`,
+);
 
 console.log(`  masa al soltar frenos: ${Math.round(despegue.masa)} kg`);
 comprobar(
@@ -1404,14 +1421,37 @@ if (despegue.enElAire) {
     despegue.flechaDeTirar ? "salió" : "no salió",
     "el peldaño que no lee se quedaba sin saber qué hacer en ese segundo",
   );
-  comprobar(
-    "el freno se despide al pasar el punto de no retorno",
-    despegue.frenoSeFue !== null && despegue.frenoSeFue > 15,
-    despegue.frenoSeFue === null
-      ? "no se fue"
-      : `se fue a ${despegue.frenoSeFue.toFixed(1)} m/s`,
-    "se iba también rodando por una calle, donde no hay V1 que valga",
-  );
+  /*
+   * **Y solo donde V1 decide** (H44a): en la avioneta, el fumigador y el
+   * bimotor de pistón frenar sigue siendo lo que toca mientras quede pista, y
+   * el botón se queda hasta que las ruedas dejan el suelo. Ver `pasadaLaV1`
+   * en `flight/decide-con-v1.ts`.
+   */
+  if (despegue.seSigueEnV1)
+    comprobar(
+      "el freno se despide al pasar el punto de no retorno",
+      despegue.frenoSeFue !== null && despegue.frenoSeFue > 15,
+      despegue.frenoSeFue === null
+        ? "no se fue"
+        : `se fue a ${despegue.frenoSeFue.toFixed(1)} m/s`,
+      "se iba también rodando por una calle, donde no hay V1 que valga",
+    );
+  else {
+    comprobar(
+      "y en el que no decide con V1, el freno se queda mientras haya ruedas en la pista",
+      despegue.frenoSeFue === null,
+      despegue.frenoSeFue === null
+        ? "se quedó hasta volar"
+        : `se fue en el suelo, a ${despegue.frenoSeFue.toFixed(1)} m/s`,
+      "el botón se despedía en V1 también en el 172 y en el Seneca, que paran mientras quede pista",
+    );
+    comprobar(
+      "y su carrera no pasa por «comprometido»: no hay «ya despegamos: seguí»",
+      !despegue.fasesEnElSuelo.includes("comprometido"),
+      despegue.fasesEnElSuelo.join(" → ") || "ninguna",
+      "la tarjeta de «seguí» salía con la pista acabándose, y su manual para igual",
+    );
+  }
 }
 
 // ── En el aire ────────────────────────────────────────────────────────────

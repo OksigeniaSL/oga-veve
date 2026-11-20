@@ -146,6 +146,14 @@ export interface Situacion {
    * `YA_ES_RODAJE`.
    */
   readonly velocidadDeSalida?: number;
+  /**
+   * **Si el manual de este avión decide el despegue con V1**: ver `conV1` en
+   * `decide-con-v1.ts`. En los que no —la avioneta, el fumigador, el bimotor
+   * de pistón— no hay fase «comprometido». Ver `yaNoSePuedeParar`.
+   *
+   * Opcional para las pruebas que no van de esto; sin ella, como uno que sí.
+   */
+  readonly decideConV1?: boolean;
 }
 
 export interface Paso {
@@ -201,7 +209,24 @@ const MARGEN_DE_PARADA = 1.4;
  */
 const REACCION = 3;
 
+/*
+ * **Y solo en los aviones que deciden con V1** (H44a).
+ *
+ * «Ya no se puede parar, así que se sigue» es la regla del avión que tiene
+ * otro motor con el que seguir y un manual que lo calcula: el turbohélice y
+ * el reactor. En los demás, su manual para **aunque no quede pista**. El
+ * Seneca: «If inadequate runway remains to stop: Throttles — CLOSED. Brakes —
+ * APPLY max braking […] Continue straight ahead, turning to avoid obstacles»
+ * (Piper PA-34, sección 3, *Engine Failure During Takeoff*); el 172, gas al
+ * ralentí y frenos rodando, y recién despegado, «Land STRAIGHT AHEAD» (Cessna
+ * 172S, sección 3). En ninguno de los dos hay un punto pasado el cual un
+ * fallo se resuelva siguiendo, así que la tarjeta de «ya despegamos: seguí»
+ * en ellos contaba una decisión que su manual no toma. Su carrera es toda
+ * «despegando», con su «motor a fondo», hasta que vuelan; y en el bimotor de
+ * pistón el «seguí» llega con el tren, ver `lo-que-se-dice-al-despegar.ts`.
+ */
 function yaNoSePuedeParar(s: Situacion): boolean {
+  if (s.decideConV1 === false) return false;
   const v = s.estado.airspeed;
   if (v < RODANDO_YA) return false;
   const paraParar = (v * REACCION + (v * v) / (2 * FRENADA)) * MARGEN_DE_PARADA;

@@ -101,6 +101,7 @@ import {
   type Situacion,
 } from "../flight/vuelo";
 import type { FlightState } from "../flight/model";
+import { conV1 } from "../flight/decide-con-v1";
 
 /**
  * Ancho de la raya que marca la ruta, m.
@@ -6632,6 +6633,8 @@ export class PlanDeVuelo {
       desalineado,
       // La de la salida por la que va la ruta de vuelta. Ver `laSalida`.
       velocidadDeSalida: this.laSalida?.velocidad,
+      // Sin V1 no hay «comprometido». Ver `yaNoSePuedeParar` en `vuelo.ts`.
+      decideConV1: conV1(this.avion),
     };
   }
 

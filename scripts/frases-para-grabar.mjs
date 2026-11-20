@@ -2790,6 +2790,24 @@ if (!filas.some((f) => f.id === "cabina.flapsUp")) {
   total += "flaps up".length;
 }
 /*
+ * **Y los ochenta nudos de la carrera de despegue** (20-11-2026), que canta
+ * quien vigila en el E-Jet: «EIGHTY KNOTS» cuando el avión «accelerates past
+ * 80 KIAS» (SOPM-1755 de Embraer, rev. 19, 3-15-01). Solo el JAZ 90: de los
+ * demás no se ha leído el canto en su manual. Detrás de todo, como «flaps up»,
+ * para no renumerar las ya grabadas. Ver `CANTOS_DEL_DESPEGUE` en
+ * `src/audio/cabina.ts` y el ADR 0014, enmienda H44a.
+ */
+if (!filas.some((f) => f.id === "cabina.eightyKnots")) {
+  filas.push({
+    id: "cabina.eightyKnots",
+    voz: "cabina",
+    idioma: "en",
+    texto: "eighty knots",
+    para: "en la carrera de despegue: el anemómetro pasa por ochenta nudos",
+  });
+  total += "eighty knots".length;
+}
+/*
  * **Y el anillo turbillonario del helicóptero** (16-11-2026): la instructora
  * cuenta, con calma, que el rotor se hunde en su propio viento, que subir el
  * colectivo no saca y que se sale hacia delante. Del grupo `vuelo`, pero metida

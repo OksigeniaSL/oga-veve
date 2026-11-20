@@ -38,7 +38,7 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
-import { conV1 } from "./ejercicios";
+import { conV1 } from "./decide-con-v1";
 
 /** Un nudo, en m/s. */
 const NUDO = 0.514444;

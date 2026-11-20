@@ -20,6 +20,7 @@ import {
   type Situacion,
 } from "./vuelo";
 import { ES_PY } from "../i18n/es-PY";
+import { tarjetaDeLaFase } from "./guion-de-fases";
 
 const EN_TIERRA: Situacion = {
   /*
@@ -966,6 +967,46 @@ describe("ya no se puede parar", () => {
    */
   it("en una pista de tres kilómetros y medio no se llega a comprometer", () => {
     expect(rodando(100, 3390 - 600)).toBe("despegando");
+  });
+
+  /*
+   * **Y solo en los que deciden con V1** (H44a). En el 172 y en el Seneca su
+   * manual para aunque no quede pista —gas cerrado, freno y recto, esquivando
+   * lo que haya—, así que «ya despegamos: seguí» contaba una decisión que su
+   * manual no toma. Su carrera es «despegando» hasta que vuelan.
+   */
+  it("sin V1 no hay «comprometido», quede la pista que quede; con V1 sí", () => {
+    const enLaPistaCorta = (decideConV1: boolean): Fase => {
+      const v = new Vuelo();
+      const s = con({
+        estado: { airspeed: 100 / 3.6, groundSpeed: 100 / 3.6, verticalSpeed: 0 } as Situacion["estado"],
+        motor: true,
+        enPista: true,
+        alEjeDePista: 4,
+        sobreElSuelo: 1,
+        desalineado: 0,
+        pistaRestante: 200,
+        decideConV1,
+      });
+      return durante(v, s, 1);
+    };
+    expect(enLaPistaCorta(false)).toBe("despegando");
+    expect(enLaPistaCorta(true)).toBe("comprometido");
+  });
+
+  it("y la tarjeta de la carrera sin V1 es la del gas, no la de «seguí», con torre o sin ella", () => {
+    const donde = {
+      conBici: false,
+      enCasa: false,
+      aterrizando: false,
+      haciaOtroCampo: false,
+      remontaUnTrecho: false,
+    };
+    for (const contesta of ["torre", "afis", "nadie"] as const) {
+      const t = tarjetaDeLaFase("despegando", { ...donde, contesta });
+      expect(t.clave, contesta).toBe("vuelo.despegando");
+      expect(t.icono, contesta).not.toBe("nopara");
+    }
   });
 });
 
