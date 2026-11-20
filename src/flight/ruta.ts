@@ -1847,6 +1847,18 @@ export class Seguimiento {
       : (1000 * PIE) / (MILLAS_POR_MIL_PIES * MILLA);
   }
 
+  /**
+   * **A cuánto del umbral cruza la bajada del plan esa altitud**, m, o `null`
+   * sin plan o sin avión. Es donde la tripulación la cruza, que sigue la senda
+   * del plan. Ver `distanciaDelPerfil` y `hastaLosDiezMil` en
+   * `motor-del-pasaje.ts`.
+   */
+  distanciaBajandoA(altitud: number): number | null {
+    const r = this.ruta;
+    const perfil = r ? this.perfil(r) : null;
+    return perfil ? distanciaDelPerfil(perfil, altitud) : null;
+  }
+
   /** Si a `falta` del umbral el plan va nivelado para frenar. Para el banco y el cuadro. */
   frenaAqui(falta: number): boolean {
     const r = this.ruta;

@@ -865,6 +865,125 @@ escena pasó de 126 de 126 a 123. Lo que dejó de caber, cada cosa con su causa:
   FL190 se decían las dos. Lo del ala lo cuenta Ara si se pone esa pieza en
   «Armá tu avión», que es justo lo que se queda sin rato.
 
+### Enmienda H38k (20-11-2026): por encima de los diez mil pies, lo que cabe
+
+La tripulación ya vuela a sus velocidades de verdad (ADR 0019, enmiendas H38f a
+H38h) y los niveles van por la tabla de verdad (H49): de Los Rodeos por la 12 a
+La Palma por la 36 el salto nivela a FL160, con unos 170 s de crucero, y deja
+unos **570 s por encima de los diez mil pies**. Lo que cuenta la escena, una
+cosa detrás de otra, pide unos **650** —medido en H38i—. Bajar el nivel no da
+rato (H38j, en su rama y sin juntar): por encima de los diez mil pies se vuela
+lo que pone la ruta, no el nivel. La decisión que faltaba la tomó Enrique:
+
+> «Pero si el vuelo es rápido no hay que entretener tanto al jugador».
+
+#### Decisión
+
+- **El vuelo no se toca** para que quepa más escena: ni el nivel, ni la ruta,
+  ni las velocidades.
+- **La escena va por prioridad, escrita en un solo sitio**: `LO_DE_ARRIBA`, en
+  `guion-tenerife-la-palma.ts`, con lo que dura cada cosa. Primero lo de un
+  vuelo de verdad, que pasa siempre: la comandante al cruzar los diez mil pies
+  (53 s), el crucero con el servicio, el baño y la tripulante (110) y la bajada
+  con el anuncio, los oídos y el porqué del ralentí (86). Después, lo de Ara,
+  lo que se explica antes que lo que entretiene —«la experiencia de montar en
+  un vuelo hay que contarla, explicarla con cariño», 18-10-2026—: a qué altura
+  se va (30), cómo se sostiene el avión (36), el kit de viaje (166) y la siesta
+  (136 como poco), que es lo último porque nació de «que el niño no se aburra
+  esperando a aterrizar; esto tarda» (punto 304), y un salto corto no tarda.
+- **Lo que no es esencial empieza solo si cabe** (`cabe`, en
+  `motor-del-pasaje.ts`): ella y todo lo de más prioridad que queda por pasar,
+  antes de cruzar los diez mil pies bajando. Ahí se recoge el kit, la
+  comandante deja de hablar de lo que no es volar y empieza la llegada. Si no
+  cabe, **se omite entero**, se apunta en `omitidos` con lo que quedaba y lo
+  que pedía, y no se vuelve a mirar: el rato solo encoge, y algo que entra y
+  sale de caber según el paso del juego es un filo, no una regla. Una charla
+  que no cabe no se empieza; la siesta se mira antes del bostezo, y bostezada
+  ya no, que un bostezo sin siesta es dejarla a medias; el kit omitido se
+  lleva sus dos momentos, el de darlo y el de pedirlo de vuelta, que no
+  cuentan como saltados. Y la siesta que llega a la bajada sin haber tenido
+  sus dos minutos tranquilos también se apunta, «sin rato», que el banco dice
+  qué se omitió y por qué.
+- **El rato lo da el juego**: `hastaLosDiezMil`, lo que falta hasta donde la
+  senda de la bajada del plan cruza los diez mil pies (`distanciaBajandoA` en
+  `ruta.ts`), a la velocidad de ahora por el suelo, también bajando. Bajando
+  se queda algo corto, que se va frenando: lo justo se queda fuera antes que
+  dentro.
+- **El kit, con dos minutos de juego o nada** (`RATO_DEL_KIT`, 166 s hasta
+  los diez mil pies): los once segundos callados que espera, unos quince de
+  la tripulante dándolo y Ara dando las gracias, **dos minutos de juego** —una
+  partida entera de la luz verde, minuto y medio, con su canción, o un avión
+  de «Armá tu avión» con sus piezas, sus luces y su despegue sin prisa— y
+  veinte de una megafonía que lo pause por el camino. Menos es abrirlo y
+  guardarlo, y eso enseña que un juego se deja a medias. Y el kit espera a que
+  se cuente lo de la comandante que va antes que él en la lista.
+
+#### Medido
+
+- `inicio-pasaje.test.ts` vuela la escena con el vuelo medido a otro nivel
+  —la misma bajada medida, desde su altitud, que el perfil lo pone la
+  distancia a la pista— y con todos los números que le da el juego:
+  - **el salto de ahora**, FL160 y dos minutos de crucero, **570 s** por
+    encima de los diez mil pies: **no hay siesta** —la subida por encima de los
+    diez mil pies no deja sus dos minutos tranquilos detrás de la comandante,
+    y se apunta «sin rato»—; Ara, despierta, oye arriba la altura y el ala,
+    enteras; y en ese vuelo de mentira, que baja más despacio que el de
+    verdad, el kit llega con sus dos minutos de juego sin la megafonía en
+    medio;
+  - **el de antes**, FL190 y el crucero medido, **705 s**, y **uno largo**, con
+    cinco minutos de crucero, **947 s**: pasa todo, la siesta de 163 s, la
+    altura, el ala y el kit con su rato, y nada omitido;
+  - y en los tres, lo esencial entero y en su orden, nada pisado, nada a
+    medias —lo omitido sin una frase, lo demás con todas— y ningún silencio de
+    más de setenta segundos en el aire.
+- La prueba que pedía el kit antes que el ala (17-11-2026) pide ahora el ala
+  antes: va antes en la lista, el kit la espera si viene a cuento, y su rato
+  lo guarda `cabe`.
+
+- **El banco de la escena** (`verificar-inicio-3.mjs`, reloj ×12, con la
+  tarjeta de verdad, solo el vuelo y el teléfono: el hangar y el kit con el
+  dedo no tocan esto), con FL160: **97 de 98**. Antes de este cambio no se
+  había volado con FL160; con FL170 daba 124 de 126 (H38i) y con FL150, 116 de
+  128 (H38j). Lo que dice que se omitió, y por qué:
+  - **la siesta, «sin rato»**: a los 1.050 s se empieza a bajar sin que Ara
+    haya tenido sus dos minutos tranquilos —la subida por encima de los diez
+    mil pies se la llevan la comandante, la altura y el ala—;
+  - **el kit, «no cabe»**: a los 1.131 s, detrás del porqué del ralentí,
+    quedaban 140 s hasta los diez mil pies y pedía 166. Ni se trae ni se pide
+    de vuelta, y la bajada se vive sin juego desde el principio.
+  - Entero: **la altura y el ala**, que con FL170 y FL150 no se decían; y el
+    Teide tocado por el cristal, a los 1.006 s, contado con lo que dice la
+    tripulante de las islas. Lo esencial, entero y en su orden; nada pisado;
+    lo más largo callado en el aire, 76 s.
+  - Falla uno: **el toque mientras alguien habla**. El banco tocó el Teide a
+    los 978 s con el plop de la tripulante acabando —a los 978,6—, el toque
+    esperó su turno sin pisarla y, cuando le tocó, la escena vio que ya no se
+    veía (`sinVer`) y no dijo nada; el banco solo da por buenos `ocupado` y
+    `contado`. No pisa a nadie, que es lo que mira; si ese `sinVer` es de
+    verdad —medio minuto después el Teide sí se veía— no se ha mirado: puede
+    ser que se tocara con Ara pegada al cristal y se contestara ya sentada.
+
+#### Lo que no
+
+- **Lo que dura cada cosa está medido una vez**, en los bancos de H38i y H38j,
+  y escrito en la lista; no se cuenta con lo que dura cada frase grabada. Si
+  cambia lo que se dice arriba, se mide otra vez y se cambia allí.
+- **El rato hasta los diez mil pies es una cuenta a la velocidad de ahora**,
+  como la del punto de descenso: subiendo sale algo largo, que arriba se va
+  más deprisa, y la siesta, que se decide subiendo, puede caber por unos
+  segundos que bajando no estarán. Lo que se decide bajando —el kit— se queda
+  corto, que es el lado bueno.
+- **Lo de por debajo de los diez mil pies no va en la lista**: lo que cuenta
+  la tripulante bajando —la ruta, las islas, los PAPI— caduca al preparar la
+  cabina y espera su silencio como siempre. La ruta de la tripulante, que H38j
+  vio colgar del reloj del silencio, sigue igual.
+- **La cuarta escena no lleva lista**, y en ella todo cabe como antes.
+- **En el salto de ahora no hay kit ni siesta.** Es lo que sale de la regla y
+  de la decisión de Enrique; si se quiere el kit en este vuelo, lo que se
+  mueve es la lista o lo que pide el kit, no el vuelo. Le faltaron 26 s.
+- **El banco se voló una vez**: 97 de 98, y el que falla, el toque mientras
+  alguien habla, está contado arriba. No se ha vuelto a volar.
+
 ## La cuarta escena: el vuelo largo de Ara a casa
 
 Fecha: 2026-11-01

@@ -32,6 +32,7 @@ import {
   type GuionDelPasaje,
   KIT_POR_ENCIMA,
   type LecturaDelPasaje,
+  type LoDeArriba,
   luzApagada,
   type MotorDelPasaje,
   PREPARAR_LA_CABINA,
@@ -307,6 +308,26 @@ const MAZO_YA_NO = 100;
  */
 const CALLA_ANTES_DEL_KIT = 11;
 /**
+ * **Lo que pide el kit para traerse**, s de vuelo hasta cruzar los diez mil
+ * pies bajando, que es donde la tripulante lo pide de vuelta (20-11-2026, ADR
+ * 0020, enmienda H38k). Enrique: el kit no se reparte si no queda rato de
+ * verdad para jugar con él; no se trae para recogerlo enseguida. Así que:
+ *
+ * - los once segundos callados que espera (`CALLA_ANTES_DEL_KIT`);
+ * - lo que dicen la tripulante al darlo y Ara al darle las gracias, unos
+ *   quince;
+ * - **dos minutos de juego**, que es una partida entera de la luz verde
+ *   —minuto y medio— con su trozo de canción, o un avión de «Armá tu avión»
+ *   con sus piezas, sus luces y su despegue sin prisa. Menos es abrirlo y
+ *   guardarlo, y eso enseña que un juego se deja a medias;
+ * - y veinte de la megafonía que lo pausa por el camino, la de La Gomera o
+ *   la que caiga, que no es rato de juego.
+ *
+ * Con menos por delante, no se trae. El banco lo mira con lo jugado de
+ * verdad: dos minutos sin la megafonía en medio.
+ */
+const RATO_DEL_KIT = 11 + 15 + 120 + 20;
+/**
  * **Lo que puede esperar a que Ara se despierte**: lo que se cuenta porque
  * viene a cuento y sigue viniendo después —cómo se sostiene el avión, a qué
  * altura se va, el mar de nubes—. Lo que no puede esperar es la respuesta a lo
@@ -336,6 +357,56 @@ const TRAS_AL_DESPERTAR: Partial<Record<CharlaDelPasaje, number>> = { altoRapido
 const PRIMERO_AL_DESPERTAR: ReadonlySet<CharlaDelPasaje> = new Set(["altoRapido"]);
 /** Lo que se tiene que haber señalado, si se ve, antes de cerrar los ojos: lo más bonito de la ruta. */
 const SE_ENSENA_ANTES_DE_DORMIRSE = ["teide"] as const;
+
+/**
+ * **Lo que pasa por encima de los diez mil pies, por prioridad** (20-11-2026,
+ * ADR 0020, enmienda H38k). Es el único sitio donde se dice qué va antes. Lo
+ * pidió Enrique cuando el salto, volado a sus velocidades y a su nivel de
+ * verdad, dejó unos 570 s por encima de los diez mil pies para una escena que
+ * pedía unos 650: «Pero si el vuelo es rápido no hay que entretener tanto al
+ * jugador». El vuelo no se toca; la escena va por esta lista, y lo que no
+ * cabe se omite entero —ver `cabe` en `motor-del-pasaje.ts`—.
+ *
+ * Lo que dura cada cosa, s de vuelo con los silencios que espera delante, es
+ * lo medido en el banco de la escena (enmiendas H38i y H38j).
+ *
+ * **Primero, lo de un vuelo de verdad**, que pasa siempre:
+ *
+ * 1. La comandante al cruzar los diez mil pies: las nubes, el gas de subida y
+ *    el Teide, 53 s.
+ * 2. El crucero: el cartel apagado, el servicio, el baño y la tripulante en el
+ *    asiento con las nubes de cerca, 110 s.
+ * 3. La bajada: el anuncio, los oídos y el porqué del ralentí, 86 s.
+ *
+ * **Después, lo de Ara**, por lo que dice el ADR de cada cosa: lo que se
+ * explica antes que lo que entretiene —«la experiencia de montar en un vuelo
+ * hay que contarla, explicarla con cariño y que el niño entienda todo lo que
+ * está pasando», 18-10-2026—, y de lo que entretiene, lo que enseña antes que
+ * lo que solo pasa el rato:
+ *
+ * 4. A qué altura y a qué velocidad se va, más alto que el Teide: la pregunta
+ *    de Ara, la comandante y lo que dice Ara, 30 s.
+ * 5. Cómo se sostiene el avión, el ala de la comandante, 36 s.
+ * 6. El kit de viaje, 166 s —ver `RATO_DEL_KIT`—: el juego tiene sentido
+ *    educativo, y es para cuando el vuelo «dura un ratito».
+ * 7. La siesta, 136 s como poco: el bostezo, dos minutos de vuelo durmiendo
+ *    (`SIESTA_MINIMA`) y el «me dormí». Es lo último porque es justo lo que
+ *    sobra en un vuelo corto: salió de «que el niño no se aburra esperando a
+ *    aterrizar; esto tarda» (punto 304), y un salto corto no tarda.
+ *
+ * Lo esencial va antes también en el tiempo, que es como pasa un vuelo; lo
+ * demás no adelanta nada, y el kit espera a que se cuente lo de la comandante
+ * que tiene más prioridad (ver `dejaPasarAlKit`).
+ */
+const LO_DE_ARRIBA: readonly LoDeArriba<MomentoDelPasaje, CharlaDelPasaje>[] = [
+  { momentos: ["nubesRespuesta"], dura: 53, esencial: true },
+  { momentos: ["arriba", "servicio", "tcpNubes"], dura: 110, esencial: true },
+  { momentos: ["bajada", "oidos"], dura: 86, esencial: true },
+  { charlas: ["altoRapido"], dura: 30 },
+  { charlas: ["ala"], dura: 36 },
+  { momentos: ["kit", "kitRecoger"], dura: RATO_DEL_KIT },
+  { siesta: true, dura: 136 },
+];
 
 /**
  * **La vuelta en la pista** (punto 300): cuándo se está dando. Ver `daLaVuelta`.
@@ -1941,6 +2012,7 @@ export const GUION_TENERIFE_LA_PALMA: GuionDelPasaje<MomentoDelPasaje, CharlaDel
   charlas: CHARLAS_DEL_PASAJE,
   // Arriba: del cartel apagado, o de la comandante contando las nubes pasados los diez mil pies.
   seSenalaDesde: ["arriba", "nubesRespuesta"],
+  porEncima: LO_DE_ARRIBA,
   tripulanteEnElPasillo,
   siesta: {
     seDuerme: SE_DUERME,

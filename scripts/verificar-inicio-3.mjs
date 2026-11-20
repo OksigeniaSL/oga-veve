@@ -47,6 +47,11 @@
  *   de visita, y que el botón del final vuelve al hangar.
  * - **Y que en un teléfono apaisado**, con el dedo, la tarjeta cabe y no hay
  *   mandos de pilotar.
+ * - **Lo de arriba, por prioridad** (ADR 0020, enmienda H38k): lo esencial
+ *   pasa siempre, y la altura, el ala, el kit y la siesta pasan enteros o no
+ *   pasan, según quepan con lo de delante antes de cruzar los diez mil pies
+ *   bajando. El banco dice qué se omitió y por qué, y lo que mira el kit o la
+ *   siesta pide, si se omitieron, que no haya ni rastro.
  * - **El kit de viaje** (punto 275): que la tripulante lo trae en un tramo
  *   tranquilo de la parte alta de la bajada, que en el vuelo se abre y se
  *   juega primero **la luz verde entera** —a la velocidad de verdad, como un
@@ -1253,10 +1258,24 @@ async function elVuelo() {
       "puerta empujando arrancando rodando esperando entrando carrera subida crucero bajada final recogida frenando al-puesto aparcado apagado",
     tramos.map((x) => `${x.tramo}@${x.t.toFixed(0)}s`).join(" "),
   );
+  /*
+   * **Lo que no cupo por encima de los diez mil pies** (ADR 0020, enmienda
+   * H38k): la escena va por prioridad, y lo que no cabe se omite entero. El kit
+   * omitido se lleva sus dos momentos, el de darlo y el de pedirlo de vuelta.
+   */
+  const omitidos = e?.omitidos ?? [];
+  const omitido = (que) => omitidos.find((o) => o.que === que) ?? null;
+  const sinElKit = omitido("kit");
+  const momentosDeHoy = MOMENTOS.filter((m) => !(sinElKit && (m === "kit" || m === "kitRecoger")));
+  console.log(
+    `  por encima de los diez mil pies, omitido: ${
+      omitidos.map((o) => `${o.que} a los ${o.a.toFixed(0)} s, ${o.porQue} (quedaban ${o.queda.toFixed(0)} s hasta los diez mil bajando, pedía ${o.pide.toFixed(0)})`).join(" · ") || "nada"
+    }`,
+  );
   comprobar(
     "cada cosa en su momento, en el orden de un vuelo de verdad",
-    !!e && MOMENTOS.every((m) => e.dichos.includes(m)) && e.dichos.join() === MOMENTOS.filter((m) => e.dichos.includes(m)).join() && e.saltados.length === 0,
-    e ? `${e.dichos.join(" ")}${e.saltados.length ? ` · saltados: ${e.saltados.join(" ")}` : ""}` : "no llegó",
+    !!e && momentosDeHoy.every((m) => e.dichos.includes(m)) && e.dichos.join() === momentosDeHoy.filter((m) => e.dichos.includes(m)).join() && e.saltados.length === 0,
+    e ? `${e.dichos.join(" ")}${e.saltados.length ? ` · saltados: ${e.saltados.join(" ")}` : ""}${sinElKit ? " · sin el kit, que no cupo" : ""}` : "no llegó",
   );
   comprobar("no se arranca antes de armar los toboganes", arrancoCon === true, String(arrancoCon));
   comprobarElRemolque(remolque, e?.charlas ?? [], "de su puesto de Los Rodeos");
@@ -1589,6 +1608,35 @@ async function elVuelo() {
       ventanitas.has("dibujo:nube"),
     `${claves.filter((c) => /nubes/.test(c)).join(", ")} · ventanita: ${ventanitas.has("dibujo:nube")}`,
   );
+  /*
+   * **Lo de arriba que no es esencial, entero o nada** (ADR 0020, enmienda
+   * H38k): la altura, el ala, el kit y la siesta. Lo que pasa, pasa con todo lo
+   * suyo y sin cortarse; lo omitido no deja ni una frase, y se dice por qué.
+   * Lo que no se omitió y no pasó tampoco vale: es lo que se perdía sin que
+   * nadie lo viera (enmiendas H38i y H38j).
+   */
+  const LO_QUE_PUEDE_NO_CABER = {
+    altoRapido: ["inicio.ara.pasaje.preguntaAlto", "inicio.mama.pasaje.altoRapido"],
+    ala: ["inicio.ara.pasaje.preguntaAla", "inicio.mama.pasaje.ala", "inicio.ara.pasaje.pandorga"],
+    kit: ["inicio.tripulacion.pasaje.cerca.kitAqui", "inicio.ara.pasaje.kitGracias", "inicio.tripulacion.pasaje.cerca.kitGuardar"],
+    siesta: ["inicio.ara.pasaje.dormirse", "inicio.ara.pasaje.despertarse"],
+  };
+  const oidaEntera = (c) => registro.some((d) => d.clave === c && (d.como === "sono" || d.como === "muda"));
+  const aMedias = [];
+  const enteros = [];
+  for (const [que, cs] of Object.entries(LO_QUE_PUEDE_NO_CABER)) {
+    const dichas = cs.filter((c) => registro.some((d) => d.clave === c));
+    const enteras = cs.filter(oidaEntera);
+    if (omitido(que)) {
+      if (dichas.length > 0) aMedias.push(`${que}, omitido, con ${dichas.join(", ")}`);
+    } else if (enteras.length < cs.length) aMedias.push(`${que}: ${enteras.length} de ${cs.length} enteras (${dichas.join(", ") || "nada"})`);
+    else enteros.push(que);
+  }
+  comprobar(
+    "lo de arriba que no es esencial pasa entero o no pasa —la altura, el ala, el kit y la siesta—, y lo omitido se omite por no caber",
+    aMedias.length === 0 && omitidos.every((o) => o.porQue === "sin rato" || o.queda < o.pide),
+    `entero: ${enteros.join(", ") || "nada"} · omitido: ${omitidos.map((o) => `${o.que} (${o.porQue})`).join(", ") || "nada"}${aMedias.length ? ` · a medias: ${aMedias.join(" · ")}` : ""}`,
+  );
   comprobar(
     "la ventanita, con los dibujos de lo que se explica",
     ["dibujo:cinturon", "dibujo:mascara", "dibujo:chaleco", "dibujo:nube", "dibujo:motor"].every((d) => ventanitas.has(d)),
@@ -1627,6 +1675,16 @@ async function elVuelo() {
   );
   // ── La siesta de Ara (punto 304), y el mapa de la ruta (292) ──
   const s0 = e?.siestas?.[0] ?? null;
+  /*
+   * **Y si no cupo, no hay siesta** (ADR 0020, enmienda H38k): es lo último de
+   * la lista de arriba. Entonces lo que la mira pide que no haya ni bostezo ni
+   * siesta, y dice por qué no la hubo.
+   */
+  const sinSiesta = omitido("siesta");
+  const ningunaSiesta = (e?.siestas?.length ?? 0) === 0 && !registro.some((d) => d.clave === "inicio.ara.pasaje.dormirse");
+  const porQueSinSiesta = sinSiesta
+    ? `sin siesta: ${sinSiesta.porQue}, a los ${sinSiesta.a.toFixed(0)} s (quedaban ${sinSiesta.queda.toFixed(0)} s hasta los diez mil bajando, pedía ${sinSiesta.pide.toFixed(0)})`
+    : "";
   const bajadaEn = tramos.find((x) => x.tramo === "bajada")?.t ?? Infinity;
   const oidaEn = (clave) => registro.find((d) => d.clave === clave && (d.como === "sono" || d.como === "muda"));
   const bostezo = oidaEn("inicio.ara.pasaje.dormirse");
@@ -1645,8 +1703,8 @@ async function elVuelo() {
   const loDeLaComandante = conElDing ? oidoAlEmpezar("comandante.crucero") : null;
   const mama = registro.find((d) => d.clave === "inicio.mama.pasaje.menosGas" || d.clave === "inicio.mama.pasaje.nubes");
   comprobar(
-    "Ara se duerme una vez, arriba, en cuanto la comandante acaba lo de los diez mil pies, y se despierta con algo que pasa: el ding de la luz, o la tripulante para bajar",
-    (e?.siestas?.length ?? 0) === 1 &&
+    "Ara se duerme una vez, arriba, en cuanto la comandante acaba lo de los diez mil pies, y se despierta con algo que pasa: el ding de la luz, o la tripulante para bajar; o, si no cabe, no se duerme",
+    sinSiesta ? ningunaSiesta : (e?.siestas?.length ?? 0) === 1 &&
       s0.hasta !== null &&
       s0.hasta < bajadaEn &&
       !!bostezo &&
@@ -1658,13 +1716,13 @@ async function elVuelo() {
         (porLaTripulante && !!despiertan && despiertan.desde < alDespertar.desde && !!loSiguiente && loSiguiente.desde > alDespertar.desde)),
     s0
       ? `durmiendo de ${s0.desde.toFixed(0)} a ${s0.hasta?.toFixed(0)} s: ${(s0.hasta - s0.desde).toFixed(0)} s de vuelo · se despierta con: ${s0.porQue ?? "?"} · ${loSiguiente?.clave ?? "?"} a los ${loSiguiente?.desde?.toFixed(0) ?? "?"} s · «me dormí» a los ${alDespertar?.desde?.toFixed(0) ?? "?"} s · empieza a bajar a los ${bajadaEn.toFixed(0)} s`
-      : "no se durmió",
+      : porQueSinSiesta || "no se durmió",
   );
   const movidoEnElMapa = siesta?.avionAntes && siesta?.avionDespues ? Math.hypot(siesta.avionDespues[0] - siesta.avionAntes[0], siesta.avionDespues[1] - siesta.avionAntes[1]) : 0;
   comprobar(
     `y al despertar se nota: ${SIESTA_KM} km de ruta como poco, el avión del mapa bien movido y lo de al dormirse, atrás`,
     // Y los dos minutos de vuelo durmiendo que pide el juego, que es lo que se ve en el mapa.
-    !!siesta &&
+    sinSiesta ? ningunaSiesta && !siesta : !!siesta &&
       !!s0 &&
       s0.hasta !== null &&
       s0.hasta - s0.desde >= 120 &&
@@ -1673,19 +1731,19 @@ async function elVuelo() {
       (siesta.atras ?? 0) >= 0.6 * SIESTA_KM,
     siesta
       ? `${s0?.hasta != null ? `${(s0.hasta - s0.desde).toFixed(0)} s durmiendo · ` : ""}${siesta.km?.toFixed(1) ?? "?"} km por la ruta · el avión del mapa, ${movidoEnElMapa.toFixed(0)} puntos de 480 · donde se durmió, ${siesta.atras?.toFixed(1) ?? "?"} km por detrás`
-      : "no se vio",
+      : porQueSinSiesta || "no se vio",
   );
   comprobar(
     "y rápido: el fundido entero en segundos de pantalla, no un minuto",
-    !!siesta?.pared && siesta.pared < 20,
-    siesta?.pared ? `${siesta.pared.toFixed(1)} s de pared con la pantalla del sueño, por ${siesta.vuelo?.toFixed(0)} s de vuelo` : "no se vio",
+    sinSiesta ? ningunaSiesta && !siesta : !!siesta?.pared && siesta.pared < 20,
+    siesta?.pared ? `${siesta.pared.toFixed(1)} s de pared con la pantalla del sueño, por ${siesta.vuelo?.toFixed(0)} s de vuelo` : porQueSinSiesta || "no se vio",
   );
   comprobar(
     "durmiendo, el avión sigue su ruta de verdad: sin salirse y recorriendo lo que vuela",
-    !!siesta && siesta.muestras >= 5 && siesta.lado < 2000 && siesta.recorrido !== null && siesta.recorrido > 0.8 && siesta.recorrido < 1.25,
+    sinSiesta ? ningunaSiesta && !siesta : !!siesta && siesta.muestras >= 5 && siesta.lado < 2000 && siesta.recorrido !== null && siesta.recorrido > 0.8 && siesta.recorrido < 1.25,
     siesta
       ? `${siesta.muestras} muestras · ${siesta.lado.toFixed(0)} m fuera de la ruta como mucho · recorrido ${siesta.recorrido?.toFixed(2) ?? "?"} de lo que da su velocidad`
-      : "no se vio",
+      : porQueSinSiesta || "no se vio",
   );
   const DE_SEGURIDAD = [
     ...["intro", "cinturon", "salidas", "mascaras", "chaleco", "tarjeta", "aparatos"].map((x) => `inicio.tripulacion.pasaje.demo.${x}`),
@@ -1707,13 +1765,13 @@ async function elVuelo() {
   );
   comprobar(
     "durmiendo se ve a Ara durmiendo y después soñando, en su orden",
-    !!siesta && siesta.vistas.join(" → ") === "ara-durmiendo → ara-sonando",
-    siesta ? siesta.vistas.join(" → ") || "ninguna" : "no se vio",
+    sinSiesta ? ningunaSiesta && !siesta : !!siesta && siesta.vistas.join(" → ") === "ara-durmiendo → ara-sonando",
+    siesta ? siesta.vistas.join(" → ") || "ninguna" : porQueSinSiesta || "no se vio",
   );
   const movido = siesta?.avionAntes && siesta?.avionDespues ? Math.hypot(siesta.avionDespues[0] - siesta.avionAntes[0], siesta.avionDespues[1] - siesta.avionAntes[1]) : 0;
   comprobar(
     "y en la ventanita, el mapa de la ruta con las islas de verdad y el avión avanzando; el mismo de la tripulante",
-    !!siesta &&
+    sinSiesta ? ningunaSiesta && !siesta : !!siesta &&
       siesta.islas.length === 4 &&
       siesta.islas.every((n) => n >= 15) &&
       siesta.muestras > 0 &&
@@ -1722,7 +1780,7 @@ async function elVuelo() {
       ventanitas.has("dibujo:ruta"),
     siesta
       ? `islas de ${siesta.islas.join(", ")} puntos · el mapa en la ventanita en ${siesta.conElMapa} de ${siesta.muestras} muestras · el avión avanza ${movido.toFixed(1)} de 480 en la hoja`
-      : "no se vio",
+      : porQueSinSiesta || "no se vio",
   );
   // ── El modo rápido ⏩ (19-10-2026) ──
   const medida = i?.adelanto ?? null;
@@ -1883,10 +1941,20 @@ async function elVuelo() {
   const cerca = dado
     ? registro.filter((d) => deMegafonia(d.clave) && (d.hasta ?? d.desde) > dado.desde - 10 && d.desde < dado.desde + 60)
     : [];
+  /*
+   * **Y si no cabe, no se trae** (ADR 0020, enmienda H38k): «no se reparte para
+   * recogerlo enseguida». Traído, los dos minutos de juego sin la megafonía en
+   * medio son lo que pide `RATO_DEL_KIT`; no traído, ni la tripulante lo da ni
+   * lo pide de vuelta, y lo que lo mira dice por qué.
+   */
+  const porQueSinKit = sinElKit
+    ? `sin kit: ${sinElKit.porQue}, a los ${sinElKit.a.toFixed(0)} s (quedaban ${sinElKit.queda.toFixed(0)} s hasta los diez mil bajando, pedía ${sinElKit.pide.toFixed(0)})`
+    : "";
+  const ningunKit = !dado && !guardar && kit.dadoEn === null;
   comprobar(
-    "el kit llega en la parte alta de la bajada, sin megafonía cerca, y con rato para jugar antes de los diez mil pies",
-    !!dado && kit.tramo === "bajada" && cerca.length === 0 && (altitudDe(dado.desde) ?? 0) > 3048 + 300 && rato !== null && rato - enPausa > 120,
-    dado
+    "el kit llega en la parte alta de la bajada, sin megafonía cerca, y con dos minutos para jugar antes de los diez mil pies; o, si no caben, no se trae",
+    sinElKit ? ningunKit : !!dado && kit.tramo === "bajada" && cerca.length === 0 && (altitudDe(dado.desde) ?? 0) > 3048 + 300 && rato !== null && rato - enPausa >= 120,
+    sinElKit ? porQueSinKit : dado
       ? `a los ${dado.desde.toFixed(0)} s, ${kit.tramo}, a ${pies(altitudDe(dado.desde))} · megafonía cerca: ${cerca.map((d) => d.clave).join(", ") || "ninguna"} · para jugar: ${rato?.toFixed(0) ?? "?"} s hasta pedir guardarlo, ${enPausa.toFixed(0)} s de megafonía en medio (${megafoniaEnMedio.map((d) => d.clave).join(", ") || "ninguna"})`
       : "no llegó",
   );
@@ -1948,9 +2016,17 @@ async function elVuelo() {
     }
     hueco = Math.max(hueco, hasta - fin);
   }
+  /*
+   * Y Armá tu avión es lo que queda detrás de la luz verde y su canción: el
+   * kit pide dos minutos de juego, que son una partida entera de uno de los
+   * dos (`RATO_DEL_KIT`). Si la tripulante lo pide de vuelta antes de tres
+   * cuartos de minuto de acabar la luz —su canción y volver a elegir—, no
+   * quedó rato para el avión, y no se elige.
+   */
+  const sinRatoParaElAvion = !!torre.fin && !!guardar && guardar.desde - torre.fin.t < 45;
   comprobar(
-    "en el vuelo, después de la luz verde y con lo que queda, se ponen piezas de Armá tu avión —ninguna con la megafonía pausando— y Ara cuenta alguna si la escena le deja un hueco",
-    !!armando.elegidoEn &&
+    "en el vuelo, después de la luz verde y con lo que queda, se ponen piezas de Armá tu avión —ninguna con la megafonía pausando— y Ara cuenta alguna si la escena le deja un hueco; sin kit o sin rato detrás de la luz, no se elige",
+    sinElKit ? !armando.elegidoEn : !armando.elegidoEn ? sinRatoParaElAvion : !!armando.elegidoEn &&
       !!torre.fin &&
       armando.elegidoEn.t > torre.fin.t &&
       (armando.puestas.length > 0 || armando.libre < 3) &&
@@ -1959,12 +2035,14 @@ async function elVuelo() {
       (!despego || delKit.includes("avion.luces")),
     armando.elegidoEn
       ? `elegido a los ${armando.elegidoEn.t.toFixed(0)} s a ${pies(armando.elegidoEn.altitud)}, ${torre.fin ? `${(armando.elegidoEn.t - torre.fin.t).toFixed(0)} s después de acabar la luz` : "sin acabar la luz"} · ${armando.libre.toFixed(0)} s libres para jugar (sin pausa y sin nadie hablando) · puestas ${armando.puestas.length} (${armando.puestas.join(", ")}) · fases ${[...armando.fases].join(", ")} · despegó ${despego} · ${armando.pausado} lecturas pausado por la megafonía armando, ${armando.conPausa} puestas en pausa · Ara cuenta ${piezaContada ? `${piezaContada.clave.replace("inicio.ara.pasaje.kit.", "")} a los ${piezaContada.desde.toFixed(0)} s` : "ninguna"} · el hueco más largo hasta los diez mil pies o pedir guardarlo, ${Number.isFinite(hueco) ? `${hueco.toFixed(1)} s` : "—"} · dicho: ${delKit.join(", ") || "nada"}`
-      : `no se eligió · la luz ${torre.fin ? `acabó a los ${torre.fin.t.toFixed(0)} s` : "no acabó"} · la tripulante pide guardarlo a los ${guardar?.desde?.toFixed(0) ?? "—"} s`,
+      : sinElKit
+        ? porQueSinKit
+        : `no se eligió · la luz ${torre.fin ? `acabó a los ${torre.fin.t.toFixed(0)} s` : "no acabó"} · la tripulante pide guardarlo a los ${guardar?.desde?.toFixed(0) ?? "—"} s${sinRatoParaElAvion ? ", sin rato para el avión detrás" : ""}`,
   );
   const aGuardar = guardar ? altitudEntre(guardar.desde) : null;
   comprobar(
     "se recoge al empezar la llegada: la tripulante lo pide cruzando los diez mil pies bajando, con el juego que esté abierto, y la llegada se vive sin juego",
-    !!guardar &&
+    sinElKit ? ningunKit && !kit.botonEnLaFinal && !kit.abiertoEnLaFinal : !!guardar &&
       aGuardar !== null &&
       aGuardar < 3048 &&
       aGuardar > 3048 - 300 &&
@@ -1976,25 +2054,27 @@ async function elVuelo() {
       !kit.abiertoTrasGuardar &&
       !kit.abiertoEnLaFinal &&
       !kit.botonEnLaFinal,
-    `pide guardarlo a ${pies(aGuardar)} · recogido a ${pies(kit.recogidoEn?.altitud ?? null)}, ${kit.alRecoger?.abierto ? `con ${kit.alRecoger.juego ?? "nada"} abierto` : "con el kit cerrado"} · abierto después ${kit.abiertoTrasGuardar} · en la final: abierto ${kit.abiertoEnLaFinal}, mochilita ${kit.botonEnLaFinal} · pausado por la megafonía ${kit.pausado} lecturas`,
+    `${porQueSinKit ? `${porQueSinKit} · ` : ""}pide guardarlo a ${pies(aGuardar)} · recogido a ${pies(kit.recogidoEn?.altitud ?? null)}, ${kit.alRecoger?.abierto ? `con ${kit.alRecoger.juego ?? "nada"} abierto` : "con el kit cerrado"} · abierto después ${kit.abiertoTrasGuardar} · en la final: abierto ${kit.abiertoEnLaFinal}, mochilita ${kit.botonEnLaFinal} · pausado por la megafonía ${kit.pausado} lecturas`,
   );
   // ── La luz verde en el vuelo, entera, y su canción ──
   const guardarEn = guardar?.desde ?? null;
   comprobar(
     "en el vuelo, la luz verde se juega entera haciendo caso a lo que brilla, y acaba antes de los diez mil pies",
-    !!torre.fin && torre.fin.altitud > 3048 && (guardarEn === null || torre.fin.t < guardarEn) && torre.fin.alAire === 0,
+    sinElKit ? !torre.abierta : !!torre.fin && torre.fin.altitud > 3048 && (guardarEn === null || torre.fin.t < guardarEn) && torre.fin.alAire === 0,
     torre.fin
       ? `abierta a los ${torre.abierta?.t?.toFixed(0)} s a ${pies(torre.abierta?.altitud ?? null)} · acaba a los ${torre.fin.t.toFixed(0)} s a ${pies(torre.fin.altitud)}: ${(torre.fin.t - (torre.abierta?.t ?? 0)).toFixed(0)} s de juego · ${torre.fin.rondas} rondas, ${torre.fin.aterrizados} aterrizados, ${torre.fin.rojas} rojas · ${torre.toques} toques · la tripulante pide guardarlo a los ${guardarEn?.toFixed(0) ?? "—"} s`
-      : `no acabó · abierta ${JSON.stringify(torre.abierta)} · ${torre.toques} toques · la tripulante pide guardarlo a los ${guardarEn?.toFixed(0) ?? "—"} s`,
+      : sinElKit
+        ? porQueSinKit
+        : `no acabó · abierta ${JSON.stringify(torre.abierta)} · ${torre.toques} toques · la tripulante pide guardarlo a los ${guardarEn?.toFixed(0) ?? "—"} s`,
   );
   const sono = torre.muestras;
   const ultimaDeLaCancion = sono[sono.length - 1];
   comprobar(
     "y al acabar suena el trozo de la canción, por su bus, después del «¡aterrizaron todos!»",
-    !!torre.empieza && torre.empieza.trasElFin !== null && torre.empieza.trasElFin > 2 && torre.empieza.trasElFin < 20 && sono.length > 10,
+    sinElKit ? !torre.empieza : !!torre.empieza && torre.empieza.trasElFin !== null && torre.empieza.trasElFin > 2 && torre.empieza.trasElFin < 20 && sono.length > 10,
     torre.empieza
       ? `empieza a los ${torre.empieza.t.toFixed(0)} s, ${torre.empieza.trasElFin?.toFixed(1)} s después de acabar el juego, a ${pies(torre.empieza.altitud)} · suena ${(ultimaDeLaCancion.t - torre.empieza.t).toFixed(0)} s, hasta el ${ultimaDeLaCancion.va?.toFixed(1)} del trozo`
-      : "no sonó",
+      : porQueSinKit || "no sonó",
   );
   const cancionAgachada = (lista) => lista.filter((m) => m.agachado && (m.fundido ?? 0) > 0.9);
   const agachada = cancionAgachada(sono);
@@ -2010,12 +2090,16 @@ async function elVuelo() {
   const seFue = torre.trasRecoger.filter((x) => x.seVa);
   comprobar(
     "y si la tripulante viene a recoger el kit con la canción sonando, se va con un fundido",
-    torre.alRecoger?.sonaba ? seFue.some((x) => x.seVa.fundido < 0.9 && x.seVa.fundido > 0.02) && torre.trasRecoger.every((x) => !x.suena) : !!torre.alRecoger,
+    sinElKit
+      ? !torre.alRecoger
+      : torre.alRecoger?.sonaba
+        ? seFue.some((x) => x.seVa.fundido < 0.9 && x.seVa.fundido > 0.02) && torre.trasRecoger.every((x) => !x.suena)
+        : !!torre.alRecoger,
     torre.alRecoger
       ? torre.alRecoger.sonaba
         ? `recogido a los ${torre.alRecoger.t.toFixed(0)} s con la canción sonando · fundido ${seFue.map((x) => x.seVa.fundido.toFixed(2)).join(" → ") || "no se vio"}`
         : `la canción ya había acabado entera ${torre.empieza && ultimaDeLaCancion ? `${(torre.alRecoger.t - ultimaDeLaCancion.t).toFixed(0)} s` : "—"} antes de recoger el kit`
-      : "no se recogió",
+      : porQueSinKit || "no se recogió",
   );
   // ── El hilo musical ──
   comprobar(

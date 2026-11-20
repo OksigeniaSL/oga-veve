@@ -934,6 +934,20 @@ const BAJADA_MEDIDA: readonly (readonly [number, number, number])[] = [
  */
 const LA_VUELTA = { empieza: 100, acaba: 118, sale: 200 } as const;
 
+/**
+ * **En qué segundo de la bajada medida se pasa por esa altitud**, la primera
+ * vez: el principio para la del crucero medido, y más tarde para una más baja.
+ */
+function segundoDeLaBajada(altitud: number): number {
+  for (let i = 1; i < BAJADA_MEDIDA.length; i++) {
+    const [ta, ha] = BAJADA_MEDIDA[i - 1]!;
+    const [tb, hb] = BAJADA_MEDIDA[i]!;
+    if (altitud >= ha) return ta;
+    if (altitud > hb) return ta + ((ha - altitud) * (tb - ta)) / (ha - hb);
+  }
+  return BAJADA_MEDIDA[BAJADA_MEDIDA.length - 1]![0];
+}
+
 /** Lo que vale la columna `col` de una tabla en `t`, interpolando. */
 function enLaTabla(tabla: readonly (readonly number[])[], t: number, col: number): number {
   for (let i = 1; i < tabla.length; i++) {
@@ -967,6 +981,16 @@ class VueloMedido {
   sobreElMar = false;
   /** Lo que dura el crucero, s: el medido, y uno largo para ver despertar a Ara para bajar. */
   crucero = 58;
+  /**
+   * **Hasta dónde sube**, m: el FL190 medido. Más bajo, sube al mismo ritmo y
+   * baja por la misma bajada medida desde su altitud, que el perfil de la
+   * bajada lo pone la distancia a la pista y no el nivel. Ver `desdeLaTabla`.
+   */
+  techo = 5785;
+  /** **Desde qué segundo de la bajada medida se baja**: el de la altitud de `techo`. */
+  get desdeLaTabla(): number {
+    return segundoDeLaBajada(this.techo);
+  }
   /**
    * **La potencia de los motores**, la de la tripulación de verdad —ver
    * `potenciaPara` en `vuelo-de-linea.ts`—: el despegue hasta los mil
@@ -1056,7 +1080,7 @@ class VueloMedido {
         break;
       case "subida": {
         this.vertical = 11.6;
-        this.altitud = Math.min(5785, this.altitud + this.vertical * dt);
+        this.altitud = Math.min(this.techo, this.altitud + this.vertical * dt);
         this.tren = t < 6 ? 0.5 : 0;
         this.flaps = t < 40 ? 0.33 : 0;
         this.cabina = t < 45 ? -1.7 : t < 175 ? 0 : 2.4;
@@ -1064,35 +1088,38 @@ class VueloMedido {
         this.porElSuelo = (this.altitud > 3048 ? 519 : 463) / 3.6;
         this.sobreElMar = t > 85 && !(t > 215 && t < 370);
         this.falta -= this.porElSuelo * dt * 0.4;
-        if (t >= 446) {
+        if (t >= 446 - (5785 - this.techo) / 11.6) {
           this.vertical = 0;
           this.cabina = 0.1;
           this.pasar("crucero");
         }
         break;
       }
-      case "crucero":
+      case "crucero": {
         this.alabeo = 0;
-        this.falta = Math.max(131700, this.falta - this.porElSuelo * dt);
+        const arriba = enLaTabla(BAJADA_MEDIDA, this.desdeLaTabla, 2) * 1000;
+        this.falta = Math.max(arriba, this.falta - this.porElSuelo * dt);
         if (t >= this.crucero) {
-          this.falta = 131700;
+          this.falta = arriba;
           this.pasar("bajada");
         }
         break;
+      }
       case "bajada": {
         // La bajada medida, con sus dos tramos nivelados: a 3.180 m y a 1.960 m.
         const antes = this.altitud;
-        this.altitud = enLaTabla(BAJADA_MEDIDA, t, 1);
+        const tb = t + this.desdeLaTabla;
+        this.altitud = enLaTabla(BAJADA_MEDIDA, tb, 1);
         this.vertical = dt > 0 ? (this.altitud - antes) / dt : 0;
         this.cabina = this.vertical < -1 ? -1.48 : 0.1;
-        this.falta = enLaTabla(BAJADA_MEDIDA, t, 2) * 1000;
+        this.falta = enLaTabla(BAJADA_MEDIDA, tb, 2) * 1000;
         this.porElSuelo = (this.altitud > 3048 ? 519 : this.falta > 31000 ? 463 : this.falta > 24000 ? 389 : 300) / 3.6;
         this.flaps = this.falta < 16600 ? 0.67 : this.falta < 24000 ? 0.33 : 0;
         this.alabeo = this.falta < 20600 && this.falta > 18600 ? 25 * GRADOS : 0;
         this.sobreElMar = true;
         // Sobre el mar, la altura es la altitud: el suelo es el agua.
         this.campo = 0;
-        if (t >= 904) {
+        if (tb >= 904) {
           this.campo = 33;
           this.pasar("final");
         }
@@ -1745,6 +1772,173 @@ describe("y con un crucero largo, despierta a Ara la tripulante para bajar", () 
   });
 });
 
+// ── Lo que pasa por encima de los diez mil pies, por prioridad (H38k) ────
+
+/** **El segundo de la bajada medida en que se cruzan los diez mil pies**, bajando. */
+const CRUZA_LOS_DIEZ_MIL = segundoDeLaBajada(DIEZ_MIL_PIES);
+
+/**
+ * **El vuelo medido a otro nivel, con todo lo que el juego le da a la escena**:
+ * lo que falta para nivelar, para bajar y para cruzar los diez mil pies
+ * bajando —ver `ratosDelVuelo` en `game.ts`—. Con FL160 y dos minutos de
+ * crucero es el salto de Los Rodeos a La Palma de ahora: unos 570 s por encima
+ * de los diez mil pies (ADR 0019, enmienda H49). Con FL190 y el crucero
+ * medido, el de antes, unos 705; con un crucero de cinco minutos, uno largo.
+ */
+class VueloConLosDiezMil extends VueloMedido {
+  constructor(techo: number, crucero: number) {
+    super();
+    this.techo = techo;
+    this.crucero = crucero;
+  }
+
+  /** Lo que se vuela por encima de los diez mil pies, s: subiendo, en crucero y bajando. */
+  get porEncima(): number {
+    return (this.techo - DIEZ_MIL_PIES) / 11.6 + this.crucero + (CRUZA_LOS_DIEZ_MIL - this.desdeLaTabla);
+  }
+
+  override get lectura(): LecturaDelPasaje {
+    const base = super.lectura;
+    const bajandoHastaLosDiezMil = CRUZA_LOS_DIEZ_MIL - this.desdeLaTabla;
+    if (this.tramo === "subida") {
+      const hastaElCrucero = Math.max(0, this.techo - this.altitud) / 11.6;
+      const hastaLaBajada = hastaElCrucero + this.crucero;
+      return { ...base, hastaElCrucero, hastaLaBajada, hastaLosDiezMil: hastaLaBajada + bajandoHastaLosDiezMil };
+    }
+    if (this.tramo === "crucero") {
+      const hastaLaBajada = Math.max(0, this.crucero - this.enTramo);
+      return { ...base, hastaLaBajada, hastaLosDiezMil: hastaLaBajada + bajandoHastaLosDiezMil };
+    }
+    if (this.tramo === "bajada" && this.enTramo < bajandoHastaLosDiezMil)
+      return { ...base, hastaLosDiezMil: bajandoHastaLosDiezMil - this.enTramo };
+    return base;
+  }
+}
+
+/** **Lo que no es esencial**, con todo lo que se dice si pasa entero. Ver `LO_DE_ARRIBA` en el guion. */
+const LO_QUE_PUEDE_NO_CABER: Readonly<Record<string, readonly string[]>> = {
+  altoRapido: ["inicio.ara.pasaje.preguntaAlto", "inicio.mama.pasaje.altoRapido"],
+  ala: ["inicio.ara.pasaje.preguntaAla", "inicio.mama.pasaje.ala", "inicio.ara.pasaje.pandorga"],
+  kit: ["inicio.tripulacion.pasaje.cerca.kitAqui", "inicio.ara.pasaje.kitGracias", "inicio.tripulacion.pasaje.cerca.kitGuardar"],
+  siesta: ["inicio.ara.pasaje.dormirse", "inicio.ara.pasaje.despertarse"],
+};
+
+/** Vuela la escena a ese nivel y con ese crucero, jugando el kit si llega. */
+function volarPorPrioridad(techo: number, crucero: number): Medido & { readonly porEncima: number } {
+  const vuelo = new VueloConLosDiezMil(techo, crucero);
+  const jugar = jugadorQueAcierta();
+  const m = volarElMedido(vuelo, (escena, t) => jugar(escena, t));
+  return { ...m, porEncima: vuelo.porEncima };
+}
+
+/** **Lo que no pasó entero**: lo omitido con algo dicho, o lo no omitido sin decir entero. Vacío si todo va bien. */
+function aMedias(m: Medido): string[] {
+  const r = m.escena.registro;
+  const omitidos = m.escena.estado.omitidos.map((o) => o.que);
+  const mal: string[] = [];
+  for (const [que, claves] of Object.entries(LO_QUE_PUEDE_NO_CABER)) {
+    const dichas = claves.filter((c) => r.some((d) => d.clave === c));
+    if (omitidos.includes(que) ? dichas.length > 0 : dichas.length < claves.length)
+      mal.push(`${que}${omitidos.includes(que) ? " (omitido)" : ""}: ${dichas.length} de ${claves.length}`);
+  }
+  // Y nada de lo de arriba se corta.
+  for (const d of r)
+    if (d.cortada && Object.values(LO_QUE_PUEDE_NO_CABER).some((cs) => cs.includes(d.clave))) mal.push(`${d.clave} cortada`);
+  return mal;
+}
+
+/** Lo que se pisa: una frase que empieza antes de que acabe la anterior. */
+function pisadas(m: Medido): string[] {
+  const r = m.escena.registro;
+  const mal: string[] = [];
+  for (let i = 1; i < r.length; i++) {
+    const antes = r[i - 1]!;
+    if (r[i]!.desde < (antes.hasta ?? Infinity) - 1e-6) mal.push(`${r[i]!.clave} sobre ${antes.clave} a los ${r[i]!.desde.toFixed(1)} s`);
+  }
+  return mal;
+}
+
+/** Los ratos callados de más en el aire, sin lo que Ara pasa durmiendo. */
+function calladosDeMas(m: Medido): string[] {
+  const siestas = m.escena.estado.siestas;
+  return silencios(m)
+    .filter((x) => {
+      if (!(x.tramo === "subida" || x.tramo === "crucero" || x.tramo === "bajada")) return false;
+      const durmiendo = siestas.reduce((n, s) => n + Math.max(0, Math.min(x.desde + x.largo, s.hasta ?? Infinity) - Math.max(x.desde, s.desde)), 0);
+      return x.largo - durmiendo > CALLADO_COMO_MUCHO;
+    })
+    .map((x) => `${x.largo.toFixed(0)} s desde ${x.desde.toFixed(0)} (${x.tramo})`);
+}
+
+describe("lo que pasa por encima de los diez mil pies, por prioridad: lo que cabe pasa, y lo que no se omite entero (H38k)", () => {
+  const corto = volarPorPrioridad(4877, 120);
+  const medido = volarPorPrioridad(5785, 58);
+  const largo = volarPorPrioridad(5785, 300);
+  const resumen = (m: ReturnType<typeof volarPorPrioridad>) =>
+    `${m.porEncima.toFixed(0)} s por encima · omitido: ${m.escena.estado.omitidos.map((o) => `${o.que} a los ${o.a.toFixed(0)} s, ${o.porQue} (quedaban ${o.queda.toFixed(0)}, pedía ${o.pide.toFixed(0)})`).join(", ") || "nada"} · siestas ${m.escena.estado.siestas.map((s) => `${s.desde.toFixed(0)}–${s.hasta?.toFixed(0)}`).join(" ") || "ninguna"} · charlas ${m.escena.estado.charlas.join(" ")}`;
+  if (entorno?.OGA_PASAJE) for (const [n, m] of [["corto", corto], ["medido", medido], ["largo", largo]] as const) console.log(`${n}: ${resumen(m)}`);
+
+  it("el salto de ahora, FL160 y unos 570 s por encima: no hay siesta, y lo que se omite se omite entero", () => {
+    const e = corto.escena.estado;
+    expect(corto.porEncima).toBeGreaterThan(550);
+    expect(corto.porEncima).toBeLessThan(590);
+    // Sin siesta: la subida por encima de los diez mil pies no deja sus dos minutos, y no cabe con lo de delante.
+    expect(e.omitidos.find((o) => o.que === "siesta"), resumen(corto)).toBeDefined();
+    expect(e.siestas).toEqual([]);
+    for (const o of e.omitidos.filter((x) => x.porQue === "no cabe")) expect(o.queda, o.que).toBeLessThan(o.pide);
+    expect(aMedias(corto), resumen(corto)).toEqual([]);
+  });
+
+  it("y lo de la comandante que se explica arriba se dice entero, despierta Ara: la altura y el ala", () => {
+    const charlas = corto.escena.estado.charlas;
+    expect(charlas).toContain("altoRapido");
+    expect(charlas).toContain("ala");
+  });
+
+  it("con un salto largo pasa todo: la siesta, la altura, el ala y el kit con su rato", () => {
+    for (const m of [medido, largo]) {
+      const e = m.escena.estado;
+      expect(e.omitidos, resumen(m)).toEqual([]);
+      expect(e.siestas, resumen(m)).toHaveLength(1);
+      expect(e.siestas[0]!.hasta! - e.siestas[0]!.desde).toBeGreaterThanOrEqual(120);
+      expect(aMedias(m), resumen(m)).toEqual([]);
+    }
+  });
+
+  it("el kit, si llega, llega con dos minutos de juego antes de que se pida guardarlo, sin la megafonía en medio", () => {
+    for (const m of [corto, medido, largo]) {
+      const r = m.escena.registro;
+      const dado = r.find((d) => d.clave === "inicio.tripulacion.pasaje.cerca.kitAqui");
+      const guardar = r.find((d) => d.clave === "inicio.tripulacion.pasaje.cerca.kitGuardar");
+      if (m.escena.estado.omitidos.some((o) => o.que === "kit")) {
+        expect(dado).toBeUndefined();
+        continue;
+      }
+      expect(dado, resumen(m)).toBeDefined();
+      expect(guardar, resumen(m)).toBeDefined();
+      const megafonia = r
+        .filter((d) => d.desde > dado!.desde && d.desde < guardar!.desde && (esAnuncioDeSiempre(d.clave) || d.clave.startsWith("comandante.") || d.clave.startsWith("tripulacion.")))
+        .reduce((n, d) => n + ((d.hasta ?? d.desde) - d.desde), 0);
+      expect(guardar!.desde - dado!.hasta! - megafonia, resumen(m)).toBeGreaterThanOrEqual(120);
+    }
+  });
+
+  it("en los tres, lo esencial pasa siempre, nada se pisa ni se queda a medias, y ningún silencio largo", () => {
+    for (const m of [corto, medido, largo]) {
+      const e = m.escena.estado;
+      const r = m.escena.registro;
+      for (const c of DE_SEGURIDAD) expect(r.some((x) => x.clave === c), c).toBe(true);
+      expect(e.saltados, resumen(m)).toEqual([]);
+      const omitidos = new Set(e.omitidos.map((o) => o.que));
+      const sinOmitir = GUION_DEL_PASAJE.map((x) => x.id).filter((x) => x !== "fin" && !(omitidos.has("kit") && (x === "kit" || x === "kitRecoger")));
+      expect(e.dichos).toEqual(sinOmitir);
+      expect(e.terminado).toBe(true);
+      expect(pisadas(m)).toEqual([]);
+      expect(calladosDeMas(m), resumen(m)).toEqual([]);
+    }
+  });
+});
+
 describe("el modo rápido (⏩), puesto en cuanto sale y sin tocarlo más", () => {
   const sinBoton = volarElMedido(new VueloMedidoConRatos());
   const ratos: { desde: number; hasta: number }[] = [];
@@ -1886,7 +2080,14 @@ describe("el vuelo de dentro de un rato, para saber qué viene", () => {
  * el vuelo de los ratos y un kilómetro más, el ala se colaba antes del kit.
  * Ver `kitAPuntoDeLlegar`.
  */
-describe("el kit, antes que el ala, aunque la bajada llegue un poco más tarde a su sitio", () => {
+/*
+ * **El ala, antes que el kit** (ADR 0020, enmienda H38k). Antes era al revés:
+ * lo que venía a cuento esperaba al kit, porque el ala colada en su silencio lo
+ * empujaba medio minuto y «Armá tu avión» se quedaba sin rato. Ahora el ala va
+ * antes en la lista de arriba, el kit la espera si viene a cuento, y el rato
+ * del kit lo guarda `cabe`: si no caben los dos, el que no se trae es el kit.
+ */
+describe("el ala, antes que el kit, aunque la bajada llegue un poco más tarde a su sitio", () => {
   for (const extra of [0, 1000, 3000, 5000])
     it(`con la bajada ${extra} m más larga`, () => {
       class V extends VueloMedidoConRatos {
@@ -1899,8 +2100,8 @@ describe("el kit, antes que el ala, aunque la bajada llegue un poco más tarde a
       const k = m.dichas.map((d) => d.linea.clave);
       const kit = k.indexOf("inicio.tripulacion.pasaje.cerca.kitAqui");
       const ala = k.indexOf("inicio.mama.pasaje.ala");
-      expect(kit).toBeGreaterThanOrEqual(0);
-      expect(ala).toBeGreaterThan(kit);
+      expect(ala).toBeGreaterThanOrEqual(0);
+      expect(kit).toBeGreaterThan(ala);
     });
 });
 
