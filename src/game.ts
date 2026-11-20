@@ -9040,7 +9040,14 @@ export class Game {
      * `cabe` en `flight/motor-del-pasaje.ts`.
      */
     const diezMil = this.navegacion.distanciaBajandoA(DIEZ_MIL_PIES);
-    const losDiezMil = diezMil !== null && p.restante > diezMil ? { hastaLosDiezMil: (p.restante - diezMil) / suelo } : {};
+    /*
+     * Por el perfil, con la velocidad que toca en cada trozo (H38l): a la de
+     * ahora, subiendo salía hasta cincuenta segundos largo, y lo largo deja
+     * empezar lo que luego no cabe. Ver `segundosHastaQueQueden`.
+     */
+    const porElPerfil = diezMil !== null ? this.navegacion.segundosHastaQueQueden(diezMil) : null;
+    const losDiezMil =
+      diezMil !== null && p.restante > diezMil ? { hastaLosDiezMil: porElPerfil ?? (p.restante - diezMil) / suelo } : {};
     if (p.descenso === null || this.navegacion.bajando) return losDiezMil;
     const hastaLaBajada = Math.max(0, p.restante - p.descenso) / suelo;
     const tramo = this.tripulacionDeLinea?.estado.tramo;

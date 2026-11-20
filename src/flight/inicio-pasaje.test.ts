@@ -42,6 +42,7 @@ import {
   type Senalado,
   type SitioDelPaisaje,
   type Tocable,
+  type Toque,
   type VistaDelSitio,
 } from "./inicio-pasaje";
 import { REDUCE_EL_GAS, type PermisosDeLaEscena, type PotenciaDeLinea, type TramoDeLinea } from "./vuelo-de-linea";
@@ -3357,6 +3358,77 @@ describe("la ventanilla viva: tocar lo que se ve y que te lo cuenten", () => {
     // El ala y el motor, lo primero; la isla de llegada y Mazo, y lo señalado por la ventanilla.
     for (const s of ["motor", "ala", "palma", "mazo", "teide", "gomera"] as const) expect(vistos, s).toContain(s);
     expect(new Set(vistos).size).toBe(vistos.length);
+  });
+});
+
+/*
+ * **El toque que espera su turno se vuelve a mirar desde el asiento de Ara**
+ * (H38l). El banco de la tercera escena tocó el Teide con la tripulante
+ * acabando el plop de los oídos; el toque esperó sin pisarla y, al volver a
+ * mirarlo, la escena preguntó sin plano cómo se veía. Sin plano, el juego
+ * dice cómo se enseña mejor, y un hito se enseña antes con el avión por fuera
+ * —ver `mirarElSitio` en `game.ts`—: «fuera», y el toque se calló con el
+ * Teide en el cristal de Ara. Lo que se pregunta es si se ve sentada o con la
+ * cara contra el cristal, cada pose con su plano.
+ */
+describe("un toque que espera su turno se vuelve a mirar desde el asiento de Ara, no desde fuera", () => {
+  /**
+   * El mundo del vuelo medido con el Teide como lo mira el juego: por encima
+   * de los diez mil pies se ve desde fuera, y sin plano se enseña así; por el
+   * cristal de Ara, solo con `porElCristal`.
+   */
+  function conElTeide(vuelo: VueloMedido, porElCristal: boolean): LecturaDelPasaje["ver"] {
+    const base = loQueSeVeEnElMedido(vuelo);
+    return (sitio, plano) => {
+      if (sitio !== "hito:teide") return base(sitio, plano);
+      if (vuelo.enLaNube || vuelo.altitud < DIEZ_MIL_PIES) return NADA;
+      if (!plano || esDeFuera(plano)) return { como: "fuera", lado: "izquierda" };
+      if (!porElCristal) return NADA;
+      return { como: plano === "ventanilla" ? "ventanilla" : "asomado", lado: "izquierda" };
+    };
+  }
+
+  /**
+   * Toca el Teide arriba al empezar una frase de entre dos y cinco segundos,
+   * hasta que un toque espere más de lo que se fía —y menos de lo que espera
+   * un toque— y se vuelva a mirar.
+   */
+  function tocarHablando(porElCristal: boolean): Toque | undefined {
+    const vuelo = new VueloMedido();
+    vuelo.ver = conElTeide(vuelo, porElCristal);
+    let ultimo = -Infinity;
+    const m = volarElMedido(vuelo, (escena, t, l) => {
+      if (escena.estado.toques.some((x) => x.mirado) || t - ultimo < 8) return;
+      const linea = escena.estado.linea;
+      const suena = escena.registro.at(-1);
+      if (l.enTierra || l.altitud < DIEZ_MIL_PIES || !escena.estado.hablando || !linea || !suena || suena.hasta !== null) return;
+      const dura = loQueDura(linea);
+      if (t - suena.desde > 0.2 || dura < 2 || dura > 5) return;
+      ultimo = t;
+      escena.tocar("hito:teide");
+    });
+    return m.escena.estado.toques.find((x) => x.mirado);
+  }
+
+  it("con el Teide en su cristal, se cuenta cuando se calla quien hablaba, aunque desde fuera se vea mejor", () => {
+    const t = tocarHablando(true);
+    expect(t, "ningún toque esperó lo bastante").toBeTruthy();
+    expect(t!.mirado!.espero).toBeGreaterThan(1.5);
+    // Lo que preguntaba la regla de antes, y lo que de verdad decide.
+    expect(t!.mirado!.como).toBe("fuera");
+    expect(t!.mirado!.ventanilla).toBe(true);
+    expect(t!.calla, JSON.stringify(t)).toBeNull();
+    expect(t!.dijo.length).toBeGreaterThan(0);
+  });
+
+  it("y si de verdad dejó de verse por su cristal, se calla aunque desde fuera se vea", () => {
+    const t = tocarHablando(false);
+    expect(t, "ningún toque esperó lo bastante").toBeTruthy();
+    expect(t!.mirado!.como).toBe("fuera");
+    expect(t!.mirado!.ventanilla).toBe(false);
+    expect(t!.mirado!.asomado).toBe(false);
+    expect(t!.calla).toBe("sinVer");
+    expect(t!.dijo).toEqual([]);
   });
 });
 

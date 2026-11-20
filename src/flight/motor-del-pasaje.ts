@@ -984,13 +984,32 @@ export interface Nombrado {
  * - `ocupado`: hablaba alguien y el toque se quedó en su aro.
  * - `contado`: ya se había contado, y se enseña su lámina sin voz.
  * - `dormida`: Ara tiene los ojos cerrados.
- * - `sinVer`: esperó su turno y, cuando le tocó, ya no se veía.
+ * - `sinVer`: esperó su turno y, cuando le tocó, ya no se veía desde el
+ *   asiento de Ara, ni sentada ni con la cara contra el cristal.
  */
 export interface Toque {
   readonly que: Tocable;
   readonly desde: number;
   readonly dijo: readonly string[];
   readonly calla: "ocupado" | "contado" | "dormida" | "sinVer" | null;
+  /** Lo que se vio al volver a mirarlo, si esperó su turno más de lo que se fía. Ver `VueltaAMirar`. */
+  readonly mirado?: VueltaAMirar;
+}
+
+/**
+ * **Lo que se vio al volver a mirar lo tocado** (H38l): cuánto esperó su
+ * turno, s de escena; el plano de ese instante; cómo lo enseñaría la escena
+ * si pudiera elegir —`como`, que para un hito prefiere el avión por fuera, y
+ * era lo que se miraba antes—, y si se ve sentada en la ventanilla y con la
+ * cara contra el cristal, que es lo que decide. Un `sinVer` sin esto no se
+ * puede comprobar: el banco mide por su lado, con la cámara, y compara.
+ */
+export interface VueltaAMirar {
+  readonly espero: number;
+  readonly plano: Plano;
+  readonly como: ComoSeVe | null;
+  readonly ventanilla: boolean;
+  readonly asomado: boolean;
 }
 
 /** Si un sitio es de lo de debajo del avión: se mira hacia abajo, no hacia él. */
@@ -1067,6 +1086,8 @@ export interface EstadoDelPasaje<M extends string = string, C extends string = s
   readonly siestas: readonly Siesta[];
   /** **Lo que no cupo por encima de los diez mil pies**, y no pasó entero. Ver `cabe`. */
   readonly omitidos: readonly Omitido[];
+  /** **Cada vez que se miró si cabía**, con lo que se estimaba que quedaba. Ver `SeMiroSiCabe`. */
+  readonly seMiroSiCabe: readonly SeMiroSiCabe[];
   /** **La luz del cinturón, apagada en el puesto**, y la gente de la cabina. Ver `gente`. */
   readonly luzApagada: boolean;
   readonly gente: GenteDeLaCabina;
@@ -1133,6 +1154,21 @@ export interface Omitido {
   readonly queda: number;
   readonly pide: number;
   readonly porQue: "no cabe" | "sin rato";
+}
+
+/**
+ * **Cada vez que se miró si algo cabe** (H38l), para el banco: qué, a qué
+ * segundo de escena, lo que el juego estimaba que quedaba hasta cruzar los
+ * diez mil pies bajando —`hastaLosDiezMil`—, lo que pedía y si cupo. El banco
+ * sabe cuándo se cruzaron de verdad, y así ve cuánto se equivocó la cuenta: si
+ * se pasa por arriba, deja empezar algo que luego no cabe.
+ */
+export interface SeMiroSiCabe {
+  readonly que: string;
+  readonly a: number;
+  readonly queda: number;
+  readonly pide: number;
+  readonly cabe: boolean;
 }
 
 /**
@@ -1265,6 +1301,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private readonly charlasDichas: C[] = [];
   /** Lo que no cupo por encima de los diez mil pies, y por qué. Ver `cabe`. */
   private readonly omitidos: Omitido[] = [];
+  /** Cada vez que se miró si algo cabía, para el banco. Ver `SeMiroSiCabe`. */
+  private readonly seMiroSiCabe: SeMiroSiCabe[] = [];
   private mira: QueMirar | null = null;
   private miraDesde = 0;
   private callada = 0;
@@ -1366,8 +1404,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    * quien la diga—, los sellos de lo visto, si ya se invitó a tocar y la
    * lámina de un toque sin voz. Ver `tocar`.
    */
-  private readonly toques: { que: Tocable; desde: number; dijo: string[]; calla: Toque["calla"] }[] = [];
-  private toquePendiente: { readonly que: Tocable; readonly desde: number; readonly toque: { dijo: string[]; calla: Toque["calla"] } } | null = null;
+  private readonly toques: { que: Tocable; desde: number; dijo: string[]; calla: Toque["calla"]; mirado?: VueltaAMirar }[] = [];
+  private toquePendiente: { readonly que: Tocable; readonly desde: number; readonly toque: { dijo: string[]; calla: Toque["calla"]; mirado?: VueltaAMirar } } | null = null;
   private readonly contados = new Set<Tocable>();
   private readonly pedidas = new Set<string>();
   /** Las frases de Ara que ya se dijeron por un toque: la escena no las repite cuando le llegan. */
@@ -1519,7 +1557,11 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       if (y === x) break;
       if (this.quedaPorPasar(y, l)) pide += y.dura;
     }
-    if (queda >= pide) return true;
+    const cupo = queda >= pide;
+    // Se apunta la primera vez y cuando cambia: se mira en cada paso mientras espera lo demás.
+    const antes = this.seMiroSiCabe.filter((d) => d.que === nombre).at(-1);
+    if (!antes || antes.cabe !== cupo) this.seMiroSiCabe.push({ que: nombre, a: this.reloj, queda, pide, cabe: cupo });
+    if (cupo) return true;
     this.omitidos.push({ que: nombre, a: this.reloj, queda, pide, porQue: "no cabe" });
     return false;
   }
@@ -1727,6 +1769,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       marca: this.marca,
       siestas: this.siestas.map((s) => ({ ...s })),
       omitidos: [...this.omitidos],
+      seMiroSiCabe: [...this.seMiroSiCabe],
       luzApagada: this.luzApagadaEnElPuesto,
       gente: this.gente,
       fueAlBano: this.alBano,
@@ -1753,7 +1796,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   tocar(que: Tocable): void {
     // Con la lámina delante no se ve lo que hay detrás, así que no se toca.
     if (this.acabado || this.enLaApertura) return;
-    const toque = { que, desde: this.reloj, dijo: [] as string[], calla: null as Toque["calla"] };
+    const toque = { que, desde: this.reloj, dijo: [] as string[], calla: null as Toque["calla"] } as { que: Tocable; desde: number; dijo: string[]; calla: Toque["calla"]; mirado?: VueltaAMirar };
     this.toques.push(toque);
     if (this.toques.length > 60) this.toques.shift();
     if (this.durmiendo || this.bostezando) {
@@ -1792,12 +1835,23 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    * esperar su turno: por su cristal, sentada o con la cara contra él. Las
    * piezas del avión no se van; lo de debajo y el paisaje, sí. Sin el mundo
    * —las pruebas que no lo miran—, se ve.
+   *
+   * Cada pose se pregunta con su plano (H38l). Sin plano, `ver` dice cómo se
+   * enseña mejor un sitio, y un hito se enseña antes con el avión por fuera
+   * —ver `mirarElSitio` en `game.ts`—: el Teide que llenaba el cristal de Ara
+   * salía «fuera» y el toque que había esperado su turno se callaba. Lo
+   * midió el banco de la tercera escena. Y se apunta lo que se vio, para él.
    */
-  private sigueALaVista(que: Tocable, l: LecturaDelPasaje): boolean {
-    if (que === "motor" || que === "ala" || !l.ver) return true;
-    const sitio: SitioDelPaisaje = que === "mar" ? "mar-abajo" : que === "nubes" ? "nubes-abajo" : que;
-    const como = l.ver(sitio).como;
-    return como === "ventanilla" || como === "asomado";
+  private volverAMirar(que: Tocable, l: LecturaDelPasaje, espero: number): VueltaAMirar {
+    const sitio: SitioDelPaisaje | null = que === "motor" || que === "ala" ? null : que === "mar" ? "mar-abajo" : que === "nubes" ? "nubes-abajo" : que;
+    if (!sitio || !l.ver) return { espero, plano: this.plano, como: "ventanilla", ventanilla: true, asomado: true };
+    return {
+      espero,
+      plano: this.plano,
+      como: l.ver(sitio).como,
+      ventanilla: l.ver(sitio, "ventanilla").como === "ventanilla",
+      asomado: l.ver(sitio, planoParaVer("asomado", sitio)).como === "asomado",
+    };
   }
 
   /**
@@ -1826,9 +1880,13 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     }
     if (this.callada < CALLA_ANTES_DEL_TOQUE) return false;
     this.toquePendiente = null;
-    if (this.reloj - p.desde > SIGUE_A_LA_VISTA && !this.sigueALaVista(p.que, l)) {
-      p.toque.calla = "sinVer";
-      return false;
+    if (this.reloj - p.desde > SIGUE_A_LA_VISTA) {
+      const mirado = this.volverAMirar(p.que, l, this.reloj - p.desde);
+      p.toque.mirado = mirado;
+      if (!mirado.ventanilla && !mirado.asomado) {
+        p.toque.calla = "sinVer";
+        return false;
+      }
     }
     this.contados.add(p.que);
     // La invitación ya no hace falta: se ha tocado.
