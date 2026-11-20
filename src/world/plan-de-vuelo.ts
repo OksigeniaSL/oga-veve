@@ -481,12 +481,24 @@ export interface ComoSeSale {
   readonly desde: "cabecera" | "interseccion" | "remonte";
   /** Si el remonte llega hasta el final de la pista; si no, es un trozo. */
   readonly hastaElFinal: boolean;
-  /** La pista que queda por delante al soltar frenos, m. */
+  /**
+   * La pista que queda por delante al soltar frenos, m: desde la cabecera o
+   * la intersección, su TORA menos lo que se come alinearse (`alinearse`).
+   */
   readonly porDelante: number;
   /** La calle por la que se llega a la pista, si tiene nombre. */
   readonly calle: string | null;
-  /** La pista que queda por delante desde donde se entra, m: la TORA de la intersección. */
+  /**
+   * La TORA desde donde se entra, m: la publicada, contada desde el borde de
+   * la calle y sin restar la alineación. Es la que dice la torre. Ver
+   * `PistaDesdeLaBoca`.
+   */
   readonly desdeLaEntrada: number;
+  /**
+   * La pérdida por alineación entrando por ahí, m: lo que va del principio de
+   * esa TORA a donde el avión queda alineado en el eje. Ver `PistaDesdeLaBoca`.
+   */
+  readonly alinearse: number;
   /** La pista entera, m: la TORA desde la cabecera. */
   readonly entera: number;
   /** La que este avión necesita hoy, con su margen, m. Ver `pistaNecesariaHoy`. */
@@ -494,6 +506,35 @@ export interface ComoSeSale {
   /** Por qué hoy necesita bastante más que en las tablas, si es así. */
   readonly porQue: "calor" | "cola" | null;
 }
+
+/**
+ * **La pista desde una boca: la que se publica y la que queda al alinearse**
+ * (H41f). Ver `PlanDeVuelo.pistaDesdeLaBoca`.
+ *
+ * Son dos números y no uno porque de verdad son dos. La TORA de una
+ * intersección se publica desde el borde de la calle —el que queda del lado
+ * de la cabecera; así la cuenta la autoridad británica, CAP 168, cap. 3—, y
+ * esa longitud declarada «no tiene en cuenta la alineación del avión en el
+ * sentido del despegue»: quien despega le resta lo que se come girar hasta
+ * quedar en el eje, la pérdida por alineación (AMC1 CAT.POL.A.205,
+ * Reglamento (UE) 965/2012, que la pide para la entrada a noventa grados y
+ * para la media vuelta en la pista). La torre dice la primera; la cuenta de
+ * si basta se hace con la segunda.
+ */
+interface PistaDesdeLaBoca {
+  /** La TORA publicada desde ahí, m: la del AIP si la da, y si no, la del borde de la calle. */
+  readonly tora: number;
+  /** La pérdida por alineación, m: del principio de esa TORA al avión alineado en el eje. */
+  readonly alinearse: number;
+  /** La que queda por delante al soltar frenos, m: la TORA menos la alineación. Es la que decide. */
+  readonly alSoltarFrenos: number;
+}
+
+/**
+ * El coseno con el que un tramo de la raya ya va por el eje, recto: un grado.
+ * Ver `pistaDesdeLaBoca`.
+ */
+const EN_LA_RECTA = Math.cos(Math.PI / 180);
 
 /**
  * Lo que tiene que quedar detrás de un remonte parcial para que compense no ir
@@ -1194,6 +1235,8 @@ export interface Vista {
   readonly cambio: boolean;
   /** Se acaba de entrar en la pista sin permiso. */
   readonly saltoLaLuz: boolean;
+  /** Se acaba de empezar la carrera sin remontar. Ver `vigilarElRemonte` en `flight/vuelo.ts`. */
+  readonly sinRemontar: "basta" | "noBasta" | null;
   /** La lección de rodar, terminada: parado en la doble raya. */
   readonly leccionHecha: boolean;
   /**
@@ -2875,7 +2918,11 @@ export class PlanDeVuelo {
     let remonta = Infinity;
     if (alEje) {
       const alinear = this.contraElDespegue(alEje.hastaElEje);
-      const giro = this.dondeSeDaLaVuelta(alEje.along, alEje.remontaPorLaBoca);
+      const giro = this.dondeSeDaLaVuelta(
+        alEje.along,
+        alEje.remontaPorLaBoca,
+        alEje.pista.alSoltarFrenos,
+      );
       const mitad = this.largoDePista / 2;
       const paraDespegar = Math.min(PARA_DESPEGAR, this.largoDePista * 0.4);
       const entra = Math.max(-mitad + 40, Math.min(alEje.along, mitad - paraDespegar));
@@ -3150,7 +3197,7 @@ export class PlanDeVuelo {
     if (!regla) return true;
     if (!regla.permitidas) return false;
     if (!regla.soloDesde?.length && !regla.tora) return true;
-    return this.bocasPermitidas().some((a) => Math.abs(a - along) < MISMA_BOCA);
+    return this.bocasPermitidas().some((b) => Math.abs(b.along - along) < MISMA_BOCA);
   }
 
   /**
@@ -3160,27 +3207,30 @@ export class PlanDeVuelo {
    * `calleDeLaBoca`. Y la regla, la misma que mira el tráfico: ver
    * `desdeLaInterseccion` en `salidas-por-interseccion.ts`.
    */
-  private bocasPermitidas(): number[] {
+  private bocasPermitidas(): { along: number; tora: number | null }[] {
     if (this.bocasPermitidasGuardadas) return this.bocasPermitidasGuardadas;
     const cabecera = cabeceraPorRumbo(this.aero, this.pista.heading);
-    const bocas: number[] = [];
+    const bocas: { along: number; tora: number | null }[] = [];
     this.grafo.nudos.forEach((nudo, i) => {
       const tramos = (this.grafo.desde[i] ?? []).map((k) => this.grafo.tramos[k]!);
       if (!tramos.some((t) => t.pista) || !tramos.some((t) => !t.pista)) return;
       if (!this.enLaPista(nudo)) return;
       const calle = calleDeLaBoca(this.grafo, i);
-      if (!calle || !desdeLaInterseccion(this.aero, cabecera, calle).permitida) return;
-      bocas.push(
-        enEjesDePista(nudo[0], -nudo[1], this.pista.x, this.pista.z, this.pista.heading)
+      const aip = calle ? desdeLaInterseccion(this.aero, cabecera, calle) : null;
+      if (!aip?.permitida) return;
+      bocas.push({
+        along: enEjesDePista(nudo[0], -nudo[1], this.pista.x, this.pista.z, this.pista.heading)
           .along,
-      );
+        // Y la TORA que publica desde ella, si la publica: ver `pistaDesdeLaBoca`.
+        tora: aip.tora,
+      });
     });
     this.bocasPermitidasGuardadas = bocas;
     return bocas;
   }
 
   /** Ver `bocasPermitidas`. Se tira al mudarse de campo. */
-  private bocasPermitidasGuardadas: number[] | null = null;
+  private bocasPermitidasGuardadas: { along: number; tora: number | null }[] | null = null;
 
   /**
    * La pista que se quiere por delante al elegir por dónde se entra, m: la de
@@ -4236,6 +4286,7 @@ export class PlanDeVuelo {
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
       saltoLaLuz: p.saltoLaLuz,
+      sinRemontar: p.sinRemontar,
       leccionHecha: p.leccionHecha,
       mirandoLaPista: this.miraLaPista(s.enPista, s.desalineado),
       fuera:
@@ -5006,6 +5057,12 @@ export class PlanDeVuelo {
      * hacia atrás. Ver `bocaDeEntrada`.
      */
     porLaBoca = false,
+    /**
+     * La pista que queda por delante al soltar frenos entrando por ahí, m: la
+     * TORA publicada menos la pérdida por alineación (H41f). Sin ella, desde
+     * el punto del eje. Ver `pistaDesdeLaBoca`.
+     */
+    alSoltarFrenos?: number,
   ): VueltaDelBackTaxi | null {
     const mitad = this.largoDePista / 2;
     const soloLaCabecera = !this.sePuedeSalirDesde(along);
@@ -5013,8 +5070,8 @@ export class PlanDeVuelo {
     // entrar y despegar, que es lo que pasa en casi todos los aeródromos.
     // Salvo donde el AIP no deja salir por intersección: ver
     // `salidasPorInterseccion`.
-    if (!soloLaCabecera && !porLaBoca && mitad - along >= this.pistaParaNoRemontar())
-      return null;
+    const queda = alSoltarFrenos ?? mitad - along;
+    if (!soloLaCabecera && !porLaBoca && queda >= this.pistaParaNoRemontar()) return null;
     const umbral = -mitad + HUECO_PARA_GIRAR;
     /*
      * **Y donde el AIP limita las intersecciones, a la cabecera y no a medio
@@ -5289,8 +5346,12 @@ export class PlanDeVuelo {
   }
 
   /** Ver `vueltaDelBackTaxi`. */
-  private dondeSeDaLaVuelta(along: number, porLaBoca = false): number | null {
-    return this.vueltaDelBackTaxi(along, porLaBoca)?.giro ?? null;
+  private dondeSeDaLaVuelta(
+    along: number,
+    porLaBoca = false,
+    alSoltarFrenos?: number,
+  ): number | null {
+    return this.vueltaDelBackTaxi(along, porLaBoca, alSoltarFrenos)?.giro ?? null;
   }
 
   /**
@@ -5336,10 +5397,12 @@ export class PlanDeVuelo {
     llegaDeFrente = false,
     /** Si se remonta por llegar mirando a la cabecera. Ver `bocaDeEntrada`. */
     porLaBoca = false,
+    /** La que queda al soltar frenos sin remontar. Ver `vueltaDelBackTaxi`. */
+    alSoltarFrenos?: number,
   ): { puntos: Punto[]; arco: number | null } | null {
     this.giroDelBackTaxi = null;
     this.remonteHastaElFinal = false;
-    const vuelta = this.vueltaDelBackTaxi(along, porLaBoca);
+    const vuelta = this.vueltaDelBackTaxi(along, porLaBoca, alSoltarFrenos);
     if (!vuelta) return null;
     const { giro, lado, radio } = vuelta;
     const mitad = this.largoDePista / 2;
@@ -5474,8 +5537,13 @@ export class PlanDeVuelo {
     // mira antes de cambiar de ruta: la de ahora es la que trajo hasta aquí.
     const calle = this.ruta?.letras.at(-1) ?? null;
     // Y la vuelta entera, si desde aquí no hay pista para despegar.
-    const vuelta = this.backTaxiDesde(alEje.along, alEje.llegaDeFrente, alEje.remontaPorLaBoca);
-    this.laSalidaDeHoy = this.comoSeSaleDesde(alEje.along, vuelta !== null, calle);
+    const vuelta = this.backTaxiDesde(
+      alEje.along,
+      alEje.llegaDeFrente,
+      alEje.remontaPorLaBoca,
+      alEje.pista.alSoltarFrenos,
+    );
+    this.laSalidaDeHoy = this.comoSeSaleDesde(alEje.along, vuelta !== null, calle, alEje.pista);
     const puntos: Punto[] = vuelta
       ? [...hastaElEje, ...vuelta.puntos]
       : [...hastaElEje, ejeAbajo];
@@ -5521,6 +5589,8 @@ export class PlanDeVuelo {
      * de por delante bastara. Ver `bocaDeEntrada`.
      */
     remontaPorLaBoca: boolean;
+    /** La TORA desde ahí y lo que se come alinearse. Ver `pistaDesdeLaBoca`. */
+    pista: PistaDesdeLaBoca;
   } | null {
     const x = desde[0];
     const z = -desde[1];
@@ -5658,6 +5728,7 @@ export class PlanDeVuelo {
         ejeAbajo: [masAlla[0], -masAlla[1]],
         llegaDeFrente: boca.deFrente,
         remontaPorLaBoca: boca.remontaPorLaBoca,
+        pista: boca.pista,
       };
     }
     const porLaCalle = rodajeEntre(
@@ -5674,7 +5745,129 @@ export class PlanDeVuelo {
         ? [desde, enElEje]
         : null;
     if (!hastaElEje) return null;
-    return { hastaElEje, along, ejeAbajo, llegaDeFrente: false, remontaPorLaBoca: false };
+    return {
+      hastaElEje,
+      along,
+      ejeAbajo,
+      llegaDeFrente: false,
+      remontaPorLaBoca: false,
+      pista: this.pistaDesdeLaBoca(along, hastaElEje),
+    };
+  }
+
+  /**
+   * **La TORA desde donde se entra y lo que se come alinearse** (H41f), por
+   * la calle `hastaElEje` que llega al eje en `along`. Ver `PistaDesdeLaBoca`.
+   *
+   * Lo que se decía y lo que se tenía eran dos cosas. La torre daba la pista
+   * desde el nudo del eje —725 m en la C de El Hierro con el JAZ 40—, la
+   * cuenta de si bastaba usaba ese mismo número, y el avión soltaba frenos
+   * con menos: 717,6 m con el piloto perfecto, porque para quedar en el eje
+   * la raya redondea el codo y eso se come unos metros pasado el nudo. Ni lo
+   * dicho era lo publicado ni la cuenta restaba la alineación.
+   *
+   * - **La TORA es la publicada.** La del AIP si la da para esa calle y esa
+   *   cabecera —Los Rodeos, La Gomera; ver `desdeLaInterseccion`—, y si no,
+   *   la que publicaría: desde el borde de la calle del lado de la cabecera,
+   *   donde la calle se junta con el borde de la pista. Una entrada a menos
+   *   de `EN_LA_CABECERA` del final es la de la cabecera: la pista entera.
+   * - **La pérdida por alineación es de este avión y de esta entrada**: del
+   *   principio de esa TORA a donde el avión queda en el eje siguiendo la
+   *   raya, alisada como la alisa `ponerRuta` con el radio de giro de este
+   *   avión. Como mucho, la de un codo de noventa grados: una calle que llega
+   *   mirando a la cabecera es de remontar (`bocaDeEntrada`), y desde ella no
+   *   se despega sin rodar hacia atrás.
+   */
+  private pistaDesdeLaBoca(along: number, hastaElEje: readonly Punto[]): PistaDesdeLaBoca {
+    const mitad = this.largoDePista / 2;
+    const semiancho = this.pista.width / 2;
+    const enEjes = (x: number, z: number) =>
+      enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
+    /*
+     * Donde el eje de la calle cruza el borde de la pista, mirado desde el
+     * nudo hacia atrás, y con qué ángulo: el borde de la calle cae medio
+     * ancho de calle más atrás, y más cuanto más en diagonal llega.
+     */
+    let principio = along;
+    for (let i = hastaElEje.length - 1; i > 0; i--) {
+      const fuera = hastaElEje[i - 1]!;
+      const a = enEjes(fuera[0], -fuera[1]);
+      const b = enEjes(hastaElEje[i]![0], -hastaElEje[i]![1]);
+      if (Math.abs(a.across) < semiancho || Math.abs(b.across) >= semiancho) continue;
+      const u = (Math.abs(a.across) - semiancho) / (Math.abs(a.across) - Math.abs(b.across));
+      const enElBorde = a.along + (b.along - a.along) * u;
+      const largo = Math.hypot(b.along - a.along, b.across - a.across);
+      const seno = largo > 0 ? Math.abs(b.across - a.across) / largo : 1;
+      principio = enElBorde - this.anchoDeLaCalleEn(fuera) / 2 / Math.max(seno, 0.5);
+      break;
+    }
+    if (along + mitad <= EN_LA_CABECERA) principio = -mitad;
+    principio = Math.max(-mitad, Math.min(principio, along));
+    /*
+     * Y dónde queda alineado: donde empieza la recta final de la raya que se
+     * va a seguir. Mirar solo el último tramo de la calle contra el eje daba
+     * poco —3 m de menos en la C de El Hierro—: el chaflán llega por varios
+     * codos, y la raya los redondea juntos.
+     */
+    const lejos = puntoDePista(this.pista, -Math.min(mitad - 60, along + 500));
+    const { puntos } = alisarRuta(
+      [...hastaElEje.map((p) => [p[0], -p[1]] as Punto), [lejos[0], lejos[1]]],
+      undefined,
+      Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)),
+    );
+    /*
+     * La recta final se mide contra sí misma y no contra el rumbo de la pista:
+     * el nudo de la boca no siempre cae en el eje del juego —en la C de El
+     * Hierro, a 4,6 m— y la raya se acerca a él a lo largo de quinientos
+     * metros, como la que dibuja `alEjeDesde`.
+     */
+    const fin = puntos.at(-1)!;
+    const antesDelFin = puntos.at(-2) ?? fin;
+    const recta = Math.atan2(fin[1] - antesDelFin[1], fin[0] - antesDelFin[0]);
+    let alineado = along;
+    for (let i = puntos.length - 1; i > 0; i--) {
+      const a = puntos[i - 1]!;
+      const b = puntos[i]!;
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 0.01) continue;
+      if (Math.cos(Math.atan2(b[1] - a[1], b[0] - a[0]) - recta) < EN_LA_RECTA) break;
+      alineado = enEjes(a[0], a[1]).along;
+    }
+    alineado = Math.min(alineado, along + Math.max(RADIO_CURVA, radioDeGiro(this.avion)));
+    /*
+     * **Y con la del AIP, la alineación se cuenta desde donde empieza la
+     * suya**, que llega hasta el final de la pista como todas. En Los Rodeos
+     * la E-2 entra a doce grados, como la salida rápida que es para la 30:
+     * desde el borde de la calle en los datos de OpenStreetMap habría 2.705 m
+     * por la 12, y el AIP publica 2.546, que empiezan unos treinta metros
+     * pasado el sitio donde el avión ya queda alineado. Restarle a esa cifra
+     * los ciento treinta metros del chaflán sería contarlos dos veces.
+     */
+    const delAip =
+      along + mitad > EN_LA_CABECERA
+        ? (this.bocasPermitidas().find((b) => Math.abs(b.along - along) < MISMA_BOCA)?.tora ??
+          null)
+        : null;
+    if (delAip !== null) principio = mitad - delAip;
+    const tora = mitad - principio;
+    const alinearse = Math.max(0, alineado - principio);
+    return { tora, alinearse, alSoltarFrenos: tora - alinearse };
+  }
+
+  /**
+   * El ancho de la calle que pasa por `p`, m: el de los datos, o el que se
+   * dibuja si no lo traen. Ver `pistaDesdeLaBoca`.
+   */
+  private anchoDeLaCalleEn(p: Punto): number {
+    let cerca = Infinity;
+    let ancho = ANCHO_RODADURA;
+    for (const calle of this.aero.taxiways) {
+      const d = aLaPolilinea(p, calle.path);
+      if (d < cerca) {
+        cerca = d;
+        ancho = calle.widthM ?? ANCHO_RODADURA;
+      }
+    }
+    return ancho;
   }
 
   /** Si un punto cae en la pista en uso, con el margen de `enElAsfalto`. */
@@ -5712,7 +5905,13 @@ export class PlanDeVuelo {
    */
   private bocaDeEntrada(
     desde: Punto,
-  ): { nudo: Punto; ruta: Ruta; deFrente: boolean; remontaPorLaBoca: boolean } | null {
+  ): {
+    nudo: Punto;
+    ruta: Ruta;
+    deFrente: boolean;
+    remontaPorLaBoca: boolean;
+    pista: PistaDesdeLaBoca;
+  } | null {
     const [fx, fz] = delante(this.pista.heading);
     let mejor: {
       nudo: Punto;
@@ -5720,6 +5919,7 @@ export class PlanDeVuelo {
       deFrente: boolean;
       bien: boolean;
       remontaPorLaBoca: boolean;
+      pista: PistaDesdeLaBoca;
     } | null = null;
     /*
      * Los nudos **del eje**: las calles se cosen hasta él —ver «Coser las
@@ -5768,10 +5968,15 @@ export class PlanDeVuelo {
         this.pista.z,
         this.pista.heading,
       );
-      const porLaPista = this.dondeSeDaLaVuelta(along) !== null;
+      // La que queda al soltar frenos, alineado: la misma cuenta que dirá la torre.
+      const pista = this.pistaDesdeLaBoca(along, ruta.puntos);
+      const alSoltarFrenos = pista.alSoltarFrenos;
+      const porLaPista = this.dondeSeDaLaVuelta(along, false, alSoltarFrenos) !== null;
       // Llega mirando a la cabecera: lo contrario de lo que pide `bien` sin remontar.
       const remontaPorLaBoca =
-        !porLaPista && coseno <= -0.2 && this.dondeSeDaLaVuelta(along, true) !== null;
+        !porLaPista &&
+        coseno <= -0.2 &&
+        this.dondeSeDaLaVuelta(along, true, alSoltarFrenos) !== null;
       const haciaAtras = porLaPista || remontaPorLaBoca;
       const bien = haciaAtras ? coseno < 0.2 : coseno > -0.2;
       if (
@@ -5784,7 +5989,7 @@ export class PlanDeVuelo {
           remontaPorLaBoca === mejor.remontaPorLaBoca &&
           ruta.largo < mejor.ruta.largo)
       )
-        mejor = { nudo, ruta, deFrente: coseno > 0.5, bien, remontaPorLaBoca };
+        mejor = { nudo, ruta, deFrente: coseno > 0.5, bien, remontaPorLaBoca, pista };
     }
     return mejor
       ? {
@@ -5792,6 +5997,7 @@ export class PlanDeVuelo {
           ruta: mejor.ruta,
           deFrente: mejor.deFrente,
           remontaPorLaBoca: mejor.remontaPorLaBoca,
+          pista: mejor.pista,
         }
       : null;
   }
@@ -6494,8 +6700,13 @@ export class PlanDeVuelo {
     const giro = this.giroDelBackTaxi;
     const hastaElFinal = this.remonteHastaElFinal;
     const calle = this.ruta?.letras.at(-1) ?? null;
-    const vuelta = this.backTaxiDesde(alEje.along, alEje.llegaDeFrente, alEje.remontaPorLaBoca);
-    const sale = this.comoSeSaleDesde(alEje.along, vuelta !== null, calle);
+    const vuelta = this.backTaxiDesde(
+      alEje.along,
+      alEje.llegaDeFrente,
+      alEje.remontaPorLaBoca,
+      alEje.pista.alSoltarFrenos,
+    );
+    const sale = this.comoSeSaleDesde(alEje.along, vuelta !== null, calle, alEje.pista);
     this.giroDelBackTaxi = giro;
     this.remonteHastaElFinal = hastaElFinal;
     return sale;
@@ -6510,13 +6721,20 @@ export class PlanDeVuelo {
    * es la de la cabecera: da la pista entera, o casi, y no es una
    * intersección.
    */
-  private comoSeSaleDesde(along: number, remonta: boolean, calle: string | null): ComoSeSale {
+  private comoSeSaleDesde(
+    along: number,
+    remonta: boolean,
+    calle: string | null,
+    /** La TORA desde ahí y la alineación: la misma cuenta que decide. Ver `pistaDesdeLaBoca`. */
+    pista: PistaDesdeLaBoca,
+  ): ComoSeSale {
     const mitad = this.largoDePista / 2;
     const giro = this.giroDelBackTaxi;
     const dia = this.diaDeHoy();
     const comun = {
       calle,
-      desdeLaEntrada: mitad - Math.max(-mitad, along),
+      desdeLaEntrada: pista.tora,
+      alinearse: pista.alinearse,
       entera: this.largoDePista,
       necesitaHoy: pistaNecesariaHoy(this.avion, dia),
       porQue: porQueHoyMasPista(this.avion, dia),
@@ -6532,7 +6750,7 @@ export class PlanDeVuelo {
       ...comun,
       desde: along + mitad > EN_LA_CABECERA ? "interseccion" : "cabecera",
       hastaElFinal: false,
-      porDelante: comun.desdeLaEntrada,
+      porDelante: pista.alSoltarFrenos,
     };
   }
 

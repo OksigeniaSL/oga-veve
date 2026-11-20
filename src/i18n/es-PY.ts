@@ -3008,6 +3008,16 @@ export const ES_PY = {
     "Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima",
   "palabra.salidaSiguiente": "La próxima",
   /*
+   * La torre dijo remontar y se despegó desde la boca (H41f): el porqué, en
+   * casa y sin regañar. Con la pista que alcanza, seguir; con la que no, lo
+   * que se ve es el aviso de que se acaba la pista. Ver `decirQueNoSeRemonto`.
+   */
+  "vuelo.sinRemontar":
+    "La torre nos dijo ir primero por la pista y dar la vuelta, para tener más pista por delante. Hoy alcanza igual: seguí",
+  "vuelo.sinRemontarNoAlcanza":
+    "La torre nos dijo ir primero por la pista y dar la vuelta: desde acá no alcanza la pista para despegar",
+  "palabra.sinRemontar": "Primero, la vuelta",
+  /*
    * Darle paso a uno que viene de frente por la calle de tu raya: la raya se
    * corta antes de esa calle y se espera ahí. Lo que diría el control de
    * tierra —«give way»—, contado en casa. Ver `decirQueDasPaso`.

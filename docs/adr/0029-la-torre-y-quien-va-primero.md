@@ -1556,3 +1556,171 @@ dura los ciento veinte segundos de la prueba y los que hagan falta.
   verde a los 293 s, esperando detrás de EC-MCM, primero en la fila y después
   despegando. Tiene porqué y acaba, pero es mucho más que la paciencia de la
   fila (`PACIENCIA_EN_LA_FILA`, 180 s); no se ha mirado.
+
+## Enmienda (20-11-2026, H41f): la TORA que se dice y la que se tiene, y quien no remonta
+
+Los dos flecos que dejó la H41e.
+
+### La TORA que se decía no era la que había
+
+**Lo que pasaba.** Saliendo por una intersección, la torre daba la pista
+desde el punto donde la calle toca el eje —725 m en la C de El Hierro con el
+JAZ 40—, la cuenta de si bastaba (`vueltaDelBackTaxi`) usaba ese mismo
+número, y el avión soltaba frenos con menos: 717,6 m con el piloto perfecto y
+708 con el del banco, porque para quedar en el eje la raya redondea el codo y
+se come unos metros pasado el nudo. Ni lo dicho era lo publicado ni la cuenta
+restaba nada por alinearse.
+
+**Lo real.** Son dos números:
+
+- La TORA de una intersección se publica **desde el borde de la calle**, el
+  del lado de la cabecera, para que cuadre con la de la pista entera (CAP 168
+  de la CAA británica, cap. 3; leído citado, no en el original). Donde el AIP
+  la publica, es la suya: en Los Rodeos, «12 INT E-2» TORA 2.546 y «30 INT
+  E-4» 1.906 (AD 2.13); en La Gomera, «09 INT A» 400 y «27 INT A» 1.100.
+- Esa longitud declarada «no tiene en cuenta la alineación del avión en el
+  sentido del despegue», y quien calcula el despegue le resta la **pérdida por
+  alineación**: para la TORA y la TODA, lo que va del principio de la pista
+  declarada a las ruedas principales ya alineadas; para la ASDA, a la rueda
+  de morro (AMC1 CAT.POL.A.205, Reglamento (UE) 965/2012, con la entrada a
+  noventa grados y la media vuelta en la pista; el AMC da la cuenta con la
+  batalla y el ángulo de la rueda de morro cuando el fabricante no da la
+  suya). Las tablas por tipo no se han leído: la página de la CAA con el AMC
+  no se abrió sin navegador.
+
+**Decisión: una sola cuenta**, `pistaDesdeLaBoca` en `plan-de-vuelo.ts`, que
+da las dos cosas y de la que sale todo lo demás:
+
+- **La TORA** (`desdeLaEntrada`, la que dice la torre): la del AIP si la
+  publica para esa calle y esa cabecera (`bocasPermitidas` guarda ahora la
+  cifra junto a la boca), y si no, la que publicaría: desde donde el borde de
+  la calle del lado de la cabecera se junta con el borde de la pista, con el
+  ancho de la calle de los datos o el que se dibuja (`ANCHO_RODADURA`), y
+  más atrás cuanto más en diagonal llega (con el seno de la entrada, que no
+  baja de 0,5). Una entrada a menos de `EN_LA_CABECERA` del final es la de la
+  cabecera: la pista entera.
+- **La alineación** (`alinearse`): del principio de esa TORA a donde el avión
+  queda en el eje **siguiendo la raya**, alisada como la alisa `ponerRuta`
+  con el radio de giro de este avión: donde empieza su recta final. Es la
+  pérdida de este avión por esta entrada, y no una tabla: el juego sabe por
+  dónde va a ir. Como mucho la de un codo de noventa grados, que lo que llega
+  mirando a la cabecera es de remontar (H41e). Con la del AIP, la alineación
+  se cuenta desde donde empieza la suya —la pista entera menos esa cifra—:
+  la E-2 de Los Rodeos entra a doce grados, como la salida rápida que es para
+  la 30, y desde el borde de la calle en los datos habría 2.705 m; el AIP da
+  2.546, que empiezan unos treinta metros pasado donde el avión ya va
+  alineado, así que ahí la alineación es cero y la cuenta se queda con la
+  publicada.
+- **Lo que decide** es la TORA menos la alineación (`alSoltarFrenos`, el
+  `porDelante` de la intersección): `vueltaDelBackTaxi`, `bocaDeEntrada`,
+  `pistaParaRemontar` y `comoSeSale` usan ese número. Si con él la
+  intersección ya no basta, se remonta.
+
+**Medido sin navegador** (`tora-de-la-interseccion.test.ts`, piloto perfecto
+del puesto a la carrera):
+
+- **El Hierro, 34, JAZ 40, sin viento**: la torre dice **749 m** (antes 725),
+  la alineación es de **29 m** y quedan **720** al soltar frenos; el piloto
+  perfecto queda en el eje con 717,6 —la fase de despegar llega un par de
+  metros después de acabar el codo—. Pide 606: intersección, sin ir hacia
+  atrás.
+- **El mismo campo, con un día que pide tres metros más de los 720** (cola
+  buscada en la prueba): menos que la TORA dicha, más que lo que queda
+  alineado. Antes salía desde la C; ahora remonta, más de cien metros hacia
+  la cabecera, y suelta frenos con lo que pide. Es el caso de la segunda
+  tirada de la H41e, la de 37 °C, que pedía 722 con 725 desde el nudo: hoy
+  remontaría.
+- **Los Rodeos, 12, JAZ 90**: sale por la E-2, la torre dice **2.546** —la del
+  AIP; antes, la de la geometría— y la alineación es cero.
+- `remontar-por-el-chaflan`, `remontar-por-tipo`, `por-donde-se-sale-en-la-roja`,
+  `back-taxi`, `back-taxi-vuelta`, `entrada-al-reves`, `salida-del-trafico` y
+  `despegue-en-taguato`, en verde sin tocarlas.
+
+### Quien no remonta
+
+**Lo que pasaba.** Con la torre diciendo «backtrack», quien se alineaba en la
+boca y daba gas despegaba en cuanto la pista que quedaba bastaba sin
+márgenes (`deducir` en `flight/vuelo.ts`: el hecho gana al plan). Pasaba a
+«despegando» con un remonte trazado y nadie decía nada.
+
+**Lo real.** Despegar sin hacer lo autorizado no es lo que se enseña. Pero
+aquí no se castiga: se ve la consecuencia y se vuelve a intentar (AGENTS.md).
+Y la pista que necesita un avión es cosa de quien vuela, no de la torre:
+a uno que empieza la carrera, una torre le dice «stop immediately» si ve un
+peligro (SKYbrary, *Take-off without ATC clearance*; Doc 4444, 12.3.4.10),
+que es una orden de emergencia, no una lección.
+
+**Decisión.** Lo de otros casos de no seguir la raya —pasarse la salida
+(`decirSalPorLaSiguiente`)—: la máquina sigue haciendo lo de siempre y se
+cuenta el porqué.
+
+- **La fase, como estaba.** Si queda la pista que necesita sin márgenes, es
+  un despegue con su V1 y su Vr; si no, sigue siendo rodaje: en Guyrami y
+  Tukã el tope de rodaje no deja correr, y de Taguató para arriba lo que se
+  ve es el aviso de que se acaba la pista (`runningOutOfRunway` en el HUD).
+- **Se apunta una vez** (`vigilarElRemonte`, `Paso.sinRemontar`): con el
+  remonte por delante, derecho en el eje hacia donde se despega y por encima
+  de `YA_ES_RODAJE` —el mismo hecho que gana al plan—, con si bastaba. Y
+  solo si desde que pisó la pista no fue hacia la cabecera más de
+  `SIN_REMONTAR` (30 m): quien remontó y dio la vuelta antes del lazo
+  dibujado hizo lo que dijo la torre, aunque la bandera del remonte siga
+  puesta hasta llegar a él.
+- **La instructora lo cuenta en los tres peldaños de abajo**
+  (`decirQueNoSeRemonto` en `game.ts`), con calma y solo grabada: con la
+  pista que alcanza, «La torre nos dijo ir primero por la pista y dar la
+  vuelta, para tener más pista por delante. Hoy alcanza igual: seguí»; con la
+  que no, «…: desde acá no alcanza la pista para despegar», y el «frená» lo
+  pone el aviso de fin de pista. En la tarjeta, la frase o «Primero, la
+  vuelta», según se lea.
+- **La torre calla** en todos: lo que diría es una orden de emergencia, y el
+  peligro, si lo hay, lo avisa la cabina.
+
+Las pruebas, en `vuelo.test.ts`: con la pista que basta se despega y se
+apunta `basta` una vez; sin ella sigue el back-taxi y se apunta `noBasta`;
+rodando por la raya, yendo hacia la cabecera, sin remonte o habiendo
+remontado ochenta metros y dado la vuelta antes del lazo, nada.
+
+**Frases nuevas, sin grabar** (es-PY y en): `vuelo.sinRemontar`,
+`vuelo.sinRemontarNoAlcanza` y `palabra.sinRemontar`. Sin grabación no
+suenan; la tarjeta sale igual en los peldaños que leen.
+
+### En el navegador
+
+Una tirada de cada, con el piloto del banco (`verificar-despegue.mjs`, que
+ahora escribe también la alineación).
+
+- **El Hierro, Taguató, JAZ 40, a 42 °C**
+  (`OGA_URL_EXTRA='&metar=GCHI%20201200Z%2015005KT%20CAVOK%2042%2F10%20Q1013'`),
+  **20 de 20**. Pide 734 m: no le basta ninguna de las dos bocas de la C, y
+  el plan dice remonte hasta el final, por la cola, con 1.217 m por delante.
+  Entra por el chaflán que mira a la cabecera (en el metro −114 del eje), va
+  hasta el −605, da la vuelta en el −590 y suelta frenos en el −516. Rota con
+  509 m de 1.254. De la instructora sonó `vuelo.backTaxi`; **la torre no dijo
+  el `torre.canario.backtrack`** que sí sonó en la tercera tirada de la H41e,
+  con la verde a los 10,8 s. Lo que se dice al remontar no lo toca esta
+  enmienda, y no se ha mirado por qué no sonó.
+- **Los Rodeos, Taguató, JAZ 90, por la 12**, **21 de 21**. Pisa la pista por
+  la E-2 en el metro −1.130 —la calle entra a doce grados— y suelta frenos en
+  el −999, con 2.583 m por delante: más de los 2.546 que publica el AIP, que
+  es con lo que decide ahora la cuenta. Ni la oferta ni la TORA sonaron en
+  esta tirada (la verde a los 10,8 s, sin roja que dé tiempo, como en la
+  H29m), y el banco leyó el plan con la carrera empezada, cuando ya se ha
+  borrado (lo mismo que contó la H41e): **la TORA dicha de Los Rodeos está
+  comprobada en vitest, no en el navegador**.
+- **Quien no remonta** no se ha volado en el navegador: el piloto del banco
+  sigue la raya del remonte desde la H41e. Está en `vuelo.test.ts`.
+
+**Vitest entero**, una vez y con el código final: 564 de 564 ficheros, 11.221
+pruebas en verde, 32 saltadas y una pendiente, ninguna en rojo, en 1.636 s con
+dos hilos.
+
+### Lo que queda
+
+- **El tráfico no resta la alineación**: `pistaDesde` en
+  `suelo-del-trafico.ts` sigue con la TORA del AIP o la pista desde el nudo.
+  La cuenta de quien juega y la del tráfico vuelven a ser dos.
+- **El ancho de las calles** no viene en los datos de ningún campo canario;
+  se toma el que se dibuja, 23 m. Con el de verdad, la TORA dicha de El
+  Hierro sería unos metros menor.
+- **Las tablas del AMC por tipo** no se han leído: la alineación sale de la
+  raya que sigue el avión, no de ellas.

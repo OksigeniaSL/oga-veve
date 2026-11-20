@@ -17907,6 +17907,38 @@ export class Game {
   }
 
   /**
+   * **«Backtrack», y se despegó desde la boca** (H41f): con un remonte
+   * autorizado, quien juega se alineó donde entró y dio gas.
+   *
+   * No es lo autorizado, y de verdad no se hace; pero aquí no se castiga, se
+   * ve la consecuencia y se cuenta (AGENTS.md, «Las normas se muestran, no se
+   * imponen»). La máquina de fases ya hace lo que toca —ver `deducir` en
+   * `flight/vuelo.ts`—: si desde ahí queda la pista que el avión necesita sin
+   * márgenes, es un despegue, con su V1 y su Vr; si no, sigue siendo rodaje,
+   * y lo que se ve es el aviso de que se acaba la pista. Lo que faltaba es el
+   * porqué, y eso crece con el peldaño como todo lo que se explica: en los
+   * tres de abajo lo cuenta la instructora, con calma —la torre dijo ir
+   * primero por la pista y dar la vuelta, para tener más pista por delante—,
+   * y en la tarjeta la frase entera o la palabra, según se lea. La voz, solo
+   * con su grabación.
+   *
+   * **La torre no dice nada**, en ningún peldaño. La pista que necesita un
+   * avión es cosa de quien vuela, y lo que una torre le dice a uno que empieza
+   * la carrera cuando ve un peligro es «stop immediately» (Doc 4444,
+   * 12.3.4.10; SKYbrary, *Take-off without ATC clearance*): una orden de
+   * emergencia, no una lección. Aquí el peligro, si lo hay, es quedarse sin
+   * pista, y ése lo avisa la cabina. En el de arriba quedan la raya que
+   * seguía hacia la cabecera y ese aviso.
+   */
+  private decirQueNoSeRemonto(como: "basta" | "noBasta"): void {
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    const larga = como === "basta" ? "vuelo.sinRemontar" : "vuelo.sinRemontarNoAlcanza";
+    const dicho = this.avisoCon(larga, "palabra.sinRemontar");
+    if (dicho.rotulo) this.hud.flash(dicho.rotulo, 5);
+    this.decirLoGrabado(larga);
+  }
+
+  /**
    * **«Give way»: se le da paso a uno que viene de frente** por una calle de
    * tu raya, y la raya se corta antes de ella. Ver `paradaPorElTramo` en
    * `world/plan-de-vuelo.ts`.
@@ -31152,6 +31184,8 @@ export class Game {
      * lámpara de la torre; sin consecuencia, los tres eran adorno.
      */
     if (vista.saltoLaLuz) this.sufrirPercance("sinpermiso");
+    // Y la carrera empezada sin remontar lo que dijo la torre. Ver `decirQueNoSeRemonto`.
+    if (vista.sinRemontar) this.decirQueNoSeRemonto(vista.sinRemontar);
   }
 
   /**

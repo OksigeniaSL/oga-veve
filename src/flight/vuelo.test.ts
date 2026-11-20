@@ -1173,6 +1173,68 @@ describe("rodando por la pista para ir a la cabecera", () => {
   });
 
   /*
+   * **Y se apunta, una vez, que la carrera empezó sin remontar** (H41f), con
+   * si desde ahí la pista bastaba: la torre dijo «backtrack» y se dio gas en
+   * la boca. La fase hace lo de siempre —despegue si basta, rodaje si no— y
+   * el juego lo cuenta. Ver `vigilarElRemonte`.
+   */
+  describe("la carrera sin remontar (H41f)", () => {
+    const corriendo = (mas: Partial<Situacion>): Situacion =>
+      enLaPista({
+        backTaxi: true,
+        desalineado: 1,
+        alEjeDePista: 2,
+        estado: { airspeed: 20, groundSpeed: 20 } as never,
+        ...mas,
+      });
+    const sucesos = (v: Vuelo, s: Situacion, segundos: number) => {
+      const vistos: (string | null)[] = [];
+      for (let t = 0; t < segundos; t += 0.05) vistos.push(v.paso(s, 0.05).sinRemontar);
+      return vistos.filter((x) => x !== null);
+    };
+
+    it("con la pista que basta, se despega y se apunta una vez", () => {
+      const v = new Vuelo();
+      durante(v, enLaPista({ backTaxi: true, desalineado: 1, alEjeDePista: 2 }), 1);
+      expect(sucesos(v, corriendo({ pistaRestante: 800, pistaQueNecesita: 600 }), 3)).toEqual([
+        "basta",
+      ]);
+      expect(v.actual).toBe("despegando");
+    });
+
+    it("sin ella, sigue siendo rodaje, y se apunta que no basta", () => {
+      const v = new Vuelo();
+      durante(v, enLaPista({ backTaxi: true, desalineado: 1, alEjeDePista: 2 }), 1);
+      expect(sucesos(v, corriendo({ pistaRestante: 500, pistaQueNecesita: 600 }), 3)).toEqual([
+        "noBasta",
+      ]);
+      expect(v.actual).toBe("back-taxi");
+    });
+
+    it("rodando por la raya, o ya dada la vuelta, no se apunta nada", () => {
+      const v = new Vuelo();
+      // A paso de rodaje y derecho: la entrada en la pista, no una carrera.
+      expect(
+        sucesos(v, enLaPista({ backTaxi: true, desalineado: 1, alEjeDePista: 2 }), 2),
+      ).toEqual([]);
+      // Hacia la cabecera, que es remontar.
+      expect(sucesos(v, corriendo({ desalineado: 178 }), 2)).toEqual([]);
+      // Y sin remonte por delante, la carrera es la de siempre.
+      expect(sucesos(v, corriendo({ backTaxi: false }), 2)).toEqual([]);
+    });
+
+    it("quien remontó y dio la vuelta antes del lazo, sí hizo lo que dijo la torre", () => {
+      const v = new Vuelo();
+      // Entra en el metro 0 y va hacia la cabecera ochenta metros.
+      for (let a = 0; a >= -80; a -= 2)
+        v.paso(enLaPista({ backTaxi: true, desalineado: 178, alLargoDePista: a }), 0.05);
+      expect(
+        sucesos(v, corriendo({ alLargoDePista: -70, pistaRestante: 800, pistaQueNecesita: 600 }), 2),
+      ).toEqual([]);
+    });
+  });
+
+  /*
    * Y **rodar no es despegar**: con la bandera puesta, derecho en el eje pero a
    * paso de rodaje, sigue siendo back-taxi. Si no, la propia entrada en la
    * pista —que se hace alineada— ya contaría como carrera.
