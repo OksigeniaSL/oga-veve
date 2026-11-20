@@ -910,3 +910,102 @@ estaban.
 - **Las tres de El Hierro de `salida-tapada.test.ts`** que vio la H41, por la
   media vuelta a su paso: siguen sin su caso. El caso medido sí vuelve a salir.
 - **El navegador**: el candado seguía ocupado por la ronda; no se voló.
+
+## Enmienda (20-11-2026, H41d): el remolque que barría tu raya, la 3A con cola y los casos de El Hierro
+
+### Los siete segundos de Los Rodeos eran un remolque
+
+EC-ADX es un reactor del tráfico en un puesto de contacto, el 23, y sale
+empujado por un tractor. Anunciado a los 40 s de dejar tú la pista, acaba de
+empujar a los 146 s de la tirada, con 37 m de su camino hechos, y desde ahí
+sigue con el tractor puesto: el freno (4 s), soltarlo (8 s), el tractor que
+se aparta, la persona que va a su sitio y el pasador y el saludo (6 s). Son
+43 s parado, hasta los 189 s. En ese rato:
+
+- **No cede ni espera tramo** porque no rueda: `empujar` le pone a cero lo
+  cedido y lo esperado, y `repartirLosTramos` no lo mira mientras lleva
+  remolque. Por eso `frenteATi` es nulo.
+- **Lo que barre el empuje sigue siendo suyo** (`zonaDelEmpuje`, ADR 0025),
+  también para ti: tu raya se corta antes (`tramosQueTienen`, marcada
+  `empuja`), y te paras a 67,7 m de él a los 183 s.
+- **Al saludo queda libre** mirando hacia donde va a rodar, que es tu calle
+  de frente; los dos estáis ya dentro del camino del otro, se le marca
+  «frente» y recula. De los 183 a los 189 s, parados y mirándoos: los 6,2 s.
+
+Lo que lo destapa es la R recta: a 15,4 m/s llegas 35 s antes que con el
+zigzag, que te dejaba en 5,1 y te hacía llegar después del saludo. Lo que
+estaba mal es la autorización del empuje: `calleLibreParaEmpujar` miraba
+dónde estás tú y `porDondeVa`, los metros de tus próximos segundos —como
+mucho cuatro veces tu velocidad, unos 60 m a treinta nudos—, y no la raya
+entera que el control ya te había dado. El empuje empezó contigo a cientos
+de metros, y un empuje con su saludo coge la calle más de un minuto.
+
+### Decisión
+
+- **No se autoriza un remolque cuya zona toca tu raya** (`EnTierra.ruta`),
+  en `calleLibreParaEmpujar`. Es lo que ya decía su comentario —el que rueda
+  por detrás del puesto pasa primero— y lo que hace el control de tierra: no
+  aprueba un «pushback» hacia la calle por la que acaba de mandar rodar a
+  otro. Espera enganchado, sin baliza, a que pases.
+- **No deja a nadie esperando al otro**: enganchado y sin empezar, no
+  reserva nada (`empujando` es falso) y tu raya no se corta por él.
+
+### El JAZ 40 en El Hierro con cola: la intersección se la da
+
+Por la 34, con 4 m/s de cola, pide 740,7 m (606,3 un día de tablas; ADR
+0027, la de su manual con el 1,33 de escuela). Desde la 3A se entra en la
+pista por los dos chaflanes de la C: el que mira hacia donde se despega llega
+al eje con 724,9 m por delante, y el que mira a la cabecera, 23 m más atrás,
+con 748,1. Ninguno le va bien sin media vuelta —por el primero hay que
+remontar; por el segundo se llega mirando a la cabecera— y entre dos así
+`bocaDeEntrada` coge el de menos rodaje. Con el grafo de main ganaba el
+primero, y remontaba; con el de la H41c gana el segundo, y con la media
+vuelta dada queda alineado a unos 744 m del final, que le bastan.
+
+La prueba pedía el remonte por los 23 m de un empate de rodaje, no por la
+pista. Ahora mira el remonte con 5 m/s de cola, que piden 776,4 m y no se los
+da ningún chaflán (con 4,5 m/s ya son 758,4 y también remonta), y con 4 m/s
+que la pista que tiene por delante, salga por donde salga, le basta y que
+dice que es por el viento.
+
+### Los casos de El Hierro de `salida-tapada.test.ts`
+
+Buscados con el banco de la propia prueba:
+
+- **Con torre**, 192 tiradas: las dos cabeceras, el JAZ 20 y el JAZ 90, doce
+  parejas de salidas de los 700 y 660 s a los 160 y 120 s antes de tu toma, y
+  las semillas 1 a 4. Solo hay vuelta con los dos saliendo a los **560 y
+  530 s**: por la 16 con el JAZ 20 (semillas 3 y 4) y el JAZ 90 (3), y por la
+  34 con el JAZ 20 (3). Las demás, ni vuelta ni aire.
+- **Sin dar la vuelta y con AFIS**, de los 580/550 a los 540/510 y con las
+  semillas 1 a 4: con 560/530 y la semilla 3, por las dos cabeceras, la
+  vuelta pedida y no dada acaba en el aire, y el AFIS avisa y propone irse.
+
+Las tres pruebas vuelan ahora también los 560 y 530 s
+(`SALEN_EN_EL_HIERRO`), y vuelven a medir lo que dicen: «lo que se pide es
+real» con torre, «te vas al aire» sin dar la vuelta, y el aviso y la
+propuesta del AFIS. Encarnación sigue con las cuatro de siempre. No se ha
+quitado ninguna.
+
+### Lo medido
+
+- `de-frente-en-la-calle.test.ts`, Los Rodeos por la 12 con el JAZ 110 y
+  EC-ADX a los 40 s: 0 s de frente, lo más cerca 77,1 m (la separación es
+  54,6) y se llega al puesto. Los doce casos de Los Rodeos, en verde.
+- `remolque.test.ts` y `recula-de-frente.test.ts`, en verde.
+- `remontar-por-tipo.test.ts` y las tres de El Hierro de
+  `salida-tapada.test.ts`, en verde, y «el caso medido: sin la regla sale el
+  fallo» sigue saliendo.
+- Vitest entero, una vez, con todo lo de arriba: 547 de 547 ficheros y
+  10.969 pruebas en verde y 29 saltadas, ninguna en rojo, en 1.092 s con
+  dos hilos.
+
+### Lo que queda
+
+- **El chaflán que mira a la cabecera, en El Hierro con cola**: se entra por
+  él, se rueda unos metros pista abajo hacia la cabecera y se da la media
+  vuelta. Para la radio es una salida por intersección; para un control de
+  verdad, rodar hacia atrás por la pista es remontar, aunque sean diez metros.
+  No cambia lo que se despega, pero lo que se dice no es lo que se hace.
+- **El navegador**: `tenerife-norte taguato 1 jaz-90` no se voló; el candado
+  tenía en cola otros tres bancos y no cabían en el tope de esta tanda.
