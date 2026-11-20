@@ -59,6 +59,10 @@
       "ms": 1909,
       "h": "8858f62e17"
     },
+    "cabina.eightyKnots": {
+      "ms": 866,
+      "h": "8134dbdff3"
+    },
     "cabina.engineFailure": {
       "ms": 978,
       "h": "0bb51aaa6d"
@@ -286,6 +290,9 @@
     ],
     "cabina.descendDescendNow": [
       "cabina.descendDescendNow"
+    ],
+    "cabina.eightyKnots": [
+      "cabina.eightyKnots"
     ],
     "cabina.engineFailure": [
       "cabina.engineFailure"
