@@ -126,6 +126,7 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
+import { llamadasConLoDeDetras, vocesAjenas } from "./voces-de-la-escena.mjs";
 
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5602);
 const FOTOS = process.env.OGA_FOTOS ?? null;
@@ -1907,11 +1908,13 @@ async function elCapitulo(dada = null) {
       lasDichas.includes("inicio.ara.pasaje.largo.llegamos") && !lasDichas.includes("inicio.ara.pasaje.fin"),
       "",
     );
-    const ajenas = l.habladas.filter((h) => !/ (inicio\.|comandante\.|tripulacion\.)/.test(h));
+    // La llamada de cabina de sus anuncios es suya, con su anuncio detrás: ver `voces-de-la-escena.mjs`.
+    const ajenas = vocesAjenas(l.habladas);
+    const llamadas = llamadasConLoDeDetras(l.habladas);
     comprobar(
       "ni otra voz que no sea de la escena, ni la de la máquina",
       ajenas.length === 0 && l.maquina.length === 0,
-      `boca: ${ajenas.slice(0, 3).join(" · ") || "nada ajeno"} · máquina: ${l.maquina.slice(0, 3).join(" · ") || "nada"}`,
+      `boca: ${ajenas.slice(0, 3).join(" · ") || "nada ajeno"} · máquina: ${l.maquina.slice(0, 3).join(" · ") || "nada"} · llamadas: ${llamadas.join(" · ") || "ninguna"}`,
     );
     comprobar("Ara no se duerme en este capítulo", l.siestas.length === 0, `${l.siestas.length} siestas`);
     if (CAPITULO === "2") {
