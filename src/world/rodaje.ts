@@ -1148,6 +1148,69 @@ function buscarEnganches(
   return buenos;
 }
 
+/**
+ * **Dónde se encuentra con la red la línea de retroceso de un puesto** (H60c): la recta
+ * que sale de `p` hacia `hacia` —la prolongación de su línea de entrada pintada, por
+ * donde el tractor saca el avión de espaldas—, y el primer tramo que cruza, pasados
+ * `EMPIEZA_EL_RETROCESO` y como mucho a `maxSalto`. Si la recta hasta él no va por
+ * pavimento, o por la plataforma lejos de sus puntas, no hay enganche: por ahí no se
+ * empuja, y la ruta sale como siempre.
+ *
+ * Es el enganche del puesto en la calle a la que llega su línea de entrada, y no en la
+ * más cercana: en un aeropuerto de verdad el avión sale del puesto de espaldas por esa
+ * recta hasta la calle, y la ruta empieza ahí. Ver `deEspaldas` en `rodajesDesde`.
+ */
+function enganchePorDetras(grafo: Grafo, p: Punto, hacia: Punto, maxSalto: number): Enganche | null {
+  const n = Math.hypot(hacia[0], hacia[1]);
+  if (n < 1e-9) return null;
+  const u: Punto = [hacia[0] / n, hacia[1] / n];
+  const along = (q: Punto) => (q[0] - p[0]) * u[0] + (q[1] - p[1]) * u[1];
+  const lado = (q: Punto) => (q[0] - p[0]) * u[1] - (q[1] - p[1]) * u[0];
+  const cajas = cajasDeLosTramos(grafo.tramos);
+  let mejor: Enganche | null = null;
+  grafo.tramos.forEach((t, k) => {
+    if (t.pista || !grafo.desde[t.a]?.includes(k)) return;
+    if (aLaCaja(cajas, k, p) > maxSalto + HOLGURA_DE_LA_CAJA) return;
+    const pts = t.puntos;
+    let recorrido = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i]!;
+      const b = pts[i + 1]!;
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const la = lado(a);
+      const lb = lado(b);
+      if (l > 1e-9 && !(Math.sign(la) === Math.sign(lb) && Math.min(Math.abs(la), Math.abs(lb)) > EN_LA_RECTA)) {
+        let f: number;
+        if (Math.abs(la) <= EN_LA_RECTA && Math.abs(lb) <= EN_LA_RECTA) {
+          // Un tramo que va por la propia recta, como la línea de entrada que es calle: desde donde empieza la recta.
+          const ta = along(a);
+          const tb = along(b);
+          const quiere = Math.max(EMPIEZA_EL_RETROCESO, Math.min(ta, tb));
+          f = Math.abs(tb - ta) > 1e-9 ? Math.max(0, Math.min(1, (quiere - ta) / (tb - ta))) : 0;
+        } else f = Math.abs(la - lb) > 1e-9 ? Math.max(0, Math.min(1, la / (la - lb))) : 0;
+        const q: Punto = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+        const s = along(q);
+        if (s >= EMPIEZA_EL_RETROCESO && s <= maxSalto && Math.abs(lado(q)) <= EN_LA_RECTA && (!mejor || s < mejor.salto))
+          mejor = { tramo: k, punto: q, desdeA: recorrido + f * l, salto: s };
+      }
+      recorrido += l;
+    }
+  });
+  if (!mejor) return null;
+  const e: Enganche = mejor;
+  return porPavimento(grafo, p, e.punto, false, false) ? e : null;
+}
+
+/**
+ * Desde dónde empieza a buscarse la calle por detrás del puesto, m: lo de antes es el
+ * propio puesto, y la calle que acaba en él —la línea de entrada, si es calle— lo toca
+ * ahí sin cruzar la recta.
+ */
+const EMPIEZA_EL_RETROCESO = 5;
+
+/** Lo que puede quedar un tramo de la recta del retroceso y cruzarla todavía, m. */
+const EN_LA_RECTA = 0.5;
+
 /** Cuántos tramos, de los más cercanos, se miran para enganchar. */
 const TRAMOS_QUE_SE_MIRAN = 40;
 
@@ -1618,11 +1681,22 @@ export function rodajesDesde(
      * atrás por la pista.
      */
     readonly desdeLaCalle?: boolean;
+    /**
+     * **Si el origen es un puesto del que se sale empujado por su raya pintada** (H60c):
+     * hacia dónde va la cola, la prolongación de la línea de entrada. La ruta engancha el
+     * puesto en la calle a la que llega esa recta, y busca su camino desde ahí, en vez de
+     * engancharlo a la más cercana. Si la recta no encuentra calle por pavimento, como
+     * siempre. Ver `enganchePorDetras`.
+     */
+    readonly deEspaldas?: Punto | null;
   } = {},
 ): (Ruta | null)[] {
-  const salidas = enganches(grafo, origen, maxSalto, !!opciones.desdeFuera).filter(
-    (e) => !opciones.desdeLaCalle || !grafo.tramos[e.tramo]!.pista,
-  );
+  const porDetras = opciones.deEspaldas ? enganchePorDetras(grafo, origen, opciones.deEspaldas, maxSalto) : null;
+  const salidas = porDetras
+    ? [porDetras]
+    : enganches(grafo, origen, maxSalto, !!opciones.desdeFuera).filter(
+        (e) => !opciones.desdeLaCalle || !grafo.tramos[e.tramo]!.pista,
+      );
   if (!salidas.length) return destinos.map(() => null);
   const ocupadosAqui = tramosOcupados(grafo, ocupados);
 
