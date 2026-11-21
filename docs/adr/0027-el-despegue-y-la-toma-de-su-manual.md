@@ -7162,3 +7162,209 @@ se queda a treinta pies —la primera—, y a metro y medio pide de más.
 - **La Vref del 747-100**, cuatro nudos por debajo de la del juego.
 - **El JAZ 110 en el navegador**, que cambia como el JAZ 120 y solo se ha
   medido en la mesa.
+
+## Enmienda H54 (21-11-2026): la actitud de la final de los reactores, la Vref del 747 clásico y el picado del suelo
+
+H53 dejó tres cosas del juego, no del banco: el 747 del juego baja la senda
+con el morro tres grados más picado que el de su manual, su Vref es la del
+-400 y no la de un 747 clásico, y el colchón del suelo no tiene el picado que
+lo acompaña. Aquí se miden las tres en los tres reactores. **En el juego entra
+solo la Vref**; la actitud y el picado se dejan medidos y con su cifra, por lo
+que mueven al entrar (abajo).
+
+### La vara
+
+- **747-400** (Boeing, *747 Flight Crew Operations Manual*, D6-30151-400, rev.
+  2009, PI.10.39-40, vuelo con la velocidad no fiable), con 250 t: en la senda
+  de 3° con los flaps a 30 y la Vref de treinta más diez, **1,0° de morro**
+  (0,5° con 200 t y 1,0° con 300); con los flaps a 25 y la suya más diez, 2,0°;
+  nivelado con los flaps a 20 y la Vref de treinta más diez, 7,5°; limpio a la
+  más ochenta, 5,5°.
+- **787-9** (Boeing, *777/787 Flight Crew Training Manual*, rev. 14, 2021, pp.
+  5.27-5.28, «ILS Approach - Landing Geometry»): en la senda de 3° con los
+  flaps a 30, la Vref más cinco y la masa típica al aterrizar, **1,0°** (el -8,
+  1,3°; el -10, 1,1°), medio grado menos por cada cinco nudos de más.
+- **E170** (Embraer, *Airplane Operations Manual* AOM-1502-003, rev. 21, 2016,
+  4-02-01 p. 52, tablas de velocidad no fiable): en la senda de 3° con
+  slat/flap FULL a la Vref más diez, **0°** de 50.000 a 70.000 lb y 1° con
+  80.000; con slat/flap 5, 4°. Limpio y nivelado a la Vref FULL más sesenta,
+  7° con 60.000-70.000 lb.
+- **La Vref del 747 clásico** (Boeing, *Aerodrome Reference Code and Approach
+  Speeds*, rev. A, agosto de 2026): **142 nudos al 747-300 con 564.000 lb**
+  —las 255,8 t de la ficha— y 145 al 747-100B con 585.000, que con la raíz de
+  la masa son 142,4 a la de la ficha. Los dos llevan el ala del -100 (511 m²,
+  59,64 m). El -400, con su ala más larga, da 153 a 630.000 lb.
+
+### Lo medido
+
+En la mesa de H53 (`h54/mesa/` del scratchpad), con la senda de 3° en aire
+quieto, el automático del juego y el adicional del manual, la media de los
+120 a los 40 m de ruedas, con la masa de la ficha:
+
+| | Morro, el modelo | Ángulo | El manual |
+|---|---|---|---|
+| JAZ 120 (747), flaps 30, Vref + 10 | **−2,4°** (−1,8° con la Vref nueva) | 0,5° (1,2°) | 1,0° |
+| JAZ 110 (787-9), flaps 30, Vref + 5 | −0,2° | 2,9° | 1,0° |
+| JAZ 90 (E170), flaps 30, Vref + 10 | **−3,1°** | −0,2° | 0° |
+
+**Por qué**: con el ángulo de ataque y la sustentación de la ficha, lo que
+sobra es lo que suman los flaps de aterrizar a igual ángulo. La sustentación
+que piden la masa y la velocidad cuadra con la de verdad —el 747 lleva un CL
+de 1,31 a la Vref más diez, y el -400 del FCOM 1,18 con su ala de 541 m², 1,25
+contado con la de 511—; lo que no cuadra es el reparto: los flaps dan tanto
+que el ala vuela casi sin ángulo. Para el ángulo del manual hacen falta, con la recta y el `cl0` de cada
+ficha:
+
+| | Los de aterrizar, hoy | Los de la actitud del manual |
+|---|---|---|
+| JAZ 120, flaps 30 | 1,0 | 0,763 |
+| JAZ 120, flaps 20 (7,5° nivelado) | 2/3 | 0,48 |
+| JAZ 110, flaps 30 | 0,82 | 0,716 |
+| JAZ 90, flaps 30 | 1,38 | 1,125 |
+
+El `cl0` no es: limpio, por la cuenta de su recta, el E170 del modelo va a
+7,7° a la Vref más sesenta contra los 7° del AOM, y el 747 a 4,9° contra los
+5,5° del -400 a la más ochenta. Tampoco hace falta incidencia del ala: el
+ángulo del modelo ya es el del fuselaje. Con esas cifras, y con la pérdida de los de aterrizar llevada al
+ángulo que deja el mismo CL máximo —el de la Vref—, la mesa da 1,0°, 1,0° y
+0,0°.
+
+### Lo que se cambia: la Vref del 747
+
+**142 nudos** (`approachSpeed`), la de la tabla de Boeing a la masa de la
+ficha, en vez de los 146 del -400. Y con ella la pérdida con los flaps de
+aterrizar, para que la Vref siga siendo 1,3 veces la del modelo: el CL máximo
+pasa de 2,40 a 2,54, el de 109,2 nudos de pérdida, con el ángulo de los
+Krueger de esa muesca de 0,25 a 0,279 rad. Sigue en la categoría D (de 141 a
+165 nudos). Las del 787 y el E170 ya eran de su fuente, la base de datos de
+características de aeronaves de la FAA (144 y 124 a su máximo al aterrizar).
+
+Dos pruebas lo notan, y ninguna es del avión:
+
+- **El avisador de pérdida en la final** (`avisador-en-la-final.test.ts`)
+  contaba la pérdida con el ángulo de la ficha y no con el de los Krueger de su
+  muesca, que es el que usa el modelo: ahora usa `anguloDePerdida`.
+- **La prueba del punto de toma** (`recogida-del-reactor.test.mjs`): a 142 más
+  ocho el 747 del banco ya no flota en esas sesenta finales sin la regla, y la
+  prueba no tenía qué quitar. Se queda con la Vref de H53, 146, donde se vio el
+  fallo. La más dura pasa de por debajo de 3 m/s a 3,03, y el tope es ahora el
+  de la toma dura de transporte, diez pies por segundo (`DURO_DE_TRANSPORTE`).
+
+### Lo que no se cambia todavía: la actitud
+
+Puesta en la mesa —las cuatro cifras de arriba—, la actitud **es lo que más
+arregla al banco del 747**, y lo que lo estropea con rachas fuertes es ir
+cuatro nudos más despacio (la Vref nueva sola, la columna del medio):
+
+| 200 finales | Más de 2 m/s | Pasadas de 600 m | La más larga | Mediana |
+|---|---|---|---|---|
+| JAZ 120, σ_w 1: antes / Vref / Vref y actitud | 23 / 32 / **21** | 5 / 4 / **1** | 706 / 615 / 623 m | 460 / 435 / 402 m |
+| JAZ 120, σ_w 1,5 | 71 / 76 / 88 | 6 / 9 / 8 | 2.206 / 947 / 924 m | 395 / 367 / 352 m |
+| JAZ 120, la actitud con la Vref de antes (146), σ_w 1 / 1,5 | 21 / 61 | 1 / 4 | 634 / 637 m | 434 / 376 m |
+| JAZ 110, σ_w 1: antes / actitud | 11 / 12 | 2 / 2 | 777 / 774 m | 441 / 427 m |
+| JAZ 110, σ_w 1,5 | 42 / 40 | 2 / 1 | 2.460 / 696 m | 368 / 374 m |
+| JAZ 90, Los Rodeos, σ_w 1: antes / actitud | 9 / 19 | 0 / 0 | 485 / 496 m | 281 / 271 m |
+| JAZ 90, Los Rodeos, σ_w 1,5 | 69 / 52 | 0 / 0 | 520 / 500 m | 240 / 214 m |
+
+Y no entra porque **mueve la mano de los peldaños de abajo**. La firmeza con la
+que la mano sostiene la trayectoria (`mano.ts`) sale de lo que tarda el camino
+en seguir al morro, `(V/g)·(α + cl0/clα)`, con el ángulo desde la sustentación
+nula del ala limpia; con medio grado de ángulo en la final daba su tope, 0,6,
+que es como se afinó. Con los 4° del manual el 747 se queda en 0,51, y en
+Tuka con el gas quieto sube y baja 2,2 m/s (`final-fina.test.ts`, tope 0,1);
+al soltar la tecla, el 787 en Tuka da 2,57 donde el tope es 2,5, y el 747 en
+Taguato Ruvicha tarda 5,07 s en nivelar de 30° con la tecla (tope 5,
+`mano-respuesta.test.ts`). Contar el ángulo solo hasta 2,9° arregla el 747 en
+Tuka y estropea el E170 al soltar (3,26); subir la firmeza a 0,54 arregla el
+747 en Tuka y estropea el E170 con el gas quieto (1,37 m/s). Es afinar la mano
+de los niños con los tres aviones nuevos, y eso pide su tanda. Además se
+mueven, con sus cifras: el «cruza el umbral a 1,3 veces la pérdida» de
+`prestaciones.test.ts`, que cuenta la pérdida con el ángulo de la ficha y no
+con el de su muesca, como contaba la del avisador; el 747 que toca con más
+ángulo y carga menos las ruedas sin los frenos de tierra (0,366 contra 0,35,
+`distancia-de-aterrizaje.test.ts`); la ascendente en la final del JAZ 90
+(`ascendente-en-la-final.test.ts`, 4,01 m/s contra 4,37); y el JAZ 90 de la
+mesa, que con σ_w 1 toca duro el doble (9 a 19) y con σ_w 1,5 deja trece
+finales sin llegar a la pista por debajo de los treinta metros, donde la mesa
+deja de perseguir la senda.
+
+El parche entero, probado en la mesa, es `h54/actitud-y-vref.patch` del
+scratchpad.
+
+### El picado del suelo: hay cifra, y no entra todavía
+
+**La fuente**: el modelo del 747 con el que Boeing y la NASA hicieron su
+simulador, C. R. Hanke y D. R. Nordwall, *The Simulation of a Jumbo Jet
+Transport Aircraft. Volume II: Modeling Data*, Boeing D6-30643, NASA
+CR-114494, 1970 (NTRS 19730001300):
+
+- p. 4.0-35, «Pitching Moment Coefficient, Ground Effect»: ΔCm a un cuarto de
+  la cuerda media con las ruedas en el suelo, por flaps y ángulo del plano del
+  ala. Leído de la gráfica a 0, 4, 8 y 12°: flaps 30, −0,092, −0,128, −0,140 y
+  −0,165; flaps 20, −0,046, −0,062, −0,113 y −0,155; flaps 5 y 10, −0,012,
+  −0,027, −0,075 y −0,121; arriba, +0,038, +0,021, −0,031 y −0,085.
+- p. 2.0-32, la sustentación de lo mismo: con flaps 30, unos +0,2 de 0 a 6°
+  del ala. Por 0,9 (abajo) son 0,18 al tocar, **lo mismo que da la fórmula de
+  Wieselsberger del juego** (+13 % de un CL de 1,4): con las ruedas en el
+  suelo, la sustentación del colchón ya estaba bien. Más arriba la de Boeing
+  dura más: a 13 m de ruedas, la mitad, donde la del juego da un tercio.
+- p. 2.0-31, el factor de altura de las dos: 1 con las ruedas en el suelo, 0,9
+  a 20 pies, 0,78 a 30, 0,6 a 40, 0,4 a 50 y nada pasados los 80.
+- p. 14.2-2: tras volarlo con pilotos de la NASA, Boeing dejó el momento en
+  **0,7 veces** el de la gráfica, la resistencia en 0,3 y la sustentación en 0,9.
+- El plano del ala va unos dos grados por encima del fuselaje: en la misma
+  gráfica, la actitud de rodar cae en 1,6° del ala y la cola toca a 14,5°.
+
+Con los flaps de aterrizar y el ángulo de la recogida son **−0,09 a −0,10 al
+tocar**: con el `cmElevator` de la ficha, 0,42, casi un cuarto de palanca de
+más para sostener el morro en el último metro.
+
+**En la mesa**, con el picado puesto en el modelo del 747 (la tabla por 0,7 y
+el factor de altura del mismo colchón que la sustentación, con la actitud del
+manual): sin viento ni rachas toca a 243 m y 1,58 m/s, y con veinte nudos de
+cara **102 duras de 200** con σ_w 1 y 133 con σ_w 1,5, y casi ninguna larga:
+el banco recoge sin saber que el suelo pica, sostiene la palanca y el morro se
+le cae. Con una mano que sostiene lo que pica el suelo —la palanca que pide,
+sumada—, 508 m y 1,2 m/s sin rachas, 30 duras y 6 largas con σ_w 1, y 73 y 17
+con σ_w 1,5.
+
+**No entra** porque, en cuanto entra, hay que volver a medir lo que vuela el
+747 cerca del suelo sin piloto de carne: la recogida del banco, la del vuelo
+de línea y la del primer aterrizaje (`vuelo-de-linea.ts`, `inicio-aterrizar.ts`)
+y la rotación del despegue, con 10° de morro y flaps 5 en el suelo (−0,08). Y
+la cifra es de un avión: para los demás no hay tabla, y no se inventa.
+
+### Volado
+
+`verificar-vuelo-entero.mjs gran-canaria taguato 1 jaz-120`, desde una foto
+del worktree con la Vref nueva (`h54/arbol-vref` y `h54/v120a.log` del
+scratchpad): **63 de 63**, con las gafas. Llegó a la puerta de los quinientos
+pies a 148 nudos (Vref 142) bajando 4,4 m/s, empezó a recoger a 14,5 m de
+ruedas, 81 m antes del umbral, bajando 4,6 m/s a 146 nudos, y tocó a **429 m y
+1,95 m/s**, a 1,2 m del eje.
+
+| | Puerta de 500 ft | Recogida | Toca | Comprobaciones |
+|---|---|---|---|---|
+| JAZ 120, H53, primera | 157 kt, 4,2 m/s | 13,8 m, 47 m antes, 2,9 m/s, 159 kt | **647 m**, 2,12 m/s | 59 de 62 |
+| JAZ 120, H53, segunda | 149 kt, 3,4 m/s | 13,4 m, 40 m pasado, 3,4 m/s, 154 kt | 545 m, 2,1 m/s | 62 de 63 |
+| JAZ 120, H54 | 148 kt, 4,4 m/s | 14,5 m, 81 m antes, 4,6 m/s, 146 kt | 429 m, 1,95 m/s | 63 de 63 |
+
+**Una tirada sola**: la segunda no se voló, porque el navegador lo tenía otro
+ayudante y no cabía en el tiempo de la tanda. Tocar a 1,95 m/s es el borde de
+los dos metros por segundo, y una tirada no dice si con la Vref nueva el 747
+del banco toca en la zona y sin golpe siempre. El JAZ 90 no se voló: no cambia
+nada suyo. Ni el JAZ 20, que no comparte nada de lo tocado.
+
+El vitest entero, con el cambio: 568 ficheros y 11.290 pruebas, en verde.
+
+### Lo que queda
+
+- **La actitud de los tres reactores**, con las cifras de arriba, junto con la
+  mano de los peldaños de abajo afinada para ellos y las pruebas que cuentan
+  la pérdida y la sustentación con la recta de la ficha.
+- **El picado del suelo del 747**, con la tabla de Boeing, junto con las
+  recogidas que no son de una persona y la rotación del despegue.
+- **El banco a 142 nudos**: en la mesa, con la Vref nueva y la actitud de
+  antes, las duras de σ_w 1 suben de 23 a 32. Y la segunda tirada del JAZ 120
+  en el navegador, que esta vez no cupo.
+- **El JAZ 110 en el navegador**, que sigue medido solo en la mesa.
