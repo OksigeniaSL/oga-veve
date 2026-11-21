@@ -328,6 +328,58 @@ const SERVO = 1.2;
 const AMORTIGUA = 0.4;
 
 /**
+ * **El servo que para el morro cuando gira más de lo que el automático se
+ * permite**, timón por cada radián por segundo de más, por segundo (H57).
+ *
+ * `GIRO_MAXIMO` y `CARGA_TOPE` acotan el giro que se **pide**; esto es lo que
+ * hace que se cumpla también el que **hay**. Hacía falta: el automático coge
+ * el avión con el timón que le dicen que lo sostiene (`Estado.timon`), y si
+ * ese no es el que lleva —el promedio de dos segundos de quien acaba de tirar
+ * para frenar, o la palanca que el banco pedía en ese fotograma—, el morro se
+ * va con el timón de más y `SERVO` lo quita a su ritmo de crucero. Medido en
+ * la mesa con el modelo del juego, enganchando en `FLCH SPD` con cuatro
+ * décimas de timón de más: el morro a 10–16°/s, de 1,4 a 1,7 g, y con diez
+ * nudos de menos el avisador sonando. En el banco del JAZ 40 (H34e), +0,32 y
+ * el morro a 20°/s con 1,71 g.
+ *
+ * Un automático de verdad no se engancha nunca así: el servo se embraga
+ * donde está el timón, y la ley de mandos —«engagement or switching of the
+ * flight guidance system, a mode, or a sensor may not cause a transient
+ * response of the airplane's flight path any greater than a minor transient»
+ * (14 CFR 25.1329(c))— no deja otra cosa. Y las órdenes de cabeceo van
+ * limitadas en ritmo y en actitud, con el amortiguador de cabeceo encima
+ * («Flight director pitch commands are rate- and attitude-limited, combined
+ * with pitch damper control», Garmin, *AXIS Pilot's Guide for Certified
+ * Aircraft*, 190-03123-01, «Pitch Axis and Trim»).
+ *
+ * Así que, al engancharse (`EMBRAGUE`), lo que el morro gire por encima de
+ * `GIRO_MAXIMO` —dos grados y medio por segundo, lo más deprisa que el
+ * automático lo gira nunca— se quita con un servo veinticinco veces más rápido
+ * que el de siempre. Es la misma ley para todos; dentro de ese giro no hace
+ * nada, y el automático vuela como volaba. Con doce, el mismo timón de más
+ * dejaba todavía 1,23 g en el JAZ 40; con treinta, 1,12 como mucho y el
+ * avisador callado (ver `enganche-con-velocidad.test.ts`). Con el tope de la
+ * carga —dos décimas de g a su velocidad, medio grado por segundo en el
+ * crucero del JAZ 120— en vez del giro, el reactor de fuselaje ancho se
+ * columpiaba al volver a cogerlo.
+ */
+const FRENO_DEL_GIRO = 30;
+
+/**
+ * **Cuánto dura el embrague**, s: los segundos después de engancharse en los
+ * que actúa `FRENO_DEL_GIRO` (H57).
+ *
+ * Es cuando el timón que se le dio puede no ser el que lleva el avión, y lo
+ * que se para es eso. Después, no: el morro que gira de más por una racha lo
+ * lleva el lazo de siempre, que es con el que se afinó la senda con rachas y
+ * la recogida de los reactores; con el freno puesto siempre, el JAZ 120 de
+ * `recogida-del-reactor.test.mjs` tocaba más duro con veinte nudos de cara y
+ * rachas, y en crucero se columpiaba al volver a cogerlo (de 0,57 a 1,42 g en
+ * `piloto-automatico.test.ts`).
+ */
+const EMBRAGUE = 5;
+
+/**
  * **Lo que tiene que mover un timón a fondo para que estos dos valgan**: medio
  * radián por segundo al cuadrado de morro, en cada avión y a cada velocidad.
  *
@@ -627,6 +679,8 @@ export interface Memoria {
    * morro: una medida para los dos. Ver `medirLaAceleracion`.
    */
   gases: MemoriaDeGases;
+  /** Cuánto lleva enganchado, s. Ver `EMBRAGUE`. */
+  enganchado: number;
 }
 
 /** La memoria de un automático recién enganchado: aún no ha cogido nada. */
@@ -640,6 +694,7 @@ export function memoriaNueva(): Memoria {
     timon: 0,
     alabeo: 0,
     gases: memoriaDeGasesNueva(),
+    enganchado: 0,
   };
 }
 
@@ -715,6 +770,7 @@ export function mandosPara(
   let throttle: number | null = null;
   // Una sola medida de la aceleración para el morro y para los gases.
   medirLaAceleracion(m.gases, e.velocidad, dt);
+  m.enganchado += dt;
 
   if (o.rumbo !== null) {
     /*
@@ -836,6 +892,14 @@ export function mandosPara(
         ? Math.min(REFUERZO_MAXIMO, Math.max(1, AUTORIDAD_SUFICIENTE / e.autoridadDelTimon))
         : 1;
       m.timon = acotar(m.timon + SERVO * refuerzo * falta * dt, 1);
+      /*
+       * **Y al engancharse, el morro que gira de más se para ya** (H57). Ver
+       * `FRENO_DEL_GIRO` y `EMBRAGUE`.
+       */
+      if (m.enganchado < EMBRAGUE) {
+        const deMas = falta + acotar(-falta, GIRO_MAXIMO);
+        m.timon = acotar(m.timon + FRENO_DEL_GIRO * deMas * dt, 1);
+      }
       elevator = acotar(m.timon + AMORTIGUA * refuerzo * falta, 1);
     }
   } else {

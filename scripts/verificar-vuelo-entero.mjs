@@ -1266,8 +1266,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         gas: conLaVelocidad ? gasDeLaSubida : mandos.throttle,
         verdadera: s.airspeed,
         ritmoDeCabeceo: s.pitchRate,
-        // Lo que lleva la palanca al engancharlo, para no dar un tirón.
-        timon: engancha ? mandos.elevator : undefined,
+        /*
+         * Lo que lleva la palanca al engancharlo, para no dar un tirón: **la
+         * que llegó al avión en el último fotograma** (H57), no la que el banco
+         * pide en este. Al acabarse la frustrada del JAZ 40 a los 120 m, la
+         * ley de actitud de debajo pedía +0,32 —venía de −0,06— y el
+         * automático cogía eso: el morro a 20°/s y 1,71 g (H34e).
+         */
+        timon: engancha ? (palancaQueLleva ?? mandos.elevator) : undefined,
         // Lo mismo que le da el juego. Ver `AUTORIDAD_SUFICIENTE`.
         autoridadDelTimon: o.autoridadDelTimon?.(),
         // Y el aire que sube o baja, también como en el juego: ver `porElAire`.
@@ -2422,6 +2428,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * también ahí). En Guyrami el piloto del banco vuela como volaba.
    */
   const REACTOR_COMPLETO = NECESITA_TECNICA && peldano !== "guyrami";
+  /**
+   * **El gas de la subida**, el que se lleva subiendo y el que se engancha con
+   * el automático en `FLCH SPD`, que no lo toca.
+   *
+   * En el reactor del modelo completo, el que da la velocidad que toca —ver el
+   * comentario del circuito: con todo el empuje de subida acelera sin parar—.
+   * **En la hélice, el de su manual** (H57): a fondo, o la potencia de subida
+   * del que la tiene por debajo de la de despegue. Ver `gasDeSubida` en
+   * `gases-automaticos.ts`. Era también el que sale de la velocidad que sobra,
+   * y al llegar a la altura de aceleración con catorce nudos de más el JAZ 40
+   * enganchaba 0,40: con él no subía el circuito, se iba a 57–71 nudos con la
+   * segunda muesca y sonaba «stall, stall» 33 veces (H34e). Con 0,52, tras la
+   * frustrada, subía a 82–85 nudos con 89 pedidos. En Guyrami y en los lentos,
+   * a fondo, como estaba.
+   */
+  const gasParaSubir = (s) => {
+    if (!NECESITA_TECNICA || peldano === "guyrami") return 1;
+    if (suyas.propulsion === "helice") return suyas.gasDeSubida ?? 1;
+    const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
+    return Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04));
+  };
   /**
    * **Y la bajada que se aprendió volando los de fuselaje ancho, en todos los
    * del modelo completo que vuelan como reactores**: por el arco del viraje a
@@ -6906,11 +6933,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       const altoQueToca = objetivo - base;
       const subiendo = !bajandoYa && alto(s) < altoQueToca - 30;
-      const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
-      const gasSubiendo =
-        NECESITA_TECNICA && peldano !== "guyrami"
-          ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
-          : 1;
+      // Ver `gasParaSubir`.
+      const gasSubiendo = gasParaSubir(s);
       /*
        * **Bajando, a la marca que pide el juego**, pasada a verdadera: la de
        * descenso de la escalera, que va frenando al acercarse —el área
@@ -6995,11 +7019,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const yaBaja = cruceroDesde !== null && t - cruceroDesde >= cruceroPedido;
       const altoQueToca = yaBaja ? ALTO_DE_BAJADA : ALTO_DE_CRUCERO;
       const subiendo = !yaBaja && sigueSubiendo(s, altoQueToca, 15);
-      const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
-      const gasSubiendo =
-        NECESITA_TECNICA && peldano !== "guyrami"
-          ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
-          : 1;
+      // Ver `gasParaSubir`.
+      const gasSubiendo = gasParaSubir(s);
       const aSuVelocidad = Math.min(
         1,
         (yaBaja ? 0.45 : 0.55) + (DE_CIRCUITO - s.airspeed) * 0.04,
@@ -7235,11 +7256,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * todo y la de circuito se coge al nivelar, que ese modelo frena en
        * cuanto se le quita el gas.
        */
-      const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
-      const gasSubiendo =
-        NECESITA_TECNICA && peldano !== "guyrami"
-          ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
-          : 1;
+      // Ver `gasParaSubir`.
+      const gasSubiendo = gasParaSubir(s);
       /*
        * **Y del viento en cola en adelante, el gas que de verdad la sostiene.**
        *

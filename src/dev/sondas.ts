@@ -98,6 +98,7 @@ import { vfeDeAterrizaje } from "../flight/limites";
 import { conUnMotor, maniobraCon, perdidaCon } from "../flight/velocidades-de-despegue";
 import { muescasDeLaPalanca } from "../flight/flaps";
 import { esSelloDelViaje } from "../flight/lo-que-se-toca";
+import { gasDeSubida } from "../flight/gases-automaticos";
 
 /**
  * **El campo en el que el banco aterriza por la otra punta**, o `null`.
@@ -615,6 +616,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * `verificar-vuelo-entero.mjs`.
        */
       propulsion: propulsionDe(juego.aircraft),
+      // Y el gas con el que sube su manual: ver `gasDeSubida` (H57).
+      gasDeSubida: gasDeSubida(juego.aircraft),
       /*
        * Y **lo que mide su tren**, que es la diferencia entre las ruedas y el
        * origen del avión. Sin esto no se puede comprobar desde fuera si un

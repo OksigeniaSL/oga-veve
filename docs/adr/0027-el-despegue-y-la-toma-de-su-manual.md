@@ -8498,3 +8498,127 @@ cuenta», de 1,05 a 1,06, con las cifras de arriba.
   antes de la entrega. Tukã es donde vuela la mano de los peldaños de abajo.
 - **La mesa del JAZ 20** no reproduce la recogida de la avioneta del banco
   (toca casi siempre por debajo de su Vref menos cinco, antes y ahora).
+
+## Enmienda H57 (21-11-2026): el automático que tiraba al engancharse con velocidad de más, y el gas de subida
+
+H34e dejó dos cosas abiertas del relevo de la frustrada al automático en el
+banco del JAZ 40: al engancharse en `FLCH SPD` con catorce nudos de más, **la
+palanca saltó de −0,06 a +0,32 en un fotograma**, con el morro a 20°/s y 1,71
+g; y el gas que se enganchaba, el de `gasSubiendo`, salió de 0,40 y de 0,52,
+con el que el automático pedía 89 nudos y subía a 82–85.
+
+### Lo medido
+
+**De dónde salía el salto.** En la traza del ala de H34e (`h34e/traza-n40.json`
+del scratchpad), en el fotograma del enganche la memoria del automático coge
+0,319 de timón; la palanca que llevaba el avión era −0,058. Esos 0,32 no los
+pidió el automático: eran **la palanca que el banco pedía en ese fotograma**,
+la de su ley de actitud de doce grados, que vuelve a mandar al acabarse la
+frustrada a los 120 m, y que `volarLaSenda` le daba como «lo que lleva la
+palanca al engancharlo» (`mandos.elevator`, antes del tope de ángulo). El
+automático la cogía como buena y su servo la quitaba a su ritmo de crucero:
+medio segundo largo, con el morro ya lanzado.
+
+**Y si le pasa a quien juega.** En la mesa (`h57/mesa.ts` del scratchpad, el
+modelo del juego en Taguató a 900 m: subiendo a 3 m/s con la velocidad de
+partida y enganchado en `FLCH SPD` a la de subida limpia del banco), con el
+timón que le da el juego —`timonAhora`, el que sostenía el avión promediado en
+dos segundos— **no tira en ninguno**: en los JAZ 20, 40, 50, 60, 90 y 120, con
++20, +10 y −10 nudos, la palanca no salta más de 0,02 entre fotogramas, el
+morro gira a 1,5°/s como mucho, la carga queda entre 0,88 y 1,13 g y el
+avisador no suena. Pero el promedio es de dos segundos, y quien acaba de tirar
+para frenar y suelta para engancharlo le da al automático un timón que ya no
+lleva. Con cuatro décimas de más, lo del banco:
+
+| Mesa, 0,38 de timón de más | Morro, giro máx. | Carga | Margen mín. | Avisador |
+|---|---|---|---|---|
+| JAZ 20, +20 / −10 kt | 13,4 / 9,4°/s | 0,73–1,41 / 0,80–1,18 g | 4,5 / **−2,1°** | — / 9,5 s |
+| JAZ 40, +20 / −10 kt | 15,8 / 12,0°/s | 0,71–**1,65** / 0,76–1,34 g | 4,3 / **−1,0°** | — / 1,3 s |
+| JAZ 50, +20 / −10 kt | 11,4 / 8,7°/s | 0,70–1,57 / 0,76–1,29 g | 1,7 / **−0,8°** | — / 1,7 s |
+| JAZ 60, +20 / −10 kt | 10,9 / 9,0°/s | 0,67–1,63 / 0,69–1,39 g | 2,5 / **−0,8°** | — / 1,3 s |
+| JAZ 90, +20 / −10 kt | 10,8 / 9,3°/s | 0,72–**1,72** / 0,70–1,49 g | 1,7 / **−1,1°** | — / 1,4 s |
+| JAZ 120, +20 / −10 kt | 3,7 / 3,3°/s | 0,69–1,38 / 0,65–1,20 g | 3,9 / 2,1° | — |
+
+**El gas de subida.** `gasSubiendo` es una ley de velocidad —0,55 y 0,04 por
+cada m/s por debajo de la de subida o la de circuito—, pensada para que un
+reactor ligero no acelere sin parar. En la hélice, con velocidad de más, da
+poco: con catorce nudos de más, 0,36 en el JAZ 40. Y en `FLCH SPD` el gas no se
+toca, así que el automático pide una velocidad que el avión no sostiene: en la
+mesa, con ese gas el JAZ 40 se queda en su mínima, 94 nudos, subiendo 0,1 m/s.
+En el banco, sin mínima, era la velocidad la que caía.
+
+### El manual
+
+- **Engancharse sin tirón**: «Engagement or switching of the flight guidance
+  system, a mode, or a sensor may not cause a transient response of the
+  airplane's flight path any greater than a minor transient» (14 CFR
+  25.1329(c)). Y en los de avioneta, «Flight director pitch commands are rate-
+  and attitude-limited, combined with pitch damper control» (Garmin, *AXIS
+  Pilot's Guide for Certified Aircraft*, 190-03123-01, «Pitch Axis and
+  Trim»). Los números del límite de un GFC 700 o un KAP 140 no se encontraron
+  publicados; los del juego son los que ya tenía (`GIRO_MAXIMO`, 2,5°/s;
+  `CARGA_TOPE`, dos décimas de g).
+- **El gas de subida**: el 172R, «Throttle -- FULL OPEN» (*Enroute Climb*,
+  sección 4, y «Normal enroute climbs are performed with flaps up and full
+  throttle»); el Seneca III, «The best rate of climb speed (92 KIAS) should be
+  maintained with takeoff power on the engines until adequate terrain clearance
+  is obtained» (POH del PA-34-220T, VB-1110, 4.35 *Climb*); el Twin Otter,
+  1.600 ft/min «at max. climb power» (Viking), por debajo de los 1.830 que da
+  el modelo a fondo. Y el FLC de Garmin: «Adjust engine power to allow the
+  autopilot to fly the aircraft at a pitch attitude» —la potencia es de quien
+  vuela, y el morro lleva la velocidad con la que le pongan—.
+
+### Lo que se cambia
+
+**En el automático del juego, el embrague** (`FRENO_DEL_GIRO` y `EMBRAGUE`, en
+`piloto-automatico.ts`): durante los cinco segundos que siguen al enganche, lo
+que el morro gire por encima de `GIRO_MAXIMO` lo quita un servo veinticinco
+veces más rápido que el de siempre. Es una sola ley para toda la flota; dentro
+de ese giro no hace nada, y pasado el embrague el automático vuela como volaba.
+Se probó también siempre puesto y con el tope de la carga en vez del giro: el
+JAZ 120 se columpiaba al volver a cogerlo en crucero (de 0,57 a 1,42 g en
+`piloto-automatico.test.ts`) y tocaba más duro en la recogida con rachas
+(`recogida-del-reactor.test.mjs`). Con el mismo timón de más:
+
+| Mesa, 0,38 de timón de más, ahora | Morro, giro máx. | Carga | Margen mín. | Avisador |
+|---|---|---|---|---|
+| JAZ 20, +20 / −10 kt | 8,0 / 6,8°/s | 0,91–1,10 / 0,86–1,01 g | 6,3 / 1,5° | — |
+| JAZ 40, +20 / −10 kt | 9,0 / 6,5°/s | 0,91–1,13 / 0,89–1,04 g | 6,6 / 2,7° | — |
+| JAZ 50, +20 / −10 kt | 6,9 / 5,2°/s | 0,87–1,13 / 0,87–1,07 g | 2,0 / 2,3° | — |
+| JAZ 60, +20 / −10 kt | 6,3 / 5,7°/s | 0,84–1,13 / 0,83–1,08 g | 2,4 / 3,1° | — |
+| JAZ 90, +20 / −10 kt | 6,2 / 5,6°/s | 0,88–1,14 / 0,86–1,11 g | 6,2 / 3,3° | — |
+| JAZ 120, +20 / −10 kt | 3,3 / 3,5°/s | 0,74–1,29 / 0,71–1,17 g | 4,9 / 3,1° | — |
+
+El de fuselaje ancho mejora poco: gira el morro por debajo de los 2,5°/s del
+freno, y a su velocidad eso ya es casi media g. Con el tope de la carga, que sí
+lo vería, se columpiaba. Lo que no se arregla en él se arregla en la causa.
+
+**En el banco, la causa**: el automático se engancha con **la palanca que llegó
+al avión en el último fotograma** (`palancaQueLleva`), no con la que el banco
+pide en este. Un servo de verdad se embraga donde está el timón.
+
+**El gas de subida, el de su manual** (`gasDeSubida`, en
+`gases-automaticos.ts`): en el reactor, el de subida (`GAS_DE_SUBIDA`); en la
+hélice, a fondo, salvo la que tiene su potencia de subida por debajo de la de
+despegue (`AircraftConfig.gasDeSubida`): el JAZ 50, 0,83, con el que el modelo
+sube los 1.600 ft/min de Viking a 94 nudos. A fondo, el JAZ 40 da los 1.340
+ft/min del Seneca II (*Plane & Pilot*) a 89 nudos con 0,97, y el JAZ 60 los 2.615 del 1900D con
+0,94. El banco lo lee de la sonda y lo usa en las hélices que sube el
+automático (`gasParaSubir`); los reactores siguen con la ley de velocidad, y la
+avioneta ya subía a fondo.
+
+Con él, el JAZ 40 sube enganchado a 98–99 nudos y 7,3 m/s, por encima de los 89
+pedidos —el morro llega a su tope de doce grados y no da para frenar más—, en
+vez de quedarse sin subir en la mínima. Es lo seguro: más rápido que la pedida,
+nunca más lento.
+
+### La prueba
+
+`enganche-con-velocidad.test.ts`: los seis, con +20, +10 y −10 nudos,
+enganchados como en el juego —sin salto de palanca de más de 0,05, el morro por
+debajo de 2,5°/s, la carga entre 0,85 y 1,15 g, el avisador callado y a más de
+1,5° de él— y con las cuatro décimas de timón de más del banco —entre 0,8 y 1,2
+g, el JAZ 120 entre 0,7 y 1,32, y el avisador callado—; y el gas: el de cada
+uno, el del JAZ 50 dando sus 1.600 ft/min, y en los JAZ 40, 50 y 60, con
+catorce nudos de más, el suyo subiendo a más de 5 m/s a la pedida o por
+encima, y el de antes del banco subiendo menos de la mitad.
