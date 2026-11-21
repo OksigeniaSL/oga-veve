@@ -8776,6 +8776,12 @@ del embrague, con la racha de Taguató, la palanca se mueve hasta 0,2 entre dos
 muestras —un cuarto de segundo— y la carga va de 0,82 a 1,09 g: es el freno
 de H57 parando el morro que mueve la racha, no el enganche.
 
+Y el del JAZ 20 con la pista ocupada (`tenerife-norte taguato 1 jaz-20`,
+`OGA_PISTA_OCUPADA=1`), una pasada, la primera de la frustrada nueva de la
+avioneta en el navegador: 58 de 58, dos sin medir, una frustrada mandada por la
+torre, el avisador callado y la toma a 1,47 m/s. Se engancha dos veces a unos
+295 m, y la palanca pasa de −0,228 a −0,226 y de −0,233 a −0,233.
+
 El vitest entero, con el código de esta enmienda: 571 ficheros y 11.422
 pruebas en verde.
 
@@ -8784,5 +8790,5 @@ pruebas en verde.
 La prueba es de Taguató; en la mesa, sin ayudas (Taguato Ruvicha), soltar sin
 compensar da lo mismo: sin salto, de 0,69 a 1,41 g y el avisador callado. El
 JAZ 120 sigue apretando más que los demás al recoger el morro, por lo dicho
-arriba. Y sin volar en el navegador desde esta enmienda: el JAZ 20 con la pista
-ocupada, con su frustrada nueva.
+arriba. Y sin volar en el navegador desde esta enmienda: los JAZ 60, 90 y 120,
+y el juego enganchado a mano, que el banco no vuela.
