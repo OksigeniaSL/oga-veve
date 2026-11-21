@@ -23,6 +23,7 @@ import {
   ojosEnElMundo,
   PEGADA_AL_CRISTAL,
   POR_LA_VENTANILLA,
+  rectasDeLaMirada,
   SE_VE_LO_DE_DEBAJO,
   seVeDesdeElAsiento,
   type ElMundoQueSeMira,
@@ -81,8 +82,8 @@ function laEscena(
   const ojo = ojosEnElMundo(pose, avion);
   return cuantoSeVeLoDeDebajo(
     ojo,
-    dondeMiran(pose, avion),
-    mundo.suelo,
+    rectasDeLaMirada(pose, avion),
+    (o, d) => (d.y < -0.01 ? { x: o.x - (d.x * o.y) / d.y, y: 5, z: o.z - (d.z * o.y) / d.y } : null),
     (q) => seVePorLaVentanilla(ojo, q, avion, pose.ventanilla),
     (q) =>
       esMar(q) === quiereMar &&
@@ -139,7 +140,7 @@ describe("lo de debajo, por la vista y no por un punto (H59b)", () => {
         const avion = enVuelo(grupo, altura, rumbo);
         // Es lo que vio el banco de H59: el punto adonde llegan los ojos, detrás del motor.
         expect(loTapaElAvionDesde(pose, dondeMiran(pose, avion), avion, mallas, grupo), `${altura} m`).toBe(true);
-        // Medido: la escena, de 0,50 a 0,63 de la vista por el cristal; el banco, de 0,48 a 0,50.
+        // Medido: la escena, 0,53 de la vista por el cristal; el banco, de 0,48 a 0,50.
         const escena = laEscena(pose, avion, grupo, mallas, true, todoMar)!;
         expect(escena, `escena a ${altura} m, rumbo ${rumbo}`).toBeGreaterThanOrEqual(SE_VE_LO_DE_DEBAJO);
         expect(escena).toBeLessThan(0.8);
@@ -153,8 +154,8 @@ describe("lo de debajo, por la vista y no por un punto (H59b)", () => {
     const { grupo, pasaje, mallas } = await montar();
     const pose = pasaje.deAra[LADO_DE_ARA]!.poses.sentada;
     const avion = enVuelo(grupo, 300, 120);
-    expect(laEscena(pose, avion, grupo, mallas, false, todoTierra)).toBeGreaterThan(0.9);
-    // El banco cuenta también el cielo de arriba de la ventanilla, que no es la tierra: 0,73.
+    // Las dos cuentan el cielo de arriba de la ventanilla, que no es la tierra: 0,71 y 0,73.
+    expect(laEscena(pose, avion, grupo, mallas, false, todoTierra)).toBeGreaterThan(0.6);
     expect(elBanco(pose, avion, mallas, () => true)).toBeGreaterThan(0.6);
   });
 
@@ -167,6 +168,20 @@ describe("lo de debajo, por la vista y no por un punto (H59b)", () => {
       expect(laEscena(pose, avion, grupo, mallas, false, todoMar)).toBe(0);
       expect(elBanco(pose, avion, mallas, todoTierra)).toBe(0);
     }
+  });
+
+  it("en la final, con la costa encima de la góndola y una franja de mar, el mar no llena la vista", async () => {
+    const { grupo, pasaje, mallas } = await montar();
+    const pose = pasaje.deAra[LADO_DE_ARA]!.poses.abajo;
+    // A 200 m, con la costa a medio kilómetro: lo que vio el banco a los 1.897 s, el mar en una franja.
+    const avion = enVuelo(grupo, 200, 0);
+    const costa = (q: Punto): boolean => Math.hypot(q.x - avion.position.x, q.z - avion.position.z) < 500;
+    expect(costa(dondeMiran(pose, avion))).toBe(true);
+    // Medido: la escena, 0,18; el banco, 0,05. Con el mar hasta 1,5 km, 0,53 y 0,48.
+    expect(laEscena(pose, avion, grupo, mallas, true, costa)!).toBeLessThan(SE_VE_LO_DE_DEBAJO);
+    expect(elBanco(pose, avion, mallas, costa)!).toBeLessThan(0.4);
+    const lejos = (q: Punto): boolean => Math.hypot(q.x - avion.position.x, q.z - avion.position.z) < 1500;
+    expect(laEscena(pose, avion, grupo, mallas, true, lejos)!).toBeGreaterThanOrEqual(SE_VE_LO_DE_DEBAJO);
   });
 
   it("tapado del todo por el ala, no se ve: mirando abajo y hacia el ala, hasta donde da el cuello", async () => {

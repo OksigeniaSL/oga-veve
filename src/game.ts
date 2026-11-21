@@ -1454,6 +1454,7 @@ import {
   seVeDesdeElAsiento,
   seVeDesdeFuera,
   seVeElMarDeNubes,
+  rectasDeLaMirada,
   seVeLoDeDebajo,
   type ElMundoQueSeMira,
   type Punto as PuntoDelMundo,
@@ -33298,8 +33299,8 @@ export class Game {
         if (
           seVeLoDeDebajo(
             ojo,
-            p,
-            mundo.suelo,
+            rectasDeLaMirada(pose, avion),
+            (o, d) => this.dondeLlegaElRayo(o, d),
             (q) => seVePorLaVentanilla(ojo, q, avion, pose.ventanilla, cortina),
             (q) =>
               (this.terrain.sampleSurface(q.x, q.z) < 5) === quiereMar &&

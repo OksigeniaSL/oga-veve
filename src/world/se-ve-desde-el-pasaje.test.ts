@@ -15,7 +15,7 @@ import {
   umbralDeLaNube,
   type DibujoDeLaCapa,
 } from "./capa-de-nubes";
-import type { VentanillaDePasaje } from "./asiento-de-pasaje";
+import type { AsientoDePasaje, VentanillaDePasaje } from "./asiento-de-pasaje";
 import {
   asomadoHacia,
   claridad,
@@ -23,6 +23,7 @@ import {
   ladoDe,
   ojosEnElMundo,
   miradaDe,
+  rectasDeLaMirada,
   SE_DISTINGUE,
   SE_VE_LO_DE_DEBAJO,
   seVeDesdeFuera,
@@ -242,64 +243,64 @@ describe("el mar de nubes, por lo que llena la mirada (H38m)", () => {
 });
 
 describe("lo de debajo, por lo que deja ver el cristal y no por un punto (H59b)", () => {
-  // Desde 1.000 m, mirando abajo y hacia el norte: lo mirado, a 1.732 m por delante.
-  const ojo = { x: 0, y: 1000, z: 0 };
-  const mirado = { x: 0, y: 5, z: -1732 };
-  const llano = (): number => 0;
+  const GRADO = Math.PI / 180;
+  // Desde 1.000 m, mirando al norte y 30° abajo: los ojos llegan al mar a 1.732 m por delante.
+  const avion = { position: new Vector3(0, 1000, 0), orientation: new Quaternion(), largo: 30 };
+  const asiento = (cabeceo: number): AsientoDePasaje =>
+    ({ ojo: { x: 0, y: 0, z: 0 }, guinada: 0, cabeceo: cabeceo * GRADO, fov: 64 }) as unknown as AsientoDePasaje;
+  const ojo = new Vector3(0, 1000, 0);
+  const llega = (o: Vector3, d: Vector3): { x: number; y: number; z: number } | null =>
+    d.y < -0.01 ? { x: o.x - (d.x * o.y) / d.y, y: 5, z: o.z - (d.z * o.y) / d.y } : null;
   const todo = (): boolean => true;
+  const centro = -1732;
 
-  it("mira cinco por cinco puntos alineados con la mirada, en un cuadro de un 27 % de la distancia", () => {
-    const vistos: { x: number; z: number }[] = [];
-    cuantoSeVeLoDeDebajo(ojo, mirado, llano, todo, (q) => (vistos.push(q), true));
-    expect(vistos).toHaveLength(25);
-    const lejos = Math.hypot(mirado.x - ojo.x, mirado.y - ojo.y, mirado.z - ojo.z);
-    const zs = vistos.map((q) => q.z);
-    const xs = vistos.map((q) => q.x);
-    expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(lejos * 0.27 * 2, 0);
-    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(lejos * 0.27 * 2, 0);
-    // Y girado con la mirada: mirando al este, el cuadro se alarga hacia el este igual.
-    const alEste: { x: number; z: number }[] = [];
-    cuantoSeVeLoDeDebajo(ojo, { x: 1732, y: 5, z: 0 }, llano, todo, (q) => (alEste.push(q), true));
-    expect(Math.max(...alEste.map((q) => q.x)) - Math.min(...alEste.map((q) => q.x))).toBeCloseTo(lejos * 0.27 * 2, 0);
+  it("mira veinticinco rectas alrededor de la mirada, con el ángulo de la vista de pasaje", () => {
+    const rectas = rectasDeLaMirada(asiento(-30), avion);
+    expect(rectas).toHaveLength(25);
+    // La del medio es la mirada; y de la de abajo a la de arriba, lo que va de −0,4 a 0,4 de pantalla.
+    expect(rectas[12]!.angleTo(miradaDe(asiento(-30), avion))).toBeLessThan(1e-9);
+    const t = Math.tan(32 * GRADO);
+    expect(rectas[10]!.angleTo(rectas[14]!)).toBeCloseTo(2 * Math.atan(0.4 * t), 6);
   });
 
   it("con la góndola tapando la mitad de cerca, el mar de la mitad de lejos se ve", () => {
+    const rectas = rectasDeLaMirada(asiento(-30), avion);
     // Lo de más cerca que lo mirado cae detrás del motor; lo mirado, también.
-    const loVe = (q: { z: number }): boolean => q.z < mirado.z - 1;
-    expect(loVe(mirado)).toBe(false);
-    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, todo, loVe)).toBeCloseTo(10 / 25, 5);
-    expect(seVeLoDeDebajo(ojo, mirado, llano, todo, loVe)).toBe(true);
+    const loVe = (q: { z: number }): boolean => q.z < centro - 1;
+    expect(llega(ojo, rectas[12]!)!.z).toBeCloseTo(centro, 0);
+    expect(cuantoSeVeLoDeDebajo(ojo, rectas, llega, todo, loVe)).toBeCloseTo(10 / 25, 5);
+    expect(seVeLoDeDebajo(ojo, rectas, llega, todo, loVe)).toBe(true);
   });
 
-  it("tapado del todo, o lo que se dice que no es lo que hay, no se ve", () => {
-    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, todo, () => false)).toBe(0);
-    expect(seVeLoDeDebajo(ojo, mirado, llano, todo, () => false)).toBe(false);
-    // Lo que asoma por un borde —una fila de cinco— tampoco: no es lo que se ve al mirar abajo.
-    const unaFila = (q: { z: number }): boolean => q.z < mirado.z - 1732 * 0.2;
-    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, todo, unaFila)).toBeCloseTo(5 / 25, 5);
-    expect(seVeLoDeDebajo(ojo, mirado, llano, todo, unaFila)).toBe(false);
+  it("tapado del todo, o lo que se dice que no es lo que hay, no se ve; ni lo que asoma por un borde", () => {
+    const rectas = rectasDeLaMirada(asiento(-30), avion);
+    expect(cuantoSeVeLoDeDebajo(ojo, rectas, llega, todo, () => false)).toBe(0);
+    expect(seVeLoDeDebajo(ojo, rectas, llega, todo, () => false)).toBe(false);
+    // Una fila de cinco, la de más lejos: la costa de la final, con el mar en una franja.
+    const lejos = llega(ojo, rectas[13]!)!.z;
+    const unaFila = (q: { z: number }): boolean => q.z < lejos - 1;
+    expect(cuantoSeVeLoDeDebajo(ojo, rectas, llega, todo, unaFila)).toBeCloseTo(5 / 25, 5);
+    expect(seVeLoDeDebajo(ojo, rectas, llega, todo, unaFila)).toBe(false);
   });
 
   it("lo que cae fuera del cristal no es de la vista: es la pared", () => {
+    const rectas = rectasDeLaMirada(asiento(-30), avion);
     // Solo la mitad de lejos cae por el cristal, y ahí todo es mar: se ve entero.
-    const cristal = (q: { z: number }): boolean => q.z < mirado.z - 1;
-    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, cristal, todo)).toBe(1);
-    // Y si por el cristal no cae nada, no hay vista: ni se ve ni se deja de ver, y no se nombra.
-    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, () => false, todo)).toBeNull();
-    expect(seVeLoDeDebajo(ojo, mirado, llano, () => false, todo)).toBe(false);
+    const cristal = (q: { z: number }): boolean => q.z < centro - 1;
+    expect(cuantoSeVeLoDeDebajo(ojo, rectas, llega, cristal, todo)).toBe(1);
+    // Y si por el cristal no cae nada, no hay vista, y no se nombra.
+    expect(cuantoSeVeLoDeDebajo(ojo, rectas, llega, () => false, todo)).toBeNull();
+    expect(seVeLoDeDebajo(ojo, rectas, llega, () => false, todo)).toBe(false);
+  });
+
+  it("la que va al cielo es de la vista, y no ve lo de debajo", () => {
+    // Casi al horizonte: las dos filas de arriba van al cielo.
+    const rectas = rectasDeLaMirada(asiento(-3), avion);
+    expect(rectas.filter((d) => !llega(ojo, d))).toHaveLength(10);
+    expect(cuantoSeVeLoDeDebajo(ojo, rectas, llega, todo, todo)).toBeCloseTo(15 / 25, 5);
   });
 
   it("pide dos quintos, lo mismo que el banco al mar de nubes", () => {
     expect(SE_VE_LO_DE_DEBAJO).toBe(0.4);
-  });
-
-  it("los puntos van un poco por encima del suelo que haya, también en la ladera", () => {
-    const vistos: { y: number }[] = [];
-    cuantoSeVeLoDeDebajo(ojo, mirado, () => 600, todo, (q) => (vistos.push(q), true));
-    expect(vistos.every((q) => q.y === 630)).toBe(true);
-    // Y el mar, o lo que nadie sabe, a ras del agua.
-    const alAgua: { y: number }[] = [];
-    cuantoSeVeLoDeDebajo(ojo, mirado, () => null, todo, (q) => (alAgua.push(q), true));
-    expect(alAgua.every((q) => q.y === 30)).toBe(true);
   });
 });
