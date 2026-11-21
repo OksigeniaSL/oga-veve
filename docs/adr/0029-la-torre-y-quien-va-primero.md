@@ -2160,6 +2160,18 @@ te dijo: `destino · roja · holdShort · backtrack · verde · clearedTakeoff`,
 una autorización de despegar y el «backtrack» antes. «Regreso por pista» no
 está: no tiene toma, y sin ella no se pide.
 
+**Guyrami en El Hierro**, `verificar-despegue.mjs el-hierro guyrami "" jaz-40`
+con voces y el mismo METAR: **21 de 21**. Número dos en la fila detrás de
+EC-ANX, que sale y deja estela: la roja con «número dos para la salida», y la
+pista a los 270,1 s. El plan, el mismo remonte hasta el final; entra en el
+−112, va hasta el −600, gira en el −590 y suelta frenos en el −589. Lo
+cuenta la instructora, `vuelo.remontar.cola` y `vuelo.backTaxi`; la torre,
+en inglés, solo al otro.
+
+**El banco de carteles entero** no se ha pasado: con otro ayudante volando
+en el mismo turno de navegador no cabía. Se ha pasado su parte nueva, la de
+arriba.
+
 **Vitest entero**, una vez y con el código de esta enmienda ya juntado con
 main: 568 de 568 ficheros, 11.291 pruebas en verde, 31 saltadas y una
 pendiente, ninguna en rojo, en 1.329 s con dos hilos.
