@@ -8498,3 +8498,322 @@ cuenta», de 1,05 a 1,06, con las cifras de arriba.
   antes de la entrega. Tukã es donde vuela la mano de los peldaños de abajo.
 - **La mesa del JAZ 20** no reproduce la recogida de la avioneta del banco
   (toca casi siempre por debajo de su Vref menos cinco, antes y ahora).
+
+## Enmienda H56b (21-11-2026): lo que dejó abierto el picado del suelo
+
+H56 metió el picado del suelo en el modelo y dejó cinco cosas abiertas. Aquí
+van por orden de importancia.
+
+### 1. La cuenta del hangar y el picado al rotar
+
+H56 movió el tope de «jaz-120 despega volando en lo que dice la cuenta» de
+1,05 a 1,06: el 747 volado pasaba los 35 pies 1.573 m después de soltar
+frenos, contra 1.489 de la cuenta. Esa cuenta decide si la pista alcanza, la
+TORA de la intersección y si hay que remontar (H41e–H41i). Una cuenta
+optimista es una pista que no alcanza.
+
+**Lo medido**, toda la flota, con la mano de
+`despegue-y-toma-del-manual.test.ts` de dos maneras: tal cual, sin saber que
+el suelo pica, y sumando la palanca que pide el picado (`palancaDelSuelo`),
+como el banco en la recogida desde H56 (`h56b/mesa/rota.ts` del scratchpad):
+
+| | Cuenta | No lo sabe | Lo sabe | Antes de H56 |
+|---|---|---|---|---|
+| JAZ 20 | 405 m | 462 m (1,143) | 462 m (1,141) | 462 m |
+| JAZ 25 | 256 m | 351 m (1,371) | 350 m (1,367) | 350 m |
+| JAZ 40 | 456 m | 596 m (1,308) | 593 m (1,301) | 593 m |
+| JAZ 50 | 338 m | 462 m (1,368) | 460 m (1,363) | 460 m |
+| JAZ 60 | 868 m | 854 m (0,984) | 849 m (0,978) | 849 m |
+| JAZ 90 | 873 m | 1.019 m (1,167) | 1.012 m (1,159) | 1.012 m |
+| JAZ 110 | 1.519 m | 1.516 m (0,998) | 1.504 m (0,990) | 1.504 m |
+| JAZ 120 | 1.489 m | 1.573 m (1,057) | 1.554 m (1,044) | 1.554 m |
+
+**Sostenido, el picado no alarga nada**: con la mano que lo sabe, los ocho
+vuelan al metro lo de antes del picado, y el 747 se va del suelo a 10,1° como
+antes y no a 9,7°. Lo que alargaba el despegue era la mano: sigue la actitud
+solo por lo que le falta de ella, con ganancia doce, y un momento que pica se
+le queda como un error fijo de actitud —palanca del suelo partida por la
+ganancia, 0,19 / 12 en el 747, casi un grado—. Quien rota de verdad no hace
+eso: si el morro no sube al ritmo de siempre, tira más. Y la proporción de
+la cuenta (2.500 / 1.800 en los reactores, `deRodarADespegar`) sale de 747
+de verdad, que ya tienen su picado.
+
+Así que **la cuenta no se toca**, y lo que se cambia es la mano:
+
+- La mano de la prueba suma `palancaDelSuelo`, y el tope del 747 vuelve a
+  1,05, el de los dos de cola de su fabricante. El 747 da 1,044.
+- `distanciaDeDespegue` (`carrera.ts`) dice por qué el picado no entra.
+
+**Lo que se vio al medir, y no es del picado**: la cuenta se queda corta en
+casi toda la flota en el tramo de la Vr a la altura de su norma, y no de
+ahora (H7b, H20b, H20e, H37a; está en la cabecera de la prueba). Con los
+márgenes de su clase y la parada desde la V1, la pista que pide el hangar
+contra lo que vuela el modelo hasta la altura de su norma, sin márgenes y con
+la mano que sabe:
+
+| | Pide | Vuela | Pide / vuela |
+|---|---|---|---|
+| JAZ 20 | 538 m | 462 m | 1,16 |
+| JAZ 25 | 340 m | 350 m | **0,97** |
+| JAZ 40 | 606 m | 593 m | 1,02 |
+| JAZ 50 | 449 m | 460 m | **0,98** |
+| JAZ 60 | 1.002 m | 849 m | 1,18 |
+| JAZ 90 | 1.023 m | 1.012 m | 1,01 |
+| JAZ 110 | 1.836 m | 1.504 m | 1,22 |
+| JAZ 120 | 1.876 m | 1.554 m | 1,21 |
+
+En el biplano y en el Twin Otter el modelo vuela más de lo que el hangar
+pide con margen; en el Seneca y el E170 el margen se queda en un 1 o 2 %.
+Las cabeceras de esas pruebas ya dicen por qué —la actitud con la que se van
+del suelo, que no se ha leído, y la cifra de Embraer que falta—, y aquí no se
+toca: cambiarlo es cambiar qué pistas acepta el juego, con fuente o sin ella.
+Se apunta abajo.
+
+### 2. Los bancos que no se volaron con el picado
+
+Desde una foto del worktree con la tabla de la sección 19 y la ley de los
+reactores (`h56b/arbol-b` del scratchpad; sin la cola en T, que solo toca al
+JAZ 60), con la tarjeta de verdad:
+
+- **`verificar-vuelo-entero.mjs tenerife-norte tuka 1 jaz-90`: 65 de 66.**
+  Es donde vuela la mano de los peldaños de abajo. La recogida, a 10,8 m de
+  ruedas, un metro antes del umbral, bajando 3,4 m/s a 119 nudos; la palanca
+  subiendo de 0,11 a 0,23 en los últimos diez metros, y tocó a **293 m y
+  1,15 m/s**, a 2,1 m del eje (en H55c, 66 de 67). **El que no pasa es la
+  puerta de los quinientos pies**: llegó 17 m por debajo de la senda, a 15 m
+  del eje y bajando 7,2 m/s de media. No es del picado: a esa altura el
+  colchón y su picado son cero —el modelo no los da a más de una envergadura,
+  26 m en el E170, y lo comprueba `efecto-suelo.test.ts`—. En la traza de la
+  final: entró en ella tras el viraje 30 m por encima de la senda, bajó a
+  buscarla con el gas casi al ralentí y el ala a 1,3–1,9° de ángulo, y entre
+  los 195 y los 180 m de ruedas cambió el viento —lo que el banco suma a la
+  velocidad por la cara bajó de 9,6 nudos a 5—: pasó de bajar 5,9 m/s a 8,4
+  y cruzó la senda hacia abajo. En H55b y H55c la misma puerta salió a 2,5
+  y 2,8 m/s. Una tirada no dice cuántas veces pasa; se apunta abajo.
+
+### 3. La sección 19 del CR-114494
+
+La gráfica de la p. 4.0-35 (PDF, p. 142) lleva estampado «See section 19
+for revised data», y H56 la usó con las lecturas de H54 sin mirar esa
+sección. Leída ahora entera (pp. 19.0-1 a 19.0-11, PDF 612 a 622; las
+imágenes, en `h56b/s19/` del scratchpad):
+
+- **p. 19.0-9 (PDF 620, REV. E, 9-1-70, «Ref: p. 4.0-35»)**: el momento de
+  cabeceo del efecto suelo revisado, con las mismas notas —tren en el suelo,
+  factor de altura uno— y **la misma gráfica por 0,7**: 0,70 a 0,72 en todas
+  las curvas y ángulos donde la cifra no es casi cero, con la misma forma y
+  los mismos cruces. El 0,7 que usó H56 es el de Boeing, y está bien puesto.
+- **Lo que cambia es la lectura**, y por eso se cambia la tabla: la revisada
+  tiene dos veces y media más resolución (±0,10 con marcas cada 0,05) y
+  separa curvas que la de antes juntaba. Releída a 300 ppp, a ±0,002:
+
+| Flaps | 0° | 4° | 8° | 12° |
+|---|---|---|---|---|
+| Recogidos y 1 | +0,026 | +0,008 | −0,028 | −0,067 |
+| 5 | +0,004 | −0,015 | −0,050 | −0,089 |
+| 10 | −0,008 | −0,026 | −0,060 | −0,103 |
+| 20 | −0,033 | −0,050 | −0,082 | −0,118 |
+| 25 | −0,055 | −0,081 | −0,109 | −0,135 |
+| 30 | −0,065 | −0,096 | −0,103 | −0,122 |
+
+  Con las de H54 por 0,7, la fila de 30 era −0,064, −0,090, −0,098, −0,116:
+  a 0° coincide y de 4° a 12° la revisada pica de 0,004 a 0,007 más. Las de
+  5 y 10 eran una curva y son dos —diez pica de 0,01 a 0,014 más que cinco—,
+  y la de 25, que H54 no leyó, cruza la de 30 hacia los siete grados. Releída
+  también la de antes a 300 ppp, sale lo mismo que la revisada partido por
+  0,7 (la fila de 30, −0,092, −0,136, −0,146, −0,173): era la lectura de H54
+  la que se quedaba corta, no Boeing la que cambió de idea.
+- **La cita del 0,7** (pp. 14.2-1 y 14.2-2, PDF 392 y 393), literal: «The
+  ground effect characteristics were modified during the approach and landing
+  evaluation. The ground effect data on Pages 2.0-31, -32, 3.0-17, -18, and
+  4.0-35 were modified by the following factors: .7 times the pitching moment
+  increment, .3 times the drag increment, .9 times the lift increment. The
+  above changes to the ground effect data were substantiated by additional
+  piloted testing on the Boeing 747 simulation. The resulting Boeing revisions
+  are included in Section 19.» **Y una corrección**: H56 escribió que el 0,7
+  salió de volarlo «con pilotos de la NASA». No: la evaluación la voló el
+  piloto de proyecto del 747 de Boeing, en el simulador de movimiento (p.
+  14.2-1); los pilotos de la NASA dieron después los datos cuantitativos de
+  las pruebas que siguen («Quantitative data were obtained with NASA pilots»,
+  p. 14.2-2). Corregido en `efecto-suelo.ts`.
+
+Al tocar, el 747 da ahora −0,098 a −0,103 con tres a seis grados de
+fuselaje, donde daba −0,09 a −0,10: de 0,23 a 0,25 de palanca. Con la cola en
+T de abajo, la tabla de H56 queda así (flaps de aterrizar, seis grados):
+
+| | ΔCm | Palanca |
+|---|---|---|
+| JAZ 20 | −0,045 | 0,11 |
+| JAZ 25, sin flaps | −0,024 | 0,05 |
+| JAZ 40 | −0,082 | 0,18 |
+| JAZ 50 | −0,093 | 0,12 |
+| JAZ 60 | −0,054 | 0,11 |
+| JAZ 90 | −0,068 | 0,15 |
+| JAZ 110 | −0,114 | 0,21 |
+| JAZ 120 | −0,103 | 0,25 |
+
+**Lo demás que revisa la sección 19 no se toca aquí**, y se dice:
+
+- p. 19.0-3: **el factor de altura del efecto suelo**, K_GE^B (el de la p.
+  2.0-31), cae antes con la altura: 0,91, 0,75, 0,58, 0,40, 0,26, 0,15 y
+  0,065 de diez en diez pies, donde el original daba 0,97, 0,88, 0,75, 0,57,
+  0,38, 0,21 y 0,085. H56 no usa el factor de Boeing sino el colchón del juego
+  (Wieselsberger), que en el 747 da 0,73, 0,56, 0,43, 0,34, 0,27, 0,21 y
+  0,16 a esas alturas de ruedas: más flojo que el revisado entre diez y
+  treinta pies, que es la recogida, y más largo por encima de cincuenta. No
+  se sabe desde dónde mide Boeing esa altura (ruedas o centro de gravedad), y
+  cambiarlo es cambiar también la sustentación del colchón, que va con él.
+- pp. 19.0-4 y 19.0-8: la sustentación del efecto suelo por 0,9 y la
+  resistencia por 0,3. H56 dijo que la sustentación del colchón al tocar
+  coincidía con la de Boeing, 0,18; la revisada es 0,9 veces eso.
+- Las demás (19.0-2, 19.0-5 a 19.0-7, 19.0-10 y 19.0-11): dimensiones, el
+  ángulo del avisador y del bataneo, el CL máximo y los spoilers.
+
+### 4. La cola en T del JAZ 60
+
+La geometría, con fuente:
+
+- **El plano horizontal**: «the horizontal stabilizer on a parked Beech 1900D
+  is located about 15 feet above the ground» (NTSB, AAR-04/01, Air Midwest
+  5481, p. 98), 4,57 m. En la vista en tres planos del TAR 98/07 de la CAA
+  de Nueva Zelanda (p. 13), lo alto de la cola a 14 ft 10,8 in, 4,54 m, y el
+  plano de cuerda del estabilizador 0,13 m por debajo: **4,45 m**, leído a
+  escala.
+- **El brazo**, del cuarto de la cuerda media del ala al del estabilizador:
+  **unos 9,5 m**, medido en la planta de esa vista a escala (que cuadra con la
+  envergadura y la longitud acotadas al 0,3 %).
+- **La cola del 747**, la baja de la que sale la tabla: la punta del
+  estabilizador a 8,23–9,35 m según la carga (Boeing D6-58326, 2.3.1, p. 24),
+  la raíz a unos 7,9 —su diedro, en el frente del mismo plano—, y el ala a
+  5,25: 2,65 m por encima del ala, un 4,4 % de su envergadura.
+
+**El método**: el de S. Katzoff y H. H. Sweberg, «Ground effect on downwash
+angles and wake location», NACA Report 738, 1943, p. 1: el downwash en la
+cola es el del ala menos el de su imagen bajo el suelo, que gira al revés. El
+picado es esa resta, así que lo que cuenta es lo que la imagen induce en la
+cola, y eso baja cuanto más lejos va la cola de la imagen. En el modelo
+(`imagenEnLaCola` en `efecto-suelo.ts`): el torbellino en herradura del ala
+—las puntas a π/4 de la envergadura— y su imagen, por Biot-Savart, en el
+punto de la cola. Y la escala de H56 para los demás aviones no cambia: la
+cola en T se mide contra una cola **como la del 747 en ese mismo avión**, a
+un 4,4 % de su envergadura por encima de su ala y con su brazo
+(`loQueNotaLaCola`):
+
+- **El 1900D nota el suelo 0,78 veces** lo que una cola baja: con el ala a
+  1,98 m, la de su ficha y su colchón. Con el ala a 1,33 m, la del plano de
+  la cuerda en la vista, 0,73; con un metro de brazo más o menos, de 0,77 a
+  0,78; con la cola a los quince pies de la NTSB, 0,77.
+- Su palanca al tocar pasa de 0,13 (H56) a 0,11, y el ΔCm de −0,066 a −0,054.
+
+Lo que no es: la bajada de la estela (Katzoff y Sweberg la cuentan, con las
+cartas del NACA Report 648) ni los flaps; la herradura es la del ala limpia.
+Es la forma de la cuenta, no una cifra de Beechcraft, que no hay.
+
+### 5. La frustrada de los reactores
+
+H34e dejó a los reactores con la ley vieja: doce grados pedidos de golpe, la
+primera muesca de una vez y el gas de una subida. **El FCTM de Boeing** pide
+TO/GA y llevar el morro hacia quince grados al ritmo de rotar, y luego lo que
+mande el director. El criterio de aquí: el ala, a dos grados y medio del
+avisador como poco.
+
+**La ley** (`LEY_DEL_REACTOR` en `la-frustrada.mjs`): la de las hélices de
+H34e con sus cifras.
+
+- **Quince grados de partida y de techo**, a tres grados por segundo.
+- **La velocidad que no se deja caer, la de la aproximación**, la del MCP. Un
+  reactor vuela la final a 1,23 veces su pérdida, por debajo de la de
+  maniobra de la muesca siguiente; con la regla de las hélices (dos grados
+  menos por cada m/s que falte para esa más cinco nudos), el JAZ 90, que
+  vuela la final a 118 nudos donde esa es de 141, empezaba la frustrada
+  pidiendo nueve grados de morro abajo.
+- **Los últimos grados, frenando** (`acerca`, dos segundos: la actitud pedida
+  va a tres grados por segundo hasta los últimos seis, y ahí se acerca a
+  ellos con dos segundos de constante), y **el morro que gira, frenado el
+  doble** (`amortigua`, 3 donde las hélices llevan 1,5). Sin eso, el 747 gira
+  el morro despacio, lo que acumula la palanca para seguir la actitud que
+  sube lo pasa de largo al pararse, y llegaba a 18,9°.
+- **El ala se aparta del avisador desde los cuatro grados**, como en las
+  hélices: con dos y medio de aviso, la racha de la mesa dejaba el 747 a 1,4°
+  del avisador; con cuatro, a 2,6° como poco.
+- **TO/GA hasta la altura de aceleración, y una muesca menos al irse**, como
+  las hélices (`irseConFlaps`); las demás de una en una, a la de maniobra de
+  la siguiente. A diferencia de las hélices, la ley se deja a la altura de
+  aceleración aunque queden flaps fuera: con quince grados el 747 no llega
+  nunca a la de recoger la siguiente muesca, 159 nudos, y se habría quedado
+  subiendo a su Vref con los de veinte. Ahí el banco sube como siempre —doce
+  grados y el automático—, desde la palanca que dejó la ley y con la mano a su
+  ritmo (`FRUSTRA_COMO_REACTOR` en `verificar-vuelo-entero.mjs`).
+
+**La mesa** (`h56b/mesa/frustrada.ts` del scratchpad, la de H34e con la ley
+de los reactores): el modelo del juego en Los Rodeos, una final asentada con
+el automático en la senda desde 250 m —desde 75, la de H34e, el 747 llegaba a
+los sesenta bajando a 9 m/s sin haberse asentado, y de ahí salían el 1,3° y
+el 1,0° de H34e— hasta 60 m, la orden, y el tope de ángulo del banco en cada
+fotograma. La racha, una «1−cos» vertical de 3 m/s en dos segundos puesta a
+1, 3, 5, … 21 s de la orden; la columna da la peor.
+
+| Hasta 120 m | Carga máx. | Margen mín. | Con racha | Palanca, salto | Morro, giro máx. | Morro máx. | Lo más bajo |
+|---|---|---|---|---|---|---|---|
+| JAZ 90, antes / ahora | 1,36 / 1,30 g | 1,8 / 3,9° | **−0,0** / 3,1° | 0,58 / 0,10 | 6,1 / 3,3°/s | 13,3 / 16,2° | 56 / 55 m |
+| JAZ 110, antes / ahora | 1,42 / 1,39 g | 2,3 / 3,9° | 1,7 / 2,7° | 0,66 / 0,10 | 5,2 / 3,6°/s | 13,2 / 16,5° | 53 / 50 m |
+| JAZ 120, antes / ahora | 1,41 / 1,34 g | 2,6 / 3,7° | 1,8 / 2,6° | 0,58 / 0,08 | 4,5 / 3,2°/s | 14,8 / 16,8° | 50 / 47 m |
+
+Con la ley vieja y la racha, el JAZ 90 entraba en el avisador medio segundo.
+Con la nueva, los tres se quedan a más de dos grados y medio, la palanca no
+salta más de una décima entre pasos del banco, y llegan a los 120 m antes
+(de 8,9 a 10,5 s, donde eran 9,8 a 11,8) con uno a tres metros más
+perdidos. **Lo que queda**: el morro se pasa de los quince en uno o dos
+grados, de 16,2 a 16,8; el 747 no gira el morro más deprisa por pedírselo.
+
+La prueba, en `la-frustrada.test.mjs`: la ley de los reactores va a quince
+frenando los últimos grados sin pasarse; y con el modelo del juego, los tres
+reactores con la ley vieja y la nueva —la palanca saltaba más de media y ya
+no salta más de una décima, la carga por debajo de 1,45 g, el morro entre 14
+y 18 grados, a más de 40 m, y con la racha a cualquier hora sin avisador y a
+más de dos grados y medio de él, y mejor que antes—.
+
+### El vitest entero
+
+Con todo lo de aquí: **569 ficheros y 11.337 pruebas, en verde** (31
+saltadas y una por hacer). Lo nuevo y lo que se mueve:
+
+- `despegue-y-toma-del-manual.test.ts`: la mano que sabe que el suelo pica,
+  y el tope del 747 otra vez en 1,05.
+- `efecto-suelo.test.ts`: la curva de flaps 30 de la p. 19.0-9; que es la de
+  la p. 4.0-35 releída por 0,7 a menos de 0,002; al tocar, el 747 de −0,095
+  a −0,105 (eran −0,088 a −0,101), y sigue por debajo del cuarto de palanca;
+  las curvas de 5, 10, 20 y 25 cada una la suya; la cola en T del JAZ 60
+  entre 0,75 y 0,81 de una baja, los demás en uno, y la imagen que baja con
+  la altura de la cola y con la del ala; y la palanca de cada avión, la del
+  747 por su colchón y por su cola.
+- `la-frustrada.test.mjs`: la ley de los reactores va a quince frenando los
+  últimos grados, y los tres reactores con el modelo del juego, la ley de
+  antes y la de ahora, con la racha (arriba).
+
+### Lo que queda
+
+- **La puerta de los quinientos pies de Tukã** (arriba): una tirada, 17 m por
+  debajo de la senda y bajando 7,2 m/s, al buscar la senda desde 30 m por
+  encima con un cambio de viento. No es del picado; no se sabe cuántas veces
+  pasa.
+- **`tenerife-norte taguato 1 jaz-20` y `jaz-50` con la pista ocupada, y
+  `gran-canaria taguato 1 jaz-120` con la pista ocupada, sin volar**: el
+  navegador lo tuvo otro ayudante, y de la cola de cuatro vuelos cupo uno. La
+  frustrada de los reactores está en la mesa y en la prueba, no en el
+  navegador.
+- **La cuenta del hangar contra lo que vuela el modelo**, de antes y no del
+  picado: el biplano y el Twin Otter piden con margen menos pista de la que
+  vuelan hasta la altura de su norma (0,97 y 0,98), y el E170 y el Seneca se
+  quedan a un 1 y un 2 %.
+- **El factor de altura revisado de Boeing** (p. 19.0-3) y su sustentación
+  por 0,9: el colchón del juego es más flojo que el revisado de diez a
+  treinta pies. Cambiarlo es cambiar la sustentación del colchón.
+- **El morro de los reactores en la frustrada se pasa de los quince en uno o
+  dos grados** (16,2 a 16,8 en la mesa).
+- **La mano del banco al rotar no suma el picado**: con ella, el 747 se va
+  dos décimas más tarde y a 8,9° en vez de 9,6° (H56). La de la prueba ya lo
+  suma.
+- **La cola del 1900D**: su altura y su brazo son lecturas a escala de la
+  vista en tres planos (con los «about 15 feet» de la NTSB, 0,77 en vez de
+  0,78); la herradura no lleva la bajada de la estela ni los flaps.
