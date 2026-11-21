@@ -38,6 +38,7 @@
  */
 
 import { Quaternion, Vector3 } from "three";
+import { FOV_DE_PASAJE } from "../cameras/pasaje";
 import { asientoAnteVentanilla, type AsientoDePasaje, type VentanillaDePasaje } from "./asiento-de-pasaje";
 import { seVe } from "./hitos";
 import { seVePorLaVentanilla } from "./marco-de-ventanilla";
@@ -203,6 +204,95 @@ export function seVeElMarDeNubes(ojo: Punto, mirado: Punto, mundo: ElMundoQueSeM
       puntos++;
     }
   return nube >= puntos * ES_UN_MAR_DE_NUBES;
+}
+
+/**
+ * **Cuánto de lo que deja ver el cristal tiene que ser lo de debajo que se
+ * nombra**, de 0 a 1: dos quintos, lo mismo que pide el banco al mar de nubes.
+ * Lo de debajo no tiene que llenar la ventanilla como un mar de nubes —con la
+ * góndola debajo del cristal, el mar ocupa la mitad de arriba (H59b)—, pero
+ * tampoco vale una esquina: lo que asoma por un borde no es lo que se ve al
+ * mirar abajo.
+ */
+export const SE_VE_LO_DE_DEBAJO = 0.4;
+
+/**
+ * **Las rectas de la mirada**: cinco por cinco direcciones alrededor de adonde
+ * miran los ojos de un asiento, cada 0,2 de pantalla —un cuadro de 0,8—, con
+ * el ángulo de la vista de pasaje en un apaisado de 16:9. Es lo que mide el
+ * banco con la cámara alrededor de lo mirado (`rectasDeLaVista`, en
+ * `dev/vista-para-banco.ts`), aquí con la pose. Unitarias, en el mundo.
+ */
+export function rectasDeLaMirada(asiento: AsientoDePasaje, avion: ElAvionQueMira): Vector3[] {
+  const giro = new Quaternion()
+    .copy(avion.orientation)
+    .multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), asiento.guinada))
+    .multiply(new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), asiento.cabeceo));
+  const t = Math.tan(((asiento.fov ?? FOV_DE_PASAJE) / 2) * GRADO);
+  const rectas: Vector3[] = [];
+  for (let i = -2; i <= 2; i++)
+    for (let k = -2; k <= 2; k++)
+      rectas.push(new Vector3(i * 0.2 * t * (16 / 9), k * 0.2 * t, -1).normalize().applyQuaternion(giro));
+  return rectas;
+}
+
+/**
+ * **Cuánto se ve de lo de debajo** —el mar, la tierra—, de 0 a 1, por lo que
+ * deja ver el cristal y no por un punto (H59b); `null` si por el cristal no se
+ * ve nada de lo que se mira.
+ *
+ * Se miraba el punto adonde llegan los ojos y cuatro más a su alrededor, y con
+ * la cara contra el cristal mirando abajo ese punto cae detrás de la góndola:
+ * en el banco de la tercera escena, a los 1.607 s, el mar llenaba la mitad de
+ * arriba de la ventanilla y el punto mirado era el motor, a 3,9 m. Con un
+ * punto, lo que se nombra se juega a dónde cae la mirada, y nada impedía decir
+ * «allá abajo está el mar» con el ala o la góndola tapándolo todo, que la
+ * cuenta no sabía del avión. Así que se mira lo que cabe en la mirada: las
+ * veinticinco rectas de `rectasDeLaMirada`, cada una hasta el mar o el
+ * terreno, y de las que pasan por el cristal, cuántas llegan a lo que se dice
+ * y lo ven. La que no pasa por el cristal no es de la vista, que es la pared;
+ * la que va al cielo, sí, y no ve lo de debajo.
+ *
+ * **Por ángulos y no por un cuadro en el suelo**, que fue lo primero que se
+ * probó, con el del mar de nubes —un 27 % de la distancia a cada lado—: a ras
+ * del agua, en la final de La Palma, ese cuadro se quedaba en el mar de al
+ * lado del avión y la escena decía «¡el mar está cada vez más cerquita!» con
+ * la ventanilla llena de costa y casas y una franja de mar encima de la
+ * góndola. Mirando oblicuo, un cuadro en el suelo es una rendija de la vista.
+ *
+ * `llega`, adonde llega una recta, o `null` si va al cielo; `porElCristal`, si
+ * un punto cae en lo que deja ver la ventanilla; `loVe`, si ese punto es lo
+ * que se nombra —mar o tierra— y se ve: se distingue y no lo tapa el propio
+ * avión.
+ */
+export function cuantoSeVeLoDeDebajo(
+  ojo: Vector3,
+  rectas: readonly Vector3[],
+  llega: (ojo: Vector3, dir: Vector3) => Punto | null,
+  porElCristal: (q: Punto) => boolean,
+  loVe: (q: Punto) => boolean,
+): number | null {
+  let vistos = 0;
+  let enLaVista = 0;
+  for (const dir of rectas) {
+    const fin = llega(ojo, dir);
+    // Sin fin —el cielo—, un punto lejos en la recta: lo que importa es por dónde sale.
+    if (!porElCristal(fin ?? { x: ojo.x + dir.x * 1e5, y: ojo.y + dir.y * 1e5, z: ojo.z + dir.z * 1e5 })) continue;
+    enLaVista++;
+    if (fin && loVe(fin)) vistos++;
+  }
+  return enLaVista ? vistos / enLaVista : null;
+}
+
+/** **Si se ve lo de debajo**: ver `cuantoSeVeLoDeDebajo` y `SE_VE_LO_DE_DEBAJO`. */
+export function seVeLoDeDebajo(
+  ojo: Vector3,
+  rectas: readonly Vector3[],
+  llega: (ojo: Vector3, dir: Vector3) => Punto | null,
+  porElCristal: (q: Punto) => boolean,
+  loVe: (q: Punto) => boolean,
+): boolean {
+  return (cuantoSeVeLoDeDebajo(ojo, rectas, llega, porElCristal, loVe) ?? 0) >= SE_VE_LO_DE_DEBAJO;
 }
 
 /** Los ojos de un asiento, en el mundo. */

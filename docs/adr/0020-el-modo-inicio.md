@@ -1109,6 +1109,74 @@ lo que pone la ruta, no el nivel. La decisión que faltaba la tomó Enrique:
   la que se ha hecho, b97b4dcd, con el automático que engancha sin salto
   (H57b).
 
+#### Nota H59b (21-11-2026): lo de debajo, por la vista y no por un punto
+
+- **El banco.** El mar y la tierra de debajo se miden ahora como el mar de
+  nubes: veinticinco rectas desde la cámara en un cuadro de 0,8 de pantalla
+  alrededor de lo mirado (`loDeDebajoEnLaVista`, en `dev/vista-para-banco.ts`,
+  aparte de `game.ts` para poder probarlo en Node). Cada recta cuenta si llega
+  a lo que se dice —el mar para el mar, la tierra para la tierra— sin dar en
+  el avión y sin 150 m de nube densa por medio, la misma regla que lo nombrado
+  por un punto; la que va al cielo o da en la góndola, como mirada que no lo
+  ve; y la que no pasa por el cristal no es de la vista, que es la pared.
+  Pide dos de cada cinco de las que pasan por el cristal, como el mar de
+  nubes, y escribe el porcentaje. Con la pared contada como mirada perdida,
+  medido en Node, el mar mirando abajo se quedaba en el listón mismo —diez de
+  veinticinco— y la tierra desde el asiento, en diez u once: eso mide lo que
+  ocupa la ventanilla en la imagen, no lo que se ve por ella.
+- **La escena miraba un punto, y no sabía del avión.** Lo de debajo se daba
+  por visto con el punto adonde llegan los ojos y cuatro vecinos (`casiTodo`),
+  con el cristal, la nube y la bruma, pero sin el propio avión: podía decir
+  «allá abajo está el mar» con el ala o la góndola tapándolo todo. Ahora
+  `seVeLoDeDebajo`, en `world/se-ve-desde-el-pasaje.ts`, tira las mismas
+  veinticinco rectas alrededor de la mirada de la pose —`rectasDeLaMirada`,
+  cada 0,2 de pantalla con el ángulo de la vista de pasaje—, cada una hasta el
+  mar o el terreno, y de las que pasan por el cristal cuenta las que llegan a
+  lo que se dice, se distinguen y no las tapa el avión —un rayo contra las
+  mallas de fuera en los ejes del avión colocado, `loTapaElAvionDesde` en
+  `world/asiento-de-ara.ts`, el del dedo de la ventanilla viva—; pide dos
+  quintos. El dedo no cambia: un toque es un punto, y si cae en la góndola es
+  la góndola.
+- **Por ángulos, no por un cuadro en el suelo.** Lo primero fue el cuadro del
+  mar de nubes, cinco por cinco puntos en el suelo a un 27 % de la distancia,
+  y así se voló la primera pasada (Iris Xe, sin la ficha del hangar): **124
+  de 125**. Lo de debajo de antes pasaba —la tierra desde el asiento a los
+  517 s, en el 67 % de la vista; el mar de los 1.607 s, en el 50 %— y el
+  banco cazó uno nuevo: a los 1.897 s, en la final de La Palma, la escena
+  dijo «¡el mar está cada vez más cerquita!» con la ventanilla llena de costa
+  y casas y una franja de mar encima de la góndola, y el banco midió el mar en
+  el 0 % de la vista. En el vuelo de la H59, con la regla de antes, esa frase
+  no salió; con el cuadro, sí: a ras del agua y mirando oblicuo, un cuadro en el suelo es una rendija
+  de la vista, y se quedaba en el mar de al lado del avión. Por ángulos, la
+  escena ve lo mismo que la ventanilla.
+- **Medido en Node con el JAZ 90 de verdad** (`world/lo-de-debajo.test.ts`):
+  con la cara contra el cristal mirando abajo, el punto de los ojos cae
+  detrás del motor a 300, 1.000 y 3.000 m y con cualquier rumbo, y el mar se
+  ve en el 53 % de la vista de la escena y en el 48-50 % de la del banco, con
+  la cámara mirando un poco por encima de lo mirado, como en el vuelo;
+  sentada, la tierra, en el 71 % y el 73 %. En la final, a 200 m con la costa
+  a medio kilómetro, el 18 % y el 5 %; con el mar hasta kilómetro y medio, el
+  53 % y el 48 %. **Sigue viendo un fallo**: el mar nombrado sobre tierra, o
+  la tierra sobre el mar, da cero en las dos cuentas; y mirando abajo y hacia
+  el ala hasta donde da el cuello —40° abajo, 30° hacia atrás—, por el
+  cristal solo se ven ala y motor, y da cero en las dos. Con el ala y el
+  motor escondidos, el mismo cuello lo ve todo: lo escondido no tapa.
+- **La segunda pasada no ha volado.** Con la escena ya por ángulos no quedó
+  navegador: la ronda de cierre lo tenía desde las 16:41 con su propio banco
+  de la tercera escena y detrás venían los suyos, y un vuelo son 29 minutos
+  que no cabían en el tope. Lo que se espera, por lo medido en Node: lo de
+  debajo de la primera pasada sigue pasando, que la escena y el banco miran
+  ya la misma vista —0,53 y 0,48 mirando abajo, 0,71 y 0,73 sentada—, y
+  «cerquita» se calla hasta que el mar llene dos quintos de lo que se ve, o
+  no se dice. El borde que queda: desde 150 m con la costa a 600 m, la escena
+  da 0,53 y el banco 0,38, porque la cámara del vuelo mira algo por encima de
+  adonde llegan los ojos —lo mirado cae en (0, −0,32) de la imagen— y ve más
+  costa. Si la final cae justo ahí, el banco lo cazará. **Queda volarlo.**
+- **El vitest entero**, una vez y con el banco y la escena del cuadro ya
+  hechos: 572 de 572 ficheros y 11.470 pruebas en verde, 30 saltadas y una
+  pendiente. Lo cambiado después —la escena por ángulos— se probó con sus
+  tres ficheros: `lo-de-debajo`, `se-ve-desde-el-pasaje` y `asiento-de-ara`.
+
 ## La cuarta escena: el vuelo largo de Ara a casa
 
 Fecha: 2026-11-01

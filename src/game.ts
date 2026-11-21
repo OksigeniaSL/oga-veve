@@ -1454,6 +1454,8 @@ import {
   seVeDesdeElAsiento,
   seVeDesdeFuera,
   seVeElMarDeNubes,
+  rectasDeLaMirada,
+  seVeLoDeDebajo,
   type ElMundoQueSeMira,
   type Punto as PuntoDelMundo,
 } from "./world/se-ve-desde-el-pasaje";
@@ -1683,7 +1685,7 @@ import { laHistoria, loQueSeDice, type LoQueSeDice } from "./audio/ventanilla";
 import { precargarLaIlustracion } from "./ui/ilustraciones-de-las-historias";
 import { alSonarLaHistoria, type Caja, type LoQueNoSeTapa } from "./ui/ventana-de-historia";
 import { cajitasDelAvion, siluetaEnPantalla, type Cajita } from "./world/silueta-del-avion";
-import { ES_ALA, ES_MOTOR, mallasDeFuera, type AsientoDeAra } from "./world/asiento-de-ara";
+import { ES_ALA, ES_MOTOR, loTapaElAvionDesde, mallasDeFuera, type AsientoDeAra } from "./world/asiento-de-ara";
 import {
   calorDelSuelo,
   capaDeMezcla,
@@ -1996,6 +1998,7 @@ import {
   type AvisoDeActitud,
 } from "./flight/avisos-de-actitud";
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
+import { loDeDebajoEnLaVista, rectasDeLaVista } from "./dev/vista-para-banco";
 import { Reparto } from "./hechos";
 import { Partida } from "./partida";
 import { laForma, unaForma } from "./audio/variantes";
@@ -33283,9 +33286,28 @@ export class Game {
           if (seVeElMarDeNubes(ojo, p, mundo)) return visto(como, p, LADO_DE_ARA);
           continue;
         }
-        const esMar = this.terrain.sampleSurface(p.x, p.z) < 5;
-        if (esMar !== (sitio === "mar-abajo")) continue;
-        if (this.casiTodo(p, avion, (q) => seVeDesdeElAsiento(pose, q, avion, mundo, POR_LA_VENTANILLA, cortina)))
+        /*
+         * **El mar y la tierra, por lo que deja ver el cristal** (H59b): no el
+         * punto adonde llegan los ojos, que con la cara contra el cristal
+         * mirando abajo cae detrás de la góndola, sino lo que cabe en la
+         * mirada, con lo que tapa el propio avión. Ver `seVeLoDeDebajo`.
+         */
+        const ojo = ojosEnElMundo(pose, avion);
+        const quiereMar = sitio === "mar-abajo";
+        const piezas = this.lasPiezasDeAra();
+        const g = this.aircraftMesh.group;
+        if (
+          seVeLoDeDebajo(
+            ojo,
+            rectasDeLaMirada(pose, avion),
+            (o, d) => this.dondeLlegaElRayo(o, d),
+            (q) => seVePorLaVentanilla(ojo, q, avion, pose.ventanilla, cortina),
+            (q) =>
+              (this.terrain.sampleSurface(q.x, q.z) < 5) === quiereMar &&
+              seVeDesdeElAsiento(pose, q, avion, mundo, POR_LA_VENTANILLA, cortina) &&
+              !loTapaElAvionDesde(pose, q, avion, piezas.mallas, g, this.rayoDelDedo),
+          )
+        )
           return visto(como, p, LADO_DE_ARA);
       }
       return nada;
@@ -34017,6 +34039,7 @@ export class Game {
     readonly nubeEnMedio: number;
     readonly nubeSinDesvanecer: number;
     readonly nubeEnLaVista: number | null;
+    readonly loDeDebajoEnLaVista: number | null;
     readonly tapaElAvion: string | null;
     readonly distancia: number;
   } | null {
@@ -34057,6 +34080,8 @@ export class Game {
       nubeEnMedio: nube,
       nubeSinDesvanecer: sinDesvanecer,
       nubeEnLaVista: sitio === "nubes-abajo" ? this.nubeEnLaVistaParaBanco(p.x, p.y) : null,
+      loDeDebajoEnLaVista:
+        sitio === "mar-abajo" || sitio === "tierra-abajo" ? this.loDeDebajoEnLaVistaParaBanco(sitio === "mar-abajo", p.x, p.y) : null,
       tapaElAvion: this.loTapaElAvion(ojo, haciaElPunto, d),
       distancia: d,
     };
@@ -34116,39 +34141,62 @@ export class Game {
    */
   private nubeEnLaVistaParaBanco(cx: number, cy: number): number | null {
     const c = this.camera;
-    const ojo = c.position.clone();
-    const radio = radioDeLasNubes(this.scenario.size * 4);
-    const desde = radio * DESVANECE_DESDE;
-    const mirada = c.getWorldDirection(new Vector3());
-    const paso = 25;
+    const ojo = new Vector3().setFromMatrixPosition(c.matrixWorld);
     let densas = 0;
     let rayos = 0;
-    for (let i = -2; i <= 2; i++)
-      for (let k = -2; k <= 2; k++) {
-        const nx = cx + i * 0.2;
-        const ny = cy + k * 0.2;
-        if (Math.abs(nx) > 0.98 || Math.abs(ny) > 0.98) continue;
-        const dir = new Vector3(nx, ny, 0.5).unproject(c).sub(ojo).normalize();
-        const fin = this.dondeLlegaElRayo(ojo, dir);
-        if (!fin) continue;
-        const largo = ojo.distanceTo(new Vector3(fin.x, fin.y, fin.z));
-        // La recta que da en el propio avión ve el avión, no la nube (H59).
-        if (this.loTapaElAvion(ojo, dir, largo)) {
-          rayos++;
-          continue;
-        }
-        const hasta = Math.min(largo, radio);
-        const hondo = dir.dot(mirada);
-        let metros = 0;
-        for (let t = paso; t < hasta; t += paso) {
-          const densidad = this.sky.densidadEn(ojo.x + dir.x * t, ojo.y + dir.y * t, ojo.z + dir.z * t);
-          const f = MathUtils.clamp((t * hondo - desde) / (radio - desde), 0, 1);
-          if (densidad * (1 - f * f * (3 - 2 * f)) > 0.3) metros += paso;
-        }
-        rayos++;
-        if (metros >= 100) densas++;
-      }
+    for (const dir of rectasDeLaVista(c, cx, cy)) {
+      const fin = this.dondeLlegaElRayo(ojo, dir);
+      if (!fin) continue;
+      const largo = ojo.distanceTo(new Vector3(fin.x, fin.y, fin.z));
+      rayos++;
+      // La recta que da en el propio avión ve el avión, no la nube (H59).
+      if (this.loTapaElAvion(ojo, dir, largo)) continue;
+      if (this.nubeDensaParaBanco(ojo, dir, largo) >= 100) densas++;
+    }
     return rayos ? densas / rayos : null;
+  }
+
+  /**
+   * **Los metros de nube densa que cruza una recta** desde la cámara, hasta
+   * donde se pintan las nubes y con su desvanecido a la hondura de la cámara:
+   * la cuenta de `nubeEnMedio`, para las rectas de la vista.
+   */
+  private nubeDensaParaBanco(ojo: Vector3, dir: Vector3, largo: number): number {
+    const radio = radioDeLasNubes(this.scenario.size * 4);
+    const desde = radio * DESVANECE_DESDE;
+    const hondo = dir.dot(this.camera.getWorldDirection(new Vector3()));
+    const paso = 25;
+    const hasta = Math.min(largo, radio);
+    let metros = 0;
+    for (let t = paso; t < hasta; t += paso) {
+      const densidad = this.sky.densidadEn(ojo.x + dir.x * t, ojo.y + dir.y * t, ojo.z + dir.z * t);
+      const f = MathUtils.clamp((t * hondo - desde) / (radio - desde), 0, 1);
+      if (densidad * (1 - f * f * (3 - 2 * f)) > 0.3) metros += paso;
+    }
+    return metros;
+  }
+
+  /**
+   * **Cuánto de la vista por el cristal es el mar o la tierra de debajo**, de
+   * 0 a 1, o `null` si ninguna recta pasa por el cristal (H59b). Lo de debajo
+   * se medía por el punto adonde llegan los ojos, y con la cara contra el
+   * cristal mirando abajo ese punto es la góndola: a los 1.607 s el mar
+   * llenaba la mitad de arriba de la ventanilla y el banco lo daba por tapado.
+   * Ahora, las veinticinco rectas del mar de nubes, cada una contada si llega
+   * al mar —o a la tierra— sin dar en el avión y sin nube densa por medio. Ver
+   * `loDeDebajoEnLaVista` en `dev/vista-para-banco.ts`.
+   */
+  private loDeDebajoEnLaVistaParaBanco(mar: boolean, cx: number, cy: number): number | null {
+    const c = this.camera;
+    return loDeDebajoEnLaVista(c, cx, cy, {
+      llega: (ojo, dir) => this.dondeLlegaElRayo(ojo, dir),
+      // Sin el fin —cielo—, un punto lejos en la recta: lo que importa es por dónde sale.
+      porElCristal: (ojo, dir, fin) =>
+        this.seVePorLaVentanillaParaBanco(fin ?? { x: ojo.x + dir.x * 1e5, y: ojo.y + dir.y * 1e5, z: ojo.z + dir.z * 1e5 }) !== false,
+      tapaElAvion: (ojo, dir, lejos) => !!this.loTapaElAvion(ojo, dir, lejos),
+      esLoDicho: (q) => (this.terrain.sampleSurface(q.x, q.z) < 5) === mar,
+      nubeDensa: (ojo, dir, lejos) => this.nubeDensaParaBanco(ojo, dir, lejos),
+    });
   }
 
   /**

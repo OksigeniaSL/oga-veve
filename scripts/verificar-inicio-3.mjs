@@ -96,8 +96,10 @@
  *   contada a pasos con la densidad del dibujo y lo que deja de ella su
  *   desvanecido con la distancia (24-10-2026: ver `paisajeParaBanco`); y sin
  *   el propio avión delante —la góndola, el ala, el fuselaje—, con un rayo
- *   contra su malla tal como se pinta (H59: ver `loTapaElAvion`). Con la
- *   captura de ese momento.
+ *   contra su malla tal como se pinta (H59: ver `loTapaElAvion`). Lo de
+ *   debajo —el mar, la tierra—, por lo que llena la vista por el cristal y no
+ *   por el punto adonde llegan los ojos, que mirando abajo es la góndola
+ *   (H59b). Con la captura de ese momento.
  * - **Que la foto de una historia no sale sin su voz** (punto 287), que dentro
  *   de la nube el meneo se cuenta en el momento (280), que al salir por debajo
  *   de las nubes se cuenta el techo (295), y los dos planos nuevos: **el tren
@@ -924,7 +926,23 @@ async function elVuelo() {
        * nube en sus dos láminas, 0 m densos, y 4 s después la misma mirada
        * cruzaba 400. Ver `nubeEnLaVistaParaBanco` en `game.ts` (H38m).
        */
-      const nube = n.sitio === "nubes-abajo" ? !!v && (v.nubeEnLaVista ?? 0) >= 0.4 : !!v && v.nubeEnMedio < 150;
+      /*
+       * Y lo de debajo —el mar, la tierra—, por la vista también (H59b): el
+       * sitio es adonde llegan los ojos, y con la cara contra el cristal
+       * mirando abajo llegan a la góndola, con el mar llenando la mitad de
+       * arriba de la ventanilla. Dos de cada cinco rectas de las que pasan por
+       * el cristal, como el mar de nubes, que lleguen a lo que se dice sin dar
+       * en el avión y sin nube densa por medio: tapado del todo por el ala, o
+       * el mar nombrado sobre tierra, da cero. Ver `loDeDebajoEnLaVista` en
+       * `dev/vista-para-banco.ts`.
+       */
+      const deDebajo = n.sitio === "mar-abajo" || n.sitio === "tierra-abajo";
+      const nube =
+        n.sitio === "nubes-abajo"
+          ? !!v && (v.nubeEnLaVista ?? 0) >= 0.4
+          : deDebajo
+            ? !!v && (v.loDeDebajoEnLaVista ?? 0) >= 0.4
+            : !!v && v.nubeEnMedio < 150;
       // Y la lámina de lo que se explica, si está puesta, no encima de lo nombrado.
       if (medido.lamina && v && v.delante) {
         const x = ((v.x + 1) / 2) * medido.pantalla.ancho;
@@ -935,10 +953,11 @@ async function elVuelo() {
       }
       /*
        * Y que no lo tape el propio avión —la góndola, el ala, el fuselaje—:
-       * caer en la imagen, por el cristal y sin nube no bastaba (H59). El mar
-       * de nubes no es un punto: lo que tapa el avión ya lo cuenta su vista.
+       * caer en la imagen, por el cristal y sin nube no bastaba (H59). Lo de
+       * debajo y el mar de nubes no son un punto: lo que tapa el avión ya lo
+       * cuenta su vista (H59b).
        */
-      const sinAvion = n.sitio === "nubes-abajo" || !v?.tapaElAvion;
+      const sinAvion = n.sitio === "nubes-abajo" || deDebajo || !v?.tapaElAvion;
       const ok = enLaImagen && porElCristal && !!v && v.ojoEnNube < 0.35 && nube && sinAvion;
       const nombre = `nombrado-${nombrados.length + 1}-${n.sitio.replace(":", "-")}`;
       nombrados.push({ ...n, plano: medido.plano, medido: v, ok, nombre });
@@ -2424,7 +2443,7 @@ async function elVuelo() {
     console.log(
       `  ${n.ok ? "·" : "✗"} ${n.sitio} (${n.clave}) a los ${n.desde.toFixed(0)} s: ${n.como} por ${n.lado ?? "—"} · plano ${n.plano} · ` +
         (n.medido
-          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)}${n.medido.tapaElAvion ? ` · lo tapa ${n.medido.tapaElAvion}` : ""} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m (${(n.medido.nubeSinDesvanecer ?? 0).toFixed(0)} m sin el desvanecido)${n.medido.nubeEnLaVista != null ? ` · nube densa en ${(n.medido.nubeEnLaVista * 100).toFixed(0)} % de la vista` : ""} · a ${(n.medido.distancia / 1000).toFixed(1)} km`
+          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)}${n.medido.tapaElAvion ? ` · lo tapa ${n.medido.tapaElAvion}` : ""} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m (${(n.medido.nubeSinDesvanecer ?? 0).toFixed(0)} m sin el desvanecido)${n.medido.nubeEnLaVista != null ? ` · nube densa en ${(n.medido.nubeEnLaVista * 100).toFixed(0)} % de la vista` : ""}${n.medido.loDeDebajoEnLaVista != null ? ` · ${n.sitio === "mar-abajo" ? "el mar" : "la tierra"} en ${(n.medido.loDeDebajoEnLaVista * 100).toFixed(0)} % de la vista por el cristal` : ""} · a ${(n.medido.distancia / 1000).toFixed(1)} km`
           : "sin punto"),
     );
   comprobar(
