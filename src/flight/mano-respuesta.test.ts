@@ -723,24 +723,17 @@ describe("el cabeceo con la tecla", () => {
      * y lo que seguía al soltar eran seis grados. Era la mano, que apretaba
      * lo mismo a la mitad de velocidad. Ver `apretonPorVelocidad` en `mano.ts`.
      *
-     * **Y los dos de fuselaje ancho, en la final, más.** Los 2,5° se cumplían
-     * midiendo contra un vuelo que no estaba quieto: con el gas de antes y los
-     * flaps aún saliendo, el vuelo sin tocar nada subía y bajaba tres grados
-     * en esos catorce segundos. Medidos en una final asentada y con los gases
-     * automáticos, la mano de antes dejaba seguir 3,8° al 747 y 3,6° al 787, y
-     * la de ahora, que ya no pierde firmeza en la final por cómo se reparte
-     * la sustentación (ver `loQueTardaElCamino` en `mano.ts`), 4,7° y 2,7°;
-     * el E170, 1,6°, y los demás, de 1,1° a 1,8°. Son los de más inercia de
-     * cabeceo de la flota: el morro tarda más en volver que en ningún otro, y
-     * el camino sigue lo que tarda. Bajarlo es afinar el lazo de dentro de la
-     * mano —el servo y el amortiguador del timón— para ellos, y pide su
-     * tanda; mientras, la prueba sostiene lo medido (enmienda H55 del ADR
-     * 0027).
+     * **Y los dos de fuselaje ancho, en la final, también.** Medidos en una
+     * final asentada y con los gases automáticos, la mano de antes dejaba
+     * seguir 4,7° al 747 y 2,7° al 787, y la prueba los había dejado en 5° y
+     * 3° (enmienda H55 del ADR 0027): son los de morro más pesado de la
+     * flota, y el mismo servo y el mismo amortiguador tardaban cinco veces más
+     * en girarlo. Con la mano apretando en proporción a lo que pesa ese morro
+     * —ver `apretonPorInercia` en `mano.ts`—, 2,1° y 1,9°; el E170, 1,6°, y
+     * los demás, de 1,1° a 1,8°, como estaban (enmienda H55b).
      */
-    const tope = (r: MedidaDeCabeceo): number =>
-      r.fase !== "final" ? 2.5 : r.avion === "jaz-120" ? 5 : r.avion === "jaz-110" ? 3 : 2.5;
     for (const r of filas)
-      expect(r.sigue, `${r.avion} en ${r.peldano}, ${r.fase}`).toBeLessThan(tope(r));
+      expect(r.sigue, `${r.avion} en ${r.peldano}, ${r.fase}`).toBeLessThan(2.5);
   });
 
   it("y nadie se levanta del asiento", () => {
