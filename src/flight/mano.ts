@@ -87,7 +87,7 @@
  * simulador. Ver `flight/mandos-fisicos.ts`.
  */
 
-import { GRAVITY } from "./atmosphere";
+import { GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { esDeChorro, type AircraftConfig } from "./aircraft";
 import { ascensoMaximo } from "./carrera";
 import { sustentacionDeLosFlaps } from "./flaps";
@@ -1474,8 +1474,9 @@ export class ManoQueSostiene {
     const delViraje = (GRAVITY / v) * Math.tan(phi) * Math.sin(phi) * Math.cos(gamma);
     const pedido = giro / Math.cos(phi) + delViraje;
     const faltaGiro = pedido - ve.ritmoDeCabeceo;
-    // Despacio, más mano: ver `apretonPorVelocidad`.
-    const aprieta = apretonPorVelocidad(ve.aircraft, v);
+    // Despacio, más mano, y más en un morro pesado: ver `apretonPorVelocidad`
+    // y `apretonPorInercia`.
+    const aprieta = apretonPorVelocidad(ve.aircraft, v) * apretonPorInercia(ve.aircraft);
     // El servo no sube el morro mientras el ala va pasada: que no se acumule.
     if (!(cede && faltaGiro > 0))
       this.trim = acotar(this.trim + SERVO * aprieta * faltaGiro * dt, 1);
@@ -1795,6 +1796,53 @@ export function apretonPorVelocidad(a: AircraftConfig, verdadera: number): numbe
  * manda el avisador. Ver `LEJOS_DEL_AVISADOR`.
  */
 export const APRETON_MAXIMO = 4;
+
+/**
+ * **Lo que acelera el morro con todo el timón**, rad/s², a la velocidad de
+ * maniobra y a nivel del mar: el momento del timón entero partido por la
+ * inercia de cabeceo, `½ρ₀·V²·S·c·Cmδe / Iyy`.
+ *
+ * Es lo que le cuesta a una mano mover ese morro. La avioneta da 6, el
+ * bimotor 3,5 y el E170 2,6; el 787 da 0,84 y el 747, 0,51: un morro doce
+ * veces más pesado de girar que el de la avioneta con todo el timón, que es
+ * lo que pesan cuatro motores y setenta metros de fuselaje.
+ */
+export function nervioDelMorro(a: AircraftConfig): number {
+  const v = velocidadDeManiobra(a);
+  return (
+    (0.5 * SEA_LEVEL_DENSITY * v * v * a.wingArea * a.chord * a.aero.cmElevator) / a.inertia.yy
+  );
+}
+
+/**
+ * **Y en los de morro pesado, la mano aprieta en proporción**: cuánto se
+ * multiplican el servo y el amortiguador de la trayectoria por la inercia
+ * del avión, de 1 hacia arriba.
+ *
+ * El servo y el amortiguador son de la flota con la que se afinaron, de la
+ * avioneta al E170, y con ellos el lazo de dentro —el giro de morro que se
+ * pide contra el que hay— responde en algo menos de un segundo. En el 747,
+ * con un morro cinco veces más pesado de girar que el del E170, el mismo
+ * movimiento de timón tardaba cinco veces más en dar el giro pedido: al
+ * soltar la tecla bajando en la final, el camino seguía bajando **4,7°** más
+ * mientras el morro volvía, y en el 787, 2,7°, donde los demás se quedan en
+ * menos de dos (enmienda H55b del ADR 0027).
+ *
+ * Es lo que hace quien pasa de una avioneta a un avión grande: mueve más el
+ * volante para el mismo giro, porque sabe que el morro pesa. Y lo que hacen
+ * los pilotos automáticos, que llevan la ganancia del lazo de cabeceo a la
+ * medida de cada avión. Por encima de `NERVIO_DE_LA_MANO` no cambia nada: de
+ * la avioneta al E170, todo sigue como estaba.
+ */
+export function apretonPorInercia(a: AircraftConfig): number {
+  return Math.max(1, NERVIO_DE_LA_MANO / nervioDelMorro(a));
+}
+
+/**
+ * Desde dónde aprieta, rad/s²: lo que mueve el morro del E170, el más
+ * pesado de la flota con el que el lazo de dentro ya iba bien.
+ */
+export const NERVIO_DE_LA_MANO = 2.5;
 /** Lo más que aprieta la mano corrigiendo, g. */
 const MAS_CARGA = 0.4;
 
