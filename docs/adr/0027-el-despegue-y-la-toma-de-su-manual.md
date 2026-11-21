@@ -7368,3 +7368,216 @@ El vitest entero, con el cambio: 568 ficheros y 11.290 pruebas, en verde.
   antes, las duras de σ_w 1 suben de 23 a 32. Y la segunda tirada del JAZ 120
   en el navegador, que esta vez no cupo.
 - **El JAZ 110 en el navegador**, que sigue medido solo en la mesa.
+
+## Enmienda H55 (21-11-2026): la actitud de la final de los reactores, y la mano que la sostiene
+
+H54 dejó medida la actitud de la final de los tres reactores contra sus
+manuales y no la metió, porque movía la mano de los peldaños de abajo. Aquí
+entra, con la mano arreglada en la raíz.
+
+### Lo que entra: lo que suman los flaps de aterrizar
+
+Las cifras y las fuentes son las de H54 (la vara, arriba): **0,763 el JAZ 120
+con flaps 30 y 0,48 con flaps 20; 0,716 el JAZ 110; 1,125 el JAZ 90**, y la
+pérdida de esas muescas llevada al ángulo que deja el mismo CL máximo, el de
+su Vref (`bordeDeAtaque`). Las de despegue no se mueven. En la mesa, en aire
+quieto, en la senda de 3° y con el adicional de cada manual, la media de los
+120 a los 40 m de ruedas:
+
+| | Morro, antes | Morro, ahora | El manual |
+|---|---|---|---|
+| JAZ 120 (747), flaps 30, Vref + 10 | −1,76° | **+0,99°** | +1,0° |
+| JAZ 110 (787-9), flaps 30, Vref + 5 | −0,15° | **+0,97°** | +1,0° |
+| JAZ 90 (E170), FULL, Vref + 10 | −3,13° | **−0,02°** | 0° |
+
+(El −1,76° del 747 es con la Vref de 142 de H54; el −2,4° de H54 era con la de
+146.)
+
+### Por qué la mano se desestabilizaba
+
+La firmeza con la que la mano sostiene la trayectoria es `FIRMEZA / tarda`,
+con tope en `POR_TRAYECTORIA` (0,45 y 0,6), y `tarda` es lo que tarda el
+camino en seguir al morro: `(V/g)·(α − α₀)`. **El `α₀` era el del ala limpia,
+`−cl0/clα`**. Con los flaps abajo eso no es lo que tarda el avión: es la parte
+de la sustentación que pone el ángulo, y cambia con cómo se reparte entre el
+ángulo y los flaps. Lo que tarda de verdad es `m·V/(q·S·CLα)`, que a un g es
+`(V/g)·CL/CLα` con el CL entero, flaps incluidos, y no depende del reparto: el
+747 en la final lo lleva a 1,31 con un reparto y con el otro, y tarda 2,1 s en
+los dos. Con el `α₀` limpio salían 0,39 s con los flaps de antes —la firmeza
+en su tope, 0,6, que es como se afinó la final— y 0,85 s con los del manual:
+0,53. Con eso, en `final-fina.test.ts`, el 747 en Tukã con el gas quieto
+—la mano sosteniendo la velocidad con el morro, que es lo que hace en un avión
+de cables— subía y bajaba **±2,28 m/s cada 52 s**, donde el tope es 0,1.
+
+Lo comprobado antes de tocar nada, con la actitud puesta:
+
+- Forzando la firmeza a su tope, 0,6, el 747 se queda en ±0,07 m/s: es la
+  firmeza, no el avión.
+- Con el `α₀` del avión tal como va y la `FIRMEZA` de siempre, la final de
+  los tres se columpia: el 747 y el 787, ±3,9 m/s con el gas quieto y ±0,5 con
+  los automáticos; el E170, ±0,7 con los automáticos. La final estaba afinada **sobre el error**:
+  con el `α₀` limpio los reactores llegaban siempre al tope, y la firmeza que
+  les va bien en la final es más de la que da `FIRMEZA / tarda` con lo que
+  tardan de verdad.
+
+### Lo que se cambia en la mano
+
+`loQueTardaElCamino` (`mano.ts`): **lo que tarda de verdad, partido por el
+apretón**. Lo de verdad, con el `α₀` del avión tal como va,
+`−(cl0 + sustentacionDeLosFlaps)/clα`, que es el de `step`. Y partido por el
+apretón porque el ángulo de más empuja el morro de vuelta con la fuerza del
+aire, que va con la presión dinámica, y la mano mueve el timón con un apretón
+que va con la inversa de esa presión por debajo de la velocidad de maniobra
+(`apretonPorVelocidad`): lo que le toca vencer de ese retraso es lo que tarda
+partido por el apretón.
+
+- **A la velocidad de maniobra y por encima, nada cambia**: el apretón es uno
+  y, limpio, el `α₀` es el de siempre. Donde se afinó `FIRMEZA`, en la fase
+  «crucero» de `mano-respuesta.test.ts`, todas las cifras salen iguales.
+- **En la final**, con un apretón de tres o cuatro, los tres reactores llegan
+  al tope, 0,6: el 747 y el E170, donde estaban antes de la actitud, y el 787,
+  que estaba en 0,55, un poco más firme.
+- **Los de hélice, igual que antes**: van en el tope en la final con un
+  reparto y con el otro, porque tardan poco. La causa es común —la cuenta es la
+  misma para todos—, pero en ellos no mordía. Medido: el JAZ 60 en
+  `final-fina`, y el JAZ 20 y el JAZ 60 al soltar la tecla en la final, dan
+  las mismas cifras con la mano de antes y con la de ahora.
+- Sin un arreglo por avión: la misma cuenta para todos.
+
+Lo que queda quieto con la mano nueva (`final-fina.test.ts`, ± m/s pasado el
+primer minuto y medio, en Tukã, senda de 3°; en Taguató y Taguato Ruvicha, lo
+mismo al centésimo salvo el E170 con el gas quieto, abajo):
+
+| | Antes, gases automáticos / gas quieto | Actitud con la mano de antes | Actitud con la de ahora |
+|---|---|---|---|
+| JAZ 120 | 0,05 / 0,10 | 0,19 / **2,28** | 0,06 / 0,07 |
+| JAZ 110 | 0,06 / 0,07 | 0,12 / 0,08 | 0,05 / 0,04 |
+| JAZ 90 | 0,02 / 0,14 | 0,08 / 0,05 | 0,03 / 0,14 |
+
+(El E170 con el gas quieto en Taguató y Taguato Ruvicha, que tiene su tope de
+0,7 por la región de mando invertido —enmienda H20e—: de 0,51 y 0,64 a 0,26 y
+0,36.)
+
+### Las pruebas que movía, y por qué
+
+Doce en siete ficheros.
+
+- **`final-fina.test.ts`** (2): en verde por la mano, con los topes de
+  siempre.
+- **`prestaciones.test.ts`**, «cruza el umbral a 1,3 veces la pérdida con
+  flaps» (2, JAZ 90 y JAZ 120): contaba la pérdida con el ángulo de la ficha y
+  la recta de los flaps, como contaba la del avisador hasta H54. Ahora con
+  `anguloDePerdida` y `sustentacionDeLosFlaps`, como `step`. El CL máximo de
+  los dos no se ha movido, así que salen donde estaban: 1,23 y 1,30.
+- **`distancia-de-aterrizaje.test.ts`**, «sin los frenos de tierra… el ala
+  lleva el peso» (1): rodando, el ala va con el ángulo que le deja el tren, y
+  lo que sostiene es lo que suman los flaps a ese ángulo. Con los del manual,
+  sin los paneles, las ruedas cargan 0,37 en el 747 (eran 0,20), 0,34 en el 787
+  (0,27) y 0,33 en el E170 (0,19): el ala sigue llevando dos tercios. El tope
+  pasa de 0,35 a 0,4, y se añade lo que enseña la prueba: con los paneles
+  arriba la carga en las ruedas pasa del doble (de 2,2 a 2,5 veces medido).
+- **`ascendente-en-la-final.test.ts`** (2): la prueba necesita que la
+  ascendente llegue con el avión alto y bajando al tope del banco, como en el
+  #192, y lo alto lo ponía el globo de sacar los flaps: el avión nace
+  compensado limpio. Con los flaps del manual el globo es menor (57 m y no 78)
+  y a los sesenta segundos ya estaba en la senda, bajando a 3,9 m/s. Ahora lo
+  alto lo pone la prueba: la senda empieza sesenta metros por debajo.
+- **`recogida-del-reactor.test.mjs`** (2). La recogida de antes, la de las
+  tandas 18 y 19, fallaba 31 de 60 con el 747 que bajaba picado y falla 13
+  con el del manual; la de ahora, 5 (2 largas y 3 duras). La guarda pasa de
+  «más de 18» a «más de 10»: la prueba sigue viendo el fallo y la mejora. Y la
+  de la regla del punto de toma: a 146 nudos, la Vref de las tandas que
+  flotaban, la más dura de las sesenta es **la misma final con la regla y sin
+  ella**, 3,22 m/s, así que ahí se mira que la regla no ponga ninguna más dura;
+  y lo de ninguna dura de transporte se mira a la Vref del juego, 142, donde
+  vuela la regla: la más dura, 2,44 m/s, y ninguna larga.
+- **`colocado-y-compensado.test.ts`**, «el JAZ 90 soltado tras empujar no
+  sostiene la bajada del empujón», en Tukã (1): es la ayuda de subida del
+  modelo, no la mano. Del empujón, −6,6 m/s, vuelve a −1,78 de media pasados
+  diez segundos, donde con los flaps de antes daba −1,68, y el tope era la
+  mitad de su senda, −1,74. Se mira ahora la regla de frente —lo que sostiene
+  la ayuda al soltar no es una bajada— y lo que se ve pasa a algo más de la
+  mitad de la senda (0,55). Por qué el E170 vuelve una décima más despacio no
+  se ha mirado.
+- **`mano-respuesta.test.ts`** (2). Aquí había dos cosas de la prueba.
+  - **El gas** era un integrador a pelo, `gas += 0,08·(V₀ − V)·dt`, sin
+    amortiguar: en la final de los reactores iba de lleno a cero y vuelta, y
+    el vuelo «sin tocar nada» contra el que se mide subía y bajaba más de tres
+    grados de trayectoria en los catorce segundos de la medida. Y la final se
+    medía a los veinte segundos de sacar los flaps, que en el 747 y el 787
+    tardan veinticuatro. Ahora el gas es el de los automáticos del juego, el
+    de `final-fina`, y la final se asienta un minuto.
+  - **Al soltar la tecla en la final**, medido así, la mano de antes ya dejaba
+    seguir **3,8° al 747 y 3,6° al 787**: los 2,5° de la prueba se cumplían por
+    el columpio. Con la actitud y la mano de ahora, 4,7° y 2,7°; el E170, 1,6°;
+    los demás, de 1,1° a 1,8°. Son los dos de más inercia de cabeceo de la
+    flota —el morro tarda en volver más que en ningún otro, y el camino sigue
+    lo que tarda—, y la prueba sostiene lo medido para ellos en la final: 5° el
+    747 y 3° el 787. **Es un tope aflojado**: bajarlo es afinar el lazo de
+    dentro —el servo y el amortiguador del timón— para los de mucha inercia, y
+    no cabe en esta tanda.
+  - **De 30° a nivelado con la tecla, en la final**: el 747 en Taguato Ruvicha
+    tarda 5,07 s, donde con la actitud de antes, medido en la misma final,
+    4,93; con la mano de antes o con la de ahora, lo mismo: es el avión. El
+    tope, el doble de MIL-F-8785C, pasa de 5 a 5,2.
+
+### La mesa
+
+La de H54 (`h55/mesa/` del scratchpad, la de H53 con el punto de toma), con
+la Vref de 142 en las dos columnas: el automático del banco, no la mano. JAZ
+120 y JAZ 110 en Gran Canaria con veinte nudos de cara a la Vref más ocho;
+JAZ 90 en Los Rodeos con doce de cara a la Vref más cinco. 200 finales.
+
+| | Más de 2 m/s | Pasadas de 600 m | La más larga | Mediana |
+|---|---|---|---|---|
+| JAZ 120, σ_w 1: antes / ahora | 32 / **21** | 4 / **1** | 615 / 623 m | 435 / 402 m |
+| JAZ 120, σ_w 1,5 | 76 / 88 | 9 / 8 | 947 / 924 m | 367 / 352 m |
+| JAZ 110, σ_w 1 | 11 / 12 | 2 / 2 | 777 / 774 m | 441 / 427 m |
+| JAZ 110, σ_w 1,5 | 42 / 40 | 2 / 1 | 2.460 / 696 m | 368 / 374 m |
+| JAZ 90, σ_w 1 | 9 / 19 | 0 / 0 | 485 / 496 m | 281 / 271 m |
+| JAZ 90, σ_w 1,5 | 69 / 52 | 0 / 0 | 520 / 500 m | 240 / 214 m |
+
+Lo que empeora es del banco y no de la mano: el JAZ 90 con σ_w 1 toca duro el
+doble, y con σ_w 1,5 deja trece finales de 200 sin llegar a la pista por
+debajo de los treinta metros (187 de 200), donde la mesa deja de perseguir la
+senda; el 747 con σ_w 1,5, doce duras más. Es la recogida del automático del
+banco, afinada con el morro de antes.
+
+### Volado
+
+Desde una foto del worktree (`h55/arbol-final` del scratchpad).
+
+- `verificar-vuelo-entero.mjs gran-canaria taguato 1 jaz-120`, con la tarjeta
+  de verdad y la cabina puesta (`OGA_GPU=1 OGA_CAMARA=cockpit OGA_FOTOS`):
+  **62 de 63**. Llegó a la puerta de los quinientos pies a 155 nudos (Vref
+  142) bajando 4,1 m/s; recogió a 13,2 m de ruedas, 80 m
+  antes del umbral, bajando 3,5 m/s a 152 nudos, y tocó a **512 m y 1,39
+  m/s**. La que falla es de lado: tocó a 10,3 m del eje, con 9 de tope, y ya
+  pasó la puerta a 9,7; en H54 tocó a 1,2. Una tirada sola no dice si es de
+  esto o del aire de esa tarde.
+- En la foto de los 450 ft (`h55/fotos-747/31-750s-final.png`), el avión del
+  PFD va un grado por encima del horizonte, a 155 nudos: el morro del FCOM.
+- `verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`: **63 de
+  63**. A la puerta de los quinientos pies a 124 nudos (Vref 118) bajando 2,1
+  m/s; recogió a 11,1 m de ruedas, 68 m antes del umbral, bajando 2,5 m/s a
+  123 nudos, y tocó a **489 m y 0,73 m/s**, a 6,8 m del eje.
+- `tenerife-norte tuka 1 jaz-90`, el de la mano: **sin volar**. El navegador
+  lo tenía la ronda de repaso cuando le tocaba, y no cabía antes de la
+  entrega.
+
+El vitest entero, con el cambio: 568 ficheros y 11.295 pruebas, una en rojo,
+la de `colocado-y-compensado` de arriba; arreglada después, los once ficheros
+tocados, en verde (406 pruebas).
+
+### Lo que queda
+
+- **El lazo de dentro de la mano para los de mucha inercia**: al soltar la
+  tecla en la final el 747 sigue 4,7° y el 787 2,7°, con topes de 5 y 3 en
+  `mano-respuesta.test.ts`.
+- **La recogida del automático del banco con el morro del manual**: el JAZ 90
+  con σ_w 1 toca duro el doble en la mesa, y con σ_w 1,5 deja trece finales sin
+  llegar; el 747 con σ_w 1,5, doce duras más.
+- **El picado del suelo del 747** (H54), que sigue fuera.
+- **Los bancos que faltan**: Tukã con el JAZ 90, que es el que vuela la mano
+  en el navegador, y una segunda tirada del JAZ 120 en Gran Canaria, por el
+  eje.
