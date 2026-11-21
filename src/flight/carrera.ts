@@ -141,6 +141,15 @@ export function carreraHastaVr(
  * Sale de la rodadura hasta la rotación por la proporción de su clase: ver
  * `deRodarADespegar`. Es lo que falta después de rotar: separarse y subir los
  * quince metros.
+ *
+ * **El picado del suelo no entra, y no porque se olvide** (H56b). Al rotar,
+ * el suelo baja el morro (`momentoDelSuelo` en `efecto-suelo.ts`), y quien
+ * rota lo vence tirando un poco más, `palancaDelSuelo`. Sostenido así, no
+ * alarga nada: con la mano de `despegue-y-toma-del-manual.test.ts` sumándolo,
+ * los ocho aviones vuelan hasta la altura de su norma lo mismo que sin
+ * picado, al metro. Lo que alargaba el 747 un 1,2 % era una mano que no lo
+ * sostenía y se quedaba atrás. La proporción de su clase, además, sale de
+ * aviones de verdad, que ya lo tienen.
  */
 export function distanciaDeDespegue(
   a: AircraftConfig,

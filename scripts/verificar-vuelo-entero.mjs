@@ -72,7 +72,7 @@ import {
   porLoQueAceleraElReactor,
 } from "./recogida-del-reactor.mjs";
 import { elEjeDeLaCarrera } from "./el-eje-de-la-carrera.mjs";
-import { palancaDeLaFrustrada } from "./la-frustrada.mjs";
+import { LEY_DEL_REACTOR, palancaDeLaFrustrada } from "./la-frustrada.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -778,11 +778,12 @@ await page.addScriptTag({
   content: `globalThis.__elEjeDeLaCarrera = ${elEjeDeLaCarrera.toString()};`,
 });
 /*
- * **Y la palanca de la frustrada de las hélices, desde su módulo** (H34e),
- * que la prueba `la-frustrada.test.mjs` contra el modelo del juego.
+ * **Y la palanca de la frustrada, desde su módulo** (H34e), que la prueba
+ * `la-frustrada.test.mjs` contra el modelo del juego; con la ley de los
+ * reactores (H56b).
  */
 await page.addScriptTag({
-  content: `globalThis.__palancaDeLaFrustrada = ${palancaDeLaFrustrada.toString()};`,
+  content: `globalThis.__palancaDeLaFrustrada = ${palancaDeLaFrustrada.toString()}; globalThis.__leyDelReactor = ${JSON.stringify(LEY_DEL_REACTOR)};`,
 });
 
 const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida]) => {
@@ -2955,10 +2956,28 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * por su crucero— con la actitud pedida de golpe, el gas de una subida de
    * circuito y la primera muesca de una vez —y el biplano sin flaps, el JAZ
    * 25, también de golpe—. Todas iban a por doce grados. En Guyrami, como
-   * estaba: allí el ala no pierde. Y los reactores, como estaban: no se han
-   * volado con esto (enmienda H34e del ADR 0027).
+   * estaba: allí el ala no pierde (enmienda H34e del ADR 0027).
+   *
+   * **Y los reactores, con la de su FCTM** (H56b): la misma ley con quince
+   * grados (`LEY_DEL_REACTOR` en `la-frustrada.mjs`), TO/GA hasta la altura
+   * de aceleración y una muesca menos al irse. Iban con la de antes de H34e
+   * —doce grados de golpe, la primera muesca de una vez y el gas de una
+   * subida—, y en la mesa el JAZ 90 se quedaba a 1,8° del avisador y con una
+   * racha entraba en él.
    */
-  const FRUSTRA_COMO_SU_MANUAL = !SENCILLO && suyas.propulsion === "helice";
+  const FRUSTRA_COMO_SU_MANUAL =
+    !SENCILLO && (suyas.propulsion === "helice" || suyas.propulsion === "chorro");
+  /**
+   * **Si la frustrada es la de un reactor**: la velocidad que no se deja caer
+   * es la de la aproximación, la del MCP —su final va a 1,23 veces la
+   * pérdida, por debajo de la de maniobra de la muesca siguiente—, y la ley se
+   * deja en la altura de aceleración aunque queden flaps: ahí el FCTM baja el
+   * morro para acelerar y recogerlos según su velocidad, que es lo que hace la
+   * subida del banco con `configurar`. Con quince grados hasta tenerlos
+   * arriba, el 747 no llegaba nunca a la de recoger la siguiente muesca, 159
+   * nudos, y se habría quedado subiendo a su Vref con los de veinte.
+   */
+  const FRUSTRA_COMO_REACTOR = FRUSTRA_COMO_SU_MANUAL && suyas.propulsion === "chorro";
   /** Las muescas de su palanca, en fracción del recorrido. Ver `muescasDeLaPalanca` en `flaps.ts`. */
   const MUESCAS_DE_LA_PALANCA =
     (suyas.maniobraPorMuesca?.length ?? 0) >= 2
@@ -3090,11 +3109,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * es suya —`sostenerLaAltura`—, y la avioneta pasa a la de velocidad con
      * la mano a su ritmo, abajo.
      */
-    if (frustrada && (s.heightAboveGround < ASENTAR_LA_SUBIDA || flapsDeLaFrustrada !== null)) {
+    if (
+      frustrada &&
+      (s.heightAboveGround < ASENTAR_LA_SUBIDA ||
+        (flapsDeLaFrustrada !== null && !FRUSTRA_COMO_REACTOR))
+    ) {
       const ahora = o.reloj();
       const transcurrido = frustrada.ultimo === null ? PASO : ahora - frustrada.ultimo;
       frustrada.ultimo = ahora;
-      frustrada.minima = deManiobraCon(o.controles?.().flaps ?? 0) + MARGEN_DE_LA_FRUSTRADA;
+      frustrada.minima = FRUSTRA_COMO_REACTOR
+        ? suyas.aproximacion
+        : deManiobraCon(o.controles?.().flaps ?? 0) + MARGEN_DE_LA_FRUSTRADA;
       const r = globalThis.__palancaDeLaFrustrada({
         cabeceo: cabeceoDe(s),
         ritmo: ritmoDelMorro(s),
@@ -3108,6 +3133,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         dt: transcurrido > 0 && transcurrido <= 0.25 ? transcurrido : PASO,
         ganancia: ganancia(s),
         mano: MANO_POR_SEGUNDO,
+        ley: FRUSTRA_COMO_REACTOR ? globalThis.__leyDelReactor : undefined,
       });
       frustrada.referencia = r.referencia;
       frustrada.acumulado = r.acumulado;
@@ -3155,9 +3181,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * la actitud de subida: el freno de `AMORTIGUA_EL_MORRO` y la mano de
        * `conLaMano`.
        */
+      /*
+       * Y el reactor que sale de su frustrada a la altura de aceleración, desde
+       * la palanca que dejó la ley y con la mano a su ritmo (H56b): de los
+       * quince grados a los doce de la subida, la ley de la actitud pedía de
+       * golpe una décima de palanca más adelantada.
+       */
       return AVIONETA_COMPLETA
         ? conLaMano(Math.max(-0.35, Math.min(0.6, aSuRitmo(actitud, s) - AMORTIGUA_EL_MORRO * ritmoDelMorro(s))))
-        : actitud;
+        : FRUSTRA_COMO_REACTOR && frustrada
+          ? conLaMano(actitud)
+          : actitud;
     }
     const base = palancaPorVelocidad(s, aQueSeSube(s));
     const falta = Math.max(0, 3 - s.verticalSpeed);
