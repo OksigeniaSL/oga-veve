@@ -8573,7 +8573,8 @@ Se apunta abajo.
 
 Desde una foto del worktree con la tabla de la sección 19 y la ley de los
 reactores (`h56b/arbol-b` del scratchpad; sin la cola en T, que solo toca al
-JAZ 60), con la tarjeta de verdad:
+JAZ 60), con la tarjeta de verdad. Un vuelo de cada uno: dicen que el banco
+vuela y toca con esto, no cuánto lo mueve.
 
 - **`verificar-vuelo-entero.mjs tenerife-norte tuka 1 jaz-90`: 65 de 66.**
   Es donde vuela la mano de los peldaños de abajo. La recogida, a 10,8 m de
@@ -8590,6 +8591,16 @@ JAZ 60), con la tarjeta de verdad:
   velocidad por la cara bajó de 9,6 nudos a 5—: pasó de bajar 5,9 m/s a 8,4
   y cruzó la senda hacia abajo. En H55b y H55c la misma puerta salió a 2,5
   y 2,8 m/s. Una tirada no dice cuántas veces pasa; se apunta abajo.
+- **`verificar-vuelo-entero.mjs gran-canaria taguato 1 jaz-120`, con
+  `OGA_PISTA_OCUPADA=1`: 62 de 62**, con la frustrada de los reactores (punto
+  5). La torre lo mandó al aire a 54 m de ruedas y 145 nudos. Con la traza
+  del ala (`h56b/traza-v120-ocupada.json`): el morro de 1,3° a 16,6° en ocho
+  segundos, a 4,0°/s como mucho; la palanca, de −0,10 a +0,17 y de vuelta,
+  0,14 como mucho entre fotogramas; lo más bajo, 42,8 m; el ala a **3,0° del
+  avisador como poco** —a 44 m, con 1,52 g en una racha—, y ni un fotograma
+  con él. Los 120 m, a los once segundos. Volvió por el circuito y tocó a
+  **494 m y 1,41 m/s**, a 3,7 m del eje, con la puerta de los quinientos pies
+  en verde.
 
 ### 3. La sección 19 del CR-114494
 
@@ -8797,11 +8808,10 @@ saltadas y una por hacer). Lo nuevo y lo que se mueve:
   debajo de la senda y bajando 7,2 m/s, al buscar la senda desde 30 m por
   encima con un cambio de viento. No es del picado; no se sabe cuántas veces
   pasa.
-- **`tenerife-norte taguato 1 jaz-20` y `jaz-50` con la pista ocupada, y
-  `gran-canaria taguato 1 jaz-120` con la pista ocupada, sin volar**: el
-  navegador lo tuvo otro ayudante, y de la cola de cuatro vuelos cupo uno. La
-  frustrada de los reactores está en la mesa y en la prueba, no en el
-  navegador.
+- **`tenerife-norte taguato 1 jaz-20` y `jaz-50` con la pista ocupada, sin
+  volar**: el navegador lo tuvo otro ayudante, y de la cola de cuatro vuelos
+  cupieron dos, Tukã y el 747. La avioneta y el Twin Otter frustran con la
+  ley de H34e, que no cambia aquí.
 - **La cuenta del hangar contra lo que vuela el modelo**, de antes y no del
   picado: el biplano y el Twin Otter piden con margen menos pista de la que
   vuelan hasta la altura de su norma (0,97 y 0,98), y el E170 y el Seneca se
