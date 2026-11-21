@@ -28,13 +28,13 @@ import { describe, expect, it } from "vitest";
 import {
   diferencia,
   edificiosDePasarela,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
   LA_CALLE_TUERCE,
   MIRA_LA_CALLE,
   RECTA_DE_LA_PLATAFORMA,
-  rumboEnElPuesto,
   rumboEntre,
   saleConRemolque,
-  trayectoriaDelEmpuje,
   vector,
   type PuntoXZ,
 } from "./remolque";
@@ -142,12 +142,10 @@ function medir(c: Caso): { readonly tuerce: boolean; readonly torcido: number; r
   const morro = morroDe(c.avion);
   if (!saleConRemolque(vaALaPasarela(c.avion), x, z, edificios, morro)) return null;
   const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-  const rumbo = rumboEnElPuesto(x, z, edificios, raya);
-  if (rumbo === null) return null;
-  // Con la rueda de morro en el punto del puesto, como lo pone el juego (#191).
-  const centro = conLaRuedaEn({ x, z }, rumbo, morro);
-  const e = trayectoriaDelEmpuje({ x: centro.x, z: centro.z, rumbo }, raya, c.avion.batalla);
-  if (!e) return null;
+  // Sobre su raya pintada si sale bien por ella, y con la rueda de morro en el punto del puesto, como lo pone el juego.
+  const enElSuyo = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), c.avion.batalla, (r) => conLaRuedaEn({ x, z }, r, morro));
+  if (!enElSuyo?.empuje) return null;
+  const { rumbo, empuje: e } = enElSuyo;
   const fin = e.poses.at(-1)!;
   const acum = acumulado(raya);
   // Hacia dónde sigue la raya desde donde el empuje la deja: los treinta metros que mira el banco.
@@ -180,6 +178,13 @@ interface ComoAcaba {
   readonly lejos: number;
   readonly largo: number;
   readonly giro: number;
+  /** Si el avión está sobre su raya pintada (H60b): ver `empujeDesdeElPuesto`. */
+  readonly porLaPintada: boolean;
+  /** Lo que se aparta su rumbo del que tendría por la raya del plan, rad. */
+  readonly cambia: number;
+  /** Lo que se aparta la raya pintada de la del plan, si la hay y mira al edificio, rad. */
+  readonly seAparta: number | null;
+  readonly porQueNo: string | null;
 }
 
 /**
@@ -200,11 +205,10 @@ function comoAcaba(c: Caso): ComoAcaba | null {
   const morro = morroDe(c.avion);
   if (!saleConRemolque(vaALaPasarela(c.avion), x, z, edificios, morro)) return null;
   const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-  const rumbo = rumboEnElPuesto(x, z, edificios, raya);
-  if (rumbo === null) return null;
-  const centro = conLaRuedaEn({ x, z }, rumbo, morro);
-  const e = trayectoriaDelEmpuje({ x: centro.x, z: centro.z, rumbo }, raya, c.avion.batalla);
-  if (!e) return null;
+  // Sobre su raya pintada si sale bien por ella, y con la rueda de morro en el punto del puesto, como lo pone el juego.
+  const enElSuyo = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), c.avion.batalla, (r) => conLaRuedaEn({ x, z }, r, morro));
+  if (!enElSuyo?.empuje) return null;
+  const { rumbo, empuje: e } = enElSuyo;
   const fin = e.poses.at(-1)!;
   const n = vector(fin.rumbo);
   const acum = acumulado(raya);
@@ -237,6 +241,10 @@ function comoAcaba(c: Caso): ComoAcaba | null {
     ...mejor,
     largo: e.largo,
     giro: e.giro,
+    porLaPintada: enElSuyo.porLaPintada,
+    cambia: Math.abs(diferencia(rumbo, enElSuyo.porLaRuta)),
+    seAparta: enElSuyo.pintada === null ? null : Math.abs(diferencia(enElSuyo.pintada, enElSuyo.porLaRuta)),
+    porQueNo: enElSuyo.porQueNo,
   };
 }
 
@@ -322,7 +330,7 @@ const entorno = (globalThis as { process?: { env: Record<string, string | undefi
 describe.runIf(entorno.OGA_BARRIDO_DEL_EMPUJE)("el barrido de todos los empujes de contacto", () => {
   it("la tabla", async () => {
     const filas: string[] = [];
-    const cuenta = { todos: 0, bien: 0, deLado: 0, debajo: 0, elegidos: 0, elegidosBien: 0 };
+    const cuenta = { todos: 0, bien: 0, deLado: 0, debajo: 0, elegidos: 0, elegidosBien: 0, pintada: 0, cambian: 0, conRaya: 0, seAparta: 0 };
     const vistos = new Set<string>();
     const solo = entorno.OGA_BARRIDO_DEL_EMPUJE!.startsWith("jaz-") ? entorno.OGA_BARRIDO_DEL_EMPUJE! : null;
     for (const e of SCENARIOS) {
@@ -343,6 +351,10 @@ describe.runIf(entorno.OGA_BARRIDO_DEL_EMPUJE)("el barrido de todos los empujes 
             const delPlan = elegido?.ref === m.ref;
             cuenta.todos++;
             if (bien) cuenta.bien++;
+            if (m.porLaPintada) cuenta.pintada++;
+            if (m.cambia > GRADO) cuenta.cambian++;
+            if (m.seAparta !== null && m.seAparta > GRADO) cuenta.seAparta++;
+            if (entradaDelPuesto(aero, Number(m.ref.split(",")[0]), Number(m.ref.split(",")[1]))) cuenta.conRaya++;
             if (m.deLado) cuenta.deLado++;
             else if (m.debajo && m.aparte >= SOBRE_LA_RAYA) cuenta.debajo++;
             if (delPlan) {
@@ -354,7 +366,7 @@ describe.runIf(entorno.OGA_BARRIDO_DEL_EMPUJE)("el barrido de todos los empujes 
                 ` ${m.deLado ? "de lado " : m.debajo ? "debajo  " : "        "} torcido ${((m.torcido * 180) / Math.PI).toFixed(0).padStart(3)}°` +
                 ` aparte ${Number.isFinite(m.aparte) ? m.aparte.toFixed(1).padStart(5) : "  —  "} m` +
                 ` empuje ${m.largo.toFixed(0).padStart(3)} m giro ${((m.giro * 180) / Math.PI).toFixed(0).padStart(4)}°` +
-                ` a ${m.lejos.toFixed(0).padStart(3)} m de la raya`,
+                ` a ${m.lejos.toFixed(0).padStart(3)} m de la raya${m.porLaPintada ? ` · pintada, ${((m.cambia * 180) / Math.PI).toFixed(0)}° de la del plan` : m.seAparta !== null && m.seAparta > GRADO ? ` · la pintada no sale (${m.porQueNo}), ${((m.seAparta * 180) / Math.PI).toFixed(0)}°` : ""}`,
             );
           }
         }
@@ -362,7 +374,7 @@ describe.runIf(entorno.OGA_BARRIDO_DEL_EMPUJE)("el barrido de todos los empujes 
     filas.push(
       `\n${cuenta.todos} empujes: ${cuenta.bien} bien —${cuenta.debajo} de ellos con la raya torciendo debajo del avión,` +
         ` mirando por ella pero a su lado—, y ${cuenta.todos - cuenta.bien} no; salen de lado ${cuenta.deLado}.` +
-        ` Del plan: ${cuenta.elegidosBien} de ${cuenta.elegidos}.`,
+        ` Del plan: ${cuenta.elegidosBien} de ${cuenta.elegidos}. Con raya pintada: ${cuenta.conRaya}; sobre ella: ${cuenta.pintada}; se aparta más de un grado de la del plan en ${cuenta.seAparta}, y de esos se aparcan en ella ${cuenta.cambian}.`,
     );
     (globalThis as { process?: { stderr: { write(s: string): void } } }).process?.stderr.write(`\n${filas.join("\n")}\n`);
   }, 900_000);

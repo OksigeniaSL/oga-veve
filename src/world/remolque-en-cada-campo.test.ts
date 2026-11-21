@@ -14,7 +14,8 @@ import {
   largoPorLaBatalla,
   paredMasCercana,
   Remolque,
-  rumboEnElPuesto,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
   saleConRemolque,
   trayectoriaDelEmpuje,
   diferencia,
@@ -191,11 +192,12 @@ describe("el empuje cabe y acaba en la raya en cada campo con aeródromo", async
         const [x, z] = puesto;
         expect(esPuestoDeContacto(x, z, edificios, morro)).toBe(true);
         const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-        const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
-        expect(rumbo).not.toBeNull();
-        // Con la rueda de morro en el punto del puesto (#191), como lo pone el juego.
-        const c = conLaRuedaEn({ x, z }, rumbo, morro);
-        const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
+        // Sobre su raya pintada si sale bien por ella (H60b), y con la rueda de morro en el punto del puesto, como lo pone el juego.
+        const enElSuyo = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), avion.batalla, (r) =>
+          conLaRuedaEn({ x, z }, r, morro),
+        )!;
+        expect(enElSuyo).not.toBeNull();
+        const e = enElSuyo.empuje!;
         expect(e, "hay empuje").not.toBeNull();
         const fin = e.poses.at(-1)!;
         // Del centro a la punta del morro: lo que va la rueda por delante y lo que le saca el morro.

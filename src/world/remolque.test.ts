@@ -18,7 +18,8 @@ import {
   paredMasCercana,
   Remolque,
   rumboAlEdificio,
-  rumboEnElPuesto,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
   rumboEntre,
   saleConRemolque,
   trayectoriaDelEmpuje,
@@ -364,9 +365,10 @@ describe("en los puestos de verdad", () => {
     const edificios = aero.buildings ?? [];
     expect(saleConRemolque(esDeLinea(avion), x, z, edificios, morroDe(avion))).toBe(true);
     const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-    const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
-    const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
-    const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
+    // Como lo pone el juego: sobre su raya pintada si sale bien por ella (H60b).
+    const e = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), avion.batalla, (r) =>
+      conLaRuedaEn({ x, z }, r, morroDe(avion)),
+    )!.empuje!;
     expect(vaDeCulo(e.poses)).toBeLessThan(-0.95);
     // La pared a la que miraba, cada vez más lejos: la terminal se aleja hacia delante.
     const pared = paredMasCercana(x, z, edificios)!;
@@ -421,16 +423,23 @@ describe("en los puestos de verdad", () => {
       const [x, z] = plan.arranque()!;
       const edificios = edificiosDePasarela(aero);
       const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-      const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
-      const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
-      const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
+      // Como lo pone el juego: sobre su raya pintada si sale bien por ella (H60b).
+      const e = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), avion.batalla, (r) =>
+        conLaRuedaEn({ x, z }, r, morroDe(avion)),
+      )!.empuje!;
       const fin = e.poses.at(-1)!;
       // El cruce con la calle, por delante del morro y en su eje.
       const hastaElCruce = Math.hypot(e.cruce.x - fin.x, e.cruce.z - fin.z);
       expect(hastaElCruce).toBeGreaterThan(5);
       expect(Math.abs(diferencia(fin.rumbo, rumboEntre(fin, e.cruce)))).toBeLessThan(5 * GRADO);
-      // Y lo que sigue la raya desde el cruce, poco torcido respecto al morro.
-      const k = raya.findIndex((p) => p.x === e.cruce.x && p.z === e.cruce.z);
+      /*
+       * Y lo que sigue la raya desde el cruce, poco torcido respecto al morro. El cruce es un
+       * punto de la raya o, sobre la raya pintada (H60b), donde la encuentra su prolongación:
+       * entonces, en uno de sus tramos, y se mira desde el punto que cierra ese tramo.
+       */
+      let k = raya.findIndex((p) => p.x === e.cruce.x && p.z === e.cruce.z);
+      if (k < 0)
+        for (let i = 1; i < raya.length && k < 0; i++) if (alSegmento(e.cruce, raya[i - 1]!, raya[i]!) < 0.5) k = i;
       expect(k).toBeGreaterThan(0);
       let j = k;
       while (j < raya.length - 1 && Math.hypot(raya[j]!.x - e.cruce.x, raya[j]!.z - e.cruce.z) < 30) j++;

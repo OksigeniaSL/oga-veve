@@ -1074,11 +1074,128 @@ ficha para eso.
   verde, 29 saltadas y una pendiente, ninguna en rojo, en 1.164 s con dos hilos.
 - **El banco del rodaje** (`npm run rodaje`), con el código terminado: 6 de 6.
 
+## Enmienda (21-11-2026, H60b): el empuje sale por la raya pintada, y el avión aparca sobre ella cuando así llega a la calle
+
+### El caso
+
+Lo que dejó la H60: el avión se aparcaba con el rumbo de la ruta del plan, que sale del puesto por el grafo, y no con
+el de su línea de entrada pintada. Con el rumbo de la pintada y el empuje siguiendo la ruta, el barrido de la H47b
+bajaba de 539 a 496 de 678 y del puesto del plan de 41 a 26 de 42: `trayectoriaDelEmpuje` daba por hecho que el avión
+estaba en el eje de la ruta. En un aeropuerto de verdad el avión aparca sobre su raya de entrada, y el tractor lo empuja
+de espaldas por esa misma recta —la línea de retroceso, que suele ser su prolongación— hasta la calle, donde lo gira
+para que salga mirando por ella.
+
+### Decisión
+
+`empujeDesdeElPuesto`, en `world/remolque.ts`, decide cómo queda el avión en el puesto y por dónde lo saca el tractor,
+y lo usan el juego (`prepararElRemolque`) y el tráfico (`empujado`):
+
+1. **El rumbo de la pintada**: el de sus últimos quince metros hasta la parada (`rumboDeLaEntrada`), si mira al
+   edificio —a menos de los cincuenta grados de siempre de su pared más cercana—. `rumboEnElPuesto` lo acepta con un
+   argumento nuevo, `entrada`, y `entradaDelPuesto` la saca de la ficha para el puesto que hay a menos de cinco metros.
+2. **El tractor, de espaldas por su prolongación hasta la ruta** (`rayaDeRetroceso`): la recta del avión hacia atrás
+   hasta el primer punto de la ruta, pasados cinco metros del puesto, que cae en ella, a menos de `SIGUE_LA_RAYA`; si
+   cae a menos de tres metros de un punto de la ruta, ese punto.
+3. **Allí empieza la calle.** Si la ruta sigue desde ahí casi recta —menos de `ESQUINA_QUE_SE_SIGUE`, diez grados—, el
+   tractor la sigue y `trayectoriaDelEmpuje` hace lo de siempre. Si hace esquina, la calle es la ruta desde la esquina,
+   seguida mientras tuerce hacia el mismo lado y hasta `MIRA_LA_CALLE` —la curva entera, como en la H47b—, y el
+   tractor gira el avión a ella con la recta, el arco y la recta de siempre (`rectaArcoRecta`).
+4. **Y la pintada se queda si así el empuje sale bien**: el avión va de culo en todo él y sin girar más de lo que da
+   la rueda a `DIRECCION_MAXIMA` (`vaDeCulo`), acaba sobre la ruta y mirando por ella (`quedaSobreLaRaya`, la medida
+   del barrido: a menos de 3 m de su eje y de 5° de su dirección) y con el morro hacia donde sigue la raya desde el
+   cruce (`miraALaCalle`, la medida de `empuje-hasta-la-calle.test.ts`). Si la prolongación no encuentra la ruta, o el
+   empuje no cumple alguna de las tres, el avión se pone como antes: con el morro al edificio y la cola por la ruta. Es
+   lo que deja el barrido igual o mejor puesto a puesto, y no un umbral.
+5. **El tráfico, siempre sobre la pintada** (`siempreLaPintada`): entra en el puesto por ella (`alPuestoPorSuRaya`), sin
+   saber todavía por dónde saldrá, y de donde aparca sale. Su empuje es el corto, que no acaba en la calle, y lo demás
+   lo rueda; si la prolongación no encuentra su camino, el tractor sigue el camino desde el avión sobre la pintada,
+   como lo probó la H60.
+
+No cambia nada del empuje cuando el puesto no tiene raya pintada, ni de la H41b a la H47b.
+
+### La esquina, que vio el banco
+
+La primera versión seguía la ruta entera desde donde la encuentra la prolongación, con `trayectoriaDelEmpuje`. El
+barrido salía igual, 539 y 41, pero el banco de quien juega cayó en los dos peldaños: **«empujando no va de culo»,
+−0,86** contra el morro (pide menos de −0,9). En el 24 de Los Rodeos la prolongación de la pintada llega a la Z a 124 m
+y a 40° de ella, y la Z tuerce al oeste veinticinco metros más allá. Con más de `RECTA_DE_LA_PLATAFORMA` hasta la
+esquina, el empuje seguía la raya con sus quiebros (`siguiendoLaRaya`), que dobla con la cuerda de seis metros los
+quiebros pequeños de la H47b, y empezaba a girar antes de la esquina, cortándola: el morro saltaba dieciocho grados en
+medio metro, con el avión de lado. El barrido no lo ve, porque mira dónde acaba el avión y no cómo llega. De ahí el
+punto 3 y el `vaDeCulo` del punto 4.
+
+### Por qué no sale siempre por la pintada
+
+En 202 de los 280 empujes del barrido cuya pintada se aparta más de un grado de la ruta, **la prolongación de la
+pintada no encuentra la ruta**: la línea de entrada llega de una calle por la que el plan no va. El 13 de Los Rodeos
+por la 30, el del plan, es de esos: su pintada llega del sur-suroeste, cruzando la plataforma, y deja el avión a 18°;
+la ruta sale recta hacia el sur, con el avión a 358°, y las dos rectas se separan 20° desde el puesto sin volver a
+juntarse. En otros 39 la encuentra y el empuje no sale bien, y se queda como antes. Lo correcto de verdad sería que la
+ruta de salida empezara por la línea de entrada, de espaldas, hasta su calle; eso es del rodaje (`reiniciarDesde`,
+`parDeSalida`), cambia qué puesto elige el plan en cada campo y queda en «Lo que queda».
+
+### El 24 de Los Rodeos
+
+Por la 12, con el JAZ 90, el del plan: el avión queda **a 61°**, el rumbo de su raya pintada y el del AIP (antes 76°,
+el de la ruta). El tractor lo empuja de espaldas por la prolongación de la pintada, a 241°, sobre la plataforma hacia
+la Z, y lo gira a la derecha para dejarlo en ella mirando al sur-suroeste, por donde sigue la ruta: **119 m empujado,
+giro de 140° con radio 11,5 m y el morro a 201°** (antes, 99 m y 125° siguiendo la ruta). Lo mira
+`lineas-de-entrada.test.ts`: el rumbo a 61° ± 3°, los primeros cincuenta metros del empuje en el eje de la pintada y
+sin girar, y el final sobre la ruta. Con el JAZ 110 y el JAZ 120 el empuje por la pintada no cumple el punto 4, y se
+quedan como antes: 89 m y 125°.
+
+### Lo medido
+
+- **El barrido** (`OGA_BARRIDO_DEL_EMPUJE=1`), antes —main en 75f1e9f3— y después:
+
+  | | Antes | Después |
+  |---|---|---|
+  | Sobre la raya y mirando por ella | 539 de 678 | 539 de 678 |
+  | Del puesto que elige el plan | 41 de 42 | 41 de 42 |
+  | Con raya pintada que mira al edificio y se aparta más de 1° de la ruta | — | 280 |
+  | De esos, aparcados sobre la pintada | 0 | 39 |
+
+  Fila a fila, ningún empuje cambia de bien a mal ni de mal a bien. Por campo, los que van sobre la pintada contra los
+  que no (con la pintada apartada al menos un grado): Pettirossi 15 y 18, Los Rodeos 12 y 24, La Palma 15 y 33,
+  Gran Canaria 6 y 51, Tenerife Sur 3 y 24, Lanzarote 1 y 16, Barajas 0 y 75. De los del plan, va sobre la pintada
+  apartándose de la ruta el 24 de Los Rodeos por la 12 con el JAZ 90 (15°); los demás del plan con pintada coinciden
+  con la ruta a menos de un grado (el 6 de Pettirossi, el 10 de La Palma, el T13 de Gran Canaria, el de Lanzarote por
+  la 21) o se quedan como antes. El 560 de Barajas, que sale de lado, sigue siendo el que queda mal.
+- **Vitest de lo tocado**: los siete ficheros del remolque, el empuje hasta la calle, las líneas de entrada, la
+  terminal y el tráfico empujado, 156 pruebas en verde. `empuja-con-quien-juega-en-su-puesto.test.ts` cambia: con el
+  JAZ 20 aparcado junto al 23, el reactor del tráfico, ahora sobre la pintada del 23 a 47° y no a los 78° de su camino,
+  empuja hacia el suroeste y no barre el sitio del JAZ 20, que le queda al noroeste; antes esperaba (H51).
+- **Vitest entero**, una vez, con el código terminado y el barrido dentro: 573 de 573 ficheros, 11.482 pruebas en
+  verde, 29 saltadas y una pendiente, ninguna en rojo, en 1.748 s con dos hilos y los bancos del navegador volando al
+  lado.
+- **El remolque de quien juega**, por la 12 y con la tarjeta Intel, en los dos peldaños: **todo en orden**. Desde el
+  24 a 61°, el morro a 56,3 m de la terminal y −8° (antes −22°), de contacto; −1,00 contra el morro empujando, **119
+  de 119 m empujado, giro de 140° con radio 11,5 m, rumbo al acabar 201° y 0° en los primeros treinta metros
+  rodando**; nada dentro de un edificio y la terminal de 61,9 a 156,5 m. En la captura del saludo el avión está en la
+  Z mirando al sur-suroeste, con la raya verde por delante, y en la de rodando, ya en la R hacia el oeste. La primera
+  versión (85d35f1b) cayó aquí: −0,86 en los dos peldaños, con 167 m y −132° (ver «La esquina, que vio el banco»).
+- **El remolque de quien juega con el viento del 300** (`OGA_VIENTO=300/10`), desde el 13 por la 30, con la tarjeta
+  Intel: **todo en orden** en los dos peldaños, y lo mismo que en la H47b: la pintada del 13 no encuentra la ruta y el
+  avión se pone como antes; −0,99 contra el morro, 152 de 152 m empujado, giro de 114°, rumbo al acabar 112°, y 11° en
+  Guyrami y 0° en el de cabina en los primeros treinta metros rodando.
+- **El remolque del tráfico**, con quien juega en el JAZ 90 y la tarjeta Intel: **bien**. EC-PSH en el 17 a 337°, el
+  rumbo de su raya pintada (se aparta un grado de su camino), el tractor enganchado al anunciarlo, 22 s con él, 36,9 m
+  de culo y nada hacia delante, el tractor a 15,4 m por delante del centro, la calle reservada los 22 s, nada dentro de
+  un edificio y 41,9 m rodados después.
+- **El banco del rodaje** (`npm run rodaje`): **no se voló**. Estaba en la cola detrás de los otros tres, y el
+  candado del navegador lo tuvo la ronda de cierre hasta el final del tope de esta tanda.
+- **El banco de quien juega espera lo que tarda el empuje**: el frenado, hasta una vez y media su largo en segundos, y
+  no tres minutos fijos (`ver-remolque-de-quien-juega.mjs`). Con la primera versión el empuje del 24 era de 167 m, y
+  un empuje largo que acaba bien no es un fallo.
+
 ## Lo que queda
 
-**El rumbo del puesto por su raya pintada.** La línea de entrada ya está en la ficha (enmienda H60); falta que el
-empuje salga de espaldas por ella hasta la calle y desde ahí siga la ruta. Con eso, `rumboEnElPuesto` puede
-preferirla, y el barrido de la H47b dice si queda igual o mejor: con la ruta sola, 539 de 678 y 41 de 42 del plan.
+**La ruta de salida, por la raya pintada.** Desde la H60b el avión aparca sobre su línea de entrada y sale de espaldas
+por ella cuando su prolongación lleva a la ruta del plan y el empuje sale bien (39 de los 280 empujes del barrido
+cuya pintada se aparta de la ruta). En 202 de los demás la línea de entrada llega de una calle por la que el plan no
+va, y el avión se pone como antes. Lo que falta es del rodaje: que la ruta de salida de un puesto con raya pintada empiece de espaldas por ella hasta su calle, y que el plan
+elija el puesto con esa ruta. Cambia el puesto del que se sale en varios campos y pide el barrido, los bancos del
+remolque y el del rodaje.
 
 **Los puestos de las fichas de antes de #191**, en La Palma, Lanzarote, Gran Canaria, Pettirossi y Barajas: siguen en
 el centro de su línea de entrada y repetidos con su nodo. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y
