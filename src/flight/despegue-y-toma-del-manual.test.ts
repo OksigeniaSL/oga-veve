@@ -202,6 +202,17 @@ function avion(id: string): AircraftConfig {
  * subir con todos los motores, cerca de la V2 de los de transporte
  * (`conUnMotor`) y de la velocidad de los cincuenta pies de las avionetas—,
  * sin pasar de veinte grados.
+ *
+ * **Y sabe que el suelo pica** (H56b): a lo que pide para seguir esa actitud
+ * suma la palanca que pide el picado del suelo, `palancaDelSuelo`, como el
+ * banco en la recogida desde H56. Es lo que hace quien rota de verdad: si el
+ * morro no sube al ritmo de siempre, tira más hasta que sube. Sin eso, esta
+ * mano —que solo corrige por lo que le falta de actitud— se queda atrás lo que
+ * pica el suelo partido por su ganancia, y el 747 se iba del suelo a 9,7° en
+ * vez de 10,1° y pasaba los 35 pies 19 m más allá. Con ella, la flota entera
+ * vuela al metro lo de antes del picado: sostenido, el picado no alarga el
+ * despegue, y por eso la cuenta del hangar no tiene nada que saber de él
+ * (enmienda H56b del ADR 0027).
  */
 function despegar(a: AircraftConfig): {
   readonly hastaVr: number;
@@ -236,7 +247,10 @@ function despegar(a: AircraftConfig): {
         const ritmo = Math.max(-3, Math.min(3, v - subirA)) * GRADO;
         actitud = Math.max(0, Math.min(20 * GRADO, actitud + ritmo * DT));
       }
-      elevator = Math.max(-1, Math.min(1, (actitud - cabeceo) * 12 - s.pitchRate * 1.5));
+      elevator = Math.max(
+        -1,
+        Math.min(1, (actitud - cabeceo) * 12 - s.pitchRate * 1.5 + m.palancaDelSuelo()),
+      );
     }
     m.step(DT, {
       ...neutralControls(),
@@ -527,16 +541,8 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
        * la cuenta, y su manual pide 352; con la recta eran 672 contra 536.
        */
       const ancho = a.id === "jaz-40" ? 1.32 : a.id === "jaz-50" ? 1.45 : 1.2;
-      /*
-       * **El JAZ 120, hasta un 6 %**: el picado del suelo (H56) se lo nota la
-       * mano de esta prueba, que sostiene la actitud sin saber que el suelo
-       * pica. Se va del suelo 7 m más tarde y a 9,7° en vez de 10,1°, y pasa
-       * los 35 pies 19 m más allá: 1.573 m contra 1.554, con la cuenta en
-       * 1.489 (1,057 donde daba 1,044). Los demás se mueven de 0 a 12 m.
-       */
-      const cerradoHasta = a.id === "jaz-120" ? 1.06 : 1.05;
       expect(r, dicho).toBeGreaterThan(cerrado ? 0.95 : 0.9);
-      expect(r, dicho).toBeLessThan(cerrado ? cerradoHasta : ancho);
+      expect(r, dicho).toBeLessThan(cerrado ? 1.05 : ancho);
     });
 
     /* Y la frenada: la misma cuenta de `frenada.ts` por dos caminos. */

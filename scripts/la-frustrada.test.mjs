@@ -12,7 +12,7 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { CoefficientFlightModel } from "../src/flight/fdm";
-import { aircraftById } from "../src/flight/aircraft";
+import { aircraftById, propulsionDe } from "../src/flight/aircraft";
 import { TAGUATO } from "../src/flight/tiers";
 import { neutralControls } from "../src/flight/model";
 import { aireDelParte, airDensity, SEA_LEVEL_DENSITY } from "../src/flight/atmosphere";
@@ -24,6 +24,7 @@ import { pitchAngleOf } from "../src/ui/actitud";
 import {
   CABECEO_DE_LA_FRUSTRADA,
   CABECEO_MAXIMO_DE_LA_FRUSTRADA,
+  LEY_DEL_REACTOR,
   MARGEN_AL_AVISADOR,
   RITMO_DE_LA_FRUSTRADA,
   palancaDeLaFrustrada,
@@ -94,6 +95,23 @@ describe("la palanca de la frustrada", () => {
     expect(CABECEO_MAXIMO_DE_LA_FRUSTRADA).toBeCloseTo(12 * GRADO, 9);
   });
 
+  it("la de los reactores va a quince grados, frenando los últimos, sin pasarse", () => {
+    let p = { ...final, ley: LEY_DEL_REACTOR, indicada: 70, minima: 70 };
+    const subidas = [];
+    for (let i = 0; i < 120; i++) {
+      const r = palancaDeLaFrustrada(p);
+      subidas.push((r.referencia - p.referencia) / p.dt);
+      expect(r.referencia).toBeLessThanOrEqual(15 * GRADO + 1e-9);
+      p = { ...p, ...r, cabeceo: r.referencia };
+    }
+    expect(Math.max(...subidas)).toBeLessThanOrEqual(RITMO_DE_LA_FRUSTRADA + 1e-9);
+    // A tres grados por segundo hasta los últimos seis; ahí, a menos.
+    const frenando = subidas.filter((v) => v > 1e-9 && v < RITMO_DE_LA_FRUSTRADA - 1e-6);
+    expect(frenando.length).toBeGreaterThan(5);
+    expect(p.referencia).toBeCloseTo(15 * GRADO, 2);
+    expect(LEY_DEL_REACTOR.cabeceo).toBeCloseTo(15 * GRADO, 9);
+  });
+
   it("y con el ala cerca del avisador, ni un grado más de morro, y la palanca aflojando", () => {
     const lejos = { ...final, cabeceo: 4 * GRADO, referencia: 4 * GRADO, alfa: 6 * GRADO };
     const cerca = { ...lejos, alfa: lejos.avisador - MARGEN_AL_AVISADOR / 2 };
@@ -122,9 +140,15 @@ function frustrar(id, ley, racha = null) {
   const muescas = muescasDeLaPalanca(a);
   const aterrizar = muescas[muescaDeAterrizaje(a)];
   const conElAutomatico = (a.cruiseSpeed ?? 0) > 90;
+  /*
+   * El reactor, con la ley de su FCTM y desde una final más larga: desde
+   * setenta y cinco metros el 747 llegaba a los sesenta bajando a 9 m/s, sin
+   * haberse asentado en la senda.
+   */
+  const reactor = propulsionDe(a) === "chorro";
   const m = new CoefficientFlightModel({ aircraft: a, ground: () => COTA, assist: TAGUATO.assists });
   m.ponerAire(AIRE);
-  const y0 = COTA + a.gearHeight + 75;
+  const y0 = COTA + a.gearHeight + (reactor ? 250 : 75);
   m.reset({
     position: new Vector3(0, y0, 0),
     heading: 0,
@@ -146,7 +170,7 @@ function frustrar(id, ley, racha = null) {
   const dt = 1 / 60;
   // La final, con el automático en la senda, hasta los sesenta metros.
   const mem = memoriaNueva();
-  for (let t = 0; alto() > 60 && t < 30; t += dt) {
+  for (let t = 0; alto() > 60 && t < 150; t += dt) {
     const out = mandosPara(
       {
         heading: s.heading,
@@ -175,7 +199,7 @@ function frustrar(id, ley, racha = null) {
   let palanca = c.elevator;
   let referencia = pitchAngleOf(s.orientation);
   let acumulado = c.elevator;
-  const md = { carga: 0, margen: Infinity, aviso: 0, indicada: Infinity, bajo: Infinity, salto: 0, alos120: NaN };
+  const md = { carga: 0, margen: Infinity, aviso: 0, indicada: Infinity, bajo: Infinity, salto: 0, alos120: NaN, morro: -Infinity };
   const ritmoDelMorro = () => {
     const { x, y, z, w } = s.orientation;
     const arriba = 1 - 2 * (x * x + z * z);
@@ -208,11 +232,12 @@ function frustrar(id, ley, racha = null) {
           alfa: s.alpha,
           avisador: s.stallWarningAlpha,
           indicada: ind(),
-          minima: maniobraCon(a, flaps) + 2.5,
+          minima: reactor ? a.approachSpeed : maniobraCon(a, flaps) + 2.5,
           referencia,
           acumulado,
           palanca,
           dt: 0.1,
+          ley: reactor ? LEY_DEL_REACTOR : undefined,
         });
         referencia = r.referencia;
         acumulado = r.acumulado;
@@ -247,6 +272,7 @@ function frustrar(id, ley, racha = null) {
     if (s.stallWarning) md.aviso += dt;
     md.indicada = Math.min(md.indicada, ind() / NUDO);
     md.bajo = Math.min(md.bajo, alto());
+    md.morro = Math.max(md.morro, pitchAngleOf(s.orientation) / GRADO);
     if (alto() >= 120) md.alos120 = t;
   }
   return md;
@@ -292,6 +318,39 @@ describe("y con el modelo del juego, la frustrada desde sesenta metros", () => {
         expect(ahora.aviso, `${id} con la racha a los ${racha} s`).toBe(0);
       }
       expect(peorAhora, id).toBeGreaterThan(3);
+      expect(peorAhora, id).toBeGreaterThan(peorAntes);
+    }
+  });
+});
+
+/*
+ * **Y los reactores, con la de su FCTM** (H56b): «Push TO/GA switch […]
+ * rotate toward 15° pitch attitude», sin cruzar el *stick shaker*. Con la ley
+ * de antes —doce grados de golpe, la primera muesca de una vez y el gas de una
+ * subida— la palanca saltaba seis décimas y el ala se quedaba a menos de dos
+ * grados del avisador; con una racha, el JAZ 90 entraba en él.
+ */
+describe("y los reactores, con la frustrada de su FCTM", () => {
+  it("TO/GA y quince grados sin tirón: el ala a dos grados y medio del avisador como poco, también con la racha", () => {
+    for (const id of ["jaz-90", "jaz-110", "jaz-120"]) {
+      const antes = frustrar(id, "antes");
+      const ahora = frustrar(id, "nueva");
+      expect(antes.salto, id).toBeGreaterThan(0.5);
+      expect(ahora.salto, id).toBeLessThanOrEqual(0.1 + 1e-9);
+      expect(ahora.carga, id).toBeLessThan(1.45);
+      // A los quince, con poco de más: el 747 gira despacio.
+      expect(ahora.morro, id).toBeGreaterThan(14);
+      expect(ahora.morro, id).toBeLessThan(18);
+      expect(ahora.bajo, id).toBeGreaterThan(40);
+      let peorAntes = antes.margen;
+      let peorAhora = ahora.margen;
+      for (const racha of [1, 3, 5, 8, 12]) {
+        peorAntes = Math.min(peorAntes, frustrar(id, "antes", racha).margen);
+        const r = frustrar(id, "nueva", racha);
+        peorAhora = Math.min(peorAhora, r.margen);
+        expect(r.aviso, `${id} con la racha a los ${racha} s`).toBe(0);
+      }
+      expect(peorAhora, id).toBeGreaterThan(2.5);
       expect(peorAhora, id).toBeGreaterThan(peorAntes);
     }
   });

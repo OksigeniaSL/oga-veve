@@ -1504,6 +1504,15 @@ export interface AircraftConfig {
    */
   alturaDelAla: number;
   /**
+   * **La cola en T**, si la lleva: a qué altura va el plano horizontal sobre
+   * el suelo con el avión parado, y cuánto por detrás del ala, m (del cuarto
+   * de la cuerda media del ala al del plano). Una cola en T va por encima del
+   * aire que el ala echa hacia abajo y nota menos el suelo: ver
+   * `loQueNotaLaCola` en `efecto-suelo.ts`. Sin ella, la cola es baja, como
+   * la del 747 del que sale el picado.
+   */
+  colaEnT?: { readonly altura: number; readonly brazo: number };
+  /**
    * **Por dónde apoya el avión al levantar el morro en el suelo**: cuánto va
    * por detrás del centro de gravedad el eje de la rueda principal de más
    * atrás, m.
@@ -3240,6 +3249,16 @@ export const ARASUNU: AircraftConfig = {
   gearHeight: 2.1,
   // La del dibujo: ver `alturaDelAla`.
   alturaDelAla: -0.12,
+  /*
+   * La cola en T: el plano horizontal a unos quince pies del suelo, «the
+   * horizontal stabilizer on a parked Beech 1900D is located about 15 feet
+   * above the ground» (NTSB, AAR-04/01, Air Midwest 5481, p. 98); en la vista
+   * en tres planos del TAR 98/07 (p. 13), lo alto de la cola a 14 ft 10,8 in
+   * y el plano de cuerda del estabilizador 0,13 m por debajo, 4,45 m. El
+   * brazo, del cuarto de la cuerda media del ala al del estabilizador, medido
+   * en la planta de esa vista a escala: unos 9,5 m. Ver `loQueNotaLaCola`.
+   */
+  colaEnT: { altura: 4.45, brazo: 9.5 },
   /*
    * Apoyo al rotar: el eje de las principales, 0,66 m por detrás del centro
    * de gravedad: `PRINCIPAL_Z` y `centro_de_gravedad` en
