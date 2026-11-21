@@ -2149,3 +2149,17 @@ cuando la verde hace lo mismo. Mirado en foto: en la tablet de Guyrami, la
 lámpara de cerca apagada, encendida y con el aro a trazos frente a la fija;
 el teléfono de Guyrami, sin una letra; y Taguató en la tablet, con la verde
 y con los destellos sin movimiento, el teléfono y la ventana de pie.
+
+**El Hierro con voces**, `verificar-despegue.mjs el-hierro taguato "" jaz-40`
+con `OGA_CON_VOCES=1` y el METAR de 42 °C de la H41h: **23 de 23**. La verde
+a los 40,4 s, sin nadie por medio; el plan, remonte hasta el final por la
+cola (pide 734 m, 750 desde la entrada, 1.217 por delante). Entra en el
+−114, va hasta el −605, gira en el −590, queda en el eje en el −558 y suelta
+frenos en el −557, como en la H41h; rota con 501 m de 1.254. Lo que la torre
+te dijo: `destino · roja · holdShort · backtrack · verde · clearedTakeoff`,
+una autorización de despegar y el «backtrack» antes. «Regreso por pista» no
+está: no tiene toma, y sin ella no se pide.
+
+**Vitest entero**, una vez y con el código de esta enmienda ya juntado con
+main: 568 de 568 ficheros, 11.291 pruebas en verde, 31 saltadas y una
+pendiente, ninguna en rojo, en 1.329 s con dos hilos.
