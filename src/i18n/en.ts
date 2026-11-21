@@ -1231,6 +1231,9 @@ export const EN: Dictionary = {
   "vuelo.sinRemontarNoAlcanza":
     "The tower told us to roll down the runway first and turn around: from here there is not enough runway to take off",
   "palabra.sinRemontar": "Turn around first",
+  "vuelo.sinAutorizacion":
+    "We started the take-off before the tower cleared us. You wait for that lined up, until the light turns steady green. The runway is ours: keep going, and next time, wait for it",
+  "palabra.sinAutorizacion": "Without the green",
   "vuelo.dasPaso":
     "We stop here: another plane is coming the other way down that taxiway, and only one goes through at a time. We let it pass and carry on",
   "vuelo.dasPasoEmpujado":

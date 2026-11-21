@@ -50,6 +50,13 @@ export function luzDeLaSalida(
   if (fase === "esperando") return "roja";
   if (!verde) return null;
   if (remontePorDelante && (fase === "autorizado" || fase === "back-taxi")) return "rodar";
+  /*
+   * Y en el back-taxi con la vuelta ya dada, también (H41j): es el medio
+   * segundo que tarda en asentarse «alineando», y la lámpara se apagaba entre
+   * los destellos y la verde fija. La verde fija sigue llegando en
+   * «alineando», que es donde la mira la máquina de fases (`despegueDado`).
+   */
+  if (fase === "back-taxi") return "rodar";
   if (fase === "autorizado" || fase === "alineando") return "verde";
   return null;
 }

@@ -18008,6 +18008,36 @@ export class Game {
   }
 
   /**
+   * **La carrera empezada sin la autorización de despegar** (H41j): con la
+   * pista dada y sin la verde fija ni su «cleared for take-off». Ver
+   * `vigilarLaCarrera` en `flight/vuelo.ts`.
+   *
+   * Lo mismo que con quien no remonta (H41f): la fase no castiga —derecho en
+   * el eje y corriendo, es un despegue— y el porqué lo cuenta la instructora
+   * en los tres peldaños de abajo, con calma y solo grabada, y la tarjeta
+   * donde se lee. Solo donde hay torre que autorice: un AFIS no autoriza
+   * nada, y sin nadie en la radio no hay autorización que esperar.
+   *
+   * **La torre calla.** A uno que ya corre, una torre solo le habla si ve un
+   * peligro, y lo que le dice es «stop immediately» (Doc 4444, 12.3.4.10;
+   * SKYbrary, *Take-off without ATC clearance*): una orden de emergencia,
+   * no una lección. Aquí la carrera sin autorizar solo se empieza con la
+   * pista dada —sin ella es el percance de la luz—, y desde que te la dan es
+   * tuya: la verde no se enciende con otro en ella (`pistaDeOtros` en
+   * `flight/turno-de-pista.ts`) y, mientras la tengas, la frecuencia no se la
+   * da a nadie (`PISTA_TUYA` en `flight/radio.ts`). No hay nadie en ella a
+   * quien estorbar, así que no hay peligro que decir; el día que lo haya,
+   * esa frase todavía no existe.
+   */
+  private decirQueNoTeAutorizaron(): void {
+    if (!this.hayTorreQueHable() || this.esAfisAqui()) return;
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    const dicho = this.avisoCon("vuelo.sinAutorizacion", "palabra.sinAutorizacion");
+    if (dicho.rotulo) this.hud.flash(dicho.rotulo, 5);
+    this.decirLoGrabado("vuelo.sinAutorizacion");
+  }
+
+  /**
    * **«Give way»: se le da paso a uno que viene de frente** por una calle de
    * tu raya, y la raya se corta antes de ella. Ver `paradaPorElTramo` en
    * `world/plan-de-vuelo.ts`.
@@ -31280,6 +31310,8 @@ export class Game {
     if (vista.saltoLaLuz) this.sufrirPercance("sinpermiso");
     // Y la carrera empezada sin remontar lo que dijo la torre. Ver `decirQueNoSeRemonto`.
     if (vista.sinRemontar) this.decirQueNoSeRemonto(vista.sinRemontar);
+    // Y la empezada sin la autorización de despegar. Ver `decirQueNoTeAutorizaron`.
+    if (vista.sinAutorizacion) this.decirQueNoTeAutorizaron();
   }
 
   /**

@@ -1372,6 +1372,11 @@ export interface Vista {
   readonly saltoLaLuz: boolean;
   /** Se acaba de empezar la carrera sin remontar. Ver `vigilarElRemonte` en `flight/vuelo.ts`. */
   readonly sinRemontar: "basta" | "noBasta" | null;
+  /**
+   * Se acaba de empezar la carrera sin la autorización de despegar. Ver
+   * `vigilarLaCarrera` en `flight/vuelo.ts`.
+   */
+  readonly sinAutorizacion: boolean;
   /** La lección de rodar, terminada: parado en la doble raya. */
   readonly leccionHecha: boolean;
   /**
@@ -4423,6 +4428,7 @@ export class PlanDeVuelo {
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
       saltoLaLuz: p.saltoLaLuz,
       sinRemontar: p.sinRemontar,
+      sinAutorizacion: p.sinAutorizacion,
       leccionHecha: p.leccionHecha,
       mirandoLaPista: this.miraLaPista(s.enPista, s.desalineado),
       fuera:

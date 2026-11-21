@@ -138,6 +138,8 @@ describe("la luz de la torre para quien sale", () => {
     expect(luzDeLaSalida("back-taxi", true, true)).toBe("rodar");
     // Sin la pista dada no hay luz que valga, ni remontando.
     expect(luzDeLaSalida("back-taxi", false, true)).toBeNull();
+    // Y con la vuelta ya dada, mientras se asienta «alineando», siguen (H41j).
+    expect(luzDeLaSalida("back-taxi", true, false)).toBe("rodar");
   });
 });
 
@@ -202,13 +204,21 @@ describe("a quien remonta, la verde fija al dar la vuelta, y una", () => {
  * morro puesto de golpe en el eje no hay «alineando», y es en esa fase donde
  * se enciende la verde, también al acabar el lazo dibujado. Apunta las luces
  * de antes y de después del giro, y si la bandera del remonte se bajó.
+ *
+ * Y con `aGolpe`, el morro puesto en el rumbo de despegue en un solo paso
+ * (H41j): `tras` dice además dónde, `"enElLazo"` en el lazo dibujado, a
+ * media vuelta, cuando cruza el eje mirando de lado —el remonte va por un
+ * lado de la pista y el lazo vuelve por el otro—, y `"enElEje"` en una
+ * entrada sin remonte, al llegar a lo que la máquina de fases ya cuenta como
+ * el eje (`alineadoEnLaPista` en `flight/vuelo.ts`).
  */
 function girarAntes(
   esc: Scenario,
   avion: AircraftConfig,
   vientoDe: number,
-  dia: DiaDeDespegue,
-  tras: number | "alEntrar",
+  dia: DiaDeDespegue | undefined,
+  tras: number | "alEntrar" | "enElLazo" | "enElEje",
+  aGolpe = false,
 ): {
   readonly sale: ComoSeSale | null;
   readonly antes: readonly Exclude<LuzDeLaTorre, null>[];
@@ -218,10 +228,12 @@ function girarAntes(
   readonly antesDelLazo: number;
   readonly bandera: boolean;
   readonly fase: string;
+  /** Las fases desde el giro, sin repetir la de seguido. */
+  readonly fases: readonly string[];
 } | null {
   const pista = conViento(esc, { ...TIEMPO_DE_CASA, vientoDe, vientoKt: 15 }).runway;
   const plan = new PlanDeVuelo(esc.aerodrome!, pista, () => 0, avion);
-  plan.diaDeDespegue = () => dia;
+  if (dia) plan.diaDeDespegue = () => dia;
   plan.reiniciar();
   const dt = 0.1;
   const mitad = pista.length / 2;
@@ -235,6 +247,7 @@ function girarAntes(
   let masAtras = Infinity;
   let vuelto: { remontado: number; antesDelLazo: number } | null = null;
   let parado = 0;
+  const fases: string[] = [];
   const haciaDondeSeDespega = (pista.heading * Math.PI) / 180;
   const GIRO = (20 * Math.PI) / 180;
   for (let t = 0; t < 1200; t += dt) {
@@ -270,11 +283,12 @@ function girarAntes(
     if (!sale && vista.luzVerde) sale = plan.comoSeSale;
     if (vuelto) {
       parado += dt;
-      // La vuelta en el sitio, por el lado más corto.
+      if (fases.at(-1) !== vista.fase) fases.push(vista.fase);
+      // La vuelta en el sitio, por el lado más corto; o de golpe.
       let falta = haciaDondeSeDespega - rumbo;
       while (falta > Math.PI) falta -= 2 * Math.PI;
       while (falta < -Math.PI) falta += 2 * Math.PI;
-      rumbo += Math.sign(falta) * Math.min(Math.abs(falta), GIRO * dt);
+      rumbo += aGolpe ? falta : Math.sign(falta) * Math.min(Math.abs(falta), GIRO * dt);
       if (parado > 15 || vista.fase === "despegando")
         return {
           sale,
@@ -283,6 +297,7 @@ function girarAntes(
           ...vuelto,
           bandera: plan.dondeSeGira !== null,
           fase: vista.fase,
+          fases,
         };
       continue;
     }
@@ -296,8 +311,16 @@ function girarAntes(
       masAtras = Math.min(masAtras, e.along);
       const remontado = entra - masAtras;
       const giro = plan.dondeSeGira;
-      if (giro !== null && (tras === "alEntrar" || remontado >= tras)) {
-        vuelto = { remontado, antesDelLazo: e.along - giro };
+      const toca =
+        tras === "enElEje"
+          ? // A once metros: lo que la máquina de fases ya cuenta como en el eje.
+            giro === null && Math.abs(e.across) < 11
+          : tras === "enElLazo"
+            ? // Pasado el sitio de girar, cruzando el eje a media vuelta.
+              giro !== null && e.along < giro && Math.abs(e.across) < 2
+            : giro !== null && (tras === "alEntrar" || remontado >= tras);
+      if (toca) {
+        vuelto = { remontado, antesDelLazo: giro === null ? NaN : e.along - giro };
         // Parado, y a dar la vuelta desde aquí.
         v = 0;
         continue;
@@ -372,5 +395,56 @@ describe("quien da la vuelta antes del lazo dibujado (H41i)", () => {
     expect(r.remontado).toBeLessThan(30);
     expect(r.bandera).toBe(true);
     expect(r.despues).not.toContain("verde");
+  });
+});
+
+/**
+ * **El morro en el eje de golpe** (H41j).
+ *
+ * Lo que vio la H41i: con el morro puesto de una vez en el rumbo de despegue,
+ * la fase saltaba del back-taxi a «despegando» sin pasar por «alineando», que
+ * es donde se enciende la verde fija, y la autorización de despegar no
+ * llegaba: ni la lámpara ni el «cleared for take-off». Al acabar el remonte
+ * antes del lazo y en el lazo dibujado. Ahora, en el eje y con la pista dada,
+ * la fase espera en «alineando» hasta que la verde fija se ha visto. Ver
+ * `deducir` en `flight/vuelo.ts`.
+ */
+describe("el morro en el eje de golpe (H41j)", () => {
+  /** Las luces de antes y de después del giro, sin repetir la de seguido. */
+  const todas = (r: { antes: readonly string[]; despues: readonly string[] }) =>
+    [...r.antes, ...r.despues].filter((l, i, a) => a[i - 1] !== l);
+
+  it("en una entrada sin remonte: la verde ya se dio en la doble raya, y una", () => {
+    const r = girarAntes(EL_HIERRO, jaz40, 0, undefined, "enElEje", true)!;
+    expect(r).not.toBeNull();
+    expect(r.sale!.desde).toBe("interseccion");
+    expect(todas(r)).toEqual(["roja", "verde"]);
+    expect(r.fase).toBe("despegando");
+  });
+
+  it("tras remontar sesenta metros y dar la vuelta antes del lazo: la verde, y la carrera", () => {
+    const r = girarAntes(EL_HIERRO, jaz40, 0, cola(4), 60, true)!;
+    expect(r).not.toBeNull();
+    expect(r.sale!.desde).toBe("remonte");
+    expect(r.antesDelLazo).toBeGreaterThan(200);
+    expect(r.antes).toEqual(["roja", "rodar"]);
+    expect(r.despues).toEqual(["rodar", "verde"]);
+    expect(r.fases).toContain("alineando");
+    expect(r.bandera).toBe(false);
+    expect(r.fase).toBe("despegando");
+  });
+
+  it("en el lazo dibujado: la verde, y la carrera", () => {
+    const r = girarAntes(EL_HIERRO, jaz40, 0, cola(4), "enElLazo", true)!;
+    expect(r).not.toBeNull();
+    expect(r.sale!.desde).toBe("remonte");
+    // En el lazo, pasado el sitio de girar: no antes.
+    expect(r.antesDelLazo).toBeLessThan(0);
+    expect(r.antesDelLazo).toBeGreaterThan(-30);
+    expect(r.antes).toEqual(["roja", "rodar"]);
+    expect(r.despues).toEqual(["rodar", "verde"]);
+    expect(r.fases).toContain("alineando");
+    expect(r.bandera).toBe(false);
+    expect(r.fase).toBe("despegando");
   });
 });
