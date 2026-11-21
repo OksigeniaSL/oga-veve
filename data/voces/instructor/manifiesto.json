@@ -3387,6 +3387,10 @@
       "ms": 3907,
       "h": "60eb7ff7d2"
     },
+    "vuelo.sinAutorizacion": {
+      "ms": 9907,
+      "h": "c172f0a9f9"
+    },
     "vuelo.sinCombustible": {
       "ms": 2625,
       "h": "7b7fd78cbf"
@@ -6411,6 +6415,9 @@
     ],
     "vuelo.sinRemontarNoAlcanza": [
       "vuelo.sinRemontarNoAlcanza"
+    ],
+    "vuelo.sinAutorizacion": [
+      "vuelo.sinAutorizacion"
     ]
   }
 }

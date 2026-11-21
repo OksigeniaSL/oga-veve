@@ -2801,5 +2801,8 @@
   ],
   "vuelo.sinRemontarNoAlcanza": [
     "vuelo.sinRemontarNoAlcanza"
+  ],
+  "vuelo.sinAutorizacion": [
+    "vuelo.sinAutorizacion"
   ]
 }
