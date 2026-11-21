@@ -224,6 +224,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { chromium, devices } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
+import { esDeLaEscena, sinLaHora, vocesAjenas } from "./voces-de-la-escena.mjs";
 
 // Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5397);
@@ -545,12 +546,6 @@ const CALLADO_COMO_MUCHO = 85;
 
 /** Lo que calla la escena en cada corte de cámara, s de escena. Ver `CORTE_DE_PLANO`. */
 const CORTE = 1.1;
-
-/**
- * Las claves que dice la escena y que no empiezan por `inicio.`: los anuncios y la ventanilla. Con la
- * llamada de la tripulación delante desde que pide turno en la boca (H29k), que es el anuncio hablando.
- */
-const DE_LA_ESCENA = /^(llamada:)?(inicio\.|comandante\.|tripulacion\.|ventanilla)/;
 
 async function elVuelo() {
   const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
@@ -1455,9 +1450,10 @@ async function elVuelo() {
           .join(" · ")}`
       : `${registro.length} frases, todas oídas`,
   );
-  const ajenas = (conversacion?.habladas ?? []).filter((l) => !DE_LA_ESCENA.test(l.replace(/^\S+s /, "")));
+  // Lo que dice la escena, con la llamada de cabina de sus anuncios: ver `voces-de-la-escena.mjs`.
+  const ajenas = vocesAjenas(conversacion?.habladas ?? []);
   const maquina = conversacion?.maquina ?? [];
-  const tiradas = (conversacion?.descartadas ?? []).filter((d) => !DE_LA_ESCENA.test(String(d).replace(/^\S+s /, "")));
+  const tiradas = (conversacion?.descartadas ?? []).filter((d) => !esDeLaEscena(sinLaHora(d)));
   comprobar(
     "no habla nadie más: ni la radio, ni las cajas de la cabina de mando, ni la instructora",
     !!conversacion && ajenas.length === 0 && maquina.length === 0,
@@ -1885,6 +1881,15 @@ async function elVuelo() {
   const losToques = e?.toques ?? [];
   const elToque = (x) => losToques.find((q, k) => k >= x.antes && q.que === x.que && Math.abs(q.desde - x.t) < 3);
   const contados = viva.toques.map((x) => ({ ...x, toque: elToque(x) }));
+  /*
+   * **Un «contado» solo vale si se contó antes**: un toque anterior al mismo
+   * sitio que sí se dijo. Desde la H38l, el toque que espera turno mientras
+   * alguien habla se contesta, y suele ser el Teide; el siguiente toque al
+   * Teide lo encuentra ya contado y enseña su lámina sin voz, que es lo bueno.
+   * Un «contado» sin nada dicho antes sigue siendo un fallo.
+   */
+  const contadoAntes = (q) => losToques.some((o) => o.que === q.que && o.desde < q.desde && o.dijo.length > 0);
+  const bienContado = (q) => q.dijo.length > 0 || (q.calla === "contado" && contadoAntes(q));
   comprobar(
     "la ventanilla viva invita a tocar: el aro suave sobre algo que se puede tocar, y Ara lo dice una vez",
     viva.aros.size > 0 && claves.filter((k) => k === "inicio.ara.pasaje.toque.invita").length === 1,
@@ -1893,11 +1898,11 @@ async function elVuelo() {
   comprobar(
     "un toque sobre lo que se ve por el cristal de Ara lo cuenta, y el Teide si se ve",
     contados.length > 0 &&
-      contados.every((x) => x.toque && (x.toque.dijo.length > 0 || x.toque.calla === "contado")) &&
-      contados.some((x) => x.toque?.dijo.length > 0) &&
+      contados.every((x) => x.toque && bienContado(x.toque)) &&
+      (contados.some((x) => x.toque?.dijo.length > 0) || contados.some((x) => x.toque?.calla === "contado" && contadoAntes(x.toque))) &&
       (!viva.teide || !!contados.find((x) => x.que === "hito:teide")?.toque) &&
       contados.every((x) => (x.toque?.dijo ?? []).every((k) => /^inicio\.(ara|tripulacion)\.pasaje\./.test(k))),
-    contados.map((x) => `${x.que} a los ${x.t.toFixed(0)} s: ${x.toque ? (x.toque.dijo.join(" + ") || x.toque.calla) : "no llegó a la escena"}`).join(" · ") ||
+    contados.map((x) => `${x.que} a los ${x.t.toFixed(0)} s: ${x.toque ? (x.toque.dijo.join(" + ") || `${x.toque.calla}${x.toque.calla === "contado" ? (contadoAntes(x.toque) ? " (dicho antes)" : " (sin decirse antes)") : ""}`) : "no llegó a la escena"}`).join(" · ") ||
       "no se tocó nada",
   );
   const delTapado = viva.tapado ? losToques.filter((q, k) => k >= viva.tapado.antes && q.que === viva.tapado.que && Math.abs(q.desde - viva.tapado.t) < 3) : [];

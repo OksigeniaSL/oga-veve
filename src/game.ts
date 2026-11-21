@@ -1349,6 +1349,7 @@ import { LeccionDelRotor, type SucesoDelRotor } from "./flight/lecciones-del-rot
 import { Senalero } from "./world/senalero";
 import { GenteDeLaMisionDibujada } from "./world/gente-de-la-mision";
 import {
+  comoMiraALaTerminal,
   diferencia as diferenciaDeRumbo,
   largoPorLaBatalla,
   paredMasCercana,
@@ -24142,15 +24143,30 @@ export class Game {
    * su pared, m, y lo que se aparta el morro de mirarla de frente, grados. Lo que dice si se
    * llegó a un puesto de contacto con el morro al edificio. En el aire, nada.
    */
-  private alEdificioParaBanco(): { readonly delMorro: number; readonly desviado: number } | null {
+  private alEdificioParaBanco(): {
+    readonly delMorro: number;
+    readonly desviado: number;
+    /**
+     * Y contra la terminal, desde la rueda de morro: la regla con la que el juego decide
+     * si un puesto es de contacto y hacia dónde mira en él, en grados. Ver
+     * `comoMiraALaTerminal` en `world/remolque.ts`.
+     */
+    readonly terminal: { readonly delMorro: number; readonly desviado: number; readonly deContacto: boolean } | null;
+  } | null {
     const s = this.flight.state;
     if (!s.onGround) return null;
-    const pared = paredMasCercana(s.position.x, s.position.z, this.plan?.aerodromoActual.buildings ?? []);
+    const aero = this.plan?.aerodromoActual;
+    const pared = paredMasCercana(s.position.x, s.position.z, aero?.buildings ?? []);
     if (!pared) return null;
     let desviado = ((pared.rumbo - s.heading) * 180) / Math.PI;
     desviado = ((((desviado + 180) % 360) + 360) % 360) - 180;
     const morro = morroDe(this.aircraft);
-    return { delMorro: pared.distancia - morro.rueda - morro.punta, desviado };
+    const terminal = comoMiraALaTerminal(ruedaDeMorroEn(s.position, s.heading, morro), s.heading, edificiosDePasarela(aero), morro);
+    return {
+      delMorro: pared.distancia - morro.rueda - morro.punta,
+      desviado,
+      terminal: terminal && { ...terminal, desviado: (terminal.desviado * 180) / Math.PI },
+    };
   }
 
   /** **El remolque, para el banco**: la fase, lo medido y dónde está cada uno. */
