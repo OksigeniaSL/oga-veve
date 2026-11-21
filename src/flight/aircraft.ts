@@ -4041,15 +4041,24 @@ export const YVAGA: AircraftConfig = {
   vfePorMuesca: [260, 230, 180],
   alivioDeFlaps: true,
   mmo: 0.92,
-  // 1,3 veces la pérdida, como manda: con CLmax 1,4 pierde a 76 m/s.
-  // Ciento cuarenta y seis nudos: 1,3 veces su pérdida con flaps, y lo que
-  // dice el manual de vuelo de un 747 a este peso —145 a 150—. Estaba en 98
-  // m/s, 191 nudos, que es 1,3 veces la pérdida **limpia**. Ver el Arai.
-  approachSpeed: 75,
+  /*
+   * **Ciento cuarenta y dos nudos, la de un 747 clásico a esta masa**, 1,3
+   * veces su pérdida con los flaps de aterrizar. La tabla de Boeing
+   * *Aerodrome Reference Code and Approach Speeds* (rev. A, agosto de 2026) da
+   * 142 al 747-300 con 564.000 lb —las 255,8 t de la ficha— y 145 al
+   * 747-100B con 585.000, que con la raíz de la masa son 142,4 a la de la
+   * ficha; los dos llevan esta ala y estos flaps. Eran 146, los del 747-400 a
+   * esta masa (su FCOM da 154 a la Vref más diez con 250 t), que tiene otra
+   * ala. Enmienda H54 del ADR 0027.
+   *
+   * Estaba antes en 98 m/s, 191 nudos, que es 1,3 veces la pérdida
+   * **limpia**. Ver el Arai.
+   */
+  approachSpeed: 142 * 0.514444,
   /*
    * **Ciento ochenta nudos**: el viento en cola de un 747 se vuela con los
    * flaps a diez y a su velocidad de maniobra, Vref más veinte a cuarenta.
-   * Cruza el umbral a 146 —categoría D, hasta 205— y no se pasa de la placa
+   * Cruza el umbral a 142 —categoría D, de 141 a 165— y no se pasa de la placa
    * de sus flaps de aterrizaje, que es la más baja.
    */
   velocidadDeCircuito: 180 * 0.514444,
@@ -4160,14 +4169,17 @@ export const YVAGA: AircraftConfig = {
    * 2,03 es el ala a (2,03 − 0,2 − 0,14) / 4,8 = 0,352 rad, 20,2°. La V2 queda
    * a 1,25 veces esa pérdida, sobre el 1,13 de la norma, y la Vr a 1,19.
    *
-   * Las otras dos muescas, con el ángulo de la ficha, el de antes. Con los de
-   * aterrizar la pérdida la fija la Vref, 1,3 veces ella, y el flap de salida
-   * muy bajado adelanta la pérdida, así que los Krueger no se suman enteros; la
-   * de veinte no tiene aquí cifra propia, y no se ha movido.
+   * La de veinte, con el ángulo de la ficha: no tiene aquí cifra propia, y no
+   * se ha movido. **La de aterrizar, la que pide su Vref**: 1,3 veces la
+   * pérdida, así que con 142 nudos la pérdida es de 109,2 y el CL máximo de
+   * 2,54, el ala a (2,5385 − 0,2 − 1,0)/4,8 = 0,279 rad, 16,0°. Era el de la
+   * ficha, 0,25, con los 146 del -400 (enmienda H54 del ADR 0027). El flap de
+   * salida muy bajado adelanta la pérdida, así que los Krueger no se suman
+   * enteros.
    */
   bordeDeAtaque: {
     dispositivo: "krueger",
-    perdidaPorMuesca: [(2.03 - 0.2 - 0.14) / 4.8, 0.25, 0.25],
+    perdidaPorMuesca: [(2.03 - 0.2 - 0.14) / 4.8, 0.25, (2.5385 - 0.2 - 1.0) / 4.8],
   },
   // Cinco, veinte y treinta: los de un cuatrirreactor de fuselaje ancho, con
   // el recorrido más largo de la flota. Ocho segundos por muesca.
