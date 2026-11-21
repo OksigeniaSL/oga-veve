@@ -835,7 +835,18 @@ const torre = await page.evaluate(async () => {
    */
   const linea = [];
   let firmaAntes = "";
-  for (let i = 0; i < 240; i++) {
+  /*
+   * **La paciencia, en reloj de juego** (21-11-2026). Con alguien por medio se
+   * espera hasta quince minutos de juego, o cuatro de pared. Antes eran
+   * sesenta segundos de pared: con el reloj a ×8 daban seis minutos de juego,
+   * pero con la máquina cargada el reloj no llega a ×8. En El Hierro, una
+   * cadena de esperas con su porqué cada una —número dos detrás de quien
+   * remontaba la pista, uno aterrizando y la estela— duró 352 s de juego en
+   * 61 de pared, y el banco cortó con la torre a punto de dar la verde. Lo
+   * que se sigue exigiendo es lo de antes: sin nadie por medio, la verde en
+   * doce segundos; y la espera, siempre con un porqué.
+   */
+  for (let i = 0; i < 960 && o.reloj() - t0 < 900; i++) {
     await new Promise((r) => setTimeout(r, 250));
     // La clase del verde vive en la caja, no en la bombilla.
     const caja = document.querySelector('[data-hud="torre"]');
