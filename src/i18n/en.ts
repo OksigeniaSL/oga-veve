@@ -343,6 +343,9 @@ export const EN: Dictionary = {
   // La roja es la del punto de espera: «hold short of runway (number)», Doc
   // 4444, 12.3.4.7. Ver `torre.roja` en `es-PY.ts`.
   "torre.roja": "{indicativo}, hold short of runway",
+  // Y los destellos de quien remonta: «backtrack runway (number)», Doc 4444,
+  // 12.3.4.7 p. Ver `torre.regreso` en `es-PY.ts`.
+  "torre.regreso": "{indicativo}, backtrack runway",
   // La torre canaria dice lo mismo en inglés: lo que cambia entre las dos es
   // el castellano y la voz. Ver `i18n/habla.ts`.
   "torre.afisLibre": "{indicativo}, runway free",
@@ -359,6 +362,7 @@ export const EN: Dictionary = {
   "torre.canario.afisTraficoDespega": "{indicativo}, departing traffic",
   "torre.canario.verde": "{indicativo}, cleared for take-off",
   "torre.canario.roja": "{indicativo}, hold short of runway",
+  "torre.canario.regreso": "{indicativo}, backtrack runway",
   "torre.aterrizar": "{indicativo}, cleared to land",
   "torre.canario.aterrizar": "{indicativo}, cleared to land",
   "torre.alAire": "{indicativo}, go around",

@@ -66,6 +66,17 @@ const DE_LA_TURBULENCIA_A_QUIEN_LA_OYE =
  * `src/flight/siguiente-vuelo.ts` e `invitarAlSiguiente` en `src/game.ts`.
  */
 const DEL_VUELO_VIVO = /^(?:comandante\.sigue\.|seguir\.|comandante\.cinturones$)/;
+
+/*
+ * **Y los destellos de quien remonta** (20-11-2026, H41i): «regreso por pista»
+ * y su número, con las dos voces de torre. La frase entera es una receta —la
+ * matrícula, la pieza y las cifras— y lo que se graba es la pieza, que va al
+ * final de la lista de cada torre en `DEL_REGRESO_POR_PISTA`: lo ya grabado no
+ * se renumera. Las claves del diccionario se apartan de sus grupos por lo
+ * mismo, aunque con su hueco no se grabarían. Ver `torre.regreso` en
+ * `src/i18n/es-PY.ts`.
+ */
+const DEL_REGRESO = /^torre\.(?:canario\.)?regreso$/;
 /**
  * Y las formas nuevas de frases que ya tenían su grabación: la de `i18n` se
  * queda donde estaba y las otras van al final, con las del vuelo vivo.
@@ -240,8 +251,9 @@ const HABLADOS = [
     "la tripulación de cabina de Canarias, por megafonía",
   ],
   ["tripulacion", "tripulacion", "la tripulación de cabina, por megafonía"],
-  ["torre.canario", "torre-canarias", "la torre de Canarias, que no vosea"],
-  ["torre", "torre", "la lámpara de la torre, dicha en casa"],
+  // Menos los destellos de quien remonta, que van al final: ver `DEL_REGRESO`.
+  ["torre.canario", "torre-canarias", "la torre de Canarias, que no vosea", DEL_REGRESO],
+  ["torre", "torre", "la lámpara de la torre, dicha en casa", DEL_REGRESO],
   ["otro", "otro", "el otro avión de la frecuencia"],
   /*
    * **Y la persona de tierra**, por el cable del interfono, con el habla del
@@ -3329,6 +3341,31 @@ for (const [id, para] of DEL_REMONTE) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+
+/*
+ * **Y la lámpara a destellos de quien remonta** (20-11-2026): «regreso por
+ * pista», la pieza de `torre.regreso` y `torre.canario.regreso`, con las dos
+ * voces de torre; la matrícula y el número los pone la receta, como en la
+ * roja. Detrás de todo, por lo mismo que las de arriba: lo ya grabado no se
+ * renumera. Ver `DEL_REGRESO`, `luzDeTorre` en `src/game.ts` y el ADR 0029,
+ * enmienda H41i.
+ */
+const DEL_REGRESO_POR_PISTA = [
+  ["torre", "torre.solo.regresoPorPista"],
+  ["torre-canarias", "torre.canario.solo.regresoPorPista"],
+];
+for (const [voz, id] of DEL_REGRESO_POR_PISTA) {
+  if (filas.some((f) => f.id === id)) continue;
+  const texto = "regreso por pista";
+  filas.push({
+    id,
+    voz,
+    idioma: "es",
+    texto,
+    para: "la lámpara a destellos verdes, a quien remonta la pista antes de despegar; detrás, las cifras de la pista",
+  });
   total += texto.length;
 }
 

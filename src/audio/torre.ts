@@ -291,8 +291,14 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * se graben, salen de aquí; la prueba lo recuerda. El «give way» se grabó el
  * 11-10-2026 y el «hold position» el 17-10-2026; esperan el desvío que
  * aprueba el control en el ejercicio de la tormenta.
+ *
+ * Y una de la lámpara, en castellano (H41i): «regreso por pista», los
+ * destellos verdes de quien remonta, con las dos voces de torre. Su pieza,
+ * `torre.solo.regresoPorPista` y la canaria, está al final de la lista de
+ * grabar; la pide `luzDeTorre` en `game.ts` solo si su toma está en el pack,
+ * y hasta entonces la lámpara a destellos calla, como antes.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>(["torre.regreso"]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice
@@ -451,9 +457,12 @@ export function esDeLaLampara(
  * Y tu número en la fila de salida, que va detrás de la roja —«número dos
  * para la salida», «number two for departure»— y con la verde ya no es
  * verdad: el que iba delante salió.
+ *
+ * Y los destellos de quien remonta, «regreso por pista» (H41i): con la verde
+ * fija ya no es verdad, que ya se dio la vuelta.
  */
 const DE_LA_LAMPARA =
-  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing|NumberTwo|NumberThree|Wake)?|numeroDos|numeroTres|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso|SinPermiso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|regreso|aterrizar|alAire|holdShort(?:Landing|Departing|NumberTwo|NumberThree|Wake)?|numeroDos|numeroTres|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso|SinPermiso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la torre dándole la pista a otro avión para que se quede

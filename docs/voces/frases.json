@@ -23318,5 +23318,19 @@
     "idioma": "es-PY",
     "texto": "La torre nos dijo ir primero por la pista y dar la vuelta: desde acá no alcanza la pista para despegar",
     "para": "con «backtrack» dado, quien se alinea en la boca y desde allí no le alcanza la pista, en los tres peldaños de abajo"
+  },
+  {
+    "id": "torre.solo.regresoPorPista",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "regreso por pista",
+    "para": "la lámpara a destellos verdes, a quien remonta la pista antes de despegar; detrás, las cifras de la pista"
+  },
+  {
+    "id": "torre.canario.solo.regresoPorPista",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "regreso por pista",
+    "para": "la lámpara a destellos verdes, a quien remonta la pista antes de despegar; detrás, las cifras de la pista"
   }
 ]

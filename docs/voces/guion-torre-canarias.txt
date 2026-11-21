@@ -169,3 +169,4 @@ suba a cinco mil pies
 suba a seis mil pies
 deviation right of route approved, advise clear of weather
 deviation left of route approved, advise clear of weather
+regreso por pista

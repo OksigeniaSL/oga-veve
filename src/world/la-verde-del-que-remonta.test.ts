@@ -191,3 +191,186 @@ describe("a quien remonta, la verde fija al dar la vuelta, y una", () => {
     }
   }
 });
+
+/**
+ * **Quien da la vuelta antes del lazo dibujado** (H41i).
+ *
+ * Remonta con el piloto perfecto hasta llevar `tras` metros hacia la cabecera
+ * desde donde pisó la pista —`"alEntrar"`: nada, nada más pisarla—, y ahí da
+ * la vuelta sin moverse del sitio, a veinte grados por segundo, hasta mirar
+ * pista abajo, y espera. Un giro de verdad y no un salto de rumbo: con el
+ * morro puesto de golpe en el eje no hay «alineando», y es en esa fase donde
+ * se enciende la verde, también al acabar el lazo dibujado. Apunta las luces
+ * de antes y de después del giro, y si la bandera del remonte se bajó.
+ */
+function girarAntes(
+  esc: Scenario,
+  avion: AircraftConfig,
+  vientoDe: number,
+  dia: DiaDeDespegue,
+  tras: number | "alEntrar",
+): {
+  readonly sale: ComoSeSale | null;
+  readonly antes: readonly Exclude<LuzDeLaTorre, null>[];
+  readonly despues: readonly Exclude<LuzDeLaTorre, null>[];
+  readonly remontado: number;
+  /** Lo que faltaba hasta el sitio de girar dibujado al dar la vuelta, m. */
+  readonly antesDelLazo: number;
+  readonly bandera: boolean;
+  readonly fase: string;
+} | null {
+  const pista = conViento(esc, { ...TIEMPO_DE_CASA, vientoDe, vientoKt: 15 }).runway;
+  const plan = new PlanDeVuelo(esc.aerodrome!, pista, () => 0, avion);
+  plan.diaDeDespegue = () => dia;
+  plan.reiniciar();
+  const dt = 0.1;
+  const mitad = pista.length / 2;
+  let p: Punto | null = null;
+  let rumbo = 0;
+  let v = 0;
+  let sale: ComoSeSale | null = null;
+  const antes: Exclude<LuzDeLaTorre, null>[] = [];
+  const despues: Exclude<LuzDeLaTorre, null>[] = [];
+  let entra: number | null = null;
+  let masAtras = Infinity;
+  let vuelto: { remontado: number; antesDelLazo: number } | null = null;
+  let parado = 0;
+  const haciaDondeSeDespega = (pista.heading * Math.PI) / 180;
+  const GIRO = (20 * Math.PI) / 180;
+  for (let t = 0; t < 1200; t += dt) {
+    const ruta = plan.rutaVisible();
+    if (!p) {
+      const a = ruta[0];
+      const b = ruta[1];
+      if (!a || !b) return null;
+      p = [a[0], a[1]];
+      rumbo = Math.atan2(b[0] - a[0], -(b[1] - a[1]));
+    }
+    const e = enEjesDePista(p[0], p[1], pista.x, pista.z, pista.heading);
+    const enPista = Math.abs(e.across) < pista.width / 2 && Math.abs(e.along) < mitad;
+    const vista = plan.paso(
+      {
+        position: { x: p[0], y: 0, z: p[1] },
+        velocity: { x: Math.sin(rumbo) * v, y: 0, z: -Math.cos(rumbo) * v },
+        heading: rumbo,
+        airspeed: v,
+        groundSpeed: v,
+        verticalSpeed: 0,
+        yawRate: 0,
+        onGround: true,
+        onRunway: enPista,
+      } as never,
+      0,
+      true,
+      dt,
+    );
+    const luz = luzDeLaSalida(vista.fase, vista.luzVerde, plan.dondeSeGira !== null);
+    const apunta = vuelto ? despues : antes;
+    if (luz && apunta.at(-1) !== luz) apunta.push(luz);
+    if (!sale && vista.luzVerde) sale = plan.comoSeSale;
+    if (vuelto) {
+      parado += dt;
+      // La vuelta en el sitio, por el lado más corto.
+      let falta = haciaDondeSeDespega - rumbo;
+      while (falta > Math.PI) falta -= 2 * Math.PI;
+      while (falta < -Math.PI) falta += 2 * Math.PI;
+      rumbo += Math.sign(falta) * Math.min(Math.abs(falta), GIRO * dt);
+      if (parado > 15 || vista.fase === "despegando")
+        return {
+          sale,
+          antes,
+          despues,
+          ...vuelto,
+          bandera: plan.dondeSeGira !== null,
+          fase: vista.fase,
+        };
+      continue;
+    }
+    if (vista.fase === "esperando") {
+      v = 0;
+      continue;
+    }
+    // Lo remontado, con la pista pisada y la torre ya dada.
+    if (enPista && vista.luzVerde) {
+      entra ??= e.along;
+      masAtras = Math.min(masAtras, e.along);
+      const remontado = entra - masAtras;
+      const giro = plan.dondeSeGira;
+      if (giro !== null && (tras === "alEntrar" || remontado >= tras)) {
+        vuelto = { remontado, antesDelLazo: e.along - giro };
+        // Parado, y a dar la vuelta desde aquí.
+        v = 0;
+        continue;
+      }
+    }
+    v = Math.max(0.5, vista.velocidadSugerida);
+    const meta = plan.avanceEnLaRuta + v * dt;
+    let anda = 0;
+    let sig: Punto | null = null;
+    for (let i = 0; i < ruta.length - 1; i++) {
+      const a = ruta[i]!;
+      const b = ruta[i + 1]!;
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (anda + l >= meta) {
+        const u = l > 0 ? (meta - anda) / l : 0;
+        sig = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+        rumbo = Math.atan2(b[0] - a[0], -(b[1] - a[1]));
+        break;
+      }
+      anda += l;
+    }
+    if (!sig) return null;
+    p = sig;
+  }
+  return null;
+}
+
+describe("quien da la vuelta antes del lazo dibujado (H41i)", () => {
+  /*
+   * El Hierro por la 34 con el JAZ 40 y 4 m/s de cola remonta hasta el final:
+   * entra hacia el −113 y el lazo está hacia el −590. Quien da la vuelta a los
+   * sesenta metros ya ha remontado, y mirando pista abajo es que ya ha dado
+   * la vuelta: verde fija, una vez.
+   */
+  it("remontó sesenta metros y mira pista abajo: la verde fija, ya", () => {
+    const r = girarAntes(EL_HIERRO, jaz40, 0, cola(4), 60)!;
+    expect(r).not.toBeNull();
+    expect(r.sale!.desde).toBe("remonte");
+    expect(r.remontado).toBeGreaterThanOrEqual(60);
+    // De verdad antes del lazo, y lejos: no es la vuelta dibujada.
+    expect(r.antesDelLazo).toBeGreaterThan(200);
+    expect(r.antes).toEqual(["roja", "rodar"]);
+    expect(r.bandera).toBe(false);
+    // Destellos mientras gira, y la verde fija al acabar la vuelta: una.
+    expect(r.despues).toEqual(["rodar", "verde"]);
+    // Y ya en el eje, la carrera.
+    expect(r.fase).toBe("despegando");
+  });
+
+  /*
+   * Y quien llega a la pista ya mirando pista abajo, sin haber remontado
+   * nada, no ha dado ninguna vuelta: sigue con los destellos, que todavía
+   * tiene la pista por remontar (H41h). Mirar pista abajo solo no basta.
+   */
+  it("mirando pista abajo nada más pisarla, sin remontar: siguen los destellos", () => {
+    const r = girarAntes(EL_HIERRO, jaz40, 0, cola(4), "alEntrar")!;
+    expect(r).not.toBeNull();
+    expect(r.sale!.desde).toBe("remonte");
+    expect(r.remontado).toBeLessThan(30);
+    expect(r.bandera).toBe(true);
+    expect(r.despues).not.toContain("verde");
+    expect([...r.antes, ...r.despues].at(-1)).toBe("rodar");
+  });
+
+  /*
+   * Y a menos de treinta metros, igual: es entrar y alinearse, la misma
+   * cuenta que la de `vigilarElRemonte`. Ver `flight/lo-remontado.ts`.
+   */
+  it("a veinte metros de remonte tampoco: la regla es la de quien no remonta", () => {
+    const r = girarAntes(EL_HIERRO, jaz40, 0, cola(4), 20)!;
+    expect(r).not.toBeNull();
+    expect(r.remontado).toBeLessThan(30);
+    expect(r.bandera).toBe(true);
+    expect(r.despues).not.toContain("verde");
+  });
+});
