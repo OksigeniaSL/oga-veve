@@ -2791,13 +2791,16 @@ export const JAZ_50: AircraftConfig = {
   rotationSpeed: VELOCIDADES_DEL_JAZ_50.vr,
   takeoffSafetySpeed: VELOCIDADES_DEL_JAZ_50.v2,
   /*
-   * **De la rodadura a los cincuenta pies, 1,62**, el más que deja su manual. Su
-   * despegue con los dos motores rueda 244 m (dehavilland.com, Series 400) y
-   * pasa los cincuenta pies a los 454 de la SFAR 23 (Viking, 2018: «All takeoff
-   * distances are based on both engines operating»), que ya lleva el 1,15 de su
-   * norma: sin él son 395, y 395 / 244 = 1,62. Ver `deRodarADespegar`.
+   * **De la rodadura a los cincuenta pies, la de su manual**: con los dos
+   * motores rueda 244 m (dehavilland.com, Series 400) y pasa los cincuenta pies
+   * a los 454 de la SFAR 23 (Viking, 2018: «All takeoff distances are based on
+   * both engines operating»), 1,86. **Sin margen** (H58): la SFAR 23 define esa
+   * distancia como «the horizontal distance required to takeoff and climb to a
+   * height of 50 feet above the takeoff surface» (§ 5 d, hoy el apéndice A de
+   * la 14 CFR 135), sin el 1,15 de la de transporte. Llevaba 1,62, los 454
+   * partidos por un 1,15 que no tienen. Ver `deRodarADespegar`.
    */
-  deRodarADespegar: 1.62,
+  deRodarADespegar: 454 / 244,
   /*
    * 4,5 m del tren de morro al principal, y 3,81 de vía (NASA TM-101427, figura
    * 1), las de su dibujo. La web de De Havilland da 7,22, que no casa con la

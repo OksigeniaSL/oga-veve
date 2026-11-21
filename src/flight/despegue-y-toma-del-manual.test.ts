@@ -178,7 +178,10 @@ import {
   segundosHastaFrenar,
   velocidadDeToma,
   margenDeSuClase,
+  pistaNecesariaHoy,
+  despegueVolado,
 } from "./carrera";
+import { aireDelParte, airDensity } from "./atmosphere";
 import { VR_SOBRE_LA_PERDIDA, perdidaCon } from "./velocidades-de-despegue";
 import { flapsDeDespegue } from "./flaps";
 
@@ -214,17 +217,31 @@ function avion(id: string): AircraftConfig {
  * despegue, y por eso la cuenta del hangar no tiene nada que saber de él
  * (enmienda H56b del ADR 0027).
  */
-function despegar(a: AircraftConfig): {
+function despegar(
+  a: AircraftConfig,
+  /**
+   * La temperatura del día, °C, en un campo al nivel del mar. La Vr y la de
+   * subir son indicadas: con aire fino se rota y se sube a más verdadera.
+   */
+  temperatura = 15,
+): {
   readonly hastaVr: number;
   readonly hastaIrse: number;
   readonly hastaLaAltura: number;
   /** La actitud con la que se va del suelo, rad. */
   readonly actitudAlIrse: number;
+  /** La densidad del aire del día, kg/m³. */
+  readonly densidad: number;
 } {
   const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: 0 });
+  const aire = aireDelParte(temperatura, 0);
+  m.ponerAire(aire);
   m.reset({ position: new Vector3(0, a.gearHeight, 0), heading: 0, airspeed: 0 });
+  const densidad = airDensity(0, aire);
+  const raiz = Math.sqrt(densidad / 1.225);
+  const vr = a.rotationSpeed / raiz;
   const altura = (esDeChorro(a) ? 35 : 50) * PIE;
-  const subirA = Math.max(perdidaCon(a, flapsDeDespegue(a)) * 1.2, a.rotationSpeed * 1.05);
+  const subirA = Math.max(perdidaCon(a, flapsDeDespegue(a)) * 1.2, a.rotationSpeed * 1.05) / raiz;
   let x = 0;
   let hastaVr = 0;
   let hastaIrse = Infinity;
@@ -236,11 +253,11 @@ function despegar(a: AircraftConfig): {
   for (let k = 0; k < Math.round(200 / DT); k++) {
     antes.copy(s.position);
     const v = s.airspeed;
-    if (v >= a.rotationSpeed) rotando = true;
+    if (v >= vr) rotando = true;
     const cabeceo = s.alpha + Math.atan2(s.verticalSpeed, Math.max(1, s.groundSpeed));
     // Antes de la Vr, la palanca suelta; el de rueda de cola, levantando la
     // cola según corre. Ver `palancaParaRodar`.
-    let elevator = palancaParaRodar(a, v, cabeceo, s.pitchRate);
+    let elevator = palancaParaRodar(a, v * raiz, cabeceo, s.pitchRate);
     if (rotando) {
       if (s.onGround) actitud = Math.min(actitud + 3 * GRADO * DT, 20 * GRADO);
       else {
@@ -261,7 +278,7 @@ function despegar(a: AircraftConfig): {
     });
     const paso = Math.hypot(s.position.x - antes.x, s.position.z - antes.z);
     x += paso;
-    if (v < a.rotationSpeed) hastaVr += paso;
+    if (v < vr) hastaVr += paso;
     /*
      * Se va del suelo cuando las ruedas principales lo dejan, y no cuando se
      * apaga `onGround`: eso es un palmo más arriba —ver `PEGADO_AL_SUELO`—, y
@@ -278,10 +295,10 @@ function despegar(a: AircraftConfig): {
       actitudAlIrse = cabeceo;
     }
     if (s.position.y - a.gearHeight >= altura) {
-      return { hastaVr, hastaIrse, hastaLaAltura: x, actitudAlIrse };
+      return { hastaVr, hastaIrse, hastaLaAltura: x, actitudAlIrse, densidad };
     }
   }
-  return { hastaVr, hastaIrse, hastaLaAltura: Infinity, actitudAlIrse };
+  return { hastaVr, hastaIrse, hastaLaAltura: Infinity, actitudAlIrse, densidad };
 }
 
 /** Posa el avión a su velocidad de toma y lo frena como su manual, m. */
@@ -372,21 +389,18 @@ const MANUALES: Readonly<Record<string, (a: AircraftConfig) => DelManual>> = {
     aterrizajeConMargen: false,
   }),
   /*
-   * El Twin Otter publica su despegue con los márgenes de la SFAR 23 y su toma
-   * sin ellos, como el 1900D: 454 m hasta los cincuenta pies con los dos motores
-   * y 460 m desde ellos, con frenos de rueda (Viking, *Twin Otter Series 400
-   * Technical Specifications*, 2018), a su peso máximo al despegar y al
-   * aterrizar. Su despegue se mira aparte: ver abajo.
+   * El Twin Otter publica su despegue y su toma sin márgenes: 454 m hasta los
+   * cincuenta pies con los dos motores y 460 m desde ellos, con frenos de rueda
+   * (Viking, *Twin Otter Series 400 Technical Specifications*, 2018), a su peso
+   * máximo al despegar y al aterrizar. **Los 454 no llevan el 1,15** (H58): son
+   * la «all engine operating takeoff distance» de la SFAR 23, § 5 d, «the
+   * horizontal distance required to takeoff and climb to a height of 50 feet
+   * above the takeoff surface» (hoy, el apéndice A de la 14 CFR 135). Se leía
+   * como una longitud de campo con su margen, y la cuenta llevaba los 454
+   * partidos por 1,15: 338 m donde su manual da 379.
    */
-  "jaz-50": (a) => ({
-    ...escalado(
-      a,
-      { metros: 454, kilos: 5670 },
-      { metros: 460, kilos: 5579 },
-      true,
-    ),
-    aterrizajeConMargen: false,
-  }),
+  "jaz-50": (a) =>
+    escalado(a, { metros: 454, kilos: 5670 }, { metros: 460, kilos: 5579 }, false),
   "jaz-90": (a) =>
     escalado(a, { metros: 1151, kilos: a.mass }, { metros: 1228, kilos: 32800 }, true, true),
   "jaz-110": (a) =>
@@ -430,7 +444,7 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
       expect(r, dicho).toBeLessThan(1.12);
     });
 
-    it.skipIf(id === "jaz-40" || id === "jaz-50")(`${id} despega en lo que dice su manual`, () => {
+    it.skipIf(id === "jaz-40")(`${id} despega en lo que dice su manual`, () => {
       const r = hangar.despegar / manual.despegar;
       const dicho = `${id}: el hangar pide ${Math.round(hangar.despegar)} m y el manual ${Math.round(manual.despegar)}`;
       // Un techo en los bimotores de línea; de frente en los demás. El techo,
@@ -442,27 +456,15 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
   }
 
   /*
-   * **El Twin Otter publica las dos cosas por separado**, y se miran por
-   * separado: su distancia de despegue con los márgenes de la SFAR 23, 454 m, y
-   * la de acelerar y parar, 675 m (Viking, 2018). El hangar pide la mayor de las
-   * dos cuentas suyas, y en él manda la de parar.
-   *
-   * - **La de despegar, de frente**: la de todos los motores por 1,15 da 389 m a
-   *   la masa de la ficha, y su manual 379.
-   * - **La de parar, por debajo de su manual**: 447 m donde el suyo da 564. No
-   *   es su frenada, que es la que para en su toma; es la cuenta de la parada,
-   *   que lleva los dos segundos de la norma de los de transporte (CS 25.109)
-   *   y no el tiempo, más largo, que contaba la SFAR 23 en un avión de los
-   *   años sesenta, que no se ha leído. Se fija que no se aleje más.
+   * **El Twin Otter publica además su parada desde la V1**, 675 m (Viking,
+   * 2018), y se mira aparte: la de su cuenta, 449 m, se queda por debajo de los
+   * 564 de su manual a la masa de la ficha. No es su frenada, que es la que
+   * para en su toma, ni el tiempo de decidir: la cuenta lleva los dos segundos
+   * de la norma de los de transporte (CS 25.109), y la SFAR 23 no pide ninguno
+   * en su § 5 c (H58). Lo que la alarga en su manual no se ha leído. Se fija
+   * que no se aleje más.
    */
-  it("el jaz-50 despega en lo que dice su manual, con los márgenes de su norma", () => {
-    const a = avion("jaz-50");
-    const r = (distanciaDeDespegue(a) * margenDeSuClase(a).factor) / MANUALES["jaz-50"]!(a).despegar;
-    expect(r).toBeGreaterThan(0.88);
-    expect(r).toBeLessThan(1.12);
-  });
-
-  it("y su parada desde la V1 se queda por debajo de la de su manual, sin alejarse más", () => {
+  it("la parada del jaz-50 desde la V1 se queda por debajo de la de su manual, sin alejarse más", () => {
     const a = avion("jaz-50");
     const suya = 675 * (a.mass / 5670) ** 2;
     const r = acelerarYPararDeSuNorma(a) / suya;
@@ -502,9 +504,10 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
      * arriba: se van del suelo más tarde que la cuenta (ver la cabecera), y eso
      * no puede pasar de una quinta parte.
      *
-     * **El JAZ 50, hasta un 45 %**, y es lo que más se aparta de toda la flota:
-     * vuela 468 m hasta los cincuenta pies donde la cuenta dice 338 y su manual,
-     * 395. Rueda hasta la Vr lo que la cuenta —215 m contra 209—; lo que se
+     * **El JAZ 50**, como los demás desde H58: con la proporción de su manual,
+     * que no lleva margen, la cuenta dice 388 m y vuela 460, 1,19 (con la de
+     * antes, 338, vuela 1,36 y tenía su propio tope de 1,45). Su manual da 379.
+     * Rueda hasta la Vr lo que la cuenta —213 m contra 208—; lo que se
      * alarga es lo de después. Rota a 73 nudos, 1,16 veces su pérdida con los
      * flaps de despegue, y a esa velocidad necesita casi nueve grados para
      * volar: con el tirón de tres grados por segundo de este piloto se va del
@@ -540,7 +543,7 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
        * a los cincuenta pies eran 296 m y son 270. Volado 593 m contra 456 de
        * la cuenta, y su manual pide 352; con la recta eran 672 contra 536.
        */
-      const ancho = a.id === "jaz-40" ? 1.32 : a.id === "jaz-50" ? 1.45 : 1.2;
+      const ancho = a.id === "jaz-40" ? 1.32 : 1.2;
       expect(r, dicho).toBeGreaterThan(cerrado ? 0.95 : 0.9);
       expect(r, dicho).toBeLessThan(cerrado ? 1.05 : ancho);
     });
@@ -550,6 +553,51 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
       const r = frenar(a) / rodaduraDeFrenada(a);
       expect(r).toBeGreaterThan(0.97);
       expect(r).toBeLessThan(1.03);
+    });
+  }
+});
+
+/*
+ * **La pista que pide el hangar, con su margen, por encima de lo que vuela el
+ * avión del juego**, en los ocho (H58). El margen existe para que el avión
+ * despegue de sobra, y no justo: el biplano y el Twin Otter pedían con margen
+ * 340 y 449 m y volaban 350 y 460 hasta la altura de su norma, porque la
+ * cuenta era solo la de su manual y el modelo vuela más (ver `despegueVolado`).
+ *
+ * Con el margen de su clase sobre lo volado y no solo sobre 1: el hangar
+ * pide la mayor de la distancia de su manual y la volada, por su margen, y
+ * eso tiene que quedar al menos a un 10 % por encima. En el día de tablas y en
+ * uno de treinta y cinco grados.
+ */
+describe("la pista que pide el hangar, con su margen, cubre lo que vuela el avión", () => {
+  for (const a of MEDIDOS) {
+    if (a.helicoptero) continue;
+    for (const temperatura of [15, 35]) {
+      it(`${a.id} pide con margen más de lo que vuela a ${temperatura} °C`, () => {
+        const volado = despegar(a, temperatura);
+        const pide = pistaNecesariaHoy(a, {
+          densidad: volado.densidad,
+          vientoDeFrente: 0,
+          superficie: "asfalto",
+        });
+        const r = pide / volado.hastaLaAltura;
+        const dicho = `${a.id} a ${temperatura} °C: pide ${Math.round(pide)} m y vuela ${Math.round(volado.hastaLaAltura)}`;
+        expect(r, dicho).toBeGreaterThan(1.1);
+      });
+    }
+
+    /*
+     * Y la cuenta que lo vuela dice lo que vuela el modelo, al cinco por
+     * ciento: de 0,96 a 1,03 al escribirlo. Se queda algo corta en los que
+     * tardan en irse del suelo porque no lleva lo que tarda el morro en
+     * responder.
+     */
+    it(`${a.id}: lo que vuela la cuenta es lo que vuela el modelo`, () => {
+      const volado = despegar(a).hastaLaAltura;
+      const r = despegueVolado(a) / volado;
+      const dicho = `${a.id}: la cuenta vuela ${Math.round(despegueVolado(a))} m y el modelo ${Math.round(volado)}`;
+      expect(r, dicho).toBeGreaterThan(0.95);
+      expect(r, dicho).toBeLessThan(1.05);
     });
   }
 });
