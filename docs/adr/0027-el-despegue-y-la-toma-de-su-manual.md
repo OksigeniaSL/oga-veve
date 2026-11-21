@@ -6915,3 +6915,250 @@ cabía en el encargo.
   entrar: una tirada no la dio. Y el segundo vuelo entero.
 - **El JAZ 50 y el JAZ 60 en el navegador** con el cambio. El JAZ 20 no pasa
   por aquí (un motor) y no cambia.
+
+## Enmienda H53 (21-11-2026): el 747 que flotaba en Gran Canaria, y el punto de toma
+
+H46 no bastó. El JAZ 120 del vuelo entero de Gran Canaria, en Taguató y con
+veinte nudos de cara, siguió tocando ronda sí, ronda no pasada la zona (de 150
+a 600 m en 3.104 m de pista):
+
+| Ronda | Recogida | Toca | |
+|---|---|---|---|
+| c29 | 13,4 m, −14 m, 2,8 m/s, 154 kt | 319 m, 2,35 m/s | ✗ dura |
+| c30 | 13,4 m, −31 m, 3,5 m/s, 155 kt | **651 m**, 1,97 m/s | ✗ la zona, ✗ las gafas |
+| c31 | 14,7 m, −11 m, 4,8 m/s, 148 kt | 572 m, 1,84 m/s | ✓ por poco |
+| c32 | 13,7 m, −76 m, 3,0 m/s, 157 kt | **728 m**, 0,94 m/s | ✗ la zona, ✗ las gafas |
+
+En la c32 cantó «toma larga» a un metro de ruedas y 140 nudos, con la Vref en
+146, y tocó ochocientos metros después de empezar a recoger. El número baila alrededor del límite, así que esta vez no se tocó
+ninguna constante antes de medir.
+
+### La vara
+
+No se ha encontrado en abierto un manual de entrenamiento del 747 clásico. Lo
+que se ha leído, de Boeing:
+
+- **La técnica, del FCTM de los de fuselaje ancho** (Boeing, *777/787 Flight
+  Crew Training Manual*, FCT 777/787 (TM), rev. 14, 30-6-2021, pp. 6.9-6.10,
+  copia de `fctm.txt` del scratchpad): «Initiate the flare when the main gear
+  is approximately 30 feet above the runway by increasing pitch attitude
+  approximately 2° - 3°» (777; el 787, de 20 a 30); «If the autothrottle is
+  connected, the thrust lever begins to reduce toward idle at 25 feet. If the
+  autothrottle is not engaged, after the flare is initiated, smoothly retard
+  the thrust levers to idle […] Ideally, main gear touchdown should occur
+  simultaneously with thrust levers reaching idle»; «If the flare is too
+  abrupt and thrust is excessive near touchdown, the airplane tends to float
+  in ground effect. **Do not allow the airplane to float or attempt to hold
+  it off. Fly the airplane onto the runway at the desired touchdown point and
+  at the desired airspeed**»; «The 5 knot additive is bled off during the
+  flare […] some of the steady wind additive may be bled off prior to
+  touchdown. Plan to maintain gust correction until touchdown. Touchdown
+  should occur at no less than VREF − 5 knots»; y el perfil: «flare distance
+  is approximately 1,000 to 2,000 feet beyond the threshold; typical landing
+  flare times range from 4 to 8 seconds and are a function of approach
+  speed».
+- **El 747-400 en automático** (Boeing, *747 Flight Crew Operations Manual*,
+  D6-30151-400, rev. 23, 2009, vol. 1, p. 4.20.13): «At approximately 50 feet
+  radio altitude, the autopilots start the flare maneuver […] at 25 feet radio
+  altitude, the autothrottle retards thrust levers to idle».
+- **El margen del viento**, la regla de Boeing para todos sus tipos: la mitad
+  del viento de cara y la racha entera, de cinco a veinte nudos (resumida por
+  Code 7700, `approach_speed_additives.htm`, de las láminas del *Cross-model
+  Wind Additive Reduction Study* de Boeing, 2018). Con veinte nudos de cara,
+  diez: cruzar a la Vref más diez, que es lo que hace el banco (156–157).
+
+### El avión, contra eso
+
+- **La Vref**: 146 nudos, 1,3 veces la pérdida del modelo con los flaps de
+  aterrizar (112,3). La tabla de Boeing *Aerodrome Reference Code and Approach
+  Speeds* (rev. A) da al 747-100B 145 nudos a 585.000 lb y al 747-300 142 a
+  564.000; a la masa de la ficha, unos 142, y Jenkinson 141. La del juego es
+  la del -400: su FCOM da 154 nudos a la Vref más diez con 250 t (tabla de
+  velocidad no fiable), 146 a la masa de la ficha. Cuatro nudos de más no
+  hacen flotar: lo que decide es la velocidad contra su propia pérdida, que
+  guarda el 1,3. No se toca.
+- **La actitud de la final, sí es otra**: el mismo FCOM da 1,0° de morro con
+  los flaps a 30, la Vref más diez y 250 t; el del juego baja la senda a
+  −2,1°. Tres grados más picado, con el ángulo de ataque tres grados más bajo
+  y la misma sustentación. No se toca aquí: es la recta de sustentación con
+  los flaps (`cl0` y `flapsLift`), y mueve el despegue y la cola.
+- **El efecto suelo, el del libro** (`efecto-suelo.ts`): con el ala del 747 a
+  5,25 m sobre las ruedas, +4 % de sustentación a 13 m de ruedas, +7 % a 6 m y
+  +13 % al tocar, con el mismo ángulo. **Sin el momento de cabeceo**: el
+  modelo no tiene el picado que da el suelo al quitarle *downwash* a la cola.
+  No se ha podido leer cuánto es en un 747 —Hurt (NAVWEPS 00-80T-80) y el
+  manual del piloto de la FAA no se dejaron bajar—, así que no se pone.
+
+### La mesa
+
+La de H46 sobre la de H45b (`h53/mesa/` del scratchpad): el modelo del juego,
+su automático en la senda, el gas del banco, las rachas del juego y la
+recogida del banco copiada tal cual; el JAZ 120 y el JAZ 110 a 24 m con veinte
+nudos de cara a la Vref más ocho, el JAZ 90 en Los Rodeos con doce. Lo que
+enseña:
+
+- **En aire quieto el banco no tira**: la palanca va de 0,049 a 0,000 y vuelve
+  a 0,039, y el morro sube de −2,1° a +0,8° solo, con la carga en 1,05 g. Se
+  recoge el colchón. Toca a 477 m y 0,78 m/s tras siete segundos de recogida,
+  518 m después de los cincuenta pies: dentro de los 1.000–2.000 pies de
+  Boeing.
+- **Las largas no son globos**: con σ_w 1 m/s, de las catorce que pasan de
+  600 m, diez suben menos de medio metro; recogen de ocho a trece segundos
+  —la mediana de todas, siete— a ras de suelo, y once tocan por debajo de la
+  Vref menos cinco, de 130 a 139 nudos.
+  En una (semilla 38) el ángulo se queda en cero, la palanca sostenida en
+  −0,027 y la velocidad baja nudo y medio por segundo. Es lo que el FCTM dice
+  que no se haga: aguantarlo en el aire.
+- **Y el colchón es el que lo sostiene**: con la sustentación del suelo
+  quitada en la mesa —solo como prueba—, 2 largas en vez de 14 y 37 duras en
+  vez de 20, y 5,7 segundos de recogida en vez de 7,3. Con la
+  mitad, 8 y 28. El banco recoge **con** el colchón, y por eso, cuando una
+  racha le da energía de más, flota.
+
+### De quién es
+
+El efecto suelo y la Vref son del libro; si el colchón de este 747 es mayor
+que el de verdad por faltarle el momento de cabeceo queda abierto, sin fuente
+con la que medirlo. **Lo que va contra el manual es el banco**: su perfil
+reparte la bajada hasta tocar a dos pies por segundo sin mirar dónde, y sostiene
+la palanca cuando baja menos de lo pedido. Eso, a medio metro del suelo, es
+«attempt to hold it off».
+
+### Lo que se cambia, en el banco
+
+**Un reactor va a la pista en su punto de toma** (`pideAlPuntoDeToma`, en
+`scripts/recogida-del-reactor.mjs`). El punto, a 1.500 pies del umbral, el
+medio de los 1.000–2.000 del FCTM. Si el perfil lo va a llevar pasado el
+punto, la recogida pide lo que lo pone en el suelo en él —lo que queda de
+ruedas entre el tiempo que falta, medio segundo como poco—, nunca más deprisa
+que la senda de la que viene la recogida, y ni sostiene la palanca ni deja de
+empujar en el último metro y medio. Mientras va a llegar antes, el perfil
+manda como siempre. Lo vuela el vuelo entero, y la ley del módulo si se le
+dice dónde está la pista; el banco del cangrejo no se lo dice y no cambia. La
+avioneta y las hélices no pasan por aquí. **El juego no cambia.**
+
+| 200 finales | Más de 2 m/s | Pasadas de 600 m | La más larga | Mediana |
+|---|---|---|---|---|
+| JAZ 120, aire quieto, antes / ahora | — | — | — | 477 m, 0,78 / 473 m, 0,93 |
+| JAZ 120, σ_w 1, antes / ahora | 20 / 23 | **14 / 5** | 1.760 / 706 m | 459 / 460 m |
+| JAZ 120, σ_w 1,5, antes / ahora | 66 / 71 | 12 / 6 | 1.628 / 2.206 m | 395 / 395 m |
+| JAZ 110, aire quieto, antes / ahora | — | — | — | 462 m, 0,83 / 457 m, 0,99 |
+| JAZ 110, σ_w 1, antes / ahora | 8 / 11 | 7 / 2 | 2.693 / 777 m | 442 / 441 m |
+| JAZ 110, σ_w 1,5, antes / ahora | 42 / 42 | 6 / 2 | 2.551 / 2.460 m | 368 / 368 m |
+| JAZ 90, Los Rodeos, σ_w 1, antes / ahora | 9 / 9 | 0 / 0 | 493 / 485 m | 281 / 281 m |
+| JAZ 90, Los Rodeos, σ_w 1,5, antes / ahora | 67 / 69 | 1 / 0 | 655 / 520 m | 240 / 240 m |
+
+Lo que flotaba se posa: las largas bajan a menos de la mitad, y las que
+quedan son globos. El precio, alguna toma más firme —tres más de 2 m/s en
+doscientas con σ_w 1—, que es lo que el FCTM prefiere a flotar. Las dos más
+largas con σ_w 1,5 (2.206 y 2.460 m) son otra cosa: globos de seis y setenta
+metros que empiezan antes de bajar de los treinta pies, y **el gas de la senda
+se queda puesto** —0,34 de media en treinta y cinco segundos—, porque el banco
+lo quita con la altura y no con el reloj. Es lo de H45 en el bimotor. Que no
+vuelva una vez quitado no lo arregla (la misma mesa, igual): no llega a
+quitarse. Queda apuntado abajo.
+
+Se probaron antes, en la misma mesa, y no sirven: dejar de sostener al bajar
+de la Vref menos cinco, o al pasar el tiempo del perfil, pidiendo tocar a
+1,2 m/s (de 14 largas a 14 y 15: los términos que piden ángulo por la velocidad
+perdida y por la carga se comen el empujón), y el punto con lo que haga falta
+para llegar a él sin tope (4 largas, pero tomas de 7,8 m/s al pedir ocho
+metros por segundo a cuatro metros de altura).
+
+La prueba, en `recogida-del-reactor.test.mjs`: la función, que la página la
+recibe como texto, y sesenta finales del JAZ 120 con la ley del módulo, con y
+sin el punto: de 5 largas a ninguna, la más larga de 855 a 560 m, las duras 6
+y 6.
+
+### Volado
+
+`verificar-vuelo-entero.mjs gran-canaria taguato 1 jaz-120`, reloj por uno,
+viento 025/20, con la traza del ala (`OGA_TRAZA_ALA`, `h53/` del scratchpad:
+`leer.mjs` saca la final cada cuarto de segundo desde los treinta metros, con
+el efecto suelo de cada altura). La traza de main no se voló: el navegador
+estaba ocupado y se dio el turno a los vuelos del cambio; la de main es la de
+la mesa, arriba.
+
+**Primera tirada, con el cambio: 647 m y 2,12 m/s, 59 de 62** (✗ la zona, ✗
+uno a dos metros por segundo, ✗ las gafas). La torre la mandó al aire a 60 m
+en la primera final (pista ocupada), y la segunda llegó a la puerta de los
+quinientos pies a 157 nudos bajando 4,2 m/s, con tres «sink rate» entre los
+70 y los 39 m. Lo que dice la traza no es lo de la mesa:
+
+- **A treinta metros bajaba 5,6 m/s**, una racha de cola (−3,7 m/s de cara);
+  el automático lo sacó tirando, con la carga en 1,10 g, y la recogida empezó
+  a 13,8 m y 47 m antes del umbral, a 159 nudos, **bajando ya solo 2,9 y
+  frenando la bajada**.
+- **Sostuvo la palanca desde el primer instante** (−0,337, la media del
+  automático): el perfil pedía 3,7 —el de la senda, H32c— y el avión bajaba
+  uno menos. Con esa palanca y la carga que traía, **casi se niveló a diez
+  metros**: de 130 a 250 m pasado el umbral bajó de 9,9 a 8,8 m, a menos de
+  1,1 m/s, con el gas de la senda puesto (0,30, 216 kN) tres segundos y medio:
+  el banco lo quita con la altura, y no bajaba de los treinta pies.
+- A los treinta pies, gas fuera, y **entró el punto de toma** (a 217 m del
+  umbral: le quedaban tres segundos y le faltaban nueve metros). La palanca
+  bajó a −0,38/−0,51, pero el avión solo llegó a bajar 1,5–2,1 m/s mientras
+  la indicada caía de 160 a 141; tocó a 646 m, a 2,13 m/s y 145 nudos, con la
+  palanca adelantada.
+
+Es decir: aquí no flotó a ras de suelo, sino **a treinta pies**, saliendo de
+una final racheada con la carga arriba; la regla nueva entró, pero tarde y
+desde nueve metros, y lo que había perdido no lo recuperó. Que una recogida
+empiece sosteniendo la palanca de un avión que ya está tirando, y con el gas
+puesto mientras no baje de los treinta pies, es lo que hay que mirar.
+
+**Segunda tirada: 545 m, en la zona, y 2,1 m/s; 62 de 63** (✗ uno a dos
+metros por segundo, por una décima; las gafas, ganadas). Llegó a la puerta a
+149 nudos bajando 3,4 m/s y empezó a recoger a 13,4 m, 40 m pasado el umbral.
+Una racha la hundió al empezar (de 3,3 a 4,4 m/s, lo que faltaba hasta +2,0),
+el banco tiró hasta 1,22 g y **se niveló a metro y medio**, a 150 nudos, 280 m
+pasado el umbral. Ahí es donde antes flotaba: **entró el punto de toma** a
+314 m, el avión dejó de sostenerse y bajó de −0,2 a −2,1 m/s en dos segundos,
+y tocó a 545 m y 143 nudos. Lo que pidió a metro y medio fue 3 m/s —lo que
+quedaba de ruedas entre el medio segundo de suelo—, y por eso tocó firme.
+
+**El JAZ 90 en Gran Canaria** (`gran-canaria taguato 1 jaz-90`), por si lo
+compartido le movía algo: **373 m y 1,04 m/s, 62 de 63**, con las gafas. El
+punto de toma no entró en ningún fotograma. El ✗ es de otra cosa: un tráfico
+de frente a 4 km en la salida, a los 547 s.
+
+| | Puerta de 500 ft | Recogida | Toca | Comprobaciones |
+|---|---|---|---|---|
+| JAZ 120, c30 (antes) | 155 kt, 4,1 m/s | 13,4 m, 31 m antes, 3,5 m/s, 155 kt | **651 m**, 1,97 m/s | ✗ la zona, ✗ las gafas |
+| JAZ 120, c32 (antes) | — | 13,7 m, 76 m antes, 3,0 m/s, 157 kt | **728 m**, 0,94 m/s | ✗ la zona, ✗ las gafas |
+| JAZ 120, H53, primera | 157 kt, 4,2 m/s | 13,8 m, 47 m antes, 2,9 m/s, 159 kt | **647 m**, 2,12 m/s | 59 de 62: ✗ la zona, ✗ la toma, ✗ las gafas |
+| JAZ 120, H53, segunda | 149 kt, 3,4 m/s | 13,4 m, 40 m pasado, 3,4 m/s, 154 kt | 545 m, 2,1 m/s | 62 de 63: ✗ la toma, por una décima |
+| JAZ 90, H53 | 127 kt, 3,4 m/s | 11,2 m, 25 m pasado, 2,9 m/s, 127 kt | 373 m, 1,04 m/s | 62 de 63: ✗ un tráfico en la salida |
+
+**No está cerrado**: de las dos tiradas del JAZ 120, una toca en la zona y la
+otra no, y las dos a algo más de 2 m/s. La regla hace lo que dice el manual
+cuando el avión flota a ras de suelo —la segunda—, pero no cuando la recogida
+se queda a treinta pies —la primera—, y a metro y medio pide de más.
+
+### Lo que queda
+
+- **El gas de la senda mientras no baje de los treinta pies**: el reactor del
+  banco lo quita solo con la altura, y si se nivela por encima lo deja puesto
+  —tres segundos y medio en la primera tirada; toda la recogida en los dos
+  globos de la mesa con σ_w 1,5—; el FCTM lo quita «after the flare is
+  initiated». Es lo de H45 en el bimotor. Probado en la mesa, quitarlo también
+  con el reloj del perfil (lo que tarda en bajar a los treinta pies): con σ_w 1
+  el JAZ 120 pasa de 23 a 20 duras y de 5 a 8 largas, la más larga de 706 a
+  904 m; con σ_w 1,5 la más larga de 2.206 a 891 m, y el JAZ 110 de 2.460 a
+  1.036. No se ha puesto: no estaba volado y el vitest entero ya corría.
+- **Lo que pide el punto a ras de suelo**: con el medio segundo de suelo, a
+  metro y medio pide 3 m/s, y la segunda tirada tocó a 2,1. En la mesa, con σ_w
+  1, el tope de lo pedido en 2 m/s deja el JAZ 120 en 14 duras y 7 largas, y en
+  3 m/s —los diez pies por segundo de una toma dura de transporte,
+  `DURO_DE_TRANSPORTE`— en 17 y 5, donde el de la senda da 23 y 5. No se ha
+  cambiado: sería afinar otra constante sin volarla.
+- **La recogida que empieza sosteniendo la palanca de un avión que ya tira**:
+  en la primera tirada, la del automático sacándolo de 5,6 m/s con 1,10 g, y
+  se niveló a nueve metros y medio. El perfil pide la senda (H32c) y el avión
+  baja menos, así que se sostiene desde el primer fotograma.
+- **El momento de cabeceo del efecto suelo**, con una fuente que dé cuánto
+  pica un 747 al entrar en él.
+- **La actitud de la final del 747**, tres grados más picada que la del FCOM.
+- **La Vref del 747-100**, cuatro nudos por debajo de la del juego.
+- **El JAZ 110 en el navegador**, que cambia como el JAZ 120 y solo se ha
+  medido en la mesa.
