@@ -2431,7 +2431,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
             gas: 0,
             verdadera: s.airspeed,
             ritmoDeCabeceo: s.pitchRate,
-            timon: juego.flight.timonAhora(),
+            // Como el del juego. Ver `timonDelPaso` en `model.ts`.
+            timon: juego.flight.timonDelPaso(),
             /*
              * Y el aire que sube o baja, como se lo da el juego a su
              * automático en cualquier modo, también cambiando de nivel con la

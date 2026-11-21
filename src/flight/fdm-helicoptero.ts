@@ -140,6 +140,11 @@ export class HelicopteroComoModelo implements FlightModel {
     return 0;
   }
 
+  /** Y por lo mismo, el del último paso. Ver `timonDelPaso` en `model.ts`. */
+  timonDelPaso(): number {
+    return 0;
+  }
+
   /** Un golpe contra un edificio o contra el suelo rompe el helicóptero igual que un avión. */
   romper(): void {
     this.modelo.state.crashed = true;

@@ -671,6 +671,13 @@ export class CoefficientFlightModel implements FlightModel {
     return this.timonQueSostiene;
   }
 
+  /** El timón con el que voló el último paso. Ver `timonDelPaso`. */
+  private timonDelUltimoPaso = 0;
+
+  timonDelPaso(): number {
+    return this.timonDelUltimoPaso;
+  }
+
   /** Los flaps con los que voló el último paso, de 0 a 1. */
   private flapsDelPaso = 0;
   /**
@@ -965,8 +972,10 @@ export class CoefficientFlightModel implements FlightModel {
     this.reponerLosMotores();
     this.updateDerived();
     // Y el timón que lo sostiene, para quien lo coja volando. Ver `timonAhora`.
-    if (initial.equilibrado)
+    if (initial.equilibrado) {
       this.timonQueSostiene = this.timonDeEquilibrio(initial.flapsDelEquilibrio ?? 0);
+      this.timonDelUltimoPaso = this.timonQueSostiene;
+    }
     // Y sus flaps, hasta el primer paso. Ver `anguloSinSustentacion`.
     this.flapsDelPaso = initial.flapsDelEquilibrio ?? 0;
     /*
@@ -1890,9 +1899,19 @@ export class CoefficientFlightModel implements FlightModel {
      * segundos. Promediado porque lo que tiene que coger el automático es el
      * timón con el que el avión vuela, no el de un instante: con el avión
      * cabeceando, el de un instante es la cresta o el valle. Ver `timonAhora`.
+     *
+     * Era cuando el automático no recordaba nada y su primera orden era la
+     * que cogía. Desde H57b engancha con el del paso (`timonDelPaso`) y su
+     * primera orden es ésa, así que coger la cresta no es un salto: es donde
+     * está el timón, y el amortiguador del automático para el cabeceo. Y el
+     * promedio sí era un salto en cuanto alguien soltaba la palanca: de 0,36
+     * a 0,48 en el primer fotograma. Subiendo quieto, los dos se apartan una
+     * centésima. Lo sigue leyendo la mano de los peldaños de abajo.
      */
     this.timonQueSostiene +=
       (timonDeAhora - this.timonQueSostiene) * Math.min(1, dt / 2);
+    // Y el de este paso, sin promediar: donde está la superficie. Ver `timonDelPaso`.
+    this.timonDelUltimoPaso = timonDeAhora;
 
     // ── Traslación ─────────────────────────────────────────────────────
     this.force

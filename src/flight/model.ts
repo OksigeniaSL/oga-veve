@@ -429,8 +429,28 @@ export interface FlightModel {
    *
    * El modelo sencillo no tiene timón que contar: devuelve cero, y allí no hay
    * piloto automático.
+   *
+   * Va **promediado en dos segundos**, para no coger la cresta de un cabeceo.
+   * Por eso no es el que coge el automático al engancharse: ver `timonDelPaso`.
    */
   timonAhora(): number;
+  /**
+   * **El timón con el que voló el último paso**, sin promediar, en unidades de
+   * mando: lo mismo que cuenta `timonAhora` —quien vuela, el compensador y lo
+   * que empuja la ayuda—, pero el de ese paso. Es **donde está la superficie**.
+   *
+   * Es el que coge el automático al engancharse (H57b). Con el promedio, quien
+   * acababa de tirar para frenar y soltaba para engancharlo le daba un timón
+   * que el avión ya no llevaba: el morro arrancaba con él y el embrague de H57
+   * lo paraba, pero el salto del primer fotograma quedaba. Un servo de verdad
+   * se embraga donde está el timón —«engagement … may not cause a transient
+   * response … any greater than a minor transient», 14 CFR 25.1329(c)— y el
+   * automático arranca dando ése: ver `Estado.timon` en
+   * `piloto-automatico.ts`.
+   *
+   * Cero en los modelos que no tienen timón, como `timonAhora`.
+   */
+  timonDelPaso(): number;
   /**
    * **El timón que sostiene el avión nivelado a la velocidad de ahora**, en
    * unidades de mando: lo que hay que dejar puesto en el compensador para que

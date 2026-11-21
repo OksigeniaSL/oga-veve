@@ -35625,9 +35625,10 @@ export class Game {
         gas: c.throttle,
         verdadera: s.airspeed,
         ritmoDeCabeceo: s.pitchRate,
-        // Solo cuenta al engancharse: coger el avión con el timón que lo
-        // sostenía, ayuda incluida. Ver `timonAhora` en `model.ts`.
-        timon: this.flight.timonAhora(),
+        // Solo cuenta al engancharse: coger el avión con el timón que llevaba
+        // en el último paso, ayuda incluida, sin promediar (H57b). Ver
+        // `timonDelPaso` en `model.ts`.
+        timon: this.flight.timonDelPaso(),
         // Lo que empuja el motor aquí y lo que pesa el avión: los gases miden
         // con eso cuánto acelera cada trozo de palanca.
         empujeAFondo: empujeLleno(this.aircraft, airDensity(s.position.y, aire), s.airspeed),
@@ -36064,7 +36065,8 @@ export class Game {
         gas: c.throttle,
         verdadera: s.airspeed,
         ritmoDeCabeceo: s.pitchRate,
-        timon: this.flight.timonAhora(),
+        // Como el automático: ver `timonDelPaso` en `model.ts`.
+        timon: this.flight.timonDelPaso(),
         // Lo que mueve su morro su timón: ver `AUTORIDAD_SUFICIENTE`.
         autoridadDelTimon: autoridadDelTimon(
           this.aircraft,
