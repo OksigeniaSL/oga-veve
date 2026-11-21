@@ -8029,3 +8029,216 @@ módulo y la prueba nueva del gas): **568 ficheros y 11.296 pruebas, en verde**
   comprobado en el navegador.
 - **El picado del suelo del 747** (H54) y **el JAZ 110 en el navegador**,
   que siguen como estaban.
+
+## Enmienda H34e (21-11-2026): la frustrada del banco, como su manual
+
+H45b dejó apuntado que el banco, cuando la torre lo mandaba al aire, tiraba
+de golpe. Lo hacían dos aviones con dos leyes distintas, y las dos acababan en
+el avisador de pérdida: **✗ «en un vuelo normal no suena el avisador de
+pérdida»** en el JAZ 40 de H45b y en el JAZ 20 de la ronda c31, los dos en
+Los Rodeos y en Taguató.
+
+### Lo medido
+
+**El JAZ 40**, en la traza del ala de H45b (`h45b/traza-antes-40.json` del
+scratchpad, cuatro muestras por segundo). La orden llegó a 60 m, con la pista
+ocupada, bajando 3,2 m/s a 85 nudos con todos los flaps. En la primera muestra
+de la subida:
+
+| | Palanca | Ángulo / avisador | Carga | Giro del morro | Gas | Flaps |
+|---|---|---|---|---|---|---|
+| La final | −0,14 | 0,9° / 11,9° | 0,95 g | 1,0°/s | 0,78 | 1,00 |
+| +0,25 s | **+0,19** | 0,3° | 0,84 g | 13,4°/s | 0,79 | 0,98 |
+| +0,50 s | +0,19 | 4,8° | 1,34 g | 22,6°/s | 0,75 | 0,95 |
+| +0,75 s | +0,20 | 11,2° | 1,91 g | 20,3°/s | 0,76 | 0,92 |
+| +1,00 s | −0,04 | **12,1° / 11,9°** | **2,04 g** | 0,9°/s | 0,78 | 0,90 |
+
+Sonó «stall, stall» a 61 m y 84 nudos. Era la ley de la subida de los que sube
+el automático (`SUBE_CON_EL_MORRO`, por su crucero: el JAZ 40, el 50 y el 60):
+doce grados pedidos de golpe —seis décimas de palanca— que solo paraba el tope
+de `limitarElAngulo`, el ángulo del avisador menos dos grados **en
+equilibrio**: 0,19 de palanca. Con el morro lanzado a veinte grados por
+segundo, ese tope llega tarde. Y con el gas de una subida de circuito, 0,78, y
+la primera muesca pedida de una vez.
+
+**La avioneta** de c31 no tiraba de golpe: tenía la mano a su ritmo y el freno
+del morro (H34c, H34d). Pero iba a por los mismos doce grados, y con ellos se
+quedaba a **57 nudos a 100 m con la primera muesca**, 1,25 veces su pérdida con
+esos flaps (47 nudos con su peso); a esa velocidad el ala va a cinco grados del
+avisador, y la racha de Taguató la llevó a 1,50 g y al avisador a 125 m, a 59
+nudos.
+
+En la mesa (`h34e/mesa.mjs` del scratchpad: el modelo del juego en Los Rodeos,
+la final con el automático en la senda hasta 60 m, el compensador donde lo
+deja el despegue y el tope de ángulo en cada fotograma, como en el banco) las
+dos cosas salen igual: el JAZ 40 a 1,84 g y a 1,1° del avisador, la palanca
+saltando 0,74 y el morro a 19,3°/s; la avioneta a 59 nudos a los 120 m y, con
+una racha de 3 m/s, a 3,1° del avisador. Y no son solo esos dos: el JAZ 50 se
+queda a 0,2° con la racha, y el JAZ 60 entra en el avisador.
+
+### El manual
+
+- **Cessna 172R** (*Information Manual*, Rev. 7, sección 4, *Balked
+  Landing*, pp. 4-17 y 4-33): «Throttle — FULL OPEN. Wing Flaps — RETRACT TO
+  20°. Climb Speed — 55 KIAS. Wing Flaps — 10° (until obstacles are cleared).
+  RETRACT (after reaching a safe altitude and 60 KIAS)». Y en la explicación:
+  «reduce the flap setting to 20° immediately after full power is applied
+  […] the flaps may be retracted as the airplane accelerates to the normal
+  flaps up climb speed».
+- **Piper Seneca III** (PA-34-220T, POH VB-1110, 4.43 *Go-Around*, p. 4-34):
+  «apply takeoff power to both engines […]. While the pitch attitude is
+  increased to obtain the balked landing climb speed of 85 KIAS, retract the
+  landing gear and slowly retract the flaps, when a positive climb is
+  established […]. Airspeed should then be established at the best angle of
+  climb speed (76 KIAS) for obstacle clearance or to the best rate of climb
+  speed (92 KIAS)».
+
+Los dos dicen lo mismo: **gas a fondo, la actitud que da la velocidad de la
+frustrada —no un ángulo que se persigue aunque se caiga la velocidad—, y los
+flaps poco a poco**. Las dos velocidades quedan en 1,3 veces la pérdida con los
+flaps que llevan o algo por encima, y ninguna se vuela tirando.
+
+### Lo que se cambia, en el banco
+
+**Una sola ley para todas las hélices del modelo completo**
+(`palancaDeLaFrustrada`, en `scripts/la-frustrada.mjs`), la avioneta, los tres
+bimotores y el biplano:
+
+- **El morro, a la actitud que da la velocidad de la frustrada, y a tres
+  grados por segundo** —el ritmo de rotar— desde el que llevaba la final. Se
+  empieza por ocho grados (`CABECEO_DE_LA_FRUSTRADA`); **dos menos por cada
+  m/s que falte** sobre la de la frustrada —la de maniobra con los flaps que
+  lleva (1,3 veces su pérdida, `maniobraPorMuesca`) y cinco nudos,
+  `MARGEN_DE_LA_FRUSTRADA`: 66 en la avioneta con la primera muesca— y **uno
+  más por cada m/s que sobre**, hasta los doce de la subida del banco
+  (`CABECEO_MAXIMO_DE_LA_FRUSTRADA`). Lo que se persigue es esa actitud que
+  se mueve despacio, así que el error nunca es grande. La avioneta se queda
+  en ocho o nueve grados; el bimotor, con el gas a fondo, acaba en once o doce.
+- **El ala, a cuatro grados del avisador como poco** (`MARGEN_AL_AVISADOR`): si
+  se acerca, la actitud pedida no sube más y la palanca afloja.
+- **La palanca, desde la de la final**: lo que acumula empieza en ella, encima
+  va lo que falta de actitud y el freno del morro, y la mano no la mueve más de
+  una palanca entera por segundo (`MANO_POR_SEGUNDO`).
+- **Gas a fondo** hasta la altura de aceleración (los ciento veinte metros de
+  `ASENTAR_LA_SUBIDA`); ahí, el de subida de siempre, que es el que se engancha.
+- **Los flaps, una muesca menos al irse y las demás de una en una**, con las
+  muescas de cada palanca: la siguiente cuando ha llegado la anterior, sube y
+  va a la de maniobra de la siguiente; la primera, arriba y a la de recogerla.
+  Era lo de la avioneta; ahora también el bimotor de cuatro muescas —de 40° a
+  25°, a 10° a 81 nudos— y el 1900D de tres.
+- **Y mientras dura, el banco dice que lleva los mandos** (`automatico`), como
+  en la senda y la recogida: al llegar a la actitud la palanca pasa cerca del
+  centro, y ahí el compensador del peldaño que sostiene la subida entraría con
+  su ley a sostener lo que subiera en ese instante.
+
+Por encima de la altura de aceleración y con los flaps arriba, lo de antes: en
+los que sube el automático la palanca es suya desde los 120 m, y la avioneta
+pasa a la ley de velocidad con la mano a su ritmo. En Guyrami, como estaba.
+**El juego no cambia.**
+
+| Mesa, hasta 120 m | Carga máx. | Margen mín. | Con racha de 3 m/s | Palanca, salto | Morro, giro máx. | IAS mín. |
+|---|---|---|---|---|---|---|
+| JAZ 20, antes / ahora | 1,26 / 1,15 g | 5,7 / 8,0° | 3,1 / 5,8° | 0,10 / 0,02 | 6,5 / 3,2°/s | 59 / 64 kt |
+| JAZ 40, antes / ahora | 1,84 / 1,23 g | 1,1 / 7,1° | 1,1 / 5,7° | 0,74 / 0,01 | 19,3 / 3,2°/s | 81 / 86 kt |
+| JAZ 50, antes / ahora | 1,42 / 1,22 g | 2,5 / 6,2° | 0,2 / 4,2° | 0,69 / 0,02 | 8,5 / 3,4°/s | 70 / 70 kt |
+| JAZ 60, antes / ahora | 1,44 / 1,27 g | 0,2 / 4,3° | **−0,8** / 3,4° | 0,65 / 0,02 | 7,9 / 3,3°/s | 107 / 107 kt |
+
+La racha es una «1−cos» vertical de 3 m/s en dos segundos, puesta a 1, 3, 5,
+… 21 s de la orden; la columna da la peor. Se pierde algo más de altura al
+irse —lo más bajo, de 58–59 m de ruedas a 54–57 en la avioneta y los
+bimotores, y el 1900D de 54 a 51—, y la avioneta llega a los ciento veinte
+metros cuatro segundos más tarde, a más velocidad; los bimotores, en lo mismo
+o antes, con el gas a fondo. Es lo que cuesta no tirar.
+
+La prueba, en `la-frustrada.test.mjs`: la función —arranca desde la palanca de
+la final, nunca la mueve más de una décima por paso, la actitud sube a tres
+grados por segundo hasta ocho, baja si falta velocidad y no sube cerca del
+avisador— y la frustrada con el modelo del juego, con la ley de antes y la de
+ahora: el JAZ 40 de más de 1,7 g y menos de dos grados a menos de 1,3 g y más
+de cinco; la avioneta por encima de la de maniobra de su primera muesca; y los
+cuatro, con la racha a cualquier hora, sin avisador y a más de tres grados.
+
+### Lo que dice el juego
+
+Se miró si el juego pide un cabeceo que solo se consigue tirando. No: al
+mandar al aire la torre dice «Pista ocupada. Subí y volvé por el circuito», se
+enciende la luz de frustrada y se quita la senda de la pantalla; la guía de
+pasos pide subir «a la velocidad de la marca rosa», que en las hélices es la
+del circuito o la Vref y un tercio —85 nudos en la avioneta, 110 en el JAZ
+40— (`indicadaDeSubida`), por encima de la de esta ley; y en el JAZ 40 pidió
+«más gas» para acelerar a ella. No hay director de vuelo ni actitud que
+perseguir. El tirón era del banco.
+
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-40`, reloj por uno,
+con `OGA_PISTA_OCUPADA=1` —la torre manda al aire— y la traza del ala, que en
+la frustrada va ahora fotograma a fotograma con la actitud pedida, lo que
+acumula la palanca y la palanca pedida antes del tope de ángulo (`h34e/` del
+scratchpad; `leer.mjs` la saca).
+
+**Primera tirada, con ocho grados fijos: 56 de 58.** La torre lo mandó al
+aire dos veces, a 58 m y 93 y 89 nudos. Las dos frustradas, hasta los 120 m,
+como la mesa: la palanca sin saltos —0,08 como mucho entre fotogramas—, el
+morro a 5°/s como mucho y a 8,7°, y el ala a 5,0° del avisador como poco; la
+carga llegó a 1,65 g una vez, a 53 m, con el morro quieto y la palanca quieta
+—el ángulo subió de 2,2° a 7,0° en tres décimas sin que el morro se moviera—:
+una racha que sube, no la mano. Pero **con el gas a fondo y ocho grados llegó a
+los 120 m a 103 nudos**, catorce por encima de los de su subida, y ahí se
+torció:
+
+- **El automático, al engancharse en `FLCH` para llevarlo a los 89 de su
+  subida, pidió +0,32 de palanca en el primer fotograma** —venía de −0,06—, y
+  el morro subió de 7,5° a 20,5° a 20°/s, con 1,71 g.
+- **El gas de subida que se engancha salió de 0,40**: es el que da
+  `gasSubiendo` por la velocidad que sobra, y se queda quieto toda la subida.
+  Con él no subía el circuito; en el viento en cola, con la segunda muesca, el
+  avión fue a 57–71 nudos, y sonó **«stall, stall» 33 veces** entre 250 y
+  470 m, con el ala en 12,1° y el avisador en 12,1°.
+
+Era la ley, no el banco de antes: ocho grados fijos no son lo que dice el
+manual, que pide la actitud que da la velocidad. **Se cambió eso**: los ocho
+son por donde se empieza, y la actitud sube un grado por cada m/s que sobre,
+hasta los doce de la subida del banco. En la mesa, el JAZ 40 llega a los 120 m
+a la velocidad de su subida y el relevo con el automático ya no tira: 1,23 g
+como mucho hasta los 220 m, y el morro a 3,2°/s.
+
+**Segunda tirada, con la ley de ahora: 58 de 58, y ningún «stall, stall» en
+todo el vuelo.** La torre lo mandó al aire a 58 m y 95 nudos. La palanca, de
+−0,28 a −0,08 en el primer segundo y sin saltos (0,11 como mucho entre
+fotogramas, un paso de la mano); el morro, de −1,2° a 12° en cinco segundos, a
+4,7°/s como mucho; los flaps, de 40° a 25° y a 10° a los seis segundos, y
+arriba a los 128 m; lo más bajo, 55 m; gas a fondo hasta los 120 m, que pasó a
+97 nudos. Hasta ahí, el ala a 6,0° del avisador como poco, y la carga a 1,47 g
+una vez con el morro quieto: la racha de Taguató otra vez. El automático se
+enganchó sin tirón. Tocó en la zona, a 329 m.
+
+Lo que queda flojo es de después: el gas de subida que se engancha salió de
+0,52 —el de `gasSubiendo` con los 97 nudos que traía— y el automático subió a
+82–85 nudos con 89 pedidos; con una racha, a 164 m, el ala quedó a 2,9° del
+avisador. No sonó.
+
+### El vitest entero
+
+Con la ley de ahora: **569 ficheros y 11.311 pruebas, en verde** (31 saltadas
+y una por hacer).
+
+### Lo que queda
+
+- **El automático del juego, enganchado en `FLCH` con catorce nudos de más,
+  pidió +0,32 de palanca en el primer fotograma** y llevó el morro a 20° a
+  20°/s (primera tirada). Aquí se evita llegando a su velocidad; no se ha
+  mirado si le pasa igual a quien lo engancha jugando.
+- **El gas de subida que se engancha en los que sube el automático** sale de
+  la velocidad que sobra (`gasSubiendo`, pensado para un reactor ligero): tras
+  la frustrada, 0,52 y la subida a 82–85 nudos con 89 pedidos.
+- **La avioneta y el JAZ 50 en el navegador con la ley de ahora**: el banco
+  de navegador es uno para dos ayudantes y no cupieron en el encargo. La mesa
+  y la prueba los vuelan; el JAZ 50 pasa por el mismo relevo que el JAZ 40.
+- **Los reactores frustran todavía con la ley de antes**: doce grados de
+  golpe —en la mesa, el JAZ 90 a 1,3° del avisador y con la racha dentro, el
+  JAZ 120 a 1,0° y bajando hasta 25 m—, la primera muesca de una vez y el gas
+  de subida. No entra aquí porque su actitud no es esta —el FCTM de Boeing
+  pide quince grados con TOGA— y no se han volado.
+- **El biplano sin flaps, el JAZ 25**, entra en la ley nueva y no se ha volado:
+  en la mesa, de 1,18 a 1,15 g y a 6,3° del avisador.

@@ -72,6 +72,7 @@ import {
   porLoQueAceleraElReactor,
 } from "./recogida-del-reactor.mjs";
 import { elEjeDeLaCarrera } from "./el-eje-de-la-carrera.mjs";
+import { palancaDeLaFrustrada } from "./la-frustrada.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -776,6 +777,13 @@ await page.addScriptTag({
 await page.addScriptTag({
   content: `globalThis.__elEjeDeLaCarrera = ${elEjeDeLaCarrera.toString()};`,
 });
+/*
+ * **Y la palanca de la frustrada de las hélices, desde su módulo** (H34e),
+ * que la prueba `la-frustrada.test.mjs` contra el modelo del juego.
+ */
+await page.addScriptTag({
+  content: `globalThis.__palancaDeLaFrustrada = ${palancaDeLaFrustrada.toString()};`,
+});
 
 const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida]) => {
   const o = globalThis.__oga;
@@ -941,7 +949,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * cuatro segundos, y a cuatro muestras por segundo se ve el principio y el
      * toque, no lo que pasa en medio.
      */
-    let cerca = recogida !== null;
+    /*
+     * Y en la frustrada de una hélice, también cada fotograma (H34e): lo que
+     * se mira es el tirón, y un tirón cabe entero entre dos muestras de un
+     * cuarto de segundo.
+     */
+    let cerca = recogida !== null || frustrada !== null;
     try {
       cerca ||= alto(s) - (suyas.tren ?? 0) < 30;
     } catch {
@@ -1080,6 +1093,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
                   rs: +(ahora - (recogida.empezo ?? ahora)).toFixed(2),
                 }
               : {}),
+            /*
+             * **Y la frustrada por dentro** (H34e): desde cuándo, la actitud
+             * que pide su ley, lo que acumula la palanca y la palanca que pidió
+             * el banco antes del tope de `limitarElAngulo`.
+             */
+            ...(frustrada
+              ? {
+                  fr: +(ahora - frustrada.desde).toFixed(2),
+                  frr: +((frustrada.referencia * 180) / Math.PI).toFixed(2),
+                  fra: +frustrada.acumulado.toFixed(3),
+                  frv: frustrada.minima !== undefined ? Math.round(frustrada.minima * 1.94384) : null,
+                }
+              : {}),
+            ep: palancaPedida === null ? null : +palancaPedida.toFixed(3),
             em: (() => {
               const e = o.juegoParaTrazas?.()?.flight?.ultimoEmpuje;
               return typeof e === "number" ? Math.round(e) : null;
@@ -1291,6 +1318,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * ha llegado ninguna. Aquí y no con `conLaMano` porque la escribe el gancho.
    */
   let palancaQueLleva = null;
+  /**
+   * **La frustrada de una hélice en curso** (H34e), o `null`: la actitud que
+   * se lleva pedida, lo que acumula la palanca y cuándo se dio la orden. Ver
+   * `palancaDeLaFrustrada` en `la-frustrada.mjs`. Aquí y no con `irseConFlaps`
+   * porque la lee el gancho.
+   */
+  let frustrada = null;
+  /** La palanca que pidió el banco en este fotograma, antes del tope de ángulo. Para la traza. */
+  let palancaPedida = null;
   const recoger = (mandos) => {
     if (!recogida) return;
     const s = o.estado();
@@ -1778,7 +1814,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * segundo. Es lo mismo que ya le pasó al automático del juego, y se arregla
      * igual: diciendo quién lleva los mandos. Ver `ControlInputs.automatico`.
      */
-    mandos.automatico = senda !== null || recogida !== null || obediente.nariz !== null;
+    /*
+     * Y en la frustrada de una hélice, también (H34e): la palanca la lleva su
+     * ley, que pasa cerca del centro al llegar a la actitud, y el compensador
+     * que sostiene la subida se metía a sostener lo que subía en ese instante.
+     */
+    mandos.automatico =
+      senda !== null || recogida !== null || obediente.nariz !== null || frustrada !== null;
     if (!recogida && senda !== null) {
       const ahora = o.reloj();
       const dt =
@@ -1793,6 +1835,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const e = o.estado();
       if (!e.onGround) ultimaCaida = -e.verticalSpeed;
     }
+    palancaPedida = mandos.elevator;
     limitarElAngulo(mandos);
     apuntarElAla(mandos);
     // La palanca que de verdad llegó al avión: de ahí parte la mano. Ver `conLaMano`.
@@ -2204,17 +2247,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     }
     avionetaConLosDeDespegue = false;
     /*
-     * **Y la frustrada de la avioneta, muesca a muesca.** Ver
+     * **Y la frustrada de las hélices, muesca a muesca.** Ver
      * `flapsDeLaFrustrada`: una muesca menos cuando ha llegado la anterior,
-     * sube y va a la de maniobra de la siguiente.
+     * sube y va a la de maniobra de la siguiente. Con las muescas de cada
+     * palanca (H34e): la avioneta las vuela como antes, y el bimotor de cuatro
+     * y el 1900D de tres, las suyas.
      */
     if (flapsDeLaFrustrada !== null && tramo < 2 && !enFinal) {
       const indicada = (o.velocidadDeCabina?.() ?? kt) / 1.94384;
       const llegaron =
         Math.abs((o.controles?.().flaps ?? flapsDeLaFrustrada) - flapsDeLaFrustrada) < 0.02;
-      const deLaPrimera = suyas.maniobraPorMuesca?.[1] ?? RECOGE_LOS_FLAPS_A;
-      if (flapsDeLaFrustrada > 0.34) {
-        if (llegaron && s.verticalSpeed > 1 && indicada >= deLaPrimera) flapsDeLaFrustrada = 1 / 3;
+      const k = muescaDe(flapsDeLaFrustrada);
+      if (k > 1) {
+        const siguiente = MUESCAS_DE_LA_PALANCA[k - 1];
+        if (llegaron && s.verticalSpeed > 1 && indicada >= deManiobraCon(siguiente))
+          flapsDeLaFrustrada = siguiente;
       } else if (s.heightAboveGround >= ASENTAR_LA_SUBIDA && indicada >= RECOGE_LOS_FLAPS_A)
         flapsDeLaFrustrada = 0;
       if (flapsDeLaFrustrada > 0) {
@@ -2834,7 +2881,72 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * `null` si no hay frustrada en curso. Ver `configurar`.
    */
   let flapsDeLaFrustrada = null;
-  const irseConFlaps = () => {
+  /**
+   * **Las hélices del modelo completo frustran con la ley de su manual**
+   * (H34e): gas a fondo, el morro a la actitud de subida sin tirón y a la
+   * velocidad que toca, y los flaps de muesca en muesca. Ver
+   * `palancaDeLaFrustrada` en `la-frustrada.mjs`.
+   *
+   * Eran dos leyes, según quién subía: la avioneta con la mano a su ritmo, y
+   * el JAZ 40, el 50 y el 60 —que suben con el automático, `SUBE_CON_EL_MORRO`,
+   * por su crucero— con la actitud pedida de golpe, el gas de una subida de
+   * circuito y la primera muesca de una vez —y el biplano sin flaps, el JAZ
+   * 25, también de golpe—. Todas iban a por doce grados. En Guyrami, como
+   * estaba: allí el ala no pierde. Y los reactores, como estaban: no se han
+   * volado con esto (enmienda H34e del ADR 0027).
+   */
+  const FRUSTRA_COMO_SU_MANUAL = !SENCILLO && suyas.propulsion === "helice";
+  /** Las muescas de su palanca, en fracción del recorrido. Ver `muescasDeLaPalanca` en `flaps.ts`. */
+  const MUESCAS_DE_LA_PALANCA =
+    (suyas.maniobraPorMuesca?.length ?? 0) >= 2
+      ? suyas.maniobraPorMuesca.map((_, i, t) => i / (t.length - 1))
+      : [0, 1 / 3, 2 / 3, 1];
+  const muescaDe = (f) => {
+    let cual = 0;
+    MUESCAS_DE_LA_PALANCA.forEach((d, i) => {
+      if (Math.abs(d - f) < Math.abs(MUESCAS_DE_LA_PALANCA[cual] - f)) cual = i;
+    });
+    return cual;
+  };
+  /**
+   * **La de maniobra con los flaps donde están ahora**, indicada, m/s: 1,3
+   * veces la pérdida, entre las de las dos muescas que los rodean. Ver
+   * `maniobraPorMuesca` en `sondas.ts`.
+   */
+  const deManiobraCon = (f) => {
+    const t = suyas.maniobraPorMuesca;
+    if (!t || t.length < 2) return RECOGE_LOS_FLAPS_A;
+    const x = Math.max(0, Math.min(1, f)) * (t.length - 1);
+    const i = Math.min(t.length - 2, Math.floor(x));
+    return t[i] + (t[i + 1] - t[i]) * (x - i);
+  };
+  /**
+   * **Lo que se vuela por encima de esa en la frustrada**, m/s: cinco nudos.
+   * Las dos del manual quedan ahí o un poco más arriba —el 172R sube a 55
+   * nudos con veinte grados, el Seneca III a 85 con lo que lleve—, y en la
+   * mesa de H34e, a la de maniobra justa, una racha de tres metros por segundo
+   * deja el ala a tres grados del avisador.
+   */
+  const MARGEN_DE_LA_FRUSTRADA = 2.5;
+  const irseConFlaps = (s) => {
+    if (FRUSTRA_COMO_SU_MANUAL) {
+      /*
+       * Una muesca menos al irse —de treinta a veinte en el 172, de cuarenta a
+       * veinticinco en el Seneca, la de aproximación en el 1900D—, y las demás
+       * de una en una desde `configurar`. La primera no se recoge aquí: se
+       * recoge arriba, como la de despegar.
+       */
+      const k = muescaDe(o.palancaDeFlaps?.() ?? 1);
+      flapsDeLaFrustrada = k >= 1 ? MUESCAS_DE_LA_PALANCA[Math.max(1, k - 1)] : null;
+      if (flapsDeLaFrustrada !== null) o.pedirFlaps?.(flapsDeLaFrustrada);
+      frustrada = {
+        desde: o.reloj(),
+        referencia: cabeceoDe(s),
+        acumulado: palancaQueLleva ?? 0,
+        ultimo: null,
+      };
+      return;
+    }
     if (SUBE_CON_EL_MORRO && suyas.llevaFlaps) {
       o.pedirFlaps?.(1 / 3);
       flapsDeDespegueFuera = true;
@@ -2908,6 +3020,36 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   };
 
   const subirDeVerdad = (s) => {
+    /*
+     * **Y en la frustrada de una hélice, la ley de su manual** (H34e) hasta
+     * la altura de aceleración y los flaps arriba: ver `FRUSTRA_COMO_SU_MANUAL`.
+     * Por encima, la de siempre; en los que sube el automático la palanca ya
+     * es suya —`sostenerLaAltura`—, y la avioneta pasa a la de velocidad con
+     * la mano a su ritmo, abajo.
+     */
+    if (frustrada && (s.heightAboveGround < ASENTAR_LA_SUBIDA || flapsDeLaFrustrada !== null)) {
+      const ahora = o.reloj();
+      const transcurrido = frustrada.ultimo === null ? PASO : ahora - frustrada.ultimo;
+      frustrada.ultimo = ahora;
+      frustrada.minima = deManiobraCon(o.controles?.().flaps ?? 0) + MARGEN_DE_LA_FRUSTRADA;
+      const r = globalThis.__palancaDeLaFrustrada({
+        cabeceo: cabeceoDe(s),
+        ritmo: ritmoDelMorro(s),
+        alfa: s.alpha,
+        avisador: s.stallWarningAlpha,
+        indicada: (o.velocidadDeCabina?.() ?? s.airspeed * 1.94384) / 1.94384,
+        minima: frustrada.minima,
+        referencia: frustrada.referencia,
+        acumulado: frustrada.acumulado,
+        palanca: palancaQueLleva ?? frustrada.acumulado,
+        dt: transcurrido > 0 && transcurrido <= 0.25 ? transcurrido : PASO,
+        ganancia: ganancia(s),
+        mano: MANO_POR_SEGUNDO,
+      });
+      frustrada.referencia = r.referencia;
+      frustrada.acumulado = r.acumulado;
+      return r.palanca;
+    }
     /*
      * **Los primeros metros, por actitud.**
      *
@@ -2985,7 +3127,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * `AMORTIGUA_EL_MORRO`.
      */
     const freno = AVIONETA_COMPLETA ? AMORTIGUA_EL_MORRO * ritmoDelMorro(s) : 0;
-    return Math.max(-0.35, Math.min(0.5, base + extra - freno));
+    const porVelocidad = Math.max(-0.35, Math.min(0.5, base + extra - freno));
+    // Y saliendo de la frustrada, desde la palanca que dejó su ley (H34e).
+    return frustrada ? conLaMano(porVelocidad) : porVelocidad;
   };
 
   /**
@@ -6248,7 +6392,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
       aDonde = 1;
       etapa = "subir";
-      irseConFlaps();
+      irseConFlaps(s);
     }
     /*
      * **Y si el juego ya te ha mandado al aire, o la pista se acabó, también.**
@@ -6274,7 +6418,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
         aDonde = 1;
         etapa = "subir";
-        irseConFlaps();
+        irseConFlaps(s);
       }
     }
     /*
@@ -6297,6 +6441,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       obediente.armado = etapa === "final" || etapa === "frenar";
     }
+    if (etapa !== "subir") frustrada = null;
     topeDeInclinacion =
       etapa === "final" || (etapa === "subir" && aDonde >= 3)
         ? TOPE_DE_INCLINACION_EN_LA_BASE
@@ -7029,6 +7174,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         : CRUCERO;
       ultimoAltoQueToca = altoQueToca;
       const subiendo = sigueSubiendo(s, altoQueToca, 15);
+      // La frustrada se acaba al nivelar: ver `subirDeVerdad`.
+      if (!subiendo) frustrada = null;
       const quiereIr = velocidadDelTramo(aDonde, s);
       /*
        * **Y subiendo, el gas a tope solo mientras haga falta.**
@@ -7079,8 +7226,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           -0.5,
           Math.min(0.45, gasQueSostiene + (quiereIr - s.airspeed) * 0.002 * paso),
         );
+      /*
+       * Y en la frustrada de una hélice, gas a fondo hasta la altura de
+       * aceleración (H34e): «Throttle — FULL OPEN» en el 172R, «takeoff
+       * power» en el Seneca. Ahí se pone el de subida, el que se engancha.
+       */
       c.throttle = subiendo
-        ? gasSubiendo
+        ? frustrada && s.heightAboveGround < ASENTAR_LA_SUBIDA
+          ? 1
+          : gasSubiendo
         : Math.max(
             // Frenando, el gas puede ir al ralentí: un reactor con un tercio
             // de gas a nivel no frena nunca.
