@@ -30,6 +30,7 @@ import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { type AssistLayers } from "./assists";
 import { MARGEN_DEL_AVISADOR } from "./avisos-de-actitud";
+import { anguloDePerdida } from "./flaps";
 import { CoefficientFlightModel, empujeLleno, liftCoefficient } from "./fdm";
 import { neutralControls } from "./model";
 import { mandosPara, memoriaNueva } from "./piloto-automatico";
@@ -63,9 +64,12 @@ const verdaderaDe = (ias: number, alto: number): number =>
 const indicadaDe = (tas: number, alto: number): number =>
   tas * Math.sqrt(airDensity(alto) / SEA_LEVEL_DENSITY);
 
-/** El ángulo de pérdida del modelo en ese peldaño. Ver `stallAngle` en `fdm.ts`. */
-const perdidaDe = (a: AircraftConfig, capas: AssistLayers): number =>
-  a.aero.alphaStall * (1 + 0.45 * capas.stallProtection);
+/**
+ * El ángulo de pérdida del modelo en ese peldaño, con los flaps que lleva: con
+ * slats o Krueger fuera, el de su muesca. Ver `stallAngle` en `fdm.ts`.
+ */
+const perdidaDe = (a: AircraftConfig, capas: AssistLayers, flaps = flapsDe(a)): number =>
+  anguloDePerdida(a, flaps) * (1 + 0.45 * capas.stallProtection);
 
 /**
  * **La pérdida de esta configuración**, en indicada: con los flaps que
@@ -74,7 +78,7 @@ const perdidaDe = (a: AircraftConfig, capas: AssistLayers): number =>
  */
 function vsDe(a: AircraftConfig, capas: AssistLayers, flaps: number): number {
   const clMax =
-    liftCoefficient(perdidaDe(a, capas), a.aero, perdidaDe(a, capas)) +
+    liftCoefficient(perdidaDe(a, capas, flaps), a.aero, perdidaDe(a, capas, flaps)) +
     a.flapsLift * flaps;
   return Math.sqrt(
     (2 * a.mass * GRAVITY) / (SEA_LEVEL_DENSITY * a.wingArea * clMax),
