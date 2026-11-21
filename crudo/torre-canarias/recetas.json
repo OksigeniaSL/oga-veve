@@ -1408,5 +1408,51 @@
     "{c4}",
     "{c5}",
     "torre.canario.solo.pushback"
+  ],
+  "torre.canario.solo.regresoPorPista": [
+    "torre.canario.solo.regresoPorPista"
+  ],
+  "torre.canario.regreso": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.regresoPorPista",
+    "{p1}",
+    "{p2}"
+  ],
+  "torre.canario.regreso.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.regresoPorPista",
+    "{p1}",
+    "{p2}",
+    "lado.es.izquierda"
+  ],
+  "torre.canario.regreso.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.regresoPorPista",
+    "{p1}",
+    "{p2}",
+    "lado.es.derecha"
+  ],
+  "torre.canario.regreso.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.regresoPorPista",
+    "{p1}",
+    "{p2}",
+    "lado.es.central"
   ]
 }

@@ -292,13 +292,10 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * 11-10-2026 y el «hold position» el 17-10-2026; esperan el desvío que
  * aprueba el control en el ejercicio de la tormenta.
  *
- * Y una de la lámpara, en castellano (H41i): «regreso por pista», los
- * destellos verdes de quien remonta, con las dos voces de torre. Su pieza,
- * `torre.solo.regresoPorPista` y la canaria, está al final de la lista de
- * grabar; la pide `luzDeTorre` en `game.ts` solo si su toma está en el pack,
- * y hasta entonces la lámpara a destellos calla, como antes.
+ * La de la lámpara en castellano, «regreso por pista» (H41i), los destellos
+ * verdes de quien remonta, se grabó el 21-11-2026 con las dos voces de torre.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>(["torre.regreso"]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice

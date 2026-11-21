@@ -495,6 +495,10 @@
       "ms": 1823,
       "h": "cea1e6b6d8"
     },
+    "torre.solo.regresoPorPista": {
+      "ms": 1167,
+      "h": "1b7a643e2d"
+    },
     "torre.solo.rogerMayday": {
       "ms": 1086,
       "h": "0524247a69"
@@ -2084,6 +2088,52 @@
       "{c4}",
       "{c5}",
       "torre.solo.pushback"
+    ],
+    "torre.solo.regresoPorPista": [
+      "torre.solo.regresoPorPista"
+    ],
+    "torre.regreso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.regresoPorPista",
+      "{p1}",
+      "{p2}"
+    ],
+    "torre.regreso.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.regresoPorPista",
+      "{p1}",
+      "{p2}",
+      "lado.es.izquierda"
+    ],
+    "torre.regreso.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.regresoPorPista",
+      "{p1}",
+      "{p2}",
+      "lado.es.derecha"
+    ],
+    "torre.regreso.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.regresoPorPista",
+      "{p1}",
+      "{p2}",
+      "lado.es.central"
     ]
   }
 }

@@ -451,7 +451,7 @@ describe("la verde nombra la pista, en castellano", () => {
  * se grabe, la lámpara a destellos calla en castellano: lo que se mira es que
  * llegue a grabarse y que el juego no la pida sin su toma.
  */
-describe("los destellos de quien remonta esperan su toma", () => {
+describe("los destellos de quien remonta, grabados", () => {
   it("su pieza está en la lista de grabar, con cada torre", () => {
     const lista = frases as { id: string; voz: string; texto: string }[];
     const de = (id: string) => lista.find((f) => f.id === id);
@@ -463,7 +463,23 @@ describe("los destellos de quien remonta esperan su toma", () => {
       voz: "torre-canarias",
       texto: "regreso por pista",
     });
-    expect(ESPERAN_SU_TOMA.has("torre.regreso")).toBe(true);
+    // Grabada el 21-11-2026: ya no espera, y cada torre la arma con el indicativo y la pista.
+    expect(ESPERAN_SU_TOMA.has("torre.regreso")).toBe(false);
+    const yo = {
+      c1: "fonetico.echo",
+      c2: "fonetico.charlie",
+      c3: "fonetico.alfa",
+      c4: "fonetico.romeo",
+      c5: "fonetico.sierra",
+      ...pistaEnCastellano("34")?.relleno,
+    };
+    for (const lado of ["", ".L", ".R", ".C"]) {
+      expect(recetaDe(manifiesto as Manifiesto, `torre.regreso${lado}`, yo), `torre.regreso${lado}`).not.toBeNull();
+      expect(
+        recetaDe(canarias as Manifiesto, `torre.canario.regreso${lado}`, yo),
+        `torre.canario.regreso${lado}`,
+      ).not.toBeNull();
+    }
   });
 
   it("y la lámpara la pide solo si su toma está en el pack", () => {

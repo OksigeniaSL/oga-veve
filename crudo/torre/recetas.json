@@ -1402,5 +1402,51 @@
     "{c4}",
     "{c5}",
     "torre.solo.pushback"
+  ],
+  "torre.solo.regresoPorPista": [
+    "torre.solo.regresoPorPista"
+  ],
+  "torre.regreso": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.regresoPorPista",
+    "{p1}",
+    "{p2}"
+  ],
+  "torre.regreso.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.regresoPorPista",
+    "{p1}",
+    "{p2}",
+    "lado.es.izquierda"
+  ],
+  "torre.regreso.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.regresoPorPista",
+    "{p1}",
+    "{p2}",
+    "lado.es.derecha"
+  ],
+  "torre.regreso.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.regresoPorPista",
+    "{p1}",
+    "{p2}",
+    "lado.es.central"
   ]
 }

@@ -491,6 +491,10 @@
       "ms": 1485,
       "h": "259191ecfa"
     },
+    "torre.canario.solo.regresoPorPista": {
+      "ms": 1163,
+      "h": "df4159f012"
+    },
     "torre.canario.solo.rogerMayday": {
       "ms": 949,
       "h": "f35cab6522"
@@ -2098,6 +2102,52 @@
       "{c4}",
       "{c5}",
       "torre.canario.solo.pushback"
+    ],
+    "torre.canario.solo.regresoPorPista": [
+      "torre.canario.solo.regresoPorPista"
+    ],
+    "torre.canario.regreso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.regresoPorPista",
+      "{p1}",
+      "{p2}"
+    ],
+    "torre.canario.regreso.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.regresoPorPista",
+      "{p1}",
+      "{p2}",
+      "lado.es.izquierda"
+    ],
+    "torre.canario.regreso.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.regresoPorPista",
+      "{p1}",
+      "{p2}",
+      "lado.es.derecha"
+    ],
+    "torre.canario.regreso.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.regresoPorPista",
+      "{p1}",
+      "{p2}",
+      "lado.es.central"
     ]
   }
 }
