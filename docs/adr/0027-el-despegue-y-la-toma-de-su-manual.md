@@ -7581,3 +7581,212 @@ tocados, en verde (406 pruebas).
 - **Los bancos que faltan**: Tukã con el JAZ 90, que es el que vuela la mano
   en el navegador, y una segunda tirada del JAZ 120 en Gran Canaria, por el
   eje.
+
+## Enmienda H55b (21-11-2026): lo que dejó abierto la actitud de los reactores
+
+H55 metió la actitud de la final de los tres reactores y la mano que la
+sostiene, y dejó cinco cosas abiertas. Aquí se cierran, por orden de
+importancia.
+
+### 1. Tukã, volado
+
+`verificar-vuelo-entero.mjs tenerife-norte tuka 1 jaz-90`, desde una foto del
+worktree con lo de H55 tal cual (`h55b/arbol-a` del scratchpad): **67 de 67**.
+Llegó a la puerta de los quinientos pies a 124 nudos (Vref 118) bajando 2,5
+m/s, a 2,3 m de la senda y 4,7 m del eje; recogió a 10,4 m de ruedas, 56 m
+antes del umbral, bajando 2,9 m/s a 117 nudos, y tocó a **364 m y 0,84 m/s**,
+a 2,6 m del eje, con las gafas. Lo de la mano de abajo no le toca al E170
+(`apretonPorInercia` es uno en él), así que el vuelo vale también con ella.
+
+`gran-canaria tuka 1 jaz-120`, desde una foto con la mano de abajo de aquí
+(`h55b/arbol-b`), con la tarjeta de verdad: **65 de 66**, con el alisio
+de 025/20. Es la primera vez que el 747 vuela Tukã en el banco, así que no
+hay tirada de antes con la que comparar. La primera final la cortó la torre
+a 60 m —pista ocupada por el que aterrizaba delante—, y el 747 frustró
+(galón de la frustrada) y volvió por el circuito. La segunda llegó a la
+puerta de los quinientos pies a 149 nudos (Vref 142) bajando 4,1 m/s y a 0,5
+m de la senda, pero **a 50,5 m del eje y cruzándolo a 5,9°**: es la que
+falla, «estabilizada a su puerta». Recogió a 13,4 m de ruedas, 72 m antes
+del umbral, bajando 3,4 m/s a 153 nudos, y tocó a **402 m y 1,73 m/s**, a 3,4
+m del eje, con las gafas. Lo que falla es de lado, en la vuelta al circuito
+después de frustrar, y lo de aquí solo toca el cabeceo de la mano; pero no
+se ha volado la misma tirada con la mano de antes para descartarlo. En la
+primera final, de los 330 m a la senda, el morro va y viene de 0° a 7° con la
+palanca hasta −0,36, lo mismo que en la final del 747 en Taguató de H55, que
+no lleva esta mano.
+
+### 2. El lazo de dentro de la mano, para los de morro pesado
+
+Al soltar la tecla bajando en la final, el 747 seguía bajando 4,7° más y el
+787, 2,7°, y la prueba los había dejado en 5° y 3°. La causa es la que H55
+apuntaba: el servo y el amortiguador del lazo de dentro —el giro de morro
+que se pide contra el que hay— son los mismos para toda la flota, y el morro
+de esos dos es mucho más pesado de girar.
+
+**La cuenta**: lo que acelera el morro con todo el timón, a la velocidad de
+maniobra y a nivel del mar, `½ρ₀·V²·S·c·Cmδe / Iyy` (`nervioDelMorro`):
+
+| | rad/s² |
+|---|---|
+| JAZ 40 | 9,45 |
+| JAZ 25 | 8,03 |
+| JAZ 20 | 6,03 |
+| JAZ 50 | 4,46 |
+| JAZ 60 | 3,50 |
+| JAZ 90 (E170) | 2,63 |
+| JAZ 110 (787) | 0,84 |
+| JAZ 120 (747) | 0,51 |
+
+Con el mismo amortiguador, el lazo de dentro del 747 responde cinco veces
+más despacio que el del E170: mientras el morro vuelve, el camino sigue
+bajando.
+
+**Lo que se cambia** (`mano.ts`): el servo y el amortiguador se multiplican,
+además de por el apretón de la velocidad, por `apretonPorInercia`, que es
+`NERVIO_DE_LA_MANO / nervioDelMorro` y nunca menos de uno, con
+`NERVIO_DE_LA_MANO` en 2,5 rad/s², lo que mueve el morro del E170: el más
+pesado de la flota con el que el lazo ya iba bien. La misma cuenta para
+todos: de la avioneta al E170 da uno y nada cambia; el 787 aprieta 3,0 veces
+y el 747, 4,9. Es lo que hace quien pasa de una avioneta a un avión grande
+—mueve más el volante para el mismo giro— y lo que hacen los pilotos
+automáticos, que llevan la ganancia del cabeceo a la medida de cada avión.
+
+Medido con la prueba (`mano-respuesta.test.ts`, de nivelado a bajar tres
+grados con la tecla y soltar), lo que sigue al soltar, en grados:
+
+| | Final, antes / ahora | Crucero, antes / ahora |
+|---|---|---|
+| JAZ 120, Tukã y Taguato Ruvicha | 4,73 / **2,07** | 1,63 / 0,82 |
+| JAZ 110, Tukã y Taguato Ruvicha | 2,73 / **1,87** | 1,40 / 0,83 |
+| JAZ 90 | 1,63 / 1,63 | 1,30 / 1,30 |
+| JAZ 60 | 1,71 / 1,71 | 1,06 / 1,06 |
+| JAZ 50 | 1,82 / 1,82 | 1,17 / 1,17 |
+| JAZ 40 | 1,15 / 1,15 | 0,86 / 0,86 |
+
+Y el resto de la tabla en los dos: un toque sigue siendo 0,6° (de 0,3 a 1),
+la carga no pasa de 0,29 g (tope 0,45), y de nivelado a −3° con la tecla el
+747 tarda en la final 2,8 s en vez de 3,9. **La prueba vuelve a 2,5° para
+todos**, que era su tope antes de H55.
+
+Y la final quieta (`final-fina.test.ts`, el 747 en Tukã con la senda de 3°,
+± m/s: el pico y pasado el minuto y medio): con el gas quieto, de 0,38 y 0,07
+a 0,10 y 0,05; con los gases automáticos, de 0,41 y 0,06 a 0,11 y 0,06; con
+el gas integrador de la prueba, de 1,84 a 0,13. El 787, que la prueba no
+vuela, medido igual: de 0,26 y 0,04 a 0,08 y 0,03 con el gas quieto, y de
+0,32 y 0,05 a 0,09 y 0,04 con los automáticos. El E170 y el JAZ 60, igual al
+centésimo. De 30° a nivelado con la tecla en la final, el 747 en Taguato
+Ruvicha: 5,1 s antes y 5,0 ahora (el tope de H55, 5,2, se queda).
+
+### 3. La recogida del automático del banco con el morro nuevo: era la mesa
+
+En la mesa de H55, el JAZ 90 con σ_w 1 tocaba duro el doble (de 9 a 19) y con
+σ_w 1,5 trece de 200 finales no llegaban a la pista. **La mesa volaba con el
+alerón suelto**: sostiene la senda con el automático del juego y no toca el
+alabeo, y las rachas inclinan el avión. En una de las trece (semilla 2), a
+los veinte segundos llevaba 4° de alabeo, a los treinta 22°, y a los cuarenta
+iba con el rumbo a 60° de la pista y 650 m de lado: tocó el suelo lejos de
+ella. Las ladeadas que sí llegaban, llegaban cayendo más. El banco del
+navegador no hace eso: sigue el localizador con el alerón.
+
+Con las alas sostenidas en la mesa (`LAT=1`: el alerón contra el alabeo y su
+ritmo, `h55b/mesa/` del scratchpad), antes y después de H55, la misma mesa:
+
+| Más de 2 m/s · pasadas de 600 m | 200 finales, antes / ahora | 1.000 finales, antes / ahora |
+|---|---|---|
+| JAZ 90, σ_w 1 | 9 · 0 / 8 · 0 | 42 · 0 / 41 · 0 |
+| JAZ 90, σ_w 1,5 | 36 · 0 / 46 · 0 | 217 · 1 / 217 · 3 |
+| JAZ 110, σ_w 1 | 10 · 2 / 7 · 3 | 65 · 4 / 62 · 9 |
+| JAZ 110, σ_w 1,5 | 47 · 1 / 50 · 2 | 218 · 13 / 220 · 10 |
+| JAZ 120, σ_w 1 | 39 · 5 / 32 · 6 | 147 · 19 / 128 · 9 |
+| JAZ 120, σ_w 1,5 | 75 · 15 / 59 · 5 | 333 · 51 / 339 · 22 |
+
+Ninguna final sin llegar a la pista. Con mil finales, **las duras no
+empeoran en ningún avión** —las diferencias caben en lo que da el azar en
+mil—, y en el 747 las largas se quedan en la mitad. Lo único que se mueve a
+peor son largas sueltas: el 787 con σ_w 1, de 4 a 9 de mil, y el E170 con
+σ_w 1,5, de 1 a 3. Las diferencias de 200 finales eran del alerón suelto y
+del azar (el JAZ 90 con σ_w 1,5, de 36 a 46 en 200, y 217 y 217 en mil). No
+hay nada que arreglar ni en el juego ni en el banco del navegador por esto.
+
+**Lo que se vio al mirar, y no entra**: la prueba del repositorio que
+reproduce la recogida del 747 (`recogida-del-reactor.test.mjs`) vuela igual,
+con el alerón suelto. Con las alas sostenidas, a 142 nudos y con la regla
+del punto de toma, dos de sus sesenta finales se pasan de los 600 m (814 y
+608 m), donde la prueba pide ninguna. La de 814 (semilla 13): empieza a
+recoger a 12,2 m de ruedas y 105 m antes del umbral, una racha la lleva de
+150 a 157 nudos, deja de bajar y sube a 12 m, y flota medio kilómetro **con
+el gas de la final puesto**, porque el reactor del banco no quita gas hasta
+los treinta pies (`RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR` en
+`verificar-vuelo-entero.mjs`). Al bimotor de hélice se le quita el gas si
+flota (H45b); al reactor, no. Arreglarlo es cambiar la recogida del banco del
+navegador y volarla, y no cabía en esta tanda: la prueba se queda como
+estaba.
+
+### 4. El 747 que tocó a 10,3 m del eje
+
+La segunda tirada de `gran-canaria taguato 1 jaz-120`, desde la foto con la
+mano de aquí (`h55b/arbol-b`, que en este vuelo no cambia nada de lado), con
+la tarjeta de verdad y el mismo alisio de 025/20: **62 de 62**. A la puerta de
+los quinientos pies a 152 nudos (Vref 142) bajando 3,8 m/s, a 0,1 m de la
+senda y **a 3,3 m del eje** (la de H55, 9,7); recogió a 13,1 m de ruedas, 64 m
+antes del umbral, bajando 2,4 m/s a 151 nudos, y tocó a **451 m y 1,2 m/s, a
+2,0 m del eje**.
+
+| | Puerta de 500 ft | Recogida | Toca |
+|---|---|---|---|
+| JAZ 120, H54 | 148 kt, 4,4 m/s, eje 6,5 m | 14,5 m, 81 m antes | 429 m, 1,95 m/s, 1,2 m del eje |
+| JAZ 120, H55 | 155 kt, 4,1 m/s, eje 9,7 m | 13,2 m, 80 m antes | 512 m, 1,39 m/s, **10,3 m del eje** |
+| JAZ 120, H55b | 152 kt, 3,8 m/s, eje 3,3 m | 13,1 m, 64 m antes | 451 m, 1,2 m/s, 2,0 m del eje |
+
+Era el aire de aquella tarde, no el cambio: sin la actitud (H54) ya pasó la
+puerta a 6,5 m del eje, y con ella, una vez a 9,7 m y otra a 3,3.
+
+### 5. El E170 vuelve más despacio del empujón: es la red de Tukã
+
+En `colocado-y-compensado.test.ts`, el JAZ 90 en Tukã empujado tres segundos y
+soltado vuelve a −1,79 m/s de media pasados diez segundos, donde antes de H55
+volvía a −1,68. Medido segundo a segundo con los dos: es el mismo columpio
+—la ayuda de subida del modelo devuelve el morro, se pasa y vuelve, cada cinco
+segundos y medio—, con la velocidad cayendo de 131 a 115 nudos porque el gas
+es el de la senda. Lo que cambia es **el primer tirón**: 11,8° de ángulo por
+encima del de la final antes, y 12,5° ahora. Los dos los para la red que no
+deja entrar en pérdida, a tres grados del avisador. Y el avisador de Tukã
+está más lejos ahora:
+
+- La pérdida que la red de los peldaños de abajo deja es la del ala por 1,45
+  (`stallAngle` en `fdm.ts`), **contada desde el ángulo cero, no desde el de
+  sustentación nula**. Con los flaps sumando 1,38, la pérdida del E170 con
+  todos ellos es 14,9° y la red la deja en 21,6°; con 1,125, 18,1° y 26,2°.
+  El CL máximo del ala, el de verdad, no se ha movido (2,756), pero el que
+  deja la red pasa de 3,29 a 3,41, y el del avisador, de 2,88 a 2,98: un 3,5
+  % más. El avisador de Tukã en la final pasa de 16,4° a 20,8°, cuando el
+  ángulo de la final ha subido 3,2°.
+- Con 1,2° más de sitio, el primer tirón llega un poco más arriba, frena algo
+  más (la velocidad, 0,3-0,4 nudos por debajo de la de antes) y la parte de la
+  ayuda que sostiene la velocidad baja el morro un poco más: −1,79 y no −1,68.
+
+Es la actitud nueva, y lo que hace la prueba —que el avión soltado no se quede
+con la bajada del empujón— está bien. Lo que no es del todo correcto es la red:
+es el mismo error que H55 arregló en la mano, una cuenta hecha desde el ángulo
+cero que cambia con cómo se reparte la sustentación entre el ala y los flaps.
+Contada desde el ángulo de sustentación nula, la red no se movería con el
+reparto. No entra aquí: mueve la red de los peldaños de abajo en todos los
+aviones con flaps, y pide su tanda.
+
+### El vitest entero
+
+Con la mano de aquí y la prueba de vuelta a 2,5°: **568 ficheros y 11.295
+pruebas, en verde** (31 saltadas y una por hacer).
+
+### Lo que queda
+
+- **El gas del reactor del banco cuando flota por encima de los treinta
+  pies**, y con él la prueba de la recogida del 747 con las alas sostenidas
+  (arriba, en el 3): se quita al bimotor y no al reactor.
+- **La red de los peldaños de abajo contada desde el ángulo de sustentación
+  nula** (arriba, en el 5).
+- **El 747 en Tukã a la puerta después de frustrar**, a 50 m del eje: volar
+  la misma tirada con la mano de antes para ver si es de ella, y si no, la
+  vuelta al circuito del banco con el avión más grande.
+- **El picado del suelo del 747** (H54), que sigue fuera.
+- **El JAZ 110 en el navegador**, que sigue medido solo en la mesa.
