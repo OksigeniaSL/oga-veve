@@ -3028,6 +3028,16 @@ export const ES_PY = {
     "La torre nos dijo ir primero por la pista y dar la vuelta: desde acá no alcanza la pista para despegar",
   "palabra.sinRemontar": "Primero, la vuelta",
   /*
+   * Y la carrera empezada sin la autorización de despegar (H41j): con la
+   * pista dada, sin haber visto la verde fija ni oído su «autorizado a
+   * despegar». La pista es de quien la tiene —la torre no se la da a otro—,
+   * así que se sigue; lo que se cuenta es dónde se espera esa autorización.
+   * Ver `decirQueNoTeAutorizaron`.
+   */
+  "vuelo.sinAutorizacion":
+    "Salimos sin que la torre nos autorizara a despegar. Eso se espera en el eje, hasta que la luz se pone verde fija. La pista es nuestra: seguí, y la próxima, esperala",
+  "palabra.sinAutorizacion": "Sin la verde",
+  /*
    * Darle paso a uno que viene de frente por la calle de tu raya: la raya se
    * corta antes de esa calle y se espera ahí. Lo que diría el control de
    * tierra —«give way»—, contado en casa. Ver `decirQueDasPaso`.

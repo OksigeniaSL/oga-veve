@@ -1542,7 +1542,7 @@ const despegue = await page.evaluate(async () => {
       return Object.entries(o.dichoConPiezas?.() ?? {}).flatMap(([quien, dichas]) =>
         dichas
           .filter(({ clave }) =>
-            /backtrack|ofreceInterseccion|\.tora|remontar|desdeLaInterseccion|backTaxi|sinRemontar/.test(clave),
+            /backtrack|ofreceInterseccion|\.tora|remontar|desdeLaInterseccion|backTaxi|sinRemontar|sinAutorizacion/.test(clave),
           )
           .map(({ clave, piezas }) =>
             quien !== "torre"

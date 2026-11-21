@@ -2194,3 +2194,148 @@ pendiente, ninguna en rojo, en 1.329 s con dos hilos.
 - **La ventana estrecha de pie sin dedo** (400 × 780): la barra del título
   queda debajo de los botones redondos de arriba, con la verde igual que con
   los destellos; no es de esta enmienda y no se ha tocado.
+
+## Enmienda (21-11-2026, H41j): el morro en el eje de golpe, y la autorización de despegar
+
+### El caso
+
+El segundo fleco de la H41i: «un giro de golpe se salta la verde». Con el
+piloto perfecto de `la-verde-del-que-remonta.test.ts`, El Hierro por la 34 y
+el JAZ 40 con 4 m/s de cola —remonte hasta el final—, y el morro puesto en el
+rumbo de despegue en un solo paso en vez de a veinte grados por segundo:
+
+- **Tras remontar sesenta metros**, a más de doscientos del lazo (en el −172,
+  a 10,7 m del eje: el remonte va por un lado de la pista): las luces de
+  después del giro, `rodar` y nada más.
+- **En el lazo dibujado**, pasado el sitio de girar y cruzando el eje a media
+  vuelta (en el −602): igual, `rodar` y nada más.
+- **En una entrada sin remonte** —sin cola sale por la C— no pasaba: la verde
+  fija ya se dio en la doble raya, `roja · verde`, y del eje a la carrera.
+
+La fase iba del back-taxi a «despegando» sin pasar por «alineando», y la
+lámpara de los destellos a apagada: ni verde fija ni «cleared for take-off».
+El avión empezaba la carrera sin que la torre le hubiera autorizado y el
+juego lo daba por bueno.
+
+### Por qué
+
+La autorización de despegar se da en «alineando»: la verde fija va en
+«autorizado» y «alineando» sin la vuelta por dar (`luzDeLaSalida`, H41h), y a
+quien remonta le llega al dar la vuelta. Pero `deducir` daba «despegando» a
+cualquiera que estuviera en el eje, quieto o no, y una fase nueva tiene que
+sostenerse medio segundo para valer (`HISTERESIS`). Del morro a treinta
+grados —donde se baja la bandera del remonte— a alineado en menos de eso,
+«alineando» no llegaba a asentarse. Y pasar a «despegando» gasta el permiso:
+la verde ya no vuelve.
+
+### Lo real
+
+En una pista con torre no se despega sin «cleared for take-off» (Doc 4444,
+12.3.4.11 a), que se da cuando el avión está listo y en la pista de salida o
+llegando a ella (7.9.3.4). A quien empieza la carrera sin ella, una torre
+solo le habla si ve un peligro, y lo que le dice es «stop immediately»
+(12.3.4.10; ver la nota de la H41f).
+
+### Decisión
+
+- **La máquina de fases sabe si la autorización de despegar se ha dado**
+  (`despegueDado` en `Vuelo`): si la lámpara ya estuvo en verde fija con la
+  pista dada. Lo decide `luzDeLaSalida`, la misma cuenta que pinta la lámpara
+  y dice el «cleared for take-off» en `game.ts`, así que la máquina sabe lo
+  que se vio y se oyó. Se mira al empezar el paso, con la fase y la verde del
+  paso anterior —lo que el juego acaba de pintar— y la bandera del remonte de
+  ahora: el remonte se traza al pasar a «autorizado», detrás de la máquina de
+  fases (`alCambiarDeFase`), y mirado en ese mismo fotograma los destellos
+  parecerían la verde fija.
+- **En el eje, con la pista dada y sin esa autorización, la fase es
+  «alineando»** mientras no se corra (`YA_ES_RODAJE`, por el suelo: parado de
+  cara a mucho viento el anemómetro ya marca): ahí se enciende la
+  verde fija y suena su autorización, y en el paso siguiente ya es un
+  despegue. Venga como venga el avión: del remonte, del lazo o de una entrada
+  a la que se llega derecho. Con la verde ya dada en la doble raya no cambia
+  nada.
+- **Si llega al eje ya corriendo, es un despegue** —el hecho gana al plan, como
+  con el remonte— y se cuenta una vez: `Paso.sinAutorizacion`
+  (`vigilarLaCarrera`). Con la bandera del remonte todavía puesta lo cuenta
+  `sinRemontar` (H41f), que es el porqué de esa carrera, y sin la pista es el
+  percance de la luz: un suceso, una voz.
+- **La instructora lo cuenta** en los tres peldaños de abajo, con calma y solo
+  grabada, y la tarjeta donde se lee (`decirQueNoTeAutorizaron` en
+  `game.ts`). Solo donde hay torre que autorice: un AFIS no autoriza nada, y
+  sin nadie en la radio no hay autorización que esperar.
+- **La torre calla.** La carrera sin autorizar solo se empieza con la pista
+  dada, y desde que te la dan es tuya: la verde no se enciende con otro en
+  ella (`pistaDeOtros`) y, mientras la tengas, la frecuencia no se la da a
+  nadie (`PISTA_TUYA` en `flight/radio.ts`). No hay nadie en ella a quien
+  estorbar, así que no hay peligro que decir.
+- **Y la lámpara no se apaga entre los destellos y la verde fija.** En el
+  medio segundo en que la fase sigue en el back-taxi con la bandera ya bajada
+  la lámpara quedaba apagada —también con el giro a veinte grados por
+  segundo—; ahora siguen los destellos hasta «alineando».
+
+**Frase nueva, sin grabar** (es-PY y en; el guaraní no se toca):
+`vuelo.sinAutorizacion` —«Salimos sin que la torre nos autorizara a despegar.
+Eso se espera en el eje, hasta que la luz se pone verde fija. La pista es
+nuestra: seguí, y la próxima, esperala»— y, para la tarjeta,
+`palabra.sinAutorizacion`, «Sin la verde». Va al final de la lista del
+instructor en su bloque, `DE_LA_CARRERA_SIN_AUTORIZACION` en
+`scripts/frases-para-grabar.mjs`, apartada de su grupo en la expresión del
+principio; es la 899 de su guion. Sin grabación no suena; la tarjeta sale
+igual en los peldaños que leen.
+
+### La prueba
+
+- `la-verde-del-que-remonta.test.ts`, «el morro en el eje de golpe»: los tres
+  casos de arriba con el morro puesto de una vez. Con el código de antes, los
+  dos del remonte en rojo (`["rodar"]` donde se espera `["rodar", "verde"]`) y
+  la entrada sin remonte en verde; ahora los tres en verde: `roja · rodar`
+  antes del giro, `rodar · verde` después, por «alineando», y la carrera.
+- `vuelo.test.ts`, «la autorización de despegar, en el eje y de golpe»: con la
+  pista dada para remontar, dado la vuelta de golpe y quieto en el eje,
+  `back-taxi · alineando · despegando` y una verde; llegando ya a veinte metros
+  por segundo, `back-taxi · despegando`, sin verde y `sinAutorizacion` una vez
+  y solo una; sin remonte, del eje a la carrera sin esperar; con la bandera
+  puesta, `sinRemontar` y no las dos; y sin la pista, nada de esto.
+
+### Lo medido
+
+**Vitest entero**, una vez y con el código de esta enmienda: 568 de 568
+ficheros, 11.303 pruebas en verde, 31 saltadas y una pendiente, ninguna en
+rojo, en 1.186 s con dos hilos. Ahí va `por-grabar.test.ts`, que lee las
+puertas de la instructora en `game.ts` y pedía receta para
+`vuelo.sinAutorizacion`: espera su toma en la excepción escrita de esa
+prueba (`ESPERAN_SU_TOMA`), y en cuanto se grabe sale de allí.
+
+**El Hierro con voces**, `verificar-despegue.mjs el-hierro taguato "" jaz-40`
+con `OGA_CON_VOCES=1` y el METAR de 42 °C de la H41h: **23 de 23**. Número
+dos detrás de EC-SMP, que remontaba y salía, y luego su estela: la verde a los
+269,7 s de juego. El plan, remonte hasta el final por la cola (pide 734 m, 750
+desde la entrada, 1.217 por delante). Entra en el −113, va hasta el −605,
+gira en el −590, queda en el eje en el −559 y suelta frenos en el −558, como
+en la H41i; rota con 508 m de 1.254. Lo que la torre te dijo: `destino ·
+roja · holdShortNumberTwo · holdShortWake · regreso · backtrack · verde ·
+clearedTakeoff`: «regreso por pista», que ya tiene su toma, el «backtrack»
+antes y una sola autorización de despegar. El piloto del banco gira por la
+raya y pasa por «alineando», como antes: el giro de golpe está en vitest, no
+en el navegador.
+
+**Los Rodeos con Guyrami**, `verificar-despegue.mjs tenerife-norte guyrami`
+(el JAZ 20, sin voces): **21 de 21**. Sale por la E-2 sin remonte —pide 531 m,
+2.546 desde la entrada, alineación cero—, con la verde a los 10,7 s de juego y
+nadie por medio. Pisa la pista en el −1.118, queda en el eje en el −996 y
+suelta frenos en el −995; rota con 393 m de 3.168. Sin remonte la verde ya se
+da en la doble raya, y del eje a la carrera no se espera nada.
+
+### Lo que queda
+
+- **«Stop immediately» no existe en el juego**, ni escrita ni grabada. Hoy no
+  hace falta: la carrera sin autorizar solo se empieza con la pista dada, y
+  dada es tuya. Si un día la torre pudiera dar la pista a otro con la tuya
+  dada, esa frase tendría que existir antes, con las dos voces de torre.
+- **`vuelo.sinAutorizacion` sin grabar**: sin toma no suena, y en los peldaños
+  que leen sale la tarjeta. Al grabarla, sale de `ESPERAN_SU_TOMA` en
+  `por-grabar.test.ts`.
+- **El caso de llegar al eje ya corriendo** solo está en vitest
+  (`vuelo.test.ts`); con el piloto perfecto o el del banco no se llega así, y
+  en el navegador no se ha forzado.
+- **«Report lined up»**, del CAP 413, sigue sin decirse (H41h).

@@ -21,6 +21,7 @@ import {
 } from "./vuelo";
 import { ES_PY } from "../i18n/es-PY";
 import { tarjetaDeLaFase } from "./guion-de-fases";
+import { luzDeLaSalida } from "./luz-de-la-salida";
 
 const EN_TIERRA: Situacion = {
   /*
@@ -1277,6 +1278,110 @@ describe("rodando por la pista para ir a la cabecera", () => {
     // torcido, y a ése hay que decirle que se enderece.
     const v = new Vuelo();
     expect(durante(v, enLaPista({ desalineado: 178 }), 2)).toBe("alineando");
+  });
+});
+
+/**
+ * **La autorización de despegar llega en el eje, venga como venga** (H41j).
+ *
+ * Se da en «alineando» —la verde fija y su «cleared for take-off», ver
+ * `luzDeLaSalida`— y la fase nueva tiene que sostenerse medio segundo. Quien
+ * ponía el morro en el eje de golpe al acabar el remonte pasaba del back-taxi
+ * a «despegando» sin «alineando», y despegaba sin que la torre le autorizara.
+ */
+describe("la autorización de despegar, en el eje y de golpe (H41j)", () => {
+  const enLaPista = (mas: Partial<Situacion>): Situacion =>
+    con({
+      motor: true,
+      enPista: true,
+      alEjeDePista: 4,
+      estado: { airspeed: 6, groundSpeed: 6 } as never,
+      ...mas,
+    });
+  /** En el eje, mirando hacia donde se despega, quieto. */
+  const enElEje = (mas: Partial<Situacion> = {}): Situacion =>
+    enLaPista({
+      desalineado: 0,
+      alEjeDePista: 1,
+      estado: { airspeed: 0, groundSpeed: 0 } as never,
+      ...mas,
+    });
+
+  /** Del puesto a la doble raya, y la pista dada: con remonte, los destellos. */
+  function conLaPista(remonte: boolean): Vuelo {
+    const v = new Vuelo();
+    v.reiniciar();
+    durante(v, con({ motor: true }), 1);
+    durante(v, con({ motor: true, estado: { airspeed: 6, groundSpeed: 6 } as never }), 1);
+    durante(v, con({ motor: true, restante: 5, backTaxi: remonte }), 6);
+    expect(v.actual).toBe("autorizado");
+    return v;
+  }
+
+  /** Las fases y las luces de unos segundos, sin repetir la de seguido. */
+  function mirar(v: Vuelo, s: Situacion, segundos: number, remonte: boolean) {
+    const fases: Fase[] = [];
+    const luces: string[] = [];
+    const sinAutorizacion: number[] = [];
+    for (let t = 0; t < segundos; t += 0.05) {
+      const p = v.paso(s, 0.05);
+      if (fases.at(-1) !== p.fase) fases.push(p.fase);
+      const luz = luzDeLaSalida(p.fase, p.luzVerde, remonte && s.backTaxi);
+      if (luz && luces.at(-1) !== luz) luces.push(luz);
+      if (p.sinAutorizacion) sinAutorizacion.push(t);
+    }
+    return { fases, luces, sinAutorizacion };
+  }
+
+  it("dado la vuelta de golpe y quieto en el eje: «alineando», la verde y la carrera", () => {
+    const v = conLaPista(true);
+    const ida = mirar(v, enLaPista({ backTaxi: true, desalineado: 178 }), 3, true);
+    expect(ida.fases.at(-1)).toBe("back-taxi");
+    expect(ida.luces).toEqual(["rodar"]);
+    // El morro en el eje en un fotograma, y la bandera bajada a la vez.
+    const r = mirar(v, enElEje(), 3, true);
+    expect(r.fases).toEqual(["back-taxi", "alineando", "despegando"]);
+    // Los destellos hasta que se asienta «alineando», y una verde fija.
+    expect(r.luces).toEqual(["rodar", "verde"]);
+    expect(r.sinAutorizacion).toEqual([]);
+  });
+
+  it("y llegando ya corriendo, es un despegue: no se castiga, se apunta una vez", () => {
+    const v = conLaPista(true);
+    mirar(v, enLaPista({ backTaxi: true, desalineado: 178 }), 3, true);
+    const corriendo = enElEje({ estado: { airspeed: 20, groundSpeed: 20 } as never });
+    const r = mirar(v, corriendo, 3, true);
+    expect(r.fases).toEqual(["back-taxi", "despegando"]);
+    expect(r.luces).not.toContain("verde");
+    expect(r.sinAutorizacion).toHaveLength(1);
+    // Y una vez por vuelo.
+    expect(mirar(v, corriendo, 2, true).sinAutorizacion).toEqual([]);
+  });
+
+  it("sin remonte, la verde ya se dio en la doble raya: del eje a la carrera, sin esperar", () => {
+    const v = conLaPista(false);
+    const r = mirar(v, enElEje(), 3, false);
+    expect(r.fases).toEqual(["autorizado", "despegando"]);
+    expect(r.sinAutorizacion).toEqual([]);
+  });
+
+  it("quien no remonta lo cuenta `sinRemontar`, y no dos veces", () => {
+    const v = conLaPista(true);
+    const vistos: { sinRemontar: string | null; sinAutorizacion: boolean }[] = [];
+    const corriendo = enElEje({ backTaxi: true, estado: { airspeed: 20, groundSpeed: 20 } as never });
+    for (let t = 0; t < 3; t += 0.05) vistos.push(v.paso(corriendo, 0.05));
+    expect(v.actual).toBe("despegando");
+    expect(vistos.filter((x) => x.sinRemontar)).toHaveLength(1);
+    expect(vistos.filter((x) => x.sinAutorizacion)).toHaveLength(0);
+  });
+
+  it("y quien entra sin la pista es el percance de la luz, no esto", () => {
+    const v = new Vuelo();
+    v.reiniciar();
+    durante(v, con({ motor: true }), 1);
+    const r = mirar(v, enElEje({ estado: { airspeed: 20, groundSpeed: 20 } as never }), 3, false);
+    expect(r.fases.at(-1)).toBe("despegando");
+    expect(r.sinAutorizacion).toEqual([]);
   });
 });
 

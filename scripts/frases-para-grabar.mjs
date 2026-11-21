@@ -101,7 +101,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.(?:compensadorParaDespegar|compensadorDeDespeguePuesto|avisoDeConfiguracionCompensador)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$|^vuelo\.altitudMaxima$|^vuelo\.sinRemontar(?:NoAlcanza)?$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.(?:compensadorParaDespegar|compensadorDeDespeguePuesto|avisoDeConfiguracionCompensador)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$|^vuelo\.altitudMaxima$|^vuelo\.sinRemontar(?:NoAlcanza)?$|^vuelo\.sinAutorizacion$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -3366,6 +3366,24 @@ for (const [voz, id] of DEL_REGRESO_POR_PISTA) {
     texto,
     para: "la lámpara a destellos verdes, a quien remonta la pista antes de despegar; detrás, las cifras de la pista",
   });
+  total += texto.length;
+}
+
+/*
+ * **Y la carrera empezada sin la autorización de despegar** (21-11-2026): con
+ * la pista dada, quien llega al eje ya corriendo y despega sin haber visto la
+ * verde fija; la instructora cuenta dónde se espera esa autorización, en los
+ * tres peldaños de abajo. Detrás de todo, por lo mismo: lo ya grabado no se
+ * renumera. Ver `vigilarLaCarrera` en `src/flight/vuelo.ts` y el ADR 0029,
+ * enmienda H41j.
+ */
+const DE_LA_CARRERA_SIN_AUTORIZACION = [
+  ["vuelo.sinAutorizacion", "con la pista dada, quien empieza la carrera sin la verde fija ni su «autorizado a despegar», en los tres peldaños de abajo"],
+];
+for (const [id, para] of DE_LA_CARRERA_SIN_AUTORIZACION) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
   total += texto.length;
 }
 

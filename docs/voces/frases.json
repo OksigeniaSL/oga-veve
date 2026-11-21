@@ -23332,5 +23332,12 @@
     "idioma": "es",
     "texto": "regreso por pista",
     "para": "la lámpara a destellos verdes, a quien remonta la pista antes de despegar; detrás, las cifras de la pista"
+  },
+  {
+    "id": "vuelo.sinAutorizacion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Salimos sin que la torre nos autorizara a despegar. Eso se espera en el eje, hasta que la luz se pone verde fija. La pista es nuestra: seguí, y la próxima, esperala",
+    "para": "con la pista dada, quien empieza la carrera sin la verde fija ni su «autorizado a despegar», en los tres peldaños de abajo"
   }
 ]

@@ -51,6 +51,7 @@
 
 import type { FlightState } from "./model";
 import { LoRemontado } from "./lo-remontado";
+import { luzDeLaSalida } from "./luz-de-la-salida";
 
 export type Fase =
   | "estacionado"
@@ -177,6 +178,12 @@ export interface Paso {
    * Ver `vigilarElRemonte`.
    */
   readonly sinRemontar: "basta" | "noBasta" | null;
+  /**
+   * **Se acaba de empezar la carrera sin la autorización de despegar** (H41j):
+   * con la pista dada, pero sin haber visto todavía la verde fija. Una vez por
+   * vuelo. Ver `despegueDado`.
+   */
+  readonly sinAutorizacion: boolean;
   /**
    * La lección de rodar está hecha: se ha parado sobre la doble raya.
    *
@@ -472,6 +479,18 @@ export class Vuelo {
   private remonteSaltado = false;
   /** Lo remontado desde que se pisó la pista. Ver `vigilarElRemonte`. */
   private readonly loRemontado = new LoRemontado();
+  /**
+   * **Si la torre ya te autorizó a despegar**: si la lámpara ya estuvo en
+   * verde fija con la pista dada (H41j). No es lo mismo que `verde`, que es
+   * que la torre te dio la pista: a quien remonta se la da para rodar por ella
+   * —los destellos— y la de despegar llega al dar la vuelta, en «alineando».
+   * La decide `luzDeLaSalida`, la misma cuenta que pinta la lámpara y dice el
+   * «cleared for take-off» en `game.ts`, así que lo que sabe la máquina de
+   * fases es lo que se vio y se oyó. Ver `deducir` y `vigilarLaCarrera`.
+   */
+  private despegueDado = false;
+  /** Ya se vio empezar la carrera sin la autorización de despegar. */
+  private carreraSinAutorizacion = false;
   /** Ha usado un permiso. Entrar en pista después de eso no es saltarse nada. */
   private uso = false;
 
@@ -561,6 +580,9 @@ export class Vuelo {
     this.avisadoDeLaLuz = false;
     this.remonteSaltado = false;
     this.loRemontado.olvidar();
+    // Quien empieza en la cabecera, alineado y con la pista, ya está autorizado.
+    this.despegueDado = desdePista;
+    this.carreraSinAutorizacion = false;
     // Y a «todavía no se ha mirado», que es lo que hace que empezar dentro de
     // la pista no cuente como haber entrado. Ver `vigilarLaLuz`.
     this.estabaEnPista = null;
@@ -622,6 +644,18 @@ export class Vuelo {
         ? Math.max(0, this.subidoEnFinal + s.estado.verticalSpeed * dt)
         : 0;
 
+    /*
+     * **La autorización de despegar, con la lámpara que se vio**: la fase y
+     * la verde del paso anterior —lo que el juego acaba de pintar— y la
+     * bandera del remonte de ahora. Se mira aquí, antes de deducir, y no al
+     * acabar el paso: el remonte se traza al pasar a «autorizado», detrás de
+     * este paso (`alCambiarDeFase` en `world/plan-de-vuelo.ts`), y mirado en
+     * el mismo fotograma la bandera todavía no está puesta y los destellos
+     * parecerían la verde fija.
+     */
+    if (luzDeLaSalida(this.fase, this.verde, s.backTaxi) === "verde")
+      this.despegueDado = true;
+
     this.atenderALaTorre(s, dt);
     const saltoLaLuz = this.vigilarLaLuz(s);
     const sinRemontar = this.vigilarElRemonte(s);
@@ -637,7 +671,9 @@ export class Vuelo {
 
     const antes = this.fase;
     const yaVale = INMEDIATAS.has(pedida) || this.candidatoDesde >= HISTERESIS;
+    let sinAutorizacion = false;
     if (pedida !== this.fase && yaVale) {
+      sinAutorizacion = this.vigilarLaCarrera(pedida, s);
       this.fase = pedida;
       this.desde = 0;
       // El permiso se gasta al usarlo: sirve para una entrada en pista y no
@@ -656,6 +692,8 @@ export class Vuelo {
       ) {
         this.verde = false;
         this.uso = true;
+        // Y con el permiso, su autorización de despegar: la próxima, otra.
+        this.despegueDado = false;
       }
     }
 
@@ -665,6 +703,7 @@ export class Vuelo {
       luzVerde: this.verde,
       saltoLaLuz,
       sinRemontar,
+      sinAutorizacion,
       leccionHecha: this.rodajeHecho,
     };
   }
@@ -975,6 +1014,34 @@ export class Vuelo {
         s.pistaRestante >= s.pistaQueNecesita;
       if (s.backTaxi && !despegandoYa) return "back-taxi";
       if (!alineado) return "alineando";
+      /*
+       * **Y en el eje sin la autorización de despegar, se espera en
+       * «alineando»** (H41j).
+       *
+       * Esa autorización —la verde fija y su «cleared for take-off»— se da
+       * en «alineando», que es cuando quien remontó ya ha dado la vuelta
+       * (`luzDeLaSalida`). Y la fase solo cambia si lo que se pide se
+       * sostiene medio segundo (`HISTERESIS`): quien ponía el morro en el eje
+       * de golpe, al acabar el remonte antes del lazo o en el lazo mismo,
+       * pasaba del back-taxi a «despegando» sin haber estado en «alineando»,
+       * la lámpara saltaba de los destellos a apagada y la autorización no
+       * llegaba nunca. Despegaba sin que la torre le autorizara, y el juego
+       * lo daba por bueno: en una pista con torre no se despega sin «cleared
+       * for take-off» (Doc 4444, 7.9.3.4 y 12.3.4.11).
+       *
+       * Así que en el eje y con la pista dada, mientras no se haya visto la
+       * verde fija, la fase es «alineando»: ahí se enciende, y en el paso
+       * siguiente ya es un despegue. Venga como venga el avión: de remontar,
+       * del lazo o de una entrada a la que se llega derecho.
+       *
+       * **Salvo que ya esté corriendo**: derecho en el eje y más rápido de lo
+       * que rueda nadie, eso es un despegue lo diga quien lo diga, como con el
+       * remonte (el hecho gana al plan). No se castiga; se cuenta. Ver
+       * `vigilarLaCarrera`. Correr se mide por el suelo: parado de cara a
+       * mucho viento, el anemómetro ya marca, y eso no es haber empezado.
+       */
+      if (this.verde && !this.despegueDado && s.estado.groundSpeed < YA_ES_RODAJE)
+        return "alineando";
       return yaNoSePuedeParar(s) ? "comprometido" : "despegando";
     }
     if (parado && s.restante < LLEGADA)
@@ -1103,6 +1170,27 @@ export class Vuelo {
     if (this.loRemontado.remonto) return null;
     this.remonteSaltado = true;
     return s.pistaRestante >= s.pistaQueNecesita ? "basta" : "noBasta";
+  }
+
+  /**
+   * **Si se empieza la carrera sin la autorización de despegar** (H41j): se
+   * pasa a «despegando» con la pista dada y sin haber visto la verde fija.
+   * Una vez por vuelo.
+   *
+   * Con `deducir` esperando en «alineando» a quien está en el eje y quieto,
+   * solo pasa si el avión llega al eje ya corriendo. Como con quien no
+   * remonta (H41f), la fase no castiga y el juego lo cuenta: ver
+   * `decirQueNoTeAutorizaron` en `game.ts`. Lo de quien no remontó lo cuenta
+   * `vigilarElRemonte`, que es el porqué de esa carrera: con la bandera del
+   * remonte puesta aquí no se apunta nada, que un suceso es una voz. Y quien
+   * entró sin la pista —sin `verde`— es el percance de la luz.
+   */
+  private vigilarLaCarrera(pedida: Fase, s: Situacion): boolean {
+    if (pedida !== "despegando" && pedida !== "comprometido") return false;
+    if (!this.verde || this.despegueDado || s.backTaxi) return false;
+    if (this.carreraSinAutorizacion) return false;
+    this.carreraSinAutorizacion = true;
+    return true;
   }
 
   /**

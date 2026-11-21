@@ -896,3 +896,4 @@
 896	vuelo.altitudMaxima	Pasamos la altura más alta que tiene aprobada este avión. Más arriba el aire es tan finito que su manual no lo deja: bajá tranquilo un poco.
 897	vuelo.sinRemontar	La torre nos dijo ir primero por la pista y dar la vuelta, para tener más pista por delante. Hoy alcanza igual: seguí
 898	vuelo.sinRemontarNoAlcanza	La torre nos dijo ir primero por la pista y dar la vuelta: desde acá no alcanza la pista para despegar
+899	vuelo.sinAutorizacion	Salimos sin que la torre nos autorizara a despegar. Eso se espera en el eje, hasta que la luz se pone verde fija. La pista es nuestra: seguí, y la próxima, esperala
