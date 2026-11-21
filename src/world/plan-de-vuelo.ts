@@ -102,6 +102,7 @@ import {
 } from "../flight/vuelo";
 import type { FlightState } from "../flight/model";
 import { conV1 } from "../flight/decide-con-v1";
+import { LoRemontado } from "../flight/lo-remontado";
 
 /**
  * Ancho de la raya que marca la ruta, m.
@@ -3680,6 +3681,7 @@ export class PlanDeVuelo {
      * quien dice de dónde se sale, que es de quien tenía que depender.
      */
     this.desdeLaPista = desdeLaPista;
+    this.loRemontado.olvidar();
     /*
      * Y el puesto elegido a mano se olvida: un vuelo nuevo sale del que toca.
      * Si se quedara, `arranque` pondría el avión en el sitio de la vez
@@ -6692,6 +6694,9 @@ export class PlanDeVuelo {
    */
   private giroDelBackTaxi: number | null = null;
 
+  /** Lo remontado desde que se pisó la pista. Ver `situacion` y `flight/lo-remontado.ts`. */
+  private readonly loRemontado = new LoRemontado();
+
   /** Dónde toca girar en el back-taxi, para los bancos. Ver `sondas.ts`. */
   get dondeSeGira(): number | null {
     return this.giroDelBackTaxi;
@@ -6932,10 +6937,27 @@ export class PlanDeVuelo {
     while (desalineado > 180) desalineado -= 360;
     while (desalineado < -180) desalineado += 360;
 
+    const enPista =
+      alEjeDePista < this.pista.width / 2 + 3 &&
+      Math.abs(along) < this.pista.length / 2 + 3;
+    this.loRemontado.mirar(enPista, along);
+    /*
+     * **Y quien da la vuelta antes del lazo dibujado, también la ha dado**
+     * (H41i). Si remontó más de treinta metros y ya mira pista abajo, hizo lo
+     * que dijo la torre —ver `vigilarElRemonte` en `flight/vuelo.ts`—, y la
+     * bandera seguía puesta hasta el lazo: la fase no salía del back-taxi, la
+     * lámpara no pasaba de los destellos a la verde fija y despegaba sin oír
+     * su «cleared for take-off». Mirar pista abajo solo no basta: hay
+     * entradas que llegan así antes de remontar. Por eso va con lo remontado,
+     * que es la misma regla que mira el vuelo. Ver `flight/lo-remontado.ts`.
+     */
+    const vueltoAntes =
+      enPista && this.loRemontado.remonto && Math.abs(desalineado) < YA_DIO_LA_VUELTA;
     if (
       this.giroDelBackTaxi !== null &&
       ((along <= this.giroDelBackTaxi + HUECO_PARA_GIRAR &&
         Math.abs(desalineado) < YA_DIO_LA_VUELTA) ||
+        vueltoAntes ||
         along < -this.largoDePista / 2 - 3)
     )
       this.giroDelBackTaxi = null;
@@ -6961,9 +6983,7 @@ export class PlanDeVuelo {
        *
        * Una pista es un rectángulo. Se mira a lo ancho y también a lo largo.
        */
-      enPista:
-        alEjeDePista < this.pista.width / 2 + 3 &&
-        Math.abs(along) < this.pista.length / 2 + 3,
+      enPista,
       backTaxi: this.giroDelBackTaxi !== null,
       pistaRestante: Math.max(0, this.pista.length / 2 - along),
       /*

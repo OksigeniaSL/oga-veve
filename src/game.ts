@@ -13677,8 +13677,12 @@ export class Game {
      * guaraní no la dice. Ver `torre.roja` en `i18n/es-PY.ts`.
      */
     const verde = luz === "verde";
+    /*
+     * Y los destellos de quien remonta también la nombran, detrás, como la
+     * roja: «regreso por pista tres cuatro» (H41i). Ver `torre.regreso`.
+     */
     const pistaEs =
-      !afis && (verde || (luz === "roja" && rojaDice === "esperar"))
+      !afis && (verde || luz === "rodar" || (luz === "roja" && rojaDice === "esperar"))
         ? pistaEnCastellano(
             this.cabeceraParaLaTorre ?? cabeceraEnUso(this.elCampo().escenario),
           )
@@ -13733,21 +13737,45 @@ export class Game {
      */
     this.turno.alCambiarLaLuz(this.misLetrasEnLaBoca);
     /*
-     * **Los destellos verdes los dice la radio del remonte, no la lámpara**
-     * (H41h). Son «autorizado para rodaje» (SERA, apéndice 1, tabla AP 1-1):
-     * la torre te deja entrar en la pista para remontarla, y eso lo dice
-     * `contarPorDondeSeSale` con su «backtrack runway», en este mismo paso,
-     * y la instructora lo cuenta abajo. La autorización de despegar —la verde
-     * fija y su «cleared for take-off»— llega al dar la vuelta, una vez. En
-     * castellano no hay frase grabada para remontar, así que la lámpara no
-     * dice nada suyo: con «autorizado a despegar» diría lo que no es.
+     * **Los destellos verdes son «autorizado para rodaje»** (H41h; SERA,
+     * apéndice 1, tabla AP 1-1): la torre te deja entrar en la pista para
+     * remontarla. La autorización de despegar —la verde fija y su «cleared
+     * for take-off»— llega al dar la vuelta, una vez; con «autorizado a
+     * despegar» la lámpara diría lo que no es.
+     *
+     * **Y en castellano, lo que dice la fraseología** (H41i): «regreso por
+     * pista (número)» en España (RD 1180/2018, anexo V, 1.4.8 p) y lo que
+     * diga la de Paraguay —ver `torre.regreso` en `i18n/es-PY.ts`—, con la
+     * pista detrás como la roja. Delante del «backtrack runway» que dice
+     * `contarPorDondeSeSale` en este mismo paso, de Taguató para arriba,
+     * como la verde va delante de su «cleared for take-off»; abajo lo cuenta
+     * la instructora. **Solo con su toma**: sin ella la diría la voz del
+     * navegador, que en Brave para Linux es muda, y se calla como antes.
      */
     if (luz === "rodar") {
       this.porQuesExplicados.clear();
       this.vecesDelPorque.clear();
       this.porQuePendiente = null;
       this.filaPedida = null;
-      return false;
+      const regreso = comoSeDiceAqui(
+        "torre.regreso",
+        hablaDe(this.elCampo().escenario.aerodrome?.id),
+      ) as TranslationKey;
+      const suya = `${regreso}${pistaEs?.sufijo ?? ""}`;
+      const conQue = { ...rellenoDe(this.miIndicativo), ...(pistaEs?.relleno ?? {}) };
+      if (!this.instructor.vozDe(suya, conQue)) {
+        this.apuntarCanto(`${suya}: sin grabar, no se pide`);
+        return false;
+      }
+      this.torre.decir(
+        [t(regreso, { indicativo: this.miIndicativo.dicho }), this.laPista(pistaEs, "dicho")]
+          .filter(Boolean)
+          .join(" "),
+        suya,
+        "mando",
+        conQue,
+      );
+      return true;
     }
     /*
      * **Y la dice como se dice aquí.** La torre no habla el castellano del

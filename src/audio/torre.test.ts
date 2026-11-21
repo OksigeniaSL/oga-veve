@@ -23,6 +23,8 @@ import {
   PISTA_DETRAS,
 } from "./torre";
 import { informacionEnPiezas } from "../flight/informacion-de-trafico";
+import fuenteDelJuego from "../game.ts?raw";
+import frases from "../../docs/voces/frases.json";
 import { pistaEnCastellano } from "../flight/matricula";
 
 describe("lo que dice la torre", () => {
@@ -39,6 +41,8 @@ describe("lo que dice la torre", () => {
   const DE_LA_LAMPARA = new Set([
     "torre.verde",
     "torre.roja",
+    // Y los destellos de quien remonta, «regreso por pista» (H41i).
+    "torre.regreso",
     "torre.aterrizar",
     // Y la roja en el aire, la orden de irse al aire. Ver `luzDeTorre`.
     "torre.alAire",
@@ -155,7 +159,8 @@ describe("lo que dice la torre", () => {
     const deCanarias = new Set(
       Object.keys((canarias as { recetas: Record<string, unknown> }).recetas),
     );
-    const apuntadas = new Set(Object.values(CLAVE_DE_TORRE));
+    // Las de la tabla, y las de la lámpara, que se piden por su clave.
+    const apuntadas = new Set([...Object.values(CLAVE_DE_TORRE), ...DE_LA_LAMPARA]);
     for (const c of ESPERAN_SU_TOMA) {
       expect(apuntadas.has(c), c).toBe(true);
       expect(grabadas, `${c} ya tiene toma: sácala de ESPERAN_SU_TOMA`).not.toContain(c);
@@ -436,5 +441,34 @@ describe("la verde nombra la pista, en castellano", () => {
         );
       }
     }
+  });
+});
+
+/**
+ * **Los destellos de quien remonta, «regreso por pista», esperan su toma**
+ * (H41i). La frase es la misma en las dos fuentes —DINAC R 4444, 12.3.4.7 p;
+ * RD 1180/2018, anexo V, 1.4.8 p— y cada torre la dice con su voz. Hasta que
+ * se grabe, la lámpara a destellos calla en castellano: lo que se mira es que
+ * llegue a grabarse y que el juego no la pida sin su toma.
+ */
+describe("los destellos de quien remonta esperan su toma", () => {
+  it("su pieza está en la lista de grabar, con cada torre", () => {
+    const lista = frases as { id: string; voz: string; texto: string }[];
+    const de = (id: string) => lista.find((f) => f.id === id);
+    expect(de("torre.solo.regresoPorPista")).toMatchObject({
+      voz: "torre",
+      texto: "regreso por pista",
+    });
+    expect(de("torre.canario.solo.regresoPorPista")).toMatchObject({
+      voz: "torre-canarias",
+      texto: "regreso por pista",
+    });
+    expect(ESPERAN_SU_TOMA.has("torre.regreso")).toBe(true);
+  });
+
+  it("y la lámpara la pide solo si su toma está en el pack", () => {
+    expect(fuenteDelJuego).toMatch(
+      /"torre\.regreso",[\s\S]{0,400}if \(!this\.instructor\.vozDe\(suya, conQue\)\)/,
+    );
   });
 });

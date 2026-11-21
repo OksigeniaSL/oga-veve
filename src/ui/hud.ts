@@ -4959,8 +4959,8 @@ export class Hud {
     /**
      * Y «rodar» son los destellos verdes, «autorizado para rodaje»: la de quien
      * remonta la pista antes de despegar (H41h). Verde, con la flecha de
-     * seguir, y parpadeando; sin frase, que lo que se dice va por la radio.
-     * Ver `flight/luz-de-la-salida.ts`.
+     * seguir, y parpadeando; con su orden escrita, «regreso por pista 34»
+     * (H41i), donde se lee. Ver `flight/luz-de-la-salida.ts`.
      */
     luz: "verde" | "roja" | "rodar" | null,
     /**
@@ -4989,7 +4989,8 @@ export class Hud {
     /**
      * Y la pista de la roja del punto de espera, como está pintada: «mantenga
      * fuera de pista 20». Va detrás de la orden y no con la matrícula, porque
-     * en la roja se nombra ahí; vacía donde el idioma no la dice.
+     * en la roja se nombra ahí; vacía donde el idioma no la dice. Y la de los
+     * destellos, igual: «regreso por pista 34».
      */
     pista = "",
     /**
@@ -5046,6 +5047,15 @@ export class Hud {
               ) as TranslationKey,
               { indicativo },
             )
+          : luz === "rodar"
+            ? [
+                t(comoSeDiceAqui("torre.regreso", this.habla) as TranslationKey, {
+                  indicativo,
+                }),
+                pista,
+              ]
+                .filter(Boolean)
+                .join(" ")
           : luz === "roja" && rojaDice === "alAire"
             ? t(comoSeDiceAqui("torre.alAire", this.habla) as TranslationKey, {
                 indicativo,

@@ -50,6 +50,7 @@
  */
 
 import type { FlightState } from "./model";
+import { LoRemontado } from "./lo-remontado";
 
 export type Fase =
   | "estacionado"
@@ -214,12 +215,6 @@ const MARGEN_DE_PARADA = 1.4;
  * cuatro años, que es quien va a estar mirando.
  */
 const REACCION = 3;
-
-/**
- * Lo que se puede ir hacia la cabecera por la pista y seguir siendo entrar y
- * alinearse, m: más es haber remontado, aunque sea poco. Ver `vigilarElRemonte`.
- */
-const SIN_REMONTAR = 30;
 
 /**
  * Derecho en el eje de la pista y mirando hacia donde se despega: a menos de
@@ -475,8 +470,8 @@ export class Vuelo {
   private avisadoDeLaLuz = false;
   /** Ya se vio empezar la carrera sin remontar. Ver `vigilarElRemonte`. */
   private remonteSaltado = false;
-  /** Dónde se pisó la pista, m del eje, y lo más atrás que se fue. Ver `vigilarElRemonte`. */
-  private pistaPisada: { entra: number; masAtras: number } | null = null;
+  /** Lo remontado desde que se pisó la pista. Ver `vigilarElRemonte`. */
+  private readonly loRemontado = new LoRemontado();
   /** Ha usado un permiso. Entrar en pista después de eso no es saltarse nada. */
   private uso = false;
 
@@ -565,7 +560,7 @@ export class Vuelo {
     this.enElAire = 0;
     this.avisadoDeLaLuz = false;
     this.remonteSaltado = false;
-    this.pistaPisada = null;
+    this.loRemontado.olvidar();
     // Y a «todavía no se ha mirado», que es lo que hace que empezar dentro de
     // la pista no cuente como haber entrado. Ver `vigilarLaLuz`.
     this.estabaEnPista = null;
@@ -1093,22 +1088,19 @@ export class Vuelo {
    * `decirQueNoSeRemonto` en `game.ts`.
    */
   private vigilarElRemonte(s: Situacion): "basta" | "noBasta" | null {
-    if (!s.enPista) {
-      this.pistaPisada = null;
-      return null;
-    }
     // Dónde se pisó la pista y lo más hacia la cabecera que se ha ido desde ahí.
-    const pisada = this.pistaPisada ?? { entra: s.alLargoDePista, masAtras: s.alLargoDePista };
-    pisada.masAtras = Math.min(pisada.masAtras, s.alLargoDePista);
-    this.pistaPisada = pisada;
+    this.loRemontado.mirar(s.enPista, s.alLargoDePista);
+    if (!s.enPista) return null;
     if (this.remonteSaltado || !this.pisa || !s.backTaxi) return null;
     if (!alineadoEnLaPista(s) || s.estado.airspeed < YA_ES_RODAJE) return null;
     /*
      * Y solo si no se fue hacia la cabecera: quien remontó y dio la vuelta un
      * poco antes del lazo dibujado sí hizo lo que dijo la torre, y la bandera
-     * sigue puesta hasta llegar a él. Ver `giroDelBackTaxi` en `plan-de-vuelo.ts`.
+     * del remonte se le baja en cuanto mira pista abajo (H41i). Es la
+     * misma regla que la baja: ver `flight/lo-remontado.ts` y `situacion` en
+     * `plan-de-vuelo.ts`.
      */
-    if (pisada.entra - pisada.masAtras > SIN_REMONTAR) return null;
+    if (this.loRemontado.remonto) return null;
     this.remonteSaltado = true;
     return s.pistaRestante >= s.pistaQueNecesita ? "basta" : "noBasta";
   }

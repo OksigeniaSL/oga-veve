@@ -89,6 +89,15 @@ const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
 /*
+ * Y solo los destellos, para mirarlos sin pasar por todo lo demás:
+ * `OGA_SOLO=destellos`. Ver `mirarLosDestellos`.
+ */
+if (process.env.OGA_SOLO === "destellos") {
+  await mirarLosDestellos();
+  await acabar();
+}
+
+/*
  * **Lo más largo que lleva la tarjeta de la orden**, sacado del código y no
  * escrito aquí: todo rótulo que el juego le pasa (`rotulo` y `claveDelAviso`
  * en `game.ts`), buscado en el castellano del juego. H28e la medía con la que
@@ -3821,13 +3830,214 @@ for (const [ancho, alto] of [[915, 412], [800, 360], [960, 540], [565, 641], [40
   }
 }
 
-for (const r of resultados) {
-  console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
-  if (!r.ok && r.porque) console.log(`      ${r.porque}`);
-}
-const bien = resultados.filter((r) => r.ok).length;
-console.log(`\n  ${bien} de ${resultados.length} comprobaciones`);
+await mirarLosDestellos();
+await acabar();
 
-await navegador.close();
-await server.close();
-process.exit(bien === resultados.length ? 0 : 1);
+/** Lo que salió, y cerrar. */
+async function acabar() {
+  for (const r of resultados) {
+    console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
+    if (!r.ok && r.porque) console.log(`      ${r.porque}`);
+  }
+  const bien = resultados.filter((r) => r.ok).length;
+  console.log(`\n  ${bien} de ${resultados.length} comprobaciones`);
+
+  await navegador.close();
+  await server.close();
+  process.exit(bien === resultados.length ? 0 : 1);
+}
+
+/**
+ * **La lámpara a destellos de quien remonta, vista** (H41i).
+ *
+ * Los destellos verdes —«autorizado para rodaje», SERA, apéndice 1, tabla AP
+ * 1-1— llegaron en la H41h y nadie los había mirado en una pantalla. Se
+ * encienden con la luz del juego (`luzDeTorre`, con la torre al mando para
+ * que el paso de cada fotograma no la apague) en El Hierro con el JAZ 40, en
+ * el peldaño de los pequeños y en Taguató, en una tablet y un teléfono
+ * apaisados y de pie, y con el movimiento reducido. Se mira:
+ *
+ * - que se vea y que no tape la tarjeta de la orden ni los dibujos del
+ *   rincón, como la verde y la roja;
+ * - que **se distinga de la verde fija**: con movimiento, encendida y
+ *   apagada de golpe —se mira el color de la luz en varios instantes— y no
+ *   respirando como la fija; sin movimiento, quieta y con su aro a trazos;
+ * - y que en el peldaño de los pequeños **no salga ni una palabra**: ni la
+ *   orden de la caja ni nada escrito en la lámpara que no esté en la verde.
+ *
+ * Con `OGA_FOTOS`, la pantalla entera con los destellos y con la verde, y la
+ * lámpara de cerca, encendida y apagada.
+ */
+async function mirarLosDestellos() {
+  for (const tramo of ["guyrami", "taguato"])
+    for (const [ancho, alto, dedo, quieto] of [
+      [1024, 600, "dedo"],
+      [800, 360, "dedo"],
+      [400, 780, "dedo"],
+      [400, 780],
+      [1024, 600, "dedo", "quieto"],
+      [800, 360, "dedo", "quieto"],
+      [400, 780, undefined, "quieto"],
+    ]) {
+      const page = await navegador.newPage({
+        viewport: { width: ancho, height: alto },
+        hasTouch: !!dedo,
+        isMobile: !!dedo,
+        reducedMotion: quieto ? "reduce" : "no-preference",
+      });
+      const nombre = `${ancho}x${alto}${dedo ? "-dedo" : ""}${quieto ? "-quieto" : ""}`;
+      const donde = `destellos, ${tramo} ${ancho}×${alto}${dedo ? " con el dedo" : ""}${quieto ? " y sin movimiento" : ""}`;
+      try {
+        await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
+        await page.goto(
+          `${BASE}/?escenario=el-hierro&hora=12&leccion=despegue&tramo=${tramo}&avion=jaz-40&meteo=`,
+        );
+        await page.waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 90000 });
+        await page.waitForTimeout(1500);
+        // De pie con el dedo no se vuela: lo único que tiene que haber es el cartel de girar.
+        const gira = await page.evaluate(() => {
+          const g = document.querySelector('[data-hud="gira"]');
+          if (!g || g.closest("[hidden]")) return false;
+          const cs = getComputedStyle(g);
+          return (
+            cs.display !== "none" &&
+            cs.visibility !== "hidden" &&
+            g.getBoundingClientRect().width >= innerWidth - 2
+          );
+        });
+        if (gira) {
+          comprobar(
+            `${donde}: de pie con el dedo, el cartel de girar tapa el vuelo`,
+            true,
+            "la lámpara queda debajo, y no se mira",
+            "",
+          );
+          if (process.env.OGA_FOTOS)
+            await page.screenshot({ path: `${process.env.OGA_FOTOS}/destellos-${tramo}-${nombre}.png` });
+          continue;
+        }
+        const poner = (luz) =>
+          page.evaluate((l) => {
+            const juego = globalThis.__oga?.juegoParaTrazas?.();
+            if (!juego) return false;
+            juego.laTorreMandaEnLaLuz = true;
+            juego.ultimaLuzDeTorre = null;
+            juego.luzDeTorre(l);
+            return true;
+          }, luz);
+        const medir = () =>
+          page.evaluate(async () => {
+            const caja = document.querySelector('[data-hud="torre"]');
+            const bombilla = document.querySelector('[data-hud="torre-luz"]');
+            const texto = document.querySelector('[data-hud="torre-texto"]');
+            if (!caja || !bombilla || !texto || caja.hidden) return null;
+            const c = caja.getBoundingClientRect();
+            const b = bombilla.getBoundingClientRect();
+            const antes = caja.style.pointerEvents;
+            caja.style.pointerEvents = "auto";
+            const punto = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+            caja.style.pointerEvents = antes;
+            const tapa = ["senal", "pictos"].filter((q) => {
+              const o = document.querySelector(`[data-hud="${q}"]`);
+              if (!o || o.closest("[hidden]")) return false;
+              const r = o.getBoundingClientRect();
+              return (
+                Math.min(c.right, r.right) - Math.max(c.left, r.left) > 1 &&
+                Math.min(c.bottom, r.bottom) - Math.max(c.top, r.top) > 1
+              );
+            });
+            // El color de la luz en varios instantes: los destellos van de 0,9 s.
+            const colores = [];
+            for (let i = 0; i < 4; i++) {
+              colores.push(getComputedStyle(bombilla).backgroundColor);
+              await new Promise((r) => setTimeout(r, 230));
+            }
+            const cs = getComputedStyle(bombilla);
+            return {
+              clases: caja.className,
+              seVe: !!punto && caja.contains(punto),
+              dentro: c.left >= 0 && c.top >= 0 && c.right <= innerWidth && c.bottom <= innerHeight,
+              tapa,
+              orden: texto.innerText.trim(),
+              todo: caja.innerText.trim(),
+              animacion: cs.animationName,
+              aro: cs.outlineStyle,
+              colores: [...new Set(colores)],
+              caja: [Math.round(c.left), Math.round(c.top), Math.round(c.width), Math.round(c.height)],
+            };
+          });
+        const fotos = async (que, luz) => {
+          if (!process.env.OGA_FOTOS || !luz) return;
+          await page.screenshot({ path: `${process.env.OGA_FOTOS}/destellos-${tramo}-${nombre}-${que}.png` });
+          const [x, y, w, h] = luz.caja;
+          const x0 = Math.max(0, x - 12);
+          const y0 = Math.max(0, y - 12);
+          const clip = {
+            x: x0,
+            y: y0,
+            width: Math.min(ancho - x0, w + 24),
+            height: Math.min(alto - y0, h + 24),
+          };
+          const ruta = `${process.env.OGA_FOTOS}/destellos-${tramo}-${nombre}-${que}-cerca`;
+          if (que !== "rodar" || quieto) {
+            await page.screenshot({ path: `${ruta}.png`, clip });
+            return;
+          }
+          // Encendida y apagada: medio periodo entre las dos.
+          await page.screenshot({ path: `${ruta}-a.png`, clip });
+          await page.waitForTimeout(450);
+          await page.screenshot({ path: `${ruta}-b.png`, clip });
+        };
+        if (!(await poner("verde"))) throw new Error("sin juego para trazas");
+        await page.waitForTimeout(600);
+        const verde = await medir();
+        await fotos("verde", verde);
+        await poner("rodar");
+        await page.waitForTimeout(600);
+        const rodar = await medir();
+        await fotos("rodar", rodar);
+        if (!rodar || !verde) {
+          comprobar(`${donde}: la lámpara se enciende`, false, `verde ${!!verde}, destellos ${!!rodar}`, "");
+          continue;
+        }
+        comprobar(
+          `${donde}: los destellos se ven, dentro de la pantalla y sin tapar la orden ni los dibujos`,
+          /torre--destellos/.test(rodar.clases) && rodar.seVe && rodar.dentro && !rodar.tapa.length,
+          `${rodar.seVe ? "se ve" : "debajo de algo"} · ${rodar.dentro ? "dentro" : "se sale"} · ` +
+            `${rodar.tapa.length ? `tapa ${rodar.tapa.join(", ")}` : "no tapa nada"} · caja ${rodar.caja.join(",")}`,
+          "la lámpara es seguridad: se enciende sola, y si queda debajo de algo el juego habla y no enseña",
+        );
+        const distinta = quieto
+          ? rodar.aro === "dashed" && verde.aro !== "dashed" && rodar.colores.length === 1
+          : rodar.animacion === "torre-destellos" &&
+            verde.animacion !== rodar.animacion &&
+            rodar.colores.length > 1;
+        comprobar(
+          `${donde}: los destellos no son la verde fija`,
+          distinta,
+          quieto
+            ? `aro ${rodar.aro} frente a ${verde.aro}; color ${rodar.colores.join(" / ")}`
+            : `${rodar.animacion} frente a ${verde.animacion}; colores ${rodar.colores.join(" / ")}`,
+          "la verde fija es autorizado a despegar y los destellos, a rodar: si se confunden, se enseña lo que no es",
+        );
+        if (tramo === "guyrami")
+          comprobar(
+            `${donde}: en el peldaño de los pequeños no sale ni una palabra`,
+            rodar.orden === "" && rodar.todo === verde.todo,
+            `orden «${rodar.orden}»; en la caja «${rodar.todo}», con la verde «${verde.todo}»`,
+            "empiezan a los cuatro años y no leen: un cartel de texto es un cartel en blanco",
+          );
+        else
+          comprobar(
+            `${donde}: con letras, la orden de los destellos escrita, con su pista`,
+            /regreso por pista \d/.test(rodar.orden),
+            `«${rodar.orden}»; con la verde «${verde.orden}»`,
+            "un color solo no es información: quien no distinga la verde fija de la que destella tiene que poder leerlo",
+          );
+      } catch (e) {
+        comprobar(`${donde}: se mira`, false, String(e).slice(0, 200), "");
+      } finally {
+        await page.close();
+      }
+    }
+}

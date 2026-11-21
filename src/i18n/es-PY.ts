@@ -445,6 +445,15 @@ export const ES_PY = {
    * matrícula: así cada idioma dice lo suyo sin un hueco más que llenar.
    */
   "torre.roja": "{indicativo}, mantenga fuera de pista",
+  /*
+   * **Y los destellos verdes de quien remonta** (H41i): la torre le deja
+   * rodar la pista hacia atrás antes de despegar, «regreso por pista
+   * (número)» —«backtrack runway (number)»—. Igual, letra por letra, en las
+   * dos fuentes y en la edición en español del Doc 4444: DINAC R 4444,
+   * 12.3.4.7 p, y RD 1180/2018, anexo V, 1.4.8 p. El número va detrás, como
+   * en la roja; lo pone `luzDeTorre`. Ver `flight/luz-de-la-salida.ts`.
+   */
+  "torre.regreso": "{indicativo}, regreso por pista",
   /* Y la verde a un avión **en el aire**, que en las señales de luz de verdad
      quiere decir otra cosa: autorizado para aterrizar. Con «para», que es
      como lo escriben las tres fuentes (Doc 4444 y DINAC R 4444, 12.3.4.16;
@@ -538,6 +547,7 @@ export const ES_PY = {
   "torre.canario.afisTraficoDespega": "{indicativo}, tráfico despegando",
   "torre.canario.verde": "{indicativo}, autorizado a despegar",
   "torre.canario.roja": "{indicativo}, mantenga fuera de pista",
+  "torre.canario.regreso": "{indicativo}, regreso por pista",
   "torre.canario.aterrizar": "{indicativo}, autorizado para aterrizar",
   // En España no es «ida al aire»: «motor y al aire» (RD 1180/2018, 1.4.19).
   "torre.canario.alAire": "{indicativo}, motor y al aire",
