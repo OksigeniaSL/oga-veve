@@ -286,6 +286,14 @@ export interface Aerodrome {
   readonly parkingPositions?: readonly {
     readonly ref: string | null;
     readonly xy: Punto;
+    /**
+     * **La línea de entrada pintada**, de fuera hacia la parada: el último punto es
+     * `xy`. Es la raya sobre la que se aparca, con el morro a la pasarela, y manda
+     * sobre la ruta para poner el avión en el puesto (H60, `rumboEnElPuesto`). Solo
+     * en los puestos que la tienen en OpenStreetMap. Ver `entradasDeOsm` en
+     * `scripts/puestos-de-osm.mjs`.
+     */
+    readonly entrada?: readonly Punto[];
   }[];
   /**
    * Las ayudas **visuales** de OpenStreetMap: PAPI, VASI, luces de aproximación.

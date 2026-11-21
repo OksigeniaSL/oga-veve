@@ -32,7 +32,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { puestosDeOsm, puestosSinCopias } from "./puestos-de-osm.mjs";
+import { entradasDeOsm, puestosDeOsm, puestosSinCopias } from "./puestos-de-osm.mjs";
 
 const OVERPASS =
   process.env.OVERPASS ?? "https://overpass-api.de/api/interpreter";
@@ -966,7 +966,7 @@ async function construir(icao, pistas, aeropuertos) {
      * elemento, que en una línea de entrada es la mitad del camino desde la
      * calle. Ver `puestos-de-osm.mjs`.
      */
-    parkingPositions: puestosDeOsm(elementos, proj),
+    parkingPositions: entradasDeOsm(elementos, proj, puestosDeOsm(elementos, proj)),
     holdingPositions: puntosDeEspera(de("holding_position"), proj),
     windsocks: de("windsock")
       .map((n) => centro(n))
