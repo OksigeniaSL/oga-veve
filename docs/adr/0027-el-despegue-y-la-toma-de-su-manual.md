@@ -8622,3 +8622,24 @@ g, el JAZ 120 entre 0,7 y 1,32, y el avisador callado—; y el gas: el de cada
 uno, el del JAZ 50 dando sus 1.600 ft/min, y en los JAZ 40, 50 y 60, con
 catorce nudos de más, el suyo subiendo a más de 5 m/s a la pedida o por
 encima, y el de antes del banco subiendo menos de la mitad.
+
+### En el navegador, y lo que queda
+
+El banco del JAZ 40 en Los Rodeos con la pista ocupada a propósito
+(`tenerife-norte taguato 1 jaz-40`, `OGA_PISTA_OCUPADA=1`) da 58 de 58, y el
+avisador de pérdida no suena ni una vez; con la ley de antes había sonado 33
+veces. En los tres enganches la palanca es continua: en el de después de la
+frustrada pasa de −0,076 a −0,077, y la memoria del automático coge la que
+llevaba. En los diez segundos siguientes el morro gira como mucho 5,3–5,9°/s y
+el ala queda a 4,8° del avisador como poco; antes, 20,5°/s y 1,79 g. La carga
+de esos diez segundos va de 0,61 a 1,31 g con la racha de Taguató, sin separar
+cuánto es racha y cuánto automático. El vitest entero, con el código de esta
+enmienda: 570 ficheros y 11.353 pruebas en verde.
+
+Sin volar en el navegador con el gas nuevo: el JAZ 20 y el JAZ 50 —la
+frustrada nueva de la avioneta tampoco—, el JAZ 60 y las etapas de ruta y
+crucero del banco en las tres de hélice del modelo completo. Y en el juego
+sigue entrando `timonAhora`, el timón promediado en dos segundos, con su porqué
+en `fdm.ts`: quien tira para frenar y suelta justo al enganchar le da al
+automático un timón que ya no lleva. El embrague acota ese tirón, pero no quita
+el salto del primer fotograma.
