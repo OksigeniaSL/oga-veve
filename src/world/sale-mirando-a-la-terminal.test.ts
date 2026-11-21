@@ -27,8 +27,9 @@ import { vientoDeCasa } from "./meteo";
 import {
   comoMiraALaTerminal,
   edificiosDePasarela,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
   paredMasCercana,
-  rumboEnElPuesto,
   saleConRemolque,
 } from "./remolque";
 import { AIRCRAFT } from "../flight/aircraft";
@@ -53,8 +54,10 @@ describe("el JAZ 90 sale de Los Rodeos mirando a la terminal", async () => {
     const [x, z] = plan.arranque()!;
     const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
     expect(saleConRemolque(vaALaPasarela(jaz90), x, z, terminal, morro)).toBe(true);
-    const rumbo = rumboEnElPuesto(x, z, terminal, raya)!;
-    const centro = conLaRuedaEn({ x, z }, rumbo, morro);
+    // Sobre su raya pintada, si sale bien por ella (H60b): ver `empujeDesdeElPuesto`.
+    const { rumbo, centro } = empujeDesdeElPuesto({ x, z }, terminal, raya, entradaDelPuesto(aero, x, z), jaz90.batalla, (r) =>
+      conLaRuedaEn({ x, z }, r, morro),
+    )!;
     return { pista: campo.runway.heading, x, z, rumbo, centro };
   }
 

@@ -249,9 +249,17 @@ export function rumboEnElPuesto(
   z: number,
   edificios: Edificios,
   raya: readonly PuntoXZ[],
+  /**
+   * **La línea de entrada pintada**, si el puesto la tiene (H60b): de fuera hacia la
+   * parada, acabando en el puesto. Manda sobre la raya del plan, que va hacia donde va
+   * la calle y no hacia donde está pintado el puesto. Ver `entradaDelPuesto`.
+   */
+  entrada?: readonly PuntoXZ[] | null,
 ): number | null {
   const alEdificio = rumboAlEdificio(x, z, edificios);
   if (alEdificio === null) return null;
+  const pintada = entrada ? rumboDeLaEntrada(x, z, entrada) : null;
+  if (pintada !== null && Math.abs(diferencia(alEdificio, pintada)) < SALE_DE_LADO) return pintada;
   let lejos: PuntoXZ | null = null;
   for (const p of raya) {
     if (Math.hypot(p.x - x, p.z - z) > 15) {
@@ -262,6 +270,199 @@ export function rumboEnElPuesto(
   if (!lejos) return alEdificio;
   const porLaRaya = rumboEntre(lejos, { x, z });
   return Math.abs(diferencia(alEdificio, porLaRaya)) < 50 * GRADO ? normalizar(porLaRaya) : alEdificio;
+}
+
+/**
+ * **La línea de entrada pintada del puesto que hay en `x`, `z`**, en los ejes del mundo y
+ * de fuera hacia la parada, o `null` si no la tiene (H60, H60b). El puesto, el de la
+ * ficha más cercano a menos de cinco metros, que es lo que se le deja a quien juega para
+ * pararse en él (`prepararElRemolque` en `game.ts`).
+ */
+export function entradaDelPuesto(
+  aero: Pick<Aerodrome, "parkingPositions"> | null | undefined,
+  x: number,
+  z: number,
+): readonly PuntoXZ[] | null {
+  let mejor: { readonly entrada?: readonly Punto[] } | null = null;
+  let cerca = 5;
+  for (const p of aero?.parkingPositions ?? []) {
+    const d = Math.hypot(p.xy[0] - x, -p.xy[1] - z);
+    if (d < cerca) {
+      cerca = d;
+      mejor = p;
+    }
+  }
+  const e = mejor?.entrada;
+  return e && e.length >= 2 ? e.map(([a, b]) => ({ x: a, z: -b })) : null;
+}
+
+/**
+ * **Hacia dónde va la raya pintada al llegar a la parada**: el rumbo de sus últimos quince
+ * metros, como la lee el señalero y como la sigue quien entra. Una curva de entrada que
+ * viene de la calle no cuenta: lo que manda es el tramo que acaba en el puesto.
+ */
+function rumboDeLaEntrada(x: number, z: number, entrada: readonly PuntoXZ[]): number | null {
+  let lejos: PuntoXZ | null = null;
+  for (let i = entrada.length - 2; i >= 0; i--) {
+    lejos = entrada[i]!;
+    if (Math.hypot(lejos.x - x, lejos.z - z) > 15) break;
+  }
+  if (!lejos || Math.hypot(lejos.x - x, lejos.z - z) < 3) return null;
+  return normalizar(rumboEntre(lejos, { x, z }));
+}
+
+/**
+ * **Lo que sigue el tractor desde un puesto en el que el avión está sobre su raya pintada**
+ * (H60b): de espaldas por la prolongación de la línea de entrada —la de retroceso, que es
+ * la misma recta— hasta donde se encuentra con la raya del plan, y desde ahí la raya. Es el
+ * primer punto de la raya, pasados cinco metros del puesto, que cae en el eje del avión
+ * por detrás de él, a menos de `SIGUE_LA_RAYA`. `null` si la prolongación no la encuentra:
+ * la línea de entrada lleva a una calle por la que el plan no va.
+ */
+function rayaDeRetroceso(puesto: PuntoXZ, rumbo: number, raya: readonly PuntoXZ[]): PuntoXZ[] | null {
+  const atras = vector(rumbo + Math.PI);
+  const t = (q: PuntoXZ) => (q.x - puesto.x) * atras.x + (q.z - puesto.z) * atras.z;
+  const lado = (q: PuntoXZ) => cruz(atras, { x: q.x - puesto.x, z: q.z - puesto.z });
+  let andado = 0;
+  for (let i = 1; i < raya.length; i++) {
+    const a = raya[i - 1]!;
+    const b = raya[i]!;
+    const l = Math.hypot(b.x - a.x, b.z - a.z);
+    const n = Math.max(1, Math.ceil(l));
+    for (let k = 1; k <= n; k++) {
+      const s = andado + (l * k) / n;
+      if (s < 5) continue;
+      const p = { x: a.x + ((b.x - a.x) * (k - 1)) / n, z: a.z + ((b.z - a.z) * (k - 1)) / n };
+      const q = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
+      const lp = lado(p);
+      const lq = lado(q);
+      if (Math.abs(lq) > 0.5 && Math.sign(lp) === Math.sign(lq)) continue;
+      // Donde cruza el eje: entre `p` y `q`, por la parte que le toca a cada uno.
+      const f = Math.abs(lp - lq) > 1e-9 ? Math.max(0, Math.min(1, lp / (lp - lq))) : 1;
+      const x = { x: p.x + (q.x - p.x) * f, z: p.z + (q.z - p.z) * f };
+      const hasta = t(x);
+      if (hasta <= 0) continue;
+      if (hasta > SIGUE_LA_RAYA) return null;
+      const enElEje = { x: puesto.x + atras.x * hasta, z: puesto.z + atras.z * hasta };
+      return [{ ...puesto }, enElEje, ...raya.slice(i).filter((r) => Math.hypot(r.x - enElEje.x, r.z - enElEje.z) > 0.5)];
+    }
+    andado += l;
+  }
+  return null;
+}
+
+/**
+ * **Si el empuje deja el avión sobre la raya y mirando por ella**: de la raya por delante
+ * del morro, hasta ciento cincuenta metros, algún sitio en su eje —a menos de tres metros—
+ * desde el que la raya va a menos de cinco grados del morro en sus quince metros
+ * siguientes. Es lo que se le pide al tractor: que la tripulación arranque recto (H47b), y
+ * con lo que se elige si el avión se aparca sobre su raya pintada (`empujeDesdeElPuesto`).
+ */
+export function quedaSobreLaRaya(fin: Pose, raya: readonly PuntoXZ[]): boolean {
+  const n = vector(fin.rumbo);
+  const acum: number[] = [0];
+  for (let i = 1; i < raya.length; i++) acum.push(acum[i - 1]! + Math.hypot(raya[i]!.x - raya[i - 1]!.x, raya[i]!.z - raya[i - 1]!.z));
+  const total = acum.at(-1)!;
+  const aLos = (s: number): PuntoXZ => {
+    const d = Math.max(0, Math.min(total, s));
+    let i = 1;
+    while (i < raya.length - 1 && acum[i]! < d) i++;
+    const a = raya[i - 1]!;
+    const b = raya[i]!;
+    const k = (d - acum[i - 1]!) / (acum[i]! - acum[i - 1]! || 1);
+    return { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k };
+  };
+  for (let s = 0; s <= Math.min(total, 600); s += 1) {
+    const q = aLos(s);
+    const delante = (q.x - fin.x) * n.x + (q.z - fin.z) * n.z;
+    if (delante < 0 || delante > 150) continue;
+    if (Math.abs((q.x - fin.x) * -n.z + (q.z - fin.z) * n.x) >= 3) continue;
+    if (Math.abs(diferencia(fin.rumbo, rumboEntre(q, aLos(s + 15))))< 5 * GRADO) return true;
+  }
+  return false;
+}
+
+/**
+ * **Cómo queda el avión en el puesto y por dónde lo saca el tractor** (H60b): sobre su raya
+ * pintada, si el puesto la tiene, y de espaldas por ella hasta la raya del plan; y si no,
+ * como antes, con el morro al edificio y la cola por la raya del plan.
+ *
+ * En un aeropuerto de verdad el avión aparca sobre su línea de entrada, y el tractor lo
+ * empuja de espaldas por esa misma recta —la línea de retroceso, que es su prolongación—
+ * hasta la calle, donde lo gira para que salga mirando por ella. La raya del plan sale del
+ * puesto por el grafo, y no por la línea de entrada: con el avión en la pintada y el empuje
+ * siguiendo la del plan, el avión acababa atravesado (H60). Así que el tractor va por la
+ * recta de la pintada hasta donde se encuentra con la del plan (`rayaDeRetroceso`), y desde
+ * ahí la sigue con el giro de siempre (`trayectoriaDelEmpuje`).
+ *
+ * **Y la pintada se queda solo si así el avión acaba en la calle** (`quedaSobreLaRaya`).
+ * Hay líneas de entrada que llegan de una calle por la que el plan no va —el 13 de Los
+ * Rodeos por la 30 viene de la plataforma del sur y el plan sale hacia el norte—, y con
+ * ellas el tractor no tiene por dónde llegar a la raya del plan sin cruzar la plataforma.
+ * Ahí el avión se pone como antes. Lo correcto de verdad sería que la raya del plan saliera
+ * por la línea de entrada; eso es del rodaje, y no está hecho.
+ *
+ * **El tráfico, siempre sobre la pintada** (`siempreLaPintada`): entra por ella
+ * (`alPuestoPorSuRaya` en `suelo-del-trafico.ts`) sin saber todavía por dónde saldrá, y de
+ * donde aparcó sale. Su empuje es el corto, que no acaba en la calle sino a medio largo de
+ * avión, y lo demás lo rueda (`empujado`); si la prolongación de la pintada no encuentra su
+ * raya, el tractor sigue la del camino desde el avión sobre la pintada.
+ *
+ * `centroCon` da el centro del avión con la rueda de morro en el puesto y ese rumbo.
+ */
+export function empujeDesdeElPuesto(
+  puesto: PuntoXZ,
+  edificios: Edificios,
+  raya: readonly PuntoXZ[],
+  entrada: readonly PuntoXZ[] | null | undefined,
+  batalla: number,
+  centroCon: (rumbo: number) => PuntoXZ,
+  {
+    porLaPlataforma = true,
+    siempreLaPintada = false,
+  }: { readonly porLaPlataforma?: boolean; readonly siempreLaPintada?: boolean } = {},
+): {
+  readonly rumbo: number;
+  readonly centro: PuntoXZ;
+  readonly empuje: Empuje | null;
+  /** Si el avión está sobre su raya pintada. */
+  readonly porLaPintada: boolean;
+  /** El rumbo que tendría sin ella, con el morro al edificio y la cola por la raya del plan. */
+  readonly porLaRuta: number;
+  /** El de la raya pintada, si la tiene y mira al edificio, se use o no. */
+  readonly pintada: number | null;
+  /**
+   * Si la tiene y no se usa, por qué: su prolongación no encuentra la raya del plan, o la
+   * encuentra y el empuje no acaba sobre ella. Para el barrido.
+   */
+  readonly porQueNo: "no-la-encuentra" | "no-acaba-en-ella" | null;
+} | null {
+  const porLaRuta = rumboEnElPuesto(puesto.x, puesto.z, edificios, raya);
+  if (porLaRuta === null) return null;
+  const opciones = { porLaPlataforma };
+  const alEdificio = rumboAlEdificio(puesto.x, puesto.z, edificios);
+  const deLaEntrada = entrada ? rumboDeLaEntrada(puesto.x, puesto.z, entrada) : null;
+  const pintada =
+    deLaEntrada !== null && alEdificio !== null && Math.abs(diferencia(alEdificio, deLaEntrada)) < SALE_DE_LADO ? deLaEntrada : null;
+  let porQueNo: "no-la-encuentra" | "no-acaba-en-ella" | null = null;
+  if (pintada !== null) {
+    const retroceso = rayaDeRetroceso(puesto, pintada, raya);
+    const centro = centroCon(pintada);
+    const empuje = trayectoriaDelEmpuje({ ...centro, rumbo: pintada }, retroceso ?? raya, batalla, opciones);
+    if (siempreLaPintada || (retroceso && empuje && quedaSobreLaRaya(empuje.poses.at(-1)!, raya)))
+      return { rumbo: pintada, centro, empuje, porLaPintada: true, porLaRuta, pintada, porQueNo };
+    porQueNo = retroceso ? "no-acaba-en-ella" : "no-la-encuentra";
+  }
+  const centro = centroCon(porLaRuta);
+  return {
+    rumbo: porLaRuta,
+    centro,
+    empuje: trayectoriaDelEmpuje({ ...centro, rumbo: porLaRuta }, raya, batalla, opciones),
+    porLaPintada: false,
+    porLaRuta,
+    pintada,
+    porQueNo,
+  };
 }
 
 // ── Por dónde va el empuje ───────────────────────────────────────────────

@@ -13,7 +13,8 @@
  * Con el JAZ 90 en su puesto, el 24, el reactor se va al 17 y empuja enseguida; sin
  * nadie, al 24, también. El banco pone ahora el JAZ 90, y esto mira las tres cosas con
  * la cuenta de tráfico de verdad: lo que el banco espera ver, y por qué con el JAZ 20
- * no lo veía.
+ * no lo veía. Desde la H60b el reactor aparca en el 23 sobre su raya pintada, y su
+ * empuje ya no barre el sitio del JAZ 20: con él aparcado, también empuja.
  */
 import { describe, expect, it } from "vitest";
 import { sinTorre, type Aerodrome } from "./aerodrome";
@@ -100,9 +101,16 @@ describe("el reactor del tráfico de Los Rodeos, con quien juega en su puesto", 
     expect(tractorDe(null, 60).tractor).not.toBeNull();
   });
 
-  it("y con el JAZ 20 aparcado en lo que barre el empuje del 23, espera a que ruede", () => {
+  /*
+   * **Y con el JAZ 20 aparcado junto al 23, ya no espera** (H60b): el reactor aparca en el 23
+   * sobre su raya pintada, a 47° y no a los 78° de su camino, y el tractor lo saca de
+   * espaldas hacia el suroeste; lo que barre ya no llega al sitio del JAZ 20, que le queda al
+   * noroeste. Con el rumbo del camino lo barría, y esperaba a que rodara (H51). Que el
+   * tractor espere cuando lo que barre alcanza a alguien lo mira `trafico-empujado.test.ts`.
+   */
+  it("y con el JAZ 20 aparcado junto al 23, empuja: sobre su raya pintada no barre su sitio", () => {
     const r = tractorDe("jaz-20", 60);
     expect(r.puesto?.x).toBeCloseTo(-596, 0);
-    expect(r.tractor).toBeNull();
+    expect(r.tractor, "el tractor sale").not.toBeNull();
   });
 });

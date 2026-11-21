@@ -249,7 +249,12 @@ try {
       if (!motor) fallos.push(t("la tarjeta de la llave no arranca empujando"));
     } else {
       // Al final: el tractor tiene que esperar, enganchado y frenado.
-      if (!(await esperar(page, () => globalThis.__oga.inicio().remolque?.fase === "frenado", null, 180)))
+      /*
+       * Lo que tarda de verdad el empuje, a paso de persona, y no un tope fijo: desde que el
+       * avión aparca sobre su raya pintada (H60b) el del 24 por la 12 son 167 m, y los tres
+       * minutos de antes eran 152 m y poco más. Un empuje largo que acaba bien no es un fallo.
+       */
+      if (!(await esperar(page, () => globalThis.__oga.inicio().remolque?.fase === "frenado", null, Math.max(180, 1.5 * (r0.medida?.largo ?? 0)))))
         fallos.push(t("no acaba de empujar"));
       await page.waitForTimeout(PRISA ? 4000 : 25000);
       const espera = await remolque(page);
@@ -263,7 +268,7 @@ try {
     }
 
     // ── 4. El pasador y el saludo ──
-    if (!(await esperar(page, () => globalThis.__oga.inicio().remolque?.fase === "saludando", null, 240)))
+    if (!(await esperar(page, () => globalThis.__oga.inicio().remolque?.fase === "saludando", null, Math.max(240, 1.5 * (r0.medida?.largo ?? 0) + 60))))
       fallos.push(t("no llega al saludo"));
     else {
       await page.waitForTimeout(PRISA ? 300 : 1500);

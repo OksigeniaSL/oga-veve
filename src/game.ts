@@ -1354,10 +1354,10 @@ import {
   largoPorLaBatalla,
   paredMasCercana,
   Remolque,
-  rumboEnElPuesto,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
   saleConRemolque,
   edificiosDePasarela,
-  trayectoriaDelEmpuje,
   vector,
   morroEnVilo,
   type Empuje,
@@ -23347,12 +23347,21 @@ export class Game {
     const edificios = edificiosDePasarela(aero);
     if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, morro)) return;
     const raya = this.rayaParaLaTripulacion();
-    const rumbo = rumboEnElPuesto(puesto[0], puesto[1], edificios, raya);
-    if (rumbo === null) return;
-    // Con el morro al edificio y la rueda de morro en el punto del puesto: el centro, por detrás.
-    const centro = conLaRuedaEn({ x: puesto[0], z: puesto[1] }, rumbo, morro);
-    const empuje = trayectoriaDelEmpuje({ x: centro.x, z: centro.z, rumbo }, raya, this.aircraft.batalla);
-    if (!empuje) return;
+    /*
+     * Sobre su raya pintada, si la tiene y el tractor puede sacarlo por ella hasta la del
+     * plan (H60b); y si no, con el morro al edificio. La rueda de morro, en el punto del
+     * puesto, y el centro por detrás. Ver `empujeDesdeElPuesto`.
+     */
+    const enElSuyo = empujeDesdeElPuesto(
+      { x: puesto[0], z: puesto[1] },
+      edificios,
+      raya,
+      entradaDelPuesto(aero, puesto[0], puesto[1]),
+      this.aircraft.batalla,
+      (r) => conLaRuedaEn({ x: puesto[0], z: puesto[1] }, r, morro),
+    );
+    if (!enElSuyo?.empuje) return;
+    const { rumbo, centro, empuje } = enElSuyo;
     this.posicionDelEmpuje.set(centro.x, this.terrain.sampleSurface(centro.x, centro.z) + this.aircraft.gearHeight, centro.z);
     this.flight.reset({ position: this.posicionDelEmpuje, heading: rumbo, airspeed: 0 });
     this.remolque = new Remolque(empuje, {

@@ -18,7 +18,8 @@ import {
   paredMasCercana,
   Remolque,
   rumboAlEdificio,
-  rumboEnElPuesto,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
   rumboEntre,
   saleConRemolque,
   trayectoriaDelEmpuje,
@@ -364,9 +365,10 @@ describe("en los puestos de verdad", () => {
     const edificios = aero.buildings ?? [];
     expect(saleConRemolque(esDeLinea(avion), x, z, edificios, morroDe(avion))).toBe(true);
     const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-    const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
-    const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
-    const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
+    // Como lo pone el juego: sobre su raya pintada si sale bien por ella (H60b).
+    const e = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), avion.batalla, (r) =>
+      conLaRuedaEn({ x, z }, r, morroDe(avion)),
+    )!.empuje!;
     expect(vaDeCulo(e.poses)).toBeLessThan(-0.95);
     // La pared a la que miraba, cada vez más lejos: la terminal se aleja hacia delante.
     const pared = paredMasCercana(x, z, edificios)!;
@@ -421,9 +423,10 @@ describe("en los puestos de verdad", () => {
       const [x, z] = plan.arranque()!;
       const edificios = edificiosDePasarela(aero);
       const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-      const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
-      const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
-      const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
+      // Como lo pone el juego: sobre su raya pintada si sale bien por ella (H60b).
+      const e = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), avion.batalla, (r) =>
+        conLaRuedaEn({ x, z }, r, morroDe(avion)),
+      )!.empuje!;
       const fin = e.poses.at(-1)!;
       // El cruce con la calle, por delante del morro y en su eje.
       const hastaElCruce = Math.hypot(e.cruce.x - fin.x, e.cruce.z - fin.z);

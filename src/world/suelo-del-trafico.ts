@@ -23,9 +23,10 @@
 import { enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
 import {
   edificiosDePasarela,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
   esPuestoDeContacto,
   rumboEnElPuesto,
-  trayectoriaDelEmpuje,
   vector,
   type Empuje,
 } from "./remolque";
@@ -644,7 +645,8 @@ export function sueloDelTrafico(
   const alPuestoPorSuRaya = (camino: EnElPlano[], pasarela: PasarelaDelTrafico): EnElPlano[] => {
     const fin = camino[camino.length - 1];
     if (!fin || camino.length < 3 || !enUnPuestoDeContacto(fin, pasarela)) return camino;
-    const rumbo = rumboEnElPuesto(fin.x, fin.z, edificios, [...camino].reverse());
+    // Por su raya pintada, si la tiene (H60b): es la que sigue quien entra.
+    const rumbo = rumboEnElPuesto(fin.x, fin.z, edificios, [...camino].reverse(), entradaDelPuesto(aero, fin.x, fin.z));
     if (rumbo === null) return camino;
     const v = vector(rumbo);
     const entra = { x: fin.x - v.x * EN_SU_RAYA, z: fin.z - v.z * EN_SU_RAYA };
@@ -671,8 +673,6 @@ export function sueloDelTrafico(
     let k = 1;
     while (k < camino.length - 1 && acum[k]! < s.espera) k++;
     const raya = camino.slice(0, k + 1);
-    const rumbo = rumboEnElPuesto(p0.x, p0.z, edificios, raya);
-    if (rumbo === null) return s;
     /*
      * **Sin el empuje largo por la plataforma** —ver `RECTA_DE_LA_PLATAFORMA` en
      * `remolque.ts`—: lo que reserva el camino todavía no espera a que quepa un
@@ -686,10 +686,16 @@ export function sueloDelTrafico(
      * Con la rueda de morro en el punto del puesto (#191) y el morro al edificio: el
      * centro, que es lo que se empuja, por detrás. Ver `world/rueda-de-morro.ts`.
      */
-    const centro = conLaRuedaEn(p0, rumbo, pasarela.morro ?? MORRO_DEL_TRAFICO.reactor);
-    const trayectoria = trayectoriaDelEmpuje({ x: centro.x, z: centro.z, rumbo }, raya, pasarela.batalla, {
+    /*
+     * Y sobre su raya pintada, si la tiene y por ella el tractor lo deja en la calle (H60b):
+     * de espaldas por la línea de entrada hasta la raya del camino. Ver `empujeDesdeElPuesto`.
+     */
+    const morro = pasarela.morro ?? MORRO_DEL_TRAFICO.reactor;
+    const enElSuyo = empujeDesdeElPuesto(p0, edificios, raya, entradaDelPuesto(aero, p0.x, p0.z), pasarela.batalla, (r) => conLaRuedaEn(p0, r, morro), {
       porLaPlataforma: false,
+      siempreLaPintada: true,
     });
+    const trayectoria = enElSuyo?.empuje;
     if (!trayectoria) return s;
     const fin = trayectoria.poses[trayectoria.poses.length - 1]!;
     const adelante = vector(fin.rumbo);
