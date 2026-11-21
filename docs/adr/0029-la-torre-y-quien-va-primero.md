@@ -2037,3 +2037,115 @@ rojo, en 2.082 s con dos hilos.
   lo que se arregla aquí.
 - **«Report lined up»**: el CAP 413 lo pone con el «backtrack», y aquí no se
   dice; la autorización llega sola al acabar la vuelta.
+
+## Enmienda (21-11-2026, H41i): quien da la vuelta antes, «regreso por pista» y los destellos vistos
+
+### El caso
+
+Los tres flecos de la H41h:
+
+- **Quien da la vuelta antes del lazo dibujado no recibía la autorización.**
+  Si remontaba más de treinta metros y giraba antes del sitio de girar, la
+  bandera del remonte (`PlanDeVuelo.dondeSeGira`) seguía puesta hasta el
+  lazo: la fase no salía del back-taxi, la lámpara no pasaba de los
+  destellos a la verde fija y despegaba sin oír su «cleared for take-off».
+- **En castellano la lámpara a destellos callaba y su caja iba sin texto**:
+  no había frase escrita ni grabada para remontar.
+- **Los destellos no los había visto nadie** en una pantalla.
+
+### Lo real
+
+Leído en el original:
+
+- **Paraguay**: DINAC R 4444, «Gestión de Tránsito Aéreo», cuarta edición
+  R00, Resolución 419/2018 del 05-11-2018, 12.3.4.7, procedimientos de
+  rodaje, «... después del aterrizaje»: «\*n) SOLICITO REGRESAR POR PISTA»,
+  «o) REGRESO POR PISTA APROBADO», «p) REGRESO POR PISTA (número)», en tabla
+  con «REQUEST BACKTRACK», «BACKTRACK APPROVED», «BACKTRACK RUNWAY (number)».
+  Es el PDF que cuelga la DINAC
+  (`dinac.gov.py/Seguridad_Operacional/docs/DINAC_R-4444_RES_4192018.pdf`);
+  no está en su lista pública de reglamentos, y no se ha mirado si hay una
+  edición posterior.
+- **España**: RD 1180/2018 (BOE-A-2018-15406, texto consolidado de
+  05-06-2024), anexo V, 1.4.8 n, o y p: las mismas tres frases, letra por
+  letra.
+- **OACI en español**: Doc 4444, 15.ª edición (2007), 12.3.4.7 n, o y p, lo
+  mismo; y el Doc 9870 (prevención de incursiones en la pista), apéndice A,
+  «(distintivo de llamada) REGRESO POR PISTA (número)». La 16.ª edición en
+  español no se ha podido leer.
+
+Así que la frase es **la misma en los dos sitios**, «regreso por pista
+(número)», y cada torre la dice con su voz. Es impersonal: no hay voseo que
+quitar.
+
+### Decisión
+
+- **El remonte hecho es una sola regla**, `LoRemontado` en
+  `flight/lo-remontado.ts`: más de `SIN_REMONTAR` (30 m) hacia la cabecera
+  desde donde se pisó la pista. La miran `vigilarElRemonte` en
+  `flight/vuelo.ts` —que ya la tenía, y la cuenta se ha mudado allí— y
+  `situacion` en `world/plan-de-vuelo.ts`, que **baja la bandera del remonte
+  en cuanto el avión ha remontado y mira pista abajo** (a menos de
+  `YA_DIO_LA_VUELTA`, 30°, del rumbo de despegue, y en la pista). Con eso la
+  fase pasa a «alineando», la lámpara a la verde fija y suena la
+  autorización, una vez, como al acabar el lazo. Mirar pista abajo solo no
+  basta: una entrada que llega así sin haber remontado sigue con los
+  destellos.
+- **«Regreso por pista»**, `torre.regreso` y `torre.canario.regreso` en
+  `i18n/es-PY.ts` —«{indicativo}, regreso por pista» y el número detrás, como
+  la roja— y en `en.ts`, «backtrack runway». El guaraní no se toca. La caja
+  de la lámpara la escribe donde se lee —«regreso por pista 34»— y la lámpara
+  la dice en los cuatro peldaños, delante del «backtrack runway» de
+  Taguató para arriba, como la verde va delante de su «cleared for
+  take-off». **Solo con su toma** (`vozDe`): mientras no esté grabada se
+  apunta «sin grabar, no se pide» y calla, como antes. Está en
+  `ESPERAN_SU_TOMA` de `audio/torre.ts`, y `torre.test.ts` mira que su pieza
+  esté en la lista de grabar y que no tenga toma en ninguna de las dos
+  torres. Y en `DE_LA_LAMPARA`: con la verde fija ya no es verdad, y se
+  retira de la cola.
+- **Lo que hay que grabar**: la pieza «regreso por pista», con
+  `torre.solo.regresoPorPista` (voz `torre`) y
+  `torre.canario.solo.regresoPorPista` (voz `torre-canarias`), al final de
+  la lista de cada torre (`DEL_REGRESO_POR_PISTA` en
+  `scripts/frases-para-grabar.mjs`, 170 y 172 de sus guiones), para no
+  renumerar lo grabado. Las recetas, al grabarlas, como las de la roja:
+  `{c1}`…`{c5}`, la pieza, `{p1}`, `{p2}` y el lado en `.L`, `.R` y `.C`.
+- **Los destellos, en el banco de carteles**: `mirarLosDestellos` en
+  `scripts/verificar-carteles.mjs` (con `OGA_SOLO=destellos`, solo eso).
+
+### La prueba
+
+En `la-verde-del-que-remonta.test.ts`, con el piloto perfecto, El Hierro por
+la 34 y el JAZ 40 con 4 m/s de cola, girando en el sitio a 20°/s: a los
+sesenta metros de remonte, a más de doscientos del lazo, roja y destellos,
+destellos mientras gira, **una** verde fija al acabar la vuelta y la
+carrera; nada más pisar la pista, mirando pista abajo sin remontar, siguen
+los destellos y la bandera; y a veinte metros, lo mismo.
+
+Un primer intento ponía el morro de golpe en el rumbo de despegue, y la
+verde no llegaba: en el eje y alineado de una vez la fase salta del
+back-taxi a «despegando», sin pasar por «alineando», que es donde se
+enciende la verde —también al acabar el lazo dibujado—. Un giro de verdad
+pasa por ella.
+
+### Lo medido
+
+**Los destellos, vistos** (`OGA_SOLO=destellos node
+scripts/verificar-carteles.mjs`, El Hierro con el JAZ 40, en es-PY): en
+Guyrami y en Taguató, en la tablet de 1024 × 600 y el teléfono de 800 × 360
+con el dedo, de pie en una ventana de 400 × 780, y las tres otra vez con el
+movimiento reducido. La lámpara se ve, dentro de la pantalla y sin tapar la
+tarjeta de la orden ni los dibujos del rincón. Se distingue de la fija: con
+movimiento, `torre-destellos` frente a `torre-late`, y la luz pasa de verde
+(126, 200, 106) a apagada (58, 66, 61); sin movimiento, quieta y con el aro a
+trazos, que la fija no lleva. En Guyrami no sale ni una palabra: en la caja
+solo la placa, igual que con la verde. En Taguató, «Zulu Papa Papa November
+Bravo, regreso por pista 34», y con la verde «…, pista 34, autorizado a
+despegar». De pie con el dedo tapa el vuelo el cartel de girar, como debe.
+En la ventana estrecha de pie la lámpara se recoge a su dibujo, sin frase,
+con la verde igual que con los destellos (`lee-recogida`): la primera
+pasada lo daba por fallo y la comprobación se ha corregido para aceptarlo
+cuando la verde hace lo mismo. Mirado en foto: en la tablet de Guyrami, la
+lámpara de cerca apagada, encendida y con el aro a trazos frente a la fija;
+el teléfono de Guyrami, sin una letra; y Taguató en la tablet, con la verde
+y con los destellos sin movimiento, el teléfono y la ventana de pie.

@@ -4037,8 +4037,15 @@ async function mirarLosDestellos() {
         else
           comprobar(
             `${donde}: con letras, la orden de los destellos escrita, con su pista`,
-            /regreso por pista \d/.test(rodar.orden),
-            `«${rodar.orden}»; con la verde «${verde.orden}»`,
+            /*
+             * O recogida a su dibujo, como la verde, donde no cabe la frase: en
+             * una ventana estrecha de pie la lámpara se queda en luz y placa
+             * (`lee-recogida`), y la orden la dice la torre.
+             */
+            /regreso por pista \d/.test(rodar.orden) ||
+              (rodar.orden === "" && verde.orden === "" && /lee-recogida/.test(rodar.clases)),
+            `«${rodar.orden}»; con la verde «${verde.orden}»` +
+              (/lee-recogida/.test(rodar.clases) ? " · recogida a su dibujo, como la verde" : ""),
             "un color solo no es información: quien no distinga la verde fija de la que destella tiene que poder leerlo",
           );
       } catch (e) {
