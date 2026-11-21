@@ -164,6 +164,34 @@ export function esPuestoDeContacto(
 }
 
 /**
+ * **Cómo mira a la terminal un avión parado en un puesto**, para el banco (H51): desde
+ * su rueda de morro y contra los edificios de pasarela, que es donde y contra lo que
+ * deciden `esPuestoDeContacto` y `rumboEnElPuesto`. Lo que queda de la punta del morro a
+ * la pared, m; lo que se aparta el morro de mirarla de frente, rad; y si es de contacto.
+ *
+ * Existe porque el banco lo medía con otra regla —desde el centro del avión, contra
+ * cualquier edificio y con cincuenta metros de tope— y las dos reglas solo coincidían
+ * en algunos puestos. En el 24 de Los Rodeos, el de la 12, el edificio más cercano al
+ * centro es el tejado alargado que sale del extremo oeste de la terminal, a un lado del
+ * avión, y la terminal queda a 62 m: el banco veía 67° de desvío donde el juego, con su
+ * regla, pone el morro a 22° de la pared, en la raya del puesto.
+ */
+export function comoMiraALaTerminal(
+  rueda: PuntoXZ,
+  rumbo: number,
+  edificios: Edificios,
+  morro: Pick<MorroDelAvion, "puerta" | "punta">,
+): { readonly delMorro: number; readonly desviado: number; readonly deContacto: boolean } | null {
+  const pared = paredMasCercana(rueda.x, rueda.z, edificios);
+  if (!pared) return null;
+  return {
+    delMorro: pared.distancia - morro.punta,
+    desviado: diferencia(rumbo, pared.rumbo),
+    deContacto: esPuestoDeContacto(rueda.x, rueda.z, edificios, morro),
+  };
+}
+
+/**
  * **Los edificios junto a los que puede haber un puesto de contacto**: los del
  * campo si embarca por pasarela, y ninguno si no. La regla de los cincuenta
  * metros sola daba por puestos de pasarela los de cualquier campo con un

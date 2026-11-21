@@ -860,6 +860,88 @@ raya con el biplano (`ver-vuelta-a-la-raya.mjs vuelta-a-la-raya tenerife-norte j
 banco de navegador deja el gas a fondo ya en el puesto —el del vuelo entero pasa a apagar con el gas cerrado en cuanto
 llega—, así que eso, el caso que se arregla, solo lo ha visto la mesa.
 
+## Enmienda (21-11-2026, H51): el banco de quien juega mide con la regla del juego, y por la 12
+
+### El caso
+
+La mini-ronda de la tanda 20 pasó `ver-remolque-de-quien-juega.mjs` (JAZ 90, Los Rodeos) sobre main en d04d8889, y
+cayó en los dos peldaños: «no empieza con el morro al edificio», con el morro a 21,4 m y 67° de desvío, y un empuje de
+99 m y 125°. En la H47b y la H48 el mismo banco había dado 27,9 m, −9°, 152 m y 114°. Se tomó por una regresión de algo
+entre 590a69b4 y d04d8889.
+
+### No era una regresión: era el viento
+
+- **Bisect con vitest** (una prueba que monta el plan del JAZ 90 en Los Rodeos con el viento de siempre y mide el
+  puesto, el rumbo y el empuje como el banco): los cinco commits que probó el bisect entre 590a69b4 y d04d8889, y el
+  propio 590a69b4, dan lo mismo que d04d8889 —el puesto 24, rumbo 76°, 21,4 m, −66,8°, 99 m y 125°—, idéntico a lo que
+  midió la mini-ronda. El bisect acaba señalando el primer commit de la tanda porque el «bueno» tampoco lo era.
+- **Con el navegador, sobre una copia de 590a69b4** y sin `OGA_VIENTO`: 21,4 m, −66,8°, 99,1 m y 125,5°. Lo mismo.
+- **La H47b y la H48 pasaron el banco con el viento del 300** (`OGA_VIENTO`, ver el ADR 0029, enmiendas H47b y H48):
+  por la 30, desde el 13. Su 152 m y 114° es justo la fila del 13 por la 30 en el barrido de la H47b. La mini-ronda lo
+  pasó con el viento de siempre, el alisio del 040, que da la 12 y el puesto 24, el de salida por la 12 desde la H41c
+  (ver el ADR 0029, enmienda H47). Las dos tiradas de este banco que constan después de eso fueron por la 30.
+
+### Lo que fallaba es la regla del banco
+
+El banco medía el morro **desde el centro del avión, contra cualquier edificio, con cincuenta metros de tope**. El juego
+decide de otra manera: si el puesto es de contacto, **desde la rueda de morro y contra la terminal**, con lo que alcanza
+una pasarela (`esPuestoDeContacto`, hasta 79 m de la fachada dibujada); y el morro va a la pared de la terminal o, si la
+raya del puesto se aparta de ella menos de cincuenta grados, por la raya (`rumboEnElPuesto`). En el 13 las dos reglas
+coinciden. En el 24 no: a un lado del avión está el tejado alargado (`kind: "roof"`) que sale del extremo oeste de la
+terminal, a 34 m de la rueda de morro, y es lo más cercano al centro del avión; la terminal queda a 62 m. Con su regla,
+el juego pone el morro a 22° de la terminal, en la raya del puesto, y el banco leía 67° contra el tejado.
+
+### Decisión
+
+El banco mide con la regla del juego: `comoMiraALaTerminal`, en `world/remolque.ts`, da desde la rueda de morro y
+contra los edificios de pasarela lo que queda de la punta del morro a la pared, lo que se aparta el morro de mirarla y
+si el puesto es de contacto, y `alEdificioParaBanco` lo añade como `terminal`. El banco exige un puesto de contacto con
+el morro a menos de cincuenta grados de la terminal, y sigue escribiendo lo de antes entre paréntesis. Sigue viendo un
+fallo: un avión que empezara fuera de un puesto de contacto, o mirando a otro lado, cae.
+
+La prueba es `sale-mirando-a-la-terminal.test.ts`: el viento de siempre da la 12; por la 12 y por la 30 el JAZ 90 sale
+del puesto del plan de contacto y con el morro a la terminal, con la regla del juego; y por la 12 lo más cercano al
+centro del avión no es la terminal, que es por lo que la regla de antes del banco no valía ahí.
+
+Lo que esto no decide es si el 24 de verdad se ocupa mirando al tejado. Si ese tejado es un dique de pasarelas, el
+avión tendría que mirarlo a él, y entonces lo que cambia es `edificiosDePasarela`, no el banco. No se ha podido mirar.
+
+Con el banco nuevo, por la 12 y con la tarjeta Intel, en los dos peldaños: el morro a 56,3 m de la terminal y −22°, de
+contacto (y, entre paréntesis, 21,4 m y −67° contra el tejado), 99 de 99 m empujado, giro de 125°, y **todo en orden**.
+
+### El remolque del tráfico: quien juega estaba en lo que barre
+
+`ver-remolque-del-trafico.mjs`, que no se había pasado en las rondas recientes, cayó en la misma mini-ronda: EC-PSH en
+su puesto y el tractor que no sale en los cuatrocientos segundos del banco, con `recorrido` 0. No le faltaba el
+permiso —`conPermiso` es el de aterrizar, y no cuenta para el que sale— ni era el mismo cambio: con el código de
+590a69b4 pasa igual.
+
+El banco ponía a quien juega en el JAZ 20. Con el viento de siempre, su puesto de salida (−652,6, −553,0) queda en lo
+que barre el empuje del 23, que es el puesto al que se va EC-PSH con la avioneta ahí, y el control de tierra no
+autoriza un empuje que barre a nadie (`calleLibreParaEmpujar`, que mira la avioneta aparcada contra la zona con la
+separación de ala). En el juego eso se resuelve solo: quien juega rueda, pasa, y el tractor sale. En el banco quien
+juega no rueda nunca. Medido con la cuenta de tráfico de verdad: con el JAZ 20 aparcado, sin tractor; con su raya
+reservada o sin ella, igual; sin nadie, EC-PSH se va al 24 y empuja en el primer paso; con el JAZ 90 en el 24, se va
+al 17 y empuja en el primer paso.
+
+**Decisión: se arregla el banco.** Quien juega va en el JAZ 90 (`OGA_AVION` para otro), y el banco sigue mirando lo
+mismo: que salga el tractor, que empuje de culo, que no vaya hacia delante con él, que el tractor quede delante de la
+rueda de morro, que la calle quede reservada, que nada caiga dentro de un edificio y que ruede hacia delante después.
+Cualquiera de esas cosas que falle, cae. Lo mira `empuja-con-quien-juega-en-su-puesto.test.ts`: con el JAZ 90 en el
+24, desde el 17 y enseguida; sin nadie, también; y con el JAZ 20 aparcado, espera.
+
+### Lo medido
+
+- **Vitest entero**, una vez, con el código terminado: 567 de 567 ficheros, 11.278 pruebas en verde, 31 saltadas y una
+  pendiente, ninguna en rojo, en 1.459 s con dos hilos.
+- **El remolque de quien juega**, por la 12 y con la tarjeta Intel: todo en orden en los dos peldaños (arriba).
+- **El remolque del tráfico**, con quien juega en el JAZ 90 y la tarjeta Intel: **bien**. EC-PSH en el 17, el tractor
+  enganchado al anunciarlo, 22 s con él, 36,9 m de culo y nada hacia delante, el tractor a 15,4 m por delante del
+  centro, la calle reservada los 22 s, nada dentro de un edificio y 42,1 m rodados después.
+- **Sin pasar por el navegador**: el banco del rodaje (`npm run rodaje`) y el despegue de Los Rodeos con el JAZ 90
+  desde el 24 (`verificar-despegue.mjs tenerife-norte guyrami "" jaz-90`). El candado del navegador lo tuvieron otros
+  bancos hasta el final del tope de esta tanda.
+
 ## Lo que queda
 
 El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando

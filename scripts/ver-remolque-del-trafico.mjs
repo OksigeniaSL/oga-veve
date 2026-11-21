@@ -15,7 +15,17 @@
  *
  * Y saca capturas desde una cámara puesta encima, con la tarjeta de verdad
  * (`OGA_GPU=1`). Uso: `node scripts/ver-remolque-del-trafico.mjs carpeta`, con
- * `OGA_PUERTO` y `OGA_PRISA` como los demás bancos.
+ * `OGA_PUERTO` y `OGA_PRISA` como los demás bancos, y con `OGA_AVION`, el avión de
+ * quien juega.
+ *
+ * **Quien juega, en el JAZ 90** (H51). Iba en el JAZ 20, y con el viento de siempre su
+ * puesto de salida queda en lo que barre el empuje del 23, el puesto al que se va
+ * EC-PSH con él ahí: el control de tierra no autoriza un empuje que barre un avión
+ * (`calleLibreParaEmpujar` en `trafico.ts`), y como en el banco quien juega no rueda
+ * nunca, el tractor no salía. En el juego eso se resuelve solo, cuando quien juega
+ * rueda. Con el JAZ 90 en el 24, EC-PSH se va al 17 y empuja enseguida. Lo mira
+ * `empuja-con-quien-juega-en-su-puesto.test.ts`; con `OGA_AVION=jaz-20` se ve la
+ * espera.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -33,6 +43,7 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5601);
 const PRISA = process.env.OGA_PRISA ? Number(process.env.OGA_PRISA) : 4;
 // Una matrícula que en Los Rodeos le toca al reactor: ver `tipoDe` en `trafico.ts`.
 const MATRICULA = process.env.OGA_MATRICULA ?? "EC-PSH";
+const AVION = process.env.OGA_AVION ?? "jaz-90";
 
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
@@ -76,7 +87,7 @@ try {
   const page = await navegador.newPage({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
   page.on("pageerror", (e) => fallos.push(`error de página: ${e.message}`));
   await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
-  await page.goto(`${BASE}/?escenario=tenerife-norte&hora=12&leccion=despegue&avion=jaz-20`);
+  await page.goto(`${BASE}/?escenario=tenerife-norte&hora=12&leccion=despegue&avion=${AVION}`);
   await page.waitForFunction(() => globalThis.__oga?.aeronave?.().deVerdad === true, null, { timeout: 120000 });
   const renderer = await page.evaluate(() => {
     const c = document.createElement("canvas").getContext("webgl2");

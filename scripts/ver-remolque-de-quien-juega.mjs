@@ -5,7 +5,7 @@
  *
  * Mira, con el dedo y no por dentro:
  *
- * 1. Que empieza en un puesto de contacto con el morro al edificio, con la baliza
+ * 1. Que empieza en un puesto de contacto con el morro a la terminal, con la baliza
  *    apagada y la tarjeta que la pide puesta y tocable, y su botón ofreciéndose; y que
  *    si no se toca nada no pasa nada: sigue enganchado, sin moverse, con la misma
  *    tarjeta. Y que la llave, sin baliza, no lo saca: el tractor no empuja sin ella.
@@ -144,11 +144,23 @@ try {
     const alEdificio = await page.evaluate(() => globalThis.__oga.inicio().alEdificio);
     const t0 = await tarjeta(page);
     const r0 = await remolque(page);
+    /*
+     * **Con el morro a la terminal, con la regla del juego** (H51): desde la rueda de
+     * morro, que es lo que para en el punto del puesto, y contra la terminal, que es de
+     * donde salen las pasarelas. Se medía desde el centro del avión contra cualquier
+     * edificio y con cincuenta metros de tope, y eso solo coincidía con la regla en
+     * algunos puestos: por la 30 (el 13) sí; por la 12 (el 24), con el viento de
+     * siempre, el más cercano al centro es el tejado alargado del extremo oeste de la
+     * terminal, a un lado del avión, y daba 67° donde el morro está a 22° de la
+     * terminal, en la raya del puesto. Lo de antes se sigue escribiendo, entre
+     * paréntesis. Ver `comoMiraALaTerminal` en `world/remolque.ts`.
+     */
+    const terminal = alEdificio?.terminal ?? null;
     console.log(
-      t(`en el puesto: morro a ${f(alEdificio?.delMorro)} m del edificio, desviado ${f(alEdificio?.desviado, 0)}° · tarjeta ${t0.dibujo} «${t0.texto}» tecla ${t0.tecla} tocable ${t0.tocable} · empuje ${f(r0.medida?.largo, 0)} m, giro ${f(r0.medida?.giro, 0)}°`),
+      t(`en el puesto: morro a ${f(terminal?.delMorro)} m de la terminal, desviado ${f(terminal?.desviado, 0)}°, ${terminal?.deContacto ? "de contacto" : "no es de contacto"} (el edificio más cercano al centro, a ${f(alEdificio?.delMorro)} m del morro y ${f(alEdificio?.desviado, 0)}°) · tarjeta ${t0.dibujo} «${t0.texto}» tecla ${t0.tecla} tocable ${t0.tocable} · empuje ${f(r0.medida?.largo, 0)} m, giro ${f(r0.medida?.giro, 0)}°`),
     );
-    if (!alEdificio || alEdificio.delMorro > 50 || Math.abs(alEdificio.desviado) > 50)
-      fallos.push(t(`no empieza con el morro al edificio (${JSON.stringify(alEdificio)})`));
+    if (!terminal || !terminal.deContacto || Math.abs(terminal.desviado) > 50)
+      fallos.push(t(`no empieza en un puesto de contacto con el morro a la terminal (${JSON.stringify(alEdificio)})`));
     if (t0.dibujo !== "baliza" || !t0.tocable) fallos.push(t(`la tarjeta del puesto no es la de la baliza tocable (${t0.dibujo}, ${t0.tocable})`));
     if (r0.baliza) fallos.push(t("en el puesto ya está la baliza encendida"));
     const boton0 = await page.evaluate(() => {
