@@ -8972,3 +8972,298 @@ saltadas y una por hacer). Lo nuevo y lo que se mueve:
 - **La cola del 1900D**: su altura y su brazo son lecturas a escala de la
   vista en tres planos (con los «about 15 feet» de la NTSB, 0,77 en vez de
   0,78); la herradura no lleva la bajada de la estela ni los flaps.
+
+## Enmienda H58 (21-11-2026): el hangar pedía menos pista de la que vuela el avión del juego
+
+H56b lo dejó medido: la pista que pide el hangar **con su margen**, partida
+por lo que vuela el modelo hasta la altura de su norma, daba 0,97 en el
+biplano y 0,98 en el Twin Otter. Por debajo de uno, el hangar acepta una
+pista en la que el avión que se vuela no llega a su altura dentro de ella. Y
+el margen está para que despegue de sobra, no justo.
+
+### Lo medido, en los ocho
+
+Con la mano de `despegue-y-toma-del-manual.test.ts` —la que sostiene el
+picado del suelo—, con la Vr y la de subir en indicada, sin viento y en
+asfalto; a la masa de la ficha y con los depósitos llenos, a 15 y 35 °C al
+nivel del mar y a 25 °C en un campo a 632 m, el de Los Rodeos. «Manual» es
+`distanciaDeDespegue`, la de su manual sin margen; «cuenta volada»,
+`despegueVolado` (abajo). La mesa entera, con los 48 casos, es
+`h58/tabla.ts` del scratchpad; aquí van los que dicen algo.
+
+| Avión | Masa, kg | Día | Volado | Manual | Cuenta volada | Pide antes | Pide ahora | Antes / volado | Ahora / volado |
+|---|---|---|---|---|---|---|---|---|---|
+| JAZ 20 | 1.100 | 15 °C | 462 | 405 | 456 | 538 | 606 | 1,17 | 1,31 |
+| JAZ 20 | 1.100 | 25 °C, 632 m | 563 | 525 | 561 | 698 | 747 | 1,24 | 1,33 |
+| JAZ 25 | 1.500 | 15 °C | 350 | 256 | 338 | 340 | 449 | **0,97** | 1,28 |
+| JAZ 25 | 1.500 | 35 °C | 383 | 298 | 368 | 397 | 490 | 1,04 | 1,28 |
+| JAZ 25 | 1.533, lleno | 15 °C | 356 | 262 | 344 | 349 | 457 | **0,98** | 1,28 |
+| JAZ 40 | 2.000 | 15 °C | 593 | 456 | 583 | 606 | 775 | 1,02 | 1,31 |
+| JAZ 40 | 1.814, lleno | 15 °C | 543 | 410 | 535 | 545 | 711 | **1,00** | 1,31 |
+| JAZ 50 | 5.182 | 15 °C | 460 | 388 | 445 | 449 | 511 | **0,98** | 1,11 |
+| JAZ 50 | 5.182 | 35 °C | 485 | 419 | 470 | 479 | 540 | **0,99** | 1,11 |
+| JAZ 50 | 5.670, lleno | 15 °C | 499 | 427 | 488 | 469 | 561 | **0,94** | 1,12 |
+| JAZ 50 | 5.670, lleno | 25 °C, 632 m | 544 | 482 | 533 | 521 | 613 | **0,96** | 1,13 |
+| JAZ 60 | 7.296 | 15 °C | 849 | 868 | 825 | 1.002 | 1.002 | 1,18 | 1,18 |
+| JAZ 60 | 8.593, lleno | 15 °C | 1.063 | 1.035 | 1.123 | 1.190 | 1.292 | 1,12 | 1,22 |
+| JAZ 90 | 30.000 | 15 °C | 1.012 | 873 | 1.029 | 1.023 | 1.184 | 1,01 | 1,17 |
+| JAZ 90 | 30.000 | 25 °C, 632 m | 1.170 | 1.060 | 1.207 | 1.219 | 1.388 | 1,04 | 1,19 |
+| JAZ 90 | 35.435, lleno | 15 °C | 1.262 | 1.042 | 1.451 | 1.199 | 1.668 | **0,95** | 1,32 |
+| JAZ 110 | 192.776 | 15 °C | 1.504 | 1.519 | 1.530 | 1.836 | 1.836 | 1,22 | 1,22 |
+| JAZ 110 | 276.085, lleno | 15 °C | 2.933 | 2.246 | 3.035 | 2.583 | 3.490 | **0,88** | 1,19 |
+| JAZ 120 | 255.826 | 15 °C | 1.554 | 1.489 | 1.560 | 1.876 | 1.876 | 1,21 | 1,21 |
+| JAZ 120 | 375.071, lleno | 35 °C | 3.562 | 2.567 | 3.671 | 2.952 | 4.222 | **0,83** | 1,19 |
+
+La «Manual» del JAZ 50 ya es la de su proporción corregida (abajo); con la de
+antes eran 338 y 371 m.
+
+Por debajo de uno, además del biplano y el Twin Otter a la masa de la ficha:
+el Twin Otter lleno, el Seneca lleno justo en uno, el E170 lleno y los dos de
+fuselaje ancho llenos. **De esos reactores, el 747 y el 787 llenos no se
+vuelan**: el 747 con los depósitos llenos pesa 375 t, por encima de las 322
+de su máximo al despegar, y el 787, 276 t sobre 254. Pero dicen lo mismo que
+el E170 lleno, que sí cabe en su máximo: **la Vr de la ficha no crece con la
+masa**, y un avión pesado que rota a la de la ficha no se va del suelo hasta
+mucho después —el 747 lleno toca la cola, 12,5°, y tarda de ocho a diez
+segundos de la Vr a irse—. La cuenta del manual lo contaba como una
+proporción fija de la carrera.
+
+### Por qué se quedaba corta: el tramo entre la Vr y el despegue
+
+La cuenta era `carreraHastaVr` por la proporción de su manual o de su clase.
+Esa proporción, en los que la tienen de su manual —el Ag Cat, el Seneca y el
+Twin Otter—, es la distancia hasta los cincuenta pies **partida por la
+carrera hasta irse del suelo**, y aquí se multiplicaba por la carrera hasta
+la Vr. En la mayoría el tramo de en medio cabía en el margen; en el biplano y
+el Twin Otter, no. A la masa de la ficha y a 15 °C:
+
+| | Hasta la Vr | De la Vr a irse | En el aire | Se va a | Actitud al irse |
+|---|---|---|---|---|---|
+| JAZ 25 | 137 m | 73 m, 2,5 s | 140 m, 4,2 s | 61 kt (Vr 51) | 6,5° |
+| JAZ 50 | 213 m | 84 m, 2,1 s | 164 m, 3,6 s | 83 kt (Vr 73) | 5,2° |
+| JAZ 120, para comparar | 1.039 m | 298 m, 3,8 s | 217 m, 2,5 s | 162 kt (Vr 160) | 10,1° |
+
+**No es la carrera**: los dos ruedan hasta la Vr lo que la cuenta, al 2 y al
+3 %. **Es la rotación.** Los dos llegan a la Vr a nivel —el biplano con la
+cola arriba, que `actitudEnTierra` sube del todo al 85 % de la Vr; el Twin
+Otter, triciclo— y a esa velocidad su ala necesita de cinco a siete grados
+para sostenerlos. A tres grados por segundo son dos segundos y pico rodando y
+acelerando: se van del suelo diez nudos por encima de la Vr, y de ahí a los
+cincuenta pies vuelan otra carrera entera. En el biplano, el tramo de la Vr a
+irse es el 53 % de lo que rueda hasta la Vr; en el Twin Otter, el 39 %; en
+los reactores, del 20 al 30 %, y su proporción, que salió del 747, ya lo
+cuenta.
+
+### Contra el manual: quién está mal
+
+- **El Twin Otter: las dos cosas.** La cuenta llevaba 1,62 porque leía los
+  454 m de su hoja como una longitud de campo con el 1,15 dentro. **No lo
+  llevan**: De Havilland los publica como «SFAR 23 TAKE-OFF AND LANDING
+  DISTANCE — Take-Off Distance to 50 ft (15.2 m) 454 m 1,490 ft», con la
+  parada desde la V1, 675 m, en otra fila (hoja del Twin Otter Classic 300-G,
+  julio de 2023, p. 3, en dehavilland.com; la del Series 400 en
+  dehavilland.com/twin-otter, «SFAR 23 Takeoff Field Length to 50 ft at
+  MTOW», 455 m), y la SFAR 23 define esa distancia sin margen: «(d) All
+  engine operating takeoff distance. The all engine operating takeoff
+  distance is the horizontal distance required to takeoff and climb to a
+  height of 50 feet above the takeoff surface under the procedures in FAR
+  23.51(a)» (§ 5 d; el texto se conserva como el apéndice A de la 14 CFR
+  135). Con la carrera de 244 m de la misma hoja, **1,86**, y la cuenta pasa
+  de 338 a 388 m a la masa de la ficha, donde su manual escalado da 379.
+
+  **Y el modelo vuela de más**: a las 12.500 lb de su manual, 499 m donde
+  da 454, un 10 %; a la masa de la ficha, 460 contra 379, un 21 %. Rota a 73
+  nudos, que es lo de su manual —la figura 4-1 del POH/AFM del Series 400
+  (Viking, PSM 1-64-1A, Rev. 3, 2017, reproducida en la revisión de
+  AvioConsult de 2026, p. 32) da Vr = V1 = 73 KIAS hasta unas 10.800 lb y 75
+  a las 12.500—, pero se va del suelo a 84 y pasa los cincuenta pies a 90,
+  donde la misma figura da 73 a 79. Lo que le falta es su actitud en el suelo
+  y el calado de su ala, que siguen sin leerse.
+- **El biplano: el modelo.** A las 4.500 lb de su manual (615 ft de carrera y
+  1.170 hasta los cincuenta pies, *Ag-Cat Pilot's Handbook*, Grumman
+  American, 1977), la cuenta da 358 m, que es su manual —su empuje parado se
+  puso para que rodara esa carrera (H37c)—, y el modelo vuela 483, un 35 %
+  más: se va a 61 nudos y 9,8°. Lo que falta es la actitud con la que corre
+  la cola arriba para despegar, que su manual no da («Raise Tail — 40 MPH»),
+  y no se ha encontrado en otra parte: ni el manual en línea, ni hojas de
+  Grumman o Schweizer, ni informes de la NTSB que lo citen. *Plane & Pilot*
+  da del Super Ag-Cat de 450 hp «Takeoff distance (50′) 1,360» y «Stall mph
+  67» a 4.500 lb, sin carrera ni velocidad de despegue.
+
+Así que **el modelo no se toca**: en los dos lo que falta es una actitud sin
+fuente, y ponerla a ojo sería enseñar un despegue inventado. Y mientras el
+avión que se vuela vuele más que su manual, **el hangar cuenta con el que se
+vuela**, que es el que el jugador lleva a la pista.
+
+### Lo que se cambia
+
+- **`despegueVolado`** (`carrera.ts`): el despegue con la física del modelo,
+  **la misma para todos**. Desde la carrera hasta la Vr de `carreraHastaVr`,
+  el morro sube a tres grados por segundo (`RITMO_DE_ROTAR`, los del FCTM de
+  Boeing y los de la mano) desde la actitud con la que rueda, sin pasar de la
+  cola, hasta que el ala —con los flaps de despegue, su resistencia y la del
+  tren, y el colchón del suelo— sostiene el peso; y en el aire, una masa
+  puntual con su sustentación, su resistencia y su empuje, con la actitud que
+  lleva la velocidad hacia 1,2 veces la pérdida con esos flaps, hasta la
+  altura de su norma. Dice lo que vuela el modelo **de 0,96 a 1,03** en los
+  ocho a la masa de la ficha; algo corta en los que tardan en irse del suelo,
+  porque no lleva lo que tarda el morro en responder.
+- **`pistaNecesariaHoy`** pide la mayor de la de su manual y la volada, por
+  el margen de su clase, y no menos que la parada desde la V1. En los 48 casos
+  de la mesa, **de 1,11 a 1,51 veces lo volado**; el más justo, el Twin
+  Otter, 0,967 × 1,15.
+- **Guarda las cuentas hechas**, por ficha y día: volar el despegue cuesta de
+  0,1 a 0,4 ms, y `porQueHoyMasPista` sola pide cuatro.
+- **El Twin Otter lleva 454 / 244** (arriba), con la cita en su ficha y en
+  `deRodarADespegar`.
+- **`distanciaDeDespegue` no cambia**: es la de su manual, y es contra la que
+  se miran los manuales.
+
+### Las pruebas
+
+En `despegue-y-toma-del-manual.test.ts`:
+
+- **Los ocho piden con margen más de 1,1 veces lo que vuelan**, a 15 y a 35
+  °C. La mano de la prueba acepta ahora la temperatura del día.
+- **La cuenta volada dice lo que vuela el modelo**, de 0,95 a 1,05, en los
+  ocho.
+- **El Twin Otter, contra su manual sin margen**, en la prueba de todos: pide
+  388 donde su manual da 379. Su parada desde la V1 sigue aparte, por debajo
+  de la de su manual —449 contra 564—, y no es el tiempo de decidir: la SFAR
+  23 no pide ninguno en su § 5 c, y la cuenta pone dos segundos.
+- **Su tope de lo volado contra la cuenta, el general**, 1,2: vuela 1,19
+  veces la de su manual, donde con la de antes eran 1,36 y tenía su propio
+  tope de 1,45. **El del 747, 1,05, no se toca**: la cuenta de su manual no
+  cambia y sigue en 1,044.
+
+### Qué pistas cambian
+
+**En los campos enteros, ningún veredicto**: `cabeEn` sobre los escenarios
+del juego en el día de tablas. El único que pasa a pista corta para despegar
+es el E170 en el valle de la Cordillera (sin aeródromo, 1.100 m), de 1.023 a
+1.184 m, y ya no cabía por la toma: pide 1.207 de LDA.
+
+La pista que pide cada uno en el día de tablas:
+
+| | Asfalto, antes → ahora | Hierba, antes → ahora |
+|---|---|---|
+| JAZ 20 | 538 → 606 | 633 → 665 |
+| JAZ 25 | 340 → 449 | 371 → 465 |
+| JAZ 40 | 606 → 775 | 690 → 836 |
+| JAZ 50 | 449 → 511 | 449 → 532 |
+| JAZ 60 | 1.002, igual | 1.098, igual |
+| JAZ 90 | 1.023 → 1.184 | 1.090 → 1.249 |
+| JAZ 110 | 1.836, igual | 1.930, igual |
+| JAZ 120 | 1.876, igual | 1.911 → 1.939 |
+
+**Por dónde se entra**, con el simulador de entradas de
+`remontar-por-tipo.test.ts` en los dieciocho campos con aeródromo, cada avión
+que cabe, con el tiempo de casa y quince nudos de cara a cada cabecera, con
+la cuenta de antes y la de ahora (`h58/salidas.ts`, 212 entradas):
+
+- **El Hierro, viento del 328: el Seneca ya no sale de la 3A**, que le deja
+  749 m (pide 775): remonta y sale con 1.217 por delante.
+- **La Gomera, viento del 320: el E170 ya no sale de la A**, la «27 INT A»
+  del AIP, TORA 1.100 (pide 1.184): remonta y sale con 1.407.
+- **Encarnación, Ayolas y Estigarribia**: la avioneta y el Seneca ya
+  remontaban un trozo, y el trozo crece, porque es el doble de lo que piden:
+  el Seneca, de 1.213 m por delante a 1.550 en Encarnación y Estigarribia y a
+  1.831 en Ayolas; la avioneta, de 1.200 a 1.212.
+- **La Gomera, «09 INT A», 400 m**: el biplano la aceptaba con la cuenta
+  (340) y ya no (449). En el juego no se usaba: a los de hélice no se les deja
+  entrar con menos de seiscientos (`pistaParaNoRemontar`).
+- Las demás, igual. El Twin Otter en El Hierro con el viento del 148 sigue
+  saliendo de la 3, con 577 m de TORA y 511 pedidos: el más justo de la flota
+  en un campo del juego, 1,13.
+
+**Y en la hoja de carga, a su peso máximo y con calor**, que es donde más
+crece la cuenta: lo volado sube con la masa más deprisa que la carrera
+estirada por la proporción de su manual (con 1,24 veces su masa, el E170
+vuela 1,37 veces la de su manual; a la de la ficha, 1,18).
+
+- **Los Rodeos, a su peso máximo y a 40 °C**: el 747 pasa de 3.036 a 3.757
+  m y el 787 de 3.140 a 3.820, y ya no caben en los 3.171 de TORA. El 747
+  cabe a su máximo hasta unos diez grados (3.169) y el 787, con cero. Los
+  demás siguen cabiendo (el E170, 2.477). Y es más verdad que antes: el
+  747-100 a 710.000 lb pide unos 9.300 ft al nivel del mar en un día estándar
+  (D6-58326, 3.3.1), 2.835 m, y a cuarenta grados el aire de Los Rodeos es el
+  de mucho más arriba; la cuenta de antes le daba a su máximo y a cuarenta
+  grados casi lo mismo que Boeing al nivel del mar.
+- **La Gomera, el E170 a su peso máximo** (37,2 t): ya no cabe ni a quince
+  grados (1.965 m de 1.500); antes, hasta unos 36. Con 32 t cabe a 25 °C
+  (1.452) y no a 40 (1.574).
+- **El 1900D en El Hierro**, igual: a su máximo cabe a 25 °C y no a 40.
+
+**Y probar un vuelo con más masa que la de la ficha deja ver otra cosa, que no
+se toca aquí: la Vr de la ficha no crece con la masa.** El juego rota siempre a
+la de la ficha, y un avión pesado que rota antes de poder volar corre con el
+morro arriba hasta que puede. Con la Vr de su masa —la raíz del peso— la
+cuenta volada sale incluso algo más larga en los pesados (el 787 a su máximo
+en Los Rodeos, de 3.322 a 3.481 m volados), así que no es lo que la alarga, y
+no se ha puesto.
+
+### Las pruebas que cambian por eso
+
+Con la cuenta nueva, nueve pruebas de seis ficheros fallaban, y ninguna por
+un fallo: decían qué pistas aceptaba la cuenta de antes.
+
+- **El Seneca de ejemplo en El Hierro** (`la-verde-del-que-remonta`,
+  `remontar-por-el-chaflan`, `tora-de-la-interseccion` y
+  `remontar-por-tipo`): era el avión que sale desde la 3A de la 34 con 606 m
+  pedidos. Ahora pide 775 y remonta; **la avioneta pide hoy esos mismos 606**,
+  y hace de ejemplo en las cinco pruebas que necesitan a alguien que salga
+  desde la intersección. Las del Seneca que remonta con viento de cola siguen
+  con él.
+- **La V1 en pista corta** (`motores.test.ts`): la pista corta era un 10 %
+  menos de la que se le deja al E170, que era la de abortar desde su V1; ahora
+  la que se le deja es la volada por su margen, más larga, y un 10 % menos aún
+  deja abortar. Es un 10 % menos de la de abortar, que es lo que se quería.
+- **La hoja de carga** (arriba): los dos de fuselaje ancho a su máximo y a
+  cuarenta grados no caben en Los Rodeos, y el E170 a su máximo no cabe en La
+  Gomera.
+
+### Los bancos
+
+- **`verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-25`**, puerto
+  5686, con la cuenta nueva: **60 de 61**, 2 sin medir. Rota a 51 nudos, se
+  va del suelo a los 157 s y sube al 11,1 % hasta los cien metros; toca a
+  0,74 m/s, en el eje y 293 m pasado el umbral, con la recogida a 5,4 m de
+  ruedas; apagado en su puesto a los 948 s. **El que no pasa es el «cleared
+  to land»**: «se aterrizó y no sonó ninguna». Es la radio de la torre, no el
+  despegue, y no se ha mirado si pasa igual sin esta enmienda (en H37c, 62 de
+  62).
+- **`verificar-despegue.mjs el-hierro guyrami 148/15 jaz-50`**, puerto
+  5686, el Twin Otter desde la 3 de El Hierro —577 m de TORA, el más justo de
+  la flota en un campo del juego—: **19 de 20**. El plan, «interseccion»,
+  pide 451 m con el viento de cara del día y le quedan 551 alineado; a 4.942
+  kg. Rota a 42 m/s de indicada, con la Vr en 37,6 (la ayuda de Guyrami tira
+  tarde, como apunta el banco), a 313 m del punto de espera de los 1.254 de
+  pista, y sube a 4,0 m/s de media de los 8 a los 18 s, a 115 m al final. Este
+  banco no mide dónde pasa los cincuenta pies. **El que no pasa es el freno
+  que se despide en la V1**: «no se fue — volvió: se iba también rodando por
+  una calle». Es la tarjeta del freno, no la cuenta.
+
+### El vitest entero
+
+Con el código terminado: **570 ficheros y 11.442 pruebas; una en rojo**,
+11.410 en verde, 30 saltadas y una por hacer. La roja es de
+`la-frustrada.test.mjs`, «TO/GA y quince grados sin tirón»: con la ley
+**vieja** de la frustrada, el 747 salta 0,479 de palanca donde la prueba
+quiere más de media para decir que la nueva lo mejora. No pasa por nada de lo
+de aquí: ni el modelo de vuelo, ni el automático, ni la frustrada importan
+`carrera.ts`, y de la ficha solo cambia la proporción del Twin Otter. Correrla
+sola no se pudo: el candado de vitest lo tuvo otro ayudante con la tanda
+entera. Así que es de 7a2bde42, de la que sale esta rama, o de la carga de la
+máquina, sin saber cuál.
+
+### Lo que queda
+
+- **El modelo del biplano y del Twin Otter vuela más que su manual**: un 35 %
+  y un 10 % a la masa de su manual. Les falta una actitud en el suelo —la de
+  correr con la cola arriba, el calado del ala— que no tiene fuente.
+- **La Vr de la ficha no crece con la masa**, y el juego rota siempre a la de
+  la ficha.
+- **La parada desde la V1 del Twin Otter**, 449 m contra los 564 de su
+  manual, sin saber qué la alarga en el suyo.
+- **El «cleared to land» del JAZ 25 en Guyrami**, que no sonó.
+- **La frustrada vieja del 747**, que salta 0,479 y no más de media.
