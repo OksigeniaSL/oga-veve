@@ -419,6 +419,11 @@ export class ArcadeFlightModel implements FlightModel {
     return 0;
   }
 
+  /** Ni el del último paso. Ver `timonDelPaso` en `model.ts`. */
+  timonDelPaso(): number {
+    return 0;
+  }
+
   /** El gas del último paso, para `empujeAhora`. */
   private ultimoGas = 0;
 

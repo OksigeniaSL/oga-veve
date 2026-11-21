@@ -336,7 +336,11 @@ const AMORTIGUA = 0.4;
  * el avión con el timón que le dicen que lo sostiene (`Estado.timon`), y si
  * ese no es el que lleva —el promedio de dos segundos de quien acaba de tirar
  * para frenar, o la palanca que el banco pedía en ese fotograma—, el morro se
- * va con el timón de más y `SERVO` lo quita a su ritmo de crucero. Medido en
+ * va con el timón de más y `SERVO` lo quita a su ritmo de crucero. Desde H57b
+ * coge el del último paso, sin salto; pero sigue haciendo falta, porque quien
+ * suelta la palanca sin haber compensado le quita al avión el timón que lo
+ * sostenía, y el morro se va igual: sin el embrague, de 0,06 a 1,85 g y el
+ * avisador hasta 3,4 s; con él, de 0,71 a 1,40 g y callado. Medido en
  * la mesa con el modelo del juego, enganchando en `FLCH SPD` con cuatro
  * décimas de timón de más: el morro a 10–16°/s, de 1,4 a 1,7 g, y con diez
  * nudos de menos el avisador sonando. En el banco del JAZ 40 (H34e), +0,32 y
@@ -369,8 +373,9 @@ const FRENO_DEL_GIRO = 30;
  * **Cuánto dura el embrague**, s: los segundos después de engancharse en los
  * que actúa `FRENO_DEL_GIRO` (H57).
  *
- * Es cuando el timón que se le dio puede no ser el que lleva el avión, y lo
- * que se para es eso. Después, no: el morro que gira de más por una racha lo
+ * Es cuando el timón que se le dio puede no ser el que lleva el avión, o el
+ * avión viene girando de la mano que lo acaba de soltar, y lo que se para es
+ * eso. Después, no: el morro que gira de más por una racha lo
  * lleva el lazo de siempre, que es con el que se afinó la senda con rachas y
  * la recogida de los reactores; con el freno puesto siempre, el JAZ 120 de
  * `recogida-del-reactor.test.mjs` tocaba más duro con veinte nudos de cara y
@@ -533,8 +538,21 @@ export interface Estado {
    */
   readonly ritmoDeCabeceo: number;
   /**
-   * El timón que sostiene el avión al engancharse, en unidades de mando. Ver
-   * `timonAhora` en `model.ts`. Solo se mira al coger el avión; sin él, cero.
+   * **El timón que lleva el avión al engancharse**, en unidades de mando: el
+   * del último paso, donde está la superficie —en el juego, `timonDelPaso` en
+   * `model.ts`; en el banco, la palanca que le llegó al avión—. Solo se mira
+   * al coger el avión; sin él, cero.
+   *
+   * Y **la primera orden es ésa** (H57b): la memoria del servo se pone para
+   * que, con el amortiguador dentro, el timón no se mueva en el fotograma del
+   * enganche. Es como se embraga un servo de verdad, donde está el timón:
+   * «engagement … may not cause a transient response of the airplane's flight
+   * path any greater than a minor transient» (14 CFR 25.1329(c)). Antes se
+   * cogía el promedio de dos segundos, y quien acababa de soltar la palanca
+   * le daba un timón que el avión ya no llevaba: la primera orden saltaba de
+   * 0,36 a 0,48 hasta él. Lo que el avión haga después de que lo suelten —sin
+   * compensar, el morro se va— lo para el automático con sus topes y su
+   * embrague: ver `FRENO_DEL_GIRO` y `enganche-sin-salto.test.ts`.
    */
   readonly timon?: number;
   /**
@@ -742,6 +760,8 @@ export function mandosPara(
   m: Memoria = memoriaNueva(),
 ): Mandos {
   const v = Math.max(e.verdadera, 1);
+  // Si este es el fotograma en que coge el avión. Ver `Estado.timon`.
+  const recienCogido = !m.cogido;
   if (!m.cogido) {
     m.cogido = true;
     m.ritmo = e.vertical;
@@ -891,14 +911,23 @@ export function mandosPara(
       const refuerzo = e.autoridadDelTimon
         ? Math.min(REFUERZO_MAXIMO, Math.max(1, AUTORIDAD_SUFICIENTE / e.autoridadDelTimon))
         : 1;
-      m.timon = acotar(m.timon + SERVO * refuerzo * falta * dt, 1);
-      /*
-       * **Y al engancharse, el morro que gira de más se para ya** (H57). Ver
-       * `FRENO_DEL_GIRO` y `EMBRAGUE`.
-       */
-      if (m.enganchado < EMBRAGUE) {
-        const deMas = falta + acotar(-falta, GIRO_MAXIMO);
-        m.timon = acotar(m.timon + FRENO_DEL_GIRO * deMas * dt, 1);
+      if (recienCogido && e.timon !== undefined) {
+        /*
+         * **Y el primer fotograma da el timón que lleva el avión** (H57b): la
+         * memoria del servo se pone para que la orden, con el amortiguador
+         * dentro, sea ésa. Ver `Estado.timon`.
+         */
+        m.timon = acotar(e.timon - AMORTIGUA * refuerzo * falta, 1);
+      } else {
+        m.timon = acotar(m.timon + SERVO * refuerzo * falta * dt, 1);
+        /*
+         * **Y al engancharse, el morro que gira de más se para ya** (H57).
+         * Ver `FRENO_DEL_GIRO` y `EMBRAGUE`.
+         */
+        if (m.enganchado < EMBRAGUE) {
+          const deMas = falta + acotar(-falta, GIRO_MAXIMO);
+          m.timon = acotar(m.timon + FRENO_DEL_GIRO * deMas * dt, 1);
+        }
       }
       elevator = acotar(m.timon + AMORTIGUA * refuerzo * falta, 1);
     }
