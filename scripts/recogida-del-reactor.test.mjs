@@ -24,7 +24,11 @@ import { airDensity, SEA_LEVEL_DENSITY } from "../src/flight/atmosphere";
 import { autoridadDelTimon, mandosPara, memoriaNueva } from "../src/flight/piloto-automatico";
 import { muescaDeAterrizaje } from "../src/flight/flaps";
 import { pitchAngleOf } from "../src/ui/actitud";
-import { palancaDelReactorEnLaRecogida, porLoQueAceleraElReactor } from "./recogida-del-reactor.mjs";
+import {
+  palancaDelReactorEnLaRecogida,
+  pideAlPuntoDeToma,
+  porLoQueAceleraElReactor,
+} from "./recogida-del-reactor.mjs";
 
 const NUDO = 0.514444;
 const SENDA = Math.tan((3 * Math.PI) / 180);
@@ -47,7 +51,7 @@ const palancaDeAntes = new Function(`${SIN_TAMANO}\nreturn palancaDelReactorEnLa
  * las rachas de la semilla, hasta tocar. Devuelve a cuántos metros del umbral
  * toca y a cuánto baja.
  */
-function vuelaLaFinal(palancaDeLaRecogida, semilla, deCara = 10.3, sigma = 1) {
+function vuelaLaFinal(palancaDeLaRecogida, semilla, deCara = 10.3, sigma = 1, alPunto = false) {
   const a = aircraftById("jaz-120");
   const cota = 24;
   const tren = a.gearHeight;
@@ -158,6 +162,8 @@ function vuelaLaFinal(palancaDeLaRecogida, semilla, deCara = 10.3, sigma = 1) {
         dt: DT,
         presion: Math.min(1, (a.approachSpeed / raiz(s.position.y) / Math.max(1, s.airspeed)) ** 2),
         rec,
+        // Y dónde va, si se le dice: para ir a la pista en su punto (H53).
+        ...(alPunto ? { pasado: along, porElSuelo } : {}),
       });
       // El gas, al ralentí a los treinta pies.
       c.throttle = ruedas > 30 * 0.3048 ? rec.gas : 0;
@@ -168,15 +174,19 @@ function vuelaLaFinal(palancaDeLaRecogida, semilla, deCara = 10.3, sigma = 1) {
 }
 
 /** Cuántas de las finales de las semillas tocan pasados los 600 m, y cuántas a más de 2 m/s. */
-function mesa(palancaDeLaRecogida, semillas) {
+function mesa(palancaDeLaRecogida, semillas, alPunto = false) {
   let largas = 0;
   let duras = 0;
+  let laMasLarga = 0;
+  let laMasDura = 0;
   for (let k = 1; k <= semillas; k++) {
-    const r = vuelaLaFinal(palancaDeLaRecogida, k);
+    const r = vuelaLaFinal(palancaDeLaRecogida, k, 10.3, 1, alPunto);
     if (r.metros > 600) largas++;
     if (r.caida > 2) duras++;
+    laMasLarga = Math.max(laMasLarga, r.metros);
+    laMasDura = Math.max(laMasDura, r.caida);
   }
-  return { largas, duras };
+  return { largas, duras, laMasLarga, laMasDura };
 }
 
 describe("la recogida de un reactor", () => {
@@ -205,5 +215,54 @@ describe("la recogida de un reactor", () => {
     expect(r.metros).toBeGreaterThan(150);
     expect(r.metros).toBeLessThan(600);
     expect(r.caida).toBeLessThan(2);
+  });
+});
+
+/**
+ * **Y a la pista en su punto, sin aguantarlo en el aire** (H53). Ver
+ * `pideAlPuntoDeToma`.
+ *
+ * El JAZ 120 del vuelo entero de Gran Canaria tocó a 319, 651, 572 y 728 m en
+ * las rondas 29 a 32, con la zona acabando en 600. En la mesa de H53 (la de
+ * H46, sobre la de H45b) las largas no son globos: son recogidas de doce
+ * segundos a medio metro del suelo, con la palanca sostenida mientras la
+ * velocidad se va por debajo de la Vref menos cinco, que es aguantar el avión
+ * en el aire. El manual: «Fly the airplane onto the runway at the desired
+ * touchdown point».
+ */
+describe("la recogida de un reactor va a la pista en su punto", () => {
+  const PUNTO = 1500 * 0.3048;
+  const g = { porElSuelo: 70, caida: 3.7 };
+
+  it("mientras va a llegar antes del punto, manda el perfil", () => {
+    expect(pideAlPuntoDeToma({ ...g, pide: -0.8, ruedas: 1, pasado: 100 })).toBeNull();
+    expect(pideAlPuntoDeToma({ ...g, pide: -3, ruedas: 10, pasado: -50 })).toBeNull();
+  });
+
+  it("si no, pide lo que lo pone en el suelo en el punto, y nunca más que la senda", () => {
+    // A un metro, con 0,4 s hasta el punto: el medio segundo de suelo, 2 m/s.
+    expect(pideAlPuntoDeToma({ ...g, pide: -0.8, ruedas: 1, pasado: PUNTO - 28 })).toBeCloseTo(-2, 9);
+    // Pasado, a cuatro metros: lo que bajaba la senda, no más.
+    expect(pideAlPuntoDeToma({ ...g, pide: -0.8, ruedas: 4, pasado: PUNTO + 50 })).toBeCloseTo(-3.7, 9);
+    // Y con un perfil que pide más que la senda, el perfil.
+    expect(pideAlPuntoDeToma({ ...g, pide: -4, ruedas: 4, pasado: PUNTO + 50 })).toBeNull();
+  });
+
+  it("y la página lo recibe como texto: no toca nada de fuera", () => {
+    const enLaPagina = new Function(`${pideAlPuntoDeToma.toString()}\nreturn pideAlPuntoDeToma;`)();
+    const p = { ...g, pide: -0.8, ruedas: 1, pasado: PUNTO - 28 };
+    expect(enLaPagina(p)).toBe(pideAlPuntoDeToma(p));
+  });
+
+  it("y con el modelo del juego, el JAZ 120 con veinte nudos de cara y rachas deja de flotar sin tocar más duro", () => {
+    const sinPunto = mesa(palancaDelReactorEnLaRecogida, 60);
+    const conPunto = mesa(palancaDelReactorEnLaRecogida, 60, true);
+    expect(sinPunto.largas).toBeGreaterThan(0);
+    expect(conPunto.largas).toBeLessThan(sinPunto.largas);
+    // Medido: de 5 largas a ninguna, la más larga de 855 a 560 m; las duras, 6 y 6.
+    expect(conPunto.laMasLarga).toBeLessThan(sinPunto.laMasLarga);
+    expect(conPunto.laMasLarga).toBeLessThan(650);
+    expect(conPunto.duras).toBeLessThanOrEqual(sinPunto.duras + 2);
+    expect(conPunto.laMasDura).toBeLessThan(3);
   });
 });

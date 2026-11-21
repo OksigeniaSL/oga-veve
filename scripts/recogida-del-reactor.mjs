@@ -44,6 +44,45 @@ export function porLoQueAceleraElReactor(p) {
 }
 
 /**
+ * **Y a la pista en su punto, sin aguantarlo en el aire** (H53): lo que pide
+ * bajar la recogida de un reactor para estar en el suelo al llegar al punto de
+ * toma, o `null` si el perfil ya pide eso o más.
+ *
+ * El perfil de `recoger` reparte lo que baja la senda hasta tocar a dos pies
+ * por segundo, y no mira dónde. Con el colchón del efecto suelo el avión del
+ * juego se recoge casi solo —en la mesa de H53, el JAZ 120 en aire quieto sube
+ * el morro tres grados con la palanca quieta en la de la senda—, y cuando una
+ * racha le da energía de más, el perfil lo sostiene a medio metro mientras la
+ * velocidad se va: tomas a 650–730 m y por debajo de la Vref menos cinco, de
+ * doce segundos de recogida. El manual dice lo contrario: «Do not allow the
+ * airplane to float or attempt to hold it off. Fly the airplane onto the
+ * runway at the desired touchdown point and at the desired airspeed», y la
+ * recogida de un reactor de Boeing va de 1.000 a 2.000 pies pasado el umbral
+ * (Boeing, *777/787 Flight Crew Training Manual*, FCT 777/787 (TM), rev. 14,
+ * 2021, pp. 6.9-6.10). El punto, a 1.500 pies, el medio de esos dos.
+ *
+ * Lo que se pide es lo que hay que bajar para llegar al suelo en el tiempo que
+ * falta hasta el punto —medio segundo como poco, pasado ya—, y nunca más
+ * deprisa que la senda de la que viene la recogida: quien flota no se tira al
+ * suelo más fuerte de lo que bajaba en la final. Mientras el avión va a llegar
+ * antes del punto, el perfil manda como siempre.
+ * @param {{
+ *   pide: number,       // lo que pide el perfil, m/s, negativo bajando
+ *   ruedas: number,     // m sobre la pista
+ *   pasado: number,     // m pasado el umbral de aterrizar
+ *   porElSuelo: number, // m/s
+ *   caida: number,      // lo que bajaba la senda al empezar a recoger, m/s
+ * }} p
+ * @returns {number | null}
+ */
+export function pideAlPuntoDeToma(p) {
+  const punto = 1500 * 0.3048;
+  const quedan = Math.max(0.5, (punto - p.pasado) / Math.max(1, p.porElSuelo));
+  const alPunto = -Math.min(Math.max(0, p.ruedas) / quedan, Math.max(-p.pide, p.caida));
+  return alPunto < p.pide ? alPunto : null;
+}
+
+/**
  * **La recogida de un reactor en el banco del cangrejo** (H46), la de
  * `recoger` en `verificar-vuelo-entero.mjs` para una pista llana y fuera de
  * Guyrami: el ritmo de
@@ -72,6 +111,8 @@ export function porLoQueAceleraElReactor(p) {
  *   porAngulo: number,    // −cmα/cmδ
  *   envergadura: number,  // m
  *   dt: number,           // s
+ *   pasado?: number,     // m pasado el umbral de aterrizar, si se sabe (H53)
+ *   porElSuelo?: number, // m/s, con `pasado`
  *   presion?: number,     // lo que pide la presión que lleva: ver `porLaPresion` en `recoger`; 1 si no se da
  *   rec: { altura: number, caida: number, palanca: number, acumulado: number, velocidad: number, ultimo?: number },
  * }} p
@@ -81,8 +122,21 @@ export function palancaDelReactorEnLaRecogida(p) {
   const rec = p.rec;
   const alSuelo = 2 * 0.3048;
   const queda = Math.max(0, Math.min(1, p.ruedas / rec.altura));
-  const pide = -(alSuelo + (rec.caida - alSuelo) * queda);
-  const falta = p.ruedas < 1.5 ? Math.max(0, pide - p.vertical) : pide - p.vertical;
+  const delPerfil = -(alSuelo + (rec.caida - alSuelo) * queda);
+  // Y a la pista en su punto, si se sabe dónde está (H53): ver `pideAlPuntoDeToma`.
+  const alPunto =
+    p.pasado !== undefined && p.porElSuelo !== undefined
+      ? pideAlPuntoDeToma({
+          pide: delPerfil,
+          ruedas: p.ruedas,
+          pasado: p.pasado,
+          porElSuelo: p.porElSuelo,
+          caida: rec.caida,
+        })
+      : null;
+  const pide = alPunto ?? delPerfil;
+  const falta =
+    p.ruedas < 1.5 && alPunto === null ? Math.max(0, pide - p.vertical) : pide - p.vertical;
   rec.acumulado = Math.max(0, Math.min(2, rec.acumulado + falta * p.dt));
   const k = p.porAngulo;
   const porLoQueFrena =
@@ -111,7 +165,9 @@ export function palancaDelReactorEnLaRecogida(p) {
   );
   const aRas = p.ruedas < 1.5 && pide - p.vertical < 0;
   const palanca =
-    (falta < -0.6 || aRas) && rec.ultimo !== undefined ? rec.ultimo : calculado;
+    (falta < -0.6 || aRas) && rec.ultimo !== undefined && alPunto === null
+      ? rec.ultimo
+      : calculado;
   rec.ultimo = palanca;
   return palanca;
 }

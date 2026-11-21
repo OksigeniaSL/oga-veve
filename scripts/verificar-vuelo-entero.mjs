@@ -65,7 +65,7 @@ import {
 } from "./oido.mjs";
 import { fasesATiempoReal } from "./reloj-del-banco.mjs";
 import { gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
-import { porLoQueAceleraElReactor } from "./recogida-del-reactor.mjs";
+import { pideAlPuntoDeToma, porLoQueAceleraElReactor } from "./recogida-del-reactor.mjs";
 import { elEjeDeLaCarrera } from "./el-eje-de-la-carrera.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
@@ -751,6 +751,13 @@ await page.addScriptTag({
   content: `globalThis.__porLoQueAceleraElReactor = ${porLoQueAceleraElReactor.toString()};`,
 });
 /*
+ * **Y lo que pide un reactor para estar en la pista en su punto de toma**
+ * (H53), desde el mismo módulo y por lo mismo.
+ */
+await page.addScriptTag({
+  content: `globalThis.__pideAlPuntoDeToma = ${pideAlPuntoDeToma.toString()};`,
+});
+/*
  * **Y los pies de la carrera de despegue, desde su módulo** (H44b), que los
  * vuela también el banco de despegue y los prueba `el-eje-de-la-carrera.test.mjs`.
  */
@@ -1056,6 +1063,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
                   rh0: +recogida.altura.toFixed(2),
                   rsost: recogida.sostiene ? 1 : 0,
                   rfl: recogida.floto ? 1 : 0,
+                  // Y si el reactor va a su punto de toma (H53).
+                  rpt: recogida.alPunto ? 1 : 0,
                   rs: +(ahora - (recogida.empezo ?? ahora)).toFixed(2),
                 }
               : {}),
@@ -1305,15 +1314,36 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * contra la pista se tocaba a 1,9 de variómetro.
      */
     const alSuelo = Math.max(0.3, ritmoAlTocar + pistaBaja);
-    const pide = -(alSuelo + (recogida.caida - alSuelo) * queda);
+    const delPerfil = -(alSuelo + (recogida.caida - alSuelo) * queda);
+    /*
+     * **Y un reactor, a la pista en su punto, sin aguantarlo en el aire**
+     * (H53): si el perfil lo va a llevar pasado el punto de toma, se pide lo
+     * que lo pone en el suelo en él. Ver `scripts/recogida-del-reactor.mjs`.
+     */
+    let alPunto = null;
+    if (RECOGIDA_DE_REACTOR) {
+      try {
+        alPunto = globalThis.__pideAlPuntoDeToma({
+          pide: delPerfil,
+          ruedas,
+          pasado: -alUmbral(s),
+          porElSuelo: porElSuelo(s),
+          caida: recogida.caida,
+        });
+      } catch {
+        // Sin pista a la que medir: el perfil, como siempre.
+      }
+    }
+    const pide = alPunto ?? delPerfil;
     /*
      * Y en el último metro y medio no se empuja: si baja menos de lo pedido,
      * se deja que se pose. Empujando ahí, el JAZ 60 pasó de bajar a 0,6 a
      * tocar a 2,3 — lo que se ganó recogiendo se perdió en el último palmo.
-     * Y más arriba tampoco: ver `mandos.elevator` abajo.
+     * Y más arriba tampoco: ver `mandos.elevator` abajo. Salvo el reactor que
+     * se pasa del punto (H53): ese sí se pone en la pista.
      */
     const falta =
-      ruedas < 1.5
+      ruedas < 1.5 && alPunto === null
         ? Math.max(0, pide - contraLaPista)
         : pide - contraLaPista;
     /*
@@ -1524,13 +1554,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * con la palanca subiendo por la velocidad que se perdía. En las tiradas
      * que tocaban en la zona, a más de un metro por segundo, no flotaba.
      */
+    /*
+     * **Salvo el reactor que va a pasarse del punto de toma** (H53): ese no
+     * se sostiene, que sostenerlo es aguantarlo en el aire. Ver `alPunto`.
+     */
     const aRas =
       (envergadura > 30 || RECOGIDA_DE_REACTOR) && ruedas < 1.5 && pide - contraLaPista < 0;
-    recogida.sostiene = (falta < -0.6 || aRas) && recogida.ultimoMando !== undefined;
-    mandos.elevator =
-      (falta < -0.6 || aRas) && recogida.ultimoMando !== undefined
-        ? recogida.ultimoMando
-        : calculado;
+    const sostiene =
+      (falta < -0.6 || aRas) && recogida.ultimoMando !== undefined && alPunto === null;
+    recogida.sostiene = sostiene;
+    recogida.alPunto = alPunto !== null;
+    mandos.elevator = sostiene ? recogida.ultimoMando : calculado;
     recogida.ultimoMando = mandos.elevator;
     /*
      * **Y un bimotor de hélice no corta el gas al empezar a recoger: lo va

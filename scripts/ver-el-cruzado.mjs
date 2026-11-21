@@ -30,7 +30,11 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { mkdirSync, readFileSync } from "node:fs";
 import { baseDe } from "./servidor.mjs";
-import { palancaDelReactorEnLaRecogida, porLoQueAceleraElReactor } from "./recogida-del-reactor.mjs";
+import {
+  palancaDelReactorEnLaRecogida,
+  pideAlPuntoDeToma,
+  porLoQueAceleraElReactor,
+} from "./recogida-del-reactor.mjs";
 
 const SALIDA = process.argv[2] ?? "capturas-cruzado";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5687);
@@ -160,7 +164,7 @@ try {
    * ver `recogidaDelReactor` abajo. Va a la página como texto.
    */
   await page.addScriptTag({
-    content: `${porLoQueAceleraElReactor.toString()}\n${palancaDelReactorEnLaRecogida.toString()}\nglobalThis.__palancaDelReactorEnLaRecogida = palancaDelReactorEnLaRecogida;`,
+    content: `${porLoQueAceleraElReactor.toString()}\n${pideAlPuntoDeToma.toString()}\n${palancaDelReactorEnLaRecogida.toString()}\nglobalThis.__palancaDelReactorEnLaRecogida = palancaDelReactorEnLaRecogida;`,
   });
   // **El piloto de la mesa**, en la página. Ver `final-con-viento-cruzado.test.ts`.
   await page.evaluate(
