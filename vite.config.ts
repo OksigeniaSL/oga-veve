@@ -172,6 +172,19 @@ function elTrabajadorDeServicio(): Plugin {
 
 export default defineConfig({
   base: "./",
+  /*
+   * **Cada copia del repositorio, con su propia caché de dependencias.**
+   *
+   * La de fábrica es `node_modules/.vite`. Los worktrees de los bancos enlazan
+   * `node_modules` al del repositorio principal, así que todos compartían la
+   * misma carpeta `deps`: cuando un servidor de desarrollo la reoptimizaba, a
+   * los que estaban sirviendo se les quedaban viejos los módulos y la página
+   * daba «Failed to fetch dynamically imported module» al arrancar. Salió en
+   * la mini-ronda de la tanda 20 —carteles, botones, un despegue— y en un
+   * vuelo de Tukã de H55c, con varios bancos a la vez. En la raíz de cada
+   * copia, `.vite/` ya está en `.gitignore`.
+   */
+  cacheDir: ".vite",
   plugins: [
     elPackDeVoz(),
     lasTeselas(),
