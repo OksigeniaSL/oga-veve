@@ -205,6 +205,83 @@ export function seVeElMarDeNubes(ojo: Punto, mirado: Punto, mundo: ElMundoQueSeM
   return nube >= puntos * ES_UN_MAR_DE_NUBES;
 }
 
+/**
+ * **Cuánto de lo que deja ver el cristal tiene que ser lo de debajo que se
+ * nombra**, de 0 a 1: dos quintos, lo mismo que pide el banco al mar de nubes.
+ * Lo de debajo no tiene que llenar la ventanilla como un mar de nubes —con la
+ * góndola debajo del cristal, el mar ocupa la mitad de arriba (H59b)—, pero
+ * tampoco vale una esquina: lo que asoma por un borde no es lo que se ve al
+ * mirar abajo.
+ */
+export const SE_VE_LO_DE_DEBAJO = 0.4;
+
+/**
+ * **Cuánto se ve de lo de debajo** —el mar, la tierra—, de 0 a 1, por lo que
+ * deja ver el cristal y no por un punto (H59b); `null` si por el cristal no se
+ * ve nada de lo que se mira.
+ *
+ * Se miraba el punto adonde llegan los ojos y cuatro más a su alrededor, y con
+ * la cara contra el cristal mirando abajo ese punto cae detrás de la góndola:
+ * en el banco de la tercera escena, a los 1.607 s, el mar llenaba la mitad de
+ * arriba de la ventanilla y el punto mirado era el motor, a 3,9 m. Con un
+ * punto, lo que se nombra se juega a dónde cae la mirada, y nada impedía decir
+ * «allá abajo está el mar» con el ala o la góndola tapándolo todo, que la
+ * cuenta no sabía del avión. Así que se mira lo que cabe en la mirada, como el
+ * mar de nubes —ver `seVeElMarDeNubes`—: cinco por cinco puntos en un cuadro
+ * de un 27 % de la distancia a cada lado, alineado con la mirada, y de los que
+ * caen por el cristal, cuántos son lo que se dice y se ven. Los que caen
+ * fuera del cristal no son de la vista: son la pared.
+ *
+ * `porElCristal`, si un punto del suelo cae en lo que deja ver la ventanilla;
+ * `loVe`, si ese punto es lo que se nombra —mar o tierra— y se ve: se
+ * distingue y no lo tapa el propio avión.
+ */
+export function cuantoSeVeLoDeDebajo(
+  ojo: Punto,
+  mirado: Punto,
+  suelo: (x: number, z: number) => number | null,
+  porElCristal: (q: Punto) => boolean,
+  loVe: (q: Punto) => boolean,
+): number | null {
+  const lejos = Math.hypot(mirado.x - ojo.x, mirado.y - ojo.y, mirado.z - ojo.z);
+  const paso = (lejos * ABARCA_LA_MIRADA) / 2;
+  // Alineado con la mirada: hacia delante, lo que se aleja; a los lados, lo de al lado.
+  let fx = mirado.x - ojo.x;
+  let fz = mirado.z - ojo.z;
+  const n = Math.hypot(fx, fz);
+  if (n < 1) {
+    fx = 0;
+    fz = -1;
+  } else {
+    fx /= n;
+    fz /= n;
+  }
+  let vistos = 0;
+  let enLaVista = 0;
+  for (let i = -2; i <= 2; i++)
+    for (let k = -2; k <= 2; k++) {
+      const x = mirado.x + (k * fx - i * fz) * paso;
+      const z = mirado.z + (k * fz + i * fx) * paso;
+      // Un poco por encima, como los vecinos de `casiTodo` en `game.ts`: que no lo tape su propia ladera.
+      const q = { x, y: Math.max(0, suelo(x, z) ?? 0) + 30, z };
+      if (!porElCristal(q)) continue;
+      enLaVista++;
+      if (loVe(q)) vistos++;
+    }
+  return enLaVista ? vistos / enLaVista : null;
+}
+
+/** **Si se ve lo de debajo**: ver `cuantoSeVeLoDeDebajo` y `SE_VE_LO_DE_DEBAJO`. */
+export function seVeLoDeDebajo(
+  ojo: Punto,
+  mirado: Punto,
+  suelo: (x: number, z: number) => number | null,
+  porElCristal: (q: Punto) => boolean,
+  loVe: (q: Punto) => boolean,
+): boolean {
+  return (cuantoSeVeLoDeDebajo(ojo, mirado, suelo, porElCristal, loVe) ?? 0) >= SE_VE_LO_DE_DEBAJO;
+}
+
 /** Los ojos de un asiento, en el mundo. */
 export function ojosEnElMundo(asiento: AsientoDePasaje, avion: ElAvionQueMira): Vector3 {
   return new Vector3(asiento.ojo.x, asiento.ojo.y, asiento.ojo.z)

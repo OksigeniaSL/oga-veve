@@ -179,6 +179,63 @@ export function mallasDeFuera(raiz: Object3D): Object3D[] {
 }
 
 /**
+ * **Hasta dónde puede estar lo del avión que tapa la vista desde un asiento**,
+ * m: más que de la ventanilla a la punta del ala del más grande. Lo de más
+ * allá es el mundo.
+ */
+const ALCANCE_DEL_AVION = 120;
+
+/**
+ * **Si el propio avión tapa un punto del mundo visto desde un asiento**: la
+ * góndola, el ala, el flap (H59b). Con un rayo contra las mallas de fuera
+ * —ver `mallasDeFuera`— tal como se pintan: lo escondido no tapa, ni lo que
+ * deja ver a través, que es la hélice girando. La misma cuenta que el banco
+ * hace con la cámara —`loTapaElAvion` en `game.ts`—, aquí con la pose.
+ *
+ * El rayo se tira en los ejes del avión colocado y no desde la posición del
+ * vuelo: así cuadra con la malla tal como se pintó, aunque el avión haya
+ * avanzado desde entonces. `grupo`, el del avión colocado; `avion`, dónde
+ * está y cómo va girado, con lo que se dice dónde cae el punto.
+ */
+export function loTapaElAvionDesde(
+  asiento: AsientoDePasaje,
+  punto: { readonly x: number; readonly y: number; readonly z: number },
+  avion: { readonly position: Vector3; readonly orientation: Quaternion },
+  mallas: readonly Object3D[],
+  grupo: Object3D,
+  rayo: Raycaster = new Raycaster(),
+): boolean {
+  const ojo = new Vector3(asiento.ojo.x, asiento.ojo.y, asiento.ojo.z);
+  const d = new Vector3(punto.x, punto.y, punto.z)
+    .sub(avion.position)
+    .applyQuaternion(avion.orientation.clone().invert())
+    .sub(ojo);
+  const lejos = d.length();
+  if (lejos < 1e-6) return false;
+  rayo.set(ojo.applyMatrix4(grupo.matrixWorld), d.divideScalar(lejos).transformDirection(grupo.matrixWorld));
+  rayo.near = 0;
+  rayo.far = Math.min(lejos, ALCANCE_DEL_AVION);
+  for (const toque of rayo.intersectObjects(mallas as Object3D[], false)) {
+    // El rayo no mira si se pinta: lo escondido —un tren recogido— no tapa.
+    let o: Object3D | null = toque.object;
+    let visible = true;
+    while (o && o !== grupo) {
+      if (!o.visible) visible = false;
+      o = o.parent;
+    }
+    if (!visible) continue;
+    const m = (toque.object as Object3D & { material?: unknown }).material as
+      | { visible: boolean; transparent: boolean; opacity: number }
+      | { visible: boolean; transparent: boolean; opacity: number }[]
+      | undefined;
+    const material = Array.isArray(m) ? m[toque.face?.materialIndex ?? 0] : m;
+    if (!material || !material.visible || (material.transparent && material.opacity < 0.5)) continue;
+    return true;
+  }
+  return false;
+}
+
+/**
  * **El asiento de Ara de un costado**: de las ventanillas que caen encima del
  * motor —de su boca a su tobera—, la que pegada al cristal deja ver a la vez
  * más motor y más ala; o `null` si el avión no tiene motor debajo del ala que

@@ -19,12 +19,15 @@ import type { VentanillaDePasaje } from "./asiento-de-pasaje";
 import {
   asomadoHacia,
   claridad,
+  cuantoSeVeLoDeDebajo,
   ladoDe,
   ojosEnElMundo,
   miradaDe,
   SE_DISTINGUE,
+  SE_VE_LO_DE_DEBAJO,
   seVeDesdeFuera,
   seVeElMarDeNubes,
+  seVeLoDeDebajo,
   tomaDelPaisaje,
   type ElMundoQueSeMira,
 } from "./se-ve-desde-el-pasaje";
@@ -235,5 +238,68 @@ describe("el mar de nubes, por lo que llena la mirada (H38m)", () => {
     // El Teide entero en la mirada: por encima de la capa, roca y no algodón.
     const teide: ElMundoQueSeMira = { ...cubierta, suelo: () => 3700 };
     expect(seVeElMarDeNubes(ojo, mirado, teide)).toBe(false);
+  });
+});
+
+describe("lo de debajo, por lo que deja ver el cristal y no por un punto (H59b)", () => {
+  // Desde 1.000 m, mirando abajo y hacia el norte: lo mirado, a 1.732 m por delante.
+  const ojo = { x: 0, y: 1000, z: 0 };
+  const mirado = { x: 0, y: 5, z: -1732 };
+  const llano = (): number => 0;
+  const todo = (): boolean => true;
+
+  it("mira cinco por cinco puntos alineados con la mirada, en un cuadro de un 27 % de la distancia", () => {
+    const vistos: { x: number; z: number }[] = [];
+    cuantoSeVeLoDeDebajo(ojo, mirado, llano, todo, (q) => (vistos.push(q), true));
+    expect(vistos).toHaveLength(25);
+    const lejos = Math.hypot(mirado.x - ojo.x, mirado.y - ojo.y, mirado.z - ojo.z);
+    const zs = vistos.map((q) => q.z);
+    const xs = vistos.map((q) => q.x);
+    expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(lejos * 0.27 * 2, 0);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(lejos * 0.27 * 2, 0);
+    // Y girado con la mirada: mirando al este, el cuadro se alarga hacia el este igual.
+    const alEste: { x: number; z: number }[] = [];
+    cuantoSeVeLoDeDebajo(ojo, { x: 1732, y: 5, z: 0 }, llano, todo, (q) => (alEste.push(q), true));
+    expect(Math.max(...alEste.map((q) => q.x)) - Math.min(...alEste.map((q) => q.x))).toBeCloseTo(lejos * 0.27 * 2, 0);
+  });
+
+  it("con la góndola tapando la mitad de cerca, el mar de la mitad de lejos se ve", () => {
+    // Lo de más cerca que lo mirado cae detrás del motor; lo mirado, también.
+    const loVe = (q: { z: number }): boolean => q.z < mirado.z - 1;
+    expect(loVe(mirado)).toBe(false);
+    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, todo, loVe)).toBeCloseTo(10 / 25, 5);
+    expect(seVeLoDeDebajo(ojo, mirado, llano, todo, loVe)).toBe(true);
+  });
+
+  it("tapado del todo, o lo que se dice que no es lo que hay, no se ve", () => {
+    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, todo, () => false)).toBe(0);
+    expect(seVeLoDeDebajo(ojo, mirado, llano, todo, () => false)).toBe(false);
+    // Lo que asoma por un borde —una fila de cinco— tampoco: no es lo que se ve al mirar abajo.
+    const unaFila = (q: { z: number }): boolean => q.z < mirado.z - 1732 * 0.2;
+    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, todo, unaFila)).toBeCloseTo(5 / 25, 5);
+    expect(seVeLoDeDebajo(ojo, mirado, llano, todo, unaFila)).toBe(false);
+  });
+
+  it("lo que cae fuera del cristal no es de la vista: es la pared", () => {
+    // Solo la mitad de lejos cae por el cristal, y ahí todo es mar: se ve entero.
+    const cristal = (q: { z: number }): boolean => q.z < mirado.z - 1;
+    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, cristal, todo)).toBe(1);
+    // Y si por el cristal no cae nada, no hay vista: ni se ve ni se deja de ver, y no se nombra.
+    expect(cuantoSeVeLoDeDebajo(ojo, mirado, llano, () => false, todo)).toBeNull();
+    expect(seVeLoDeDebajo(ojo, mirado, llano, () => false, todo)).toBe(false);
+  });
+
+  it("pide dos quintos, lo mismo que el banco al mar de nubes", () => {
+    expect(SE_VE_LO_DE_DEBAJO).toBe(0.4);
+  });
+
+  it("los puntos van un poco por encima del suelo que haya, también en la ladera", () => {
+    const vistos: { y: number }[] = [];
+    cuantoSeVeLoDeDebajo(ojo, mirado, () => 600, todo, (q) => (vistos.push(q), true));
+    expect(vistos.every((q) => q.y === 630)).toBe(true);
+    // Y el mar, o lo que nadie sabe, a ras del agua.
+    const alAgua: { y: number }[] = [];
+    cuantoSeVeLoDeDebajo(ojo, mirado, () => null, todo, (q) => (alAgua.push(q), true));
+    expect(alAgua.every((q) => q.y === 30)).toBe(true);
   });
 });
