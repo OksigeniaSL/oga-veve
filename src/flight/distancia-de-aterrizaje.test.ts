@@ -233,15 +233,28 @@ describe("lo que alarga y lo que acorta la parada", () => {
   it("sin los frenos de tierra, el reactor no frena al tocar: el ala lleva el peso", () => {
     /*
      * Para lo que salen. Tocando a su velocidad con los flaps de aterrizaje,
-     * el ala de un reactor todavía sostiene tres cuartas partes del avión, y
-     * una rueda que no carga no frena. Con los paneles arriba el peso pasa a
-     * las ruedas: medido, el regional rueda un 46 % más sin ellos.
+     * el ala de un reactor todavía sostiene dos tercios del avión, y una rueda
+     * que no carga no frena. Con los paneles arriba el peso
+     * pasa a las ruedas: medido, el regional rueda un 46 % más sin ellos.
+     *
+     * **Sin ellos, menos de cuatro décimas en las ruedas**, y no tres y media.
+     * Rodando, el ala va con el ángulo que le deja el tren y no con el que pide
+     * el peso, así que lo que sostiene es lo que suman los flaps a ese ángulo.
+     * Con los flaps de la actitud de su manual (enmienda H55 del ADR 0027) el
+     * 747 suma 0,763 y no 1,0 —en el aire lo que falta lo pone el ángulo,
+     * cuatro grados—, y sin los paneles carga las ruedas con 0,37 en vez de
+     * 0,20; el 787, 0,34, y el E170, 0,33. Era el reparto de antes, el de un
+     * ala que volaba la final sin ángulo, el que dejaba cuatro quintos en el
+     * ala. Lo que enseña la prueba no cambia: con los paneles arriba la carga
+     * en las ruedas pasa del doble —de 2,2 a 2,5 veces— y la carrera se
+     * acorta.
      */
     for (const a of AIRCRAFT.filter((x) => x.frenosDeTierra)) {
       const con = rodar(a, { brakes: 1, frenosDeTierra: 1 });
       const sin = rodar(a, { brakes: 1, frenosDeTierra: 0 });
       expect(con.enLasRuedas, `${a.id}: con ellos`).toBeGreaterThan(0.6);
-      expect(sin.enLasRuedas, `${a.id}: sin ellos`).toBeLessThan(0.35);
+      expect(sin.enLasRuedas, `${a.id}: sin ellos`).toBeLessThan(0.4);
+      expect(con.enLasRuedas / sin.enLasRuedas, a.id).toBeGreaterThan(2);
       expect(sin.metros / con.metros, a.id).toBeGreaterThan(1.25);
     }
   });

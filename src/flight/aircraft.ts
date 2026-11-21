@@ -3740,10 +3740,32 @@ export const ARAI: AircraftConfig = {
    * con la palanca, así que la de los de despegue sube con ella y baja su
    * pérdida, de 121 a 117 nudos; la Vr, arriba, la sigue. Enmienda H20e del
    * ADR 0027.
+   *
+   * **Ese 2,76 sigue, pero con los flaps de aterrizar sumando 1,125 y no
+   * 1,38** (enmiendas H54 y H55 del ADR 0027). Con 1,38 a igual ángulo el
+   * E170 bajaba la senda a −3,1° de morro, con el ángulo de ataque en cero.
+   * Su manual (Embraer, *Airplane Operations Manual* AOM-1502-003, rev. 21,
+   * 2016, 4-02-01 p. 52, tablas de velocidad no fiable) da en la senda de 3°,
+   * con slat/flap FULL a la Vref más diez, 0° de morro de 50.000 a 70.000 lb
+   * y 1° con 80.000: tres grados de ángulo. Con 1,125 los da a la masa de la
+   * ficha (66.000 lb). Las de despegue y la del medio, las de la recta de
+   * antes (`sustentacionPorMuesca`), y la pérdida con los de aterrizar llega
+   * con más ángulo, la de sus slats (`bordeDeAtaque`), al mismo CL máximo.
    */
   llevaFlaps: true,
-  flapsLift: 1.38,
+  flapsLift: 1.125,
   flapsDrag: 0.055,
+  sustentacionPorMuesca: [1.38 / 3, (1.38 * 2) / 3, 1.125],
+  /*
+   * **Los slats del E-Jet**, que salen con la palanca de flaps. Con las dos
+   * primeras muescas, el ángulo de la ficha, el de siempre; con los de
+   * aterrizar, el que deja el CL máximo de 2,76 de su Vref con la sustentación
+   * de su actitud: 0,26 + (1,38 − 1,125)/4,6 = 0,315 rad, 18,1°.
+   */
+  bordeDeAtaque: {
+    dispositivo: "slats",
+    perdidaPorMuesca: [0.26, 0.26, 0.26 + (1.38 - 1.125) / 4.6],
+  },
   /*
    * Cinco, quince y treinta: los topes de un bimotor de pasillo único. El
    * primero es casi todo carril —el Fowler sale hacia atrás y apenas baja—,
@@ -4148,17 +4170,28 @@ export const YVAGA: AircraftConfig = {
   // avioneta, y es lo que le permite entrar a 98 y no a 140.
   // Lo mismo que el Arai, y por lo mismo. Ver su ficha.
   llevaFlaps: true,
-  flapsLift: 1.0,
+  flapsLift: 0.763,
   flapsDrag: 0.065,
   /*
    * **La muesca de despegue sube poco la recta: 0,14**, y no un tercio de lo
    * de aterrizar. Es lo que hace que se vaya del suelo a 10,1°, la actitud que
    * da Boeing para el 747 con los flaps de despegue (D. Carbaugh, «Tail
    * Strikes: Prevention», *AERO* QTR_01 2007, figura 1), con el efecto suelo;
-   * con 0,333 se iba a 8,4° (notas H29c (2) y H29e del ADR 0002). Las otras
-   * dos, como estaban: la de aterrizar la fija la Vref, 1,3 veces su pérdida.
+   * con 0,333 se iba a 8,4° (notas H29c (2) y H29e del ADR 0002).
+   *
+   * **Las otras dos, las de la actitud de su manual** (enmiendas H54 y H55 del
+   * ADR 0027). El FCOM del 747-400 (D6-30151-400, rev. 2009, PI.10.39-40,
+   * vuelo con la velocidad no fiable) da, con 250 t: 7,5° de morro nivelado
+   * con los flaps a 20 a la Vref de treinta más diez, y 1,0° en la senda de 3°
+   * con los flaps a 30 a la misma velocidad; es decir, 7,5° y 4,0° de ángulo
+   * de ataque del fuselaje. Con 2/3 y 1,0 este 747 bajaba la senda a −2,4°,
+   * con medio grado de ángulo: tres grados y medio más picado que el de
+   * verdad, y el morro por debajo del horizonte en la final. Con 0,48 y 0,763
+   * da esos ángulos a la Vref más diez de la ficha. La pérdida de cada una no
+   * se mueve: la de veinte, la de antes, y la de treinta, la de su Vref. Ver
+   * `bordeDeAtaque`.
    */
-  sustentacionPorMuesca: [0.14, 2 / 3, 1.0],
+  sustentacionPorMuesca: [0.14, 0.48, 0.763],
   /*
    * **Y los Krueger del borde de ataque**: los de dentro, y los de curvatura
    * variable de fuera, que salen con los flaps. Con ellos fuera la pérdida
@@ -4169,17 +4202,25 @@ export const YVAGA: AircraftConfig = {
    * 2,03 es el ala a (2,03 − 0,2 − 0,14) / 4,8 = 0,352 rad, 20,2°. La V2 queda
    * a 1,25 veces esa pérdida, sobre el 1,13 de la norma, y la Vr a 1,19.
    *
-   * La de veinte, con el ángulo de la ficha: no tiene aquí cifra propia, y no
-   * se ha movido. **La de aterrizar, la que pide su Vref**: 1,3 veces la
-   * pérdida, así que con 142 nudos la pérdida es de 109,2 y el CL máximo de
-   * 2,54, el ala a (2,5385 − 0,2 − 1,0)/4,8 = 0,279 rad, 16,0°. Era el de la
-   * ficha, 0,25, con los 146 del -400 (enmienda H54 del ADR 0027). El flap de
-   * salida muy bajado adelanta la pérdida, así que los Krueger no se suman
-   * enteros.
+   * **La de veinte, con el CL máximo de antes, y la de aterrizar, con el que
+   * pide su Vref** (enmiendas H54 y H55 del ADR 0027). Con menos sustentación
+   * a igual ángulo —la de la actitud de su manual, en
+   * `sustentacionPorMuesca`—, el mismo CL máximo llega con más ángulo: la
+   * recta sube con el ala y no con el flap. Veinte: 2,07, el de 0,25 rad con
+   * 2/3, que no tiene cifra propia, a 0,25 + (2/3 − 0,48)/4,8 = 0,289 rad
+   * (16,6°). Treinta: 1,3 veces la pérdida a 142 nudos, 109,2 y un CL máximo
+   * de 2,54, a (2,5385 − 0,2 − 0,763)/4,8 = 0,328 rad (18,8°). Por encima de
+   * los 12,5° de la cola en el suelo, como en el avión: la cola toca antes de
+   * que el ala se pierda. El flap de salida muy bajado adelanta la pérdida,
+   * así que los Krueger no se suman enteros.
    */
   bordeDeAtaque: {
     dispositivo: "krueger",
-    perdidaPorMuesca: [(2.03 - 0.2 - 0.14) / 4.8, 0.25, (2.5385 - 0.2 - 1.0) / 4.8],
+    perdidaPorMuesca: [
+      (2.03 - 0.2 - 0.14) / 4.8,
+      0.25 + (2 / 3 - 0.48) / 4.8,
+      (2.5385 - 0.2 - 0.763) / 4.8,
+    ],
   },
   // Cinco, veinte y treinta: los de un cuatrirreactor de fuselaje ancho, con
   // el recorrido más largo de la flota. Ocho segundos por muesca.
@@ -4508,9 +4549,29 @@ export const TIJERETA: AircraftConfig = {
   /*
    * **Lo que da 144 nudos con este ala y este peso**: un CL máximo de 2,5, lo de un
    * reactor de línea con todo fuera. Ver el Arai.
+   *
+   * **Y los de aterrizar suman 0,716, y no los 0,82 de la recta** (enmiendas
+   * H54 y H55 del ADR 0027). Con 0,82 el 787 bajaba la senda a −0,2° de
+   * morro, con 2,9° de ángulo; el FCTM de Boeing (*777/787 Flight Crew
+   * Training Manual*, rev. 14, 2021, pp. 5.27-5.28, «ILS Approach - Landing
+   * Geometry») da al 787-9 1,0° en la senda de 3° con los flaps a 30, la Vref
+   * más cinco y su masa típica al aterrizar. Con 0,716 los da a la masa de la
+   * ficha. Las dos primeras, las de la recta de antes, y la pérdida con los de
+   * aterrizar llega con más ángulo, la de sus slats (`bordeDeAtaque`), al
+   * mismo CL máximo de 2,5: el de su Vref.
    */
-  flapsLift: 0.82,
+  flapsLift: 0.716,
   flapsDrag: 0.065,
+  sustentacionPorMuesca: [0.82 / 3, (0.82 * 2) / 3, 0.716],
+  /*
+   * **Los slats**: con las dos primeras muescas, el ángulo de la ficha; con
+   * los de aterrizar, el que deja el CL máximo de antes con la sustentación de
+   * su actitud: 0,27 + (0,82 − 0,716)/5,2 = 0,29 rad, 16,6°.
+   */
+  bordeDeAtaque: {
+    dispositivo: "slats",
+    perdidaPorMuesca: [0.27, 0.27, 0.27 + (0.82 - 0.716) / 5.2],
+  },
   /*
    * Cinco, veinte y treinta: tres de los de su palanca. Los de aterrizaje de la
    * gráfica de Boeing son 25 y 30 (3.4). Ocho segundos por muesca, por verificar.
