@@ -35,8 +35,10 @@
  *   es grande, y la palanca no salta.
  * - **Y menos morro si falta velocidad**: dos grados por cada m/s que la
  *   indicada quede por debajo de la de la frustrada (`minima`, la de maniobra
- *   con los flaps de ahora y un margen). Es «pitch to obtain the balked
- *   landing climb speed».
+ *   con los flaps de ahora y un margen). **Y más si sobra**: uno por cada m/s,
+ *   hasta los doce de la subida (`CABECEO_MAXIMO_DE_LA_FRUSTRADA`). Es «pitch
+ *   to obtain the balked landing climb speed»: la actitud es la que da la
+ *   velocidad, y los ocho grados son por donde se empieza.
  * - **Y el ala, lejos del avisador**: si el ángulo se acerca a
  *   `MARGEN_AL_AVISADOR` del aviso, la referencia no sube más y la palanca se
  *   afloja en proporción a lo que se pasa.
@@ -52,6 +54,14 @@
 
 /** La actitud de la frustrada, rad: ocho grados, entre los siete y los diez del manual. */
 export const CABECEO_DE_LA_FRUSTRADA = (8 * Math.PI) / 180;
+/**
+ * **Y lo más que se sube si sobra velocidad**, rad: los doce grados de la
+ * subida del banco (`CABECEO_DE_SUBIDA`). Con ocho y el gas a fondo, el JAZ 40
+ * llegaba a los 120 m a 103 nudos, catorce por encima de los de su subida; el
+ * automático, al engancharse, se los comía subiendo el morro a veinte grados
+ * por segundo (H34e, primera tirada).
+ */
+export const CABECEO_MAXIMO_DE_LA_FRUSTRADA = (12 * Math.PI) / 180;
 /** Lo deprisa que sube la actitud pedida, rad/s: el ritmo de rotar. */
 export const RITMO_DE_LA_FRUSTRADA = (3 * Math.PI) / 180;
 /** Lo que el ala se queda del avisador como poco, rad. */
@@ -73,14 +83,21 @@ export const MARGEN_AL_AVISADOR = (4 * Math.PI) / 180;
 export function palancaDeLaFrustrada(p) {
   // Las constantes de arriba, repetidas aquí porque esto viaja como texto.
   const tope = (8 * Math.PI) / 180;
+  const techo = (12 * Math.PI) / 180;
   const ritmo = (3 * Math.PI) / 180;
   const margen = (4 * Math.PI) / 180;
   const ganancia = p.ganancia ?? 1;
   const mano = p.mano ?? 1;
   const dt = Math.max(0, p.dt);
   const sobra = p.avisador - p.alfa;
-  // La actitud a la que se va: la de la frustrada, menos lo que falte de velocidad.
-  const quiere = tope - Math.max(0, p.minima - p.indicada) * ((2 * Math.PI) / 180);
+  // La actitud a la que se va: la de la frustrada, menos lo que falte de
+  // velocidad y más lo que sobre, hasta la de subida.
+  const sobraVelocidad = p.indicada - p.minima;
+  const quiere = Math.min(
+    techo,
+    tope +
+      (sobraVelocidad < 0 ? 2 * sobraVelocidad : sobraVelocidad) * (Math.PI / 180),
+  );
   let referencia = p.referencia + Math.max(-ritmo * dt, Math.min(ritmo * dt, quiere - p.referencia));
   // Y con el ala cerca del avisador, ni un grado más de morro que el que ya lleva.
   if (sobra < margen) referencia = Math.min(referencia, p.cabeceo);

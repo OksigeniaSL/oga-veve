@@ -23,6 +23,7 @@ import { maniobraCon } from "../src/flight/velocidades-de-despegue";
 import { pitchAngleOf } from "../src/ui/actitud";
 import {
   CABECEO_DE_LA_FRUSTRADA,
+  CABECEO_MAXIMO_DE_LA_FRUSTRADA,
   MARGEN_AL_AVISADOR,
   RITMO_DE_LA_FRUSTRADA,
   palancaDeLaFrustrada,
@@ -37,7 +38,7 @@ describe("la palanca de la frustrada", () => {
     ritmo: 0,
     alfa: 2 * GRADO,
     avisador: 12 * GRADO,
-    indicada: 44,
+    indicada: 42,
     minima: 42,
     referencia: -3 * GRADO,
     acumulado: -0.14,
@@ -77,6 +78,20 @@ describe("la palanca de la frustrada", () => {
       p = { ...p, ...r, cabeceo: r.referencia };
     }
     expect(p.referencia).toBeCloseTo(4 * GRADO, 9);
+  });
+
+  it("y si sobra, más: un grado por cada m/s, hasta los doce de la subida", () => {
+    const subir = (indicada) => {
+      let p = { ...final, cabeceo: 8 * GRADO, referencia: 8 * GRADO, indicada, minima: 42 };
+      for (let i = 0; i < 60; i++) {
+        const r = palancaDeLaFrustrada(p);
+        p = { ...p, ...r, cabeceo: r.referencia };
+      }
+      return p.referencia;
+    };
+    expect(subir(44)).toBeCloseTo(10 * GRADO, 9);
+    expect(subir(52)).toBeCloseTo(CABECEO_MAXIMO_DE_LA_FRUSTRADA, 9);
+    expect(CABECEO_MAXIMO_DE_LA_FRUSTRADA).toBeCloseTo(12 * GRADO, 9);
   });
 
   it("y con el ala cerca del avisador, ni un grado más de morro, y la palanca aflojando", () => {
