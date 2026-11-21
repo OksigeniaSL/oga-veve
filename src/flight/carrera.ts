@@ -35,9 +35,15 @@ import {
   type AircraftConfig,
 } from "./aircraft";
 import { actitudEnTierra } from "./apoyo";
-import { efectoSueloRodando } from "./efecto-suelo";
+import { efectoSuelo, efectoSueloRodando } from "./efecto-suelo";
+import {
+  anguloDePerdida,
+  flapsDeDespegue,
+  resistenciaDeLosFlaps,
+  sustentacionDeLosFlaps,
+} from "./flaps";
 import { resistenciaDelTren } from "./tren";
-import { acelerarYParar, vmc } from "./velocidades-de-despegue";
+import { acelerarYParar, perdidaCon, vmc } from "./velocidades-de-despegue";
 import { esDeLinea } from "./velocidades-en-tierra";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import {
@@ -160,6 +166,106 @@ export function distanciaDeDespegue(
   return carreraHastaVr(a, superficie, densidad, vientoDeFrente) * deRodarADespegar(a);
 }
 
+/** La altura de su norma, m: cincuenta pies una avioneta (CS 23), treinta y cinco un avión de transporte (CS 25.113). */
+export function alturaDeSuNorma(a: AircraftConfig): number {
+  return (esDeChorro(a) ? 35 : 50) * 0.3048;
+}
+
+/**
+ * El ritmo al que se rota, rad/s: los tres grados por segundo del FCTM de
+ * Boeing, los de la mano del banco y los de `despegue-y-toma-del-manual.test.ts`.
+ */
+export const RITMO_DE_ROTAR = (3 * Math.PI) / 180;
+
+/**
+ * **Lo que vuela este avión hasta la altura de su norma**, m: la distancia de
+ * despegue del modelo que se vuela, y no la de su manual (H58).
+ *
+ * `distanciaDeDespegue` es la del manual: la carrera hasta la Vr por la
+ * proporción que da su manual o su clase. Esa proporción sale de un avión de
+ * verdad, y **el del juego no siempre vuela así**. En el biplano y en el Twin
+ * Otter el modelo tarda dos segundos y medio en irse del suelo después de la
+ * Vr —rota desde a nivel y necesita de cinco a siete grados para sostenerse—,
+ * y pasaba la altura de su norma un 37 % más allá de lo que decía la cuenta:
+ * más que su margen. El hangar le aceptaba pistas en las que el avión que se
+ * vuela no llegaba a su altura dentro de ellas.
+ *
+ * Así que esto **vuela el despegue con la física del modelo**, y es la misma
+ * para todos: desde la Vr, el morro sube a `RITMO_DE_ROTAR` desde la actitud con
+ * la que rueda hasta que el ala —con los flaps de despegue y el colchón del
+ * suelo— sostiene el peso, sin pasar de la cola; y en el aire, una masa puntual
+ * con su sustentación, su resistencia y su empuje, con la actitud que lleva la
+ * velocidad hacia 1,2 veces la pérdida con esos flaps —la de la mano de la
+ * prueba—, hasta la altura de su norma. La carrera hasta la Vr es la de
+ * `carreraHastaVr`.
+ *
+ * No lleva lo que tarda el morro en responder: el modelo se va del suelo unas
+ * décimas más tarde. Por eso no es la cuenta del hangar sino su suelo: el
+ * hangar pide la mayor de las dos con su margen (`pistaNecesariaHoy`).
+ */
+export function despegueVolado(
+  a: AircraftConfig,
+  superficie: Superficie = "asfalto",
+  densidad: number = RHO,
+  vientoDeFrente = 0,
+): number {
+  const rodado = carreraHastaVr(a, superficie, densidad, vientoDeFrente);
+  if (!Number.isFinite(rodado)) return Infinity;
+  const masa = masaDe(a);
+  const peso = masa * G;
+  const sigma = Math.max(0.05, densidad / RHO);
+  const raiz = Math.sqrt(sigma);
+  const motor = loQueDaElMotor(a, sigma);
+  const flaps = flapsDeDespegue(a);
+  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const inducida = Math.PI * alargamiento * a.aero.oswald;
+  const parasita = a.aero.cd0 + resistenciaDelTren(a, 1) + resistenciaDeLosFlaps(a, flaps);
+  const deLosFlaps = sustentacionDeLosFlaps(a, flaps);
+  const alfaMaximo = anguloDePerdida(a, flaps);
+  const mu = ROZAMIENTO[superficie];
+  const subirA = Math.max(perdidaCon(a, flaps) * 1.2, a.rotationSpeed * 1.05) / raiz;
+  const techoEnTierra = Math.min(a.maxGroundPitch, VEINTE_GRADOS);
+  const altura = alturaDeSuNorma(a);
+  const dt = 1 / 60;
+  let v = a.rotationSpeed / raiz;
+  let actitud = actitudEnTierra(a, v);
+  let senda = 0;
+  let h = 0;
+  let x = rodado;
+  let enTierra = true;
+  for (let t = 0; t < 90; t += dt) {
+    const suelo = efectoSuelo(a, h + a.gearHeight + a.alturaDelAla);
+    const alfa = Math.min(alfaMaximo, actitud - senda);
+    const cl = (a.aero.cl0 + a.aero.clAlpha * alfa + deLosFlaps) * suelo.sustentacion;
+    const q = 0.5 * densidad * v * v * a.wingArea;
+    const sustenta = q * cl;
+    const frena = q * (parasita + ((cl * cl) / inducida) * suelo.inducida);
+    const empuje = a.maxThrust * motor * parteDelEmpuje(a, v);
+    if (enTierra) {
+      if (sustenta < peso) {
+        actitud = Math.min(techoEnTierra, actitud + RITMO_DE_ROTAR * dt);
+        const acc = (empuje - frena - mu * (peso - sustenta)) / masa;
+        if (acc <= 0 && actitud >= techoEnTierra) return Infinity;
+        v += acc * dt;
+        x += (v - vientoDeFrente) * dt;
+        continue;
+      }
+      enTierra = false;
+    }
+    const ritmo = Math.max(-3, Math.min(3, v - subirA)) * (Math.PI / 180);
+    actitud = Math.max(0, Math.min(VEINTE_GRADOS, actitud + ritmo * dt));
+    v += ((empuje * Math.cos(alfa) - frena - peso * Math.sin(senda)) / masa) * dt;
+    senda += ((sustenta + empuje * Math.sin(alfa) - peso * Math.cos(senda)) / (masa * v)) * dt;
+    if (h <= 0 && senda < 0) senda = 0;
+    h = Math.max(0, h + v * Math.sin(senda) * dt);
+    x += (v * Math.cos(senda) - vientoDeFrente) * dt;
+    if (h >= altura) return x;
+  }
+  return Infinity;
+}
+
+const VEINTE_GRADOS = (20 * Math.PI) / 180;
+
 /**
  * **Cómo está el día para despegar**: lo que mueve la distancia de despegue
  * de un día a otro en el mismo avión y la misma pista. Ver
@@ -235,6 +341,13 @@ export const MARGEN_DE_CERTIFICACION = 1.15;
  * la masa sin combustible más lo que hay en los depósitos. Una cuenta con
  * otro peso que el del avión que vuela diría que cabe y el avión no cabría.
  *
+ * **Y con lo que vuela el avión del juego, si vuela más que su manual**
+ * (H58): el margen es sobre la distancia de despegue del avión que se va a
+ * volar, y ese es el modelo. La de su manual, `distanciaDeDespegue`, y la que
+ * vuela, `despegueVolado`: la mayor de las dos, por el margen. Sin eso, el
+ * biplano y el Twin Otter, que vuelan hasta su altura un 37 % más de lo que
+ * dice su manual, pedían con margen menos pista de la que volaban.
+ *
  * **Y en el de línea de más de un motor, no menos que la de abortar desde su
  * V1** con el aire y el peso del día, `acelerarYPararDeSuNorma`: la misma
  * regla que la de qué avión cabe en qué campo. Sin ella, el JAZ 120 aceptaba
@@ -242,13 +355,32 @@ export const MARGEN_DE_CERTIFICACION = 1.15;
  * desde su V1 pide 1.869 (ADR 0027).
  */
 export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE_TABLAS): number {
+  const clave = `${dia.masa ?? ""}|${dia.superficie}|${dia.densidad}|${dia.vientoDeFrente}`;
+  let delAvion = CUENTAS_DEL_DIA.get(a);
+  if (!delAvion) CUENTAS_DEL_DIA.set(a, (delAvion = new Map()));
+  const hecha = delAvion.get(clave);
+  if (hecha !== undefined) return hecha;
   const avion = dia.masa === undefined ? a : conMasa(a, dia.masa);
-  return Math.max(
-    distanciaDeDespegue(avion, dia.superficie, dia.densidad, dia.vientoDeFrente) *
-      margenDeSuClase(a).factor,
+  const pide = Math.max(
+    Math.max(
+      distanciaDeDespegue(avion, dia.superficie, dia.densidad, dia.vientoDeFrente),
+      despegueVolado(avion, dia.superficie, dia.densidad, dia.vientoDeFrente),
+    ) * margenDeSuClase(a).factor,
     acelerarYPararDeSuNorma(avion, dia.densidad),
   );
+  if (delAvion.size >= 64) delAvion.clear();
+  delAvion.set(clave, pide);
+  return pide;
 }
+
+/**
+ * **Las cuentas ya hechas, por ficha y día.** Volar el despegue
+ * (`despegueVolado`) cuesta de 0,1 a 0,4 ms, y el plan de la salida pide la
+ * misma cuenta varias veces por entrada —`porQueHoyMasPista` sola, cuatro—,
+ * con el mismo avión y el mismo día. Por ficha y no por su nombre: una ficha
+ * con otra masa u otro motor es otro objeto, y su cuenta es otra.
+ */
+const CUENTAS_DEL_DIA = new WeakMap<AircraftConfig, Map<string, number>>();
 
 /**
  * **De la rodadura hasta la rotación a la distancia de despegue, por clase.**
@@ -277,9 +409,13 @@ export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE
  * - **El Twin Otter**, un turbohélice de diecinueve plazas, sí publica las
  *   dos: 244 m de rodadura y 455 m hasta los cincuenta pies a su peso máximo
  *   (De Havilland, especificaciones del DHC-6 en dehavilland.com/twin-otter,
- *   las del Series 400). Son 1,86, pero esos 455 son la longitud de campo de
- *   la SFAR 23, que ya lleva su margen: sin él son 395, y 1,62. Es la que
- *   lleva el JAZ 50, que es ese avión (ADR 0027, enmienda H11a). El JAZ 60
+ *   las del Series 400): 1,86. **Esos 455 no llevan margen** (H58): son la
+ *   «all engine operating takeoff distance» de la SFAR 23, «the horizontal
+ *   distance required to takeoff and climb to a height of 50 feet» (§ 5 d,
+ *   que se conserva como el apéndice A de la 14 CFR 135), sin el 1,15 de la
+ *   norma de transporte, y la parada desde la V1, 675 m, va en otra fila.
+ *   Llevaba 1,62, los 455 partidos por 1,15. Es la que lleva el JAZ 50, que
+ *   es ese avión (ADR 0027, enmiendas H11a y H58). El JAZ 60
  *   es un 1900D desde el 13-11-2026, y el 1900D publica su longitud de campo
  *   pero no su rodadura: se queda con la de su clase, y el banco de mesa
  *   comprueba que su volado no se aparta de ella (ADR 0027).

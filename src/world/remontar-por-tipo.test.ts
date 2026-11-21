@@ -308,7 +308,9 @@ describe("remontar la pista según el avión", () => {
 
   /*
    * **En El Hierro, una tarde de calor pide más pista, y ya no tanta como para
-   * remontar.** Con la recta de la hélice de paso fijo el Seneca pedía 713 m
+   * remontar.** Desde H58 la avioneta, que pide 606 m un día de tablas; el
+   * Seneca pide 775, lo que vuela por su margen, y ya remonta sin calor. Antes,
+   * con la recta de la hélice de paso fijo el Seneca pedía 713 m
    * un día de tablas, a doce de los 725 que le deja la calle, y una tarde de
    * 38 grados lo mandaba a remontar. Con sus hélices de paso variable (ADR
    * 0027, enmienda H37a) rueda lo que le falta de empuje en la carrera y pide
@@ -319,8 +321,8 @@ describe("remontar la pista según el avión", () => {
    * sí (abajo).
    */
   it("la misma avioneta, en el mismo campo: una tarde de calor pide más pista", () => {
-    const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
-    const fresco = entrada(EL_HIERRO, jaz40, 0)!;
+    const avioneta = AIRCRAFT.find((a) => a.id === "jaz-20")!;
+    const fresco = entrada(EL_HIERRO, avioneta, 0)!;
     expect(fresco.sale!.desde).toBe("interseccion");
     const cota = 30;
     const calor: DiaDeDespegue = {
@@ -328,7 +330,7 @@ describe("remontar la pista según el avión", () => {
       vientoDeFrente: 0,
       superficie: "asfalto",
     };
-    const caliente = entrada(EL_HIERRO, jaz40, 0, calor)!;
+    const caliente = entrada(EL_HIERRO, avioneta, 0, calor)!;
     expect(caliente.sale!.necesitaHoy).toBeGreaterThan(fresco.sale!.necesitaHoy * 1.05);
     expect(caliente.sale!.necesitaHoy).toBeLessThan(caliente.sale!.desdeLaEntrada);
     expect(caliente.sale!.desde).toBe("interseccion");

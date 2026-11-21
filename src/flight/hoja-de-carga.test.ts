@@ -239,27 +239,35 @@ describe("la pista de hoy", () => {
   });
 
   /*
-   * **Caliente y alto en Los Rodeos, con las cifras de cada manual: la barra
-   * no se pasa a ningún peso que se pueda llevar.** Ni a cuarenta grados y a
-   * su peso máximo: el que más se acerca es el 787-9, a 31 m del final. Pasa
-   * solo pasándose de peso, con los tanques llenos, y eso ya lo para la
-   * báscula. Se deja escrito para que nadie truque una cifra para que pase.
+   * **Caliente y alto en Los Rodeos, a su peso máximo y a cuarenta grados:
+   * los de hélice y el E170 caben; los dos de fuselaje ancho, no.** Hasta H58
+   * cabían todos, el 787-9 a 31 m del final, porque la cuenta era la de su
+   * manual a la masa de la ficha estirada con la carrera, y a su peso máximo
+   * se quedaba corta. Con lo que vuela el avión del juego por su margen
+   * (`despegueVolado`), el 747 pide 3.757 m y el 787, 3.820: el 747 cabe a su
+   * máximo hasta unos diez grados (3.169 m) y el 787 solo con cero. Y va con
+   * lo que dice Boeing: el 747-100 a 710.000 lb pide unos 9.300 ft al nivel
+   * del mar en un día estándar (D6-58326, 3.3.1), 2.835 m, y Los Rodeos está a
+   * 632 m de cota y a cuarenta grados tiene el aire de mucho más arriba.
    */
-  it("en Los Rodeos, ni a 40 °C ni a su peso máximo se pasa ningún avión de la flota", () => {
+  it("en Los Rodeos, a 40 °C y a su peso máximo, caben los de hélice y el E170, y no los de fuselaje ancho", () => {
     for (const a of AIRCRAFT) {
       const mtow = pesoMaximo(a);
       if (!mtow) continue;
       const pide = pistaDeHoy(a, mtow, { temp: 40, qnh: 1013, cota, superficie: "asfalto" });
-      expect(pide, a.id).toBeLessThan(3171);
+      if (a.id === "jaz-110" || a.id === "jaz-120") expect(pide, a.id).toBeGreaterThan(3171);
+      else expect(pide, a.id).toBeLessThan(3171);
     }
   });
 
   /*
-   * **Donde sí pasa, a su peso máximo y con calor**: el Embraer 170 en La
-   * Gomera, con 1.500 m de TORA, desde unos 36 °C; y el 1900D en El Hierro,
-   * con 1.250, a 40. Días de ola de calor, no de cada verano.
+   * **Donde pasa con calor**: el Embraer 170 en La Gomera, con 1.500 m de
+   * TORA, a su peso máximo no cabe ni a quince grados —pide 1.965 m desde H58,
+   * lo que vuela por su margen—; con 32 t, sí a 25 °C (1.452) y no a 40
+   * (1.574). Y el 1900D en El Hierro, con 1.250, a su máximo a 40. Antes de
+   * H58 el E170 cabía a su máximo hasta unos 36 °C.
    */
-  it("el JAZ 90 en La Gomera y el JAZ 60 en El Hierro, a su peso máximo y a 40 °C, no caben", () => {
+  it("el JAZ 90 en La Gomera y el JAZ 60 en El Hierro, con calor, no caben", () => {
     const gm = sitio("la-gomera");
     const hi = sitio("el-hierro");
     const aire = (s: typeof gm, temp: number) => ({
@@ -269,8 +277,9 @@ describe("la pista de hoy", () => {
       superficie: "asfalto" as const,
     });
     const e170 = aircraftById("jaz-90");
-    expect(pistaDeHoy(e170, 37200, aire(gm, 40))).toBeGreaterThan(campoDe(gm).tora!);
-    expect(pistaDeHoy(e170, 37200, aire(gm, 25))).toBeLessThan(campoDe(gm).tora!);
+    expect(pistaDeHoy(e170, 37200, aire(gm, 15))).toBeGreaterThan(campoDe(gm).tora!);
+    expect(pistaDeHoy(e170, 32000, aire(gm, 40))).toBeGreaterThan(campoDe(gm).tora!);
+    expect(pistaDeHoy(e170, 32000, aire(gm, 25))).toBeLessThan(campoDe(gm).tora!);
     const b1900 = aircraftById("jaz-60");
     expect(pistaDeHoy(b1900, 7766, aire(hi, 40))).toBeGreaterThan(campoDe(hi).tora!);
     expect(pistaDeHoy(b1900, 7766, aire(hi, 25))).toBeLessThan(campoDe(hi).tora!);

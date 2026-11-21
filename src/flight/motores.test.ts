@@ -37,7 +37,7 @@ import {
   velocidadesDeDespegue,
   vmc,
 } from "./velocidades-de-despegue";
-import { pistaQueNecesita as lasDosPistas } from "./carrera";
+import { acelerarYPararDeSuNorma, pistaQueNecesita as lasDosPistas } from "./carrera";
 
 /**
  * La pista más corta que se le deja a este avión: la mayor de la de despegar
@@ -200,12 +200,11 @@ describe("las velocidades de un despegue con un motor de menos", () => {
 
   it("en una pista corta la V1 baja, y con calor también", () => {
     const larga = velocidadesDeDespegue(ARAI, 3400);
-    // Un diez por ciento menos que la que se le deja para despegar: con la Vr
-    // de su peso (ADR 0027), en la que se le deja ya cabe abortar desde la V1
-    // de su ficha. La de despegar y no la mayor de las dos: desde que su toma
-    // cuenta los segundos de la AC 91-79A le pide más pista aterrizar, y un
-    // diez por ciento menos de ésa todavía deja abortar (enmienda H20e).
-    const corta = lasDosPistas(ARAI).despegar * 0.9;
+    // Un diez por ciento menos que la de abortar desde la V1 de su ficha. Era
+    // un diez por ciento menos que la que se le deja para despegar, que era
+    // esa misma; desde H58 la que se le deja es la que vuela por su margen,
+    // más larga, y un diez por ciento menos de ella todavía deja abortar.
+    const corta = acelerarYPararDeSuNorma(ARAI) * 0.9;
     const justa = velocidadesDeDespegue(ARAI, corta);
     expect(justa.v1!).toBeLessThan(larga.v1!);
     // Con un 8 % menos de aire —una tarde de calor— cabe parar desde menos.

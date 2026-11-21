@@ -136,6 +136,10 @@ function hastaLaCarrera(
 const SIN_REMONTAR = 5;
 
 const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
+// Desde H58 el Seneca pide 775 m —lo que vuela por su margen— y la 3A de la 34
+// le deja 749: ya remonta. La avioneta pide hoy los 606 que pedía él, y hace
+// de ejemplo de quien sale desde la intersección.
+const jaz20 = AIRCRAFT.find((a) => a.id === "jaz-20")!;
 const cola = (ms: number): DiaDeDespegue => ({
   densidad: 1.225,
   vientoDeFrente: -ms,
@@ -157,8 +161,8 @@ describe("la radio dice lo que hace el avión en la pista", () => {
     expect(r.porDelante).toBeGreaterThanOrEqual(r.conLaVerde!.necesitaHoy);
   });
 
-  it("y sin cola sale desde la C, por el chaflán que mira hacia donde se despega", () => {
-    const r = hastaLaCarrera(EL_HIERRO, jaz40, 0)!;
+  it("y sin cola la avioneta sale desde la C, por el chaflán que mira hacia donde se despega", () => {
+    const r = hastaLaCarrera(EL_HIERRO, jaz20, 0)!;
     expect(r.conLaVerde!.desde).toBe("interseccion");
     expect(r.rodando!.desde).toBe("interseccion");
     expect(r.haciaAtras).toBeLessThan(SIN_REMONTAR);
