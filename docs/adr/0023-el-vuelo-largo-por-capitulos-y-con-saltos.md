@@ -592,3 +592,38 @@ volando» al final del primero y el segundo, que cae en el tercero. Lo que se de
   hecha o no.
 - **El banco**: `OGA_CAPITULO=seguido` en `scripts/verificar-inicio-4.mjs`, con las mismas funciones que
   vuelan cada capítulo suelto sobre una sola página.
+
+## Nota H52 (21-11-2026): la llamada de cabina es del anuncio que va detrás
+
+La mini-ronda de la tanda 20 dio un rojo en el tercer capítulo (`verificar-inicio-4.mjs`, 34 de 35): «ni
+otra voz que no sea de la escena», con `llamada:comandante.aproximacion` a los 748,6 s y
+`llamada:tripulacion.llegada` a los 835,1. Se leyó como dos llamadas sueltas del vuelo de línea encima de
+las del guion. No lo eran, y el juego no se ha tocado:
+
+- **Era el tono de los anuncios del propio guion.** «Tripulación, preparados para aterrizar» y el anuncio de
+  después de aterrizar llevan delante la aguda y grave (`llamadaAntesDe`), y desde que la llamada pide turno
+  en la boca (H29k, fa1d5084, 18-11-2026) sale en lo hablado con su clave propia: `llamada:` y la del
+  anuncio. Volado otra vez con el banco escribiendo lo que suena detrás de cada llamada: la de la
+  aproximación, a los 752,4 s, con `comandante.aproximacion` detrás, y la de la llegada, a los 840,3, con
+  `tripulacion.llegada` y su receta del día. Un suceso, una voz con su tono delante. De pasaje la megafonía
+  de siempre no decide nada (`dePasaje` en `game.ts`), y la boca de la escena solo deja pasar las claves que
+  la escena está diciendo, con su llamada (`clavesDeLaEscena`): ahí ya mandaba lo que cuenta la escena.
+- **El banco de la tercera escena lo aprendió el mismo día** (a40a2fcf). El del vuelo largo llevaba su propia
+  copia de la regla, del 10-11 y sin la llamada, y no se había vuelto a volar desde H29k. Con una regla en
+  dos sitios, se arregló uno.
+- **Arreglo, en los bancos**: lo que dice la escena se decide en un solo sitio, `scripts/voces-de-la-escena.mjs`,
+  y lo usan los dos. Más estricto que la regla de antes: una llamada es de la escena solo si lo siguiente que
+  suena es su anuncio —la boca pide la voz antes de soltar el tono, `pedirLaLlamada`—; un tono sin su voz, u
+  otra voz detrás, sale como ajeno. Se comparan las claves sin formas ni receta (`baseDeLaClave`, como en
+  `game.ts`): la llamada pide turno con la del anuncio a secas y la voz suena con la receta detrás,
+  `tripulacion.llegada@tripulacion.bienvenidos.pettirossi-…~3`, y en la primera pasada, comparando la clave
+  entera, la llegada salía como tono sin su voz. Y el banco del vuelo largo escribe cada llamada con lo que
+  sonó detrás.
+- **La prueba**: `scripts/voces-de-la-escena.test.mjs` monta la llamada de cada anuncio de los cuatro guiones
+  de pasaje con `laLlamadaDe`, la del juego: si la llamada cambia de forma, falla en la mesa y no a la media
+  hora de banco. Con la regla de antes del banco del vuelo largo, las dos llamadas del rojo salían ajenas.
+- **Volado con el arreglo** (la tarjeta de verdad): el tercer capítulo, **35 de 35**, con las dos llamadas
+  cada una delante de su anuncio, a los 833,7 y 919,8 s; la tercera escena, **126 de 127**, «no habla
+  nadie más» en verde con 159 sonadas, y el que falla es el del toque por el cristal de Ara, que es del banco
+  y se arregla aparte. El vitest entero, 566 ficheros y 11.279 pruebas en verde, con el emparejado aún por
+  la clave entera; la prueba nueva, otra vez después de cambiarlo.
