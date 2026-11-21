@@ -335,7 +335,13 @@ describe("y los reactores, con la frustrada de su FCTM", () => {
     for (const id of ["jaz-90", "jaz-110", "jaz-120"]) {
       const antes = frustrar(id, "antes");
       const ahora = frustrar(id, "nueva");
-      expect(antes.salto, id).toBeGreaterThan(0.5);
+      /*
+       * Que la ley vieja sí pegaba el tirón: la prueba tiene que poder verlo.
+       * Desde H57b el automático arranca del timón del último paso y no del
+       * promediado, y el tirón viejo del 747 baja de 0,58–0,66 a 0,48; sigue
+       * siendo cinco veces el de la ley nueva, que no pasa de 0,1.
+       */
+      expect(antes.salto, id).toBeGreaterThan(0.4);
       expect(ahora.salto, id).toBeLessThanOrEqual(0.1 + 1e-9);
       expect(ahora.carga, id).toBeLessThan(1.45);
       // A los quince, con poco de más: el 747 gira despacio.
