@@ -3884,6 +3884,8 @@ async function mirarLosDestellos() {
         hasTouch: !!dedo,
         isMobile: !!dedo,
         reducedMotion: quieto ? "reduce" : "no-preference",
+        // En el castellano del juego, que es el que se lee aquí: sin esto el navegador sin ventana va en inglés.
+        locale: "es-PY",
       });
       const nombre = `${ancho}x${alto}${dedo ? "-dedo" : ""}${quieto ? "-quieto" : ""}`;
       const donde = `destellos, ${tramo} ${ancho}×${alto}${dedo ? " con el dedo" : ""}${quieto ? " y sin movimiento" : ""}`;
@@ -3958,7 +3960,12 @@ async function mirarLosDestellos() {
               seVe: !!punto && caja.contains(punto),
               dentro: c.left >= 0 && c.top >= 0 && c.right <= innerWidth && c.bottom <= innerHeight,
               tapa,
-              orden: texto.innerText.trim(),
+              /*
+               * Lo que se ve escrito, y no lo que hay dentro: `innerText` de algo
+               * que no se pinta devuelve su texto igual, y en el peldaño de los
+               * pequeños la orden está, pero escondida.
+               */
+              orden: texto.getClientRects().length ? texto.innerText.trim() : "",
               todo: caja.innerText.trim(),
               animacion: cs.animationName,
               aro: cs.outlineStyle,
@@ -4024,7 +4031,7 @@ async function mirarLosDestellos() {
           comprobar(
             `${donde}: en el peldaño de los pequeños no sale ni una palabra`,
             rodar.orden === "" && rodar.todo === verde.todo,
-            `orden «${rodar.orden}»; en la caja «${rodar.todo}», con la verde «${verde.todo}»`,
+            `orden escrita «${rodar.orden}»; en la caja «${rodar.todo}», lo mismo que con la verde «${verde.todo}»: la placa, que es una forma`,
             "empiezan a los cuatro años y no leen: un cartel de texto es un cartel en blanco",
           );
         else

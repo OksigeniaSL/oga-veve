@@ -196,9 +196,12 @@ describe("a quien remonta, la verde fija al dar la vuelta, y una", () => {
  * **Quien da la vuelta antes del lazo dibujado** (H41i).
  *
  * Remonta con el piloto perfecto hasta llevar `tras` metros hacia la cabecera
- * desde donde pisó la pista —`"alEntrar"`: nada, nada más pisarla—, y ahí se
- * pone mirando pista abajo, parado, unos segundos. Apunta las luces de antes
- * y de después, y si la bandera del remonte se bajó.
+ * desde donde pisó la pista —`"alEntrar"`: nada, nada más pisarla—, y ahí da
+ * la vuelta sin moverse del sitio, a veinte grados por segundo, hasta mirar
+ * pista abajo, y espera. Un giro de verdad y no un salto de rumbo: con el
+ * morro puesto de golpe en el eje no hay «alineando», y es en esa fase donde
+ * se enciende la verde, también al acabar el lazo dibujado. Apunta las luces
+ * de antes y de después del giro, y si la bandera del remonte se bajó.
  */
 function girarAntes(
   esc: Scenario,
@@ -232,6 +235,8 @@ function girarAntes(
   let masAtras = Infinity;
   let vuelto: { remontado: number; antesDelLazo: number } | null = null;
   let parado = 0;
+  const haciaDondeSeDespega = (pista.heading * Math.PI) / 180;
+  const GIRO = (20 * Math.PI) / 180;
   for (let t = 0; t < 1200; t += dt) {
     const ruta = plan.rutaVisible();
     if (!p) {
@@ -265,7 +270,12 @@ function girarAntes(
     if (!sale && vista.luzVerde) sale = plan.comoSeSale;
     if (vuelto) {
       parado += dt;
-      if (parado > 6 || vista.fase === "despegando")
+      // La vuelta en el sitio, por el lado más corto.
+      let falta = haciaDondeSeDespega - rumbo;
+      while (falta > Math.PI) falta -= 2 * Math.PI;
+      while (falta < -Math.PI) falta += 2 * Math.PI;
+      rumbo += Math.sign(falta) * Math.min(Math.abs(falta), GIRO * dt);
+      if (parado > 15 || vista.fase === "despegando")
         return {
           sale,
           antes,
@@ -288,8 +298,7 @@ function girarAntes(
       const giro = plan.dondeSeGira;
       if (giro !== null && (tras === "alEntrar" || remontado >= tras)) {
         vuelto = { remontado, antesDelLazo: e.along - giro };
-        // Mirando pista abajo, parado.
-        rumbo = (pista.heading * Math.PI) / 180;
+        // Parado, y a dar la vuelta desde aquí.
         v = 0;
         continue;
       }
@@ -332,8 +341,10 @@ describe("quien da la vuelta antes del lazo dibujado (H41i)", () => {
     expect(r.antesDelLazo).toBeGreaterThan(200);
     expect(r.antes).toEqual(["roja", "rodar"]);
     expect(r.bandera).toBe(false);
-    expect(r.despues).toEqual(["verde"]);
-    expect(r.fase).toBe("alineando");
+    // Destellos mientras gira, y la verde fija al acabar la vuelta: una.
+    expect(r.despues).toEqual(["rodar", "verde"]);
+    // Y ya en el eje, la carrera.
+    expect(r.fase).toBe("despegando");
   });
 
   /*
