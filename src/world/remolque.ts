@@ -318,8 +318,15 @@ function rumboDeLaEntrada(x: number, z: number, entrada: readonly PuntoXZ[]): nu
  * primer punto de la raya, pasados cinco metros del puesto, que cae en el eje del avión
  * por detrás de él, a menos de `SIGUE_LA_RAYA`. `null` si la prolongación no la encuentra:
  * la línea de entrada lleva a una calle por la que el plan no va.
+ *
+ * Devuelve la raya entera desde el puesto, el punto del eje donde la encuentra y el primer
+ * punto de la raya a tres metros o más de él, que dice hacia dónde sigue.
  */
-function rayaDeRetroceso(puesto: PuntoXZ, rumbo: number, raya: readonly PuntoXZ[]): PuntoXZ[] | null {
+function rayaDeRetroceso(
+  puesto: PuntoXZ,
+  rumbo: number,
+  raya: readonly PuntoXZ[],
+): { readonly raya: PuntoXZ[]; readonly enElEje: PuntoXZ; readonly sigue: PuntoXZ } | null {
   const atras = vector(rumbo + Math.PI);
   const t = (q: PuntoXZ) => (q.x - puesto.x) * atras.x + (q.z - puesto.z) * atras.z;
   const lado = (q: PuntoXZ) => cruz(atras, { x: q.x - puesto.x, z: q.z - puesto.z });
@@ -343,12 +350,87 @@ function rayaDeRetroceso(puesto: PuntoXZ, rumbo: number, raya: readonly PuntoXZ[
       const hasta = t(x);
       if (hasta <= 0) continue;
       if (hasta > SIGUE_LA_RAYA) return null;
-      const enElEje = { x: puesto.x + atras.x * hasta, z: puesto.z + atras.z * hasta };
-      return [{ ...puesto }, enElEje, ...raya.slice(i).filter((r) => Math.hypot(r.x - enElEje.x, r.z - enElEje.z) > 0.5)];
+      let enElEje: PuntoXZ = { x: puesto.x + atras.x * hasta, z: puesto.z + atras.z * hasta };
+      // Si cae junto a un punto de la raya, a menos de tres metros, ese punto: es donde la raya sigue.
+      for (const r of [a, b]) if (Math.hypot(r.x - enElEje.x, r.z - enElEje.z) < 3) enElEje = r;
+      const eje = enElEje;
+      const despues = raya.slice(i).filter((r) => r !== eje && Math.hypot(r.x - eje.x, r.z - eje.z) > 0.5);
+      const sigue = despues.find((r) => Math.hypot(r.x - eje.x, r.z - eje.z) >= 3);
+      if (!sigue) return null;
+      return { raya: [{ ...puesto }, enElEje, ...despues], enElEje, sigue };
     }
     andado += l;
   }
   return null;
+}
+
+/** Lo que puede torcer la raya donde la encuentra la prolongación de la pintada y seguirse como un quiebro. */
+const ESQUINA_QUE_SE_SIGUE = 10 * GRADO;
+
+/**
+ * **Si el avión va de culo en todo el empuje, y girando lo que puede**: cada medio metro, lo
+ * que se mueve va a menos de veinticinco grados de lo contrario al morro, que es lo que exige
+ * el banco (`ver-remolque-de-quien-juega.mjs`), y el morro no gira más de lo que da la rueda
+ * a `DIRECCION_MAXIMA`. Un avión empujado no derrapa ni pivota: si una trayectoria lo hace,
+ * está mal hecha, y con la pintada se vuelve a lo de antes.
+ */
+function vaDeCulo(e: Empuje, batalla: number): boolean {
+  const radio = batalla / Math.tan(DIRECCION_MAXIMA);
+  for (let i = 1; i < e.poses.length; i++) {
+    const a = e.poses[i - 1]!;
+    const b = e.poses[i]!;
+    const d = Math.hypot(b.x - a.x, b.z - a.z);
+    if (d < 0.01) continue;
+    const n = vector(a.rumbo);
+    if (((b.x - a.x) * n.x + (b.z - a.z) * n.z) / d > -0.9) return false;
+    if (Math.abs(diferencia(a.rumbo, b.rumbo)) > d / radio + 0.5 * GRADO) return false;
+  }
+  return true;
+}
+
+/**
+ * **Si el morro acaba hacia donde sigue la raya desde la calle**: la raya de los treinta
+ * metros que siguen al cruce, a menos de cinco grados del morro, y el cruce por delante. Es
+ * lo que mide `empuje-hasta-la-calle.test.ts` (H47): con la calle en una esquina, el cruce
+ * puede quedar en ella y la raya torcer enseguida, y entonces el avión no sale mirando por
+ * donde va a rodar.
+ */
+function miraALaCalle(e: Empuje, raya: readonly PuntoXZ[]): boolean {
+  const fin = e.poses.at(-1)!;
+  const n = vector(fin.rumbo);
+  if ((e.cruce.x - fin.x) * n.x + (e.cruce.z - fin.z) * n.z <= 0) return false;
+  let mejor = Infinity;
+  let s = 0;
+  let andado = 0;
+  for (let k = 1; k < raya.length; k++) {
+    const a = raya[k - 1]!;
+    const b = raya[k]!;
+    const l = Math.hypot(b.x - a.x, b.z - a.z);
+    if (l > 1e-9) {
+      const t = Math.max(0, Math.min(1, ((e.cruce.x - a.x) * (b.x - a.x) + (e.cruce.z - a.z) * (b.z - a.z)) / (l * l)));
+      const d = Math.hypot(a.x + (b.x - a.x) * t - e.cruce.x, a.z + (b.z - a.z) * t - e.cruce.z);
+      if (d < mejor) {
+        mejor = d;
+        s = andado + t * l;
+      }
+    }
+    andado += l;
+  }
+  const aLos = (m: number): PuntoXZ => {
+    let quedan = Math.max(0, Math.min(andado, m));
+    for (let k = 1; k < raya.length; k++) {
+      const a = raya[k - 1]!;
+      const b = raya[k]!;
+      const l = Math.hypot(b.x - a.x, b.z - a.z);
+      if (quedan <= l || k === raya.length - 1) {
+        const t = l > 1e-9 ? Math.min(1, quedan / l) : 0;
+        return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+      }
+      quedan -= l;
+    }
+    return raya.at(-1)!;
+  };
+  return Math.abs(diferencia(fin.rumbo, rumboEntre(aLos(s), aLos(s + MIRA_LA_CALLE)))) < 5 * GRADO;
 }
 
 /**
@@ -377,7 +459,7 @@ export function quedaSobreLaRaya(fin: Pose, raya: readonly PuntoXZ[]): boolean {
     const delante = (q.x - fin.x) * n.x + (q.z - fin.z) * n.z;
     if (delante < 0 || delante > 150) continue;
     if (Math.abs((q.x - fin.x) * -n.z + (q.z - fin.z) * n.x) >= 3) continue;
-    if (Math.abs(diferencia(fin.rumbo, rumboEntre(q, aLos(s + 15))))< 5 * GRADO) return true;
+    if (Math.abs(diferencia(fin.rumbo, rumboEntre(q, aLos(s + 15)))) < 5 * GRADO) return true;
   }
   return false;
 }
@@ -396,11 +478,13 @@ export function quedaSobreLaRaya(fin: Pose, raya: readonly PuntoXZ[]): boolean {
  * ahí la sigue con el giro de siempre (`trayectoriaDelEmpuje`).
  *
  * **Y la pintada se queda solo si así el avión acaba en la calle** (`quedaSobreLaRaya`).
- * Hay líneas de entrada que llegan de una calle por la que el plan no va —el 13 de Los
- * Rodeos por la 30 viene de la plataforma del sur y el plan sale hacia el norte—, y con
- * ellas el tractor no tiene por dónde llegar a la raya del plan sin cruzar la plataforma.
- * Ahí el avión se pone como antes. Lo correcto de verdad sería que la raya del plan saliera
- * por la línea de entrada; eso es del rodaje, y no está hecho.
+ * Hay líneas de entrada que llegan de una calle por la que el plan no va —la del 13 de Los
+ * Rodeos, del que se sale por la 30, llega del sur-suroeste y deja el avión a 18°, y la raya
+ * del plan sale recta hacia el sur, veinte grados más allá, sin volver a juntarse con ella—,
+ * y con ellas el tractor no tiene por dónde llegar a la raya del plan. Ahí el avión se pone
+ * como antes. Y también si el empuje lo pone de lado en algún momento (`vaDeCulo`). Lo
+ * correcto de verdad sería que la raya del plan saliera por la línea de entrada; eso es del
+ * rodaje, y no está hecho.
  *
  * **El tráfico, siempre sobre la pintada** (`siempreLaPintada`): entra por ella
  * (`alPuestoPorSuRaya` en `suelo-del-trafico.ts`) sin saber todavía por dónde saldrá, y de
@@ -448,8 +532,45 @@ export function empujeDesdeElPuesto(
   if (pintada !== null) {
     const retroceso = rayaDeRetroceso(puesto, pintada, raya);
     const centro = centroCon(pintada);
-    const empuje = trayectoriaDelEmpuje({ ...centro, rumbo: pintada }, retroceso ?? raya, batalla, opciones);
-    if (siempreLaPintada || (retroceso && empuje && quedaSobreLaRaya(empuje.poses.at(-1)!, raya)))
+    const desde = { ...centro, rumbo: pintada };
+    let empuje: Empuje | null = null;
+    if (!retroceso || !porLaPlataforma) empuje = trayectoriaDelEmpuje(desde, retroceso?.raya ?? raya, batalla, opciones);
+    else {
+      /*
+       * **Donde la prolongación encuentra la raya con esquina, la calle empieza ahí.** Hasta
+       * ahí el tractor va recto por la pintada, y la esquina no es un quiebro que se pueda
+       * doblar: con la raya entera, `trayectoriaDelEmpuje` la seguía con sus quiebros
+       * (`siguiendoLaRaya`) y empezaba a girar antes de la esquina, cortándola. En el 24 de
+       * Los Rodeos la prolongación llega a la Z a 40° de ella, a 124 m, y la Z tuerce al oeste
+       * veinticinco metros más allá: el morro saltaba dieciocho grados en medio metro, con el
+       * avión de lado (el banco lo vio: −0,86 contra el morro). Así que la calle es la raya
+       * desde la esquina, seguida mientras tuerce hacia el mismo lado —la curva entera, como
+       * en la H47b— y hasta `MIRA_LA_CALLE`, y el tractor gira el avión a ella como en
+       * cualquier puesto. Lo que sigue casi recto, a menos de `ESQUINA_QUE_SE_SIGUE`, se sigue
+       * como la raya de siempre.
+       */
+      const tras = retroceso.raya.slice(1);
+      let calle = rumboEntre(retroceso.enElEje, retroceso.sigue);
+      let cruce = retroceso.enElEje;
+      const esquina = diferencia(pintada + Math.PI, calle);
+      if (Math.abs(esquina) <= ESQUINA_QUE_SE_SIGUE) empuje = trayectoriaDelEmpuje(desde, retroceso.raya, batalla, opciones);
+      else {
+        const lado = Math.sign(esquina);
+        for (let k = tras.indexOf(retroceso.sigue); k >= 0 && k < tras.length - 1; k++) {
+          const p = tras[k]!;
+          if (Math.hypot(p.x - retroceso.enElEje.x, p.z - retroceso.enElEje.z) > MIRA_LA_CALLE) break;
+          const va = rumboEntre(p, tras[k + 1]!);
+          if (lado * diferencia(calle, va) <= GRADO) break;
+          calle = va;
+          cruce = p;
+        }
+        empuje = rectaArcoRecta(desde, cruce, calle, batalla);
+      }
+    }
+    if (
+      siempreLaPintada ||
+      (retroceso && empuje && vaDeCulo(empuje, batalla) && quedaSobreLaRaya(empuje.poses.at(-1)!, raya) && miraALaCalle(empuje, raya))
+    )
       return { rumbo: pintada, centro, empuje, porLaPintada: true, porLaRuta, pintada, porQueNo };
     porQueNo = retroceso ? "no-acaba-en-ella" : "no-la-encuentra";
   }

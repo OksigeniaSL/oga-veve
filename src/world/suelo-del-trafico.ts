@@ -687,8 +687,9 @@ export function sueloDelTrafico(
      * centro, que es lo que se empuja, por detrás. Ver `world/rueda-de-morro.ts`.
      */
     /*
-     * Y sobre su raya pintada, si la tiene y por ella el tractor lo deja en la calle (H60b):
-     * de espaldas por la línea de entrada hasta la raya del camino. Ver `empujeDesdeElPuesto`.
+     * Y sobre su raya pintada, si la tiene, siempre (H60b): entró por ella, y de donde
+     * aparcó sale. El tractor lo saca de espaldas por su prolongación hasta la raya del
+     * camino, si la encuentra. Ver `empujeDesdeElPuesto`.
      */
     const morro = pasarela.morro ?? MORRO_DEL_TRAFICO.reactor;
     const enElSuyo = empujeDesdeElPuesto(p0, edificios, raya, entradaDelPuesto(aero, p0.x, p0.z), pasarela.batalla, (r) => conLaRuedaEn(p0, r, morro), {

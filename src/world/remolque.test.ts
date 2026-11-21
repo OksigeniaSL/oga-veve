@@ -432,8 +432,14 @@ describe("en los puestos de verdad", () => {
       const hastaElCruce = Math.hypot(e.cruce.x - fin.x, e.cruce.z - fin.z);
       expect(hastaElCruce).toBeGreaterThan(5);
       expect(Math.abs(diferencia(fin.rumbo, rumboEntre(fin, e.cruce)))).toBeLessThan(5 * GRADO);
-      // Y lo que sigue la raya desde el cruce, poco torcido respecto al morro.
-      const k = raya.findIndex((p) => p.x === e.cruce.x && p.z === e.cruce.z);
+      /*
+       * Y lo que sigue la raya desde el cruce, poco torcido respecto al morro. El cruce es un
+       * punto de la raya o, sobre la raya pintada (H60b), donde la encuentra su prolongación:
+       * entonces, en uno de sus tramos, y se mira desde el punto que cierra ese tramo.
+       */
+      let k = raya.findIndex((p) => p.x === e.cruce.x && p.z === e.cruce.z);
+      if (k < 0)
+        for (let i = 1; i < raya.length && k < 0; i++) if (alSegmento(e.cruce, raya[i - 1]!, raya[i]!) < 0.5) k = i;
       expect(k).toBeGreaterThan(0);
       let j = k;
       while (j < raya.length - 1 && Math.hypot(raya[j]!.x - e.cruce.x, raya[j]!.z - e.cruce.z) < 30) j++;
