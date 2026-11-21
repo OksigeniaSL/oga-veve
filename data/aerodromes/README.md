@@ -35,6 +35,25 @@ node scripts/osm-a-aerodromo.mjs SGAS GCXO
 Hace falta conexión. Tarda un par de minutos: la mayor parte es descargar los
 CSV de OurAirports, que son grandes.
 
+### Las líneas de entrada de los puestos
+
+Cada puesto que tiene su línea de entrada pintada en OpenStreetMap la lleva
+en `entrada`, de fuera hacia la parada (ver `entradasDeOsm` en
+`scripts/puestos-de-osm.mjs`): es la raya sobre la que se aparca el avión, y
+manda sobre la ruta para ponerlo en el puesto (ADR 0025, enmienda H60). La
+extracción entera la guarda sola. Para añadirlas sin rehacer la geometría:
+
+```
+node scripts/lineas-de-entrada.mjs GCXO GCTS --crudo carpeta   # pregunta a Overpass y guarda lo que trae
+node scripts/lineas-de-entrada.mjs GCXO GCTS --de carpeta      # lo vuelve a leer de ahí
+```
+
+Solo toca `parkingPositions`, y en ellos solo `entrada`: ningún puesto se
+mueve, se quita ni se añade. Las de los nueve campos con pasarelas se
+añadieron el 21-11-2026. En las fichas que no se rehicieron con
+`puestosDeOsm` (#191) hay puestos en mitad de su línea de entrada —el centro
+que sacaba el extractor de antes—; esos llevan la línea hasta ellos.
+
 ## La rejilla del pavimento, horneada
 
 Cada `<id>.pavimento.bin` es la rejilla de dos metros con la que las ruedas

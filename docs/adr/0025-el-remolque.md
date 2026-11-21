@@ -997,11 +997,92 @@ pasillo en alto (`layer=1`), sobre pilares. Tampoco se ha tocado.
   tejado), 99 de 99 m empujado y giro de 125°. En la captura del puesto, el pasillo queda a la izquierda del avión y la
   terminal delante, como en el puesto de verdad.
 
+## Enmienda (21-11-2026, H60): la raya pintada de cada puesto, guardada; el rumbo por ella, todavía no
+
+### El caso
+
+Lo que dejó la H59 sin tocar: en el puesto 24 de Los Rodeos el juego pone el JAZ 90 a 76°, por la raya de su ruta
+hasta la Z, y la raya de entrada pintada va a 61° (OpenStreetMap, la vía 1425730831; unos 60° sobre el plano del AIP,
+AD 2-GCXO PDC 1.1). En un puesto de contacto el avión se aparca sobre su línea de entrada, con el morro a la pasarela.
+La ruta va hacia donde vaya la calle, no hacia donde está pintado el puesto.
+
+### Lo que entra: cada puesto guarda su línea de entrada
+
+`entrada` en `parkingPositions`, de fuera hacia la parada y acabando en el punto del puesto. Sale de `entradasDeOsm`
+(`scripts/puestos-de-osm.mjs`): la vía de `parking_position` que pasa por el puesto —su lado largo, si sigue unos
+metros más allá de la parada, como la del 24; y empalmada con los tramos de su mismo `ref`—, o, si no la hay, la única
+`taxilane` o `taxiway` que acaba en él. La extracción entera la guarda sola, y `scripts/lineas-de-entrada.mjs` la
+añade a una ficha sin rehacer su geometría: una consulta solo de puestos y calles del campo, y en la ficha solo cambia
+`entrada`; ningún puesto se mueve, se quita ni se añade, y repetirla sobre lo mismo no cambia nada. Las fichas que no
+se rehicieron con `puestosDeOsm` (#191) traen puestos en el centro de su línea de entrada; llevan la línea hasta ellos,
+que es la raya sobre la que están.
+
+Sacadas de OpenStreetMap el 21-11-2026 para los nueve campos con pasarelas:
+
+| Campo | Puestos | Con línea | De ellos, en mitad de la suya |
+|---|---|---|---|
+| Los Rodeos (GCXO) | 16 | 16 | 0 |
+| Tenerife Sur (GCTS) | 65 | 62 | 0 |
+| La Palma (GCLA) | 18 | 15 | 15 |
+| Lanzarote (GCRR) | 55 | 28 | 18 |
+| Gran Canaria (GCLP) | 82 | 77 | 77 |
+| Silvio Pettirossi (SGAS) | 62 | 16 | 10 |
+| Barajas (LEMD) | 425 | 333 | 330 |
+| Fuerteventura (GCFV) y Guaraní (SGES) | 4 y 4 | 0 | — |
+
+Fuerteventura y Guaraní tienen los puestos puestos a mano y ningún `parking_position` en OpenStreetMap. De los que se
+quedan sin línea, unos son nodos sin vía ni calle que acabe en ellos y otros, puestos de la ficha que ya no están donde
+estaban en OpenStreetMap. La del 24 va a 61,5° en sus últimos quince metros. Lo miran `puestos-de-osm.test.mjs` (cómo
+se saca cada línea) y `lineas-de-entrada.test.ts` (que Los Rodeos las tiene todas, que la del 24 va a 61° ± 3° y que
+el aeródromo desplazado se las lleva).
+
+### Lo que no entra: el rumbo por la raya pintada
+
+Se probó, y se ha deshecho. `rumboEnElPuesto` preferiría la línea pintada —el rumbo de sus últimos quince metros, si
+mira hacia el edificio— a la ruta. En el 24, con el JAZ 90 y por la 12, va muy bien: a 61°, con el morro a 56,3 m de la
+terminal y −8° (antes −22°), 119 de 119 m empujado, giro de 140° y −1° en los primeros treinta metros rodando; y en el
+banco del tráfico EC-PSH sale del 17 a 337°, el rumbo de su raya pintada, con todo en orden. Pero el barrido de la
+H47b, con el JAZ 90 y por cada cabecera:
+
+- de 234 puestos de contacto, 198 tienen raya pintada y **118 cambian de rumbo** con ella: 15 menos de 5°, 32 de 5° a
+  15°, 35 de 15° a 30°, 30 de 30° a 60° y 6 más; la mediana, 20°;
+- y, con los tres reactores, los empujes que acaban sobre la raya y mirando por ella **bajan de 539 a 496 de 678**, y
+  los del puesto que elige el plan **de 41 a 26 de 42**: el 13 de Los Rodeos por la 30, el 7 de La Palma por la 36, el
+  H43 y el J8 de Tenerife Sur y el del plan de Pettirossi por la 02, con el morro de 53° a 90° fuera de la raya o
+  a 15–35 m de ella.
+
+Ningún umbral sobre lo que se aparta la pintada de lo de antes lo salva: dejándola solo hasta 10°, ya caen seis
+empujes que estaban bien; hasta 15°, que es lo del 24, 532 de 678. Es la regla del empuje: `trayectoriaDelEmpuje`
+sigue la ruta, que sale del puesto por el grafo y no por la línea de entrada, y supone el avión en su eje. Con el avión
+sobre la raya pintada, la ruta le sale de lado, y el empuje lo deja atravesado.
+
+**Decisión: el rumbo en el puesto sigue siendo el de la ruta** hasta que el empuje sepa salir por la raya pintada:
+de espaldas por la línea de entrada hasta donde se junta con la calle, y desde ahí la ruta. La línea ya está en la
+ficha para eso.
+
+### Lo medido
+
+- **El barrido**, antes (sobre una copia de db8dd3cd) y con lo que entra: 539 de 678 sobre la raya, 41 de 42 del
+  puesto del plan, igual: ningún empuje cambia. Con el rumbo por la raya pintada, 496 y 26 (arriba).
+- **El remolque de quien juega**, con el rumbo por la raya pintada, por la 12 y con la tarjeta Intel: todo en orden en
+  los dos peldaños (arriba). Sin él, el código del remolque es el de db8dd3cd, el que voló la H59; no se ha vuelto
+  a volar.
+- **El remolque del tráfico**, con el rumbo por la raya pintada y la tarjeta Intel: bien. EC-PSH en el 17, 22 s con el
+  tractor, 36,9 m de culo y nada hacia delante, el tractor a 15,4 m por delante del centro, la calle reservada los 22
+  s, nada dentro de un edificio y 41,5 m rodados después.
+- **Vitest entero**, una vez y con el código terminado (y el barrido dentro): 572 de 572 ficheros, 11.469 pruebas en
+  verde, 29 saltadas y una pendiente, ninguna en rojo, en 1.164 s con dos hilos.
+- **El banco del rodaje** (`npm run rodaje`), con el código terminado: 6 de 6.
+
 ## Lo que queda
 
-**El rumbo del puesto por su raya pintada.** En Los Rodeos, el 24 va a 61° de verdad y a 76° en el juego: ver la
-enmienda H59. Las líneas de entrada están en OpenStreetMap (`aeroway=parking_position` como vía) y `puestosDeOsm` ya las
-lee; falta guardarlas en la ficha y que el puesto se ocupe en ellas.
+**El rumbo del puesto por su raya pintada.** La línea de entrada ya está en la ficha (enmienda H60); falta que el
+empuje salga de espaldas por ella hasta la calle y desde ahí siga la ruta. Con eso, `rumboEnElPuesto` puede
+preferirla, y el barrido de la H47b dice si queda igual o mejor: con la ruta sola, 539 de 678 y 41 de 42 del plan.
+
+**Los puestos de las fichas de antes de #191**, en La Palma, Lanzarote, Gran Canaria, Pettirossi y Barajas: siguen en
+el centro de su línea de entrada y repetidos con su nodo. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y
+Tenerife Sur, mueve el puesto del que se sale en esos campos y pide su barrido y sus bancos.
 
 El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando
 por su calle: ver «El empuje hasta la calle».

@@ -3,7 +3,7 @@
  * `puestos-de-osm.mjs`. Los casos son los de Tenerife Sur, en pequeño.
  */
 import { describe, expect, it } from "vitest";
-import { puestosDeOsm, puestosSinCopias } from "./puestos-de-osm.mjs";
+import { entradasDeOsm, puestosDeOsm, puestosSinCopias } from "./puestos-de-osm.mjs";
 
 // Metros tal cual: `lat` es la `y` y `lon` la `x`.
 const proj = (lat, lon) => [lon, lat];
@@ -104,5 +104,63 @@ describe("los puestos sin copias", () => {
       { ref: "H38", xy: [9, 9] },
     ];
     expect(puestosSinCopias(lista)).toEqual([lista[0], lista[1], lista[3], lista[4]]);
+  });
+});
+
+describe("las líneas de entrada pintadas (H60)", () => {
+  const conEntradas = (elementos) => entradasDeOsm(elementos, proj, puestosDeOsm(elementos, proj));
+
+  it("la del nodo, de fuera hacia él, y sin lo que sigue más allá de la parada", () => {
+    // El 24 de Los Rodeos: la línea llega del suroeste, pasa por el nodo y sigue unos metros.
+    const salen = conEntradas([
+      nodo("24", [0, 0]),
+      puesto("24", [[-90, -50], [-40, -22], [0, 0], [6, 3.3]]),
+      calle([[-200, -50], [200, -50]]),
+    ]);
+    expect(salen).toEqual([{ ref: "24", xy: [0, 0], entrada: [[-90, -50], [-40, -22], [0, 0]] }]);
+  });
+
+  it("la de una línea sin nodo, hacia su punta suelta, vaya hacia donde vaya dibujada", () => {
+    const calles = [calle([[-200, 0], [200, 0]])];
+    expect(conEntradas([...calles, puesto("A", [[0, 0], [0, 60]])])).toEqual([
+      { ref: "A", xy: [0, 60], entrada: [[0, 0], [0, 60]] },
+    ]);
+    expect(conEntradas([...calles, puesto("J22", [[-38, 98], [0, 0]])])).toEqual([
+      { ref: "J22", xy: [-38, 98], entrada: [[0, 0], [-38, 98]] },
+    ]);
+  });
+
+  it("la de dos tramos con el nodo donde empalman: el tramo largo", () => {
+    const salen = conEntradas([
+      nodo("25", [41.6, 16.3]),
+      puesto("25", [[0, 0], [41.6, 16.3]]),
+      puesto("25", [[41.6, 16.3], [55.2, 22.8]]),
+    ]);
+    expect(salen).toEqual([{ ref: "25", xy: [41.6, 16.3], entrada: [[0, 0], [41.6, 16.3]] }]);
+  });
+
+  it("la de dos tramos seguidos, entera", () => {
+    const salen = conEntradas([
+      nodo("17", [0, 50]),
+      puesto("17", [[0, 50], [0, 30]]),
+      puesto("17", [[0, 30], [-10, 0]]),
+    ]);
+    expect(salen).toEqual([{ ref: "17", xy: [0, 50], entrada: [[-10, 0], [0, 30], [0, 50]] }]);
+  });
+
+  it("si no hay línea de puesto, la calle de plataforma que acaba en él, si es una", () => {
+    const una = conEntradas([nodo("5", [0, 40]), via("taxilane", null, [[30, 0], [0, 10], [0, 40]])]);
+    expect(una).toEqual([{ ref: "5", xy: [0, 40], entrada: [[30, 0], [0, 10], [0, 40]] }]);
+    // Con dos no se sabe cuál es la de entrar.
+    const dos = conEntradas([
+      nodo("5", [0, 40]),
+      via("taxilane", null, [[30, 0], [0, 40]]),
+      via("taxilane", null, [[0, 40], [-30, 0]]),
+    ]);
+    expect(dos).toEqual([{ ref: "5", xy: [0, 40] }]);
+  });
+
+  it("y sin nada pintado, el puesto se queda sin línea", () => {
+    expect(conEntradas([nodo("9", [0, 0]), calle([[-100, -50], [100, -50]])])).toEqual([{ ref: "9", xy: [0, 0] }]);
   });
 });

@@ -144,3 +144,116 @@ export function puestosDeOsm(elementos, proj) {
   }
   return puestos;
 }
+
+/** Lo que se da por el mismo punto al casar un puesto con su línea, m. */
+const EN_EL_PUESTO = 0.5;
+
+/** Largo de una polilínea, m. */
+function largo(linea) {
+  let l = 0;
+  for (let i = 1; i < linea.length; i++) l += Math.hypot(linea[i][0] - linea[i - 1][0], linea[i][1] - linea[i - 1][1]);
+  return l;
+}
+
+/**
+ * **La línea de entrada pintada de cada puesto que la tenga** (H60), de fuera
+ * hacia la parada: su último punto es el del puesto. Es la raya por la que el
+ * avión entra y sobre la que se aparca, con el morro a la pasarela; `rumboEnElPuesto`
+ * la prefiere a la ruta, que va hacia donde vaya la calle y no hacia donde está
+ * pintado el puesto. En el 24 de Los Rodeos la ruta hasta la Z daba 76° y la raya
+ * pintada va a 61°, como en el plano del AIP.
+ *
+ * `puestosDeOsm` ya las leía, y las tiraba: le servían para no contar dos veces
+ * un puesto. De dónde sale cada una:
+ *
+ * 1. **La vía de `parking_position` que pasa por el puesto**, con su nodo en un
+ *    vértice o con la parada en su punta. Si sigue un poco más allá de la parada
+ *    —la del 24 de Los Rodeos lo hace—, eso es el final de la raya, por donde
+ *    paran los aviones más cortos: la entrada es el lado largo. Y si empalma con
+ *    otro tramo de su mismo `ref`, se sigue por él (el 17 y el 25 de Los Rodeos
+ *    van en dos trozos).
+ * 2. Si no la hay, **la `taxilane` o `taxiway` que acaba en el puesto**, si es
+ *    una sola: así dibujan algunos campos la línea de entrada.
+ *
+ * Sin ninguna de las dos, el puesto se queda sin `entrada` y el avión se pone
+ * por la ruta, como antes.
+ */
+export function entradasDeOsm(elementos, proj, puestos) {
+  const esPuesto = (e) => e.tags?.aeroway === "parking_position";
+  const ref = (e) => e.tags?.ref ?? null;
+  const linea = (w) => w.geometry.map((p) => proj(p.lat, p.lon));
+  const abierta = (w) => {
+    const g = w.geometry;
+    return !(g[0].lat === g[g.length - 1].lat && g[0].lon === g[g.length - 1].lon);
+  };
+  const vias = elementos
+    .filter((e) => esPuesto(e) && e.type === "way" && (e.geometry?.length ?? 0) > 1 && abierta(e))
+    .map((w) => ({ ref: ref(w), puntos: linea(w) }));
+  const calles = elementos
+    .filter(
+      (e) =>
+        e.type === "way" &&
+        (e.tags?.aeroway === "taxiway" || e.tags?.aeroway === "taxilane") &&
+        (e.geometry?.length ?? 0) > 1,
+    )
+    .map(linea);
+  const cerca = (a, b, tope) => Math.hypot(a[0] - b[0], a[1] - b[1]) <= tope;
+
+  /** Desde el vértice `i`, la rama más larga hacia una de las dos puntas. */
+  const ramaLarga = (puntos, i) => {
+    const atras = puntos.slice(0, i + 1).reverse();
+    const delante = puntos.slice(i);
+    return largo(atras) >= largo(delante) ? atras : delante;
+  };
+
+  /** La rama seguida por los tramos de su mismo `ref` que empalman con su punta. */
+  const conSusTramos = (rama, suRef, usadas) => {
+    let out = rama;
+    for (let vuelta = 0; vuelta < 4 && suRef !== null; vuelta++) {
+      const punta = out[out.length - 1];
+      const sigue = vias.find(
+        (v) =>
+          !usadas.has(v) &&
+          v.ref === suRef &&
+          (cerca(v.puntos[0], punta, TOCA_LA_RED) || cerca(v.puntos[v.puntos.length - 1], punta, TOCA_LA_RED)),
+      );
+      if (!sigue) break;
+      usadas.add(sigue);
+      const orientada = cerca(sigue.puntos[0], punta, TOCA_LA_RED) ? sigue.puntos : [...sigue.puntos].reverse();
+      out = [...out, ...orientada.slice(1)];
+    }
+    return out;
+  };
+
+  const entradaDe = (p) => {
+    // 1. La vía del puesto, del mismo `ref` si lo tienen los dos. Si el nodo está donde
+    // empalman dos tramos, los dos pasan por él: la entrada es el más largo.
+    let mejor = null;
+    for (const v of vias) {
+      if (p.ref !== null && v.ref !== null && v.ref !== p.ref) continue;
+      const i = v.puntos.findIndex((q) => cerca(q, p.xy, EN_EL_PUESTO));
+      if (i < 0) continue;
+      const rama = ramaLarga(v.puntos, i);
+      if (rama.length < 2) continue;
+      const entera = conSusTramos(rama, v.ref, new Set([v]));
+      if (!mejor || largo(entera) > largo(mejor)) mejor = entera;
+    }
+    if (mejor) return mejor;
+    // 2. La calle que acaba en el puesto, si es una sola.
+    const suyas = calles.filter(
+      (c) => cerca(c[0], p.xy, TOCA_LA_RED) || cerca(c[c.length - 1], p.xy, TOCA_LA_RED),
+    );
+    if (suyas.length !== 1) return null;
+    const c = suyas[0];
+    return cerca(c[0], p.xy, TOCA_LA_RED) ? c : [...c].reverse();
+  };
+
+  return puestos.map((p) => {
+    const rama = entradaDe(p);
+    if (!rama || largo(rama) < 3) return p;
+    // De fuera hacia la parada, acabando justo en el punto del puesto.
+    const entrada = [...rama].reverse();
+    entrada[entrada.length - 1] = [p.xy[0], p.xy[1]];
+    return { ...p, entrada };
+  });
+}

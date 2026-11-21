@@ -64,6 +64,7 @@ export function desplazarAerodromo(
     parkingPositions: aero.parkingPositions?.map((k) => ({
       ...k,
       xy: p(k.xy),
+      ...(k.entrada ? { entrada: lista(k.entrada) } : {}),
     })),
     visualAids: aero.visualAids?.map((v) => ({ ...v, xy: p(v.xy) })),
   };
