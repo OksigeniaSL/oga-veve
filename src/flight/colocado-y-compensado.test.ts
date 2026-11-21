@@ -232,15 +232,15 @@ describe("la final colocada, con la ayuda de subida, sostiene su senda", () => {
       // La regla misma: lo que sostiene la ayuda al soltar no es una bajada.
       expect(m.subidaQueSostiene(), que).toBeGreaterThanOrEqual(0);
       /*
-       * Y lo que se ve: pasados diez segundos, de media, ya no baja ni a algo
-       * más de la mitad de la senda. Era la mitad justa; con los flaps de la
-       * actitud de su manual (enmienda H55 del ADR 0027) el JAZ 90 en Tukã
-       * vuelve del empujón algo más despacio —de −6,6 m/s a −1,78 de media,
-       * donde con los de antes daba −1,68 y la mitad de su senda es −1,74—, y
-       * lo que mide la prueba, que no se queda con la bajada del empujón, es
-       * lo mismo.
+       * Y lo que se ve: pasados diez segundos, de media, ya no baja ni a la
+       * mitad de la senda. Con los flaps de la actitud de su manual (enmienda
+       * H55 del ADR 0027) el JAZ 90 en Tukã volvía algo más despacio, −1,78
+       * de media donde la mitad de su senda es −1,74, y el tope se aflojó a
+       * 0,55: era la red de los peldaños de abajo, que se movía con el
+       * reparto entre ángulo y flaps (H55c, `masAllaDeLaPerdida`). Con la red
+       * en su sitio vuelve a −1,67, lo de antes de H55.
        */
-      expect(vs, que).toBeGreaterThan(porLaSenda * 0.55);
+      expect(vs, que).toBeGreaterThan(porLaSenda * 0.5);
     },
   );
 });
