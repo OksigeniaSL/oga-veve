@@ -8643,3 +8643,137 @@ sigue entrando `timonAhora`, el timón promediado en dos segundos, con su porqu�
 en `fdm.ts`: quien tira para frenar y suelta justo al enganchar le da al
 automático un timón que ya no lleva. El embrague acota ese tirón, pero no quita
 el salto del primer fotograma.
+
+## Enmienda H57b (21-11-2026): el timón que coge el automático al engancharse
+
+H57 dejó una cosa abierta: en el juego el automático se enganchaba con
+`timonAhora`, el timón que sostenía el avión promediado en dos segundos, y
+quien acababa de soltar la palanca le daba un timón que el avión ya no
+llevaba. El embrague acotaba el tirón, pero la primera orden saltaba.
+
+### El porqué del promedio
+
+Nació con el automático con topes (28-9-2026): «coge el avión como está: una
+memoria nueva en cada enganche y el timón con el que venía volando, ayuda
+incluida (`timonAhora`, promediado dos segundos para no coger la cresta de un
+cabeceo)». La primera orden del automático era ese timón más su amortiguador;
+si el avión cabeceaba, el timón de un instante era la cresta o el valle, y el
+automático arrancaba de él como si fuera el que lo sostiene.
+
+Ya no aplica, y se ha medido. Subiendo quieto —la mesa de H57, enganchado
+desde otro automático—, el promedio y el timón del paso se apartan entre 0,001
+y 0,015; con el del paso, la carga de los JAZ 20 a 90 cambia una centésima y
+la del JAZ 120 pasa de 1,136 a 1,152 g. Y el promedio, en cuanto alguien
+suelta la palanca, se aparta del timón que lleva el avión entre 0,28 y 0,44.
+
+### Lo medido
+
+En la mesa (`h57b/mesa.ts` del scratchpad, el modelo del juego en Taguató a
+900 m, como la de H57), dos maneras de soltar y enganchar, en los JAZ 20, 40,
+50, 60, 90 y 120, con +20, +10 y −10 nudos sobre la de subida:
+
+- **Sin compensar**: la mano sostiene ±0,4 contra el compensador seis
+  segundos, suelta a ritmo de tecla y engancha con la palanca en el centro.
+  Es el «timón de más» de H57 hecho por quien juega: el promedio da entre
+  0,28 y 0,44 de más, con el avión entre 0,88 y 1,07 g al engancharlo.
+
+| Sin compensar, ±0,4 | Salto, primer fotograma | Carga | Avisador |
+|---|---|---|---|
+| Promedio (antes) | 0,36–0,48 | 0,84–1,19 g | callado |
+| Timón del paso, sin embrague | 0 | 0,06–1,85 g | hasta 3,4 s |
+| **Timón del paso, con embrague (ahora)** | **0** | **0,71–1,26 g; JAZ 120, 0,71–1,40** | **callado** |
+| Equilibrio a esa velocidad | 0,27–0,47 | 0,81–1,16 g | callado |
+
+- **Tirando o empujando**: compensado, ±0,4 de más durante un segundo; suelta
+  y engancha medio segundo después. El tirón deja el avión entre 0,15 y 1,8 g
+  y el morro hasta a 31°/s al engancharlo; el promedio saltaba entre 0,11 y
+  0,75, y el timón del paso, nada. La carga de después es la del tirón, y es
+  casi la misma con las dos reglas.
+
+Se probaron también dos maneras de ir del timón que hay al de equilibrio sin
+saltar: limitando el ritmo de la orden a 3 o 1,5 por segundo —con el servo
+detrás, el lazo se columpiaba hasta 2,8 g— y fundiendo una en otra en 0,3 o
+0,5 s —de 0,52 a 1,45 g—. Las dos peor que arrancar del timón que hay.
+
+### Por qué no entre 0,85 y 1,15 g
+
+Ninguna regla deja el avión entre 0,85 y 1,15 g con cuatro décimas de más,
+porque esa carga no la pone el enganche. Con el tirón, el avión ya llega
+fuera de la banda. Sin compensar, soltar la palanca le quita al avión el timón
+que lo sostenía, y el morro se va antes de que nadie enganche nada: ni el
+promedio, saltando, ni el timón de equilibrio, saltando, lo dejan dentro. Lo
+que es del enganche, el salto, ahora es cero. Lo otro es lo que pasa en un
+avión de verdad al soltar los mandos sin compensar, y el automático lo para
+con sus topes.
+
+### El embrague de H57 sigue haciendo falta
+
+Sin él, soltando sin compensar, de 0,06 a 1,85 g y el avisador hasta 3,4 s;
+tirando un segundo, el morro se paraba más tarde y la carga se apartaba de la
+que traía el avión hasta 0,91 g más. Con él, de 0,71 a 1,40 g y callado.
+
+### El JAZ 120
+
+No queda como los demás: soltando sin compensar llega a 1,40 g, y los demás a
+1,26. El embrague frena lo que el morro gira por encima de 2,5°/s, y el de
+fuselaje ancho, a su velocidad, ya aprieta media g girando a 2,5°/s. Con el
+tope de la carga en el embrague en vez del giro —lo que H57 probó en
+crucero— aquí tampoco mejora: de 0,72 a 1,41 g. Y en la prueba de H57,
+enganchado subiendo quieto, pasa de 1,136 a 1,152 g: con el promedio, la
+primera orden saltaba 0,011 hacia donde quería ir el automático; ahora no
+salta, y esa centésima la hace el servo.
+
+### Lo que se cambia
+
+- **`FlightModel.timonDelPaso`**: el timón con el que voló el último paso —la
+  mano, el compensador y lo que empuja la ayuda—, sin promediar. Es donde
+  está la superficie. Lo cogen el automático y la nivelada del juego al
+  engancharse, y la sonda de la tripulación. `timonAhora` se queda para la
+  mano de los peldaños de abajo.
+- **En `mandosPara`, la primera orden es ese timón**: al coger el avión, la
+  memoria del servo se pone para que la orden, con el amortiguador dentro,
+  sea la que lleva el avión. Una sola regla, la de un servo de verdad, que se
+  embraga donde está el timón (14 CFR 25.1329(c)). El banco ya le daba la
+  palanca que llegó al avión (H57), y ahora tampoco salta por el
+  amortiguador.
+
+### La prueba
+
+`enganche-sin-salto.test.ts`: los seis, sin compensar con ±0,4 de mano y
++20, +10 y −10 nudos —el promedio habría dado más de 0,25 de más; el primer
+fotograma no salta más de 0,05; el avisador callado y a más de 1° de él; la
+carga entre 0,68 y 1,3 g, y en el JAZ 120 hasta 1,45—, y tirando o empujando
+±0,4 un segundo —sin salto, y el avisador, que el tirón del JAZ 90 hace sonar
+medio segundo, callado pasado el primer segundo enganchado—.
+`enganche-con-velocidad.test.ts` engancha ahora como el juego, con el timón del
+paso, y el tope de la carga del JAZ 120 pasa de 1,15 a 1,16 con los números de
+arriba.
+
+### En el navegador
+
+El banco del JAZ 40 en Los Rodeos con la pista ocupada a propósito
+(`tenerife-norte taguato 1 jaz-40`, `OGA_PISTA_OCUPADA=1`), una pasada: 57 de
+58, y el avisador de pérdida sin sonar ni una vez. Se engancha dos veces: en la
+subida, a 120 m, y después de la frustrada, a 118 m, donde la palanca pasa de
+−0,105 a −0,105 y la memoria del automático coge −0,105. En los diez segundos
+siguientes, el morro gira como mucho a 3,2 y 6,0°/s, y el ala queda a 7,2 y
+4,7° del avisador.
+
+La que falla es la toma: 2,7 m/s, con la recogida del banco empezando a 11,5 m
+y bajando a 3,6 m/s. El automático llevó la final enganchado desde la
+frustrada, 386 s seguidos —bajando de 2,4 a 2,6 m/s con la carga en 1,0
+hasta los 17 m, y a 3,1 desde ahí—, y se soltó a 11 m: la toma es de la
+recogida del banco, que esta enmienda no toca, y el enganche que sí toca quedó
+seis minutos atrás. Esta vez
+aterrizó a la segunda; en la pasada de H57, a la tercera y a 0,43 m/s.
+
+El vitest entero, con el código de esta enmienda: 571 ficheros y 11.422
+pruebas en verde.
+
+### Lo que queda
+
+La prueba es de Taguató; en la mesa, sin ayudas (Taguato Ruvicha), soltar sin
+compensar da lo mismo: sin salto, de 0,69 a 1,41 g y el avisador callado. El
+JAZ 120 sigue apretando más que los demás al recoger el morro, por lo dicho
+arriba. Y sin volar en el navegador desde esta enmienda: el JAZ 20 con la pista
+ocupada, con su frustrada nueva.
