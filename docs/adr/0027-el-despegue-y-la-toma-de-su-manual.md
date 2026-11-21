@@ -8242,3 +8242,259 @@ y una por hacer).
   pide quince grados con TOGA— y no se han volado.
 - **El biplano sin flaps, el JAZ 25**, entra en la ley nueva y no se ha volado:
   en la mesa, de 1,18 a 1,15 g y a 6,3° del avisador.
+
+## Enmienda H56 (21-11-2026): el picado que da el suelo al acercarse
+
+H54 encontró la cifra del picado del suelo del 747 y no la metió: con la
+recogida del banco tal cual, 102 de 200 tomas del 747 pasaban de 2 m/s. Aquí
+entra, para toda la flota, y el banco recoge como quien sabe que el suelo
+pica.
+
+### Lo que faltaba
+
+El colchón del juego (Wieselsberger, H29c) daba la sustentación de más y
+quitaba inducida, pero no el **momento de cabeceo**. El mismo aire que baja
+menos detrás del ala es el que le llega a la cola, y la cola de un avión de
+cola atrás está ajustada para recibirlo inclinado: empuja hacia abajo y
+sostiene el morro. Con el suelo cerca le llega menos inclinado, empuja menos y
+el morro cae. Sin eso, el avión que entra en el colchón se recoge solo, y
+quien aprende aquí aprende que en los últimos metros no hace falta tirar.
+
+### La fuente
+
+C. R. Hanke y D. R. Nordwall, *The Simulation of a Jumbo Jet Transport
+Aircraft. Volume II: Modeling Data*, Boeing D6-30643, NASA CR-114494, 1970
+(las lecturas son las de H54):
+
+- p. 4.0-35: ΔCm con las ruedas en el suelo, por flaps y ángulo del plano del
+  ala, leído a 0, 4, 8 y 12°. Flaps 30: −0,092, −0,128, −0,140, −0,165;
+  flaps 20: −0,046, −0,062, −0,113, −0,155; flaps 5 y 10, una sola curva:
+  −0,012, −0,027, −0,075, −0,121; recogidos: +0,038, +0,021, −0,031, −0,085.
+- p. 14.2-2: Boeing lo dejó en **0,7 veces** la gráfica después de volarlo
+  con pilotos de la NASA. Es la cifra que vuela.
+- El plano del ala, dos grados por encima del fuselaje.
+- La altura, con el colchón del juego y no con el factor de Boeing (p.
+  2.0-31): el momento y la sustentación de más vienen del mismo aire, y la
+  sustentación del colchón al tocar ya coincide con la de Boeing (0,18).
+
+Con los flaps de aterrizar y el ángulo de la recogida, el 747 da **−0,09 a
+−0,10 al tocar**: con su `cmElevator`, 0,42, de 0,21 a 0,24 de palanca de
+más.
+
+### Cómo se lleva a los demás
+
+No hay otra tabla publicada, y no se inventa una. La del 747 se lleva a cada
+avión con las dos cosas de las que crece (`momentoDelSuelo`, en
+`efecto-suelo.ts`):
+
+- **Por la altura del ala, con su colchón**, `S − 1` entre el del 747
+  rodando (0,129). Lo que el suelo le quita al aire que baja es lo mismo que
+  le da sustentación de más, y depende de la altura del ala partida por la
+  envergadura y del alargamiento. Rodando: JAZ 20, 0,056; JAZ 25, 0,089; JAZ
+  40, 0,093; JAZ 50, 0,064; JAZ 60, 0,073; JAZ 90, 0,079; JAZ 110, 0,111.
+- **Por la cola**, `cmδ` entre el del 747: el picado es la cola que empuja
+  menos, y una cola que mueve más el morro por grado de timón lo mueve más por
+  grado de aire. Con eso la palanca que hay que sumar, `ΔCm/cmδ`, es la del
+  747 por el colchón de cada uno.
+- **No por la cuerda**: el ΔCm ya va en coeficiente, y el momento que da sale
+  con la cuerda de cada ficha, como el resto de `cmMoment`.
+- **Los flaps, por sus grados** partidos por los del todo abajo, contra los
+  del 747 partidos por sus treinta: los diez de despegue de la avioneta leen
+  la fila de flaps 10; los cinco del E170, la de 5. El que no lleva flaps, la
+  de recogidos.
+
+La palanca de más al tocar, con los de aterrizar y seis grados de ángulo:
+
+| | ΔCm | Palanca |
+|---|---|---|
+| JAZ 20 | −0,043 | 0,10 |
+| JAZ 25, sin flaps | −0,019 | 0,04 |
+| JAZ 40 | −0,078 | 0,17 |
+| JAZ 50 | −0,088 | 0,12 |
+| JAZ 60 | −0,066 | 0,13 |
+| JAZ 90 | −0,065 | 0,14 |
+| JAZ 110 | −0,108 | 0,20 |
+| JAZ 120 | −0,098 | 0,23 |
+
+**Los de hélice no tienen cifra propia**: la de arriba es la del 747 llevada
+por su colchón y su cola, y es el mismo mecanismo con la cola atrás y debajo
+del aire del ala. Se decidió con los números de abajo: en ellos el picado
+mueve la rotación medio grado como mucho y, con la mano que lo sostiene, la
+recogida del banco no cambia. **Lo que no se distingue es la cola en T** del
+JAZ 60 (el 1900D), que pasa por encima del aire del ala y nota menos el
+suelo: la ficha no dice a qué altura va la cola. Para él la cifra es por
+arriba.
+
+### Lo que se cambia
+
+- **El modelo** (`fdm.ts`): `cmMoment` suma `momentoDelSuelo` en cada paso,
+  y `palancaDelSuelo()` da la palanca que lo sostiene, `−ΔCm/cmδ`. La página
+  del banco la lee por `palancaDelSuelo` de las sondas.
+- **El banco**, como un piloto que sabe que el suelo pica: en la senda suma
+  esa palanca a la del automático, y la deja fuera de la palanca media de la
+  que parte la recogida (`palancaMedia`); en la recogida la suma entera, y a
+  la palanca sostenida le suma lo que pique de más desde el último fotograma
+  (`recoger` en `verificar-vuelo-entero.mjs` y
+  `palancaDelReactorEnLaRecogida` en `scripts/recogida-del-reactor.mjs`, con
+  `picadoDeLaPalanca`).
+- **El juego no se toca**: su automático, la recogida del vuelo de línea, la
+  del primer aterrizaje y la mano de los peldaños de abajo sostienen la
+  trayectoria con su acumulado, y lo absorben (abajo).
+
+### La mesa
+
+La de H55c (`h56/mesa/` del scratchpad), con las alas sostenidas y el gas del
+reactor de H55c: JAZ 120 y JAZ 110 en Gran Canaria con veinte nudos de cara a
+la Vref más ocho; JAZ 90 y JAZ 20 en Los Rodeos con doce de cara a la Vref
+más cinco. Tres columnas: **antes**, el modelo sin picado; **suelto**, el
+modelo con el picado y la recogida de antes, que no lo sabe; **ahora**, con
+el picado y el banco que lo sostiene.
+
+Más de 2 m/s · pasadas de 600 m (la peor), 200 finales:
+
+| | Antes | Suelto | Ahora |
+|---|---|---|---|
+| JAZ 120, σ_w 1 | 34 · 4 (2,83) | **101** · 0 (3,72) | 33 · 4 (2,83) |
+| JAZ 120, σ_w 1,5 | 62 · 3 (4,51) | 104 · 0 (5,13) | 63 · 3 (4,47) |
+| JAZ 110, σ_w 1 | 8 · 3 (2,52) | 13 · 0 (3,46) | 8 · 3 (2,52) |
+| JAZ 110, σ_w 1,5 | 46 · 1 (4,11) | 48 · 0 (6,15) | 46 · 2 (4,24) |
+| JAZ 90, σ_w 1 | 8 · 0 (2,39) | **87** · 0 (3,10) | 8 · 0 (2,39) |
+| JAZ 90, σ_w 1,5 | 45 · 0 (3,62) | 118 · 0 (4,08) | 45 · 0 (3,63) |
+| JAZ 20, σ_w 1 | 55 · 0 (3,54) | 107 · 0 (3,72) | 55 · 0 (3,54) |
+| JAZ 20, σ_w 1,5 | 83 · 0 (6,01) | 121 · 0 (5,88) | 82 · 0 (6,01) |
+
+Y mil finales, antes y ahora:
+
+| | Antes | Ahora |
+|---|---|---|
+| JAZ 120, σ_w 1 | 137 · 7 (3,96) | 138 · 7 (3,96) |
+| JAZ 120, σ_w 1,5 | 346 · 12 (5,62) | 350 · 12 (5,62) |
+| JAZ 110, σ_w 1 | 64 · 7 (4,23) | 64 · 8 (4,08) |
+| JAZ 110, σ_w 1,5 | 214 · 8 (20,5) | 213 · 9 (19,4) |
+| JAZ 90, σ_w 1 | 41 · 0 (3,03) | 41 · 0 (3,03) |
+| JAZ 90, σ_w 1,5 | 211 · 1 (4,02) | 213 · 1 (4,03) |
+| JAZ 20, σ_w 1 | 232 · 0 (4,00) | 233 · 0 (4,01) |
+| JAZ 20, σ_w 1,5 | 459 · 0 (10,7) | 459 · 0 (10,7) |
+
+**Suelto, el picado es un fallo**: el 747 y el E170 tocan duro la mitad de
+las veces —el banco sostiene la palanca y el morro se le cae—, y es lo de
+H54 (102 de 200). **Sostenido, es lo que un piloto nota y contrarresta**: el
+banco toca como antes, dentro de lo que da el azar en mil. Las dos cifras
+que se salen ya estaban: el JAZ 110 con σ_w 1,5 tiene una final de 20 m/s
+antes y después (una racha en la recogida que no es de aquí), y la mesa no
+reproduce la recogida de la avioneta del banco —toca casi siempre por debajo
+de su Vref menos cinco—, así que el JAZ 20 vale para comparar, no como nota.
+
+**Lo que se probó antes y no entra**, con mil finales:
+
+- **Sumar solo lo que pique de más desde que empieza a recoger**, con la
+  senda sin mano: la palanca media de la senda ya llevaba parte del picado,
+  pero con retraso —el automático lo descubre por el error—, y la recogida
+  partía corta. El JAZ 90 con σ_w 1 pasaba de 41 duras a 70, y con 1,5 de 211
+  a 241; el 747 con σ_w 1,5, de 346 a 373 y la peor de 5,6 a 8,2 m/s.
+- **Sumarlo entero en la recogida sin quitarlo de la media**: el E170 tocaba
+  como antes (37 y 211), pero el 747, que a trece metros ya lleva 0,07 de
+  palanca de picado, tiraba eso de golpe al empezar a recoger: globos de 11 a
+  79 y largas de 7 a 47 con σ_w 1.
+
+Por eso el banco sostiene el picado ya en la senda y lo deja fuera de la
+media: lo que la recogida suma es entonces todo lo que pica el suelo, ni más
+ni menos.
+
+### La rotación
+
+Con la mano de `despegue-y-toma-del-manual.test.ts` (la actitud a tres grados
+por segundo, sin saber que el suelo pica), antes y ahora:
+
+| | De la Vr a irse | Actitud al irse (cola) | Hasta los 35/50 ft |
+|---|---|---|---|
+| JAZ 20 | 2,8 → 2,9 s | 7,2° → 7,1° (16,1°) | 462 → 462 m |
+| JAZ 25 | 2,5 → 2,6 s | 6,5° → 6,5° (12,0°) | 350 → 351 m |
+| JAZ 40 | 2,5 → 2,6 s | 6,7° → 6,5° (19,7°) | 593 → 596 m |
+| JAZ 50 | 2,1 → 2,1 s | 5,3° → 5,1° (10,5°) | 460 → 462 m |
+| JAZ 60 | 2,5 → 2,5 s | 6,7° → 6,5° (15,4°) | 849 → 854 m |
+| JAZ 90 | 2,6 → 2,7 s | 7,2° → 7,1° (14,2°) | 1.012 → 1.019 m |
+| JAZ 110 | 2,6 → 2,7 s | 6,8° → 6,6° (9,7°) | 1.504 → 1.516 m |
+| JAZ 120 | 3,8 → 3,8 s | 10,1° → 9,7° (12,5°) | 1.554 → 1.573 m |
+
+Ninguno rota antes —el picado solo resta— ni se queda sin rotar: la palanca
+más alta de la rotación del 747 pasa de 0,84 a 0,87, lejos del tope, y en
+los demás sube de 0,01 a 0,04. Con la mano del banco del vuelo entero (doce
+grados con ganancia cuatro, tope 0,8 y tres grados por segundo), el 747 se va
+a 8,9° en vez de 9,6° y dos décimas de segundo más tarde; el E170, a 7,3° en
+vez de 7,5°. Es lo que se nota al rotar cerca del suelo, y se vence.
+
+**La prueba que lo nota**: «jaz-120 despega volando en lo que dice la
+cuenta» (`despegue-y-toma-del-manual.test.ts`) pedía que lo volado hasta los
+35 pies no pasara de 1,05 veces la cuenta del hangar; con el picado son
+1.573 m contra 1.489, 1,057, donde daba 1,044. El tope del 747 pasa a 1,06,
+con esas cifras en la prueba: la cuenta del hangar no sabe que el suelo
+pica, y la mano de la prueba tampoco.
+
+### Las recogidas del juego
+
+**No les toca.** El vuelo de línea y el primer aterrizaje —las dos
+recogidas que hace el juego solo— vuelan el modelo sencillo de Guyrami
+(`arcade.ts`, en `vuelo-de-linea.test.ts` e `inicio-aterrizar.test.ts`), que
+no tiene ala ni cola: medido con el árbol de antes y el de ahora, las cuatro
+tomas de esas pruebas salen iguales al milímetro (el primer aterrizaje a
+0,35, 0,67 y 0,35 m/s con el que obedece, el quieto y el torpe; el vuelo de
+línea, a 0,91). El automático del juego no aterriza. La mano de los peldaños
+de abajo (`mano.ts`) sostiene la trayectoria y no recoge; en el colchón
+absorbe el picado con su acumulado, y las pruebas que la miden
+—`final-fina`, `mano-respuesta`, `colocado-y-compensado`— salen en verde con
+sus topes de siempre. Tukã en el navegador, que es donde vuela esa mano, no
+se ha volado (abajo).
+
+### Volado
+
+Desde una foto del worktree (`h56/arbol-a` del scratchpad), con la tarjeta
+de verdad:
+
+- `verificar-vuelo-entero.mjs gran-canaria taguato 1 jaz-120`, con el alisio
+  de 025/20: **62 de 62**. A la puerta de los quinientos pies a 157 nudos
+  (Vref 142) bajando 3,5 m/s, a 4,5 m de la senda y 6,3 m del eje; recogió a
+  13 m de ruedas, 43 m antes del umbral, bajando 3,1 m/s a 150 nudos, y tocó
+  a **487 m y 1,6 m/s**, a 4,8 m del eje. En H55c, sin el picado, el mismo
+  vuelo tocó a 470 m y 2,07 m/s.
+  Sube de verdad después de rotar (14,7 %).
+- `verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`: **63 de 63**.
+  A la puerta a 122 nudos (Vref 118) bajando 2,4 m/s, 3 m por debajo de la
+  senda y a 15,6 m del eje; recogió a 10,6 m de ruedas, sobre el umbral,
+  bajando 3,2 m/s a 119 nudos, y tocó a **352 m y 1,0 m/s**, a 1,2 m del eje
+  (en H55, 489 m y 0,73 m/s). Sube de verdad después de rotar (11,1 %).
+
+- `verificar-despegue.mjs tenerife-norte guyrami "" jaz-90`: **22 de 22**.
+  Rota a 70 m/s de indicada con la Vr en 66,4, a 807 m del punto de espera
+  en 3.168 m de pista. Guyrami vuela el modelo sencillo, sin ala ni cola, así
+  que el picado no le toca: dice que nada de aquí lo rompe, no cómo rota el
+  modelo de coeficientes, que es la tabla de arriba y los dos vuelos enteros.
+
+Una tirada de cada uno: dicen que el banco vuela y toca con el picado puesto,
+no cuánto lo mueve; eso lo dice la mesa.
+
+### El vitest entero
+
+Con todo lo de aquí: **568 ficheros y 11.325 pruebas, en verde** (31
+saltadas y una por hacer). Las nuevas: el picado contra la tabla de Boeing
+—las cifras del 747 son las de su ficha, la curva de flaps 30 por 0,7, de
+−0,09 a −0,10 al tocar, las curvas de 5, 10 y 20, el colchón con la altura,
+la palanca de cada avión por su colchón y el morro que cae en el modelo a un
+metro de la pista y no lejos— (`efecto-suelo.test.ts`), y la recogida del
+reactor que suma el picado entero a la palanca de la senda y lo de más a la
+sostenida (`recogida-del-reactor.test.mjs`, que vuela ahora la senda y la
+recogida con el picado sostenido, como el banco, y sigue en sus topes). El
+único tope movido es el del 747 en «despega volando en lo que dice la
+cuenta», de 1,05 a 1,06, con las cifras de arriba.
+
+### Lo que queda
+
+- **La cola en T del JAZ 60**: lleva el picado de una cola baja. Hace falta
+  la altura de su cola, o una cifra de su fabricante.
+- **La cuenta del hangar no sabe que el suelo pica**: el 747 volado pasa los
+  35 pies un 5,7 % más allá que ella.
+- **`tenerife-norte tuka 1 jaz-90` y `tenerife-norte taguato 1 jaz-20`, sin
+  volar**: el navegador lo tuvo otro ayudante casi media hora y no cupieron
+  antes de la entrega. Tukã es donde vuela la mano de los peldaños de abajo.
+- **La mesa del JAZ 20** no reproduce la recogida de la avioneta del banco
+  (toca casi siempre por debajo de su Vref menos cinco, antes y ahora).

@@ -527,8 +527,16 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
        * la cuenta, y su manual pide 352; con la recta eran 672 contra 536.
        */
       const ancho = a.id === "jaz-40" ? 1.32 : a.id === "jaz-50" ? 1.45 : 1.2;
+      /*
+       * **El JAZ 120, hasta un 6 %**: el picado del suelo (H56) se lo nota la
+       * mano de esta prueba, que sostiene la actitud sin saber que el suelo
+       * pica. Se va del suelo 7 m más tarde y a 9,7° en vez de 10,1°, y pasa
+       * los 35 pies 19 m más allá: 1.573 m contra 1.554, con la cuenta en
+       * 1.489 (1,057 donde daba 1,044). Los demás se mueven de 0 a 12 m.
+       */
+      const cerradoHasta = a.id === "jaz-120" ? 1.06 : 1.05;
       expect(r, dicho).toBeGreaterThan(cerrado ? 0.95 : 0.9);
-      expect(r, dicho).toBeLessThan(cerrado ? 1.05 : ancho);
+      expect(r, dicho).toBeLessThan(cerrado ? cerradoHasta : ancho);
     });
 
     /* Y la frenada: la misma cuenta de `frenada.ts` por dos caminos. */

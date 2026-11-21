@@ -7,7 +7,13 @@ import { describe, expect, it } from "vitest";
 import { Vector3, type Mesh, type Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { AIRCRAFT, type AircraftConfig } from "./aircraft";
-import { alivioDeLaInducida, efectoSuelo } from "./efecto-suelo";
+import {
+  PICADO_DEL_747,
+  alivioDeLaInducida,
+  efectoSuelo,
+  efectoSueloRodando,
+  momentoDelSuelo,
+} from "./efecto-suelo";
 import { CoefficientFlightModel } from "./fdm";
 import { neutralControls } from "./model";
 
@@ -137,6 +143,116 @@ describe("el avión lo nota cerca del suelo, y lejos no", () => {
       const lejos = unPaso(a, 400);
       expect(alto.state.loadFactor).toBe(lejos.state.loadFactor);
       expect(alto.state.airspeed).toBe(lejos.state.airspeed);
+    });
+  }
+});
+
+/*
+ * **El picado del suelo** (enmienda H56 del ADR 0027): la tabla del modelo de
+ * Boeing del 747 (Hanke y Nordwall, NASA CR-114494, 1970, p. 4.0-35, por 0,7
+ * como lo dejó Boeing en la p. 14.2-2), llevada a cada avión con su colchón y
+ * su cola. Ver `momentoDelSuelo`.
+ */
+describe("el picado del suelo, contra el modelo de Boeing del 747", () => {
+  const GRADO = Math.PI / 180;
+  const yvaga = AIRCRAFT.find((a) => a.id === "jaz-120")!;
+  const rodando747 = efectoSueloRodando(yvaga);
+  /** El ΔCm del 747 con las ruedas en la pista, a un ángulo del ala, rad. */
+  const del747 = (flaps: number, alaGrados: number) =>
+    momentoDelSuelo(yvaga, rodando747, flaps, alaGrados * GRADO - PICADO_DEL_747.incidencia);
+
+  it("las cifras de la tabla son las del 747 de la flota", () => {
+    // Si la ficha del JAZ 120 cambia, la tabla deja de estar leída en su ala.
+    expect(yvaga.aero.cmElevator).toBe(PICADO_DEL_747.cmElevator);
+    expect(rodando747.sustentacion - 1).toBeCloseTo(PICADO_DEL_747.colchon, 10);
+    expect(PICADO_DEL_747.incidencia / GRADO).toBeCloseTo(2, 10);
+  });
+
+  it("con los flaps de aterrizar, la curva de flaps 30 por 0,7", () => {
+    expect(del747(1, 0)).toBeCloseTo(-0.092 * 0.7, 6);
+    expect(del747(1, 4)).toBeCloseTo(-0.128 * 0.7, 6);
+    expect(del747(1, 8)).toBeCloseTo(-0.14 * 0.7, 6);
+    expect(del747(1, 12)).toBeCloseTo(-0.165 * 0.7, 6);
+    // Entre dos lecturas, en recta; fuera de ellas, la última.
+    expect(del747(1, 6)).toBeCloseTo(((-0.128 - 0.14) / 2) * 0.7, 6);
+    expect(del747(1, 16)).toBeCloseTo(-0.165 * 0.7, 6);
+  });
+
+  it("al tocar con los de aterrizar, de −0,09 a −0,10: casi un cuarto de palanca", () => {
+    // La recogida del 747 toca con 3 a 6 grados de ángulo del fuselaje.
+    for (const alfa of [3, 4.5, 6]) {
+      const cm = momentoDelSuelo(yvaga, rodando747, 1, alfa * GRADO);
+      expect(cm).toBeLessThan(-0.088);
+      expect(cm).toBeGreaterThan(-0.101);
+      expect(-cm / yvaga.aero.cmElevator).toBeGreaterThan(0.2);
+      expect(-cm / yvaga.aero.cmElevator).toBeLessThan(0.25);
+    }
+  });
+
+  it("los flaps 5 y 10 son una curva, y los 20 la suya", () => {
+    // El 747 de la flota: muescas de 0, 5, 20 y 30 grados, palanca a tercios.
+    expect(del747(1 / 3, 4)).toBeCloseTo(-0.027 * 0.7, 6);
+    expect(del747(2 / 3, 8)).toBeCloseTo(-0.113 * 0.7, 6);
+    // Recogidos y a poco ángulo, el suelo levanta el morro: así es la gráfica.
+    expect(del747(0, 0)).toBeCloseTo(0.038 * 0.7, 6);
+    expect(del747(0, 12)).toBeCloseTo(-0.085 * 0.7, 6);
+  });
+
+  it("se va con el colchón: del todo rodando, menos arriba y nada a una envergadura", () => {
+    const a = yvaga;
+    const a6 = 6 * GRADO;
+    const en = (ruedas: number) =>
+      momentoDelSuelo(a, efectoSuelo(a, ruedas + a.gearHeight + a.alturaDelAla), 1, a6);
+    let antes = en(0);
+    for (const ruedas of [1, 3, 6, 10, 15, 20, 30]) {
+      const ahora = en(ruedas);
+      expect(ahora).toBeGreaterThan(antes);
+      antes = ahora;
+    }
+    // Lo mismo que la sustentación de más: la mitad del picado donde la mitad del colchón.
+    const k = efectoSuelo(a, 10 + a.gearHeight + a.alturaDelAla).sustentacion - 1;
+    expect(en(10) / en(0)).toBeCloseTo(k / (rodando747.sustentacion - 1), 2);
+    expect(en(a.wingSpan)).toBe(0);
+  });
+
+  for (const a of AIRCRAFT) {
+    it(`${a.id}: la palanca que pide al tocar es la del 747 por su colchón`, () => {
+      const rodando = efectoSueloRodando(a);
+      const alfa = 6 * GRADO;
+      const flaps = a.llevaFlaps ? 1 : 0;
+      const palanca = -momentoDelSuelo(a, rodando, flaps, alfa) / a.aero.cmElevator;
+      const del747 =
+        -momentoDelSuelo(yvaga, rodando747, a.llevaFlaps ? 1 : 0, alfa) / yvaga.aero.cmElevator;
+      expect(palanca).toBeCloseTo(
+        (del747 * (rodando.sustentacion - 1)) / (rodando747.sustentacion - 1),
+        6,
+      );
+      // Algo que se nota y se sostiene: de una vigésima a un cuarto de palanca.
+      expect(palanca, a.id).toBeGreaterThan(a.llevaFlaps ? 0.09 : 0.02);
+      expect(palanca, a.id).toBeLessThan(0.25);
+    });
+  }
+
+  // Con flaps: el que no los lleva lee la fila de recogidos, que a poco
+  // ángulo levanta el morro (arriba).
+  for (const a of AIRCRAFT.filter((x) => x.llevaFlaps)) {
+    it(`${a.id}: en el modelo, a un metro de la pista el morro cae, y lejos no`, () => {
+      const y = 600;
+      const paso = (debajo: number) => {
+        const m = new CoefficientFlightModel({
+          aircraft: a,
+          ground: () => y - a.gearHeight - debajo,
+          assist: 0,
+        });
+        m.reset({ position: new Vector3(0, y, 0), heading: 0, airspeed: a.approachSpeed });
+        m.step(1 / 240, { ...neutralControls(), engineOn: true, throttle: 0, flaps: 1, tren: 1 });
+        return m;
+      };
+      const cerca = paso(1);
+      const lejos = paso(400);
+      expect(cerca.palancaDelSuelo(), a.id).toBeGreaterThan(0);
+      expect(Math.abs(lejos.palancaDelSuelo())).toBe(0);
+      expect(cerca.state.pitchRate, a.id).toBeLessThan(lejos.state.pitchRate);
     });
   }
 });

@@ -189,7 +189,8 @@ export function flotaElReactor(p) {
  *   pasado?: number,     // m pasado el umbral de aterrizar, si se sabe (H53)
  *   porElSuelo?: number, // m/s, con `pasado`
  *   presion?: number,     // lo que pide la presión que lleva: ver `porLaPresion` en `recoger`; 1 si no se da
- *   rec: { altura: number, caida: number, palanca: number, acumulado: number, velocidad: number, ultimo?: number },
+ *   picado?: number,      // la palanca que pide el picado del suelo, `palancaDelSuelo` del modelo (H56); 0 si no se da
+ *   rec: { altura: number, caida: number, palanca: number, acumulado: number, velocidad: number, ultimo?: number, picado?: number, picadoDeLaPalanca?: number },
  * }} p
  * @returns {number} la palanca, de −0,6 a 0,8
  */
@@ -227,11 +228,23 @@ export function palancaDelReactorEnLaRecogida(p) {
     acelera,
     carga: p.carga,
   });
+  /*
+   * **Y lo que pica el suelo, sumado** (H56): la palanca que sostiene el morro
+   * contra el picado del colchón, que es lo que hace quien sabe que el suelo
+   * pica —más palanca en los últimos metros—. Menos el que ya lleve
+   * `rec.palanca`: ninguno si es la media de la senda sin él, que es como la
+   * da el banco (`picadoDeLaPalanca` a cero); si no se dice, el de al empezar,
+   * que es lo que lleva una palanca que ya lo sostenía. Ver `palanca` abajo y
+   * `momentoDelSuelo` en `src/flight/efecto-suelo.ts`.
+   */
+  const picado = p.picado ?? 0;
+  if (rec.picadoDeLaPalanca === undefined) rec.picadoDeLaPalanca = picado;
   const calculado = Math.max(
     -0.6,
     Math.min(
       0.8,
       rec.palanca +
+        (picado - rec.picadoDeLaPalanca) +
         (p.presion ?? 1) *
           (porLoQueFrena +
             porDelante +
@@ -242,9 +255,18 @@ export function palancaDelReactorEnLaRecogida(p) {
     ),
   );
   const aRas = p.ruedas < 1.5 && pide - p.vertical < 0;
+  /*
+   * Sostener la palanca es sostener el morro: lo que pica el suelo de más
+   * desde el último fotograma se le suma también a la sostenida (H56).
+   */
+  const sostenida =
+    rec.ultimo !== undefined
+      ? Math.max(-0.6, Math.min(0.8, rec.ultimo + picado - (rec.picado ?? picado)))
+      : undefined;
+  rec.picado = picado;
   const palanca =
-    (falta < -0.6 || aRas) && rec.ultimo !== undefined && alPunto === null
-      ? rec.ultimo
+    (falta < -0.6 || aRas) && sostenida !== undefined && alPunto === null
+      ? sostenida
       : calculado;
   rec.ultimo = palanca;
   return palanca;
