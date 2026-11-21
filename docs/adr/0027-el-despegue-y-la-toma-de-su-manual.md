@@ -7790,3 +7790,242 @@ pruebas, en verde** (31 saltadas y una por hacer).
   vuelta al circuito del banco con el avión más grande.
 - **El picado del suelo del 747** (H54), que sigue fuera.
 - **El JAZ 110 en el navegador**, que sigue medido solo en la mesa.
+
+## Enmienda H55c (21-11-2026): la red de los peldaños de abajo, el gas del reactor del banco que flota y el 747 en Tukã
+
+H55b dejó tres cosas abiertas: la red de los peldaños de abajo, que cambiaba
+con el reparto entre ángulo y flaps; el gas de la final que el reactor del
+banco dejaba puesto si flotaba por encima de los treinta pies, y el 747 que
+llegó a la puerta de Tukã a cincuenta metros del eje después de frustrar.
+
+### 1. La red de los peldaños de abajo
+
+**Dónde muerde.** La red es la capa `stallProtection`, y solo la llevan los
+peldaños que no dejan entrar en pérdida con el modelo de coeficientes: Tukã.
+Guyrami vuela otro modelo, sin pérdida ni avisador (`arcade.ts`), y Taguató y
+Taguato Ruvichá la llevan a cero. Son dos cosas: la pérdida del modelo, que
+la red alarga (`stallAngle` en `fdm.ts`), y el limitador del tirón, que quita
+autoridad a la palanca al acercarse (`applyAssist`). El avisador va con la
+primera: suena a 1,07 veces la velocidad de la pérdida que el modelo va a
+tener (`anguloDeAviso`), y la mano de abajo se aparta de él.
+
+**El error.** Las dos multiplicaban el ángulo de pérdida con los flaps que se
+llevaran: la red, por 1,45; el limitador, del 0,82 al 1,17. Contado desde el
+cero, eso cambia con cómo se reparte la sustentación entre el ángulo y los
+flaps, y H55 lo cambió en los tres reactores (menos flaps y más ángulo de
+pérdida, el mismo CL máximo). El JAZ 90 con los de aterrizar: el CL máximo de
+verdad, 2,76 antes y después; la red, de 3,29 a 3,41; el avisador, de 2,88 a
+2,98.
+
+**Lo que se cambia** (`masAllaDeLaPerdida`, en `flaps.ts`): la red y el
+limitador se cuentan **en la escala del ala limpia**: la pérdida con los flaps
+que se lleven, más (o menos) la parte que toque de la pérdida del ala sin
+nada. La red alarga 0,45 veces la pérdida limpia; el limitador va de 0,18 por
+debajo a 0,17 por encima. Lo que la red añade es entonces lo mismo con flaps
+que sin ellos —en el JAZ 90, medio CL—, se reparta como se reparta. La misma
+cuenta para todos; solo da algo distinto donde la pérdida se mueve con los
+flaps, los tres reactores con slats o Krueger, y ahí con los flaps fuera.
+
+| Tukã, flaps de aterrizar | Pérdida del ala | La red, H55 → ahora | El avisador, H55 → ahora | Del ángulo de la Vref al avisador | El limitador |
+|---|---|---|---|---|---|
+| JAZ 90 | 18,1°, CL 2,76 | 26,2° (3,41) → **24,8° (3,29)** | 20,8° (2,98) → **19,6° (2,88)** | 14,4° → 13,2° | 14,8–21,1° → 15,4–20,6° |
+| JAZ 110 | 16,6°, CL 2,52 | 24,1° (3,20) → 23,6° (3,16) | 19,6° (2,80) → 19,2° (2,76) | 14,4° → 13,9° | 13,6–19,4° → 13,8–19,2° |
+| JAZ 120 | 18,8°, CL 2,54 | 27,3° (3,25) → 25,3° (3,08) | 22,4° (2,84) → 20,6° (2,69) | 15,9° → 14,2° | 15,4–22,0° → 16,2–21,2° |
+
+El JAZ 90 vuelve a lo que la red le dejaba antes de H55, 3,29 y 2,88, que era
+con todos los flaps y la pérdida del ala limpia. Los cinco de hélice, limpios
+y con flaps, y los tres reactores limpios, salen al grado igual que antes.
+
+**Contarla desde el ángulo de sustentación nula, no.** Era lo que pedía la
+tanda, y se probó: también es independiente del reparto, pero deja la red en
+1,45 veces el CL máximo en todos, y con los flaps fuera eso es mucho más de
+lo que había —el JAZ 90, 4,00 donde dejaba 3,29; el JAZ 50, 4,03 donde 3,39—,
+y lleva el avisador a 27°. Medido en Tukã con la palanca atrás del todo
+quince segundos en la final: el JAZ 90 con flaps no lo oye nunca (el ángulo
+llega a 25,9° y el avisador está a 27,2°), y el JAZ 40, el 50 y el 60 con
+flaps lo oyen a los 5,7, 6,1 y 8,8 segundos, donde lo oían al segundo. Y el
+JAZ 90 empujado y soltado (abajo) vuelve más despacio todavía, −1,92 m/s.
+
+**El avisador, ni antes ni después.** Con la cuenta de ahora, en Tukã:
+
+- **No antes**: del ángulo de la Vref al avisador quedan más de trece grados
+  en los tres reactores; empujado y soltado en la final, el JAZ 90 llega a
+  4,5° del avisador sin que suene, y ninguno de los cuatro de la prueba lo
+  oye.
+- **No después**: con la palanca atrás del todo en la final, el JAZ 90 con
+  flaps lo oye a los 1,1 s, como antes, y ahora entra en pérdida a los 1,8 s
+  si se insiste —la red a 24,8° y el ángulo llega a 26,0°—, que es lo que
+  dice la red: «el avión sigue cayendo si insistís», como ya hacían los de
+  hélice y el JAZ 90 limpio. El 747 con flaps lo oye a los 3,6 s y no a los
+  9,2, y entra en pérdida a los 11,2 (antes 11,8); el 787, a los 10,3 y no a
+  los 10,7. En Taguató y Taguato Ruvichá, todo igual al grado y a la décima
+  de segundo.
+
+**`colocado-y-compensado.test.ts`.** El JAZ 90 en Tukã empujado tres segundos
+y soltado vuelve a **−1,67 m/s** de media pasados diez segundos (con H55,
+−1,78; antes de H55, −1,68), con la mitad de su senda en −1,74: el tope
+vuelve a la mitad, 0,5, que era el de antes de H55. El primer tirón llega a
+15,1° y no a 16,1°: era el limitador, que con H55 empezaba más arriba. Los
+demás de la prueba, igual.
+
+### 2. El gas del reactor del banco cuando flota por encima de los treinta pies
+
+El reactor del banco quitaba el gas solo con la altura, a los treinta pies
+(`RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR`), y si una racha lo
+subía al empezar a recoger o la recogida se pasaba, flotaba con el gas de la
+final puesto. El FCTM lo quita al empezar la recogida, no a una altura («after
+the flare is initiated, smoothly retard the thrust levers to idle», pp.
+6.9-6.10). Al bimotor ya se le quitaba si flotaba (H45b).
+
+**Lo que se cambia, solo en el banco** (`gasDelReactorEnLaRecogida` y
+`flotaElReactor`, en `scripts/recogida-del-reactor.mjs`, que el banco copia a
+la página como las otras): el gas de la senda hasta los treinta pies, y al
+ralentí desde ahí **o desde que flota**, y lo quitado no vuelve, como en el
+bimotor. Lo que es flotar no es lo del bimotor, y se midió por qué:
+
+- **La holgura del bimotor no encaja** —bajar seis décimas de metro por
+  segundo menos de lo pedido—, porque el perfil del reactor empieza en lo que
+  baja la senda (H32c) y no en lo que baja el avión: el que el automático
+  acaba de sacar de una racha empieza a recoger bajando un metro menos, y se
+  le quitaba el gas en el primer fotograma. En la mesa de la prueba (60
+  finales del JAZ 120 a 142 nudos con el punto de toma), en 25 de las 29
+  finales a las que cambiaba el gas salía al empezar a recoger; duras de 7 a
+  11 y la peor de 2,94 a **3,51 m/s**, más que una dura de transporte.
+- **Bajar menos de la mitad de lo pedido**: ninguna larga en esas sesenta y
+  la peor igual, pero en la mesa de H55b con las alas sostenidas (200 finales
+  por avión) un JAZ 110 con σ_w 1,5 (semilla 30) hizo un globo de ocho metros
+  al empezar a recoger, se le quitó el gas arriba, perdió velocidad y tocó a
+  138 nudos y **9,25 m/s**; con el gas de antes, a 146 y 3,73.
+- **Y con energía de sobra**: la mitad, y además más deprisa que al empezar a
+  recoger. Es lo que el manual llama flotar —el avión que se queda en el aire
+  porque lleva velocidad que gastar—, y deja el gas al globo que ya va
+  despacio, que es cuando hace falta. Es la que entra.
+
+En la mesa de H55b (`h55c/mesa/` del scratchpad), alas sostenidas, 200
+finales, más de 2 m/s · pasadas de 600 m (la más larga):
+
+| | El gas de antes | La mitad | La mitad, con energía de sobra |
+|---|---|---|---|
+| JAZ 120, σ_w 1 | 32 · 6 (871 m) | 34 · 4 (653 m) | 34 · 4 (653 m) |
+| JAZ 120, σ_w 1,5 | 59 · 5 (1.565 m) | 61 · 3 (784 m) | 62 · 3 (784 m) |
+| JAZ 110, σ_w 1 | 7 · 3 (812 m) | 10 · 3 (695 m) | 8 · 3 (695 m) |
+| JAZ 110, σ_w 1,5 | 50 · 2 (819 m), la peor 4,11 m/s | 46 · 1 (640 m), **la peor 9,25** | 46 · 1 (640 m), la peor 4,11 |
+| JAZ 90, σ_w 1 | 8 · 0 | 8 · 0 | 8 · 0 |
+| JAZ 90, σ_w 1,5 | 46 · 0 | 45 · 0 | 45 · 0 |
+
+Las largas bajan y la más larga se queda dentro de los 800 m en todos; las
+duras se mueven dentro de lo que da el azar en doscientas (H55b), y la peor
+de cada avión es la misma salvo el 747 con σ_w 1,5 (4,39 → 4,51). El E170
+sale igual con σ_w 1 y con una dura menos con 1,5.
+
+**`recogida-del-reactor.test.mjs`** vuela ahora con las alas sostenidas, como
+la mesa de H55b, y con el gas del módulo. A 142 nudos con el punto de toma:
+
+| 60 finales | Largas (la más larga) | Más de 2 m/s (la peor) |
+|---|---|---|
+| El gas de antes | 2 (814 m) | 7 (2,94 m/s) |
+| El de ahora | 1 (608 m) | 8 (2,94 m/s) |
+
+La de 814 (semilla 13) es la de H55b: empieza a recoger a 12,2 m, una racha la
+lleva de 150 a 157 nudos, deja de bajar y flota con el gas puesto; ahora toca
+a 529 m y 2,04 m/s. **La de 608 (semilla 56) se queda**, y por eso la prueba
+pide como mucho una y ninguna pasada de los 650 m, donde con el alerón suelto
+pedía ninguna: es un avión que se sostiene a diez metros perdiendo velocidad
+—toca a 133 nudos, por debajo de la Vref menos cinco—, no uno que flota con
+energía de sobra, y quitarle el gas ahí es lo de la semilla 30 del JAZ 110.
+La prueba mira también que con el gas de antes hay una pasada de los 650 m y
+con el de ahora no, que las duras no suben más de dos y que la peor no
+empeora. Y la de H53 a 146 nudos, con el gas de ahora: sin el punto, 5 largas
+(733 m) y 3 duras; con él, ninguna (572 m) y 2, la peor la misma final, 2,52
+m/s. En aire quieto, igual que antes: 438 m y 0,83 m/s.
+
+### 3. El 747 en Tukã, después de frustrar: no se repite
+
+`verificar-vuelo-entero.mjs gran-canaria tuka 1 jaz-120`, dos veces, desde
+fotos del worktree (`h55c/arbol-a` y `arbol-b` del scratchpad), con la
+tarjeta de verdad y la traza de la final (`OGA_TRAZA_FINAL`).
+
+- **La primera**, con la red de aquí y el gas del reactor con la holgura del
+  bimotor (la foto se hizo antes de medirla): **66 de 66**. Sin frustrada —ese
+  día nadie se puso en la pista—, llegó a la puerta de los quinientos pies a
+  155 nudos (Vref 142) bajando 4,5 m/s, a 4,3 m de la senda y **4,7 m del
+  eje**, cruzándolo a 0,1°; recogió a 13 m de ruedas, 13 m antes del umbral,
+  bajando 2,8 m/s a 151 nudos, y tocó a **324 m y 1,4 m/s**, a 8,6 m del eje,
+  con las gafas. No sonó el avisador de pérdida en todo el vuelo.
+- **La segunda**, con todo lo de aquí y **la pista ocupada a propósito**
+  (`OGA_PISTA_OCUPADA=1`), para repetir lo de H55b: la torre lo mandó al aire
+  a **60 m** (196 ft, «pistaOcupada»), igual que entonces, frustró y volvió
+  por el circuito. La segunda final llegó a la puerta a 152 nudos bajando 3,5
+  m/s, a 1,2 m de la senda y **a 4,9 m del eje, cruzándolo a 0,6°**: la que en
+  H55b llegó a 50,5 m y 5,9°, aquí llega estabilizada. **65 de 66**: recogió a
+  13,7 m, 26 m antes del umbral, bajando 2,7 m/s a 158 nudos, y tocó a 540 m,
+  en la zona, a 0,6 m del eje y a **2,06 m/s**: la que falla es «uno o dos
+  metros por segundo», por seis centésimas.
+
+Con la frustrada puesta en el mismo sitio, la vuelta al circuito del 747
+llega bien a la puerta, así que lo de H55b no es ni del circuito del banco
+ni del juego de una forma que se repita: fue esa tirada. No se cambia nada.
+**Lo que no se ha podido ver** es la recogida de la segunda final: la traza
+de la final se corta a los cuatrocientos renglones (`trazaDeLaFinal`) y con
+la frustrada se acabó en el tramo base de la vuelta, así que no se sabe si
+el gas salió por flotar en esa recogida, que empezó con dieciséis nudos de
+más.
+
+### Los demás bancos
+
+Desde la foto con todo lo de aquí (`h55c/arbol-b`), con la tarjeta de verdad:
+
+- `tenerife-norte tuka 1 jaz-90`, el E170 con la red que cambia: **66 de
+  67**. A la puerta de los quinientos pies a 122 nudos (Vref 118) bajando 2,8
+  m/s, a 0,6 m de la senda y 4,4 m del eje; recogió a 12 m de ruedas, 73 m
+  antes del umbral, bajando 3,8 m/s a 121 nudos, y tocó a **384 m y 0,68
+  m/s**, a 1,2 m del eje, con las gafas. El avisador de pérdida no sonó en
+  todo el vuelo. El ✗ es de la consola: «Failed to fetch dynamically imported
+  module: …/src/main.ts» al arrancar, lo de la red de la máquina que la página
+  ya recarga sola, y no de este cambio.
+- `gran-canaria taguato 1 jaz-120`, con el alisio de 025/20: **61 de 62**. A
+  la puerta a 155 nudos bajando 3,5 m/s, a 3,4 m por encima de la senda y 1,9
+  m del eje; empezó a recoger tarde y alto, a 13,4 m de ruedas y **92 m pasado
+  el umbral**, 6,3 m por encima de la senda, bajando 2,3 m/s a 154 nudos, y
+  tocó a 470 m y **2,07 m/s**, a 4,9 m del eje: el ✗ es la toma, por siete
+  centésimas. **El gas de aquí no entró**: bajó de 2,6 a 3,0 m/s toda la
+  recogida, sin flotar, y el gas de la senda (0,39) salió a los treinta pies,
+  como antes. Lo que la hizo firme es el punto de toma de H53: alto y pasado,
+  la recogida pidió llegar al suelo en los 457 m con la palanca adelantada
+  (−0,21 a −0,23), que es lo que H53 dejó apuntado de lo que pide el punto a
+  ras de suelo.
+
+| | Puerta de 500 ft | Recogida | Toca | Comprobaciones |
+|---|---|---|---|---|
+| JAZ 120, Tukã, primera | 155 kt, 4,5 m/s, eje 4,7 m, 0,1° | 13 m, 13 m antes, 2,8 m/s, 151 kt | 324 m, 1,4 m/s | 66 de 66 |
+| JAZ 120, Tukã, pista ocupada | 152 kt, 3,5 m/s, eje 4,9 m, 0,6° | 13,7 m, 26 m antes, 2,7 m/s, 158 kt | 540 m, 2,06 m/s | 65 de 66: ✗ la toma, por seis centésimas |
+| JAZ 90, Tukã | 122 kt, 2,8 m/s, eje 4,4 m, 1° | 12 m, 73 m antes, 3,8 m/s, 121 kt | 384 m, 0,68 m/s | 66 de 67: ✗ la consola al arrancar |
+| JAZ 120, Taguató | 155 kt, 3,5 m/s, eje 1,9 m, 0,6° | 13,4 m, 92 m pasado, 2,3 m/s, 154 kt | 470 m, 2,07 m/s | 61 de 62: ✗ la toma, por siete centésimas |
+
+### El vitest entero
+
+Con la red y el gas de aquí, y las dos pruebas tocadas (`colocado-y-compensado`
+de vuelta a 0,5; `recogida-del-reactor` con las alas sostenidas, el gas del
+módulo y la prueba nueva del gas): **568 ficheros y 11.296 pruebas, en verde**
+(31 saltadas y una por hacer).
+
+### Lo que queda
+
+- **El reactor que se sostiene a diez metros perdiendo velocidad con el gas
+  puesto** (la semilla 56 de `recogida-del-reactor.test.mjs`, 608 m a 133
+  nudos): no flota con energía de sobra, así que el gas no se le quita, y
+  quitárselo a un globo que ya va despacio es peor (la semilla 30 del JAZ 110,
+  9,25 m/s). Lo que pide es otra regla, la de no aguantarlo en el aire por
+  debajo de la Vref menos cinco, y no se ha probado.
+- **Lo que pide el punto de toma a ras de suelo** (H53), que en Taguató dejó
+  la toma del 747 a 2,07 m/s empujándolo desde alto y pasado.
+- **La recogida del 747 en Tukã después de frustrar**: tocó a 2,06 m/s,
+  empezando a recoger con dieciséis nudos de más, y no hay traza: la de la
+  final se corta a los cuatrocientos renglones y con una frustrada no llega a
+  la segunda. Volarla con `OGA_TRAZA_ALA`, o subir ese tope.
+- **`tenerife-norte guyrami 3 jaz-20`, sin volar**: no cabía antes de la
+  entrega. No le toca nada de aquí —Guyrami vuela el modelo sencillo, sin
+  pérdida ni red, y el gas del reactor no es de una hélice—, pero no se ha
+  comprobado en el navegador.
+- **El picado del suelo del 747** (H54) y **el JAZ 110 en el navegador**,
+  que siguen como estaban.

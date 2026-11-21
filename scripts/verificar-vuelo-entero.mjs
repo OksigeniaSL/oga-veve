@@ -65,7 +65,12 @@ import {
 } from "./oido.mjs";
 import { fasesATiempoReal } from "./reloj-del-banco.mjs";
 import { gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
-import { pideAlPuntoDeToma, porLoQueAceleraElReactor } from "./recogida-del-reactor.mjs";
+import {
+  flotaElReactor,
+  gasDelReactorEnLaRecogida,
+  pideAlPuntoDeToma,
+  porLoQueAceleraElReactor,
+} from "./recogida-del-reactor.mjs";
 import { elEjeDeLaCarrera } from "./el-eje-de-la-carrera.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
@@ -756,6 +761,13 @@ await page.addScriptTag({
  */
 await page.addScriptTag({
   content: `globalThis.__pideAlPuntoDeToma = ${pideAlPuntoDeToma.toString()};`,
+});
+/*
+ * **Y el gas de un reactor en la recogida** (H55c), desde el mismo módulo y
+ * por lo mismo.
+ */
+await page.addScriptTag({
+  content: `globalThis.__gasDelReactorEnLaRecogida = ${gasDelReactorEnLaRecogida.toString()};\nglobalThis.__flotaElReactor = ${flotaElReactor.toString()};`,
 });
 /*
  * **Y los pies de la carrera de despegue, desde su módulo** (H44b), que los
@@ -1587,7 +1599,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     /*
      * **Y un reactor, al ralentí a los treinta pies**, no al empezar a recoger:
-     * ver `RECOGIDA_DE_REACTOR`.
+     * ver `RECOGIDA_DE_REACTOR`. **O desde que flota**, como el bimotor
+     * (H55c): ver `gasDelReactorEnLaRecogida` en
+     * `scripts/recogida-del-reactor.mjs`.
      */
     /*
      * **Y la racha se nota en el asiento antes que en el variómetro** (H34d):
@@ -1608,6 +1622,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * `scripts/gas-de-la-recogida.mjs`.
      */
     if (falta < -0.6) recogida.floto = true;
+    if (
+      RECOGIDA_DE_REACTOR &&
+      globalThis.__flotaElReactor({
+        vertical: contraLaPista,
+        pide,
+        verdadera: s.airspeed,
+        alEmpezar: recogida.velocidad,
+      })
+    )
+      recogida.flotoElReactor = true;
     if (!SENCILLO)
       mandos.throttle = BIMOTOR_EN_LA_RECOGIDA
         ? globalThis.__gasDelBimotorEnLaRecogida({
@@ -1621,8 +1645,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             carga: s.loadFactor ?? 1,
             floto: recogida.floto === true,
           })
-        : RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR
-            ? (recogida.gas ?? 0)
+        : RECOGIDA_DE_REACTOR
+            ? globalThis.__gasDelReactorEnLaRecogida({
+                gas: recogida.gas ?? 0,
+                ruedas,
+                floto: recogida.flotoElReactor === true,
+              })
             : 0;
   };
   /**
@@ -2482,8 +2510,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     !SENCILLO && suyas.propulsion === "helice" && (suyas.motores ?? 1) >= 2;
   /** El ritmo al que se busca tocar, m/s: el del perfil de `recoger`. */
   const ritmoAlTocar = RECOGIDA_DE_REACTOR ? 2 * 0.3048 : RITMO_AL_TOCAR;
-  /** Las ruedas a las que un reactor pone el gas al ralentí, m. */
-  const RETARD_DEL_REACTOR = 30 * 0.3048;
+  /*
+   * Las ruedas a las que un reactor pone el gas al ralentí, treinta pies, van
+   * con el gas de su recogida: ver `gasDelReactorEnLaRecogida` en
+   * `scripts/recogida-del-reactor.mjs`.
+   */
   /*
    * **Y lo que el avión ya está acelerando, en la recogida de un reactor**: lo
    * que nota en el asiento un piloto al que una racha le quita el ala, con el
@@ -7632,9 +7663,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * reactor, el gas que llevaba hasta los treinta pies: ver
          * `RECOGIDA_DE_REACTOR`.
          */
-        c.throttle =
-          SENCILLO || (RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR)
-            ? recogida.gas
+        c.throttle = SENCILLO
+          ? recogida.gas
+          : RECOGIDA_DE_REACTOR
+            ? globalThis.__gasDelReactorEnLaRecogida({
+                gas: recogida.gas,
+                ruedas,
+                floto: recogida.flotoElReactor === true,
+              })
             : 0;
       } else {
         /*

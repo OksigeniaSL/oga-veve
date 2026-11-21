@@ -279,6 +279,43 @@ export function anguloDePerdida(
 }
 
 /**
+ * **El ángulo de ataque a `veces` la pérdida, en la escala del ala limpia**,
+ * rad: la pérdida con esos flaps, más o menos una parte de la del ala sin
+ * nada, `anguloDePerdida + (veces − 1)·alphaStall`.
+ *
+ * Es la cuenta de la red de los peldaños de abajo, que deja la pérdida más
+ * allá de la del ala (`veces` 1,45), y la del limitador del tirón (de 0,82 a
+ * 1,17). Las dos multiplicaban el ángulo de pérdida con los flaps que se
+ * llevaran, contado desde el cero, y eso cambia con cómo se reparte la
+ * sustentación entre el ángulo y los flaps: con los flaps de aterrizar de su
+ * manual (enmienda H55 del ADR 0027), el JAZ 90 lleva el mismo CL máximo que
+ * antes, 2,76, con más ángulo y menos flaps, y la red le dejaba de 3,29 a 3,41
+ * y el avisador de 2,88 a 2,98 sin que el ala hubiera cambiado. Es el mismo
+ * error que tenía la mano (`loQueTardaElCamino`).
+ *
+ * Así, lo que la red añade es lo mismo con flaps que sin ellos —en el JAZ 90,
+ * medio CL—, y al CL máximo de verdad, se reparta como se reparta. Sin slats
+ * ni Krueger, la pérdida no se mueve con los flaps y la cuenta da lo de
+ * siempre; con ellos, la red con flaps vuelve a lo que dejaba antes de H55.
+ *
+ * **Contarla desde el ángulo de sustentación nula, no**: también es
+ * independiente del reparto, pero deja la red en 1,45 veces el CL máximo, y
+ * con los flaps fuera eso es mucho más que lo que había —el JAZ 90, 4,00 donde
+ * dejaba 3,29— y lleva el avisador a 27°. Medido en Tukã con el JAZ 90 en la
+ * final, la palanca atrás del todo quince segundos no lo hace sonar nunca.
+ */
+export function masAllaDeLaPerdida(
+  a: {
+    readonly aero: { readonly alphaStall: number };
+    readonly bordeDeAtaque?: { readonly perdidaPorMuesca: readonly number[] };
+  },
+  flaps: number,
+  veces: number,
+): number {
+  return anguloDePerdida(a, flaps) + (veces - 1) * a.aero.alphaStall;
+}
+
+/**
  * Adónde llegan los flaps en este paso de tiempo.
  *
  * A paso fijo, que es como los mueve un husillo: `tardan` es lo que se tarda

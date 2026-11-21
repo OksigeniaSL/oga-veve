@@ -34,6 +34,7 @@ import { efectoSuelo, efectoSueloRodando } from "./efecto-suelo";
 import {
   anguloDePerdida,
   fraccionDeLosFlaps,
+  masAllaDeLaPerdida,
   resistenciaDeLosFlaps,
   sustentacionDeLosFlaps,
 } from "./flaps";
@@ -1239,8 +1240,17 @@ export class CoefficientFlightModel implements FlightModel {
     // cayendo si insistís, pero perdona el tirón nervioso de un crío. La de
     // los flaps que lleva: con slats o Krueger fuera, más ángulo. Ver
     // `anguloDePerdida`.
+    //
+    // **Y lo que alarga es lo mismo con flaps que sin ellos**: los grados de
+    // la pérdida del ala limpia por 0,45, más allá de la pérdida con los flaps
+    // que lleva. Multiplicando la pérdida con flaps, la red cambiaba con el
+    // reparto entre ángulo y flaps. Ver `masAllaDeLaPerdida`.
     const perdidaDelAla = anguloDePerdida(ac, assisted.flaps);
-    const stallAngle = perdidaDelAla * (1 + 0.45 * this.layers.stallProtection);
+    const stallAngle = masAllaDeLaPerdida(
+      ac,
+      assisted.flaps,
+      1 + 0.45 * this.layers.stallProtection,
+    );
     const conLosFlaps = sustentacionDeLosFlaps(ac, assisted.flaps);
     /*
      * **Y el suelo debajo del ala**, que a menos de una envergadura le quita
@@ -2393,8 +2403,13 @@ export class CoefficientFlightModel implements FlightModel {
 
     // Limitador de ángulo de ataque: cuanto más cerca de la pérdida, menos
     // autoridad tiene el tirón. No la impide, la hace costar.
-    const margin = anguloDePerdida(this.aircraft, controls.flaps);
-    const excess = clamp((alpha - margin * 0.82) / (margin * 0.35), 0, 1);
+    //
+    // Del 82 % al 117 % de la pérdida, en la escala del ala limpia y como la
+    // red: multiplicando la pérdida con flaps, el tramo se movía con el
+    // reparto entre ángulo y flaps. Ver `masAllaDeLaPerdida`.
+    const empieza = masAllaDeLaPerdida(this.aircraft, controls.flaps, 0.82);
+    const acaba = masAllaDeLaPerdida(this.aircraft, controls.flaps, 1.17);
+    const excess = clamp((alpha - empieza) / (acaba - empieza), 0, 1);
     const limitado =
       controls.elevator > 0
         ? controls.elevator * (1 - stallProtection * 0.75 * excess)
