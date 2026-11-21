@@ -117,6 +117,10 @@ function lucesHastaLaCarrera(
 }
 
 const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
+// Desde H58 el Seneca pide 775 m —lo que vuela por su margen— y la 3A de la 34
+// le deja 749: ya remonta. La avioneta pide hoy los 606 que pedía él, y hace
+// de ejemplo de quien sale desde la intersección.
+const jaz20 = AIRCRAFT.find((a) => a.id === "jaz-20")!;
 const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
 const cola = (ms: number): DiaDeDespegue => ({
   densidad: 1.225,
@@ -153,7 +157,7 @@ describe("a quien remonta, la verde fija al dar la vuelta, y una", () => {
   });
 
   it("y sin cola sale desde la C, sin remontar: roja y verde, sin destellos", () => {
-    const r = lucesHastaLaCarrera(EL_HIERRO, jaz40, 0)!;
+    const r = lucesHastaLaCarrera(EL_HIERRO, jaz20, 0)!;
     expect(r.sale!.desde).toBe("interseccion");
     expect(r.luces).toEqual(["roja", "verde"]);
   });
@@ -415,7 +419,7 @@ describe("el morro en el eje de golpe (H41j)", () => {
     [...r.antes, ...r.despues].filter((l, i, a) => a[i - 1] !== l);
 
   it("en una entrada sin remonte: la verde ya se dio en la doble raya, y una", () => {
-    const r = girarAntes(EL_HIERRO, jaz40, 0, undefined, "enElEje", true)!;
+    const r = girarAntes(EL_HIERRO, jaz20, 0, undefined, "enElEje", true)!;
     expect(r).not.toBeNull();
     expect(r.sale!.desde).toBe("interseccion");
     expect(todas(r)).toEqual(["roja", "verde"]);

@@ -61,9 +61,9 @@
  * frente.
  *
  * - **JAZ 50 con el DHC-6 Twin Otter de la Serie 400**, que está en el taller
- *   (ver `RESERVADOS`): 454 m para despegar con los márgenes de la SFAR 23 y
- *   460 para aterrizar sin ellos (Viking, 2018). Su despegue se mira contra la
- *   de todos los motores por 1,15, y su parada aparte.
+ *   (ver `RESERVADOS`): 454 m para despegar y 460 para aterrizar, los dos sin
+ *   márgenes (Viking, 2018; la distancia de despegue de la SFAR 23 no lleva el
+ *   1,15, enmienda H58). Su parada desde la V1, aparte.
  *
  * El JAZ 25, el fumigador, no tiene tipo con el que medirlo. El JAZ 60 era un
  * tipo mezclado —el ala y el peso del Twin Otter con la frenada del 1900D— y
@@ -91,10 +91,10 @@
  * volada frena lo mismo que la cuenta, al uno por ciento, y el aire de la toma
  * es el de su clase en los dos.
  *
- * En el JAZ 50 el hangar pide la de abortar desde su V1, 447 m, por debajo de
- * los 564 de la suya en su manual; su despegue con todos los motores por 1,15
- * da 389 contra los 379 del manual, y volado, sin márgenes y hasta los
- * cincuenta pies, 468 contra 338 de la cuenta (ver abajo).
+ * En el JAZ 50 la tabla es de antes de H58. Desde entonces su cuenta, sin
+ * márgenes, da 388 m contra los 379 de su manual, y vuela 460: el hangar le
+ * pide 511, lo volado por su margen (ver `despegueVolado`). La de abortar
+ * desde su V1, 449, sigue por debajo de los 564 de la suya en su manual.
  *
  * El volado del 110 y del 120 es el de la cola de su fabricante (H7b): eran
  * 1.625 y 1.841 con los 8,5° y 8,6° de antes, sin fuente. Y el de todos, con el

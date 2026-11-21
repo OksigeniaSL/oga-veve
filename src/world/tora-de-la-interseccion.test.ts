@@ -120,6 +120,10 @@ function hastaLaCarrera(
 
 const avion = (id: string): AircraftConfig => AIRCRAFT.find((a) => a.id === id)!;
 const jaz40 = avion("jaz-40");
+// Desde H58 el Seneca pide 775 m —lo que vuela por su margen— y la 3A de la 34
+// le deja 749: ya remonta. La avioneta pide hoy los 606 que pedía él, y hace
+// de ejemplo de quien sale desde la intersección.
+const jaz20 = avion("jaz-20");
 const cola = (ms: number): DiaDeDespegue => ({
   densidad: 1.225,
   vientoDeFrente: -ms,
@@ -134,8 +138,8 @@ const cola = (ms: number): DiaDeDespegue => ({
 const LO_QUE_SE_MIDE = 3;
 
 describe("la TORA de la intersección (H41f)", () => {
-  it("El Hierro por la 34, el JAZ 40 sin viento: la torre dice la publicada, y la cuenta resta la alineación", () => {
-    const r = hastaLaCarrera(EL_HIERRO, jaz40, 0)!;
+  it("El Hierro por la 34, el JAZ 20 sin viento: la torre dice la publicada, y la cuenta resta la alineación", () => {
+    const r = hastaLaCarrera(EL_HIERRO, jaz20, 0)!;
     expect(r).not.toBeNull();
     const sale = r.conLaVerde!;
     expect(sale.desde).toBe("interseccion");
@@ -155,20 +159,20 @@ describe("la TORA de la intersección (H41f)", () => {
    * ése salía desde la C.
    */
   it("y si la que queda alineado no basta, aunque la TORA sí, remonta", () => {
-    const sinViento = hastaLaCarrera(EL_HIERRO, jaz40, 0)!.conLaVerde!;
+    const sinViento = hastaLaCarrera(EL_HIERRO, jaz20, 0)!.conLaVerde!;
     const quiere = sinViento.porDelante + 3;
     let lo = 0;
     let hi = 6;
     for (let k = 0; k < 40; k++) {
       const mitad = (lo + hi) / 2;
-      if (pistaNecesariaHoy(jaz40, cola(mitad)) < quiere) lo = mitad;
+      if (pistaNecesariaHoy(jaz20, cola(mitad)) < quiere) lo = mitad;
       else hi = mitad;
     }
     const dia = cola(hi);
-    const pide = pistaNecesariaHoy(jaz40, dia);
+    const pide = pistaNecesariaHoy(jaz20, dia);
     expect(pide).toBeGreaterThan(sinViento.porDelante);
     expect(pide).toBeLessThan(sinViento.desdeLaEntrada);
-    const r = hastaLaCarrera(EL_HIERRO, jaz40, 0, dia)!;
+    const r = hastaLaCarrera(EL_HIERRO, jaz20, 0, dia)!;
     expect(r.conLaVerde!.desde).toBe("remonte");
     expect(r.haciaAtras).toBeGreaterThan(100);
     expect(r.alSoltarFrenos).toBeGreaterThanOrEqual(pide);
