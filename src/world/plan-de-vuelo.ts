@@ -62,8 +62,8 @@ import { radioDeGiro } from "../flight/cabe";
 import { DE_LADO_RODANDO } from "../flight/fdm";
 import { ESPERA_MAXIMA } from "../flight/radio";
 import { PuertaAsignada } from "./puerta-asignada";
-import { edificiosDePasarela, esPuestoDeContacto } from "./remolque";
-import { morroDe } from "./rueda-de-morro";
+import { edificiosDePasarela, empujeDesdeElPuesto, entradaDelPuesto, esPuestoDeContacto, rumboDeLaPintada } from "./remolque";
+import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
 import { YA_EN_SU_SITIO } from "../flight/senalero";
 import {
   aLaCaja,
@@ -2161,6 +2161,7 @@ export class PlanDeVuelo {
     this.candidatosGuardados = null;
     this.deLineaGuardados = null;
     this.deContactoGuardados = null;
+    this.empujesMirados.clear();
     this.puestoElegido = null;
     this.puerta.olvidar();
     this.destino = null;
@@ -2324,14 +2325,7 @@ export class PlanDeVuelo {
      * que no sabía salir: el avión aparecía allí y **la raya verde no se
      * pintaba**. Se vio en Tenerife Norte, en un puesto por lo demás perfecto.
      */
-    const ruta = rodajeEntre(
-      this.grafo,
-      puesto,
-      espera,
-      220,
-      this.ocupadosAhora(true),
-      { desdeFuera },
-    );
+    const ruta = this.salidaDesde(puesto, espera, desdeFuera);
     if (!ruta) return false;
     this.puestoElegido = puesto;
     this.vuelo.reiniciar(false);
@@ -2743,6 +2737,93 @@ export class PlanDeVuelo {
     return this.deContactoGuardados;
   }
 
+  /**
+   * **Hacia dónde sale de espaldas el avión de este puesto, si sale por su raya pintada**
+   * (H60c): la prolongación de la línea de entrada, en los ejes del grafo, para que la ruta
+   * de salida empiece donde el tractor deja el avión, en la calle a la que llega esa recta
+   * (`deEspaldas` en `rodajesDesde`). Solo si se sale empujado —con pasaje, un avión de
+   * pasarela y un puesto de contacto— y la raya pintada mira al edificio
+   * (`rumboDeLaPintada`): es con la que se aparca el avión. Si no, `null`, y la ruta sale
+   * como siempre.
+   *
+   * Sin esto la ruta salía del puesto hacia la calle más cercana, que no siempre es la de
+   * su línea de entrada: la del 13 de Los Rodeos llega del sur-suroeste cruzando la
+   * plataforma, y la ruta salía recta hacia el sur. Con el avión sobre su raya, el tractor
+   * no tenía por dónde llevarlo a esa ruta, y se aparcaba con el rumbo de la ruta y no
+   * sobre su raya (H60b, 202 de los 280 empujes del barrido en los que no coinciden).
+   */
+  private deEspaldasDesde(puesto: Punto): Punto | null {
+    if (!this.deContacto || !vaALaPasarela(this.avion)) return null;
+    const x = puesto[0];
+    const z = -puesto[1];
+    const edificios = edificiosDePasarela(this.aero);
+    if (!esPuestoDeContacto(x, z, edificios, morroDe(this.avion))) return null;
+    const pintada = rumboDeLaPintada(x, z, edificios, entradaDelPuesto(this.aero, x, z));
+    if (pintada === null) return null;
+    // La cola, hacia atrás por la raya: en el mundo (sen, −cos) del rumbo más media vuelta, y en el grafo la z cambia de signo.
+    return [-Math.sin(pintada), -Math.cos(pintada)];
+  }
+
+  /**
+   * **La ruta de salida de un puesto a su punto de espera**: de espaldas por su raya pintada
+   * hasta la calle a la que llega, si de ahí sale empujado y el tractor lo saca bien por ella
+   * (H60c, `saleBienDeEspaldas`); y si no, como siempre, enganchada a la calle más cercana.
+   */
+  private salidaDesde(puesto: Punto, espera: Punto, desdeFuera = false): Ruta | null {
+    const ocupados = this.ocupadosAhora(true);
+    const deEspaldas = desdeFuera ? null : this.deEspaldasDesde(puesto);
+    if (deEspaldas) {
+      const porLaPintada = rodajeEntre(this.grafo, puesto, espera, 220, ocupados, { deEspaldas });
+      if (porLaPintada && this.saleBienDeEspaldas(puesto, porLaPintada)) return porLaPintada;
+    }
+    return rodajeEntre(this.grafo, puesto, espera, 220, ocupados, { desdeFuera });
+  }
+
+  /**
+   * **Si el tractor saca bien el avión por su raya pintada con esta ruta** (H60c): con la
+   * ruta como se pinta (`alisarRuta`), el empuje de `empujeDesdeElPuesto` deja el avión
+   * sobre su raya pintada, que es cuando cumple las tres de la H60b —de culo en todo él,
+   * sobre la ruta y mirando por ella—. Si no las cumple, la ruta de espaldas no se usa: con
+   * ella, lo que queda es el empuje de la raya del plan sin mirar, y en el 24 de Los Rodeos
+   * era el de «La esquina, que vio el banco». Así ningún empuje que salía bien sale peor.
+   *
+   * Se guarda por puesto y por los primeros quinientos metros de la ruta, que es todo lo que
+   * mira el empuje: elegir el par de salida pregunta por el mismo puesto con cada punto de
+   * espera, y casi todas sus rutas salen del puesto igual.
+   */
+  private saleBienDeEspaldas(puesto: Punto, ruta: Ruta): boolean {
+    let andado = 0;
+    const firma: string[] = [];
+    for (let i = 0; i < ruta.puntos.length && andado <= 500; i++) {
+      const p = ruta.puntos[i]!;
+      if (i > 0) andado += Math.hypot(p[0] - ruta.puntos[i - 1]![0], p[1] - ruta.puntos[i - 1]![1]);
+      firma.push(`${p[0].toFixed(1)},${p[1].toFixed(1)}`);
+    }
+    const clave = `${this.avion.id}|${puesto[0].toFixed(2)},${puesto[1].toFixed(2)}|${firma.join(";")}`;
+    const ya = this.empujesMirados.get(clave);
+    if (ya !== undefined) return ya;
+    if (this.empujesMirados.size > 2000) this.empujesMirados.clear();
+    const x = puesto[0];
+    const z = -puesto[1];
+    const crudos = ruta.puntos.map((p) => [p[0], -p[1]] as Punto);
+    const { puntos } = alisarRuta(crudos, ruta.exactaDesde, Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)), ruta.exactaHasta);
+    const morro = morroDe(this.avion);
+    const enElSuyo = empujeDesdeElPuesto(
+      { x, z },
+      edificiosDePasarela(this.aero),
+      puntos.map(([px, pz]) => ({ x: px, z: pz })),
+      entradaDelPuesto(this.aero, x, z),
+      this.avion.batalla,
+      (r) => conLaRuedaEn({ x, z }, r, morro),
+    );
+    const bien = enElSuyo?.porLaPintada === true;
+    this.empujesMirados.set(clave, bien);
+    return bien;
+  }
+
+  /** Ver `saleBienDeEspaldas`. Se tira al mudarse de campo. */
+  private readonly empujesMirados = new Map<string, boolean>();
+
   /** Ver `puestosDeContacto`. Se tira al mudarse de campo. */
   private deContactoGuardados: { ref: string | null; xy: Punto }[] | null = null;
 
@@ -2834,8 +2915,17 @@ export class PlanDeVuelo {
     for (const [i, puesto] of puestos.entries()) {
       const vuelta = vueltas[i] ?? null;
       const casa = vuelta ? vuelta.largo : 0;
-      const rutas = rodajesDesde(this.grafo, puesto.xy, esperas, 220, undefined, {
+      const deEspaldas = desdeFuera ? null : this.deEspaldasDesde(puesto.xy);
+      const comoSiempre = rodajesDesde(this.grafo, puesto.xy, esperas, 220, undefined, {
         desdeFuera,
+      });
+      // Por su raya pintada donde el tractor saca bien el avión por ella (H60c); si no, como siempre.
+      const porLaPintada = deEspaldas
+        ? rodajesDesde(this.grafo, puesto.xy, esperas, 220, undefined, { deEspaldas })
+        : [];
+      const rutas = comoSiempre.map((r, k) => {
+        const p = porLaPintada[k];
+        return p && this.saleBienDeEspaldas(puesto.xy, p) ? p : r;
       });
       esperas.forEach((espera, k) => {
         const ruta = rutas[k] ?? null;
@@ -3714,9 +3804,7 @@ export class PlanDeVuelo {
     this.trazadaAlTocar = false;
     this.destino = "espera";
     this.ultimaPos = puesto.xy;
-    this.ponerRuta(
-      rodajeEntre(this.grafo, puesto.xy, espera, 220, this.ocupadosAhora(true)),
-    );
+    this.ponerRuta(this.salidaDesde(puesto.xy, espera));
     return this.ruta !== null;
   }
 
