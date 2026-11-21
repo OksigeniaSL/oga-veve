@@ -8767,6 +8767,15 @@ recogida del banco, que esta enmienda no toca, y el enganche que sí toca quedó
 seis minutos atrás. Esta vez
 aterrizó a la segunda; en la pasada de H57, a la tercera y a 0,43 m/s.
 
+El del JAZ 50 en Los Rodeos (`tenerife-norte taguato 1 jaz-50`), una pasada,
+la primera con el gas de subida de H57: 57 de 57, cuatro sin medir, el
+avisador callado y la toma a 1,48 m/s. Se engancha a 119 m, a 89 nudos y con
+0,83 de gas, el de su manual; la palanca pasa de 0,017 a −0,004 entre dos
+muestras de la traza, y sube enganchado a 86–105 nudos. En los cinco segundos
+del embrague, con la racha de Taguató, la palanca se mueve hasta 0,2 entre dos
+muestras —un cuarto de segundo— y la carga va de 0,82 a 1,09 g: es el freno
+de H57 parando el morro que mueve la racha, no el enganche.
+
 El vitest entero, con el código de esta enmienda: 571 ficheros y 11.422
 pruebas en verde.
 
