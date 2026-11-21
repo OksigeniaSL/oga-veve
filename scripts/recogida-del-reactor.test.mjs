@@ -205,8 +205,15 @@ describe("la recogida de un reactor", () => {
   it("y con el modelo del juego, el JAZ 120 con veinte nudos de cara y rachas toca en la zona y sin golpe", () => {
     const antes = mesa(palancaDeAntes, 60);
     const ahora = mesa(palancaDelReactorEnLaRecogida, 60);
-    // Con la de antes, la de las tandas 18 y 19: por un lado o por el otro, cuatro o cinco de cada diez.
-    expect(antes.largas + antes.duras).toBeGreaterThan(18);
+    /*
+     * Con la de antes, la de las tandas 18 y 19: por un lado o por el otro,
+     * cuatro o cinco de cada diez con el 747 que bajaba la final con el morro
+     * dos grados por debajo del horizonte (31 de 60). Con la actitud de su
+     * manual recoge desde un grado por encima y la de antes falla menos, dos
+     * de cada diez (13 de 60: 4 largas y 9 duras); la de ahora, 5 (enmienda
+     * H55 del ADR 0027). La prueba sigue viendo el fallo y la mejora.
+     */
+    expect(antes.largas + antes.duras).toBeGreaterThan(10);
     // Con el tamaño, menos de la mitad.
     expect(ahora.largas + ahora.duras).toBeLessThan((antes.largas + antes.duras) / 2);
     expect(ahora.largas).toBeLessThan(antes.largas);
@@ -269,14 +276,25 @@ describe("la recogida de un reactor va a la pista en su punto", () => {
     const conPunto = mesa(palancaDelReactorEnLaRecogida, 60, true, deH53);
     expect(sinPunto.largas).toBeGreaterThan(0);
     expect(conPunto.largas).toBeLessThan(sinPunto.largas);
-    // Medido: de 5 largas a ninguna, la más larga de 855 a 560 m; las duras, 6 y 6.
+    // Medido: de 2 largas a ninguna, la más larga de 750 a 560 m; las duras, 8 y 7.
     expect(conPunto.laMasLarga).toBeLessThan(sinPunto.laMasLarga);
     expect(conPunto.laMasLarga).toBeLessThan(650);
     expect(conPunto.duras).toBeLessThanOrEqual(sinPunto.duras + 2);
-    // Y ninguna que la norma llame dura: los diez pies por segundo de una toma
-    // dura de transporte. La más dura, 3,03 m/s desde que la pérdida con los
-    // de aterrizar es la de la Vref de 142 (H54); con la de antes, por debajo
-    // de tres.
-    expect(conPunto.laMasDura).toBeLessThan(DURO_DE_TRANSPORTE);
+    /*
+     * Y la regla no pone ninguna más dura que las que ya había: con la actitud
+     * de su manual (enmienda H55 del ADR 0027) la más dura de estas sesenta, a
+     * 146, es la misma final con la regla y sin ella, 3,22 m/s.
+     */
+    expect(conPunto.laMasDura).toBeLessThanOrEqual(sinPunto.laMasDura + 1e-9);
+    /*
+     * **Y a la Vref del juego, ninguna que la norma llame dura**: los diez pies
+     * por segundo de una toma dura de transporte. Se miraba a 146, la de las
+     * tandas que flotaban, cuando era la del juego; desde H54 la del juego es
+     * 142, y es donde vuela la regla. Ahí la más dura es de 2,44 m/s, y
+     * ninguna pasa de los 600 m.
+     */
+    const delJuego = mesa(palancaDelReactorEnLaRecogida, 60, true);
+    expect(delJuego.laMasDura).toBeLessThan(DURO_DE_TRANSPORTE);
+    expect(delJuego.largas).toBe(0);
   });
 });

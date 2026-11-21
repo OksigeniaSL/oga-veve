@@ -90,6 +90,7 @@
 import { GRAVITY } from "./atmosphere";
 import { esDeChorro, type AircraftConfig } from "./aircraft";
 import { ascensoMaximo } from "./carrera";
+import { sustentacionDeLosFlaps } from "./flaps";
 import { VISUAL_BANK } from "./arcade";
 import { ACELERACION_MAXIMA } from "./gases-automaticos";
 import { PARA_LA_VELOCIDAD_CON_EL_MORRO } from "./piloto-automatico";
@@ -1439,17 +1440,13 @@ export class ManoQueSostiene {
      */
     /*
      * **Y la firmeza, a la medida del avión.** La trayectoria va por detrás
-     * del morro un tiempo que es `(V/g)·(α − α₀)` —lo que tarda la
-     * sustentación de más en torcer el camino—: un tercio de segundo en la
-     * avioneta y casi segundo y medio en el JAZ 120. Con la misma firmeza
-     * para los dos, el grande bajaba y subía grado y pico alrededor de lo
-     * pedido, cada dieciséis segundos. Ver `POR_TRAYECTORIA`.
+     * del morro un tiempo —lo que tarda la sustentación de más en torcer el
+     * camino—: un tercio de segundo en la avioneta y casi segundo y medio en
+     * el JAZ 120 en crucero. Con la misma firmeza para los dos, el grande
+     * bajaba y subía grado y pico alrededor de lo pedido, cada dieciséis
+     * segundos. Ver `POR_TRAYECTORIA` y `loQueTardaElCamino`.
      */
-    const a = ve.aircraft.aero;
-    const tarda = Math.max(
-      0.2,
-      (v / GRAVITY) * Math.max(0.02, ve.alfa + a.cl0 / Math.max(a.clAlpha, 0.1)),
-    );
+    const tarda = loQueTardaElCamino(ve, v);
     const firmeza = Math.min(POR_TRAYECTORIA, FIRMEZA / tarda);
     const falta = c.valor - gamma;
     let giro =
@@ -1530,6 +1527,44 @@ function medirLaEnergia(e: Energia, ve: LoQueVeLaMano, dt: number): void {
     e.gana += (ahora - e.gana) * Math.min(1, dt / PROMEDIO_DE_LA_ENERGIA);
   } else e.gana = ve.vertical;
   e.verdadera = ve.verdadera;
+}
+
+/**
+ * **Lo que tarda el camino en seguir al morro, visto por la mano**, s.
+ *
+ * Un ángulo de ataque de más tuerce el camino al ritmo que le deja la
+ * sustentación que añade: `γ̇ = q·S·CLα·Δα / (m·V)`. El tiempo de eso es
+ * `m·V / (q·S·CLα)`, y a un g, con `q·S·CL = m·g`, es `(V/g)·CL/CLα`, o
+ * `(V/g)·(α − α₀)` con `α₀` el ángulo de sustentación nula **del avión tal
+ * como va**, flaps incluidos: lo que suman los flaps a igual ángulo baja `α₀`
+ * tanto como sube el ala.
+ *
+ * Se contaba con el `α₀` del ala limpia, `−cl0/clα`, y con los flaps abajo
+ * eso no es lo que tarda: es la parte de la sustentación que pone el ángulo,
+ * y depende de cómo se reparte entre el ángulo y los flaps, que no cambia lo
+ * que tarda el avión en torcer el camino. Con los flaps de aterrizar del 747
+ * sumando 1,0 salían 0,39 s; con los 0,763 de la actitud de su manual, 0,85;
+ * y los dos vuelan con el mismo CL, el que pide su peso a su velocidad, y
+ * tardan lo mismo: 2,1 s. La firmeza caía de su tope, 0,6, a 0,53, y el 747
+ * en la final con el gas quieto subía y bajaba ±2,3 m/s cada cincuenta
+ * segundos (enmienda H55 del ADR 0027).
+ *
+ * **Y la mano lo nota menos cuanto más despacio va**, por el apretón. Ese
+ * ángulo de más empuja el morro de vuelta con la fuerza del aire, que va con
+ * la presión dinámica, mientras la mano mueve el timón con un apretón que va
+ * con la inversa de esa presión por debajo de la velocidad de maniobra —ver
+ * `apretonPorVelocidad`—: lo que le toca vencer de ese retraso es lo que
+ * tarda partido por el apretón. A la velocidad de maniobra, donde se afinó
+ * `FIRMEZA`, y por encima, es lo mismo que antes; en la final, con un apretón
+ * de tres o cuatro, los reactores vuelven a la firmeza con la que se afinó
+ * su final, la del tope.
+ */
+function loQueTardaElCamino(ve: LoQueVeLaMano, v: number): number {
+  const a = ve.aircraft.aero;
+  const sinSustentacion =
+    -(a.cl0 + sustentacionDeLosFlaps(ve.aircraft, ve.flaps)) / Math.max(a.clAlpha, 0.1);
+  const tarda = (v / GRAVITY) * Math.max(0.02, ve.alfa - sinSustentacion);
+  return Math.max(0.2, tarda / apretonPorVelocidad(ve.aircraft, v));
 }
 
 /**

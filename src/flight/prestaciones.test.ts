@@ -110,7 +110,7 @@ import { actitudEnTierra, palancaParaRodar } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import { perdidaCon } from "./velocidades-de-despegue";
-import { flapsDeDespegue } from "./flaps";
+import { anguloDePerdida, flapsDeDespegue, sustentacionDeLosFlaps } from "./flaps";
 import {
   derivadasDeLaFicha,
   modosDe,
@@ -257,12 +257,23 @@ function nivelado(
   return false;
 }
 
-/** La velocidad de pérdida que dicen los coeficientes, m/s. */
+/**
+ * La velocidad de pérdida que dicen los coeficientes, m/s.
+ *
+ * Con los flaps de aterrizar, la del modelo: el ángulo de pérdida de esa
+ * muesca —el de los slats o los Krueger, en el que los lleva— y lo que suman
+ * los flaps en ella, como en `step`. Con el ángulo de la ficha y la recta,
+ * el JAZ 90 y el JAZ 120 salían con la Vref a 1,17 y 1,20 veces su pérdida
+ * cuando su CL máximo, el de su Vref, no se había movido: la actitud de su
+ * manual pone menos sustentación de los flaps y más ángulo para llegar a él
+ * (enmienda H55 del ADR 0027). Ver `anguloDePerdida`.
+ */
 function perdidaDeLaFicha(a: AircraftConfig, conFlaps = false): number {
+  const flaps = conFlaps ? 1 : 0;
   const clMax =
     a.aero.cl0 +
-    a.aero.clAlpha * a.aero.alphaStall +
-    (conFlaps ? a.flapsLift : 0);
+    a.aero.clAlpha * anguloDePerdida(a, flaps) +
+    sustentacionDeLosFlaps(a, flaps);
   return Math.sqrt((2 * a.mass * G) / (RHO * a.wingArea * clMax));
 }
 

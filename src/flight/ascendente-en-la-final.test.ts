@@ -42,6 +42,16 @@ const MIL_PIES_POR_MINUTO = (1000 * 0.3048) / 60;
 const TOPE_DEL_BANCO = 0.9 * MIL_PIES_POR_MINUTO;
 /** Cuándo entra la ascendente, s: con el avión ya bajando a lo que se le pide. */
 const ENTRA = 60;
+/**
+ * **Lo alto que empieza sobre la senda**, m: como en el #192, que llegó alto
+ * y bajando al tope del banco. Lo ponía el globo de sacar los flaps —el avión
+ * nace compensado limpio y los flaps lo suben unos sesenta metros—, y con los
+ * flaps de la actitud de su manual, que suman menos a igual ángulo, el globo
+ * es menor y a los sesenta segundos ya estaba en la senda, bajando a 3,4 m/s
+ * y no a lo que mira la prueba (enmienda H55 del ADR 0027). Así lo alto lo
+ * pone la prueba y no el globo.
+ */
+const ALTO_SOBRE_LA_SENDA = 60;
 
 interface Vuelo {
   /** La peor media de cinco segundos de lo que baja, desde que entra la ascendente, m/s. */
@@ -91,7 +101,7 @@ function finalConAscendente(sube: number, dura: number, loSabe: boolean): Vuelo 
     // La senda, y estando alto, el tope del banco: ver la final recta de
     // `verificar-vuelo-entero.mjs`.
     const pedida = Math.max(
-      inicio + ritmo * t,
+      inicio - ALTO_SOBRE_LA_SENDA + ritmo * t,
       s.position.y + (-TOPE_DEL_BANCO - ritmo) * 10,
     );
     const r = mandosPara(
