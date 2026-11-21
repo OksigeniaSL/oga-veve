@@ -24,8 +24,10 @@ import { Rafagas } from "../src/flight/rafagas";
 import { airDensity, SEA_LEVEL_DENSITY } from "../src/flight/atmosphere";
 import { autoridadDelTimon, mandosPara, memoriaNueva } from "../src/flight/piloto-automatico";
 import { muescaDeAterrizaje } from "../src/flight/flaps";
-import { pitchAngleOf } from "../src/ui/actitud";
+import { bankAngleOf, pitchAngleOf } from "../src/ui/actitud";
 import {
+  flotaElReactor,
+  gasDelReactorEnLaRecogida,
   palancaDelReactorEnLaRecogida,
   pideAlPuntoDeToma,
   porLoQueAceleraElReactor,
@@ -52,7 +54,15 @@ const palancaDeAntes = new Function(`${SIN_TAMANO}\nreturn palancaDelReactorEnLa
  * las rachas de la semilla, hasta tocar. Devuelve a cuántos metros del umbral
  * toca y a cuánto baja.
  */
-function vuelaLaFinal(palancaDeLaRecogida, semilla, deCara = 10.3, sigma = 1, alPunto = false, conVref = undefined) {
+function vuelaLaFinal(
+  palancaDeLaRecogida,
+  semilla,
+  deCara = 10.3,
+  sigma = 1,
+  alPunto = false,
+  conVref = undefined,
+  gasDeAntes = false,
+) {
   const a = aircraftById("jaz-120");
   const vref = conVref ?? a.approachSpeed;
   const aLaQueVa = vref + 8 * NUDO;
@@ -106,6 +116,14 @@ function vuelaLaFinal(palancaDeLaRecogida, semilla, deCara = 10.3, sigma = 1, al
     });
     m.ponerRacha(r.x, r.y, r.z, r.alabeo);
     if (s.onGround) return { metros: along, caida };
+    /*
+     * **Y las alas, sostenidas**, como las sostiene el piloto del banco
+     * siguiendo el localizador. Con el alerón suelto, las rachas inclinaban el
+     * avión y algunas finales se iban de lado y llegaban ladeadas: en la mesa
+     * de H55, con el E170 y rachas fuertes, 13 de 200 no llegaron a la pista,
+     * y eso no lo hace el banco del navegador (enmienda H55b del ADR 0027).
+     */
+    c.aileron = Math.max(-1, Math.min(1, -(1.5 * bankAngleOf(s.orientation) + 0.5 * s.rollRate)));
     caida = -s.velocity.y;
     const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
     if (!rec) {
@@ -168,8 +186,13 @@ function vuelaLaFinal(palancaDeLaRecogida, semilla, deCara = 10.3, sigma = 1, al
         // Y dónde va, si se le dice: para ir a la pista en su punto (H53).
         ...(alPunto ? { pasado: along, porElSuelo } : {}),
       });
-      // El gas, al ralentí a los treinta pies.
-      c.throttle = ruedas > 30 * 0.3048 ? rec.gas : 0;
+      // El gas, al ralentí a los treinta pies o desde que flota (H55c); el de
+      // antes, solo a los treinta pies.
+      c.throttle = gasDeAntes
+        ? ruedas > 30 * 0.3048
+          ? rec.gas
+          : 0
+        : gasDelReactorEnLaRecogida({ gas: rec.gas, ruedas, floto: rec.floto === true });
     }
     m.step(DT, c);
   }
@@ -177,13 +200,13 @@ function vuelaLaFinal(palancaDeLaRecogida, semilla, deCara = 10.3, sigma = 1, al
 }
 
 /** Cuántas de las finales de las semillas tocan pasados los 600 m, y cuántas a más de 2 m/s. */
-function mesa(palancaDeLaRecogida, semillas, alPunto = false, conVref = undefined) {
+function mesa(palancaDeLaRecogida, semillas, alPunto = false, conVref = undefined, gasDeAntes = false) {
   let largas = 0;
   let duras = 0;
   let laMasLarga = 0;
   let laMasDura = 0;
   for (let k = 1; k <= semillas; k++) {
-    const r = vuelaLaFinal(palancaDeLaRecogida, k, 10.3, 1, alPunto, conVref);
+    const r = vuelaLaFinal(palancaDeLaRecogida, k, 10.3, 1, alPunto, conVref, gasDeAntes);
     if (r.metros > 600) largas++;
     if (r.caida > 2) duras++;
     laMasLarga = Math.max(laMasLarga, r.metros);
@@ -211,7 +234,9 @@ describe("la recogida de un reactor", () => {
      * dos grados por debajo del horizonte (31 de 60). Con la actitud de su
      * manual recoge desde un grado por encima y la de antes falla menos, dos
      * de cada diez (13 de 60: 4 largas y 9 duras); la de ahora, 5 (enmienda
-     * H55 del ADR 0027). La prueba sigue viendo el fallo y la mejora.
+     * H55 del ADR 0027). Con las alas sostenidas y el gas fuera si flota
+     * (H55c), la de antes 26 (7 largas y 19 duras) y la de ahora 10 (1 larga
+     * y 9 duras). La prueba sigue viendo el fallo y la mejora.
      */
     expect(antes.largas + antes.duras).toBeGreaterThan(10);
     // Con el tamaño, menos de la mitad.
@@ -276,25 +301,68 @@ describe("la recogida de un reactor va a la pista en su punto", () => {
     const conPunto = mesa(palancaDelReactorEnLaRecogida, 60, true, deH53);
     expect(sinPunto.largas).toBeGreaterThan(0);
     expect(conPunto.largas).toBeLessThan(sinPunto.largas);
-    // Medido: de 2 largas a ninguna, la más larga de 750 a 560 m; las duras, 8 y 7.
+    // Medido, con las alas sostenidas y el gas de H55c: de 5 largas a ninguna, la
+    // más larga de 733 a 572 m; las duras, 3 y 2.
     expect(conPunto.laMasLarga).toBeLessThan(sinPunto.laMasLarga);
     expect(conPunto.laMasLarga).toBeLessThan(650);
     expect(conPunto.duras).toBeLessThanOrEqual(sinPunto.duras + 2);
     /*
-     * Y la regla no pone ninguna más dura que las que ya había: con la actitud
-     * de su manual (enmienda H55 del ADR 0027) la más dura de estas sesenta, a
-     * 146, es la misma final con la regla y sin ella, 3,22 m/s.
+     * Y la regla no pone ninguna más dura que las que ya había: la más dura de
+     * estas sesenta, a 146, es la misma final con la regla y sin ella, 2,52
+     * m/s con las alas sostenidas (3,22 con el alerón suelto, enmienda H55
+     * del ADR 0027).
      */
     expect(conPunto.laMasDura).toBeLessThanOrEqual(sinPunto.laMasDura + 1e-9);
     /*
      * **Y a la Vref del juego, ninguna que la norma llame dura**: los diez pies
      * por segundo de una toma dura de transporte. Se miraba a 146, la de las
      * tandas que flotaban, cuando era la del juego; desde H54 la del juego es
-     * 142, y es donde vuela la regla. Ahí la más dura es de 2,44 m/s, y
-     * ninguna pasa de los 600 m.
+     * 142, y es donde vuela la regla. Ahí la más dura es de 2,94 m/s.
+     *
+     * **Y lo que flota con energía de sobra, se posa por el gas** (H55c). Con
+     * el alerón suelto, ninguna de estas sesenta pasaba de los 600 m; con las
+     * alas sostenidas, como las lleva el banco, y el gas de la final hasta los
+     * treinta pies aunque flote, dos (814 y 608 m). La de 814 (semilla 13)
+     * empezaba a recoger a 12,2 m, una racha la llevaba de 150 a 157 nudos,
+     * dejaba de bajar y flotaba medio kilómetro con el gas puesto: con el gas
+     * de ahora toca a 529 m y 2,04 m/s. **La de 608 (semilla 56) se queda**: es
+     * otra cosa, un avión que se sostiene a diez metros perdiendo velocidad
+     * —toca a 133 nudos, por debajo de la Vref menos cinco— y no flota con
+     * energía de sobra, así que el gas no se le quita: quitárselo en un globo
+     * que ya va despacio es lo que hizo tocar a 9,25 m/s a un JAZ 110 en la mesa
+     * (ver `flotaElReactor`). Por eso aquí se pide como mucho una, y ninguna
+     * pasada de los 650 m, donde antes se pedía ninguna con el alerón suelto.
      */
     const delJuego = mesa(palancaDelReactorEnLaRecogida, 60, true);
     expect(delJuego.laMasDura).toBeLessThan(DURO_DE_TRANSPORTE);
-    expect(delJuego.largas).toBe(0);
+    expect(delJuego.largas).toBeLessThanOrEqual(1);
+    expect(delJuego.laMasLarga).toBeLessThan(650);
+    const conElGasDeAntes = mesa(palancaDelReactorEnLaRecogida, 60, true, undefined, true);
+    expect(conElGasDeAntes.laMasLarga).toBeGreaterThan(650);
+    expect(delJuego.largas).toBeLessThan(conElGasDeAntes.largas);
+    // Medido: las duras, 7 con el gas de antes y 8 con el de ahora; la peor, igual.
+    expect(delJuego.duras).toBeLessThanOrEqual(conElGasDeAntes.duras + 2);
+    expect(delJuego.laMasDura).toBeLessThanOrEqual(conElGasDeAntes.laMasDura + 1e-9);
+  });
+
+  it("y el gas del reactor: el de la senda hasta los treinta pies, y fuera desde que flota", () => {
+    const pies30 = 30 * 0.3048;
+    expect(gasDelReactorEnLaRecogida({ gas: 0.3, ruedas: pies30 + 1, floto: false })).toBe(0.3);
+    expect(gasDelReactorEnLaRecogida({ gas: 0.3, ruedas: pies30 - 0.1, floto: false })).toBe(0);
+    expect(gasDelReactorEnLaRecogida({ gas: 0.3, ruedas: pies30 + 5, floto: true })).toBe(0);
+    // Flotar es bajar menos de la mitad de lo pedido con velocidad de sobra:
+    // un metro por segundo menos que la senda, no; un globo que ya va más
+    // despacio que al empezar a recoger, tampoco.
+    const v = { verdadera: 80, alEmpezar: 78 };
+    expect(flotaElReactor({ ...v, vertical: -2.7, pide: -3.7 })).toBe(false);
+    expect(flotaElReactor({ ...v, vertical: -1.5, pide: -3.7 })).toBe(true);
+    expect(flotaElReactor({ ...v, vertical: 0.2, pide: -0.8 })).toBe(true);
+    expect(flotaElReactor({ vertical: 1, pide: -3, verdadera: 74, alEmpezar: 78 })).toBe(false);
+    // Y la página los recibe como texto: no tocan nada de fuera.
+    const gasEnLaPagina = new Function(`${gasDelReactorEnLaRecogida.toString()}\nreturn gasDelReactorEnLaRecogida;`)();
+    const flotaEnLaPagina = new Function(`${flotaElReactor.toString()}\nreturn flotaElReactor;`)();
+    expect(gasEnLaPagina({ gas: 0.3, ruedas: 20, floto: false })).toBe(0.3);
+    expect(flotaEnLaPagina({ ...v, vertical: -1.5, pide: -3.7 })).toBe(true);
   });
 });
+
