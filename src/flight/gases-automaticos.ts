@@ -99,6 +99,28 @@ export type ModoDeGases = "SPD" | "THR" | "IDLE";
 export const GAS_DE_SUBIDA = 0.92;
 
 /**
+ * **El gas con el que se sube, el de su manual**, de 0 a 1 (H57).
+ *
+ * En el reactor, el de subida (`GAS_DE_SUBIDA`). En la hélice, a fondo, que es
+ * lo que dicen sus manuales: el 172R, «Throttle -- FULL OPEN» en la subida en
+ * ruta (Cessna, *Information Manual* del 172R, sección 4, *Enroute Climb*); el
+ * Seneca, a la de mejor subida «with takeoff power on the engines until
+ * adequate terrain clearance is obtained» (Piper, POH del PA-34-220T, VB-1110,
+ * 4.35 *Climb*). Y la que tiene su potencia de subida por debajo de la de
+ * despegue, la suya: ver `AircraftConfig.gasDeSubida`.
+ *
+ * Es el que el automático necesita para sostener la velocidad de subida con
+ * el morro: en `FLCH SPD` el gas no lo toca, y con menos del de subida pide
+ * una velocidad que no puede sostener. En el banco del JAZ 40 (H34e) salía de
+ * 0,40 y de 0,52, y subía a 82–85 nudos con 89 pedidos. Los 1.340 ft/min de
+ * su clase —el Seneca II, en *Plane & Pilot*— los da este modelo a 89 nudos
+ * con 0,97: es subir a fondo.
+ */
+export function gasDeSubida(a: Pick<AircraftConfig, "sound" | "gasDeSubida">): number {
+  return llevaGasesAutomaticos(a) ? GAS_DE_SUBIDA : (a.gasDeSubida ?? 1);
+}
+
+/**
  * **A qué ritmo se sube cambiando de nivel**, m/s: unos dos mil quinientos
  * pies por minuto, y menos si el cambio es pequeño —un millar se sube a mil y
  * pico—. Es lo que hace el modo `THR` de un Boeing: no mete todo el empuje

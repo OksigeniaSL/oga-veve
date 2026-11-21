@@ -1421,6 +1421,11 @@ export interface AircraftConfig {
    */
   velocidadDeCircuito: number;
   /**
+   * **El gas de la subida de su manual**, de 0 a 1, en la hélice que no sube a
+   * fondo. Sin él, a fondo. Ver `gasDeSubida` en `gases-automaticos.ts`.
+   */
+  gasDeSubida?: number;
+  /**
    * Velocidad de decisión, m/s. **V1.**
    *
    * El último instante de la carrera en que todavía queda pista para
@@ -2766,6 +2771,13 @@ export const JAZ_50: AircraftConfig = {
    * más de 1,1 veces su Vref. No se ha leído a qué vuela el circuito su manual.
    */
   velocidadDeCircuito: 90 * 0.514444,
+  /*
+   * **Su potencia de subida, que no es la de despegue** (H57): Viking da
+   * 1.600 ft/min al nivel del mar «at max. climb power», y este modelo, a
+   * fondo, sube 1.830 —ver el empuje, arriba—. Los 1.600 salen con 0,83 de
+   * gas a su velocidad de subida limpia, 94 nudos.
+   */
+  gasDeSubida: 0.83,
   decisionSpeed: VELOCIDADES_DEL_JAZ_50.v1,
   rotationSpeed: VELOCIDADES_DEL_JAZ_50.vr,
   takeoffSafetySpeed: VELOCIDADES_DEL_JAZ_50.v2,
