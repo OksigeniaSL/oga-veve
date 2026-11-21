@@ -324,8 +324,8 @@ describe("y con el modelo del juego, la frustrada desde sesenta metros", () => {
 });
 
 /*
- * **Y los reactores, con la de su FCTM** (H56b): «Push TO/GA switch […]
- * rotate toward 15° pitch attitude», sin cruzar el *stick shaker*. Con la ley
+ * **Y los reactores, con la de su FCTM** (H56b): TO/GA y el morro hacia
+ * quince grados al ritmo de rotar, sin acercarse al avisador. Con la ley
  * de antes —doce grados de golpe, la primera muesca de una vez y el gas de una
  * subida— la palanca saltaba seis décimas y el ala se quedaba a menos de dos
  * grados del avisador; con una racha, el JAZ 90 entraba en él.

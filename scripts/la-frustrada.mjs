@@ -52,15 +52,15 @@
  * banco, con la misma regla para todos (ver `irseConFlaps`).
  *
  * **Y los reactores, con la de su FCTM** (H56b), la misma ley con otras
- * cifras (`LEY_DEL_REACTOR`). El de Boeing: «Push TO/GA switch […] rotate
- * toward 15° pitch attitude», al ritmo de rotar, y luego lo que mande el
- * director; y lo que no se cruza nunca es el *stick shaker*, con dos grados y
- * medio de ala de margen. Así que la actitud de partida y la de techo son
- * quince grados, y la velocidad que no se deja caer es la de la aproximación,
- * la que lleva puesta el MCP: un reactor vuela la final a 1,23 veces su
- * pérdida, no a 1,3, y bajar dos grados de morro por cada m/s que le faltara
- * para la de maniobra de la muesca siguiente lo dejaría sin subir hasta
- * acelerar. **Y llega a los quince sin pasarse**: un avión pesado gira el morro
+ * cifras (`LEY_DEL_REACTOR`). El de Boeing pide TO/GA y llevar el morro
+ * hacia quince grados al ritmo de rotar, y luego lo que mande el director; y
+ * el criterio de aquí es no acercarse a menos de dos grados y medio de ala
+ * del avisador, el *stick shaker*. Así que la actitud de partida y la de
+ * techo son quince grados, y la velocidad que no se deja caer es la de la
+ * aproximación, la que lleva puesta el MCP: un reactor vuela la final a 1,23
+ * veces su pérdida, no a 1,3, y bajar dos grados de morro por cada m/s que
+ * le faltara para la de maniobra de la muesca siguiente lo dejaría sin subir
+ * hasta acelerar. **Y llega a los quince sin pasarse**: un avión pesado gira el morro
  * despacio, y lo que acumula la palanca para seguir la actitud que sube a tres
  * grados por segundo lo pasaba de largo al pararse de golpe —el 747 a 18,9°
  * en la mesa de H56b—; así que la actitud pedida frena los últimos grados
