@@ -94,7 +94,9 @@
  *   pinta en ese momento: dentro de la imagen, por el cristal si se mira por
  *   la ventanilla, sin el ojo metido en una nube y sin nube densa por medio,
  *   contada a pasos con la densidad del dibujo y lo que deja de ella su
- *   desvanecido con la distancia (24-10-2026: ver `paisajeParaBanco`). Con la
+ *   desvanecido con la distancia (24-10-2026: ver `paisajeParaBanco`); y sin
+ *   el propio avión delante —la góndola, el ala, el fuselaje—, con un rayo
+ *   contra su malla tal como se pinta (H59: ver `loTapaElAvion`). Con la
  *   captura de ese momento.
  * - **Que la foto de una historia no sale sin su voz** (punto 287), que dentro
  *   de la nube el meneo se cuenta en el momento (280), que al salir por debajo
@@ -931,7 +933,13 @@ async function elVuelo() {
         n.conLamina = medido.lamina.sitio;
         if (x > c.left && x < c.right && y > c.top && y < c.bottom) laminaPisa.add(`${medido.lamina.sitio} tapa ${n.sitio}`);
       }
-      const ok = enLaImagen && porElCristal && !!v && v.ojoEnNube < 0.35 && nube;
+      /*
+       * Y que no lo tape el propio avión —la góndola, el ala, el fuselaje—:
+       * caer en la imagen, por el cristal y sin nube no bastaba (H59). El mar
+       * de nubes no es un punto: lo que tapa el avión ya lo cuenta su vista.
+       */
+      const sinAvion = n.sitio === "nubes-abajo" || !v?.tapaElAvion;
+      const ok = enLaImagen && porElCristal && !!v && v.ojoEnNube < 0.35 && nube && sinAvion;
       const nombre = `nombrado-${nombrados.length + 1}-${n.sitio.replace(":", "-")}`;
       nombrados.push({ ...n, plano: medido.plano, medido: v, ok, nombre });
       if (FOTOS) await foto(page, nombre);
@@ -2416,11 +2424,11 @@ async function elVuelo() {
     console.log(
       `  ${n.ok ? "·" : "✗"} ${n.sitio} (${n.clave}) a los ${n.desde.toFixed(0)} s: ${n.como} por ${n.lado ?? "—"} · plano ${n.plano} · ` +
         (n.medido
-          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m (${(n.medido.nubeSinDesvanecer ?? 0).toFixed(0)} m sin el desvanecido)${n.medido.nubeEnLaVista != null ? ` · nube densa en ${(n.medido.nubeEnLaVista * 100).toFixed(0)} % de la vista` : ""} · a ${(n.medido.distancia / 1000).toFixed(1)} km`
+          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)}${n.medido.tapaElAvion ? ` · lo tapa ${n.medido.tapaElAvion}` : ""} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m (${(n.medido.nubeSinDesvanecer ?? 0).toFixed(0)} m sin el desvanecido)${n.medido.nubeEnLaVista != null ? ` · nube densa en ${(n.medido.nubeEnLaVista * 100).toFixed(0)} % de la vista` : ""} · a ${(n.medido.distancia / 1000).toFixed(1)} km`
           : "sin punto"),
     );
   comprobar(
-    "lo que se nombra del paisaje está a la vista cuando se nombra: en la imagen, por el cristal y sin nube por medio",
+    "lo que se nombra del paisaje está a la vista cuando se nombra: en la imagen, por el cristal, sin nube por medio y sin el avión delante",
     nombrados.length >= 3 && nombrados.every((n) => n.ok),
     `${nombrados.filter((n) => n.ok).length} de ${nombrados.length}: ${nombrados.map((n) => `${n.sitio}${n.ok ? "" : " ✗"}`).join(", ")}`,
   );

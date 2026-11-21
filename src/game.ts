@@ -34017,6 +34017,7 @@ export class Game {
     readonly nubeEnMedio: number;
     readonly nubeSinDesvanecer: number;
     readonly nubeEnLaVista: number | null;
+    readonly tapaElAvion: string | null;
     readonly distancia: number;
   } | null {
     const punto = this.puntoDeLoNombrado(sitio as SitioDelPaisaje);
@@ -34028,6 +34029,7 @@ export class Game {
     p.project(c);
     const ojo = c.position;
     const d = Math.hypot(punto.x - ojo.x, punto.y - ojo.y, punto.z - ojo.z);
+    const haciaElPunto = new Vector3(punto.x - ojo.x, punto.y - ojo.y, punto.z - ojo.z).normalize();
     // Los metros de nube densa que cruza la recta, hasta donde se pintan las nubes.
     let nube = 0;
     let sinDesvanecer = 0;
@@ -34055,9 +34057,49 @@ export class Game {
       nubeEnMedio: nube,
       nubeSinDesvanecer: sinDesvanecer,
       nubeEnLaVista: sitio === "nubes-abajo" ? this.nubeEnLaVistaParaBanco(p.x, p.y) : null,
+      tapaElAvion: this.loTapaElAvion(ojo, haciaElPunto, d),
       distancia: d,
     };
   }
+
+  /**
+   * **La pieza del propio avión que tapa una recta desde la cámara**, o `null`
+   * si no la tapa ninguna (H59). Lo nombrado podía caer en la imagen, por el
+   * cristal y sin nube, y estar detrás de la góndola del motor: en el banco de
+   * la tercera escena, el mar de nubes caía en (0,01, −0,33), justo encima de
+   * la góndola, y aquello pasaba por visto (H38m).
+   *
+   * Con un rayo contra la malla del avión tal como se pinta y no con la
+   * profundidad de la imagen, que pediría leer la tarjeta: lo escondido no
+   * cuenta —la losa de las ventanillas, mirando desde dentro—, la cara de
+   * atrás tampoco, que three la descarta igual al pintar y al tirar el rayo, y
+   * lo que deja pasar la vista tampoco: la hélice girando, que se ve como un
+   * velo y a través de ella se ve el mundo.
+   */
+  private loTapaElAvion(ojo: Vector3, dir: Vector3, lejos: number): string | null {
+    const g = this.aircraftMesh.group;
+    if (!g.visible || !g.parent) return null;
+    g.updateMatrixWorld();
+    const mallas: Mesh[] = [];
+    g.traverseVisible((o) => {
+      if ((o as Mesh).isMesh) mallas.push(o as Mesh);
+    });
+    const rayo = (this.rayoContraElAvion ??= new Raycaster());
+    rayo.set(ojo, dir);
+    rayo.near = 0;
+    rayo.far = lejos;
+    for (const toque of rayo.intersectObjects(mallas, false)) {
+      const m = (toque.object as Mesh).material;
+      const material = Array.isArray(m) ? m[toque.face?.materialIndex ?? 0] : m;
+      if (!material || !material.visible || (material.transparent && material.opacity < 0.5)) continue;
+      let o: Object3D | null = toque.object;
+      while (o && !o.name && o.parent && o.parent !== g) o = o.parent;
+      return `${o?.name || "avión"} a ${toque.distance.toFixed(1)} m`;
+    }
+    return null;
+  }
+
+  private rayoContraElAvion: Raycaster | null = null;
 
   /**
    * **Cuánto de la vista alrededor de lo mirado es nube densa**, de 0 a 1, o
@@ -34068,7 +34110,9 @@ export class Game {
    * pantalla alrededor de lo mirado, hasta el mar o el terreno, y se cuenta
    * cuántas cruzan cien metros de nube densa, con la misma cuenta y el mismo
    * desvanecido que `nubeEnMedio`: otra regla que la de la escena, que mira lo
-   * que dejan pasar las láminas. Ver `scripts/verificar-inicio-3.mjs`.
+   * que dejan pasar las láminas. Ver `scripts/verificar-inicio-3.mjs`. La
+   * recta que da en el propio avión —la góndola, el ala— cuenta como mirada
+   * que no ve nube: ver `loTapaElAvion` (H59).
    */
   private nubeEnLaVistaParaBanco(cx: number, cy: number): number | null {
     const c = this.camera;
@@ -34087,7 +34131,13 @@ export class Game {
         const dir = new Vector3(nx, ny, 0.5).unproject(c).sub(ojo).normalize();
         const fin = this.dondeLlegaElRayo(ojo, dir);
         if (!fin) continue;
-        const hasta = Math.min(ojo.distanceTo(new Vector3(fin.x, fin.y, fin.z)), radio);
+        const largo = ojo.distanceTo(new Vector3(fin.x, fin.y, fin.z));
+        // La recta que da en el propio avión ve el avión, no la nube (H59).
+        if (this.loTapaElAvion(ojo, dir, largo)) {
+          rayos++;
+          continue;
+        }
+        const hasta = Math.min(largo, radio);
         const hondo = dir.dot(mirada);
         let metros = 0;
         for (let t = paso; t < hasta; t += paso) {
