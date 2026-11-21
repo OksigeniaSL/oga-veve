@@ -155,6 +155,8 @@ function vuelaLaFinal(
       c.elevator = out.elevator;
       palancaMedia =
         palancaMedia === null ? c.elevator : palancaMedia + (c.elevator - palancaMedia) * DT / 2;
+      // Y lo que pica el suelo, sumado y fuera de la media, como el banco (H56).
+      c.elevator = Math.max(-1, Math.min(1, out.elevator + m.palancaDelSuelo()));
       // El gas del banco en la velocidad, proporcional y que acumula.
       const err = aLaQueVa / raiz(s.position.y) - s.airspeed;
       c.throttle = Math.max(0, Math.min(1, c.throttle + (err - (errorAntes ?? err)) * 0.04 + err * 0.01 * DT));
@@ -166,6 +168,7 @@ function vuelaLaFinal(
           altura,
           caida: Math.max(1.2, Math.min(6, Math.max(porElSuelo * SENDA, Math.min(-s.velocity.y, porElSuelo * SENDA * 1.1)))),
           palanca: palancaMedia,
+          picadoDeLaPalanca: 0,
           acumulado: 0,
           velocidad: s.airspeed,
           gas: c.throttle,
@@ -182,6 +185,7 @@ function vuelaLaFinal(
         envergadura: a.wingSpan,
         dt: DT,
         presion: Math.min(1, (vref / raiz(s.position.y) / Math.max(1, s.airspeed)) ** 2),
+        picado: m.palancaDelSuelo(),
         rec,
         // Y dónde va, si se le dice: para ir a la pista en su punto (H53).
         ...(alPunto ? { pasado: along, porElSuelo } : {}),
@@ -243,6 +247,30 @@ describe("la recogida de un reactor", () => {
     expect(ahora.largas + ahora.duras).toBeLessThan((antes.largas + antes.duras) / 2);
     expect(ahora.largas).toBeLessThan(antes.largas);
     expect(ahora.duras).toBeLessThan(antes.duras);
+  });
+
+  it("y sostiene lo que pica el suelo (H56): lo suma entero a la palanca de la senda, y a la sostenida lo de más", () => {
+    const base = () => ({
+      ruedas: 5,
+      vertical: -2,
+      verdadera: 75,
+      ritmoDeCabeceo: 0,
+      carga: 1,
+      porAngulo: 2,
+      envergadura: 59.64,
+      dt: 1 / 60,
+    });
+    const rec = () => ({ altura: 13, caida: 3.5, palanca: 0.1, acumulado: 0, velocidad: 75, picadoDeLaPalanca: 0 });
+    const sin = palancaDelReactorEnLaRecogida({ ...base(), rec: rec() });
+    const con = palancaDelReactorEnLaRecogida({ ...base(), picado: 0.15, rec: rec() });
+    // La palanca de la senda va sin el picado: se suma entero.
+    expect(con - sin).toBeCloseTo(0.15, 9);
+    // Si no se dice qué lleva la palanca, la de ese instante: solo lo de más.
+    const r = { altura: 13, caida: 3.5, palanca: 0.1, acumulado: 0, velocidad: 75 };
+    expect(palancaDelReactorEnLaRecogida({ ...base(), picado: 0.15, rec: r })).toBeCloseTo(sin, 9);
+    // Y sostenida —sube más de lo que pide—, la de antes con lo que pica de más.
+    const sostenida = palancaDelReactorEnLaRecogida({ ...base(), vertical: 1, picado: 0.2, rec: r });
+    expect(sostenida).toBeCloseTo(sin + 0.05, 9);
   });
 
   it("y en aire quieto toca en la zona, recogido", () => {

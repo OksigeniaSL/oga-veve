@@ -458,6 +458,12 @@ export interface FlightModel {
    */
   anguloSinSustentacion?(): number;
   /**
+   * **La palanca que pide el picado del suelo**, `−ΔCm/cmδ`, del último paso:
+   * lo que hay que sumar en el colchón para sostener el morro. Solo lo sabe el
+   * modelo de coeficientes. Ver `momentoDelSuelo` en `efecto-suelo.ts`.
+   */
+  palancaDelSuelo?(): number;
+  /**
    * **Qué palanca da este ritmo de subida**, en el modelo en el que la palanca
    * es cuánto se sube: el sencillo. Ver `mandoParaSubir` en `arcade.ts`.
    */

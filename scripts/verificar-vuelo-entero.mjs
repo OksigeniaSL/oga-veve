@@ -1121,8 +1121,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let senda = null;
   let memoriaDeSenda = null;
   let relojDeSenda = null;
+  /**
+   * Lo que la senda sumó por el picado del suelo en este fotograma (H56): se
+   * quita de la media de la palanca. Ver `palancaMedia`.
+   */
+  let picadoEnLaSenda = 0;
   const volarLaSenda = (mandos) => {
     const s = o.estado();
+    picadoEnLaSenda = 0;
     if (!senda || s.onGround) {
       memoriaDeSenda = null;
       relojDeSenda = null;
@@ -1261,7 +1267,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       dt,
       memoriaDeSenda,
     );
-    mandos.elevator = r.elevator;
+    /*
+     * **Y lo que pica el suelo, sumado** (H56): cerca del suelo la cola empuja
+     * menos y el morro cae, y quien vuela la senda lo sostiene con la mano en
+     * vez de esperar a que el automático lo descubra por el error. Fuera de la
+     * media de la palanca (`palancaMedia`), que es la de la senda sin él: la
+     * recogida se lo vuelve a sumar entero. Cero lejos del suelo y en Guyrami.
+     */
+    picadoEnLaSenda = o.palancaDelSuelo?.() ?? 0;
+    mandos.elevator = Math.max(-1, Math.min(1, r.elevator + picadoEnLaSenda));
     if (conLaVelocidad) mandos.throttle = gasDeLaSubida;
   };
   /*
@@ -1482,11 +1496,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * Ver `BIMOTOR_EN_LA_RECOGIDA`.
      */
     const kpQueSeHunde = BIMOTOR_EN_LA_RECOGIDA && falta > 0 ? kp * 2 : kp;
+    /*
+     * **Y lo que pica el suelo, sumado** (H56): en el colchón la cola empuja
+     * menos y el morro cae, y quien sabe que el suelo pica tira más en los
+     * últimos metros. Es la palanca que pide el modelo para sostener el morro
+     * como estaba —`palancaDelSuelo`—, de la misma mano que en
+     * `palancaDelReactorEnLaRecogida`: entero si la recogida parte de la media
+     * de la senda, que va sin él, y lo de más desde que empezó si parte de la
+     * palanca de ese instante, que ya lo lleva (`picadoDeLaPalanca`). Cero en
+     * Guyrami, que no tiene ala.
+     */
+    const picado = o.palancaDelSuelo?.() ?? 0;
+    if (recogida.picadoDeLaPalanca === undefined) recogida.picadoDeLaPalanca = picado;
     const calculado = Math.max(
       -0.6,
       Math.min(
         0.8,
         recogida.palanca +
+          (picado - recogida.picadoDeLaPalanca) +
           porLaPresion *
             (porLoQueFrena +
               porDelante +
@@ -1576,7 +1603,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       (falta < -0.6 || aRas) && recogida.ultimoMando !== undefined && alPunto === null;
     recogida.sostiene = sostiene;
     recogida.alPunto = alPunto !== null;
-    mandos.elevator = sostiene ? recogida.ultimoMando : calculado;
+    // Sostener la palanca es sostener el morro: con lo que pica el suelo de
+    // más desde el último fotograma (H56).
+    const sostenida =
+      recogida.ultimoMando !== undefined
+        ? Math.max(-0.6, Math.min(0.8, recogida.ultimoMando + picado - (recogida.picado ?? picado)))
+        : calculado;
+    recogida.picado = picado;
+    mandos.elevator = sostiene ? sostenida : calculado;
     recogida.ultimoMando = mandos.elevator;
     /*
      * **Y un bimotor de hélice no corta el gas al empezar a recoger: lo va
@@ -1784,10 +1818,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const dt =
         relojDeLaMedia === null ? 0 : Math.max(0, Math.min(0.1, ahora - relojDeLaMedia));
       relojDeLaMedia = ahora;
+      // Sin lo que pica el suelo, que la recogida suma entero (H56).
+      const sinElSuelo = mandos.elevator - picadoEnLaSenda;
       palancaMedia =
         palancaMedia === null
-          ? mandos.elevator
-          : palancaMedia + (mandos.elevator - palancaMedia) * Math.min(1, dt / 2);
+          ? sinElSuelo
+          : palancaMedia + (sinElSuelo - palancaMedia) * Math.min(1, dt / 2);
     }
     {
       const e = o.estado();
@@ -7603,6 +7639,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             CON_EL_AUTOMATICO && palancaMedia !== null
               ? palancaMedia
               : (o.controles().elevator ?? c.elevator),
+          // La media va sin el picado del suelo; la de ese instante, con él (H56).
+          ...(CON_EL_AUTOMATICO && palancaMedia !== null ? { picadoDeLaPalanca: 0 } : {}),
           porAngulo:
             !SENCILLO && p && p.cmElevator
               ? Math.abs(p.cmAlpha / p.cmElevator)

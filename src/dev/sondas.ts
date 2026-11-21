@@ -2475,6 +2475,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     anguloSinSustentacion: () => juego.anguloSinSustentacion().anguloSinSustentacion,
     /**
+     * **La palanca que pide el picado del suelo**, `−ΔCm/cmδ`, del último paso
+     * del modelo: la que la recogida del banco suma para sostener el morro en
+     * el colchón (H56). Cero en el modelo sencillo. Ver `palancaDelSuelo`.
+     */
+    palancaDelSuelo: () => juego.flight.palancaDelSuelo?.() ?? 0,
+    /**
      * **La indicada de ahora**, m/s y sin redondear: la que se compara con las V
      * del manual —V1, Vr, V2, Vref—, que son indicadas. Un banco que tira cuando
      * la verdadera pasa la Vr rota antes que el juego en cuanto el campo es alto

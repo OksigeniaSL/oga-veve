@@ -30,7 +30,7 @@
 import { Quaternion, Vector3 } from "three";
 import { actitudEnTierra, alturaSobreLasRuedas, brazoDelTren } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
-import { efectoSuelo, efectoSueloRodando } from "./efecto-suelo";
+import { efectoSuelo, efectoSueloRodando, momentoDelSuelo } from "./efecto-suelo";
 import {
   anguloDePerdida,
   fraccionDeLosFlaps,
@@ -690,6 +690,18 @@ export class CoefficientFlightModel implements FlightModel {
     const ac = this.aircraft;
     return -(ac.aero.cl0 + sustentacionDeLosFlaps(ac, this.flapsDelPaso)) / ac.aero.clAlpha;
   }
+
+  /**
+   * **La palanca que pide el picado del suelo en el último paso**, de −1 a 1:
+   * la que hay que sumar para sostener el morro como estaba, `−ΔCm/cmδ`. Cero
+   * fuera del colchón. Lo pide quien recoge sin ser una persona —el banco—
+   * para tirar lo que tiraría un piloto que sabe que el suelo pica. Ver
+   * `momentoDelSuelo` en `efecto-suelo.ts`.
+   */
+  palancaDelSuelo(): number {
+    return -this.picadoDelSuelo / this.aircraft.aero.cmElevator;
+  }
+  private picadoDelSuelo = 0;
 
   /**
    * **Cómo está cada motor**, en el orden de `motoresA`: de izquierda a
@@ -1477,11 +1489,18 @@ export class CoefficientFlightModel implements FlightModel {
      */
     const timon = clamp(assisted.elevator + controls.trim, -1, 1);
     let timonDeAhora = timon;
+    /*
+     * **Y el picado del suelo**: en el colchón la cola recibe el aire del ala
+     * menos inclinado y empuja menos hacia abajo, y el morro cae. Ver
+     * `momentoDelSuelo` en `flight/efecto-suelo.ts`.
+     */
+    this.picadoDelSuelo = momentoDelSuelo(ac, suelo, assisted.flaps, s.alpha);
     const cmMoment =
       a.cm0 +
       a.cmAlpha * anguloQueEstabiliza(s.alpha, perdidaDelAla) +
       a.cmQ * qHat +
-      a.cmElevator * timon;
+      a.cmElevator * timon +
+      this.picadoDelSuelo;
     const cnMoment =
       a.cnBeta * s.beta +
       a.cnR * rHat +
