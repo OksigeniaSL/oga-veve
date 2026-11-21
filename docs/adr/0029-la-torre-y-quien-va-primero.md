@@ -2163,3 +2163,22 @@ está: no tiene toma, y sin ella no se pide.
 **Vitest entero**, una vez y con el código de esta enmienda ya juntado con
 main: 568 de 568 ficheros, 11.291 pruebas en verde, 31 saltadas y una
 pendiente, ninguna en rojo, en 1.329 s con dos hilos.
+
+### Lo que queda
+
+- **Grabar «regreso por pista»** con las dos voces de torre:
+  `torre.solo.regresoPorPista` (`torre`) y
+  `torre.canario.solo.regresoPorPista` (`torre-canarias`), y sus recetas
+  `torre.regreso` y `torre.canario.regreso`, con sus `.L`, `.R` y `.C`. Al
+  grabarlas, `torre.regreso` sale de `ESPERAN_SU_TOMA`; la prueba lo recuerda.
+- **Un giro de golpe se salta la verde**: si el morro pasa de treinta grados
+  a alineado en menos de la histéresis de las fases (0,5 s), la fase va del
+  back-taxi a «despegando» sin «alineando», y la verde no llega. Pasa igual
+  al acabar el lazo dibujado; a veinte grados por segundo no pasa. No se ha
+  tocado.
+- **En inglés, la lámpara y la radio dicen lo mismo**: «backtrack runway» en
+  la caja y en la voz, como ya pasa con «cleared for take-off».
+- **«Report lined up»**, del CAP 413, sigue sin decirse.
+- **La ventana estrecha de pie sin dedo** (400 × 780): la barra del título
+  queda debajo de los botones redondos de arriba, con la verde igual que con
+  los destellos; no es de esta enmienda y no se ha tocado.
