@@ -1063,6 +1063,52 @@ lo que pone la ruta, no el nivel. La decisión que faltaba la tomó Enrique:
   887 s y nube densa en el 84 % de la vista. El vitest entero, 564 ficheros y
   11.234 pruebas en verde.
 
+#### Nota H59 (21-11-2026): lo que tapa el propio avión
+
+- **El banco no miraba el avión.** Lo nombrado tenía que caer en la imagen,
+  por el cristal y sin nube por medio, pero nada miraba si lo tapaba el
+  propio avión. En la H38m el mar de nubes caía en (0,01, −0,33), detrás de
+  la góndola del motor, y pasó porque la ventanilla estaba llena de nube.
+- **Ahora lo mira**, con un rayo de la cámara a lo nombrado contra la malla
+  del avión tal como se pinta (`loTapaElAvion` en `game.ts`): solo lo que
+  está a la vista —la losa de las ventanillas, escondida mirando desde
+  dentro, no cuenta—, sin la cara de atrás, que three descarta igual al
+  pintar y al tirar el rayo, y sin lo que deja ver a través, que es la hélice
+  girando. Es más barato que leer la profundidad de la imagen, que pediría
+  leer la tarjeta, y mide lo mismo: lo que se pinta. En las veinticinco
+  rectas del mar de nubes, la que da en el avión cuenta como mirada que no ve
+  nube. El banco dice además qué pieza tapa y a cuántos metros.
+- **Volado con la tarjeta de verdad** (Iris Xe), una pasada sin la ficha del
+  hangar: **124 de 125**. De los nueve sitios nombrados, el rayo no da en
+  nada en siete —la tierra desde el asiento, el Teide dos veces, Garajonay,
+  la isla y la costa desde fuera y la ladera de Mazo asomada— y da en
+  `motor_4`, a 3,9 m, en los dos que se miran con la cara contra el cristal y
+  hacia abajo: el mar de nubes a los 883 s y el mar a los 1.607 s. El mar de
+  nubes sigue pasando: con las rectas que dan en el motor contadas como sin
+  nube, nube densa en el 48 % de la vista. **El mar cae.**
+- **Lo que es.** No es la escena, que nombre sin ver: en la captura, el mar
+  llena la mitad de arriba de la ventanilla, por encima de la góndola. Ni el
+  plano: la toma de Ara contra el cristal mirando abajo es la del motor y el
+  mar (ver la cabecera del banco), y desde la ventanilla de encima del ala,
+  mirando abajo, la góndola está ahí. Lo que falla es medir **lo de debajo
+  por un punto**: el sitio es adonde llegan los ojos, y con esa pose llegan a
+  la góndola. Es lo que la H38m vio con el mar de nubes —no es lo que cruza
+  una recta, es lo que llena la vista—, y el arreglo es el mismo: medir el
+  mar y la tierra de debajo con las veinticinco rectas, y la que da en el
+  avión, como mirada que no los ve.
+- **Sin hacer.** Ese arreglo no ha cabido en esta tanda: con el vuelo del
+  banco, el vitest entero y el banco del remolque dentro del tope, no quedaba
+  otro vuelo para comprobarlo, y un cambio de banco sin volar no se junta.
+  Hasta entonces el banco da 124 de 125, con el mar de los 1.607 s detrás de
+  `motor_4`, y es lo que se espera.
+- **El vitest entero**, una vez y con el código terminado: 570 de 571
+  ficheros y 11.425 pruebas en verde, 31 saltadas y una pendiente. La que cae
+  es de `la-frustrada.test.mjs`, «TO/GA y quince grados sin tirón»: el salto
+  de antes del JAZ 120 da 0,479 y pide más de 0,5. No es de esto —esta nota
+  no toca nada del modelo de vuelo ni del automático—, sino de la base sobre
+  la que se ha hecho, b97b4dcd, con el automático que engancha sin salto
+  (H57b).
+
 ## La cuarta escena: el vuelo largo de Ara a casa
 
 Fecha: 2026-11-01

@@ -942,7 +942,66 @@ Cualquiera de esas cosas que falle, cae. Lo mira `empuja-con-quien-juega-en-su-p
   desde el 24 (`verificar-despegue.mjs tenerife-norte guyrami "" jaz-90`). El candado del navegador lo tuvieron otros
   bancos hasta el final del tope de esta tanda.
 
+## Enmienda (21-11-2026, H59): el tejado del 24 es el pasillo de las pasarelas, y el avión no lo mira
+
+La H51 dejó abierto si el 24 de Los Rodeos se ocupa mirando al tejado alargado que sale del extremo oeste de la
+terminal. Se ha mirado en tres fuentes.
+
+### Lo que dicen
+
+- **El AIP de España**, AD 2-GCXO PDC 1.1 (plano de estacionamiento y atraque, WEF 29-OCT-26, AIRAC AMDT 10/26) y PDC
+  1.2 (características de los puestos, WEF 06-AUG-26), de aip.enaire.es: el 24 está en 28°29'13.9"N 16°20'52.29"W,
+  admite hasta un B744, es incompatible con el 23 y el 25 —un puesto ancho que se parte en dos estrechos—, sale en
+  retroceso y **tiene pasarela**, la observación (2), como el 22, el 23 y el 25. En el plano, la pasarela de esos tres
+  sale en diagonal de la esquina oeste de la terminal y acaba junto al 24 y el 25, con sus cabezas dibujadas; la línea
+  de entrada del 24 llega del suroeste.
+- **La ortofoto PNOA** de máxima actualidad del IGN (WMS `OI.OrthoimageCoverage`, CC BY 4.0, scne.es): del extremo
+  oeste de la terminal sale un pasillo cubierto y elevado, de unos sesenta metros, hacia el oeste-suroeste; en su punta,
+  una rotonda de la que salen dos pasarelas móviles, una hacia el sur, recogida a unos once metros al noroeste del punto
+  del 24, y otra hacia el suroeste, junto al 25. Los números pintados en la foto son de antes de la renumeración, y las
+  rayas no se leen bien.
+- **OpenStreetMap** (API 0.6, el 21-11-2026): el tejado es la vía 1243723094, `building=roof` y `layer=1`, y a lo largo
+  de él van cuatro tramos `bridge=yes`, `layer=1` (1243723096, 1425729449, 1425729451 y 1425729450): un pasillo en alto.
+  El 24 tiene su nodo (11560035671), a dos metros del punto del AIP, y su **línea de entrada** (la vía 1425730831), que
+  llega del suroeste y cuyo último tramo, hasta la parada y un poco más, va a 61°. Medido sobre el plano del AIP, la
+  línea del 24 va a unos 60°.
+
+### Lo que es
+
+No es un dique de puertas, ni una marquesina: es **el pasillo fijo de las dos pasarelas** que sirven el 23, el 24 y el
+25. Y el avión no lo mira. Entra por su raya pintada a 61°, con el morro hacia el extremo oeste de la terminal, cuya
+pared más cercana queda a 53,6°, y el pasillo le queda a la izquierda, con la rotonda a unos 38 m de la rueda de morro y
+70° del morro: la pasarela móvil sale de la rotonda hasta la puerta de delante. Así se llega a un avión que no mira al
+edificio del que sale su pasarela.
+
+**Decisión: `edificiosDePasarela` se queda como está**, con las terminales solas. Con el tejado dentro, la pared más
+cercana del 24 sería el pasillo, a 34 m y al 353°, y el avión se pondría mirándolo, setenta grados fuera de su raya. El
+24 del juego está donde el de verdad (a 2,1 m del punto del AIP), es de contacto como el de verdad y mira a la terminal
+como el de verdad.
+
+### Lo que no cuadra, y se queda sin tocar
+
+**El rumbo, por quince grados.** El juego pone el JAZ 90 a 76° —la raya de su ruta hasta la Z, que sale hacia el oeste,
+se aparta 22° de la pared y gana—, y la raya pintada va a 61°. El juego no tiene las líneas de entrada: `puestosDeOsm`
+las lee para no contar dos veces un puesto y quedarse con su punta, y las tira. Ponerlas en la ficha y que
+`rumboEnElPuesto` prefiera la pintada a la de la ruta mueve el rumbo y el empuje de todos los puestos que la tengan, en
+cada campo, y pide su banco del remolque y el del tráfico; no cabía en esta tanda. Queda en «Lo que queda».
+
+Y en la captura del puesto se ve otra cosa que no cuadra: el pasillo se pinta como un bloque que llega al suelo, y es un
+pasillo en alto (`layer=1`), sobre pilares. Tampoco se ha tocado.
+
+### Lo medido
+
+- **El remolque de quien juega**, por la 12 y con la tarjeta Intel, en los dos peldaños: **todo en orden**, lo mismo que
+  en la H51: el morro a 56,3 m de la terminal y −22°, de contacto (y, entre paréntesis, 21,4 m y −67° contra el
+  tejado), 99 de 99 m empujado y giro de 125°. En la captura del puesto, el pasillo queda a la izquierda del avión y la
+  terminal delante, como en el puesto de verdad.
+
 ## Lo que queda
+
+**El rumbo del puesto por su raya pintada.** En Los Rodeos, el 24 va a 61° de verdad y a 76° en el juego: ver la
+enmienda H59. Las líneas de entrada están en OpenStreetMap (`aeroway=parking_position` como vía) y `puestosDeOsm` ya las
+lee; falta guardarlas en la ficha y que el puesto se ocupe en ellas.
 
 El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando
 por su calle: ver «El empuje hasta la calle».
