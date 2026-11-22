@@ -347,15 +347,41 @@ export function palancaDelReactorEnLaRecogida(p) {
    * Sostener la palanca es sostener el morro: lo que pica el suelo de más
    * desde el último fotograma se le suma también a la sostenida (H56).
    */
+  const picadoAntes = rec.picado ?? picado;
   const sostenida =
     rec.ultimo !== undefined
-      ? Math.max(-0.6, Math.min(0.8, rec.ultimo + picado - (rec.picado ?? picado)))
+      ? Math.max(-0.6, Math.min(0.8, rec.ultimo + picado - picadoAntes))
       : undefined;
   rec.picado = picado;
-  const palanca =
-    (falta < -0.6 || aRas) && sostenida !== undefined && alPunto === null
-      ? sostenida
-      : conElMorro;
+  const sostiene = (falta < -0.6 || aRas) && sostenida !== undefined && alPunto === null;
+  /*
+   * **Y lo que se sostiene es la actitud, no la palanca** (H64): «Hold
+   * sufficient back pressure on the control column to keep the pitch attitude
+   * constant» (FCTM 777/787, p. 6.10). La palanca de ese instante puede ser la
+   * de una corrección a medias: en Tukã, el 747 que se había nivelado a trece
+   * metros empezó a recoger con −0,29, la del automático bajando el morro tras
+   * el globo, y sostenerla dos segundos le bajó el morro de 2,7° a −0,9° y lo
+   * tiró al suelo a 3,36 m/s. Así que, mientras se sostiene, el morro no baja
+   * del que llevaba al empezar a sostener. La misma cuenta que `recoger` en
+   * `verificar-vuelo-entero.mjs`.
+   */
+  let palanca;
+  if (sostiene) {
+    if (rec.sostenMorro === undefined) rec.sostenMorro = p.cabeceo;
+    rec.sostenBase =
+      rec.sostenBase === undefined
+        ? sostenida
+        : Math.max(-0.6, Math.min(0.8, rec.sostenBase + picado - picadoAntes));
+    const caido =
+      rec.sostenMorro !== undefined && p.cabeceo !== undefined
+        ? Math.max(0, rec.sostenMorro - p.cabeceo)
+        : 0;
+    palanca = Math.min(0.8, rec.sostenBase + k * caido);
+  } else {
+    rec.sostenMorro = undefined;
+    rec.sostenBase = undefined;
+    palanca = conElMorro;
+  }
   rec.ultimo = palanca;
   return palanca;
 }
