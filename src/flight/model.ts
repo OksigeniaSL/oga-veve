@@ -555,6 +555,13 @@ export interface FlightModel {
   /** Y la que tiene puesta, kg. */
   masaAhora?(): number;
   /**
+   * **Dónde va el centro de gravedad**, m por detrás del de su modelo —el de
+   * la carga de su ficha—: lo pone el juego desde la hoja de carga, y sin
+   * ponerlo vuela con el de siempre. Solo lo mira el modelo de coeficientes:
+   * el sencillo no tiene par de cabeceo que mover. Ver `flight/centrado.ts`.
+   */
+  ponerCentrado?(dx: number): void;
+  /**
    * La ráfaga de este instante, en m/s y en ejes del mundo.
    *
    * Va aparte del viento del parte porque son dos cosas distintas: el viento es

@@ -55,6 +55,7 @@ import {
   AIRCRAFT,
   PYKASU,
   avisosDeABordo,
+  conCentrado,
   conMasa,
   propulsionDe,
   esDeChorro,
@@ -1587,6 +1588,7 @@ import {
   type LlamadaDeCombustible,
 } from "./flight/combustible";
 import { masaSinCombustibleDeLaHoja, pesar, type Hoja } from "./flight/hoja-de-carga";
+import { desplazamientoDelCentrado } from "./flight/centrado";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import {
@@ -4042,10 +4044,23 @@ export class Game {
     const hoja = this.hojaDeEsteAvion();
     if (hoja)
       return (
-        masaSinCombustibleDeLaHoja(this.aircraft, hoja.pasajeros) +
+        masaSinCombustibleDeLaHoja(this.aircraft, hoja.pasajeros, hoja.reparto) +
         Math.max(0, Number.isFinite(this.combustible) ? this.combustible : 0)
       );
     return masaConCombustible(this.aircraft, this.combustible);
+  }
+
+  /**
+   * **Cuánto se ha ido el centro de gravedad del de su modelo**, m hacia la
+   * cola, con la hoja de este avión y el combustible de ahora. Sin hoja —la
+   * carga de su ficha— o sin hoja de centrado en su manual, cero: vuela como
+   * siempre. Ver `flight/centrado.ts`.
+   */
+  centradoDeAhora(): number {
+    const hoja = this.hojaDeEsteAvion();
+    if (!hoja) return 0;
+    const combustible = Math.max(0, Number.isFinite(this.combustible) ? this.combustible : 0);
+    return desplazamientoDelCentrado(this.aircraft, hoja.pasajeros, combustible, hoja.reparto);
   }
 
   /** La hoja de carga del hangar. Ver `GameOptions.hojaDeCarga`. */
@@ -4069,11 +4084,18 @@ export class Game {
    */
   avionConPeso(): AircraftConfig {
     const masa = this.masaDeAhora();
+    const centrado = this.centradoDeAhora();
     const guardado = this.conPesoGuardado;
-    if (guardado && guardado.ficha === this.aircraft && Math.abs(guardado.masa - masa) < 1)
+    if (
+      guardado &&
+      guardado.ficha === this.aircraft &&
+      Math.abs(guardado.masa - masa) < 1 &&
+      Math.abs(guardado.centrado - centrado) < 1e-3
+    )
       return guardado.avion;
-    const avion = conMasa(this.aircraft, masa);
-    this.conPesoGuardado = { ficha: this.aircraft, masa, avion };
+    // Y con su centrado, que es lo que sigue la marca del compensador.
+    const avion = conCentrado(conMasa(this.aircraft, masa), centrado);
+    this.conPesoGuardado = { ficha: this.aircraft, masa, centrado, avion };
     return avion;
   }
 
@@ -4081,6 +4103,7 @@ export class Game {
   private conPesoGuardado: {
     readonly ficha: AircraftConfig;
     readonly masa: number;
+    readonly centrado: number;
     readonly avion: AircraftConfig;
   } | null = null;
 
@@ -19160,6 +19183,7 @@ export class Game {
      * primer fotograma, tarde para las dos cosas.
      */
     this.flight.ponerMasa?.(this.masaDeAhora());
+    this.flight.ponerCentrado?.(this.centradoDeAhora());
     /*
      * Los flaps con los que empieza: limpio en un ejercicio, los de aterrizar
      * en la final configurada, y en la de tren fijo, los que haya. Con ellos
@@ -19529,6 +19553,7 @@ export class Game {
     this.ponerElCieloDe(origen, new Date(perfil.horario.salida.getTime() - SE_EMBARCA_ANTES * 1000));
     this.combustible = cargaDelVueloLargo(this.aircraft, perfil);
     this.flight.ponerMasa?.(this.masaDeAhora());
+    this.flight.ponerCentrado?.(this.centradoDeAhora());
     const campo = this.laCasa;
     const camino = caminoDeLaSalida(origen, finalDeLaPista(campo), campo.pista.length, perfil);
     this.navegacion.poner(rutaDe(camino, PETTIROSSI_DE_LA_RUTA.elevacion), NIVELES_DE_CRUCERO[0], this.aircraft);
@@ -19769,6 +19794,7 @@ export class Game {
     this.tripulacionDeLinea?.ponerEnCrucero(e.velocidad);
     this.combustible = e.combustible;
     this.flight.ponerMasa?.(this.masaDeAhora());
+    this.flight.ponerCentrado?.(this.centradoDeAhora());
     this.cabinaDelAvion.reiniciar(e.altitud, false, this.aircraft);
     this.cabinaPorPoner = false;
     this.cabinaDe = this.aircraft;
@@ -24271,6 +24297,7 @@ export class Game {
      * vuelo largo sale más pesado y aterriza más ligero. Ver `ponerMasa`.
      */
     this.flight.ponerMasa?.(this.masaDeAhora());
+    this.flight.ponerCentrado?.(this.centradoDeAhora());
 
     /*
      * El aviso de reserva, una vez. Ámbar y en voz de aviso —nunca de
@@ -40662,6 +40689,7 @@ export class Game {
     // Nace con lo que pesa el avión ahora, no con la ficha: cambiar de peldaño
     // en el aire no le quita el combustible. Ver `ponerMasa`.
     if (this.combustible > 0) modelo.ponerMasa?.(this.masaDeAhora());
+    if (modelo instanceof CoefficientFlightModel) modelo.ponerCentrado(this.centradoDeAhora());
     /*
      * Y el timón de este avión, para el pie de tecla en la carrera: solo en el
      * modelo que tiene timón de aire. El sencillo gira con las ruedas, igual

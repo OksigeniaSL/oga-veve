@@ -689,6 +689,26 @@ export function conMasa(a: AircraftConfig, masa: number): AircraftConfig {
 }
 
 /**
+ * **Lo que se ha ido el centro de gravedad del de su modelo**, m, positivo
+ * hacia la cola; cero con la carga de su ficha. Ver `flight/centrado.ts`.
+ */
+export function centradoDe(a: { readonly centradoDeAhora?: number }): number {
+  return a.centradoDeAhora ?? 0;
+}
+
+/**
+ * **Este avión con el centro de gravedad `dx` metros por detrás del de su
+ * modelo.** Como `conMasa`: una copia para las cuentas de física, y sin
+ * desplazamiento —la carga de su ficha— la misma ficha que entra, para que
+ * con la carga de siempre nada cambie ni por una coma flotante.
+ */
+export function conCentrado(a: AircraftConfig, dx: number): AircraftConfig {
+  const nada = !Number.isFinite(dx) || Math.abs(dx) < 1e-6;
+  if (nada && a.centradoDeAhora === undefined) return a;
+  return { ...a, centradoDeAhora: nada ? undefined : dx };
+}
+
+/**
  * **Lo que frena un motor que se ha parado**, según lo que le quede delante.
  *
  * Un motor parado no es un motor que no está: sigue metido en la corriente y
@@ -850,6 +870,13 @@ export interface AircraftConfig {
    * `resistenciaDelTren`— y los depósitos también.
    */
   readonly masaDeAhora?: number;
+  /**
+   * **Dónde va ahora el centro de gravedad**, m por detrás del centrado para
+   * el que está ajustado su modelo —el de la carga de su ficha—, si no es
+   * ese: positivo hacia la cola. Solo lo llevan las copias que hace
+   * `conCentrado`; se lee con `centradoDe`. Ver `flight/centrado.ts`.
+   */
+  readonly centradoDeAhora?: number;
   /** Superficie alar, m². */
   wingArea: number;
   /** Envergadura, m. */

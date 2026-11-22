@@ -24,7 +24,7 @@
  * centro —`mainWheelsAft` negativo—, así que al bajar la cola el centro baja,
  * y en tres puntos va más cerca del suelo que con la cola arriba.
  */
-import type { AircraftConfig } from "./aircraft";
+import { centradoDe, type AircraftConfig } from "./aircraft";
 
 /**
  * La altura del centro de gravedad sobre el suelo con las ruedas principales
@@ -56,12 +56,18 @@ export function alturaSobreLasRuedas(
  * Es el centro del tren principal, `mainGearAft`, y no el eje de atrás: el
  * peso se reparte por todas sus ruedas. Al levantar el morro, el punto que
  * toca se acerca a la vertical del centro un `gearHeight·sen θ`.
+ *
+ * **Y con el centrado de hoy**, no el de su modelo: con el morro pesado el
+ * centro de gravedad se adelanta y las principales le quedan más lejos, y el
+ * peso que cargan tira del morro hacia abajo con más brazo. Es el par que el
+ * timón tiene que vencer para rotar, y por eso con el centrado muy adelante
+ * puede no haber timón para levantar el morro. Ver `flight/centrado.ts`.
  */
 export function brazoDelTren(
-  ac: Pick<AircraftConfig, "gearHeight" | "mainWheelsAft" | "mainGearAft">,
+  ac: Pick<AircraftConfig, "gearHeight" | "mainWheelsAft" | "mainGearAft" | "centradoDeAhora">,
   cabeceo: number,
 ): number {
-  const d = ac.mainGearAft ?? ac.mainWheelsAft;
+  const d = (ac.mainGearAft ?? ac.mainWheelsAft) - centradoDe(ac);
   return d * Math.cos(cabeceo) - ac.gearHeight * Math.sin(cabeceo);
 }
 
