@@ -4023,6 +4023,25 @@ async function mirarElCentrado() {
       );
       await foto("4-arreglada", !tumbado);
       /*
+       * **Y el amarre** (H38g): con maletas en la hoja sale el toque de
+       * amarrarlas, y al tocarlo la cinta de la red se ve encima de las de la
+       * bodega, sin pisar nada ni quitar de la vista el veredicto.
+       */
+      await page.click("[data-hoja-amarre]");
+      await page.waitForTimeout(400);
+      const h4 = await page.evaluate(medirElCentrado);
+      const atadas = await page.evaluate(() => ({
+        cinta: !!document.querySelector(".hoja__toque--bodega .hoja__maletas--amarradas"),
+        pulsado: document.querySelector("[data-hoja-amarre]")?.getAttribute("aria-pressed") ?? null,
+      }));
+      comprobar(
+        `${tam}: las maletas se amarran con un toque, y la cinta se ve encima`,
+        h4 && atadas.cinta && atadas.pulsado === "true" && !h4.pisan && h4.chicos.length === 0 && h4.fuera.length === 0 && aLaVista(h4),
+        `cinta ${atadas.cinta ? "sí" : "no"} · pulsado ${atadas.pulsado} · ${detalle(h4)}`,
+        "el amarre se ve en el dibujo y se toca con el dedo: es lo que decide si en vuelo la maleta se corre",
+      );
+      await foto("4b-amarradas", !tumbado);
+      /*
        * **Y lo elegido llega al vuelo**: se sale tal cual —uno delante, uno
        * atrás y cuatro maletas en la bodega 2— y se lee el centrado que tiene
        * el modelo de vuelo, que tiene que ser el que pide la hoja.

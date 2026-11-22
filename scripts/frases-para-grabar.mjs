@@ -141,7 +141,8 @@ const HABLADOS = [
     // La tormenta, la autorrotación y las lecciones del helicóptero van al final de la lista: ver
     // `DE_LA_TORMENTA`, `DE_LA_AUTORROTACION` y `DE_LAS_LECCIONES_DEL_ROTOR`. Y lo que
     // «Se apaga el GPS» escribe delante de su frase, que se lee: ver `atenderAlGps`.
-    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo)\.|^ejercicio\.gps\.integOk$/,
+    // Y la carga suelta, que es nueva: ver `DE_LA_CARGA_SUELTA`.
+    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga)\.|^ejercicio\.gps\.integOk$/,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],
@@ -3384,6 +3385,35 @@ for (const [id, para] of DE_LA_CARRERA_SIN_AUTORIZACION) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+
+/*
+ * **Y la carga suelta** (22-11-2026): la maleta sin amarrar que se va al
+ * fondo de la bodega subiendo. La instructora presenta, pide empujar y
+ * compensar, cuenta cómo se sigue y cierra; y si iba amarrada, lo dice. En
+ * calma, como todo ejercicio. Detrás de todo: lo ya grabado no se renumera.
+ * Ver `src/flight/carga-suelta.ts` y el ADR 0033, enmienda H38g.
+ */
+const DE_LA_CARGA_SUELTA = [
+  ["ejercicio.carga.antes", "la carga suelta, antes de empezar: la maleta sin amarrar se va a correr subiendo"],
+  ["ejercicio.carga.suelta", "la carga suelta: la maleta se corrió para atrás, empujar y compensar"],
+  ["ejercicio.carga.despacio", "la carga suelta, con la maleta ya al fondo: suave, con velocidad de sobra y a la pista más cercana"],
+  ["ejercicio.carga.amarrada", "la carga suelta, con las maletas amarradas en la hoja: no se movió nada"],
+  ["ejercicio.carga.bien", "el cierre de la carga suelta, aterrizado"],
+];
+for (const [id, para] of DE_LA_CARGA_SUELTA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
   total += texto.length;
 }
 

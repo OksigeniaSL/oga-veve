@@ -74,7 +74,8 @@ describe("los ejercicios que se ofrecen", () => {
   });
 
   it("en Taguato, V1 y el motor parado en vuelo, pero solo con más de un motor", () => {
-    expect(ejerciciosPara("taguato", PYKASU).map((e) => e.id)).toEqual(["planeo"]);
+    // Y en la avioneta, la carga suelta, que es de su hoja de centrado: ver `carga-suelta.test.ts`.
+    expect(ejerciciosPara("taguato", PYKASU).map((e) => e.id)).toEqual(["planeo", "carga"]);
     for (const a of [JAZ_50, ARASUNU, ARAI, TIJERETA, YVAGA]) {
       const ids = ejerciciosPara("taguato", a).map((e) => e.id);
       expect(ids.slice(0, 4), a.id).toEqual(["planeo", "antes-de-v1", "despues-de-v1", "un-motor"]);

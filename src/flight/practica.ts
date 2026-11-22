@@ -36,6 +36,11 @@
  * juego con `despresurizacion.ts`. Lo demás es lo de cualquier emergencia
  * declarada: la torre aparta a todos, los bomberos esperan junto a la pista y
  * se vuelve a aterrizar.
+ *
+ * **La carga que se suelta** tampoco toca un motor: aquí solo se dice cuándo
+ * se suelta, y lo que se corre lo cuenta `carga-suelta.ts`. Su procedimiento
+ * es volar el avión y aterrizar en el campo más cercano, sin declarar: ni
+ * llamada ni bomberos, que nada se ha roto. Ver el ADR 0033, enmienda H38g.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -223,6 +228,14 @@ export class Practica {
     return this.declarada;
   }
 
+  /**
+   * **Los segundos desde el fallo**, en el reloj del juego: lo que lleva
+   * corrida la carga que se suelta. Cero antes del fallo.
+   */
+  get segundosDesdeElFallo(): number {
+    return this.desdeElFallo;
+  }
+
   /** Cómo acabó, si acabó. */
   get cierre(): Cierre | null {
     return this.comoCerro;
@@ -361,9 +374,10 @@ export class Practica {
     /*
      * Todos parados: la llamada ya la hace el vuelo sin motor. Ver
      * `sin-motor.ts`. Y sin aire en la cabina, el descenso de emergencia: ver
-     * `avisarDeLaCabina` en `game.ts`.
+     * `avisarDeLaCabina` en `game.ts`. La carga suelta no se declara: ver la
+     * cabecera.
      */
-    if (todos) this.declarada = true;
+    if (todos && this.elegida.que !== "carga") this.declarada = true;
     if (!this.bomberos && this.declarada && (l.enFinal || l.enElSuelo)) {
       this.bomberos = true;
       sucesos.push({ que: "bomberos", donde: "pista" });

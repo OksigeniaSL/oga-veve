@@ -855,6 +855,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   gps: "gps-apagado",
   // La subida: lo que se practica es cómo se sube. Ver `pista-corta.ts`.
   "pista-corta": "subida",
+  // La nariz que hay que bajar: con la carga al fondo, la nariz quiere subir. Ver `carga-suelta.ts`.
+  carga: "nariz-abajo",
 };
 
 /**
@@ -1587,8 +1589,9 @@ import {
   seCargaAlCambiarDeDestino,
   type LlamadaDeCombustible,
 } from "./flight/combustible";
-import { masaSinCombustibleDeLaHoja, pesar, type Hoja } from "./flight/hoja-de-carga";
-import { desplazamientoDelCentrado } from "./flight/centrado";
+import { masaSinCombustibleDeLaHoja, pasajerosDeSuFicha, pesar, type Hoja } from "./flight/hoja-de-carga";
+import { centradoDeSuTipo, desplazamientoDelCentrado, repartoQueVale } from "./flight/centrado";
+import { cargaSuelta, corrimientoDeLaCarga, repartoDelEjercicio, TARDA_EN_CORRERSE } from "./flight/carga-suelta";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import {
@@ -4041,7 +4044,7 @@ export class Game {
    * queda en los depósitos. Ver `masaConCombustible`.
    */
   masaDeAhora(): number {
-    const hoja = this.hojaDeEsteAvion();
+    const hoja = this.hojaConLaCarga();
     if (hoja)
       return (
         masaSinCombustibleDeLaHoja(this.aircraft, hoja.pasajeros, hoja.reparto) +
@@ -4057,10 +4060,43 @@ export class Game {
    * siempre. Ver `flight/centrado.ts`.
    */
   centradoDeAhora(): number {
-    const hoja = this.hojaDeEsteAvion();
+    const hoja = this.hojaConLaCarga();
     if (!hoja) return 0;
     const combustible = Math.max(0, Number.isFinite(this.combustible) ? this.combustible : 0);
-    return desplazamientoDelCentrado(this.aircraft, hoja.pasajeros, combustible, hoja.reparto);
+    return (
+      desplazamientoDelCentrado(this.aircraft, hoja.pasajeros, combustible, hoja.reparto) +
+      this.cargaCorrida(hoja)
+    );
+  }
+
+  /**
+   * **La hoja con la que se vuela**: la del hangar, y en el ejercicio de la
+   * carga suelta, con sus maletas si la hoja no llevaba ninguna. Sin hoja, la
+   * gente de su ficha sentada como siempre. Solo para el peso y el centrado:
+   * el combustible sigue saliendo de la hoja del hangar o del plan. Ver
+   * `flight/carga-suelta.ts`.
+   */
+  private hojaConLaCarga(): Hoja | null {
+    const hoja = this.hojaDeEsteAvion();
+    if (this.practica?.averia.que !== "carga") return hoja;
+    const t = centradoDeSuTipo(this.aircraft);
+    if (!t) return hoja;
+    const base: Hoja = hoja ?? { pasajeros: pasajerosDeSuFicha(this.aircraft), llenos: false };
+    return { ...base, reparto: repartoDelEjercicio(t, repartoQueVale(t, base.pasajeros, base.reparto)) };
+  }
+
+  /**
+   * **Lo que se ha ido el centro hacia la cola con la maleta suelta**, m: cero
+   * hasta que se suelta, y desde ahí lo que lleve corrido. Y se queda al
+   * fondo hasta el vuelo siguiente: una maleta no vuelve sola a su sitio.
+   */
+  private cargaCorrida(hoja: Hoja): number {
+    const p = this.practica;
+    const t = centradoDeSuTipo(this.aircraft);
+    if (!p || p.averia.que !== "carga" || p.fase === "armada" || !t || !hoja.reparto) return 0;
+    const combustible = Math.max(0, Number.isFinite(this.combustible) ? this.combustible : 0);
+    const masa = masaSinCombustibleDeLaHoja(this.aircraft, hoja.pasajeros, hoja.reparto) + combustible;
+    return corrimientoDeLaCarga(t, hoja.reparto, masa, p.segundosDesdeElFallo);
   }
 
   /** La hoja de carga del hangar. Ver `GameOptions.hojaDeCarga`. */
@@ -4359,6 +4395,8 @@ export class Game {
     readonly prioridad: boolean;
     readonly mensajes: readonly string[];
     readonly descenso: { readonly segundos: number | null; readonly terminado: boolean } | null;
+    /** El centro de gravedad con el que vuela el modelo, m por detrás del de su ficha: la carga suelta lo mueve. */
+    readonly centrado: number;
   } | null {
     const p = this.practica;
     if (!p) return null;
@@ -4383,6 +4421,7 @@ export class Game {
             terminado: this.descensoDeEmergencia.terminado,
           }
         : null,
+      centrado: this.flight.centradoAhora?.() ?? this.centradoDeAhora(),
     };
   }
 
@@ -25228,6 +25267,12 @@ export class Game {
       dt,
     );
     for (const suceso of sucesos) this.atenderLaPractica(suceso);
+    /*
+     * **Y la maleta que se va corriendo**, en cada paso hasta llegar al fondo:
+     * el modelo vuela con el centro de ahora. Ver `cargaCorrida`.
+     */
+    if (p.averia.que === "carga" && p.fase !== "armada" && p.segundosDesdeElFallo <= TARDA_EN_CORRERSE + 1)
+      this.flight.ponerCentrado?.(this.centradoDeAhora());
   }
 
   private atenderLaPractica(suceso: Suceso): void {
@@ -25236,6 +25281,7 @@ export class Game {
         return this.presentarElEjercicio();
       case "fallo":
         if (suceso.averia === "presion") return this.fallaLaPresion();
+        if (suceso.averia === "carga") return this.seSueltaLaCarga();
         return this.fallaElMotor(suceso.motor, suceso.parar, suceso.enElSuelo);
       case "velocidad":
         return this.pedirLaVelocidadDeUnMotor();
@@ -25261,7 +25307,7 @@ export class Game {
    */
   private sostenerLosMotores(): void {
     const p = this.practica;
-    if (!p || p.fase === "armada" || p.averia.que === "presion") return;
+    if (!p || p.fase === "armada" || p.averia.que === "presion" || p.averia.que === "carga") return;
     if (p.averia.que === "motores") {
       if (p.fase === "fallo") this.input.controls.engineOn = false;
       return;
@@ -25311,6 +25357,38 @@ export class Game {
     });
     if (!sePuede || !this.despresurizar())
       this.apuntarCanto("despresurización: no se pudo disparar");
+  }
+
+  /**
+   * **Se suelta la maleta de la bodega**, que es el ejercicio de la carga
+   * suelta: se va hacia la cola en `TARDA_EN_CORRERSE` segundos, y el modelo
+   * vuela con el centro que se lleva (`cargaCorrida`). Lo que se dice va en
+   * el orden del procedimiento, con calma y una cosa detrás de otra: primero
+   * el avión —la nariz quiere subir, empujá y compensá—, y cuando ya llegó al
+   * fondo, cómo se sigue —suave, con velocidad de sobra, a la pista más
+   * cercana—. Sin ruido ni alarma: el avión de verdad no tiene ninguna para
+   * esto, y lo que se nota es la palanca.
+   *
+   * **Y si todo iba amarrado, no se mueve nada**, y se dice: es la lección
+   * entera, por eso se amarra.
+   */
+  private seSueltaLaCarga(): void {
+    const t = centradoDeSuTipo(this.aircraft);
+    const reparto = this.hojaConLaCarga()?.reparto;
+    if (!t || !reparto || cargaSuelta(t, reparto).kg <= 0) {
+      this.decirDelEjercicio("ejercicio.carga.amarrada", "normal");
+      return;
+    }
+    const dicho = this.avisoCon("ejercicio.carga.suelta", "palabra.narizAbajo");
+    this.hud.senal.mostrar("nariz-abajo", dicho.rotulo, null, {
+      segundos: TARDA_EN_CORRERSE,
+      prioridad: IMPORTANTE,
+    });
+    this.decirDelEjercicio("ejercicio.carga.suelta", "mando");
+    this.agenda.luego(TARDA_EN_CORRERSE + 2, () => {
+      if (this.practica?.fase !== "fallo") return;
+      this.decirDelEjercicio("ejercicio.carga.despacio", "normal");
+    });
   }
 
   /**
@@ -25718,6 +25796,13 @@ export class Game {
    * porque renunciar a tiempo es ganar. A repetir: eso ya lo cuenta el
    * percance, con la frase del ejercicio. Ver `sufrirPercance`.
    */
+  /** Si en el ejercicio de la carga suelta se corrió algo: con todo amarrado, nada. */
+  private cargaSeCorrio(): boolean {
+    const t = centradoDeSuTipo(this.aircraft);
+    const reparto = this.hojaConLaCarga()?.reparto;
+    return !!t && !!reparto && cargaSuelta(t, reparto).kg > 0;
+  }
+
   private cerrarElEjercicio(como: Cierre): void {
     if (como === "otraVez") return;
     const clave =
@@ -25725,6 +25810,8 @@ export class Game {
         ? CIERRE_DE_LA_DESPRESURIZACION
         : this.practica?.ejercicio.id === "autorrotacion" && como === "vuelta"
           ? "ejercicio.autorrotacion.bien"
+          : this.practica?.ejercicio.id === "carga" && como === "vuelta" && this.cargaSeCorrio()
+            ? "ejercicio.carga.bien"
           : como === "seguidoAntesDeV1" && !conV1(this.aircraft)
             ? SEGUIDO_CON_EL_TREN_FUERA
             : this.segunLosMotores(CIERRE_DEL_EJERCICIO[como]);

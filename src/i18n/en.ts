@@ -1335,6 +1335,9 @@ export const EN: Dictionary = {
   "hoja.asiento.ocupado": "Passenger: move them to the other row",
   "hoja.maleta.poner": "Put a bag in baggage area {n}",
   "hoja.maleta.sacar": "Take a bag out of baggage area {n}",
+  "hoja.amarrar": "Tie the bags down with the net",
+  "hoja.amarradas": "Tied down",
+  "hoja.sueltas": "Not tied down",
   "hoja.centro.adelante": "Move someone forward",
   "hoja.centro.atras": "Move someone back",
   "hoja.centro.detras.largo": "That won't fly well: the centre of gravity is too far aft and the nose comes up on its own. Move someone forward or take bags out of the back.",
@@ -1497,6 +1500,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.cangrejo": "Landing in a crab",
   "hangar.ejercicio.ala-baja": "Landing wing-low",
   "hangar.ejercicio.pista-corta": "Short-field takeoff",
+  "hangar.ejercicio.carga": "Loose cargo",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1768,6 +1772,14 @@ export const EN: Dictionary = {
     "That was close to the trees. Next time, right after lift-off, slow and nose high until they're cleared: that's the most height for every metre",
   "ejercicio.pista-corta.cierreParado":
     "Good call! Stopping on the runway when it won't work is a good takeoff too",
+  "ejercicio.carga.antes":
+    "Today we practise loose cargo. The bag in the baggage area isn't tied down, and on the climb it will slide aft. We push the yoke, trim, and fly back to the runway, calmly",
+  "ejercicio.carga.suelta": "The bag slid aft, and the nose wants to rise. Push the yoke forward and trim",
+  "ejercicio.carga.despacio":
+    "Now gently: no steep turns and plenty of speed, well away from the stall. We go back to the nearest runway",
+  "ejercicio.carga.amarrada": "The bag was tied down, and it didn't move. That's why we tie it down",
+  "ejercicio.carga.bien":
+    "Exercise done: with the cargo shifted, yoke forward, gently and down to land. That's why cargo is always tied down",
   "palabra.solta": "Let go!",
   "ejercicio.rumbo.antes": "Follow the river: the sun has just set. Look how the water shines",
   "ejercicio.rumbo.anochece": "It's night now and the river is getting dark. Keep the arrow still on the mark",

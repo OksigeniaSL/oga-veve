@@ -142,8 +142,13 @@ export interface VelocidadesDeDespegue {
    */
   readonly v1: number | null;
   readonly vr: number;
-  /** V2, o la Vyse en el bimotor de pistón. Ver `conUnMotor`. */
-  readonly v2: number;
+  /**
+   * V2, o la Vyse en el bimotor de pistón. Ver `conUnMotor`. `null` en un
+   * monomotor: no tiene un motor de sobra con el que seguir, y su manual no da
+   * ni la una ni la otra. Salía la «línea azul» de un avión sin motor, que es
+   * su velocidad de menor caída: 49 nudos en el 172, pegada a su pérdida.
+   */
+  readonly v2: number | null;
   /** Vmc, o `null` en un monomotor. */
   readonly vmc: number | null;
   /** Hasta dónde podría llegar V1 en esta pista: la parada justa. */
@@ -567,7 +572,7 @@ export function velocidadesDeDespegue(
   return {
     v1: m !== null && v1 < m ? null : v1,
     vr,
-    v2: conUnMotor(a).velocidad,
+    v2: a.motores > 1 ? conUnMotor(a).velocidad : null,
     vmc: m,
     v1Maxima,
   };

@@ -533,6 +533,10 @@ describe("la V2, la de sus flaps de despegue", () => {
     expect(conUnMotor(YVAGA).velocidad).toBeCloseTo(vmc(YVAGA)! * V2_SOBRE_LA_VMC, 6);
   });
 
+  it("el monomotor no tiene V2 ni línea azul: no le queda motor con el que seguir (H38g)", () => {
+    expect(velocidadesDeDespegue(PYKASU, 1000).v2).toBeNull();
+  });
+
   it("la de la tarjeta no depende de la palanca con la que se cuenta la V1", () => {
     for (const a of DE_TRANSPORTE)
       expect(velocidadesDeDespegue(a, 3000, undefined, 1).v2).toBe(

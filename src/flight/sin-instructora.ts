@@ -254,6 +254,12 @@ const LOS_EJERCICIOS = [
   "ejercicio.seguidoConElTrenFuera",
   "ejercicio.bienDespresurizacion",
   "ejercicio.otraVez",
+  // Y la carga suelta: qué va a pasar, empujar y compensar, cómo se sigue y el cierre. Ver `flight/carga-suelta.ts`.
+  "ejercicio.carga.antes",
+  "ejercicio.carga.suelta",
+  "ejercicio.carga.despacio",
+  "ejercicio.carga.amarrada",
+  "ejercicio.carga.bien",
   /*
    * Y la tormenta, entera: es un ejercicio que se elige, y lo que dice —qué
    * es, por qué no se entra, que un rayo no hace nada— es el ejercicio mismo.
