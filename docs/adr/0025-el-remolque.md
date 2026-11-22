@@ -1439,9 +1439,13 @@ avión se aparca con el rumbo de la ruta.
 - **El banco del rodaje** (`npm run rodaje`): **6 de 6**. Guyrami, de 8 m del eje a 0,6 m; Tukã, 1 m; Taguato, 1,6 m;
   Taguato Ruvicha, 10,2 m (sin ayuda, recto); de 18 m, Tukã 4,3 y Taguato 8,8; y Guyrami con el mando suelto llega al
   punto de espera sin pisar fuera del asfalto.
-- **El remolque de quien juega con el JAZ 120 desde el 24** (`OGA_AVION=jaz-120`): **no se voló**. Estaba en la cola
-  detrás de los otros cuatro, y el candado del navegador lo tuvo otro banco hasta el final del tope de esta tanda. Lo
-  del 747 en el 24 está medido en el barrido y en `lineas-de-entrada.test.ts`, no en el navegador.
+- **El remolque de quien juega con el JAZ 120 desde el 24** (`OGA_AVION=jaz-120 OGA_TRAMO=guyrami`), por la 12 y con
+  la tarjeta Intel: **todo en orden**. El morro a 54,0 m de la terminal y −8°, de contacto; −1,00 contra el morro, **98
+  de 98 m empujado, giro de 142° con radio 25,6 m, rumbo al acabar 203°** y −3° en los primeros treinta metros rodando;
+  nada dentro de un edificio y la terminal de 61,9 a 128,5 m. En la captura del empuje el 747 va de culo por la
+  prolongación de su pintada, a 070 en el PFD, y en la del saludo está en la Z, con sus letreros a los lados, mirando
+  al sur-suroeste con la raya por delante y el tractor apartado. Solo el peldaño de Guyrami: el otro no cabía en el
+  tope.
 
 ## Lo que queda
 
