@@ -1447,20 +1447,123 @@ avión se aparca con el rumbo de la ruta.
   al sur-suroeste con la raya por delante y el tractor apartado. Solo el peldaño de Guyrami: el otro no cabía en el
   tope.
 
+## Enmienda (22-11-2026, H60e): los puestos de Barajas, a su parada, y la raya que llega a una esquina
+
+### El caso
+
+Lo que dejó la H60d: el parche que lleva a su parada los puestos de las fichas de antes de #191 cuando otra calle cruza
+su línea de entrada antes de llegar a ellos —el 312, el 380 al 386, el 560 y el 562 de Barajas, a 54–89 m de donde los
+pone el AIP (AD 2-LEMD PDC 2.3, WEF 25-DEC-25, y PDC 2.5, WEF 01-OCT-26)— no se metió porque el 560 empeoraba fila a
+fila. En su sitio de verdad su raya pintada va al oeste, a la fachada que tiene a 53 m, y la pared más cercana es la del
+ala, a 37 m al sur: `rumboDeLaPintada`, que pedía la raya a menos de cincuenta grados de la pared más cercana, la daba por
+ir de lado, y el avión se ponía mirando al ala y salía a lo largo de la fachada. Al 312 y al 562 les pasaba lo mismo.
+
+### Decisión
+
+1. **El parche de la H60d, tal cual** (`scripts/lineas-de-entrada.mjs`, regla de los datos sin nombrar campo ni puesto):
+   mueve 48 puestos de Barajas y uno sin `ref` de Lanzarote, y quita una copia del 175.
+2. **La raya mira al edificio si llega de frente a la pared más cercana o a la pared a la que va** (`paredDeDelante`,
+   en `rumboDeLaPintada`). La pared a la que va es la primera que corta la prolongación de la raya hacia delante, a
+   menos de `ALCANCE_DE_LA_PASARELA` —más allá no hay pasarela que la una al avión—, y de frente es lo de siempre:
+   menos de cincuenta grados de su perpendicular. `rumboEnElPuesto`, con el que aparca el tráfico, usa la misma regla.
+   Es lo de un puesto en una esquina de la terminal: la pasarela sale de la pared que el avión tiene delante, no de la
+   del ala de al lado.
+3. **Las dos paredes, no solo la de delante.** Con solo la de delante se perdían dos puestos que ya aparcaban sobre su
+   raya: el 23 de Los Rodeos, cuya raya va de frente a la fachada que tiene a 57 m y corta antes un chaflán de once
+   metros que le queda a 62°, y el T7 de Barajas, cuya raya pasa rozando la esquina de su pared más cercana, a 41 m, y
+   corta de lado, a 78°, la de detrás. La pared a la que va es el tramo del polígono que corta, y una fachada dibujada
+   tiene chaflanes y quiebros. Con las dos, ningún puesto deja de aceptar su raya.
+
+De los 544 puestos con raya pintada de los nueve campos, la aceptan ahora seis más y ninguno menos: el 312, el 373, el
+376, el 560 y el 562 de Barajas —todos «R» y de contacto en el AIP— y el 1 de Pettirossi. La fachada que tienen delante
+les queda a 29, 31, 37, 53 y 49 m en Barajas, y la pared más cercana, de lado o de espaldas a la raya. El 1 de Pettirossi
+va a un tramo de cinco metros y medio a 73 m, con la pared más cercana a 55° de su raya; no se ha mirado contra el AIP
+de la DINAC.
+
+### El puesto del que se sale en Barajas, contra el AIP
+
+`puesto-de-salida-de-cada-campo.json` cambia en tres claves, todas por la 36 y con pasaje
+(`OGA_REHACER_SALIDAS=1`, después de mirarlas):
+
+| Avión, por la 36 | Antes | Ahora | En el AIP (PDC 2.5, WEF 01-OCT-26) |
+|---|---|---|---|
+| JAZ 90 | el 329 | el **540** | a 0,3 m del publicado; salida «R», APROAR N, de contacto |
+| JAZ 110 | el 560, en mitad de su línea (a 89 m del publicado) | el **578** | a 0,2 m; «R», APROAR N, de contacto |
+| JAZ 120 | el otro 329 de la ficha, que lo tiene dos veces | el **578** | ídem |
+
+Los dos son de las rampas R-22 y R-20, de los de «PRKG 300 a 312, 330 a 394 y 500 a 586» de la observación (1), y
+salen en retroceso; con el JAZ 90 el empuje del 540 es de 126 m y 115° de giro y acaba con el morro al norte, el APROAR
+del AIP, y con el JAZ 110 y el JAZ 120 el del 578 va por su raya pintada, 90 m y 91°. **Por la 18 no cambia nada, y no está bien**: los tres salen del 329, y en
+el AIP (PDC 2.3, WEF 25-DEC-25) el 329 es de la rampa R-12, de salida autónoma («A»), APROAR W, y no está entre los de
+contacto; el punto de la ficha queda a 32 m al norte del publicado. El juego lo da por puesto de contacto porque está a
+menos de lo que alcanza una pasarela de la terminal, que es la única regla que tiene (`esPuestoDeContacto`). Queda en
+«Lo que queda».
+
+### Lo medido
+
+- **El barrido** (`OGA_BARRIDO_DEL_EMPUJE=1`), antes —main en 3fed5100, que en el empuje es el código de la H60d, y su
+  tabla—, con el parche solo —la tabla de la H60d— y con el parche y la regla:
+
+  | | Antes | Con el parche solo | Con los dos |
+  |---|---|---|---|
+  | Empujes | 678 | 904 | 904 |
+  | Sobre la raya y mirando por ella | 589 | 814 | **848** |
+  | Del puesto que elige el plan | 41 de 42 | 42 de 42 | **42 de 42** |
+  | De los 678 de antes, de mal a bien | — | 16 | **33** |
+  | De los 678 de antes, de bien a mal | — | 3 (el 560) | **0** |
+  | Nuevos (puestos que pasan a ser de contacto) | — | 226: 212 bien y 14 no | 226, **todos bien** |
+  | Salen de lado | 84 | 81 | 45 |
+  | Aparcados sobre su raya pintada, de los que la tienen | 480 de 572 | 693 de 798 | 729 de 798 |
+
+  Los 33 que pasan de mal a bien: el 382, el 384 y el 386 con los tres reactores (los de la H60d); el 312 y el 562 con
+  el JAZ 90 y el JAZ 110 por las dos cabeceras y el 312 con el JAZ 120; el 560 con el JAZ 110 por la 36, el del plan de
+  antes; y el 1 de Pettirossi con los tres por las dos. Contra el parche solo, 34 de mal a bien y ninguno al revés: los
+  tres del 560 que el parche estropeaba, y los 14 nuevos que salían mal (el 373, el 376 y el 560 y el 562 con el JAZ
+  120). Siguen mal en Barajas el 306, el 330 y el 370 (13 filas), como antes.
+- **Vitest de lo tocado**, antes del entero: las líneas de entrada (con las tres pruebas nuevas: la terminal en L, la
+  raya de espaldas y los de Barajas y el 23 de Los Rodeos), el remolque, el remolque en cada campo, el empuje con quien
+  juega en su puesto, la salida mirando a la terminal, el tráfico empujado, el tractor, el puesto de salida de cada
+  campo, las salidas de Barajas, del tráfico, a un puesto y sin saltos, los puestos de línea y en el pavimento, parar
+  en el puesto, el aeródromo desplazado y el rodar por el asfalto: 18 ficheros, 339 pruebas en verde y una saltada.
+- **Vitest entero**, una vez, con el código terminado y el barrido dentro: 574 de 574 ficheros, 11.504 pruebas en
+  verde, 30 saltadas y una pendiente, ninguna en rojo, en 1.183 s con dos hilos y los bancos del navegador volando al
+  lado. El barrido de dentro, el mismo: 848 de 904 y 42 de 42.
+- **El remolque de quien juega en Barajas** (`OGA_ESCENARIO=barajas`, que sale por la 36L), con el JAZ 90, la tarjeta
+  Intel y solo el peldaño de Guyrami: **todo en orden**. Desde el 540, de contacto, con el morro a 56,5 m de la
+  terminal; −1,00 contra el morro, **126 de 126 m empujado, giro de 115° con radio 11,5 m, rumbo al acabar 360°** —el
+  APROAR N del AIP— y 14° en los primeros treinta metros rodando; nada dentro de un edificio y la terminal de 62,1 a
+  163,3 m. En la captura del saludo el avión está en la calle mirando al norte, con el tractor apartado, el señalero
+  saludando y la raya verde por delante; en la de cabina, la raya amarilla y la verde por delante del morro a 359.
+- **El remolque de quien juega**, por la 12 y con la tarjeta Intel, en los dos peldaños: **todo en orden**, lo mismo
+  que en la H60d: desde el 24 a 61°, −1,00 contra el morro, 119 de 119 m empujado, giro de 140° con radio 11,5 m, rumbo
+  al acabar 201° y 0° en los primeros treinta metros rodando; nada dentro de un edificio. En la captura del saludo está
+  en la Z mirando al sur-suroeste, con el tractor apartado y la raya por delante.
+- **El remolque de quien juega con el viento del 300** (`OGA_VIENTO=300/10`), con la tarjeta Intel: **todo en orden**
+  en los dos peldaños. Desde el 12, sobre su pintada; 161 de 161 m empujado, giro de 108° con radio 11,5 m, rumbo al
+  acabar 112°, y 11° en Guyrami y 0° en el de cabina en los primeros treinta metros rodando; nada dentro de un edificio.
+  En la captura del saludo está en la calle con la raya por delante y el tractor apartado.
+- **El remolque del tráfico**, con quien juega en el JAZ 90 y la tarjeta Intel: **bien**. EC-PSH en el 17 a 337°, 22 s
+  con el tractor, 36,9 m de culo y nada hacia delante, el tractor a 15,4 m por delante del centro, la calle reservada
+  los 22 s, nada dentro de un edificio y 42,4 m rodados después.
+- **El banco del rodaje** (`npm run rodaje`): **6 de 6**. Guyrami, de 8 m del eje a 0,6 m; Tukã, 1 m; Taguato, 1,6 m;
+  Taguato Ruvicha, 10,1 m (sin ayuda, recto); de 18 m, Tukã 4,3 y Taguato 8,8; y Guyrami con el mando suelto llega al
+  punto de espera sin pisar fuera del asfalto.
+
 ## Lo que queda
 
-**Los puestos de Barajas con una calle por debajo, y la pintada que llega a una esquina de la terminal.** La ficha de
-Barajas pone el 312, el 380 al 386, el 560 y el 562 —y otros cuarenta y uno— en mitad de su línea de entrada, pasada
-otra calle que la cruza; el AIP pone esos siete en la punta de la línea, que es donde el parche de la H60d deja a todos.
-El parche no se ha metido: el 560, en su sitio de verdad, tiene la pared más cercana a noventa grados de su pintada,
-`rumboDeLaPintada` no la acepta y sale de lado, y el 312 y el 562 siguen igual. Falta que el avión sepa aparcarse sobre
-una pintada que llega a una esquina de la terminal, con otra pared al lado más cerca que la de delante, y rehacer el
-puesto de salida de Barajas. Ver la H60d.
+**El 329 de Barajas, del que se sale por la 18.** El plan saca de él a los tres reactores con pasaje, empujados, y en el
+AIP (AD 2-LEMD PDC 2.3, WEF 25-DEC-25) es de la rampa R-12, de salida autónoma («A») y no está entre los de contacto
+(«PRKG 300 a 312, 330 a 394 y 500 a 586»); el punto de la ficha, que lo tiene dos veces, queda a 32 y 34 m del
+publicado. El juego da por puesto de contacto cualquiera que quede a lo que alcanza una pasarela de la terminal
+(`esPuestoDeContacto`), y el 329 cae dentro. Arreglarlo pide saber de cada puesto si es de
+contacto y cómo sale, que el AIP publica y la ficha no trae, y rehacer el puesto de salida por la 18. Ver la H60e.
+Siguen saliendo mal en el barrido, como antes, el 306, el 330 y el 370 de Barajas.
 
 **Los puestos de las fichas de antes de #191**, en La Palma, Lanzarote, Gran Canaria, Pettirossi y Barajas: siguen en
-el centro de su línea de entrada y repetidos con su nodo. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y
-Tenerife Sur, mueve el puesto del que se sale en esos campos y pide su barrido y sus bancos: con los 440 de los cuatro
-campos con respuesta guardada llevados a su parada, el barrido da 27 de 42 del plan (H60d).
+el centro de su línea de entrada y repetidos con su nodo, salvo los que tienen otra calle cruzando su línea, que
+están en su parada desde la H60e. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y Tenerife Sur, mueve el
+puesto del que se sale en esos campos y pide su barrido y sus bancos: con los 440 de los cuatro campos con respuesta
+guardada llevados a su parada, el barrido daba 27 de 42 del plan (H60d, sin la regla de la H60e).
 
 El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando
 por su calle: ver «El empuje hasta la calle».
