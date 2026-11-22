@@ -98,6 +98,35 @@ function tiron(a: AircraftConfig): { pico: number; queda: number } {
   return { pico: pico * grados, queda: (m.state.alpha - alfa0) * grados };
 }
 
+/**
+ * **Una pérdida y su salida**: equilibrado y compensado a 1,5 veces su Vr, al
+ * ralentí, se va tirando poco a poco —tres centésimas de palanca por
+ * segundo— hasta pasar el ángulo de pérdida, se sostiene un segundo, y se
+ * suelta la palanca con gas a fondo. Devuelve la palanca con la que entró y
+ * cuánto tardó el ala en bajar del 70 % de su ángulo de pérdida; `null` si en
+ * veinte segundos no bajó.
+ */
+function perdida(a: AircraftConfig): { palanca: number; sale: number | null } {
+  const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: 0 });
+  m.reset({ position: new Vector3(0, 1500, 0), heading: 0, airspeed: a.rotationSpeed * 1.5, equilibrado: true });
+  const trim = m.timonDeEquilibrio();
+  const angulo = a.aero.alphaStall;
+  let palanca = 0;
+  for (let i = 0; i < 60 * 40 && m.state.alpha <= angulo; i++) {
+    palanca = Math.min(1, palanca + 0.03 / 60);
+    m.step(1 / 60, { ...neutralControls(), throttle: 0, trim, elevator: palanca, tren: 0 });
+  }
+  fly(m, 1, { throttle: 0, trim, elevator: palanca, tren: 0 });
+  let sale: number | null = null;
+  let t = 0;
+  fly(m, 20, { throttle: 1, trim, tren: 0 }, () => {
+    t += 1 / 60;
+    if (m.state.alpha < angulo * 0.7) sale = t;
+    return sale !== null;
+  });
+  return { palanca, sale };
+}
+
 function caso(t: CentradoDeSuTipo, filas: number[], bodegas: number[] = [0, 0]) {
   const reparto = repartoQueVale(t, filas.reduce((s, n) => s + n, 0), { filas, bodegas });
   const cg = centroDeGravedad(t, reparto, COMBUSTIBLE);
@@ -196,6 +225,19 @@ describe("en el 172 cambiarse de asiento se nota", () => {
     // Y en el suelo, a la Vr, levanta el morro hasta empujando la palanca.
     expect(rota(cargado(delante.avion, delante.cg.masa, puntoNeutro(PYKASU) + 0.05), -0.3)).toBe(true);
   });
+
+  it("con la cola pesada se entra en pérdida con menos mano y cuesta más salir", () => {
+    const base = perdida(delante.avion);
+    const enElLimite = perdida(
+      cargado(delante.avion, delante.cg.masa, limitesDelCentrado(T172, delante.cg.masa).detras - delante.cg.brazo),
+    );
+    const pasado = perdida(cargado(delante.avion, delante.cg.masa, puntoNeutro(PYKASU) + 0.05));
+    expect(base.sale).not.toBeNull();
+    expect(enElLimite.palanca).toBeLessThan(base.palanca * 0.6);
+    expect(enElLimite.sale!).toBeGreaterThan(3 * base.sale!);
+    // Pasado el punto neutro, soltando la palanca no sale.
+    expect(pasado.sale).toBeNull();
+  });
 });
 
 describe("en el 747 una persona no se nota", () => {
@@ -226,8 +268,9 @@ describe.runIf(Boolean(import.meta.env.OGA_MEDIR || entorno.OGA_MEDIR))("medir",
       const r = palancaParaRotar(a);
       const c = compensadorDeDespegue(a).marca;
       const t = tiron(a);
+      const p = perdida(a);
       filas.push(
-        `${nombre} | ${extra} | marca ${c.toFixed(3)} | palanca ${Number.isFinite(r) ? r.toFixed(3) : "no rota"} | pico ${t.pico.toFixed(2)}° | queda ${t.queda.toFixed(2)}°`,
+        `${nombre} | ${extra} | marca ${c.toFixed(3)} | palanca ${Number.isFinite(r) ? r.toFixed(3) : "no rota"} | pico ${t.pico.toFixed(2)}° | queda ${t.queda.toFixed(2)}° | pérdida con ${p.palanca.toFixed(2)}, sale en ${p.sale === null ? "no sale" : p.sale.toFixed(2) + " s"}`,
       );
     };
     const pct = (brazo: number) => `${(enLaCuerda(T172, brazo) * 100).toFixed(1)} % MAC`;
