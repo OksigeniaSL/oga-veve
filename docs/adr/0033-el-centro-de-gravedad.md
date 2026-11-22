@@ -769,3 +769,51 @@ Y en la hoja y el hangar, que solo se leen: `hangar.ejercicio.carga`,
 - La tirada del banco con la maleta amarrada y la de los carteles de la
   hoja, por pasar en el navegador: el toque del amarre no se ha mirado
   todavía en pantalla.
+
+## Enmienda H65 (22-11-2026): el amarre, sin tapar el veredicto en el teléfono tumbado
+
+### El caso
+
+La H38f dejó el veredicto a la vista sin rodar en 800×360. La H38g puso el
+toque del amarre debajo de la envolvente y no pasó los carteles: en la
+columna de la envolvente, con sus dos renglones de cifras, el toque —que con
+«Sin amarrar» en dos renglones medía 54 px— hacía la fila de arriba 49 px
+más alta que los mandos (de 112 a 161), y con la cola cargada el veredicto
+volvía debajo de la barra de despegar, a 280–324, con 169 px de rueda. La
+ronda de cierre lo vio: `mirarElCentrado`, 800×360, «veredicto tapado».
+
+### Decisión
+
+En pantallas de 460 px de alto o menos, el bloque del centrado es una
+rejilla de dos columnas y tres filas a mano: el avión cubre las dos
+primeras y, debajo, **las cifras en un renglón**, que son el brazo, lo que
+el avión mide a lo largo; a la derecha, la envolvente (60 px) y **el amarre
+en las dos últimas**, junto a la cola, donde van las bodegas. Cada columna
+mide lo que los mandos, 112 px, y la fila de arriba no crece con el amarre.
+El toque baja a 14 px de letra y menos relleno: «Sin amarrar» cabe en un
+renglón y sigue a 48 de alto. Con filas automáticas la rejilla repartía a
+su manera el alto de lo que abarca dos, y por eso van a mano. Y entre fila y
+fila de la tarjeta, 4 px en vez de 6: el veredicto acababa a dos píxeles de
+la barra. La tableta y el teléfono de pie no cambian.
+
+### Comprobado
+
+`OGA_SOLO=hoja npm run carteles`, 46 de 46:
+
+| Pantalla | Con el amarre de la H38g | Ahora | El veredicto |
+|---|---|---|---|
+| Tableta, 1024×600 | 89 px | 89 px | a la vista |
+| Teléfono tumbado, 915×412 | 100 px | 64 px | a la vista |
+| Teléfono tumbado, 800×360 | 169 px, tapado con la cola cargada | 116 px | a la vista en los cinco pasos |
+| Teléfono de pie, 400×780 | 310 px | 310 px | se lee rodando, como la hoja de siempre |
+
+Ningún botón pisado ni por debajo de 44 px. En la captura de 800×360 con
+las maletas amarradas se ven el avión con la cinta en la bodega 2, «115 cm ·
+99–120 cm» debajo, la envolvente y «Amarradas» junto a la cola, la báscula,
+la pista y el veredicto con su arreglo, todo encima de la barra.
+
+Y `npm run carteles` entero, **1185 de 1185**. La ronda de cierre había dado
+1168 de 1170 con dos en rojo: este y «carta del hangar 400×780 con el dedo:
+se abre», que no llegó a abrir la página en noventa segundos. Esta vez se
+abrió, y sus quince comprobaciones —las que faltaban para 1185— salieron en
+verde: fue la página que no cargó, no la carta.

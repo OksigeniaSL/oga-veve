@@ -27,6 +27,7 @@ import {
   empujeDesdeElPuesto,
   entradaDelPuesto,
   esPuestoDeContacto,
+  rayaDeLado,
   rumboEnElPuesto,
   vector,
   type Empuje,
@@ -664,6 +665,35 @@ export function sueloDelTrafico(
   };
 
   /**
+   * **Cómo aparca el tráfico en su puesto de contacto y cómo lo saca el tractor**: sobre su
+   * raya pintada, siempre, y con el empuje corto. Ver `empujeDesdeElPuesto`.
+   */
+  const empujeDelTrafico = (p0: EnElPlano, raya: readonly EnElPlano[], pasarela: PasarelaDelTrafico) => {
+    const morro = pasarela.morro ?? MORRO_DEL_TRAFICO.reactor;
+    return empujeDesdeElPuesto(p0, edificios, raya, entradaDelPuesto(aero, p0.x, p0.z), pasarela.batalla, (r) => conLaRuedaEn(p0, r, morro), {
+      porLaPlataforma: false,
+      siempreLaPintada: true,
+    });
+  };
+
+  /**
+   * **Si de ese camino se sale empujado con la raya de lado** (H60f, ADR 0025): de un puesto de
+   * contacto, con el avión como lo aparca el tráfico, la raya sale a más de cincuenta grados de
+   * su cola (`rayaDeLado`). Es la regla del plan de quien juega (`saleDeLado` en
+   * `plan-de-vuelo.ts`), y el tráfico no la tenía: en Los Rodeos, desde que el AIP le quitó el
+   * 17, el reactor se iba al 14, cuya raya sale hacia el oeste a lo largo de la fachada; el
+   * tractor no tenía calle por detrás y lo giraba ciento tres grados casi en el sitio, con la
+   * rueda de morro al tope de los setenta, en un empuje de dieciocho metros. Eso no es un
+   * empuje: es lo que el plan ya no hace con quien juega.
+   */
+  const saleDeLado = (raya: readonly EnElPlano[], pasarela: PasarelaDelTrafico): boolean => {
+    const p0 = raya[0];
+    if (!p0 || !enUnPuestoDeContacto(p0, pasarela)) return false;
+    const enElSuyo = empujeDelTrafico(p0, raya, pasarela);
+    return !!enElSuyo?.empuje && rayaDeLado(enElSuyo.rumbo, raya);
+  };
+
+  /**
    * **Y de un puesto de contacto se sale empujado.** El avión está con el morro
    * al edificio; el tractor lo saca de espaldas por la raya del puesto hasta la
    * calle, girándolo —`trayectoriaDelEmpuje`, la misma que para quien juega—, y
@@ -699,12 +729,7 @@ export function sueloDelTrafico(
      * aparcó sale. El tractor lo saca de espaldas por su prolongación hasta la raya del
      * camino, si la encuentra. Ver `empujeDesdeElPuesto`.
      */
-    const morro = pasarela.morro ?? MORRO_DEL_TRAFICO.reactor;
-    const enElSuyo = empujeDesdeElPuesto(p0, edificios, raya, entradaDelPuesto(aero, p0.x, p0.z), pasarela.batalla, (r) => conLaRuedaEn(p0, r, morro), {
-      porLaPlataforma: false,
-      siempreLaPintada: true,
-    });
-    const trayectoria = enElSuyo?.empuje;
+    const trayectoria = empujeDelTrafico(p0, raya, pasarela)?.empuje;
     if (!trayectoria) return s;
     const fin = trayectoria.poses[trayectoria.poses.length - 1]!;
     const adelante = vector(fin.rumbo);
@@ -1077,11 +1102,21 @@ export function sueloDelTrafico(
        * el AIP no deja salir por intersección a nadie. Ningún avión despega
        * con menos pista de la que necesita.
        */
-      /** Si de esa ruta se llega a la doble raya por su calle y sin pisar la pista. */
-      const valeParaSalir = (puntos: readonly Punto[]): boolean => {
-        const h = cortarEnLaRaya(puntos.map(alMundo), ejes, ancho, mitad);
-        return !!h && !pisaLaPista(h.hastaLaRaya, 0, Infinity, ejes, ancho, mitad);
-      };
+      /**
+       * Si de esa ruta se llega a la doble raya por su calle y sin pisar la pista; y, si sale
+       * empujado, sin la raya de lado (`saleDeLado`), salvo que ningún puesto la dé de otra
+       * manera: entonces, como antes, que un avión sin salida no despega.
+       */
+      const valeParaSalir =
+        (deLadoTambien: boolean) =>
+        (puntos: readonly Punto[]): boolean => {
+          const h = cortarEnLaRaya(puntos.map(alMundo), ejes, ancho, mitad);
+          return (
+            !!h &&
+            !pisaLaPista(h.hastaLaRaya, 0, Infinity, ejes, ancho, mitad) &&
+            (deLadoTambien || !pasarela || !saleDeLado(h.hastaLaRaya, pasarela))
+          );
+        };
       /*
        * El radio de giro de este avión, para lo que se come alinearse: el de
        * su batalla si sale de pasarela, como `radioDeGiro` en `flight/cabe.ts`.
@@ -1089,89 +1124,92 @@ export function sueloDelTrafico(
        * cero la cuenta da lo mismo. Ver `pistaDesde`.
        */
       const radio = pasarela ? pasarela.batalla / Math.tan(GIRO_DE_MORRO) : 0;
-      let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
-      let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
-      let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;
-      for (let i = 0; i < deCabecera.length; i++) {
-        /*
-         * **De las primeras bocas desde la cabecera; y si ninguna sirve, de las demás**,
-         * remontando más pista. En El Hierro, por la 34, del grupo del 3 no se llega
-         * a ninguna de las seis primeras sin pisar la pista —la ruta más corta va por
-         * las rayas de rodaje pintadas sobre ella—, y sí a la C y a la D, más arriba,
-         * por la línea de entrada de su grupo: se entra por ahí y se remonta, que es
-         * lo que se hace en un campo sin calle paralela, y lo que publica su AIP, con
-         * salida autónoma de todos sus puestos (AD 2-GCHI PDC 1-2). Sin esto, de esos
-         * puestos no salía nadie, ni del 2A por la 34 ni del 1 por la 16.
-         */
-        if (i >= BOCAS_DE_SALIDA && (deReserva || remonte || remonteEncima)) break;
-        const boca = deCabecera[i]!;
-        const nudo = grafo.nudos[boca.nudo]!;
-        /*
-         * **Y de un puesto del que se llega a la doble raya por la calle**, sin pisar la
-         * pista: se mira al elegir el puesto, no después. Se elegía el más cercano a la
-         * boca y luego se veía si valía; en El Hierro, contigo en el 2, el único puesto
-         * apartado de ti era el 3A, que sale a la pista por encima de ella, y el
-         * turbohélice que esperaba para salir se quedaba sin camino —`despega: 0`— con
-         * siete puestos más a mano. Ver `lejosDe`.
-         */
-        const ruta = rutaConPuesto(
-          nudo,
-          "punto",
-          evitar,
-          undefined,
-          candidatosPara(pasarela, deOtros),
-          deOtros,
-          valeParaSalir,
-        )?.puntos;
-        if (!ruta) continue;
-        /*
-         * Si da su pista se mira ya con la calle por la que se llega, que es la
-         * que decide cuánto se come alinearse: ver `pistaDesde`.
-         */
-        const daSuPista =
-          !llegaAlReves(boca, ruta) && pistaDesde(boca, ruta, radio) >= pistaQueNecesita;
-        if (!daSuPista && remonte) continue;
-        const hecha = cortarEnLaRaya(ruta.map(alMundo), ejes, ancho, mitad);
-        if (!hecha) continue;
-        // Y hasta la raya no pisa la pista: sin permiso no se entra.
-        if (pisaLaPista(hecha.hastaLaRaya, 0, Infinity, ejes, ancho, mitad))
-          continue;
-        const entrada = enElEje(boca.along);
-        // De la raya a la pista, por lo que queda de calle, no en diagonal.
-        const hastaElEje = [...hecha.resto, entrada];
-        const espera = largo(hecha.hastaLaRaya);
-        const raya = hecha.hastaLaRaya[hecha.hastaLaRaya.length - 1]!;
-        const encimaDeTuCalle = deTuCalle.some((e) => dist(raya, e) <= PASA_A_TU_LADO);
-        if (daSuPista) {
-          // Y ya en el eje, unos metros hacia donde se despega: alineado; y
-          // entrando por detrás del umbral, en el umbral.
-          const alineado = enElEje(Math.max(boca.along + 30, -mitad + 5));
-          const camino = [...hecha.hastaLaRaya, ...hastaElEje.slice(1), alineado];
+      const buscar = (deLadoTambien: boolean): SalidaDelPuesto | null => {
+        let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
+        let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
+        let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;
+        for (let i = 0; i < deCabecera.length; i++) {
+          /*
+           * **De las primeras bocas desde la cabecera; y si ninguna sirve, de las demás**,
+           * remontando más pista. En El Hierro, por la 34, del grupo del 3 no se llega
+           * a ninguna de las seis primeras sin pisar la pista —la ruta más corta va por
+           * las rayas de rodaje pintadas sobre ella—, y sí a la C y a la D, más arriba,
+           * por la línea de entrada de su grupo: se entra por ahí y se remonta, que es
+           * lo que se hace en un campo sin calle paralela, y lo que publica su AIP, con
+           * salida autónoma de todos sus puestos (AD 2-GCHI PDC 1-2). Sin esto, de esos
+           * puestos no salía nadie, ni del 2A por la 34 ni del 1 por la 16.
+           */
+          if (i >= BOCAS_DE_SALIDA && (deReserva || remonte || remonteEncima)) break;
+          const boca = deCabecera[i]!;
+          const nudo = grafo.nudos[boca.nudo]!;
+          /*
+           * **Y de un puesto del que se llega a la doble raya por la calle**, sin pisar la
+           * pista: se mira al elegir el puesto, no después. Se elegía el más cercano a la
+           * boca y luego se veía si valía; en El Hierro, contigo en el 2, el único puesto
+           * apartado de ti era el 3A, que sale a la pista por encima de ella, y el
+           * turbohélice que esperaba para salir se quedaba sin camino —`despega: 0`— con
+           * siete puestos más a mano. Ver `lejosDe`.
+           */
+          const ruta = rutaConPuesto(
+            nudo,
+            "punto",
+            evitar,
+            undefined,
+            candidatosPara(pasarela, deOtros),
+            deOtros,
+            valeParaSalir(deLadoTambien),
+          )?.puntos;
+          if (!ruta) continue;
+          /*
+           * Si da su pista se mira ya con la calle por la que se llega, que es la
+           * que decide cuánto se come alinearse: ver `pistaDesde`.
+           */
+          const daSuPista =
+            !llegaAlReves(boca, ruta) && pistaDesde(boca, ruta, radio) >= pistaQueNecesita;
+          if (!daSuPista && remonte) continue;
+          const hecha = cortarEnLaRaya(ruta.map(alMundo), ejes, ancho, mitad);
+          if (!hecha) continue;
+          // Y hasta la raya no pisa la pista: sin permiso no se entra.
+          if (pisaLaPista(hecha.hastaLaRaya, 0, Infinity, ejes, ancho, mitad))
+            continue;
+          const entrada = enElEje(boca.along);
+          // De la raya a la pista, por lo que queda de calle, no en diagonal.
+          const hastaElEje = [...hecha.resto, entrada];
+          const espera = largo(hecha.hastaLaRaya);
+          const raya = hecha.hastaLaRaya[hecha.hastaLaRaya.length - 1]!;
+          const encimaDeTuCalle = deTuCalle.some((e) => dist(raya, e) <= PASA_A_TU_LADO);
+          if (daSuPista) {
+            // Y ya en el eje, unos metros hacia donde se despega: alineado; y
+            // entrando por detrás del umbral, en el umbral.
+            const alineado = enElEje(Math.max(boca.along + 30, -mitad + 5));
+            const camino = [...hecha.hastaLaRaya, ...hastaElEje.slice(1), alineado];
+            const salida = {
+              camino,
+              espera,
+              eje: espera + largo(hastaElEje) + dist(entrada, alineado),
+              remonta: 0,
+            };
+            if (!encimaDeTuCalle) return salida;
+            deReserva ??= salida;
+            continue;
+          }
+          const vuelta = mediaVuelta();
+          const alineado = enElEje(vuelta.alineado);
+          const porLaPista = [entrada, ...vuelta.puntos, alineado];
+          const entra = espera + largo(hastaElEje);
           const salida = {
-            camino,
+            camino: [...hecha.hastaLaRaya, ...hastaElEje.slice(1), ...vuelta.puntos, alineado],
             espera,
-            eje: espera + largo(hastaElEje) + dist(entrada, alineado),
-            remonta: 0,
+            eje: entra + largo(porLaPista),
+            remonta: Math.max(0, boca.along - (vuelta.alineado - 10)),
+            remonte: { entra, vira: entra + dist(entrada, vuelta.puntos[0]!) },
           };
-          if (!encimaDeTuCalle) return conSuRueda(salida);
-          deReserva ??= salida;
-          continue;
+          if (!encimaDeTuCalle) remonte = salida;
+          else remonteEncima ??= salida;
         }
-        const vuelta = mediaVuelta();
-        const alineado = enElEje(vuelta.alineado);
-        const porLaPista = [entrada, ...vuelta.puntos, alineado];
-        const entra = espera + largo(hastaElEje);
-        const salida = {
-          camino: [...hecha.hastaLaRaya, ...hastaElEje.slice(1), ...vuelta.puntos, alineado],
-          espera,
-          eje: entra + largo(porLaPista),
-          remonta: Math.max(0, boca.along - (vuelta.alineado - 10)),
-          remonte: { entra, vira: entra + dist(entrada, vuelta.puntos[0]!) },
-        };
-        if (!encimaDeTuCalle) remonte = salida;
-        else remonteEncima ??= salida;
-      }
-      const hecha = deReserva ?? remonte ?? remonteEncima;
+        return deReserva ?? remonte ?? remonteEncima;
+      };
+      const hecha = buscar(false) ?? buscar(true);
       return hecha ? conSuRueda(hecha) : hecha;
     },
 

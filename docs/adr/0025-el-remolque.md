@@ -1703,7 +1703,62 @@ demasiado lejos de la terminal para ser de contacto; en su sitio lo son, y se ru
   sale ahora empujado del 14, con el tractor antes de cinco segundos; el banco del tráfico (`ver-remolque-del-trafico`)
   mira el 17, y hay que mirarlo con el 14.
 
+## Enmienda (22-11-2026, H65): el tráfico tampoco sale de un puesto con la raya de lado
+
+### El caso
+
+Con el AIP de la H60f, el reactor del tráfico de Los Rodeos —EC-PSH, con quien juega en el JAZ 90 en el 24— dejó el 17,
+«A» en la carta, y se fue al 14. La H60f lo miró solo en vitest. En el navegador, `ver-remolque-del-trafico.mjs` dio
+**«no va de culo (17,7 m)»**. El 14 es «R», de pasarela y B3XM en la carta (PDC 1.2), y lo que falla no es el AIP sino
+la raya: la del camino sale del puesto hacia el oeste, a lo largo de la fachada, a unos 77° de la cola. Sin calle por
+detrás, el empuje corto del tráfico (`trayectoriaDelEmpuje` sin la plataforma) ponía la calle a 34 m por la raya, de
+lado, y giraba el avión 103° con la rueda de morro al tope de los setenta —radio 5,4 m en el tren principal— en 17,8 m
+de empuje: casi un giro en el sitio, con la cola barriendo hacia el este, que es lo que un avión empujado no hace.
+
+### Decisión
+
+**La regla del punto 5 de la H60f vale también para el tráfico.** El plan de quien juega ya no elegía un puesto del que
+se sale de lado (`saleDeLado`); el tráfico no lo miraba. Ahora `salida`, en `suelo-del-trafico.ts`, no da por buena la
+ruta de un puesto de contacto del que el tractor lo sacaría con la raya a más de cincuenta grados de la cola
+(`rayaDeLado`), con el avión como lo aparca el tráfico —sobre su pintada, siempre— y la raya hasta su doble raya; el
+buscador pasa al siguiente puesto. Si ninguno la da de otra manera, como antes: un avión sin salida no despega. El
+empuje del tráfico y la comprobación salen de la misma cuenta (`empujeDelTrafico`). Nada propio del 14: con la regla,
+EC-PSH sale del 13 —«R», de pasarela y B3XM en la misma carta—, sobre su pintada a 18°, con un empuje de 37 m, giro de
+90° y radio 14,9 m, el de la rueda a 45°.
+
+### Lo medido
+
+- **El remolque del tráfico** (`OGA_GPU=1 node scripts/ver-remolque-del-trafico.mjs`), con la tarjeta Intel: **bien**.
+  Antes, desde el 14: 17,7 m de culo en 17 s con el tractor. Ahora, desde el 13: 22 s con el tractor, **36,9 m de
+  culo**, 0,00 m hacia delante, el tractor a 15,4 m por delante del centro, la calle reservada los 22 s, nada dentro de
+  un edificio y, suelto, 40,9 m rodados hacia delante. En la captura del puesto el avión mira a la terminal con el
+  tractor en el morro; en la del empuje va de espaldas por la plataforma, y en la del final rueda solo.
+- **`empuja-con-quien-juega-en-su-puesto.test.ts`**: el puesto que espera es el 13 (−317,5), y el tractor sigue saliendo
+  antes de cinco segundos.
+- **Vitest entero**, una vez, con el código terminado: 578 de 578 ficheros, 11.549 pruebas en verde, 31 saltadas y una
+  pendiente, ninguna en rojo, en 1.484 s con dos hilos y los bancos del navegador volando al lado.
+- **El remolque de quien juega**, por la 12 y con la tarjeta Intel, en los dos peldaños: **todo en orden**, lo mismo que
+  en la H60f: desde el 24, −1,00 contra el morro, 119 de 119 m empujado, giro de 140° con radio 11,5 m, rumbo al acabar
+  201° y 0° en los primeros treinta metros rodando; nada dentro de un edificio.
+- **El remolque de quien juega con el viento del 300** (`OGA_VIENTO=300/10`), con la tarjeta Intel: **todo en orden** en
+  los dos peldaños, lo mismo que en la H60f: desde el 12, 161 de 161 m empujado, giro de 108° con radio 11,5 m, rumbo al
+  acabar 112°, y 11° en Guyrami y 0° en el de cabina en los primeros treinta metros rodando; nada dentro de un edificio.
+- **El remolque de quien juega en Barajas** (`OGA_ESCENARIO=barajas`), con el JAZ 90 y la tarjeta Intel, ahora en los
+  dos peldaños: **el empuje, en orden en los dos**, lo mismo que en la H60f —desde el 516, −1,00 contra el morro, 122 de
+  122 m, giro de 91° con radio 11,5 m, rumbo al acabar 181°, 14° en Guyrami y 0° en el de cabina en los primeros treinta
+  metros, nada dentro de un edificio—. **Y un rojo en el peldaño de cabina**, «la radio de tierra, fuera de orden (2, 0,
+  1, 3, 4)»: en la tira no está el «cleared to» de la ruta de quien juega, y el `/cleared to/` del banco cogió el «runway
+  three six left, cleared to land» de un avión del tráfico que aterrizaba (EC-HEQ), metido entre el empujar y el freno.
+  Esta enmienda solo toca de qué puesto sale el tráfico, y no la radio de quien juega, pero que no venga de ella no
+  está comprobado: la H60f pasó Barajas solo en Guyrami, y en el de cabina no hay tirada de antes con la que
+  compararlo. Ver «Lo que queda».
+- **`npm run rodaje`**: 6 de 6.
+
 ## Lo que queda
+
+**La radio de tierra en Barajas, en el peldaño de cabina** (H65): el banco del remolque de quien juega no encuentra el
+«cleared to» de la ruta de quien juega, y su `/cleared to/` coge el «cleared to land» del tráfico. Falta ver si la ruta no
+se dice o se dice antes de que el banco escuche, y que el banco busque el «cleared to» de su matrícula.
 
 **La Palma, Lanzarote y Pettirossi, a su punto publicado** (H60f). Los dos primeros llevan lo del AIP pero no se
 mueven: en La Palma los dieciséis puestos quedan a 29–98 m de su punto publicado, todos por su raya, y llevados allí

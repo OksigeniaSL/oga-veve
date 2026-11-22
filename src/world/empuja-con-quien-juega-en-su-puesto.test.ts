@@ -10,8 +10,8 @@
  * tierra no autoriza un empuje que la barre (`calleLibreParaEmpujar`, H41d). En el
  * juego eso se resuelve solo, cuando quien juega rueda; el banco no rueda nunca.
  *
- * Con el JAZ 90 en su puesto, el 24, el reactor se va al 17 y empuja enseguida; sin
- * nadie, al 24, también. El banco pone ahora el JAZ 90, y esto mira las tres cosas con
+ * Con el JAZ 90 en su puesto, el 24, el reactor se va al 13 (al 17 hasta la H60f) y
+ * empuja enseguida; sin nadie, al 24, también. El banco pone ahora el JAZ 90, y esto mira las tres cosas con
  * la cuenta de tráfico de verdad: lo que el banco espera ver, y por qué con el JAZ 20
  * no lo veía. Desde la H60b el reactor aparca en el 23 sobre su raya pintada, y su
  * empuje ya no barre el sitio del JAZ 20: con él aparcado, también empuja.
@@ -91,13 +91,17 @@ describe("el reactor del tráfico de Los Rodeos, con quien juega en su puesto", 
   }
 
   /*
-   * Desde el 14, de pasarela. Era el 17, a lo que alcanza una pasarela de la terminal, pero en el
-   * AIP (AD 2-GCXO PDC 1.2) el 17 es de salida autónoma («A»), de ATR 72 como mucho y sin
-   * pasarela: de él no sale nadie empujado (H60f).
+   * Desde el 13, de pasarela y de salida con tractor («R») en el AIP (AD 2-GCXO PDC 1.2). Era el
+   * 17, a lo que alcanza una pasarela de la terminal, pero en el AIP el 17 es de salida autónoma
+   * («A»), de ATR 72 como mucho y sin pasarela: de él no sale nadie empujado (H60f). Después fue
+   * el 14, cuya raya sale de lado, hacia el oeste a lo largo de la fachada: el tractor lo giraba
+   * ciento tres grados casi en el sitio en dieciocho metros, y el banco no lo veía ir de culo. El
+   * tráfico ya no elige un puesto del que se sale de lado, como el plan de quien juega
+   * (`saleDeLado` en `suelo-del-trafico.ts`).
    */
-  it("con el JAZ 90 en el 24, el del banco, empuja desde el 14 enseguida", () => {
+  it("con el JAZ 90 en el 24, el del banco, empuja desde el 13 enseguida", () => {
     const r = tractorDe("jaz-90", 60);
-    expect(r.puesto?.x).toBeCloseTo(-360.5, 0);
+    expect(r.puesto?.x).toBeCloseTo(-317.5, 0);
     expect(r.tractor, "el tractor sale").not.toBeNull();
     expect(r.tractor!).toBeLessThan(5);
   });

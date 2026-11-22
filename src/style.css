@@ -9521,18 +9521,57 @@ button.motor__tecla::after {
  * asientos por columna y la envolvente con sus cifras—, y con la envolvente
  * a 100 px más sus dos renglones el veredicto quedaba debajo de la barra de
  * despegar. El avión no baja de 94: son dos botones de 46 uno encima de otro.
+ *
+ * **Y el amarre, junto a las bodegas sin crecer la fila.** Debajo de la
+ * envolvente y de sus dos renglones, el toque del amarre ponía 54 px más en
+ * la fila de arriba y el veredicto volvía debajo de la barra, a 169 px de
+ * rueda. Así que las cifras pasan a un renglón debajo del avión —son el brazo,
+ * lo que el avión mide a lo largo— y el amarre ocupa su sitio, debajo de la
+ * envolvente y al lado de la cola, donde van las bodegas: cada columna, el
+ * alto de los mandos. Las filas, a mano: el avión cubre las dos primeras, el
+ * amarre las dos últimas, y con filas automáticas la rejilla reparte el alto
+ * de lo que abarca dos como quiere.
  */
 @media (min-width: 700px) and (max-height: 460px) {
   .hoja__planta {
+    grid-area: planta;
     height: 94px;
   }
 
-  .hoja__envolvente {
-    height: 66px;
+  .hoja__centrado {
+    grid-template-rows: 60px 32px auto;
+    grid-template-areas:
+      "planta envolvente"
+      "planta amarre"
+      "cifras amarre";
+    align-items: stretch;
+    gap: 2px 12px;
   }
 
-  .hoja__centrado {
-    gap: 6px 12px;
+  .hoja__grafica {
+    display: contents;
+  }
+
+  .hoja__envolvente {
+    grid-area: envolvente;
+    height: 60px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__grafica .hoja__cifras {
+    grid-area: cifras;
+    justify-content: flex-start;
+    gap: 0 14px;
+    line-height: 16px;
+  }
+
+  .hoja__amarre {
+    grid-area: amarre;
+    align-self: end;
+    margin-top: 0;
+    padding: 4px 8px;
+    gap: 8px;
+    font-size: 14px;
+    line-height: 1.15;
   }
 
   /*
@@ -9541,8 +9580,14 @@ button.motor__tecla::after {
    * sello, la frase y el arreglo quedaban debajo de la barra de despegar, y
    * el arreglo de un toque es justo lo que hace falta con el centro fuera.
    * Así que la báscula y la pista, más bajas: los mismos dibujos con menos
-   * alto, sin tocar nada de lo que se toca.
+   * alto, sin tocar nada de lo que se toca. Y entre fila y fila, 4 px: el
+   * veredicto acababa a dos de la barra y una letra que rinde un píxel más
+   * alta lo volvía a tapar.
    */
+  .hoja__tarjeta--centrado {
+    row-gap: 4px;
+  }
+
   .hoja__tarjeta--centrado .hoja__balanza {
     padding: 3px 0;
   }
