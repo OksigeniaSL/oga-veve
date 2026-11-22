@@ -9176,6 +9176,8 @@ export class Game {
       altitud: s.position.y,
       altura: Math.max(0, this.ruedasSobreElSuelo(s)),
       vertical: s.verticalSpeed,
+      // Contra la pista, no contra el variómetro (H63). Ver `caidaContraElSuelo`.
+      caidaAlTocar: s.touchdownSinkRate,
       motor: c.engineOn,
       flaps: c.flaps,
       tren: c.tren,

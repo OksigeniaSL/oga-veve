@@ -30,6 +30,7 @@
 import { Quaternion, Vector3 } from "three";
 import { actitudEnTierra, alturaSobreLasRuedas, brazoDelTren } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
+import { caidaContraElSuelo } from "./caida-contra-el-suelo";
 import { efectoSuelo, efectoSueloRodando, momentoDelSuelo } from "./efecto-suelo";
 import {
   anguloDePerdida,
@@ -2034,7 +2035,6 @@ export class CoefficientFlightModel implements FlightModel {
     }
 
     const wasFlying = !s.onGround;
-    const sinkRate = -s.velocity.y;
     s.onGround = true;
     /*
      * **Se pega al suelo solo si está por debajo**, no si está dentro de la
@@ -2069,6 +2069,19 @@ export class CoefficientFlightModel implements FlightModel {
       s.position.y = wheelLevel;
 
     if (wasFlying) {
+      /*
+       * **Contra la pista, no contra el variómetro** (H63): lo que se le
+       * acerca el suelo, que es lo que carga el tren y lo que rompe. En una
+       * pista llana es `−velocity.y` bit a bit. Ver `caidaContraElSuelo`.
+       */
+      const sinkRate = caidaContraElSuelo(
+        this.ground,
+        s.position.x,
+        s.position.z,
+        s.velocity.x,
+        s.velocity.y,
+        s.velocity.z,
+      );
       s.touchdownSinkRate = Math.max(0, sinkRate);
       const limit = this.crashLimits();
       if (sinkRate > limit.sink || Math.abs(this.bankAngle()) > limit.bank) {

@@ -42,6 +42,7 @@
 import { Quaternion, Vector3 } from "three";
 import { AIRE_ESTANDAR, type Aire, GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
 import type { FlightState, GroundSampler } from "./model";
+import { caidaContraElSuelo } from "./caida-contra-el-suelo";
 
 const FORWARD_LOCAL = new Vector3(0, 0, -1);
 const RIGHT_LOCAL = new Vector3(1, 0, 0);
@@ -1356,7 +1357,14 @@ export class ModeloDeHelicoptero {
         rueda.z,
       );
       if (veniaEnElAire) {
-        s.touchdownSinkRate = primeraRueda ? -s.velocity.y : Math.max(s.touchdownSinkRate, -s.velocity.y);
+        /*
+         * Contra el suelo bajo esta rueda, no contra el variómetro (H63): lo
+         * que se le acerca, que es lo que la carga. Con la velocidad del
+         * centro, como siempre, para que en llano sea `−velocity.y` bit a bit.
+         * Ver `caidaContraElSuelo`.
+         */
+        const caida = caidaContraElSuelo(this.suelo, px, pz, s.velocity.x, s.velocity.y, s.velocity.z);
+        s.touchdownSinkRate = primeraRueda ? caida : Math.max(s.touchdownSinkRate, caida);
         primeraRueda = false;
       }
     }

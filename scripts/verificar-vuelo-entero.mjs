@@ -1356,7 +1356,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /**
    * Lo último que bajaba en el aire, m/s: por si el juego no dice a qué se
    * tocó. Aquí y no con los demás porque lo escribe el gancho, que empieza a
-   * correr en cuanto se engancha.
+   * correr en cuanto se engancha. **Contra la pista** cuando hay recogida, como
+   * la del juego desde H63: el variómetro menos lo que baja ella. Ver
+   * `caidaContraElSuelo` en `flight/caida-contra-el-suelo.ts`.
    */
   let ultimaCaida = 0;
   /**
@@ -1400,7 +1402,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         0.5
       : 0;
     const pistaBaja = Number.isFinite(bajaLaPista) ? bajaLaPista : 0;
-    // Para la comprobación de la toma, que la da también contra la pista (H34h).
+    // Para la caída de reserva del gancho, que también va contra la pista. Ver `ultimaCaida`.
     recogida.pistaBaja = pistaBaja;
     const contraLaPista = s.verticalSpeed - pistaBaja;
     /*
@@ -1922,7 +1924,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     }
     {
       const e = o.estado();
-      if (!e.onGround) ultimaCaida = -e.verticalSpeed;
+      if (!e.onGround) ultimaCaida = -(e.verticalSpeed - (recogida?.pistaBaja ?? 0));
     }
     palancaPedida = mandos.elevator;
     limitarElAngulo(mandos);
@@ -4666,19 +4668,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let caidaAlTocar = null;
   /** De dónde salió `caidaAlTocar`, y lo que decía el modelo en esa muestra. */
   let caidaDeQuien = null;
-  /**
-   * **Lo que bajaba la pista bajo el avión al tocar**, m/s, negativo si baja;
-   * `null` sin recogida. Ver `pistaBaja` en `recoger`.
-   *
-   * La caída que apunta el juego es la del variómetro —`touchdownSinkRate` en
-   * `flight/fdm.ts` es `−velocity.y`—, y lo que nota el tren es lo que se le
-   * acerca el suelo. En una pista llana es lo mismo; en la 03 de Gran Canaria,
-   * que en el juego baja un 0,4 % hacia el norte, la pista se aparta 0,3 m/s
-   * bajo un 747 a la Vref, y el juego lee una toma 0,3 m/s más dura de lo que
-   * es (H34h). La comprobación sigue juzgando con la del juego, que es la que
-   * juzga a quien juega; esto solo lo dice al lado.
-   */
-  let pistaAlTocar = null;
   /** Lo más deprisa que se rodó de vuelta fuera de la pista, m/s. */
   let rodajeMasRapido = 0;
   /**
@@ -8415,7 +8404,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           juego: typeof delJuego === "number" && delJuego > 0,
           modelo: +(s.touchdownSinkRate ?? NaN).toFixed(2),
         };
-        pistaAlTocar = typeof recogida?.pistaBaja === "number" ? recogida.pistaBaja : null;
         recogida = null;
         desplazadoAlTocar = r.desplazado ?? 0;
         tocoA = s.airspeed;
@@ -8909,7 +8897,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     pistaParaTocar: Math.round(pistaParaTocar),
     caidaAlTocar: caidaAlTocar === null ? null : +caidaAlTocar.toFixed(2),
     caidaDeQuien,
-    pistaAlTocar: pistaAlTocar === null ? null : +pistaAlTocar.toFixed(2),
     /*
      * **Y lo que juzgó el juego de esa toma**: el veredicto y la caída con la
      * que lo juzgó. El banco mide la toma por su cuenta, y cuando las dos
@@ -10900,14 +10887,12 @@ comprobarSiVolo(
     "y se toca con recogida, a uno o dos metros por segundo",
     vuelo.toco > 0 && caida !== null && caida <= 2,
     vuelo.toco
-      ? `a ${caida ?? "?"} m/s` +
-          /*
-           * Y contra la pista, si baja o sube bajo el avión (H34h): es lo que
-           * nota el tren. Ver `pistaAlTocar`.
-           */
-          (caida !== null && typeof vuelo.pistaAlTocar === "number" && Math.abs(vuelo.pistaAlTocar) >= 0.05
-            ? ` (contra la pista, ${(caida + vuelo.pistaAlTocar).toFixed(2)}: la pista ${vuelo.pistaAlTocar < 0 ? "baja" : "sube"} ${Math.abs(vuelo.pistaAlTocar).toFixed(2)} m/s bajo el avión)`
-            : "") +
+      ? /*
+         * Contra la pista: la del juego lo es desde H63, y el banco ya no la
+         * cuenta aparte, como hacía `pistaAlTocar` desde H34h. Ver
+         * `caidaContraElSuelo` en `flight/caida-contra-el-suelo.ts`.
+         */
+        `a ${caida ?? "?"} m/s` +
           ` · ${Math.abs(vuelo.tocoDesviado).toFixed(1)} m del eje · a ${vuelo.tocoA} m/s`
       : "no llegó a tocar",
     "los reactores tocan a unos 4 m/s de descenso, sin recogida",

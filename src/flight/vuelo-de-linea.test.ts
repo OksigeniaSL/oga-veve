@@ -554,6 +554,23 @@ describe("con un tope de la salida por delante", () => {
     expect(ya.subida).not.toBeNull();
   });
 
+  /*
+   * **Al tocar, la caída que apunta el modelo**, que es contra la pista (H63):
+   * con el variómetro, una pista que baja ponía de más lo que baja. Sin ella,
+   * la del variómetro del paso de antes, como siempre.
+   */
+  it("al tocar apunta la caída del modelo, contra la pista; sin ella, la del variómetro (H63)", () => {
+    const tocando = { enTierra: true, enPista: true, altura: 0, vertical: 0, fase: "aterrizado" as Fase };
+    const conModelo = en("recogida");
+    conModelo.paso(DT, lectura({ vertical: -2.1 }), permisos);
+    conModelo.paso(DT, lectura({ ...tocando, caidaAlTocar: 1.8 }), permisos);
+    expect(conModelo.estado.caidaAlTocar).toBe(1.8);
+    const sinModelo = en("recogida");
+    sinModelo.paso(DT, lectura({ vertical: -2.1 }), permisos);
+    sinModelo.paso(DT, lectura(tocando), permisos);
+    expect(sinModelo.estado.caidaAlTocar).toBe(2.1);
+  });
+
   it("sin tope, como siempre: el gas de despegue hasta los quince metros", () => {
     const manos = en("carrera").paso(DT, lectura({}), permisos);
     expect(manos.gas).toBe("despegue");
