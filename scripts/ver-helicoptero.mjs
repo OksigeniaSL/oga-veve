@@ -135,7 +135,7 @@ try {
   );
   comprobar("con el rotor en sus vueltas", Math.abs(posado.nr - 1) < 0.03, `NR ${(posado.nr * 100).toFixed(0)} %, ${posado.rpm.toFixed(0)} rpm`);
   /*
-   * **Y el modelo de verdad, con el rotor de Gaudí.** Ya no se mira que el eje gire:
+   * **Y el modelo de verdad, con el rotor del kit de arte.** Ya no se mira que el eje gire:
    * a sus vueltas las palas se funden en el disco y el eje se para a propósito —lo que
    * gira entonces son las sombras—, que es lo que evita la rueda de carro. Ver
    * `world/rotor-del-helicoptero.ts`.

@@ -199,7 +199,7 @@ banco:
 
 ### Voces, radio y torre
 
-> He leído entero el frente de audio (`src/audio/*`, `src/flight/radio.ts`, `docs/voces/`, `CREDITOS.md`, los packs de `data/voces/` y los enganches en `src/game.ts`), corrido las 107 pruebas de audio y radio (pasan; hay trabajo sin confirmar de otro agente en `instructor.ts`, `audio.ts` y un `src/aud
+> He leído entero el frente de audio (`src/audio/*`, `src/flight/radio.ts`, `docs/voces/`, `CREDITOS.md`, los packs de `data/voces/` y los enganches en `src/game.ts`), corrido las 107 pruebas de audio y radio (pasan; hay trabajo sin confirmar en `instructor.ts`, `audio.ts` y un `src/aud
 
 **Graves**
 
@@ -1418,4 +1418,4 @@ _Y 71 más de este grupo en el diario del run._
 ---
 
 El diario completo del run —los 479 hallazgos, las 403 ideas y los 139
-veredictos con sus matices— está en el transcript de la sesión que lo lanzó.
+veredictos con sus matices— se guarda fuera del repositorio.

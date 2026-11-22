@@ -3,11 +3,12 @@
  * cubierta del suelo, el sombreado, los trazos y las letras, en un solo sitio.
  *
  * La identidad del juego es la carta aeronáutica, y su hoja de estilo es la de
- * Gaudí (26-10-2026, «La carta aeronáutica de Óga Veve»). Se basa en la carta
- * de verdad que vuela quien sale de Canarias: la **1:500 000 de ENAIRE, hoja
- * GC Canarias, edición 2025**. De ahí salen los peldaños del relieve en pies,
- * el azul de los datos aeronáuticos, el negro del aeródromo y la rosa. Los
- * valores de abajo son los suyos; lo que no viene de la hoja lo dice al lado.
+ * la dirección de arte (26-10-2026, «La carta aeronáutica de Óga Veve»). Se
+ * basa en la carta de verdad que vuela quien sale de Canarias: la **1:500 000
+ * de ENAIRE, hoja GC Canarias, edición 2025**. De ahí salen los peldaños del
+ * relieve en pies, el azul de los datos aeronáuticos, el negro del aeródromo
+ * y la rosa. Los valores de abajo son los suyos; lo que no viene de la hoja lo
+ * dice al lado.
  *
  * ## Por qué un fichero sin importaciones
  *
@@ -77,7 +78,7 @@ export const TINTAS = {
 /**
  * **La rampa hipsométrica**: los peldaños de la hoja GC de ENAIRE, en pies
  * —0, 1000, 2500, 4000, 6500 y 9000—, más el de 500 que añade la hoja de
- * Gaudí para que el Paraguay, casi todo por debajo de trescientos metros,
+ * estilo para que el Paraguay, casi todo por debajo de trescientos metros,
  * tenga más de un tinte.
  *
  * En peldaños y sin degradado, y **sin líneas de nivel**, como en la carta
@@ -140,9 +141,9 @@ export const CUBIERTA = {
   /** Los esteros, con su símbolo de juncos. */
   estero: { color: "#6f9f9a", fuerza: 0.18 },
   /**
-   * La ciudad. **No viene de la hoja de Gaudí**: la de ENAIRE pinta los
+   * La ciudad. **No viene de la hoja de estilo**: la de ENAIRE pinta los
    * núcleos urbanos en amarillo, y sin esto Asunción no se distinguía del
-   * monte. Para que él lo revise.
+   * monte. Para que lo revise la dirección de arte.
    */
   ciudad: { color: "#f2cf5b", fuerza: 0.45 },
 } as const;

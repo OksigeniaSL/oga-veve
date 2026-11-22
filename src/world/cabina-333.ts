@@ -9,7 +9,7 @@
  *
  * ## Las medidas, y de dónde salen
  *
- * Del bloque de Gaudí (`cabina_333.py`, en el kit de arte de hq), que las sacó de
+ * Del bloque del kit de arte (`cabina_333.py`), que las sacó de
  * Boeing, *787 Airplane Characteristics for Airport Planning*, D6-58333 Rev Q,
  * fig. 2.5.1:
  *

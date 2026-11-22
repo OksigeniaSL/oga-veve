@@ -3027,7 +3027,7 @@ def juntar_por_material(piezas, prefijo, deja=lambda nombre: False):
 def _cabina_de_helicoptero(ojos_z, ancho, alto_panel, y_suelo, y_respaldo,
                            plazas, hueco, mandos):
     """
-    La cabina de un helicóptero, la del Super Puma: la de la muestra de Gaudí
+    La cabina de un helicóptero, la del Super Puma: la de la muestra de arte
     del 12-11-2026, aprobada por Enrique, con pantallas
     (`arte-local/entregas/oga-veve/super-puma/cabina/`).
 
@@ -3037,7 +3037,7 @@ def _cabina_de_helicoptero(ojos_z, ancho, alto_panel, y_suelo, y_respaldo,
       el suelo por delante y por debajo del morro, así que el panel no puede
       tapar lo que en un avión tapa.
     - **Las ventanas de los pies**, por debajo del cuadro: por ahí se ve el
-      helipuerto al posarse. Son las de Gaudí por fuera; por dentro son el
+      helipuerto al posarse. Son las de la muestra por fuera; por dentro son el
       hueco que dejan los forros, que dibuja el guion del aparato.
     - **La consola del techo**, con dos palancas rojas —los motores— y una
       amarilla —el freno del rotor—: en un Super Puma se arrancan y se paran

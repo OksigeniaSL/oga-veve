@@ -9,7 +9,7 @@ toca el del mundo que se vuela (ADR 0003, 0005 y 0006)
 Enrique aprobó que la cara del juego sea **la carta aeronáutica**: papel de
 aviación de verdad, con las tintas hipsométricas del relieve, el sombreado, la
 cubierta del suelo, el mar con sus veriles, el aeródromo de la OACI y la rosa
-con su declinación. La hoja de estilo es la de Gaudí, sobre la carta 1:500 000
+con su declinación. La hoja de estilo es la de la dirección de arte, sobre la carta 1:500 000
 de ENAIRE, hoja GC Canarias 2025.
 
 El relieve que ya tiene el juego no sirve para eso. Son mapas por escenario

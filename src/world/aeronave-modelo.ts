@@ -1018,7 +1018,7 @@ export async function cargarModelo(
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
     vuelta,
-    // Y los rotores del helicóptero, con el rotor de Gaudí. Ver `rotor-del-helicoptero.ts`.
+    // Y los rotores del helicóptero, con el rotor del kit de arte. Ver `rotor-del-helicoptero.ts`.
     rotores: aircraft.helicoptero ? rotoresDelModelo(raiz, aircraft.helicoptero) : undefined,
   };
 }

@@ -58,7 +58,7 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     // de excentricidad y palas de unos cien kilos.
     lock: 8,
     rigidez: 180_000,
-    // De la muestra de Gaudí (plano de tres vistas a la escala de la ficha, 11-11):
+    // De la muestra de arte (plano de tres vistas a la escala de la ficha, 11-11):
     // el plano de las palas a 4,30 m del suelo posado —la tapa del buje sobresale
     // hasta 4,72—, y el centro de gravedad, supuesto, a 1,8.
     alturaDelBuje: 2.5,
@@ -131,7 +131,7 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     // vuelo. Con él, el rotor llega a sus vueltas a los 27 s de empezar.
     arranque: 30,
   },
-  // De la muestra de Gaudí: las de morro 3,6 m por delante del mástil y las
+  // De la muestra de arte: las de morro 3,6 m por delante del mástil y las
   // principales 1,7 m por detrás, con unos 3,1 m de vía. El centro de gravedad,
   // supuesto bajo el mástil y a 1,8 m del suelo.
   // Supuestos: el freno del rotor para el rotor desde el 40 % de sus vueltas en

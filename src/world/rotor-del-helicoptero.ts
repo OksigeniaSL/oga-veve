@@ -1,7 +1,6 @@
 /**
- * **El rotor del helicóptero, como lo ve el ojo**: el de Gaudí (kit de arte de
- * hq, `agents/arte/kit/oga-veve/rotor/`, 906b5527), pasado a TypeScript y
- * enchufado al modelo de verdad.
+ * **El rotor del helicóptero, como lo ve el ojo**: el del kit de arte, pasado
+ * a TypeScript y enchufado al modelo de verdad.
  *
  * Parado, las palas caen sobre su bisagra de batimiento. Girando, se enderezan,
  * suben al cono con el empuje y se funden en lo que se ve de un rotor de verdad

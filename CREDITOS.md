@@ -348,7 +348,7 @@ es nuestro, con su licencia; lo que es nuestro, con quién lo hizo.
 | AIP Paraguay, AMDT AIRAC 02/2026, AD 2.x-14 (leído el 12-NOV-2026) | DINAC | Lo mismo para los campos paraguayos, y las luces de pista y el APAPI de la 21 de Pedro Juan Caballero, con el ángulo de la senda de su carta RNP Z RWY 21 (AD 2.4-12) | **Hechos de una publicación oficial** |
 | OACI, Doc 9157, *Manual de diseño de aeródromos*, parte 4, cap. 8, y Anexo 14, 5.3.8 | OACI | Cómo se reglan y se leen el PAPI y el APAPI: los ángulos de cada luz, la más alta junto a la pista, y dónde van; y dónde van y a qué ritmo destellan las luces de identificación de umbral (`src/world/aproximacion.ts`) | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna figura |
 | Barlow Semi Condensed y Barlow Condensed | Jeremy Tribby, de Google Fonts (github.com/google/fonts, carpetas `ofl/barlowsemicondensed` y `ofl/barlowcondensed`) | Las letras de la carta, recortadas y dentro del paquete (`src/assets/letras/`, con su `OFL.txt`; `scripts/letras-de-la-carta.sh`); y el «RESCATE» del costado del helicóptero, hecho malla desde la misma letra en `modelos/jaz-super-puma.py` | **SIL Open Font License 1.1** |
-| La hoja de estilo de la carta: tokens, símbolos (`src/ui/carta/simbolos/`) y grano del papel (`src/assets/carta/papel.webp`) | Gaudí, director de arte de Oksigenia, sobre la carta 1:500 000 de ENAIRE hoja GC 2025 | Los colores, la rampa, los símbolos de aeródromo, la rosa, el avión en planta y el papel | Propio (Oksigenia SL) |
+| La hoja de estilo de la carta: tokens, símbolos (`src/ui/carta/simbolos/`) y grano del papel (`src/assets/carta/papel.webp`) | Oksigenia SL (dirección de arte de Oksigenia), sobre la carta 1:500 000 de ENAIRE hoja GC 2025 | Los colores, la rampa, los símbolos de aeródromo, la rosa, el avión en planta y el papel | Propio (Oksigenia SL) |
 | Los símbolos de las radioayudas (`src/ui/carta/simbolos/radioayuda-*.svg`) | Oksigenia SL, siguiendo el Anexo 4 de la OACI, Apéndice 2 | El VOR, el DME, el VOR/DME, el NDB y la pluma del localizador del ILS, en el calco de la radio de la ficha y del plano | Propio (Oksigenia SL); el Anexo 4 se sigue como estándar, no se copia ninguna figura |
 
 La atribución de WorldCover va también en la pantalla de créditos del juego,
@@ -573,7 +573,7 @@ corto del batallón de helicópteros de Los Rodeos, con la librea de la flota y
 - EASA, *Type Certificate Data Sheet* **R.002** (AS 332): el largo, el alto y los
   dos rotores con sus palas.
 - Airbus: la «D-value» de 18,70 m, que pone el rotor de cola a 9,375 m del mástil.
-- La muestra de Gaudí del 11-11-2026, que aprobó Enrique: lo que la ficha no trae
+- La muestra de arte del 11-11-2026, que aprobó Enrique: lo que la ficha no trae
   —las ruedas, la altura de las palas, de qué lado van el rotor de cola, el
   estabilizador y la grúa—, medido a la escala de la ficha sobre el plano de tres
   vistas del AS 332 de Jetijones (CC BY 3.0) y sobre las fotos de Wikimedia
@@ -755,8 +755,8 @@ Las trece figuras que se tocan en la ventana de explicación —el PAPI, el
 pitot con su velocímetro, el altímetro, los mandos, los flaps, el
 turbohélice, el turbofán, el motor de pistones, el tren fijo, el tren que
 se recoge, el tren de los E-Jets, las luces y el plato oscilante del Super
-Puma (`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
-arte de Oksigenia, con cara de manual de vuelo antiguo y las tintas y letras
+Puma (`src/ui/figuras/`)— son **figuras propias**: las dibujó Oksigenia SL, desde su
+dirección de arte, con cara de manual de vuelo antiguo y las tintas y letras
 de la carta, y van con el código bajo Apache-2.0. Lo único de fuera es lo
 que dice el software de terceros, arriba: la hoja isométrica de Anatomy (MIT)
 dentro del CSS del PAPI.
