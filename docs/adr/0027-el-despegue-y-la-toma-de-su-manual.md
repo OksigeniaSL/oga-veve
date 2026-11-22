@@ -10128,9 +10128,9 @@ candado compartido. Lo de antes es de H34g (`h34g/r/`) y de H55c.
 |---|---|---|
 | JAZ 120, Gran Canaria, 025/20 | 4,1 m del eje, 384 m, 2,15 m/s; 61 de 62 (✗ la toma) | con main: 2,7 m, 564 m, **2,54 m/s** (2,26 contra la pista); 62 de 63 (✗ la toma) |
 | JAZ 90, Tukã (Los Rodeos) | 1,2 m, 384 m, 0,68 m/s; 66 de 67 (H55c) | 1,0 m, 228 m, 1,95 m/s (1,65 contra la pista); 65 de 66 (✗ el avisador, en la vuelta tras frustrar) |
-| JAZ 120, Tukã, pista ocupada, con el cambio | 2,1 m, 627 m, 2,03 m/s; 64 de 67 (✗ la zona, ✗ la toma, ✗ las gafas) | no volado |
+| JAZ 120, Tukã, pista ocupada, con el cambio | 2,1 m, 627 m, 2,03 m/s; 64 de 67 (✗ la zona, ✗ la toma, ✗ las gafas) | 3,4 m, 447 m, **1,31 m/s** (1,03 contra la pista); **67 de 67** |
 | JAZ 90, Los Rodeos, con el cambio | 1,3 m, 363 m, 1,12 m/s; 62 de 62 (H34f) | no volado |
-| JAZ 120, Gran Canaria y Tukã, las segundas | — | no voladas |
+| JAZ 120, Gran Canaria con el cambio, y la segunda de Tukã | — | no voladas |
 
 Cada vuelo es una tirada, con las rachas que le tocan: no es una cifra.
 
@@ -10156,10 +10156,21 @@ mientras salían los flaps de 0,22 a 0,67, la indicada bajó de 134 a 100 nudos 
 el ángulo llegó a 17,1°, el del avisador, a 146 m del suelo. No es de la toma ni
 de nada de aquí; queda abajo.
 
-**Con el cambio del morro no se ha volado nada.** El navegador es de uno en uno
-y lo tuvieron otros bancos: el 747 en Tukã con la pista ocupada esperó el
-candado desde las 08:04 sin cogerlo antes de la entrega. Lo que dice del
-cambio es la mesa, arriba.
+**El JAZ 120 en Tukã con la pista ocupada, con el cambio**
+(`h34h/r/ala-120-tuka-1.txt`): la torre lo mandó al aire a 60 m
+(«pistaOcupada»), frustró y volvió por el circuito. La segunda final llegó a la
+puerta a 150 nudos, a 6,2 m del eje cruzándolo a 1,1°; en el último kilómetro y
+medio, con la mano de 8,4–8,7, el error de alabeo fue de 1,0° de media
+cuadrática y el avión no se apartó más de seis metros del eje. Recogió a 12,7 m,
+26 m antes del umbral, bajando 3,1 m/s a 149 nudos; el morro subió de 1,8° a
+3,9°, lo acumulado no pasó de 1,5, y el punto de toma entró a 4,1 m. **Ahí
+entró el cambio**: en 154 fotogramas el morro iba por debajo de 3,8° —la
+actitud de empezar más dos grados—, como mucho 1,3°, y la palanca se lo devolvió; tocó con el morro a 3,9°, a 447 m,
+a 139 nudos y a **1,31 m/s** (1,03 contra la pista). Es la toma que H55c, la
+tanda 21, H34f y H34g dejaron en 2,0–2,1 m/s, y es una tirada: con el aire que
+le tocó, no una cifra. El 747 en Gran Canaria con el cambio, la segunda de
+Tukã y el JAZ 90 en Los Rodeos no cupieron: el navegador es de uno en uno, y
+esta tirada esperó el candado de 08:04 a 08:09 y voló hasta las 08:30.
 
 ### Las pruebas del banco
 
@@ -10178,8 +10189,9 @@ vitest entero no se ha corrido: no se ha tocado `src/`.
   banco, que vive en dos copias (`recoger` y `palancaDelReactorEnLaRecogida`), o
   de cómo es la turbulencia a ras de suelo en cada sitio. Volar el 747 en una
   pista llana lo separaría.
-- **Volar el cambio del morro**: el 747 en Gran Canaria y en Tukã con la pista
-  ocupada, dos de cada, y el JAZ 90 en Los Rodeos. Es lo primero.
+- **Volar más el cambio del morro**: el 747 en Gran Canaria dos veces, la
+  segunda de Tukã con la pista ocupada y el JAZ 90 en Los Rodeos. Es lo primero:
+  la mesa dice que cambia duras por largas, y una tirada no lo separa.
 - **Las largas que trae el morro**: con rachas fuertes el 747 y el JAZ 110
   flotan más (el JAZ 110 hasta 881 m en la mesa con σ_w 1,5).
 - **El JAZ 90 en la vuelta tras frustrar, en Tukã**: subiendo con el gas a
