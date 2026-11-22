@@ -9416,3 +9416,218 @@ máquina, sin saber cuál.
   manual, sin saber qué la alarga en el suyo.
 - **El «cleared to land» del JAZ 25 en Guyrami**, que no sonó.
 - **La frustrada vieja del 747**, que salta 0,479 y no más de media.
+
+## Enmienda H34f (22-11-2026): el piloto de banco con el 747, en la racha y en la toma
+
+En la ronda de la tanda 21, dos rojos del JAZ 120, los dos del banco:
+
+- **Gran Canaria, viento 025/20: tocó a 15,2 m del eje, y a 9,4 al repetir**
+  (con 2,36 m/s). En la repetición, a 48 m de ruedas, una racha clavó el alerón
+  del banco en 0,35, el tope de todos, siete segundos: el rumbo se fue tres
+  grados a la izquierda con el alerón a la derecha, y el avión pasó de +0,3 a
+  −22 m del eje antes de cruzar el umbral.
+- **Tukã con la torre mandando al aire: tomó a 2,01 m/s** (a 2,07 en H55c). La
+  toma del 747 en el banco va de 2,0 a 2,6 m/s.
+
+### El alerón: el tope era de recorrido y lo que limita es un ritmo
+
+`TOPE_DE_ALERON_EN_VUELO` (0,35) se puso con la avioneta para que no rodara al
+cuchillo virando a fondo: allí 0,35 son unos veinte grados por segundo. Pero el
+mismo recorrido rueda distinto en cada avión. Con la cuenta de la ficha
+—`clAileron/|clP| · 2V/b`, `alabeoAFondo` en `flight/mano.ts`—, a su Vref:
+
+| | A fondo | Con 0,35 | Tope de ahora |
+|---|---|---|---|
+| JAZ 20 | 53,7 °/s | 18,8 °/s | 0,35 |
+| JAZ 25 | 62,8 | 22,0 | 0,35 |
+| JAZ 40 | 41,4 | 14,5 | 0,35 |
+| JAZ 60 | 35,2 | 12,3 | 0,35 |
+| JAZ 50 | 23,9 | **8,4** | 0,35 |
+| JAZ 90 | 17,4 | 6,1 | 0,48 |
+| JAZ 110 | 13,0 | 4,6 | 0,64 |
+| JAZ 120 | 12,0 | **4,2** | 0,70 |
+
+El 747 con un tercio rueda cuatro grados por segundo, y las rachas del juego
+—la de alabeo de MIL-F-8785C, `σ_p = 1,9·σ_w/√(L_w·b)`, más el derrape que
+levanta un ala por el diedro— le piden más que eso cuando aprietan. Un piloto
+mete todo el alerón que haga falta para sacar el avión de una racha, y es lo
+que la norma pide que se pueda (14 CFR 25.147(f): «roll response must allow
+normal maneuvers (such as recovery from upsets produced by gusts […])»).
+
+**Lo que se cambia, en el banco** (`topeDeAleronEnVuelo`, en
+`verificar-vuelo-entero.mjs`): cada avión, a su Vref, puede rodar **al menos lo
+que da 0,35 al más lento de los de hélice**, que son con los que se puso y se
+afinó el tope; hoy es el Twin Otter, con 8,4 °/s, que con eso sostiene el eje
+con el cruzado racheado de Los Rodeos (#192). Ninguno de hélice cambia, por
+construcción. Los tres reactores suben, y ninguno rueda así ni la mitad de
+deprisa que la avioneta con su tercio, que es donde se vio el cuchillo. La
+cuenta va en la página con la ficha del avión, sin ninguna cifra para el 747.
+En Guyrami no cuenta: el alerón ya es la inclinación. **El juego no cambia.**
+
+**La mesa lateral** (`h34f/mesa/lat.ts` del scratchpad): el modelo del juego y
+sus rachas, el automático en la senda, el gas del banco y la ley de alerón del
+banco en la final —`alPuntoPorElSuelo`, `alRumbo`, la mano de cuatro—, de
+cinco kilómetros al umbral; el JAZ 120 y el JAZ 110 con veinte nudos de cara
+(0,9 m/s de cruzado, el de 025 en la 03), el JAZ 90 y el JAZ 50 con seis de
+cruzado; doscientas finales por fila. Del eje, al cruzar el umbral:
+
+| | σ_w | Media | p90 | La peor | Alerón al tope bajo 100 m |
+|---|---|---|---|---|---|
+| JAZ 120, 0,35 / 0,70 | 1 | 3,57 / 3,53 m | 6,98 / 6,98 | 13,1 / 12,5 | 0,7 / 0,0 % |
+| | 1,5 | 6,67 / 5,51 | 14,2 / 11,8 | **57,3 / 23,3** | 6,4 / 0,0 % |
+| | 2 | 11,1 / 7,2 | 23,5 / 14,8 | **102,8 / 29,8** | 14,4 / 1,0 % |
+| JAZ 110, 0,35 / 0,64 | 1,5 | 5,21 / 4,69 | 11,2 / 10,1 | 27,8 / 18,2 | 5,1 / 0,1 % |
+| | 2 | 11,6 / 7,1 | 27,3 / 14,5 | 188,9 / 46,4 | 14,4 / 1,9 % |
+| JAZ 90, 0,35 / 0,48 | 1 | 2,47 / 2,41 | 5,49 / 5,45 | 13,4 / 10,7 | 0,7 / 0,0 % |
+| | 1,5 | 4,71 / 3,91 | 9,75 / 8,57 | 39,4 / 22,8 | 5,6 / 1,4 % |
+| | 2 | 7,75 / 6,07 | 17,1 / 13,7 | 73,5 / 78,4 | 12,9 / 4,8 % |
+| JAZ 50, 0,35 (no cambia) | 1,5 | 2,31 | 4,86 | 21,0 | 4,1 % |
+
+Con rachas suaves el tope casi no se toca y da igual; con las fuertes es lo que
+separa una final que se va veinte metros de una que se va cien. Lo que queda de
+media —tres metros y medio con σ_w 1— no es del tope: es la ley de fuera, la
+mirada, que no se ha tocado.
+
+### La recogida: lo que pedía el punto de toma
+
+**Por qué tocaba a 2–2,6 m/s.** El punto de toma de H53 (`pideAlPuntoDeToma`)
+pide, si el perfil va a llevar el avión pasado el punto, lo que lo pone en el
+suelo en él: lo que queda de ruedas entre el tiempo que falta, **medio segundo
+como poco**, hasta la senda entera. Pasado el punto, a metro y medio pide 3 m/s
+—1,5 entre 0,5— y a cuatro metros, lo que bajaba la senda. En la traza del ala
+de la tanda 20 (`c34r/ala-747-gc-t20.txt`): empezó a recoger a 14 m y 165
+nudos, el punto entró a 8,8 m y 232 m pasado el umbral, y desde los 4,5 m pidió
+**4,1 m/s** —la senda— durante segundo y medio; la palanca bajó, el morro pasó
+de −0,4° a −2,8° y tocó a 2,59 m/s **con el morro dos grados y medio por
+debajo del horizonte**, que en un 747 es la rueda de morro primero.
+
+**Lo que dice el manual.** El FCTM de Boeing de los de fuselaje ancho (ver
+H53): recoger a unos treinta pies subiendo el morro dos o tres grados, el gas
+al ralentí después, y «Do not allow the airplane to float or attempt to hold
+it off. Fly the airplane onto the runway at the desired touchdown point»: no
+sostenerlo, que no es tirarlo al suelo. Y lo normal de un avión de línea al
+tocar son de dos a cuatro pies por segundo, con diez ya duro (`aterrizaje.ts`,
+con las series de cargas en servicio de la FAA y la CS 25.473). Ninguna de las
+dos cosas pide 3 m/s a metro y medio, ni bajar el morro para llegar.
+
+**Lo que se cambia, en el banco**: por debajo de los treinta pies —donde recoge
+el manual y donde el banco quita el gas—, lo que pide el punto es como mucho la
+senda repartida en lo que queda hasta el suelo, acabando en **cuatro pies por
+segundo**, una toma firme y no dura. Por encima, como antes: es donde el punto
+le quita al avión lo que flota con energía de más. El perfil sigue buscando
+los dos pies por segundo de siempre.
+
+En la mesa de la prueba (`recogida-del-reactor.test.mjs`, la de H53 y H55c:
+el JAZ 120 con veinte nudos de cara, las alas sostenidas, el gas de H55c;
+doscientas finales; `h34f/mesa/mesa.ts`):
+
+| | σ_w | Más de 2 m/s | Pasadas de 600 m | La más larga | Mediana al tocar | Morro al tocar, el más bajo |
+|---|---|---|---|---|---|---|
+| JAZ 120 a 142, H53 / H34f | 1 | 35 / **23** | 4 / 7 | 653 / 716 m | 1,30 / 1,26 m/s | 0,3° / **1,7°** |
+| | 1,5 | 61 / 52 | 4 / 9 | 784 / 800 | 1,66 / 1,42 | 0,3° / 1,3° |
+| JAZ 120 a 146, H53 / H34f | 1 | 22 / 15 | 2 / 3 | 734 / 741 | 1,23 / 1,18 | 0,0° / 0,4° |
+| JAZ 110, H53 / H34f | 1 | 11 / 6 | 2 / 4 | 696 / 726 | 1,07 / 1,03 | 0,9° / 1,4° |
+| | 1,5 | 42 / 37 | 3 / 3 | 640 / 667 | 1,34 / 1,28 | −0,3° / −0,3° |
+| JAZ 90, Los Rodeos, H53 / H34f | 1 | 2 / 2 | 0 / 0 | 487 / 489 | 0,92 / 0,92 | 0,9° / 0,9° |
+| | 1,5 | 26 / 25 | 0 / 0 | 552 / 566 | 1,26 / 1,25 | −0,3° / −0,3° |
+
+El JAZ 90 casi no cambia porque en Los Rodeos el punto casi nunca entra. Se probó
+también repartirlo desde donde empieza la recogida, y no desde los treinta pies:
+20 duras y 12 largas (con cinco pies por segundo, 22 y 9; con seis, 26 y 7).
+Y **se probó recoger a los treinta pies**, como dice el manual: con esta ley,
+el doble de duras —69 de 200, la peor a 4,25 m/s—. El banco recoge a tres
+segundos de senda, 13–14 m en el 747 (44–46 ft), que es más cerca de los
+cincuenta pies a los que empieza la del automático del 747-400 (FCOM,
+p. 4.20.13) que de los treinta del piloto: es un perfil de bajada repartida, el
+de un automático, no los dos o tres grados de una mano. Se queda como está; lo
+que se ajusta al manual es el gas al ralentí, que ya era así desde H55c.
+
+La prueba cambia en lo suyo: la regla entera a ras de suelo, y la final de la
+semilla 56 —la que se sostiene a diez metros perdiendo velocidad, que H55c
+dejó a 608 m— llega a 716: el precio de no tirar el avión al suelo; en esas
+sesenta las duras bajan de 7 a 4.
+
+### Volado
+
+`verificar-vuelo-entero.mjs`, reloj por uno, sobre una copia fija de la rama
+(`h34f/vuelos/` del scratchpad) y con la traza del ala. El viento de Gran
+Canaria es el de su parte, 025/20: este banco no lee `OGA_VIENTO`, y la línea
+del vuelo lo confirma. Lo de antes es de la ronda de la tanda 21 (`c34/` y
+`c34r/`), sobre el mismo main sin esto.
+
+| Vuelo | Antes (tanda 21) | Con H34f |
+|---|---|---|
+| JAZ 120, Gran Canaria, 025/20 | 15,2 m del eje, 348 m, 1,88 m/s; 61 de 62 (✗ el eje) | 1,4 m, 429 m, 1,25 m/s; **62 de 62** |
+| JAZ 120, Gran Canaria, repetido | 9,4 m, 480 m, 2,36 m/s; 61 de 63 (✗ el eje, ✗ la toma) | 2,5 m, 313 m, 1,74 m/s; **62 de 62** |
+| JAZ 120, Tukã, frustrada | 3,9 m, 540 m, 2,01 m/s; 65 de 66 (✗ la toma) | 13,1 m, 448 m, 1,92 m/s; 65 de 66 (✗ el eje) |
+| JAZ 90, Los Rodeos | 0,9 m, 225 m, 0,75 m/s; 62 de 62 | 1,3 m, 363 m, 1,12 m/s; **62 de 62** |
+| JAZ 40, Los Rodeos, frustrada | 0,3 m, 326 m, 1,25 m/s; 58 de 58 | no volado (ver abajo) |
+
+Cada vuelo es una tirada, con las rachas que le tocan: no es una cifra.
+
+**El JAZ 120 en Gran Canaria**: en la final el alerón no pasó de 0,19 —no
+hubo racha que pidiera más del tope de antes—; el de ahora solo se usó entero
+al empezar el viraje de la subida, de 0° a 25° de inclinación a ocho grados por
+segundo en vez de cuatro. La recogida empezó a 12,6 m, 98 m antes del umbral,
+bajando 2,8 m/s a 146 nudos; el punto entró a 2,8 m de ruedas y pidió de 1,16
+a 1,01 m/s —el tope nuevo—, y tocó a 429 m, 1,25 m/s y con el morro a 4,4°.
+
+**El JAZ 120 en Tukã con la torre mandando al aire** (a 60 m, pista ocupada):
+la frustrada, sin avisador. En la segunda final la recogida empezó a 13,2 m y
+152 nudos; el punto entró a 5,6 m, 247 m pasado el umbral, y pidió lo que lo
+llevaba al suelo en el punto, 1,7–1,8 m/s, por debajo del tope (2,6 a esa
+altura); tocó a 1,92 m/s y 448 m, en la zona. **El rojo es otro: 13,1 m del
+eje.** La traza: llegó a los cien metros de ruedas cuatro metros a la izquierda
+y derivando; a 60 m el banco pedía casi tres grados a la derecha y el ala no
+los seguía —una racha de alabeo de −3,5 °/s, y el alerón en 0,2, lejos del
+tope—, y a 40 m iba a −16 m; la corrección se llevó la trayectoria a 2,8° hacia el
+eje, cruzó el eje a diez metros de ruedas y siguió hasta +13 m. El alerón pasó
+del tope de antes una vez, −0,40, ya corrigiendo al otro lado: con 0,35 habría
+girado más despacio, no menos. Es la ley de fuera —la mirada y la mano de
+cuatro, que con este alabeo lento se pasan—, la misma que deja tres metros y
+medio de media en la mesa lateral con el tope que sea.
+
+**El JAZ 90 en Los Rodeos**: el alerón pasó de 0,35 cuatro muestras en la
+final, 0,44 como mucho, y el punto de toma no entró en ningún fotograma: su
+recogida es la de siempre. Tocó más largo y más firme que en la tanda 21 —363 m
+y 1,12 m/s, de 225 m y 0,75—, dentro de lo que va de una tirada a otra con el
+aire de Los Rodeos, y todo en verde.
+
+**El JAZ 120 en Gran Canaria, la segunda**: tampoco hubo racha que pidiera
+más de 0,35 en la final (0,29 como mucho), y el punto no entró: empezó a
+recoger a 13,3 m, 46 m antes del umbral, bajando solo 2,1 m/s a 153 nudos, y
+el perfil lo posó a 313 m y 1,74 m/s, todo en verde. La recogida de esta toma
+es la de antes de H34f.
+
+**El JAZ 40 con la pista ocupada no se voló**: no cabía en el tiempo del
+encargo, con el navegador de uno en uno. No le toca nada de esto por
+construcción: su tope sigue en 0,35 —con él rueda 14,5 °/s, más que los 8,4
+del Twin Otter— y el punto de toma es solo de los reactores
+(`RECOGIDA_DE_REACTOR`).
+
+### El vitest
+
+Las pruebas del banco (`scripts/`, siete ficheros, 55 pruebas), en verde, y
+`tsc` limpio. El vitest entero no se ha corrido: no se ha tocado `src/`.
+
+### Lo que queda
+
+- **La ley lateral de fuera en la final del 747**: la mirada y la mano de cuatro
+  se pasan del eje con un avión que rueda despacio (Tukã, 13,1 m). En la mesa
+  lateral deja 3,5 m de media al umbral con σ_w 1, con el tope de antes y con el
+  de ahora.
+- **De qué fue la racha que clavó el alerón siete segundos** en la repetición
+  de la tanda 21: ese vuelo no llevaba la traza del ala, y el parte por segundo
+  no tiene la inclinación. Se ve el tope, no lo que rodaba el avión.
+- **La toma del 747, a 1–1,5 m/s como su manual, solo a medias**: 1,25 en Gran
+  Canaria y 1,92 en Tukã, donde el punto pidió 1,7 m/s desde 5,6 m porque
+  llegaba a la Vref más diez. Repartir el tope con el cuadrado de la altura
+  —poco más de la toma firme en los últimos metros— da en la mesa 19 duras y 15
+  largas (con la recta, 23 y 7): flota el doble, y no se ha puesto.
+- **Recoger a los treinta pies**: con esta ley, el doble de duras. Haría falta
+  una recogida de actitud, la de subir el morro dos o tres grados, y no de
+  bajada repartida.
+- **Las largas del 747 en la mesa, de 4 a 7 de 200**: la de la semilla 56 de
+  H55c, que se sostiene a diez metros perdiendo velocidad, va de 608 a 716 m.
+- **El JAZ 40 con la pista ocupada, en el navegador**, y el JAZ 110, que
+  cambia como el JAZ 120 y solo se ha medido en las mesas.
