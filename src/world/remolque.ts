@@ -346,11 +346,6 @@ function rayaDeRetroceso(
   puesto: PuntoXZ,
   rumbo: number,
   raya: readonly PuntoXZ[],
-  /**
-   * Si la raya sigue por el eje desde ahí, hasta donde lo deja (H60c): el cruce es el último
-   * punto de la raya que va por él, y no el primero. Ver `empujeDesdeElPuesto`.
-   */
-  hastaQueLoDeja = false,
 ): { readonly raya: PuntoXZ[]; readonly enElEje: PuntoXZ; readonly sigue: PuntoXZ } | null {
   const atras = vector(rumbo + Math.PI);
   const t = (q: PuntoXZ) => (q.x - puesto.x) * atras.x + (q.z - puesto.z) * atras.z;
@@ -378,12 +373,8 @@ function rayaDeRetroceso(
       let enElEje: PuntoXZ = { x: puesto.x + atras.x * hasta, z: puesto.z + atras.z * hasta };
       // Si cae junto a un punto de la raya, a menos de tres metros, ese punto: es donde la raya sigue.
       for (const r of [a, b]) if (Math.hypot(r.x - enElEje.x, r.z - enElEje.z) < 3) enElEje = r;
-      let j = i;
-      if (hastaQueLoDeja)
-        while (j < raya.length && Math.abs(lado(raya[j]!)) <= 0.5 && t(raya[j]!) >= t(enElEje) - 1e-6 && t(raya[j]!) <= SIGUE_LA_RAYA)
-          enElEje = raya[j++]!;
       const eje = enElEje;
-      const despues = raya.slice(j).filter((r) => r !== eje && Math.hypot(r.x - eje.x, r.z - eje.z) > 0.5);
+      const despues = raya.slice(i).filter((r) => r !== eje && Math.hypot(r.x - eje.x, r.z - eje.z) > 0.5);
       const sigue = despues.find((r) => Math.hypot(r.x - eje.x, r.z - eje.z) >= 3);
       if (!sigue) return null;
       return { raya: [{ ...puesto }, enElEje, ...despues], enElEje, sigue };
@@ -561,8 +552,8 @@ export function empujeDesdeElPuesto(
   if (pintada !== null) {
     const centro = centroCon(pintada);
     const desde = { ...centro, rumbo: pintada };
-    const porLaRecta = (retroceso: ReturnType<typeof rayaDeRetroceso>): Empuje | null => {
-      if (!retroceso || !porLaPlataforma) return trayectoriaDelEmpuje(desde, retroceso?.raya ?? raya, batalla, opciones);
+    const porLaRecta = (retroceso: ReturnType<typeof rayaDeRetroceso>): (Empuje | null)[] => {
+      if (!retroceso || !porLaPlataforma) return [trayectoriaDelEmpuje(desde, retroceso?.raya ?? raya, batalla, opciones)];
       /*
        * **Donde la prolongación encuentra la raya con esquina, la calle empieza ahí.** Hasta
        * ahí el tractor va recto por la pintada, y la esquina no es un quiebro que se pueda
@@ -577,10 +568,11 @@ export function empujeDesdeElPuesto(
        * como la raya de siempre.
        */
       const tras = retroceso.raya.slice(1);
-      let calle = rumboEntre(retroceso.enElEje, retroceso.sigue);
+      const alEncontrarla = rumboEntre(retroceso.enElEje, retroceso.sigue);
+      let calle = alEncontrarla;
       let cruce = retroceso.enElEje;
       const esquina = diferencia(pintada + Math.PI, calle);
-      if (Math.abs(esquina) <= ESQUINA_QUE_SE_SIGUE) return trayectoriaDelEmpuje(desde, retroceso.raya, batalla, opciones);
+      if (Math.abs(esquina) <= ESQUINA_QUE_SE_SIGUE) return [trayectoriaDelEmpuje(desde, retroceso.raya, batalla, opciones)];
       const lado = Math.sign(esquina);
       for (let k = tras.indexOf(retroceso.sigue); k >= 0 && k < tras.length - 1; k++) {
         const p = tras[k]!;
@@ -590,29 +582,34 @@ export function empujeDesdeElPuesto(
         calle = va;
         cruce = p;
       }
-      return rectaArcoRecta(desde, cruce, calle, batalla);
+      /*
+       * **Y si la calle vuelve a torcer enseguida, con el morro por la raya donde la encuentra**
+       * (H60d). Seguir la curva entera adelanta el cruce hasta donde acaba, y con un avión
+       * grande la curva alisada de la esquina es más ancha: en el 24 de Los Rodeos, con el JAZ
+       * 110 y el JAZ 120, el cruce se iba seis metros más allá, la Z tuerce al oeste a diecisiete
+       * metros de él, y el morro, puesto por la Z, ya no miraba hacia donde sigue la raya en sus
+       * treinta metros (`miraALaCalle`). Con el cruce donde la prolongación encuentra la raya y la
+       * calle con el rumbo que lleva allí, el avión queda en la Z, seis metros más allá, y
+       * mirando por ella. Se prueba después de lo de siempre, que es lo que ya salía bien.
+       */
+      const siguiendoLaCurva = rectaArcoRecta(desde, cruce, calle, batalla);
+      return cruce === retroceso.enElEje
+        ? [siguiendoLaCurva]
+        : [siguiendoLaCurva, rectaArcoRecta(desde, retroceso.enElEje, alEncontrarla, batalla)];
     };
     /*
-     * **Y si la raya del plan va por la propia prolongación**, la calle empieza donde se aparta
-     * de ella (H60c). Es la raya que sale de espaldas por la pintada hasta su calle
-     * (`deEspaldas` en `rodajesDesde`): la prolongación la encuentra a los cinco metros, y desde
-     * ahí `trayectoriaDelEmpuje` la seguía entera, con la esquina de la calle a más de
-     * `RECTA_DE_LA_PLATAFORMA` cortada como en «La esquina, que vio el banco» —el 24 de Los
-     * Rodeos, 167 m y −132°—. Se prueba primero lo de la H60b, que es lo que ya salía bien, y
-     * si no cumple, con el cruce donde la raya deja la recta.
+     * La H60c probaba además, si esto no cumplía, con el cruce en el último punto de la raya
+     * que va por la prolongación (`hastaQueLoDeja`). No salvó ningún empuje del barrido, ni en
+     * la H60c ni medido otra vez en la H60d, y se quitó.
      */
-    const primero = rayaDeRetroceso(puesto, pintada, raya);
-    const alFinal = primero ? rayaDeRetroceso(puesto, pintada, raya, true) : null;
-    const intentos = alFinal && alFinal.enElEje !== primero?.enElEje ? [primero, alFinal] : [primero];
-    for (const [n, retroceso] of intentos.entries()) {
-      const empuje = porLaRecta(retroceso);
+    const retroceso = rayaDeRetroceso(puesto, pintada, raya);
+    for (const [n, empuje] of porLaRecta(retroceso).entries())
       if (
         (siempreLaPintada && n === 0) ||
         (retroceso && empuje && vaDeCulo(empuje, batalla) && quedaSobreLaRaya(empuje.poses.at(-1)!, raya) && miraALaCalle(empuje, raya))
       )
         return { rumbo: pintada, centro, empuje, porLaPintada: true, porLaRuta, pintada, porQueNo };
-    }
-    porQueNo = primero ? "no-acaba-en-ella" : "no-la-encuentra";
+    porQueNo = retroceso ? "no-acaba-en-ella" : "no-la-encuentra";
   }
   const centro = centroCon(porLaRuta);
   return {
