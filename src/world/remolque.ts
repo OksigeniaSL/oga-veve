@@ -39,6 +39,7 @@
  * al norte: se le da la vuelta aquí.
  */
 
+import { seSaleEmpujado, type DelAip } from "./puestos-del-aip";
 import type { Aerodrome, Punto } from "./aerodrome";
 import type { MorroDelAvion } from "./rueda-de-morro";
 
@@ -215,6 +216,10 @@ export function edificiosDePasarela(
  * **Si este avión sale de este puesto empujado por un tractor**: los de línea,
  * de un puesto de contacto. Lo demás sale de frente, que es lo que hace: una
  * avioneta en la plataforma de aviación general rueda sola hacia delante.
+ *
+ * **Y si el AIP dice que de ahí se sale por sus medios, también** (H60f): un puesto
+ * «A» se deja rodando hacia delante, sin tractor, como la avioneta; y uno que la carta
+ * no da por de contacto no tiene pasarela de la que empujar. Ver `seSaleEmpujado`.
  */
 export function saleConRemolque(
   deLinea: boolean,
@@ -222,7 +227,9 @@ export function saleConRemolque(
   z: number,
   edificios: Edificios,
   morro: Pick<MorroDelAvion, "puerta" | "punta">,
+  aip: DelAip | null = null,
 ): boolean {
+  if (aip && (aip.contacto === false || !seSaleEmpujado(aip))) return false;
   return deLinea && esPuestoDeContacto(x, z, edificios, morro);
 }
 
@@ -708,6 +715,30 @@ export const LA_CALLE_TUERCE = 40 * GRADO;
  * grados que en `rumboEnElPuesto`, que con menos pone el avión en el eje de la raya.
  */
 const SALE_DE_LADO = 50 * GRADO;
+
+/**
+ * **Si la raya sale del puesto de lado**: sus primeros veinte metros, a más de
+ * `SALE_DE_LADO` de la cola del avión aparcado con `rumbo`. Es lo que mira `empujeDesdeElPuesto`
+ * para buscar la recta de la plataforma, y lo que el plan mira para no sacar de un puesto
+ * con un empuje de quince metros y el avión atravesado (H60f, `saleDeLado` en el plan).
+ */
+export function rayaDeLado(rumbo: number, raya: readonly PuntoXZ[]): boolean {
+  if (raya.length < 2) return false;
+  let andado = 0;
+  let hasta = raya[raya.length - 1]!;
+  for (let i = 1; i < raya.length; i++) {
+    const a = raya[i - 1]!;
+    const b = raya[i]!;
+    const l = Math.hypot(b.x - a.x, b.z - a.z);
+    if (andado + l >= 20) {
+      const k = (20 - andado) / (l || 1);
+      hasta = { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k };
+      break;
+    }
+    andado += l;
+  }
+  return Math.abs(diferencia(rumbo + Math.PI, rumboEntre(raya[0]!, hasta))) > SALE_DE_LADO;
+}
 /** Cuántos metros de raya se miran para saber hacia dónde va la calle. */
 export const MIRA_LA_CALLE = 30;
 /**

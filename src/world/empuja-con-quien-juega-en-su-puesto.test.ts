@@ -90,9 +90,14 @@ describe("el reactor del tráfico de Los Rodeos, con quien juega en su puesto", 
     return { puesto, tractor: null };
   }
 
-  it("con el JAZ 90 en el 24, el del banco, empuja desde el 17 enseguida", () => {
+  /*
+   * Desde el 14, de pasarela. Era el 17, a lo que alcanza una pasarela de la terminal, pero en el
+   * AIP (AD 2-GCXO PDC 1.2) el 17 es de salida autónoma («A»), de ATR 72 como mucho y sin
+   * pasarela: de él no sale nadie empujado (H60f).
+   */
+  it("con el JAZ 90 en el 24, el del banco, empuja desde el 14 enseguida", () => {
     const r = tractorDe("jaz-90", 60);
-    expect(r.puesto?.x).toBeCloseTo(-504.2, 0);
+    expect(r.puesto?.x).toBeCloseTo(-360.5, 0);
     expect(r.tractor, "el tractor sale").not.toBeNull();
     expect(r.tractor!).toBeLessThan(5);
   });

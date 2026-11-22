@@ -1547,6 +1547,7 @@
       -752.4
     ]
   ],
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCLA, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCLA/","leido":"2026-11-22","cartas":[{"carta":"AD 2-GCLA PDC 1.2","wef":"15-MAY-25"}]},
   "parkingPositions": [
     {
       "ref": "2",
@@ -1580,7 +1581,13 @@
           169.6,
           -712.3
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "10",
@@ -1597,7 +1604,13 @@
           167.3,
           -399
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "11",
@@ -1614,7 +1627,13 @@
           163.2,
           -341.1
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": null,
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "6",
@@ -1631,7 +1650,13 @@
           171.3,
           -587.6
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "4",
@@ -1648,7 +1673,13 @@
           171.7,
           -670.2
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "6A",
@@ -1665,7 +1696,13 @@
           166.2,
           -567.2
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A339",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "7",
@@ -1682,7 +1719,13 @@
           165.6,
           -546.8
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "4A",
@@ -1699,7 +1742,13 @@
           171,
           -652
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A339",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "9",
@@ -1716,7 +1765,13 @@
           168.4,
           -451.5
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "8",
@@ -1733,7 +1788,13 @@
           168.2,
           -502.1
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "5",
@@ -1750,7 +1811,13 @@
           165.3,
           -630.2
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "13",
@@ -1767,7 +1834,13 @@
           162.6,
           -280.5
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": null,
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "15",
@@ -1784,7 +1857,13 @@
           160.9,
           -229.8
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": null,
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "16",
@@ -1801,14 +1880,26 @@
           159.1,
           -168.6
         ]
-      ]
+      ],
+      "aip": {
+        "salida": "R",
+        "max": null,
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": "14",
       "xy": [
         128.1,
         -241.4
-      ]
+      ],
+      "aip": {
+        "salida": "A",
+        "max": "A339",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     },
     {
       "ref": null,
@@ -1822,7 +1913,13 @@
       "xy": [
         189.8,
         -317.4
-      ]
+      ],
+      "aip": {
+        "salida": "A",
+        "max": "B753",
+        "contacto": null,
+        "carta": "AD 2-GCLA PDC 1.2"
+      }
     }
   ],
   "holdingPositions": [

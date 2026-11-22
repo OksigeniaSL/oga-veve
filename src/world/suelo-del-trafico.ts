@@ -20,6 +20,7 @@
  * mundo y ya está. Quien los recorre es `trafico.ts`.
  */
 
+import { valeParaElEmpuje } from "./puestos-del-aip";
 import { enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
 import {
   edificiosDePasarela,
@@ -590,7 +591,14 @@ export function sueloDelTrafico(
   };
 
   // Solo los que tienen asfalto debajo, con la misma regla que el avión de quien juega. Ver `puestosEnElPavimento`.
-  const puestos = puestosEnElPavimento(aero.parkingPositions ?? [], aero, grafo).map((p) => p.xy);
+  const delPavimento = puestosEnElPavimento(aero.parkingPositions ?? [], aero, grafo);
+  const puestos = delPavimento.map((p) => p.xy);
+  /*
+   * **Los que el AIP no desmiente como de contacto con salida empujada** (H60f): sin
+   * envergadura, que la del tráfico no se sabe aquí; lo que sí se sabe es que de un puesto
+   * «A», o de uno que la carta no da por de pasarela, no sale nadie con tractor.
+   */
+  const conPasarelaEnElAip = new Set(delPavimento.filter((p) => valeParaElEmpuje(p.aip, 0)).map((p) => p.xy));
   // Los de un campo que embarca por pasarela: en otro no hay puesto de contacto. Ver `edificiosDePasarela`.
   const edificios = edificiosDePasarela(aero);
   /**
@@ -605,7 +613,7 @@ export function sueloDelTrafico(
     const hecho = deContacto.get(pasarela.batalla);
     if (hecho) return hecho;
     const morro = pasarela.morro ?? MORRO_DEL_TRAFICO.reactor;
-    const suyos = puestos.filter((xy) => esPuestoDeContacto(xy[0], -xy[1], edificios, morro));
+    const suyos = puestos.filter((xy) => conPasarelaEnElAip.has(xy) && esPuestoDeContacto(xy[0], -xy[1], edificios, morro));
     const lista = suyos.length ? suyos : puestos;
     deContacto.set(pasarela.batalla, lista);
     return lista;
@@ -633,7 +641,7 @@ export function sueloDelTrafico(
 
   /** Si el camino empieza o acaba en un puesto de contacto para ese avión. */
   const enUnPuestoDeContacto = (p: EnElPlano, pasarela: PasarelaDelTrafico): boolean =>
-    puestos.some((xy) => Math.hypot(xy[0] - p.x, -xy[1] - p.z) < 1) &&
+    puestos.some((xy) => conPasarelaEnElAip.has(xy) && Math.hypot(xy[0] - p.x, -xy[1] - p.z) < 1) &&
     esPuestoDeContacto(p.x, p.z, edificios, pasarela.morro ?? MORRO_DEL_TRAFICO.reactor);
 
   /**

@@ -1,0 +1,243 @@
+{
+ "id": "GCLA",
+ "fuente": "AIP España (ENAIRE), AD 2-GCLA, cartas PDC: características de los puestos de estacionamiento",
+ "url": "https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCLA/",
+ "leido": "2026-11-22",
+ "cartas": [
+  {
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25"
+  }
+ ],
+ "contacto": null,
+ "puestos": [
+  {
+   "ref": "03",
+   "lat": 28.620102777777777,
+   "lon": -17.753463888888888,
+   "salida": "R",
+   "max": "A321",
+   "aproar": null,
+   "obs": "INCOMP. H3A, H3B",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "04",
+   "lat": 28.620480555555556,
+   "lon": -17.753344444444444,
+   "salida": "R",
+   "max": "A321",
+   "aproar": null,
+   "obs": "INCOMP. 4A (1)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "05",
+   "lat": 28.62083888888889,
+   "lon": -17.753508333333333,
+   "salida": "R",
+   "max": "A321",
+   "aproar": null,
+   "obs": "INCOMP. 4A (1)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "06",
+   "lat": 28.621222222222222,
+   "lon": -17.75337777777778,
+   "salida": "R",
+   "max": "A321",
+   "aproar": null,
+   "obs": "INCOMP. 6A (1)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "07",
+   "lat": 28.621591666666667,
+   "lon": -17.75348888888889,
+   "salida": "R",
+   "max": "A321",
+   "aproar": null,
+   "obs": "INCOMP. 6A (1)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "08",
+   "lat": 28.621991666666666,
+   "lon": -17.753475,
+   "salida": "R",
+   "max": "A321",
+   "aproar": null,
+   "obs": "(1)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "09",
+   "lat": 28.62245,
+   "lon": -17.75344722222222,
+   "salida": "R",
+   "max": "B763",
+   "aproar": null,
+   "obs": "(1)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "10",
+   "lat": 28.622919444444445,
+   "lon": -17.753466666666668,
+   "salida": "R",
+   "max": "A321",
+   "aproar": null,
+   "obs": "INCOMP. 12 (1) (2)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "11",
+   "lat": 28.62344166666667,
+   "lon": -17.75340277777778,
+   "salida": "R",
+   "max": null,
+   "aproar": null,
+   "obs": "A333/AS32 - INCOMP. 12",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "12",
+   "lat": 28.62390277777778,
+   "lon": -17.753677777777778,
+   "salida": "A",
+   "max": "B753",
+   "aproar": null,
+   "obs": "INCOMP. 10 (2), 11, 13, 14 (3), 15 (3)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "13",
+   "lat": 28.62398888888889,
+   "lon": -17.75340277777778,
+   "salida": "R",
+   "max": null,
+   "aproar": null,
+   "obs": "A321/AS32 - INCOMP. 12 (4)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "14",
+   "lat": 28.624886111111113,
+   "lon": -17.753511111111113,
+   "salida": "A",
+   "max": "A339",
+   "aproar": null,
+   "obs": "INCOMP. 12 (3), 15, 16",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "15",
+   "lat": 28.624444444444446,
+   "lon": -17.753591666666665,
+   "salida": "R",
+   "max": null,
+   "aproar": null,
+   "obs": "B753/AS32 - INCOMP. 12 (3), 14 (4)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "16",
+   "lat": 28.624997222222223,
+   "lon": -17.753469444444445,
+   "salida": "R",
+   "max": null,
+   "aproar": null,
+   "obs": "B764/AS32 - INCOMP. 14",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "4A",
+   "lat": 28.62064722222222,
+   "lon": -17.753358333333335,
+   "salida": "R",
+   "max": "A339",
+   "aproar": null,
+   "obs": "INCOMP. 04, 05 (1)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "6A",
+   "lat": 28.621405555555555,
+   "lon": -17.753383333333332,
+   "salida": "R",
+   "max": "A339",
+   "aproar": null,
+   "obs": "INCOMP. 06, 07",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "H2",
+   "lat": 28.619730555555556,
+   "lon": -17.753769444444444,
+   "salida": "A",
+   "max": "B412",
+   "aproar": null,
+   "obs": "(4)",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "H3A",
+   "lat": 28.620102777777777,
+   "lon": -17.75353888888889,
+   "salida": "A",
+   "max": "AS50",
+   "aproar": null,
+   "obs": "INCOMP. 03",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  },
+  {
+   "ref": "H3B",
+   "lat": 28.6201,
+   "lon": -17.75360277777778,
+   "salida": "A",
+   "max": "AS50",
+   "aproar": null,
+   "obs": "INCOMP. 03",
+   "carta": "AD 2-GCLA PDC 1.2",
+   "wef": "15-MAY-25",
+   "contacto": null
+  }
+ ]
+}

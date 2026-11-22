@@ -1,0 +1,87 @@
+{
+ "id": "GCHI",
+ "fuente": "AIP España (ENAIRE), AD 2-GCHI, cartas PDC: características de los puestos de estacionamiento",
+ "url": "https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCHI/",
+ "leido": "2026-11-22",
+ "cartas": [
+  {
+   "carta": "AD 2-GCHI PDC 1",
+   "wef": "11-JUN-26"
+  }
+ ],
+ "contacto": null,
+ "puestos": [
+  {
+   "ref": "1",
+   "lat": 27.81331388888889,
+   "lon": -17.885266666666666,
+   "salida": "A",
+   "max": null,
+   "aproar": null,
+   "obs": "MAX SPAN 28.6 m, INCOMP. 1A",
+   "carta": "AD 2-GCHI PDC 1",
+   "wef": "11-JUN-26",
+   "contacto": null
+  },
+  {
+   "ref": "1A",
+   "lat": 27.813502777777778,
+   "lon": -17.885377777777776,
+   "salida": "A",
+   "max": null,
+   "aproar": null,
+   "obs": "MAX SPAN 28.6 m, INCOMP. 1",
+   "carta": "AD 2-GCHI PDC 1",
+   "wef": "11-JUN-26",
+   "contacto": null
+  },
+  {
+   "ref": "2",
+   "lat": 27.813891666666667,
+   "lon": -17.8856,
+   "salida": "A",
+   "max": null,
+   "aproar": null,
+   "obs": "MAX SPAN 28.6 m, INCOMP. 2A",
+   "carta": "AD 2-GCHI PDC 1",
+   "wef": "11-JUN-26",
+   "contacto": null
+  },
+  {
+   "ref": "2A",
+   "lat": 27.814075,
+   "lon": -17.88571111111111,
+   "salida": "A",
+   "max": null,
+   "aproar": null,
+   "obs": "MAX SPAN 28.6 m, INCOMP. 2",
+   "carta": "AD 2-GCHI PDC 1",
+   "wef": "11-JUN-26",
+   "contacto": null
+  },
+  {
+   "ref": "3",
+   "lat": 27.814397222222222,
+   "lon": -17.885902777777776,
+   "salida": "A",
+   "max": null,
+   "aproar": null,
+   "obs": "MAX SPAN 28.6 m, INCOMP. 3A",
+   "carta": "AD 2-GCHI PDC 1",
+   "wef": "11-JUN-26",
+   "contacto": null
+  },
+  {
+   "ref": "3A",
+   "lat": 27.814569444444444,
+   "lon": -17.886005555555556,
+   "salida": "A",
+   "max": null,
+   "aproar": null,
+   "obs": "MAX SPAN 28.6 m, INCOMP. 3",
+   "carta": "AD 2-GCHI PDC 1",
+   "wef": "11-JUN-26",
+   "contacto": null
+  }
+ ]
+}
