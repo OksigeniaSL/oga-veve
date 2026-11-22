@@ -423,10 +423,26 @@ despegar:
 | Teléfono tumbado, 800×360 | 110 px | 227 px | 155 px |
 | Teléfono de pie, 400×780 | 23 px | 164 px | 164 px |
 
-En el teléfono tumbado pequeño, el avión, la envolvente, la báscula y la
-pista se ven al abrir. El veredicto queda debajo de la barra de despegar, y
-para leer la frase hay que rodar unos 45 px. Esa frase es de Taguató, que ya
-lee, y el ámbar del punto y del símbolo se ve sin rodar.
+Con eso, en el teléfono tumbado pequeño el veredicto seguía debajo de la
+barra de despegar: había que rodar unos 45 px para ver el sello, la frase y
+el arreglo. Y el arreglo de un toque es justo lo que más falta hace con el
+centro fuera. Así que en pantallas de 460 px de alto o menos, con el
+centrado, la báscula y la pista se hacen más bajas: la barra y el asfalto de
+16 px, la carrera de 16 y las cifras sin margen. El sello baja a 34 px y el
+arreglo a 44, que sigue siendo el tamaño del dedo. Nada de lo que se toca
+cambia de sitio.
+
+`mirarElCentrado` mira ahora en cada pantalla tumbada si el veredicto se ve
+sin rodar: el sello, la frase y el arreglo, con el principio y el final de
+cada uno en pantalla y sin la barra encima. Lo comprueba con la carga de
+siempre, fuera de la zona y después del arreglo.
+
+| Pantalla | Rodaba | Rueda ahora | El veredicto |
+|---|---|---|---|
+| Tableta, 1024×600 | 35 px | 35 px | a la vista |
+| Teléfono tumbado, 915×412 | 103 px | 68 px | a la vista |
+| Teléfono tumbado, 800×360 | 155 px | 120 px | a la vista; antes, tapado |
+| Teléfono de pie, 400×780 | 164 px | 164 px | se lee rodando, como la hoja de siempre |
 
 ### Comprobado
 

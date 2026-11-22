@@ -3885,7 +3885,25 @@ function medirElCentrado() {
     }
   const punto = c.querySelector(".hoja__punto");
   const veredicto = document.querySelector(".hoja__veredicto");
+  /*
+   * **Si el veredicto se ve sin rodar**: el sello, la frase y el arreglo, cada
+   * uno con su centro en pantalla y sin nada encima, que la barra de despegar
+   * va fija abajo y tapa sin salirse de la pantalla.
+   */
+  const tapados = [];
+  for (const el of veredicto ? veredicto.querySelectorAll(".hoja__sello, .hoja__texto, .hoja__arreglo") : []) {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    for (const y of [r.top + 2, r.bottom - 2]) {
+      const encima = y >= 0 && y < innerHeight ? document.elementFromPoint(x, y) : null;
+      if (!encima || !veredicto.contains(encima)) {
+        tapados.push(`${String(el.className).split(" ")[0]} ${Math.round(r.top)}–${Math.round(r.bottom)}`);
+        break;
+      }
+    }
+  }
   return {
+    tapados,
     fuera,
     chicos,
     pisan,
@@ -3926,6 +3944,7 @@ async function mirarElCentrado() {
             h.fuera.length ? `fuera: ${h.fuera.join(", ")}` : "",
             h.chicos.length ? `pequeños: ${h.chicos.join(", ")}` : "",
             h.pisan ? `${h.pisan} botones se pisan` : "",
+            h.tapados.length ? `veredicto tapado: ${h.tapados.join(", ")}` : "veredicto a la vista",
             `punto en ${h.x.toFixed(1)}, ${h.y.toFixed(1)}${h.puntoFuera ? " (fuera)" : ""}`,
             h.rueda > 1 ? `se rueda ${h.rueda} px` : "sin rodar",
             h.texto,
@@ -3960,9 +3979,12 @@ async function mirarElCentrado() {
       await page.waitForSelector(".hoja__centrado", { timeout: 10000 });
       await page.waitForTimeout(500);
       const h0 = await page.evaluate(medirElCentrado);
+      // Tumbado, el veredicto se ve sin rodar; de pie, la hoja se lee rodando, como siempre.
+      const tumbado = ancho > alto;
+      const aLaVista = (h) => !tumbado || !h.tapados.length;
       comprobar(
         `${tam}: el avión y su envolvente se ven enteros, del tamaño del dedo, y la carga de siempre cae dentro`,
-        h0 && !h0.fuera.length && !h0.chicos.length && !h0.pisan && !h0.puntoFuera && h0.bien,
+        h0 && !h0.fuera.length && !h0.chicos.length && !h0.pisan && !h0.puntoFuera && h0.bien && aLaVista(h0),
         detalle(h0),
         "la hoja se usa con el dedo: un asiento que no se toca o que pisa a otro no se puede cambiar de sitio",
       );
@@ -3985,21 +4007,21 @@ async function mirarElCentrado() {
       const h2 = await page.evaluate(medirElCentrado);
       comprobar(
         `${tam}: con la cola cargada el punto sale de la zona, en ámbar, y se dice con calma`,
-        h2 && h2.puntoFuera && h2.cgFuera && !h2.bien && /Así no sale bien/.test(h2.texto) && !h2.pisan,
+        h2 && h2.puntoFuera && h2.cgFuera && !h2.bien && /Así no sale bien/.test(h2.texto) && !h2.pisan && aLaVista(h2),
         detalle(h2),
-        "fuera de la zona se ve y se dice, sin rojo y sin castigar",
+        "fuera de la zona se ve y se dice, sin rojo y sin castigar; tumbado, con el arreglo a la vista sin rodar",
       );
-      await foto("3-fuera", true);
+      await foto("3-fuera", !tumbado);
       await page.click(".hoja__arreglo");
       await page.waitForTimeout(600);
       const h3 = await page.evaluate(medirElCentrado);
       comprobar(
         `${tam}: un toque en el arreglo y el centro vuelve a la zona`,
-        h3 && !h3.cgFuera,
+        h3 && !h3.cgFuera && aLaVista(h3),
         detalle(h3),
         "el arreglo es la propuesta: tocarlo tiene que resolverlo",
       );
-      await foto("4-arreglada", true);
+      await foto("4-arreglada", !tumbado);
       /*
        * **Y lo elegido llega al vuelo**: se sale tal cual —uno delante, uno
        * atrás y cuatro maletas en la bodega 2— y se lee el centrado que tiene

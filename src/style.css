@@ -9480,6 +9480,65 @@ button.motor__tecla::after {
   .hoja__centrado {
     gap: 6px 12px;
   }
+
+  /*
+   * **Y el veredicto, a la vista sin rodar.** Con el avión arriba, la báscula
+   * y la pista en la segunda fila y el veredicto en la tercera, en 800×360 el
+   * sello, la frase y el arreglo quedaban debajo de la barra de despegar, y
+   * el arreglo de un toque es justo lo que hace falta con el centro fuera.
+   * Así que la báscula y la pista, más bajas: los mismos dibujos con menos
+   * alto, sin tocar nada de lo que se toca.
+   */
+  .hoja__tarjeta--centrado .hoja__balanza {
+    padding: 3px 0;
+  }
+
+  .hoja__tarjeta--centrado .hoja__barra {
+    height: 16px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__campo {
+    height: 16px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__asfalto {
+    top: 3px;
+    bottom: 3px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__carrera {
+    height: 16px;
+    margin-top: 1px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__pide {
+    top: 10px;
+    height: 5px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__avioncito {
+    width: 17px;
+    height: 17px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__cifras {
+    margin-top: 0;
+    line-height: 1.15;
+  }
+
+  .hoja__tarjeta--centrado .hoja__veredicto {
+    min-height: 44px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__sello {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+  }
+
+  .hoja__tarjeta--centrado .hoja__arreglo {
+    height: 44px;
+  }
 }
 
 /* El circuito de la vuelta al campo, encima del plano de casa. */
