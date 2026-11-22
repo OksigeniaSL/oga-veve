@@ -5,7 +5,9 @@
  * 60° sobre el plano del AIP, AD 2-GCXO PDC 1.1). La ficha la guarda de fuera hacia la
  * parada. Y desde la H60b el avión se aparca sobre ella, y el tractor lo saca de espaldas
  * por su prolongación hasta la raya del plan (`empujeDesdeElPuesto`): en el 24, el de la 12
- * con el JAZ 90, a 61° y no a los 76° de la ruta.
+ * con el JAZ 90, a 61° y no a los 76° de la ruta. Y desde la H60d también el JAZ 110 y el JAZ
+ * 120: el AIP admite en el 24 hasta un B744 (AD 2-GCXO PDC 1.2, WEF 06-AUG-26), con salida en
+ * retroceso.
  */
 import { describe, expect, it } from "vitest";
 import { conSuAerodromo, SCENARIOS } from "./scenarios";
@@ -41,30 +43,35 @@ describe("las líneas de entrada de los puestos", async () => {
     expect(Math.abs(rumbo - 61)).toBeLessThan(3);
   });
 
-  it("el JAZ 90 se aparca en el 24 sobre ella, a 61°, y el tractor lo saca de espaldas por su prolongación", () => {
-    const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
-    const plan = new PlanDeVuelo(aero, base.runway, () => aero.elevationM ?? 0, jaz90);
+  it.each(["jaz-90", "jaz-110", "jaz-120"])("el %s se aparca en el 24 sobre ella, a 61°, y el tractor lo saca de espaldas por su prolongación", (id) => {
+    const avion = AIRCRAFT.find((a) => a.id === id)!;
+    const plan = new PlanDeVuelo(aero, base.runway, () => aero.elevationM ?? 0, avion);
     plan.deContacto = true;
     expect(plan.reiniciar()).toBe(true);
     const [x, z] = plan.arranque()!;
     const p24 = aero.parkingPositions!.find((p) => p.ref === "24")!;
     expect(Math.hypot(p24.xy[0] - x, -p24.xy[1] - z), "sale del 24, el de la 12").toBeLessThan(1);
     const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-    const morro = morroDe(jaz90);
-    const enElSuyo = empujeDesdeElPuesto({ x, z }, edificiosDePasarela(aero), raya, entradaDelPuesto(aero, x, z), jaz90.batalla, (r) =>
+    const morro = morroDe(avion);
+    const enElSuyo = empujeDesdeElPuesto({ x, z }, edificiosDePasarela(aero), raya, entradaDelPuesto(aero, x, z), avion.batalla, (r) =>
       conLaRuedaEn({ x, z }, r, morro),
     )!;
     expect(enElSuyo.porLaPintada, "sobre su raya pintada").toBe(true);
     const rumbo = ((enElSuyo.rumbo / GRADO) % 360 + 360) % 360;
     expect(Math.abs(rumbo - 61), "a 61°, como en el AIP").toBeLessThan(3);
     expect(Math.abs(enElSuyo.porLaRuta / GRADO - 76), "y no a los 76° de la ruta").toBeLessThan(3);
-    // De espaldas por la recta de la raya pintada: los primeros cincuenta metros, en su eje y sin girar.
+    /*
+     * De espaldas por la recta de la raya pintada: los primeros veinte metros, en su eje y sin
+     * girar. Con el JAZ 90 el giro empieza pasados los cincuenta; con el JAZ 110 y el JAZ 120, que
+     * giran con una batalla de veintiséis metros, el arco es más ancho —25,8 m de radio, y unos
+     * 75 m de tangente para los 142° del giro— y empieza a los veinticinco.
+     */
     const e = enElSuyo.empuje!;
     const atras = vector(enElSuyo.rumbo + Math.PI);
     const c = enElSuyo.centro;
     for (const pose of e.poses) {
       const hecho = (pose.x - c.x) * atras.x + (pose.z - c.z) * atras.z;
-      if (hecho > 50) break;
+      if (hecho > 20) break;
       expect(Math.abs((pose.x - c.x) * -atras.z + (pose.z - c.z) * atras.x), "en el eje de la raya pintada").toBeLessThan(0.5);
       expect(Math.abs(pose.rumbo - enElSuyo.rumbo) / GRADO, "sin girar").toBeLessThan(1);
     }
