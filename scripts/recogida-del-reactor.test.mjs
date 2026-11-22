@@ -311,6 +311,23 @@ describe("la recogida de un reactor va a la pista en su punto", () => {
     expect(pideAlPuntoDeToma({ ...g, pide: -4, ruedas: 4, pasado: PUNTO + 50 })).toBeNull();
   });
 
+  it("y por debajo de los treinta pies, como mucho la senda repartida hasta una toma firme (H34f)", () => {
+    const firme = 4 * 0.3048;
+    const pies30 = 30 * 0.3048;
+    const h = { ...g, pide: -0.8, pasado: PUNTO + 50, altura: 13.4 };
+    // A metro y medio, pasado el punto: antes 3 m/s —lo que queda entre medio
+    // segundo—; ahora la senda repartida en los treinta pies, 1,6.
+    const aMetroYMedio = firme + (3.7 - firme) * (1.5 / pies30);
+    expect(pideAlPuntoDeToma({ ...h, ruedas: 1.5 })).toBeCloseTo(-aMetroYMedio, 9);
+    expect(pideAlPuntoDeToma({ ...g, pide: -0.8, pasado: PUNTO + 50, ruedas: 1.5 })).toBeCloseTo(-3, 9);
+    // Cerca del suelo, poco más que una toma firme; por encima de los treinta pies, la senda.
+    expect(pideAlPuntoDeToma({ ...h, ruedas: 0.8 })).toBeCloseTo(-(firme + (3.7 - firme) * (0.8 / pies30)), 9);
+    expect(-pideAlPuntoDeToma({ ...h, ruedas: 0.8 })).toBeLessThan(1.5);
+    expect(pideAlPuntoDeToma({ ...h, ruedas: 12, pasado: PUNTO + 50 })).toBeCloseTo(-3.7, 9);
+    // Y nunca menos que el perfil: si el perfil pide más, el perfil.
+    expect(pideAlPuntoDeToma({ ...h, pide: -2.5, ruedas: 1.5 })).toBeNull();
+  });
+
   it("y la página lo recibe como texto: no toca nada de fuera", () => {
     const enLaPagina = new Function(`${pideAlPuntoDeToma.toString()}\nreturn pideAlPuntoDeToma;`)();
     const p = { ...g, pide: -0.8, ruedas: 1, pasado: PUNTO - 28 };
@@ -360,11 +377,18 @@ describe("la recogida de un reactor va a la pista en su punto", () => {
      * que ya va despacio es lo que hizo tocar a 9,25 m/s a un JAZ 110 en la mesa
      * (ver `flotaElReactor`). Por eso aquí se pide como mucho una, y ninguna
      * pasada de los 650 m, donde antes se pedía ninguna con el alerón suelto.
+     *
+     * **Y desde H34f la de la semilla 56 va más lejos**, a 716 m y 130 nudos:
+     * por debajo de los treinta pies el punto ya no la empuja al suelo a lo que
+     * bajaba la senda, sino a lo más a la senda repartida hasta una toma firme
+     * (ver `pideAlPuntoDeToma`). Es el precio de no tirar el avión al suelo con
+     * el morro abajo: en estas sesenta, las de más de 2 m/s bajan de 7 a 4, y
+     * el morro más bajo al tocar sube de 0,3° a 1,7°. Sigue siendo una sola.
      */
     const delJuego = mesa(palancaDelReactorEnLaRecogida, 60, true);
     expect(delJuego.laMasDura).toBeLessThan(DURO_DE_TRANSPORTE);
     expect(delJuego.largas).toBeLessThanOrEqual(1);
-    expect(delJuego.laMasLarga).toBeLessThan(650);
+    expect(delJuego.laMasLarga).toBeLessThan(750);
     const conElGasDeAntes = mesa(palancaDelReactorEnLaRecogida, 60, true, undefined, true);
     expect(conElGasDeAntes.laMasLarga).toBeGreaterThan(650);
     expect(delJuego.largas).toBeLessThan(conElGasDeAntes.largas);

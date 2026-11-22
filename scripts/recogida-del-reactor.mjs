@@ -66,19 +66,53 @@ export function porLoQueAceleraElReactor(p) {
  * deprisa que la senda de la que viene la recogida: quien flota no se tira al
  * suelo más fuerte de lo que bajaba en la final. Mientras el avión va a llegar
  * antes del punto, el perfil manda como siempre.
+ *
+ * **Y a ras de suelo, como mucho una toma firme** (H34f). El medio segundo de
+ * suelo era lo que hacía tocar duro: pasado el punto, a metro y medio de
+ * ruedas pedía 3 m/s —lo que queda entre medio segundo—, y más arriba la
+ * senda entera; en la tanda 20 el JAZ 120 empujó el morro de 0° a −2,8° en los
+ * últimos cuatro metros y tocó a 2,59 m/s, con la rueda de morro por delante.
+ * El manual no pide eso: «Do not allow the airplane to float or attempt to
+ * hold it off» es no sostenerlo, no tirarlo al suelo; la recogida es subir el
+ * morro dos o tres grados a los treinta pies y el gas al ralentí, y tocar no
+ * por debajo de la Vref menos cinco (el mismo FCTM). Lo normal de un avión de
+ * línea al tocar son de dos a cuatro pies por segundo, y diez ya es duro (ver
+ * `aterrizaje.ts`, con las series de cargas en servicio de la FAA y la CS
+ * 25.473). Así que por debajo de los treinta pies —donde el manual recoge y
+ * quita el gas, y el banco también lo quita— lo que pide el punto es, como
+ * mucho, la bajada de la senda repartida en lo que queda hasta el suelo, y en
+ * el suelo esos cuatro pies por segundo: una toma firme y no dura. Por encima,
+ * como antes, la senda: es donde el punto le quita al avión lo que flota con
+ * energía de más. Medido en la mesa de la prueba (el JAZ 120 con veinte nudos
+ * de cara, doscientas finales con σ_w 1): las de más de 2 m/s, de 35 a 23; las
+ * pasadas de 600 m, de 4 a 7; el morro al tocar, de 0,3° a 1,7° como poco.
+ * Repartirlo desde donde empieza la recogida, y no desde los treinta pies,
+ * quitaba más duras (20) pero flotaba más (12). Sin `altura`, como antes.
  * @param {{
  *   pide: number,       // lo que pide el perfil, m/s, negativo bajando
  *   ruedas: number,     // m sobre la pista
  *   pasado: number,     // m pasado el umbral de aterrizar
  *   porElSuelo: number, // m/s
  *   caida: number,      // lo que bajaba la senda al empezar a recoger, m/s
+ *   altura?: number,    // m de ruedas a los que empezó la recogida (H34f)
  * }} p
  * @returns {number | null}
  */
 export function pideAlPuntoDeToma(p) {
   const punto = 1500 * 0.3048;
   const quedan = Math.max(0.5, (punto - p.pasado) / Math.max(1, p.porElSuelo));
-  const alPunto = -Math.min(Math.max(0, p.ruedas) / quedan, Math.max(-p.pide, p.caida));
+  // Los cuatro pies por segundo de una toma firme, repetidos aquí porque esto viaja como texto.
+  const firme = 4 * 0.3048;
+  // Y los treinta pies de la recogida del manual, por lo mismo.
+  const recogeDesde = Math.min(p.altura ?? 0, 30 * 0.3048);
+  const tope =
+    recogeDesde > 0
+      ? Math.max(
+          -p.pide,
+          firme + (Math.max(firme, p.caida) - firme) * Math.min(1, Math.max(0, p.ruedas) / recogeDesde),
+        )
+      : Math.max(-p.pide, p.caida);
+  const alPunto = -Math.min(Math.max(0, p.ruedas) / quedan, tope);
   return alPunto < p.pide ? alPunto : null;
 }
 
@@ -208,6 +242,7 @@ export function palancaDelReactorEnLaRecogida(p) {
           pasado: p.pasado,
           porElSuelo: p.porElSuelo,
           caida: rec.caida,
+          altura: rec.altura,
         })
       : null;
   const pide = alPunto ?? delPerfil;
