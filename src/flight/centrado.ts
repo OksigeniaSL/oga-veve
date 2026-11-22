@@ -110,11 +110,12 @@ export const CENTRADO_DE_SU_TIPO: Readonly<Record<string, CentradoDeSuTipo>> = {
    *   asiento—, los traseros en la 73, la bodega 1 en la 95 y la 2 en la 123,
    *   y el combustible en la 48,0: «Loading Arrangements», figura 6-3, p. 6-9;
    * - las bodegas, 120 lb la 1 y 50 la 2, y no más de 120 entre las dos, p. 2-7;
-   * - el fondo de la bodega, la estación 142: la bodega 1 va de la 82 a la
-   *   108 y la 2 de la 108 a la 142, sin tabique entre las dos, y la nota de
-   *   la misma figura 6-3 da la pared de atrás, «aft baggage wall
-   *   (approximate station 142)». Lo que se suelta en la 1 puede llegar hasta
-   *   ahí;
+   * - el fondo de la bodega, la estación 142: la nota de la misma figura
+   *   6-3, p. 6-9, da la pared de atrás, «aft baggage wall (approximate
+   *   station 142)». Y la figura 6-4, p. 6-10, enseña que el suelo sigue de
+   *   la bodega 1 a la 2, que se abre a ras de suelo con 10¼ pulgadas de alto
+   *   debajo de la pared de la cabina, la 108: una maleta que quepa por ahí
+   *   acostada puede llegar al fondo;
    * - la envolvente de categoría normal, p. 2-7: el límite delantero en la
    *   35,0 hasta 1.950 lb y en recta hasta la 40,0 a 2.450; el trasero, en la
    *   47,3 con cualquier peso.

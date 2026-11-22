@@ -14,16 +14,24 @@
  *
  * - **Hasta dónde llega la maleta**: la pared de atrás de la bodega, del
  *   manual de cada tipo (`fondoDeLaBodega`). En el 172R, la estación 142
- *   («aft baggage wall», figura 6-3 de su manual). Es el tope: más atrás no
- *   puede ir, y la cuenta da lo más que se corre el centro.
+ *   («aft baggage wall», figura 6-3, p. 6-9 de su manual), por el suelo que
+ *   sigue hasta la bodega 2 y la abertura de 10¼ pulgadas de alto debajo de
+ *   la pared de la cabina (figura 6-4, p. 6-10): las maletas de la hoja, de
+ *   11 kg, caben acostadas. Es el tope: más atrás no puede ir, y la cuenta da
+ *   lo más que se corre el centro.
  * - **Qué se corre**: lo que va en una bodega sin amarrar. Lo amarrado con
  *   sus anillas y su red se queda en su sitio, que para eso está.
  * - **El procedimiento**: mantener el control —palanca adelante y compensar—,
  *   nada brusco y con velocidad de sobra, lejos de la pérdida, y a tierra en
- *   el campo más cercano. Del *Airplane Flying Handbook* de la FAA sobre el
- *   centro de gravedad trasero y del *Pilot's Handbook of Aeronautical
- *   Knowledge*, capítulo del peso y el centrado. Ver el ADR 0033, enmienda
- *   H38g.
+ *   el campo más cercano. Ninguna fuente lo escribe para esta avería; lo que
+ *   dan es el porqué: «Unsecured baggage […] may adversely affect the center
+ *   of gravity» (*Airplane Flying Handbook*, FAA-H-8083-3C, p. 2-14); con el
+ *   centro atrás, menos estable y peor pérdida (p. 13-14 y 5-26); y «Tail
+ *   heavy loading […] reduces the capability to recover from stalls and
+ *   spins […] produces very light control forces» (*Pilot's Handbook of
+ *   Aeronautical Knowledge*, FAA-H-8083-25C, p. 10-3). Los amarres, la red
+ *   y sus seis anillos, en el POH del 172R, p. 6-8 y 7-14. Ver el ADR 0033,
+ *   enmienda H38g.
  *
  * Funciones puras: no hablan ni dibujan. Lo hace pasar `practica.ts` y lo
  * cuenta `game.ts`.

@@ -418,12 +418,15 @@ try {
         if (tramo === "subida") {
           c.throttle = 1;
           /*
-           * **La avioneta de la carga suelta sube a su Vy**, 74 nudos en el
-           * manual del 172R —1,15 veces su vref—, y con los flaps dentro en
-           * cuanto tiene altura. La V2 del juego es de los que deciden con V1:
-           * la primera tirada subió a 49 nudos, la que da el juego para el
-           * 172, y el avisador de pérdida sonó antes de soltarse la maleta.
-           * La lección es justo la contraria: velocidad de sobra.
+           * **La avioneta de la carga suelta sube a 74 nudos**, 1,15 veces su
+           * vref: la Vy que el juego usa para el JAZ 20 (`SUBIDA_DEL_JAZ_20`,
+           * del 172S) y dentro de la subida del despegue del 172R, «Normal
+           * Climb Out 70-80 KIAS» (POH, p. 4-5). Con los flaps dentro en
+           * cuanto tiene altura. La V2 es de los que deciden con V1, y el
+           * monomotor no tiene: la primera tirada subió a 49 nudos, lo que el
+           * juego daba entonces como V2 del 172, y el avisador de pérdida sonó
+           * antes de soltarse la maleta. La lección es la contraria: velocidad
+           * de sobra.
            */
           if (modo === "carga" && sobre > 60) o.pedirFlaps(0);
           const v2 = modo === "carga" ? vref * 1.15 : (vel.v2 ?? vref * 1.2);
