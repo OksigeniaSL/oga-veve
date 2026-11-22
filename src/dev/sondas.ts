@@ -265,6 +265,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `flight/compensador-de-despegue.ts`.
      */
     compensadorDeDespegue: () => juego.compensadorDeDespegueParaBanco(),
+    /**
+     * **El centrado que vuela**, m hacia la cola: el que pide la hoja de carga
+     * del hangar o de la dirección (`Game.centradoDeAhora`) y el que tiene
+     * puesto el modelo de vuelo (`ponerCentrado`). Cero los dos con la carga
+     * de su ficha. Ver `flight/centrado.ts`.
+     */
+    centrado: () => ({
+      juego: juego.centradoDeAhora(),
+      modelo: (juego.flight as { centradoAhora?: () => number }).centradoAhora?.() ?? null,
+    }),
     /** Lo hecho con la lista de antes de despegar y la recogida. */
     listaDelDespegue: () => juego.flapsDelDespegueParaBanco,
     /** Lo que se le ha pedido al tren: la orden, no la posición. */

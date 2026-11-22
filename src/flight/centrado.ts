@@ -47,8 +47,8 @@
  * ya estaba dentro del modelo ajustado; lo que se cuenta aquí es la carga que
  * se elige.
  *
- * Funciones puras: no hablan ni dibujan. La pantalla que lo enseña es otro
- * encargo.
+ * Funciones puras: no hablan ni dibujan. Lo enseña la hoja de carga del
+ * hangar, desde Taguató (`ui/hoja-de-carga.ts`).
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -191,7 +191,7 @@ export function repartoQueVale(
 
 /**
  * **El reparto puesto en la dirección**, `?filas=0,2&bodegas=0,20`, o nada si
- * no hay `filas`. Para los bancos: la pantalla que lo elige es otro encargo.
+ * no hay `filas`. Para los bancos; quien juega lo elige en la hoja de carga.
  */
 export function repartoDeLaDireccion(params: URLSearchParams): { readonly reparto?: Reparto } {
   const filas = params.get("filas");
@@ -208,6 +208,57 @@ export function repartoDeLaDireccion(params: URLSearchParams): { readonly repart
 /** Cuántos pasajeros lleva un reparto. */
 export function pasajerosDelReparto(r: Reparto): number {
   return r.filas.reduce((s, n) => s + n, 0);
+}
+
+/**
+ * **El reparto con otra cuenta de gente**: la hoja de carga elige cuántos
+ * suben y esta, dónde van, así que al cambiar la cuenta lo que se movió a mano
+ * no se deshace. El que sube se sienta en el primer hueco de delante; el que
+ * baja es el de más atrás, que es el último que subió. Las bodegas no se tocan.
+ */
+export function repartoConGente(t: CentradoDeSuTipo, r: Reparto, pasajeros: number): Reparto {
+  const filas = repartoQueVale(t, 0, r).filas.slice();
+  let falta = Math.max(0, Math.round(pasajeros)) - filas.reduce((s, n) => s + n, 0);
+  for (let i = 0; falta > 0 && i < filas.length; i++) {
+    const sube = Math.min(falta, t.filas[i]!.asientos - filas[i]!);
+    filas[i]! += sube;
+    falta -= sube;
+  }
+  for (let i = filas.length - 1; falta < 0 && i >= 0; i--) {
+    const baja = Math.min(-falta, filas[i]!);
+    filas[i]! -= baja;
+    falta += baja;
+  }
+  return { filas, bodegas: repartoQueVale(t, 0, r).bodegas ?? [] };
+}
+
+/**
+ * **Pasar a uno de una fila a otra**: si en la de salida hay alguien y en la
+ * de llegada un asiento libre. Si no, el reparto se queda como estaba: no se
+ * sienta a nadie encima de nadie.
+ */
+export function pasarDeFila(t: CentradoDeSuTipo, r: Reparto, desde: number, hasta: number): Reparto {
+  const filas = repartoQueVale(t, 0, r).filas.slice();
+  const de = filas[desde];
+  const a = filas[hasta];
+  const sitio = t.filas[hasta]?.asientos ?? 0;
+  if (desde === hasta || de === undefined || a === undefined || de <= 0 || a >= sitio) return r;
+  filas[desde] = de - 1;
+  filas[hasta] = a + 1;
+  return { filas, bodegas: repartoQueVale(t, 0, r).bodegas ?? [] };
+}
+
+/**
+ * **Los kilos de una bodega**, puestos a mano. Sin tope en el rótulo, por lo
+ * mismo que `repartoQueVale`: pasarse es justo lo que la hoja tiene que poder
+ * enseñar.
+ */
+export function conBodega(t: CentradoDeSuTipo, r: Reparto, bodega: number, kg: number): Reparto {
+  const v = repartoQueVale(t, 0, r);
+  const bodegas = (v.bodegas ?? []).slice();
+  if (bodega < 0 || bodega >= bodegas.length) return r;
+  bodegas[bodega] = Math.max(0, kg);
+  return { filas: v.filas, bodegas };
 }
 
 /** El centro de gravedad: lo que pesa el avión, kg, y dónde está, m por detrás del datum. */

@@ -298,3 +298,214 @@ y eso lo mide la tabla de arriba.
 - El punto neutro sale del modelo de cada ficha, no del manual: es el modelo
   el que vuela. En el 172 cae 2,6 pulgadas detrás del límite trasero, y eso
   es lo que hace que salirse por detrás se note de verdad.
+
+## Enmienda H38f (22-11-2026): la hoja de carga enseña dónde va cada uno
+
+Con H38b el centrado estaba en el modelo y nadie lo veía: la hoja del hangar
+solo elegía cuánta gente y cuánto combustible, y el reparto entraba por la
+dirección, para los bancos. Ahora lo enseña la hoja.
+
+### Dónde y para quién
+
+**Desde Taguató, y solo en el avión con hoja de centrado en su manual**, que
+hoy es el 172 (`llevaCentrado` en `ui/hoja-de-carga.ts`). Es lo que pide el
+#91 por peldaños: «Taguató: hoja de carga con centro de gravedad y su zona
+buena». Los demás aviones, y el 172 en Guyrami y en Tukã, tienen la hoja de
+siempre.
+
+Lo que no se ve no se elige. Si alguien sienta a un pasajero atrás en
+Taguató y luego baja a Tukã, el reparto deja de valer y la gente vuelve a
+sentarse como siempre (`hojaDelPeldano`). El hangar lo aplica al pintar la
+hoja y también al despegar.
+
+### Lo que se ve
+
+En el sitio de la fila de asientos, que el dibujo ya enseña, van dos cosas:
+
+- **El avión visto desde arriba**, con el morro a la izquierda: las dos filas
+  y las dos bodegas, y el ala alta dibujada a través para que se vean los
+  asientos de debajo. No va a escala: a escala, los asientos de atrás y la
+  bodega 1 quedaban a un dedo uno de otro. Cada columna va a la misma
+  distancia de la siguiente, y el brazo se reparte en recta entre una y
+  otra. Lo que sí es de verdad es el orden de las cosas y el lado de cada
+  una. Quien pilota va en el asiento de la izquierda, que con el morro a la
+  izquierda queda abajo, en ocre. El pasaje va en el azul de la gente de la
+  báscula.
+  - **Tocar un asiento ocupado** pasa a esa persona a la otra fila, si allí
+    hay sitio. **Tocar uno libre** trae a alguien de otra fila, y si no hay a
+    quién traer, sube uno. Así se pasa a alguien de delante a atrás con un
+    solo toque, y el deslizador de la gente cambia cuántos van sin deshacer
+    dónde se sentaron (`repartoConGente`): el que sube se sienta en el primer
+    hueco de delante, y el que baja es el de más atrás.
+  - **En cada bodega**, arriba se pone una maleta y abajo se saca. Cada
+    maleta pesa 11 kg, la maleta de bodega de CAT.POL.MAB.100 que ya usa la
+    hoja de carga, y caben seis en el dibujo de cada bodega. Las que pasan
+    del rótulo (23 kg en la 2, 54 kg en la 1 y 54 kg entre las dos) van
+    rayadas en ámbar, como lo que pasa de la raya de la báscula.
+  - Encima va **el símbolo del centro de gravedad** de los manuales, el
+    círculo en cuartos, sobre la raya del medio. A su lado va la zona buena
+    con la masa de hoy, en verde.
+- **La envolvente de su manual**, dibujada de verdad, con la masa hacia
+  arriba y el brazo a lo ancho. El límite delantero está en 35,0 in hasta
+  1.950 lb y sube en recta hasta 40,0 in a 2.450 lb. El trasero está en
+  47,3 in, y arriba va el peso máximo. Abajo no tiene borde, porque el manual
+  no pone límite por abajo: ahí solo acaba el dibujo. El punto es el centro
+  de gravedad al soltar frenos, con el combustible que se carga. Debajo
+  vienen las cifras: dónde está el centro, en cm desde el cortafuegos, y la
+  zona buena con ese peso. En el peldaño de cabina se añade CG y % MAC, que
+  no se traducen.
+
+**El punto se mueve.** La vista se repinta entera con cada toque, así que el
+punto y el símbolo recuerdan dónde estaban y salen de allí, en 0,45 s. Con el
+movimiento reducido, saltan.
+
+### Fuera de la zona
+
+El punto y el símbolo se ponen en **ámbar**, y la envolvente se sacude una
+vez, como la barra de la pista. El sello del veredicto pasa a «!» y la frase
+lo dice con calma: «Así no sale bien: el centro de gravedad quedó muy atrás y
+la nariz se levanta sola. Pasá a alguien adelante o sacá maletas de atrás.»
+No hay rojo ni voz nueva.
+
+El arreglo es de un toque, como el de la gente:
+
+- con la cola pesada, pasar adelante al de más atrás si delante hay sitio;
+  si no, sacar una maleta de la bodega de más atrás;
+- con el morro pesado, pasar a uno atrás.
+
+Es un paso por toque: si no basta, el botón sigue ahí.
+
+**La bodega que pasa de su rótulo** también se dice, y lo hace después del
+centro: «La bodega 2 admite 23 kg y lleva 33 kg: sacá una maleta». El modelo
+no lee rótulos (`repartoQueVale`), así que tiene que decirlo la hoja. El
+orden del veredicto es el de siempre, más estos dos al final: no llega con
+la reserva, pesa de más, le falta pista, el centro y la bodega. Se dice una
+cosa cada vez.
+
+**Y se sale igual.** Despegar no se frena ni con el centro fuera ni con la
+bodega pasada. Es la misma regla que la hoja ya aplica al peso máximo, que
+tampoco frena: lo único que no deja salir es no llevar el combustible legal.
+El avión vuela lo que dice el modelo, y con la cola pesada eso es justo lo
+que la tabla de arriba enseña. Las normas se muestran, no se imponen.
+
+Con quien pilota y un pasajero delante, el 172 llega antes al peso máximo
+que al límite trasero. Lo de pasar a alguien adelante sale solo con el
+asiento de delante libre; si no, sale el de la maleta.
+
+### Lo que llega al vuelo
+
+El reparto va en `Hoja.reparto`, y el hangar se lo da al juego al despegar.
+De ahí sale lo que ya estaba en H38b:
+
+- `Game.centradoDeAhora`, que el juego le pone al modelo con `ponerCentrado`;
+- y `Game.avionConPeso`, del que sale la marca del compensador de despegue.
+
+Para los bancos, `__oga.centrado()` da las dos cifras: el centrado que pide la
+hoja y el que lleva puesto el modelo.
+
+### La maquetación
+
+Con sitio (700 px o más), el avión y la envolvente van arriba a la derecha,
+junto a los mandos que los cambian, y la báscula y la pista debajo, una al
+lado de otra. Con el centrado debajo de todo, en un teléfono tumbado el avión
+quedaba tapado por la barra de despegar. En pantallas de 460 px de alto o
+menos, la envolvente baja a 66 px y el avión a 94, que son dos botones de 46
+uno encima de otro. De pie, cada cosa va debajo de la anterior, con el avión
+justo debajo de los mandos.
+
+Lo que rueda la hoja, en `.hangar`, contando el hueco de la barra de
+despegar:
+
+| Pantalla | Sin centrado (JAZ 60) | Con centrado (JAZ 20), primera tirada | Con centrado, ahora |
+|---|---|---|---|
+| Tableta, 1024×600 | no se mide; a 960×540 no rueda | 102 px | 35 px |
+| Teléfono tumbado, 915×412 | 52 px | 175 px | 103 px |
+| Teléfono tumbado, 800×360 | 110 px | 227 px | 155 px |
+| Teléfono de pie, 400×780 | 23 px | 164 px | 164 px |
+
+Con eso, en el teléfono tumbado pequeño el veredicto seguía debajo de la
+barra de despegar: había que rodar unos 45 px para ver el sello, la frase y
+el arreglo. Y el arreglo de un toque es justo lo que más falta hace con el
+centro fuera. Así que en pantallas de 460 px de alto o menos, con el
+centrado, la báscula y la pista se hacen más bajas: la barra y el asfalto de
+16 px, la carrera de 16 y las cifras sin margen. El sello baja a 34 px y el
+arreglo a 44, que sigue siendo el tamaño del dedo. Nada de lo que se toca
+cambia de sitio.
+
+`mirarElCentrado` mira ahora en cada pantalla tumbada si el veredicto se ve
+sin rodar: el sello, la frase y el arreglo, con el principio y el final de
+cada uno en pantalla y sin la barra encima. Lo comprueba con la carga de
+siempre, fuera de la zona y después del arreglo.
+
+| Pantalla | Rodaba | Rueda ahora | El veredicto |
+|---|---|---|---|
+| Tableta, 1024×600 | 35 px | 35 px | a la vista |
+| Teléfono tumbado, 915×412 | 103 px | 68 px | a la vista |
+| Teléfono tumbado, 800×360 | 155 px | 120 px | a la vista; antes, tapado |
+| Teléfono de pie, 400×780 | 164 px | 164 px | se lee rodando, como la hoja de siempre |
+
+### Comprobado
+
+- **`ui/hoja-de-carga.test.ts`**, con cinco pruebas nuevas:
+  - el centrado sale solo desde Taguató y solo en el 172;
+  - al pasar al pasajero de delante atrás, el punto se va hacia la cola a la
+    misma altura, el símbolo se corre y los dos salen de donde estaban. Son
+    los 7,9 cm de la tabla de arriba;
+  - las maletas pesan, y la tercera de la bodega 2 va rayada y se dice;
+  - con quien pilota solo, dos atrás y tres maletas en la bodega 2, el punto
+    sale de la zona: va en ámbar, sale «Así no sale bien» y el arreglo pasa a
+    uno adelante. Con las dos bodegas a tope y nadie atrás, el arreglo saca
+    una maleta;
+  - el reparto llega al vuelo. `desplazamientoDelCentrado` da +7,9 cm, la
+    marca del compensador baja más de 0,1, en Tukã el reparto no vale y el
+    deslizador no deshace dónde se sentó cada uno.
+- **`npm run carteles`**, con `OGA_SOLO=hoja`: la hoja del JAZ 60 de siempre
+  y el centrado del JAZ 20 en Pettirossi, en Taguató, en una tableta
+  (1024×600), dos teléfonos tumbados (800×360 y 915×412) y uno de pie
+  (400×780), todos con el dedo. En cada uno se mira:
+  - que se ve entera y que ningún botón mide menos de 44 px ni pisa a otro;
+  - que el punto se mueve al pasar al pasajero atrás;
+  - que con dos atrás y cuatro maletas en la bodega 2 el punto sale de la
+    zona y se dice con calma;
+  - que el arreglo lo devuelve a la zona. Después queda la bodega pasada de
+    su rótulo, que se dice: «La bodega 2 admite 23 kg y lleva 44 kg».
+
+  En la tableta, además, se despega desde el hangar. El juego pide 15,6 cm
+  hacia la cola y el modelo lleva 15,6 cm, con la marca del compensador en
+  −0,096.
+
+  La primera tirada, con el centrado debajo de todo, rodaba 227 px en
+  800×360. La segunda, con el avión arriba, tenía cinco botones pisados en
+  ese teléfono: el avión medía 247 px y las columnas iban a 43 px. Ahora las
+  columnas van del 22 al 84 % del ancho y el avión tiene dos tercios del
+  bloque. La tercera y la cuarta, con la envolvente más baja en pantallas
+  bajas, dieron 42 de 42.
+- **Un despegue del JAZ 20 con alguien atrás**: `verificar-despegue.mjs` en
+  Tenerife Norte, en Taguató, con `OGA_URL_EXTRA="&pasajeros=1&filas=0,1"`.
+  El banco ahora lee el centrado cuando la dirección sienta a alguien. Dio
+  **21 de 21**:
+  - en el puesto y volando, la hoja pide 8,1 cm hacia la cola y el modelo
+    lleva 8,1 cm;
+  - rota a 27 m/s tras 278 m;
+  - sube 2,9 m/s de media entre los 8 y los 18 s.
+- **El vitest entero**, al final y con el código terminado: 573 de 574
+  ficheros y 11.499 de 11.500 pruebas. La que falló es la de
+  `style.test.ts` que no deja declarar dos veces una clase base, y lo que
+  saltó fue `.hoja__techo`, que iba en una regla con `.hoja__eje` y en otra
+  sola. Se separó en dos reglas con lo mismo, y ese fichero y el de la hoja
+  se volvieron a pasar en verde. No cambia nada que se vea, así que los
+  carteles no se repitieron.
+
+### Lo que queda
+
+- El dibujo del avión y su envolvente sale solo en el 172, que es el único
+  con hoja de centrado leída en su manual. El resto de la lista de arriba
+  sigue sin ella.
+- El símbolo del centro se corre poco sobre el avión dibujado: entre la
+  carga de su ficha y el límite trasero hay 8 pulgadas, que en el dibujo son
+  unos 15 px. Es la envolvente, al lado, la que enseña el movimiento en
+  grande, con unos 30 px por cada pasajero que pasa atrás.
+- No se arrastra con el dedo de un asiento a otro: se toca. Arrastrar es
+  más natural, pero pide seguir el dedo fuera del botón donde empezó. Se
+  dejó para no meter otra manera de tocar en una hoja que ya funciona con
+  toques.

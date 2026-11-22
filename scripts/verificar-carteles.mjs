@@ -98,6 +98,16 @@ if (process.env.OGA_SOLO === "destellos") {
 }
 
 /*
+ * Y solo la hoja de carga, con su centrado: `OGA_SOLO=hoja`. Ver
+ * `mirarLaHoja` y `mirarElCentrado`.
+ */
+if (process.env.OGA_SOLO === "hoja") {
+  await mirarLaHoja();
+  await mirarElCentrado();
+  await acabar();
+}
+
+/*
  * **Lo más largo que lleva la tarjeta de la orden**, sacado del código y no
  * escrito aquí: todo rótulo que el juego le pasa (`rotulo` y `claveDelAviso`
  * en `game.ts`), buscado en el castellano del juego. H28e la medía con la que
@@ -3747,6 +3757,7 @@ function medirLaHoja() {
   };
 }
 
+async function mirarLaHoja() {
 for (const [ancho, alto] of [[915, 412], [800, 360], [960, 540], [565, 641], [400, 780]]) {
   const page = await navegador.newPage({ viewport: { width: ancho, height: alto }, hasTouch: true, isMobile: true });
   const tam = `hoja de carga ${ancho}×${alto} con el dedo`;
@@ -3829,7 +3840,226 @@ for (const [ancho, alto] of [[915, 412], [800, 360], [960, 540], [565, 641], [40
     await page.close();
   }
 }
+}
 
+/**
+ * **El centrado en la hoja, con el dedo** (H38f, ADR 0033): el JAZ 20 en
+ * Pettirossi, en Taguató, que es desde donde la hoja enseña dónde va cada
+ * uno. Se mira:
+ *
+ * - que el avión visto desde arriba y la envolvente se vean enteros, con sus
+ *   botones del tamaño del dedo y sin pisarse;
+ * - que el punto se mueva hacia la cola al pasar al pasajero de delante atrás;
+ * - que con dos atrás y cuatro maletas en la bodega 2 el punto salga de la
+ *   zona, en ámbar y dicho con calma, y que el arreglo lo devuelva;
+ * - y, en la tableta, que lo elegido llegue al vuelo: despegar y leer el
+ *   centrado del modelo de vuelo, que tiene que ser el que pide la hoja.
+ *
+ * Con `OGA_FOTOS`, una foto de cada paso.
+ */
+function medirElCentrado() {
+  const c = document.querySelector(".hoja__centrado");
+  if (!c) return null;
+  const W = innerWidth;
+  const fuera = [];
+  for (const el of c.querySelectorAll(".hoja__planta, .hoja__grafica, .hoja__hueco")) {
+    const r = el.getBoundingClientRect();
+    if (r.left < -0.5 || r.right > W + 0.5)
+      fuera.push(`${String(el.className).split(" ")[0]} ${Math.round(r.left)}–${Math.round(r.right)}`);
+  }
+  const chicos = [];
+  for (const el of document.querySelectorAll(".hoja button, .hoja input")) {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && Math.min(r.width, r.height) < 44)
+      chicos.push(`${String(el.className).split(" ")[0]} ${Math.round(r.width)}×${Math.round(r.height)}`);
+  }
+  const cajas = [...c.querySelectorAll(".hoja__toque")].map((b) => b.getBoundingClientRect());
+  let pisan = 0;
+  for (let i = 0; i < cajas.length; i++)
+    for (let j = i + 1; j < cajas.length; j++) {
+      const a = cajas[i];
+      const b = cajas[j];
+      const ancho = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      const alto = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (ancho > 1 && alto > 1) pisan++;
+    }
+  const punto = c.querySelector(".hoja__punto");
+  const veredicto = document.querySelector(".hoja__veredicto");
+  /*
+   * **Si el veredicto se ve sin rodar**: el sello, la frase y el arreglo, cada
+   * uno con su centro en pantalla y sin nada encima, que la barra de despegar
+   * va fija abajo y tapa sin salirse de la pantalla.
+   */
+  const tapados = [];
+  for (const el of veredicto ? veredicto.querySelectorAll(".hoja__sello, .hoja__texto, .hoja__arreglo") : []) {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    for (const y of [r.top + 2, r.bottom - 2]) {
+      const encima = y >= 0 && y < innerHeight ? document.elementFromPoint(x, y) : null;
+      if (!encima || !veredicto.contains(encima)) {
+        tapados.push(`${String(el.className).split(" ")[0]} ${Math.round(r.top)}–${Math.round(r.bottom)}`);
+        break;
+      }
+    }
+  }
+  return {
+    tapados,
+    fuera,
+    chicos,
+    pisan,
+    x: Number(punto?.getAttribute("cx")),
+    y: Number(punto?.getAttribute("cy")),
+    puntoFuera: !!punto?.classList.contains("hoja__punto--fuera"),
+    cgFuera: !!c.querySelector(".hoja__cg--fuera"),
+    bien: !!veredicto?.classList.contains("hoja__veredicto--bien"),
+    texto: veredicto?.querySelector(".hoja__texto")?.textContent?.trim() ?? "",
+    rueda: document.querySelector(".hangar").scrollHeight - document.querySelector(".hangar").clientHeight,
+  };
+}
+
+async function mirarElCentrado() {
+  for (const [ancho, alto, nombre] of [
+    [1024, 600, "tableta"],
+    [800, 360, "teléfono apaisado"],
+    [915, 412, "teléfono apaisado"],
+    [400, 780, "teléfono de pie"],
+  ]) {
+    const page = await navegador.newPage({
+      viewport: { width: ancho, height: alto },
+      hasTouch: true,
+      isMobile: true,
+      locale: "es-PY",
+    });
+    const tam = `centrado en la hoja, ${nombre} ${ancho}×${alto}`;
+    // Con lo que dice el veredicto a la vista, si hay que rodar para verlo: es lo que haría quien lee.
+    const foto = async (paso, veredicto = false) => {
+      if (!process.env.OGA_FOTOS) return;
+      if (veredicto)
+        await page.evaluate(() => document.querySelector(".hoja__veredicto")?.scrollIntoView({ block: "center" }));
+      await page.screenshot({ path: `${process.env.OGA_FOTOS}/centrado-${ancho}x${alto}-${paso}.png` });
+    };
+    const detalle = (h) =>
+      h
+        ? [
+            h.fuera.length ? `fuera: ${h.fuera.join(", ")}` : "",
+            h.chicos.length ? `pequeños: ${h.chicos.join(", ")}` : "",
+            h.pisan ? `${h.pisan} botones se pisan` : "",
+            h.tapados.length ? `veredicto tapado: ${h.tapados.join(", ")}` : "veredicto a la vista",
+            `punto en ${h.x.toFixed(1)}, ${h.y.toFixed(1)}${h.puntoFuera ? " (fuera)" : ""}`,
+            h.rueda > 1 ? `se rueda ${h.rueda} px` : "sin rodar",
+            h.texto,
+          ]
+            .filter(Boolean)
+            .join(" · ")
+        : "no hay centrado";
+    try {
+      await page.addInitScript(() => {
+        localStorage.setItem("oga-veve:teclas-vistas", "1");
+        if (localStorage.getItem("oga-veve:guardado") === null)
+          localStorage.setItem("oga-veve:cuaderno", JSON.stringify({ despegues: 1, segundos: 600 }));
+      });
+      await page.goto(`${BASE}/?meteo=`);
+      await page.waitForSelector(".piloto__boton", { timeout: 90000 });
+      await page.click(".piloto__boton");
+      await page.waitForSelector(".ficha--sitio", { timeout: 90000 });
+      const alInicio = async () => {
+        if (await page.$('.paso--volver[data-pantalla="inicio"]'))
+          await page.click('.paso--volver[data-pantalla="inicio"]');
+      };
+      await page.click('[data-pantalla="donde"]');
+      await page.click('[data-sitio="pettirossi"]');
+      await alInicio();
+      await page.click('[data-pantalla="conque"]');
+      await page.click('[data-avion="jaz-20"]');
+      await alInicio();
+      await page.click('[data-pantalla="quien"]');
+      await page.click('[data-tramo="taguato"]');
+      await alInicio();
+      await page.click('[data-pantalla="carga"]');
+      await page.waitForSelector(".hoja__centrado", { timeout: 10000 });
+      await page.waitForTimeout(500);
+      const h0 = await page.evaluate(medirElCentrado);
+      // Tumbado, el veredicto se ve sin rodar; de pie, la hoja se lee rodando, como siempre.
+      const tumbado = ancho > alto;
+      const aLaVista = (h) => !tumbado || !h.tapados.length;
+      comprobar(
+        `${tam}: el avión y su envolvente se ven enteros, del tamaño del dedo, y la carga de siempre cae dentro`,
+        h0 && !h0.fuera.length && !h0.chicos.length && !h0.pisan && !h0.puntoFuera && h0.bien && aLaVista(h0),
+        detalle(h0),
+        "la hoja se usa con el dedo: un asiento que no se toca o que pisa a otro no se puede cambiar de sitio",
+      );
+      await foto("1-de-siempre");
+      // El pasajero de delante, atrás, con un toque.
+      await page.click('[data-hoja-asiento="0,0"]');
+      await page.waitForTimeout(700);
+      const h1 = await page.evaluate(medirElCentrado);
+      comprobar(
+        `${tam}: el punto se mueve hacia la cola al pasar al pasajero atrás`,
+        h0 && h1 && h1.x > h0.x + 5 && Math.abs(h1.y - h0.y) < 0.5,
+        h0 && h1 ? `de ${h0.x.toFixed(1)} a ${h1.x.toFixed(1)}, a la misma altura: pesa lo mismo` : detalle(h1),
+        "no es cuánto pesa, es dónde está: si el punto no se mueve, la hoja no lo enseña",
+      );
+      await foto("2-uno-atras");
+      // Otro más atrás y cuatro maletas en la bodega 2, que admite dos.
+      await page.click('[data-hoja-asiento="1,1"]');
+      for (let i = 0; i < 4; i++) await page.click('[data-hoja-maleta="1,1"]');
+      await page.waitForTimeout(700);
+      const h2 = await page.evaluate(medirElCentrado);
+      comprobar(
+        `${tam}: con la cola cargada el punto sale de la zona, en ámbar, y se dice con calma`,
+        h2 && h2.puntoFuera && h2.cgFuera && !h2.bien && /Así no sale bien/.test(h2.texto) && !h2.pisan && aLaVista(h2),
+        detalle(h2),
+        "fuera de la zona se ve y se dice, sin rojo y sin castigar; tumbado, con el arreglo a la vista sin rodar",
+      );
+      await foto("3-fuera", !tumbado);
+      await page.click(".hoja__arreglo");
+      await page.waitForTimeout(600);
+      const h3 = await page.evaluate(medirElCentrado);
+      comprobar(
+        `${tam}: un toque en el arreglo y el centro vuelve a la zona`,
+        h3 && !h3.cgFuera && aLaVista(h3),
+        detalle(h3),
+        "el arreglo es la propuesta: tocarlo tiene que resolverlo",
+      );
+      await foto("4-arreglada", !tumbado);
+      /*
+       * **Y lo elegido llega al vuelo**: se sale tal cual —uno delante, uno
+       * atrás y cuatro maletas en la bodega 2— y se lee el centrado que tiene
+       * el modelo de vuelo, que tiene que ser el que pide la hoja.
+       */
+      if (ancho === 1024) {
+        await alInicio();
+        await page.click("[data-despegar]");
+        await page.waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 90000 });
+        await page.waitForTimeout(4000);
+        const c = await page.evaluate(() => ({
+          centrado: globalThis.__oga.centrado?.() ?? null,
+          marca: globalThis.__oga.compensadorDeDespegue?.()?.marca ?? null,
+        }));
+        const cm = (x) => (x === null || x === undefined ? "—" : `${(x * 100).toFixed(1)} cm`);
+        comprobar(
+          `${tam}: el reparto de la hoja llega al vuelo`,
+          c.centrado &&
+            c.centrado.modelo !== null &&
+            c.centrado.juego > 0.03 &&
+            Math.abs(c.centrado.modelo - c.centrado.juego) < 1e-3,
+          c.centrado
+            ? `pide ${cm(c.centrado.juego)} hacia la cola, el modelo lleva ${cm(c.centrado.modelo)}; marca del compensador ${c.marca?.toFixed(3) ?? "—"}`
+            : "sin sonda",
+          "se elige dónde va cada uno y el avión volaba con el centrado de su ficha",
+        );
+        await foto("5-en-vuelo");
+      }
+    } catch (e) {
+      comprobar(`${tam}: la hoja sale`, false, String(e).slice(0, 200), "");
+    } finally {
+      await page.close();
+    }
+  }
+}
+
+await mirarLaHoja();
+await mirarElCentrado();
 await mirarLosDestellos();
 await acabar();
 

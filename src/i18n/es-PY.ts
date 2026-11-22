@@ -3181,6 +3181,18 @@ export const ES_PY = {
   "hoja.nollega.largo": "No llega con la reserva: el plan pide {pide} y en los tanques caben {cabe}. Elegí un destino más cerca.",
   "hoja.quitar": "Bajar a los que sobran",
   "hoja.mascerca": "Elegir un destino más cerca",
+  "hoja.centro": "Dónde va el peso",
+  "hoja.zona": "El centro de gravedad y su zona buena",
+  "hoja.asiento.libre": "Asiento libre: que venga alguien acá",
+  "hoja.asiento.ocupado": "Pasajero: pasarlo a la otra fila",
+  "hoja.maleta.poner": "Poner una maleta en la bodega {n}",
+  "hoja.maleta.sacar": "Sacar una maleta de la bodega {n}",
+  "hoja.centro.adelante": "Pasar a alguien adelante",
+  "hoja.centro.atras": "Pasar a alguien atrás",
+  "hoja.centro.detras.largo": "Así no sale bien: el centro de gravedad quedó muy atrás y la nariz se levanta sola. Pasá a alguien adelante o sacá maletas de atrás.",
+  "hoja.centro.delante.largo": "Así no sale bien: el centro de gravedad quedó muy adelante y cuesta levantar la nariz. Pasá a alguien atrás.",
+  "hoja.bodega.largo": "La bodega {n} admite {admite} y lleva {lleva}: sacá una maleta.",
+  "hoja.bodegas.largo": "Las dos bodegas juntas admiten {admite} y llevan {lleva}: sacá una maleta.",
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro
   // modelos de avión, que es exactamente la confusión de la que avisa
   // `tiers.ts`. Un tramo no es una aeronave, son tus galones.

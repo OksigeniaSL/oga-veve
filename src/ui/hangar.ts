@@ -52,7 +52,13 @@ import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
 import { cargaParaElPlan, combustibleDelPlan, loQueCabe } from "../flight/combustible";
 import { cargaDeSuTipo, hojaDeSuFicha, type Hoja } from "../flight/hoja-de-carga";
 import {
+  conGente,
+  hojaDelPeldano,
+  llevaCentrado,
   mandosDeLaHoja,
+  pasarEnLaHoja,
+  tocarAsiento,
+  tocarBodega,
   PASO_CARGA,
   veredicto as veredictoDeLaHoja,
   vistaDeLaHoja,
@@ -2439,7 +2445,12 @@ export function abrirHangar(
    */
   let hoja: Hoja | null = null;
   let hojaDe = "";
-  const hojaDeAhora = (): Hoja => (hoja && hojaDe === avion.id ? hoja : hojaDeSuFicha(avion));
+  /*
+   * Y el reparto, solo donde la hoja lo enseña: en Taguató y por encima, en el
+   * avión con hoja de centrado. Ver `hojaDelPeldano`.
+   */
+  const hojaDeAhora = (): Hoja =>
+    hojaDelPeldano(avion, hoja && hojaDe === avion.id ? hoja : hojaDeSuFicha(avion), tramo.avisos);
   const ponerHoja = (h: Hoja): void => {
     hoja = h;
     hojaDe = avion.id;
@@ -2678,7 +2689,7 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque hoja" aria-labelledby="hangar-carga">
           <h2 class="hangar__pregunta" id="hangar-carga">${t("hangar.carga")}</h2>
-          <div class="hoja__tarjeta">
+          <div class="hoja__tarjeta${llevaCentrado(avion, tramo.avisos) ? " hoja__tarjeta--centrado" : ""}">
             <div class="hoja__mandos">${mandosDeLaHoja(avion, hojaDeAhora(), tramo.avisos)}</div>
             <div class="hoja__vista" data-hoja-vista>${vistaDeLaHoja(vueloDeLaHoja())}</div>
           </div>
@@ -3100,7 +3111,7 @@ export function abrirHangar(
     root.addEventListener("input", (event) => {
       const deslizador = event.target as HTMLInputElement | null;
       if (!deslizador?.matches("[data-hoja-gente]")) return;
-      ponerHoja({ ...hojaDeAhora(), pasajeros: Number(deslizador.value) });
+      ponerHoja(conGente(avion, hojaDeAhora(), Number(deslizador.value)));
       repintarLaHoja();
     });
     root.addEventListener("change", (event) => {
@@ -3146,13 +3157,24 @@ export function abrirHangar(
       const paso = boton.getAttribute("data-hoja-paso");
       const llenos = boton.getAttribute("data-hoja-llenos");
       const quitar = boton.getAttribute("data-hoja-quitar");
-      if (paso !== null || llenos !== null || quitar !== null) {
+      // Y dónde va cada uno: el asiento que se toca, la maleta y el arreglo del centro.
+      const asiento = boton.getAttribute("data-hoja-asiento");
+      const maleta = boton.getAttribute("data-hoja-maleta");
+      const pasar = boton.getAttribute("data-hoja-pasar");
+      if (paso !== null || llenos !== null || quitar !== null || asiento || maleta || pasar) {
         const h = hojaDeAhora();
         const plazas = cargaDeSuTipo(avion)?.plazas ?? 0;
         const gente = (n: number): number => Math.max(0, Math.min(plazas, n));
-        if (paso !== null) ponerHoja({ ...h, pasajeros: gente(h.pasajeros + Number(paso)) });
+        const par = (texto: string): [number, number] => {
+          const [a, b] = texto.split(",").map(Number);
+          return [a ?? 0, b ?? 0];
+        };
+        if (paso !== null) ponerHoja(conGente(avion, h, gente(h.pasajeros + Number(paso))));
         else if (llenos !== null) ponerHoja({ ...h, llenos: llenos === "1" });
-        else ponerHoja({ ...h, pasajeros: gente(h.pasajeros - Number(quitar)) });
+        else if (asiento) ponerHoja(tocarAsiento(avion, h, ...par(asiento)));
+        else if (maleta) ponerHoja(tocarBodega(avion, h, ...par(maleta)));
+        else if (pasar) ponerHoja(pasarEnLaHoja(avion, h, ...par(pasar)));
+        else ponerHoja(conGente(avion, h, gente(h.pasajeros - Number(quitar))));
         voz.ruido("clic");
         repintarLaHoja();
         return;
