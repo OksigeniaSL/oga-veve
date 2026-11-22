@@ -23,8 +23,9 @@
  * EC-PSH con él ahí: el control de tierra no autoriza un empuje que barre un avión
  * (`calleLibreParaEmpujar` en `trafico.ts`), y como en el banco quien juega no rueda
  * nunca, el tractor no salía. En el juego eso se resuelve solo, cuando quien juega
- * rueda. Con el JAZ 90 en el 24, EC-PSH se va al 14 y empuja enseguida (al 17, hasta la
- * H60f: en el AIP es de salida autónoma y sin pasarela). Lo mira
+ * rueda. Con el JAZ 90 en el 24, EC-PSH se va al 13 y empuja enseguida (al 17, hasta la
+ * H60f: en el AIP es de salida autónoma y sin pasarela; y al 14 después, cuya raya sale de
+ * lado y que el tráfico ya no elige, como el plan de quien juega). Lo mira
  * `empuja-con-quien-juega-en-su-puesto.test.ts`; con `OGA_AVION=jaz-20` se ve la
  * espera.
  */
