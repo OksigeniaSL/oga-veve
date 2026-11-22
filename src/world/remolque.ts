@@ -258,8 +258,8 @@ export function rumboEnElPuesto(
 ): number | null {
   const alEdificio = rumboAlEdificio(x, z, edificios);
   if (alEdificio === null) return null;
-  const pintada = entrada ? rumboDeLaEntrada(x, z, entrada) : null;
-  if (pintada !== null && Math.abs(diferencia(alEdificio, pintada)) < SALE_DE_LADO) return pintada;
+  const pintada = rumboDeLaPintada(x, z, edificios, entrada);
+  if (pintada !== null) return pintada;
   let lejos: PuntoXZ | null = null;
   for (const p of raya) {
     if (Math.hypot(p.x - x, p.z - z) > 15) {
@@ -299,9 +299,24 @@ export function entradaDelPuesto(
 /**
  * **El rumbo de la raya pintada del puesto, si el avión se puede aparcar sobre ella**: el de
  * sus últimos quince metros, si mira al edificio —a menos de los cincuenta grados de siempre
- * de su pared más cercana—, y `null` si no la tiene o va de lado. Es con lo que se aparca el
- * avión en `empujeDesdeElPuesto` y con lo que la ruta de salida del plan sale de espaldas por
- * ella hasta su calle (H60c, `deEspaldas` en `rodajesDesde`).
+ * de su pared más cercana o de la pared a la que llega (`paredDeDelante`)—, y `null` si no la
+ * tiene o va de lado. Es con lo que se aparca el avión en `empujeDesdeElPuesto` y con lo que
+ * la ruta de salida del plan sale de espaldas por ella hasta su calle (H60c, `deEspaldas` en
+ * `rodajesDesde`).
+ *
+ * **También la pared a la que llega, y no solo la más cercana** (H60e). En un puesto que da
+ * a una esquina de la terminal la pared más cercana puede ser la de al lado: el 560 de
+ * Barajas, en su sitio del AIP, tiene la fachada a la que va su raya a 53 m por delante y la
+ * del ala a 37 m a su izquierda, a noventa grados. Contra la más cercana la raya iba de lado,
+ * el avión se ponía mirando al ala y salía a lo largo de la fachada; la pasarela, en cambio,
+ * sale de la pared que tiene delante.
+ *
+ * **Y la más cercana sigue valiendo**, porque la pared a la que llega la raya es el tramo del
+ * polígono que corta, y una fachada dibujada tiene chaflanes y quiebros. En el 23 de Los
+ * Rodeos la raya va de frente a la fachada que tiene a 57 m y corta antes un chaflán de once
+ * metros que le queda a sesenta grados; en el T7 de Barajas pasa rozando la esquina de la
+ * pared más cercana y corta de lado la de detrás. Con una sola de las dos, esos dos se
+ * quedaban sin su raya.
  */
 export function rumboDeLaPintada(
   x: number,
@@ -309,11 +324,52 @@ export function rumboDeLaPintada(
   edificios: Edificios,
   entrada: readonly PuntoXZ[] | null | undefined,
 ): number | null {
-  const alEdificio = rumboAlEdificio(x, z, edificios);
   const deLaEntrada = entrada ? rumboDeLaEntrada(x, z, entrada) : null;
-  return deLaEntrada !== null && alEdificio !== null && Math.abs(diferencia(alEdificio, deLaEntrada)) < SALE_DE_LADO
+  if (deLaEntrada === null) return null;
+  const deFrente = (pared: { readonly rumbo: number } | null): boolean =>
+    pared !== null && Math.abs(diferencia(pared.rumbo, deLaEntrada)) < SALE_DE_LADO;
+  return deFrente(paredMasCercana(x, z, edificios)) || deFrente(paredDeDelante(x, z, deLaEntrada, edificios))
     ? deLaEntrada
     : null;
+}
+
+/**
+ * **La pared a la que llega quien va desde el punto con ese rumbo** (H60e): la primera de los
+ * edificios que corta esa recta, a menos de `ALCANCE_DE_LA_PASARELA` —más allá no hay pasarela
+ * que la una al avión—. A qué distancia, y el rumbo con el que se la mira de frente, que es
+ * su perpendicular hacia ella. `null` si no da con ninguna.
+ */
+function paredDeDelante(
+  x: number,
+  z: number,
+  rumbo: number,
+  edificios: Edificios,
+): { readonly distancia: number; readonly rumbo: number } | null {
+  const v = vector(rumbo);
+  let cerca = ALCANCE_DE_LA_PASARELA;
+  let deFrente: number | null = null;
+  for (const e of edificios) {
+    const n = e.polygon.length;
+    if (n < 2) continue;
+    for (let i = 0; i < n; i++) {
+      const a = e.polygon[i]!;
+      const b = e.polygon[(i + 1) % n]!;
+      // Del aeródromo al mundo, como en `paredMasCercana`.
+      const sx = b[0] - a[0];
+      const sz = -b[1] + a[1];
+      const den = v.x * sz - v.z * sx;
+      if (Math.abs(den) < 1e-9) continue;
+      const wx = a[0] - x;
+      const wz = -a[1] - z;
+      const t = (wx * sz - wz * sx) / den;
+      const u = (wx * v.z - wz * v.x) / den;
+      if (t < 0 || t >= cerca || u < 0 || u > 1) continue;
+      cerca = t;
+      const haciaElla = sz * v.x - sx * v.z >= 0 ? 1 : -1;
+      deFrente = Math.atan2(haciaElla * sz, haciaElla * sx);
+    }
+  }
+  return deFrente === null ? null : { distancia: cerca, rumbo: deFrente };
 }
 
 /**
