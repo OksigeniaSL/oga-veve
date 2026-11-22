@@ -105,6 +105,13 @@ await page.goto(
 );
 await page.waitForTimeout(16000);
 /*
+ * **Y el centrado, si la dirección sienta a alguien** (`&filas=0,1`): que el
+ * que pide la hoja sea el que tiene el modelo de vuelo antes de rodar. Ver
+ * `flight/centrado.ts` y el ADR 0033.
+ */
+const centradoPedido = /[?&]filas=/.test(process.env.OGA_URL_EXTRA ?? "");
+const centradoEnTierra = centradoPedido ? await page.evaluate(() => globalThis.__oga.centrado?.() ?? null) : null;
+/*
  * **Los pies de la carrera, los del vuelo entero** (H44b): ver «y en el modelo
  * completo, con los pies» en la carrera de despegue, más abajo. Van a la
  * página como texto, como en `verificar-vuelo-entero.mjs`.
@@ -1966,6 +1973,22 @@ comprobar(
   `${enVuelo.ruta} puntos de ruta`,
   "la raya se quedaba pintada en el suelo mientras se volaba",
 );
+
+/*
+ * **Y el centrado, en tierra y volando**: con alguien sentado atrás, el modelo
+ * lleva el que pide la hoja desde el puesto, y lo sigue llevando en el aire.
+ */
+if (centradoPedido) {
+  const enElAire = await mirar(() => globalThis.__oga.centrado?.() ?? null);
+  const igual = (c) => !!c && c.modelo !== null && Math.abs(c.modelo - c.juego) < 1e-3 && Math.abs(c.juego) > 0.005;
+  const cm = (c) => (c ? `pide ${(c.juego * 100).toFixed(1)} cm, el modelo ${((c.modelo ?? NaN) * 100).toFixed(1)} cm` : "sin sonda");
+  comprobar(
+    "y el centrado de la hoja llega al modelo de vuelo, en tierra y en el aire",
+    igual(centradoEnTierra) && igual(enElAire),
+    `en el puesto ${cm(centradoEnTierra)} · volando ${cm(enElAire)}`,
+    "la hoja sentó a alguien atrás y el avión volaba con el centrado de su ficha",
+  );
+}
 
 // ── El informe ────────────────────────────────────────────────────────────
 

@@ -9125,6 +9125,363 @@ button.motor__tecla::after {
   color: var(--precaucion);
 }
 
+/*
+ * ── El centrado en la hoja ──
+ *
+ * Desde Taguató, en el avión con hoja de centrado: el avión visto desde
+ * arriba, con sus asientos y sus bodegas del tamaño del dedo, y la envolvente
+ * de su manual con el punto. Ocupa el sitio de la fila de asientos, que el
+ * avión dibujado ya enseña, y va a lo ancho de la tarjeta: el punto que se
+ * mueve tiene que verse moverse. Ver `ui/hoja-de-carga.ts`.
+ */
+.hoja__tarjeta--centrado {
+  grid-template-areas: "mandos" "centrado" "bascula" "pista" "veredicto";
+}
+
+/*
+ * Con sitio, el avión y su envolvente arriba a la derecha, junto a los mandos
+ * que lo cambian, y la báscula y la pista debajo, una al lado de otra. En un
+ * teléfono tumbado así se ve entero lo nuevo sin rodar: con el centrado
+ * debajo de todo, el avión quedaba tapado por la barra de despegar.
+ */
+@media (min-width: 700px) {
+  .hoja__tarjeta--centrado {
+    grid-template-areas:
+      "mandos centrado"
+      "bascula pista"
+      "veredicto veredicto";
+    align-items: start;
+  }
+}
+
+.hoja__centrado {
+  grid-area: centrado;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 18px;
+  width: 100%;
+}
+
+/* De pie en un teléfono, el avión y la envolvente uno debajo de otro. */
+@media (max-width: 519px) {
+  .hoja__centrado {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.hoja__planta {
+  position: relative;
+  width: 100%;
+  height: 100px;
+}
+
+/* El dibujo se estira a lo ancho y no a lo alto: los botones van encima, por porcentaje. */
+.hoja__silueta {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hoja__fuselaje,
+.hoja__cola {
+  fill: rgb(228 226 218 / 0.1);
+  stroke: rgb(228 226 218 / 0.55);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+/* Ala alta, vista a través: debajo van los asientos. */
+.hoja__ala {
+  fill: rgb(228 226 218 / 0.07);
+  stroke: rgb(228 226 218 / 0.4);
+  stroke-width: 1.2;
+}
+
+.hoja__helice {
+  stroke: rgb(228 226 218 / 0.6);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* La zona buena con el peso de hoy, en la raya del medio del avión. */
+.hoja__zona {
+  position: absolute;
+  top: calc(50% - 5px);
+  height: 10px;
+  border-radius: 5px;
+  background: rgb(126 200 106 / 0.45);
+  box-shadow: 0 0 0 1.5px var(--ok);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hoja__hueco {
+  position: absolute;
+  display: flex;
+  width: 46px;
+  height: 46px;
+  transform: translateX(-50%);
+}
+
+.hoja__piloto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.hoja__toque {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hoja__toque:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 1px;
+}
+
+.hoja__toque:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.hoja__plaza {
+  width: 34px;
+  height: 34px;
+}
+
+.hoja__plaza-asiento {
+  fill: rgb(15 21 18 / 0.6);
+  stroke: var(--linea-fuerte);
+  stroke-width: 1.2;
+}
+
+.hoja__plaza-respaldo {
+  fill: var(--linea-fuerte);
+}
+
+/* El pasaje, del azul de la gente de la báscula; quien pilota, del ocre. */
+.hoja__plaza--ocupada .hoja__plaza-asiento {
+  stroke: #8fc3e8;
+}
+
+.hoja__plaza-cabeza {
+  fill: #8fc3e8;
+}
+
+.hoja__plaza-brazos {
+  fill: none;
+  stroke: #8fc3e8;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.hoja__plaza--piloto .hoja__plaza-asiento {
+  stroke: var(--ocre);
+}
+
+.hoja__plaza--piloto .hoja__plaza-cabeza {
+  fill: var(--ocre);
+}
+
+.hoja__plaza--piloto .hoja__plaza-brazos {
+  stroke: var(--ocre);
+}
+
+/* Las bodegas: arriba las maletas, que se tocan para poner otra; abajo, sacar. */
+.hoja__toque--bodega,
+.hoja__toque--sacar {
+  border-color: rgb(228 226 218 / 0.35);
+  background: rgb(15 21 18 / 0.5);
+}
+
+.hoja__maletas {
+  display: grid;
+  grid-template-columns: repeat(3, 10px);
+  grid-auto-rows: 9px;
+  gap: 2px;
+  align-content: center;
+}
+
+.hoja__maleta {
+  width: 10px;
+  height: 9px;
+  border-radius: 2px;
+  background: #c9a27a;
+}
+
+/* La que pasa del rótulo de su bodega, rayada en ámbar como lo que pasa de la raya de la báscula. */
+.hoja__maleta--demas {
+  background: repeating-linear-gradient(-45deg, var(--precaucion) 0 3px, rgb(232 177 58 / 0.4) 3px 6px);
+}
+
+.hoja__mas {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ocre-tinta);
+}
+
+.hoja__toque--sacar .hoja__menos {
+  font-size: 22px;
+  color: var(--tinta-suave);
+}
+
+.hoja__toque--sacar svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* El símbolo del centro de gravedad, el de los manuales: el círculo en cuartos. */
+.hoja__cg {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: conic-gradient(#14161a 0 25%, #f2f1ec 0 50%, #14161a 0 75%, #f2f1ec 0);
+  box-shadow: 0 0 0 2px var(--ok), 0 1px 4px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.hoja__cg--fuera {
+  box-shadow: 0 0 0 3px var(--precaucion), 0 1px 4px rgb(0 0 0 / 0.5);
+}
+
+/* Y se corre desde donde estaba: la vista se repinta entera con cada toque. */
+.hoja__cg--mueve {
+  animation: hoja-cg-llega 0.45s ease-out;
+}
+
+@keyframes hoja-cg-llega {
+  from {
+    left: var(--desde);
+  }
+}
+
+.hoja__grafica {
+  min-width: 0;
+}
+
+/* Las dos cifras, cada una entera: si no caben en una línea, la zona baja a la siguiente. */
+.hoja__grafica .hoja__cifras {
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.hoja__grafica .hoja__cifras span {
+  white-space: nowrap;
+}
+
+.hoja__envolvente {
+  display: block;
+  width: 100%;
+  height: 100px;
+  overflow: visible;
+}
+
+.hoja__eje {
+  stroke: rgb(228 226 218 / 0.35);
+  stroke-width: 1;
+}
+
+/* El peso máximo, a lo ancho y a trazos: por encima, pesa de más. */
+.hoja__techo {
+  stroke: rgb(228 226 218 / 0.35);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.hoja__buena {
+  fill: rgb(126 200 106 / 0.22);
+}
+
+/* Delante, arriba y detrás; abajo no, que el manual no pone límite por abajo. */
+.hoja__borde {
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.hoja__punto {
+  fill: var(--ok);
+  stroke: #10170f;
+  stroke-width: 2;
+}
+
+.hoja__punto--fuera {
+  fill: var(--precaucion);
+}
+
+.hoja__punto--mueve {
+  animation: hoja-punto-llega 0.45s ease-out;
+}
+
+@keyframes hoja-punto-llega {
+  from {
+    transform: translate(calc(var(--dx) * 1px), calc(var(--dy) * 1px));
+  }
+}
+
+.hoja__envolvente--fuera {
+  animation: hoja-no-cabe 0.5s ease-in-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoja__cg--mueve,
+  .hoja__punto--mueve,
+  .hoja__envolvente--fuera {
+    animation: none;
+  }
+}
+
+.sin-movimiento .hoja__cg--mueve,
+.sin-movimiento .hoja__punto--mueve,
+.sin-movimiento .hoja__envolvente--fuera {
+  animation: none;
+}
+
+/*
+ * En un teléfono tumbado, la envolvente más baja que el avión: la fila de
+ * arriba la marca lo más alto de las tres —los mandos, el avión con sus dos
+ * asientos por columna y la envolvente con sus cifras—, y con la envolvente
+ * a 100 px más sus dos renglones el veredicto quedaba debajo de la barra de
+ * despegar. El avión no baja de 94: son dos botones de 46 uno encima de otro.
+ */
+@media (min-width: 700px) and (max-height: 460px) {
+  .hoja__planta {
+    height: 94px;
+  }
+
+  .hoja__envolvente {
+    height: 66px;
+  }
+
+  .hoja__centrado {
+    gap: 6px 12px;
+  }
+}
+
 /* El circuito de la vuelta al campo, encima del plano de casa. */
 .ficha__circuito {
   position: absolute;
