@@ -68,6 +68,7 @@ import { gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
 import {
   flotaElReactor,
   gasDelReactorEnLaRecogida,
+  morroQueFaltaAlPunto,
   pideAlPuntoDeToma,
   porLoQueAceleraElReactor,
 } from "./recogida-del-reactor.mjs";
@@ -764,6 +765,13 @@ await page.addScriptTag({
   content: `globalThis.__pideAlPuntoDeToma = ${pideAlPuntoDeToma.toString()};`,
 });
 /*
+ * **Y el morro que no baja de la recogida bajo el punto de toma** (H34h),
+ * desde el mismo módulo y por lo mismo.
+ */
+await page.addScriptTag({
+  content: `globalThis.__morroQueFaltaAlPunto = ${morroQueFaltaAlPunto.toString()};`,
+});
+/*
  * **Y el gas de un reactor en la recogida** (H55c), desde el mismo módulo y
  * por lo mismo.
  */
@@ -1094,6 +1102,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
                   rfl: recogida.floto ? 1 : 0,
                   // Y si el reactor va a su punto de toma (H53).
                   rpt: recogida.alPunto ? 1 : 0,
+                  // Y lo que le falta al morro bajo el punto, ° (H34h).
+                  rmf: +(((recogida.morroQueFalta ?? 0) * 180) / Math.PI).toFixed(2),
                   rs: +(ahora - (recogida.empezo ?? ahora)).toFixed(2),
                 }
               : {}),
@@ -1390,6 +1400,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         0.5
       : 0;
     const pistaBaja = Number.isFinite(bajaLaPista) ? bajaLaPista : 0;
+    // Para la comprobación de la toma, que la da también contra la pista (H34h).
+    recogida.pistaBaja = pistaBaja;
     const contraLaPista = s.verticalSpeed - pistaBaja;
     /*
      * El perfil va contra la pista, y su final es el de tocar a
@@ -1671,7 +1683,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         ? Math.max(-0.6, Math.min(0.8, recogida.ultimoMando + picado - (recogida.picado ?? picado)))
         : calculado;
     recogida.picado = picado;
-    mandos.elevator = sostiene ? sostenida : calculado;
+    /*
+     * **Y bajo el punto de toma, el morro no baja de la recogida** (H34h): la
+     * actitud con la que empezó a recoger más dos grados. Ver
+     * `morroQueFaltaAlPunto` en `scripts/recogida-del-reactor.mjs`.
+     */
+    const morro = o.actitud?.().cabeceo;
+    if (recogida.morroAlEmpezar === undefined && typeof morro === "number")
+      recogida.morroAlEmpezar = morro;
+    recogida.morroQueFalta =
+      RECOGIDA_DE_REACTOR &&
+      alPunto !== null &&
+      typeof morro === "number" &&
+      recogida.morroAlEmpezar !== undefined
+        ? globalThis.__morroQueFaltaAlPunto({ cabeceo: morro, alEmpezar: recogida.morroAlEmpezar })
+        : 0;
+    const conElMorro = Math.min(0.8, calculado + (recogida.porAngulo ?? 0) * recogida.morroQueFalta);
+    mandos.elevator = sostiene ? sostenida : conElMorro;
     recogida.ultimoMando = mandos.elevator;
     /*
      * **Y un bimotor de hélice no corta el gas al empezar a recoger: lo va
@@ -4638,6 +4666,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let caidaAlTocar = null;
   /** De dónde salió `caidaAlTocar`, y lo que decía el modelo en esa muestra. */
   let caidaDeQuien = null;
+  /**
+   * **Lo que bajaba la pista bajo el avión al tocar**, m/s, negativo si baja;
+   * `null` sin recogida. Ver `pistaBaja` en `recoger`.
+   *
+   * La caída que apunta el juego es la del variómetro —`touchdownSinkRate` en
+   * `flight/fdm.ts` es `−velocity.y`—, y lo que nota el tren es lo que se le
+   * acerca el suelo. En una pista llana es lo mismo; en la 03 de Gran Canaria,
+   * que en el juego baja un 0,4 % hacia el norte, la pista se aparta 0,3 m/s
+   * bajo un 747 a la Vref, y el juego lee una toma 0,3 m/s más dura de lo que
+   * es (H34h). La comprobación sigue juzgando con la del juego, que es la que
+   * juzga a quien juega; esto solo lo dice al lado.
+   */
+  let pistaAlTocar = null;
   /** Lo más deprisa que se rodó de vuelta fuera de la pista, m/s. */
   let rodajeMasRapido = 0;
   /**
@@ -8374,6 +8415,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           juego: typeof delJuego === "number" && delJuego > 0,
           modelo: +(s.touchdownSinkRate ?? NaN).toFixed(2),
         };
+        pistaAlTocar = typeof recogida?.pistaBaja === "number" ? recogida.pistaBaja : null;
         recogida = null;
         desplazadoAlTocar = r.desplazado ?? 0;
         tocoA = s.airspeed;
@@ -8867,6 +8909,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     pistaParaTocar: Math.round(pistaParaTocar),
     caidaAlTocar: caidaAlTocar === null ? null : +caidaAlTocar.toFixed(2),
     caidaDeQuien,
+    pistaAlTocar: pistaAlTocar === null ? null : +pistaAlTocar.toFixed(2),
     /*
      * **Y lo que juzgó el juego de esa toma**: el veredicto y la caída con la
      * que lo juzgó. El banco mide la toma por su cuenta, y cuando las dos
@@ -10857,7 +10900,15 @@ comprobarSiVolo(
     "y se toca con recogida, a uno o dos metros por segundo",
     vuelo.toco > 0 && caida !== null && caida <= 2,
     vuelo.toco
-      ? `a ${caida ?? "?"} m/s · ${Math.abs(vuelo.tocoDesviado).toFixed(1)} m del eje · a ${vuelo.tocoA} m/s`
+      ? `a ${caida ?? "?"} m/s` +
+          /*
+           * Y contra la pista, si baja o sube bajo el avión (H34h): es lo que
+           * nota el tren. Ver `pistaAlTocar`.
+           */
+          (caida !== null && typeof vuelo.pistaAlTocar === "number" && Math.abs(vuelo.pistaAlTocar) >= 0.05
+            ? ` (contra la pista, ${(caida + vuelo.pistaAlTocar).toFixed(2)}: la pista ${vuelo.pistaAlTocar < 0 ? "baja" : "sube"} ${Math.abs(vuelo.pistaAlTocar).toFixed(2)} m/s bajo el avión)`
+            : "") +
+          ` · ${Math.abs(vuelo.tocoDesviado).toFixed(1)} m del eje · a ${vuelo.tocoA} m/s`
       : "no llegó a tocar",
     "los reactores tocan a unos 4 m/s de descenso, sin recogida",
   );

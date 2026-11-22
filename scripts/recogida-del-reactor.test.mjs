@@ -28,6 +28,7 @@ import { bankAngleOf, pitchAngleOf } from "../src/ui/actitud";
 import {
   flotaElReactor,
   gasDelReactorEnLaRecogida,
+  morroQueFaltaAlPunto,
   palancaDelReactorEnLaRecogida,
   pideAlPuntoDeToma,
   porLoQueAceleraElReactor,
@@ -186,6 +187,8 @@ function vuelaLaFinal(
         dt: DT,
         presion: Math.min(1, (vref / raiz(s.position.y) / Math.max(1, s.airspeed)) ** 2),
         picado: m.palancaDelSuelo(),
+        // Y el morro, para que el punto no lo baje de la recogida (H34h).
+        cabeceo: pitchAngleOf(s.orientation),
         rec,
         // Y dónde va, si se le dice: para ir a la pista en su punto (H53).
         ...(alPunto ? { pasado: along, porElSuelo } : {}),
@@ -384,10 +387,16 @@ describe("la recogida de un reactor va a la pista en su punto", () => {
      * (ver `pideAlPuntoDeToma`). Es el precio de no tirar el avión al suelo con
      * el morro abajo: en estas sesenta, las de más de 2 m/s bajan de 7 a 4, y
      * el morro más bajo al tocar sube de 0,3° a 1,7°. Sigue siendo una sola.
+     *
+     * **Y desde H34h, dos**: bajo el punto el morro ya no baja de la actitud de
+     * recoger más dos grados (ver `morroQueFaltaAlPunto`), y la semilla 14,
+     * que el punto ponía en el suelo dentro de la zona, toca a 602 m, dos
+     * metros pasada. Las de más de 2 m/s, de 4 a 3. La más larga, la de
+     * la semilla 56, de 716 a 722 m.
      */
     const delJuego = mesa(palancaDelReactorEnLaRecogida, 60, true);
     expect(delJuego.laMasDura).toBeLessThan(DURO_DE_TRANSPORTE);
-    expect(delJuego.largas).toBeLessThanOrEqual(1);
+    expect(delJuego.largas).toBeLessThanOrEqual(2);
     expect(delJuego.laMasLarga).toBeLessThan(750);
     const conElGasDeAntes = mesa(palancaDelReactorEnLaRecogida, 60, true, undefined, true);
     expect(conElGasDeAntes.laMasLarga).toBeGreaterThan(650);
@@ -395,6 +404,25 @@ describe("la recogida de un reactor va a la pista en su punto", () => {
     // Medido: las duras, 7 con el gas de antes y 8 con el de ahora; la peor, igual.
     expect(delJuego.duras).toBeLessThanOrEqual(conElGasDeAntes.duras + 2);
     expect(delJuego.laMasDura).toBeLessThanOrEqual(conElGasDeAntes.laMasDura + 1e-9);
+  });
+
+  it("y bajo el punto, el morro no baja de la actitud de recoger más dos grados (H34h)", () => {
+    const grado = Math.PI / 180;
+    expect(morroQueFaltaAlPunto({ cabeceo: 3 * grado, alEmpezar: 0.5 * grado })).toBe(0);
+    expect(morroQueFaltaAlPunto({ cabeceo: 2.5 * grado, alEmpezar: 0.5 * grado })).toBeCloseTo(0, 12);
+    expect(morroQueFaltaAlPunto({ cabeceo: 1.3 * grado, alEmpezar: 0.25 * grado })).toBeCloseTo(0.95 * grado, 12);
+    // Y la página lo recibe como texto: no toca nada de fuera.
+    const enLaPagina = new Function(`${morroQueFaltaAlPunto.toString()}\nreturn morroQueFaltaAlPunto;`)();
+    expect(enLaPagina({ cabeceo: 0, alEmpezar: 0 })).toBeCloseTo(2 * grado, 12);
+    // En la ley: sin punto no cuenta; con él, suma el morro que falta pasado a palanca.
+    const base = { ruedas: 2.5, vertical: -0.2, verdadera: 76, ritmoDeCabeceo: 0, carga: 1, porAngulo: 1.8, envergadura: 59.64, dt: 1 / 60 };
+    const rec = () => ({ altura: 13, caida: 3.8, palanca: -0.2, acumulado: 0, velocidad: 78, picadoDeLaPalanca: 0, ultimo: -0.1, morroAlEmpezar: 0.25 * grado });
+    const sinPunto = palancaDelReactorEnLaRecogida({ ...base, cabeceo: 1.3 * grado, rec: rec() });
+    expect(palancaDelReactorEnLaRecogida({ ...base, rec: rec() })).toBeCloseTo(sinPunto, 12);
+    const alPunto = { pasado: 1500 * 0.3048 + 50, porElSuelo: 66 };
+    const sinMorro = palancaDelReactorEnLaRecogida({ ...base, ...alPunto, rec: rec() });
+    const conMorro = palancaDelReactorEnLaRecogida({ ...base, ...alPunto, cabeceo: 1.3 * grado, rec: rec() });
+    expect(conMorro - sinMorro).toBeCloseTo(1.8 * 0.95 * grado, 9);
   });
 
   it("y el gas del reactor: el de la senda hasta los treinta pies, y fuera desde que flota", () => {
