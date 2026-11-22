@@ -192,6 +192,47 @@ export function flotaElReactor(p) {
 }
 
 /**
+ * **Lo que le falta al morro para la actitud de la recogida, bajo el punto de
+ * toma** (H34h), rad: cero si va en ella o por encima. Se suma a la palanca
+ * pasado a ella con el cabeceo del avión, como lo demás de la recogida.
+ *
+ * El punto de toma (H53) le quita a la recogida lo que flota, y lo hacía
+ * deshaciéndola: en el navegador, el 747 se nivelaba a dos metros y medio
+ * —una racha en la recogida y la ley que tira de más—, el punto pedía hasta
+ * 1,9 m/s y la palanca bajaba el morro de 4° a 1,3–1,9° en tres segundos;
+ * luego la racha se iba o la velocidad no daba, y desde dos metros, con el
+ * morro abajo, el ala de sesenta metros ya no llegaba a recoger otra vez: 2,03
+ * m/s en Tukã con la pista ocupada (H34g) y 2,54 en Gran Canaria (H34h). El
+ * manual recoge subiendo el morro dos o tres grados y, después, «make small
+ * pitch attitude adjustments to maintain the desired descent rate to the
+ * runway. Hold sufficient back pressure on the control column to keep the
+ * pitch attitude constant», «Avoid rapid control column movements during the
+ * flare»; y para no flotar, «Fly the airplane onto the runway at the desired
+ * touchdown point» (Boeing, *777/787 Flight Crew Training Manual*, FCT
+ * 777/787 (TM), rev. 14, 2021, pp. 6.9-6.10): quitar la recogida que sobra,
+ * no deshacerla. Así que, mientras manda el punto, el morro no baja de la
+ * actitud con la que empezó a recoger más esos dos grados.
+ *
+ * En la mesa de la recogida (el JAZ 120 con veinte nudos de cara, a la Vref
+ * más diez, doscientas finales con σ_w 1), las de más de 2 m/s pasan de 21 a
+ * 16 y las pasadas de 600 m de 4 a 5; con la pista bajando un 0,4 %, como la
+ * 03 de Gran Canaria, de 39 a 23 y de 10 a 14. Con rachas de σ_w 1,5 se cambia
+ * duras por largas (de 56 y 7 a 51 y 15). Con tres grados en vez de dos, menos
+ * duras y más largas todavía. Sin nada de fuera: el banco lo copia a la página.
+ *
+ * @param {{
+ *   cabeceo: number,   // el morro sobre el horizonte, rad
+ *   alEmpezar: number, // el de al empezar a recoger, rad
+ * }} p
+ * @returns {number}
+ */
+export function morroQueFaltaAlPunto(p) {
+  // Los dos grados de la recogida del manual, aquí porque esto viaja como texto.
+  const recoge = (2 * Math.PI) / 180;
+  return Math.max(0, p.alEmpezar + recoge - p.cabeceo);
+}
+
+/**
  * **La recogida de un reactor en el banco del cangrejo** (H46), la de
  * `recoger` en `verificar-vuelo-entero.mjs` para una pista llana y fuera de
  * Guyrami: el ritmo de
@@ -224,7 +265,8 @@ export function flotaElReactor(p) {
  *   porElSuelo?: number, // m/s, con `pasado`
  *   presion?: number,     // lo que pide la presión que lleva: ver `porLaPresion` en `recoger`; 1 si no se da
  *   picado?: number,      // la palanca que pide el picado del suelo, `palancaDelSuelo` del modelo (H56); 0 si no se da
- *   rec: { altura: number, caida: number, palanca: number, acumulado: number, velocidad: number, ultimo?: number, picado?: number, picadoDeLaPalanca?: number },
+ *   cabeceo?: number,     // el morro sobre el horizonte, rad: con él, el punto no lo baja de la recogida (H34h)
+ *   rec: { altura: number, caida: number, palanca: number, acumulado: number, velocidad: number, ultimo?: number, picado?: number, picadoDeLaPalanca?: number, morroAlEmpezar?: number },
  * }} p
  * @returns {number} la palanca, de −0,6 a 0,8
  */
@@ -289,6 +331,17 @@ export function palancaDelReactorEnLaRecogida(p) {
         k * 0.4 * p.ritmoDeCabeceo,
     ),
   );
+  /*
+   * **Y bajo el punto de toma, el morro no baja de la recogida** (H34h): el
+   * punto quita la recogida que flota, pero no deshace la actitud. Ver
+   * `morroQueFaltaAlPunto`.
+   */
+  if (rec.morroAlEmpezar === undefined && p.cabeceo !== undefined) rec.morroAlEmpezar = p.cabeceo;
+  const morroQueFalta =
+    alPunto !== null && p.cabeceo !== undefined && rec.morroAlEmpezar !== undefined
+      ? morroQueFaltaAlPunto({ cabeceo: p.cabeceo, alEmpezar: rec.morroAlEmpezar })
+      : 0;
+  const conElMorro = Math.min(0.8, calculado + k * morroQueFalta);
   const aRas = p.ruedas < 1.5 && pide - p.vertical < 0;
   /*
    * Sostener la palanca es sostener el morro: lo que pica el suelo de más
@@ -302,7 +355,7 @@ export function palancaDelReactorEnLaRecogida(p) {
   const palanca =
     (falta < -0.6 || aRas) && sostenida !== undefined && alPunto === null
       ? sostenida
-      : calculado;
+      : conElMorro;
   rec.ultimo = palanca;
   return palanca;
 }

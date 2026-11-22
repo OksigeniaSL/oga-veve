@@ -68,6 +68,7 @@ import { gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
 import {
   flotaElReactor,
   gasDelReactorEnLaRecogida,
+  morroQueFaltaAlPunto,
   pideAlPuntoDeToma,
   porLoQueAceleraElReactor,
 } from "./recogida-del-reactor.mjs";
@@ -764,6 +765,13 @@ await page.addScriptTag({
   content: `globalThis.__pideAlPuntoDeToma = ${pideAlPuntoDeToma.toString()};`,
 });
 /*
+ * **Y el morro que no baja de la recogida bajo el punto de toma** (H34h),
+ * desde el mismo módulo y por lo mismo.
+ */
+await page.addScriptTag({
+  content: `globalThis.__morroQueFaltaAlPunto = ${morroQueFaltaAlPunto.toString()};`,
+});
+/*
  * **Y el gas de un reactor en la recogida** (H55c), desde el mismo módulo y
  * por lo mismo.
  */
@@ -1094,6 +1102,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
                   rfl: recogida.floto ? 1 : 0,
                   // Y si el reactor va a su punto de toma (H53).
                   rpt: recogida.alPunto ? 1 : 0,
+                  // Y lo que le falta al morro bajo el punto, ° (H34h).
+                  rmf: +(((recogida.morroQueFalta ?? 0) * 180) / Math.PI).toFixed(2),
                   rs: +(ahora - (recogida.empezo ?? ahora)).toFixed(2),
                 }
               : {}),
@@ -1673,7 +1683,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         ? Math.max(-0.6, Math.min(0.8, recogida.ultimoMando + picado - (recogida.picado ?? picado)))
         : calculado;
     recogida.picado = picado;
-    mandos.elevator = sostiene ? sostenida : calculado;
+    /*
+     * **Y bajo el punto de toma, el morro no baja de la recogida** (H34h): la
+     * actitud con la que empezó a recoger más dos grados. Ver
+     * `morroQueFaltaAlPunto` en `scripts/recogida-del-reactor.mjs`.
+     */
+    const morro = o.actitud?.().cabeceo;
+    if (recogida.morroAlEmpezar === undefined && typeof morro === "number")
+      recogida.morroAlEmpezar = morro;
+    recogida.morroQueFalta =
+      RECOGIDA_DE_REACTOR &&
+      alPunto !== null &&
+      typeof morro === "number" &&
+      recogida.morroAlEmpezar !== undefined
+        ? globalThis.__morroQueFaltaAlPunto({ cabeceo: morro, alEmpezar: recogida.morroAlEmpezar })
+        : 0;
+    const conElMorro = Math.min(0.8, calculado + (recogida.porAngulo ?? 0) * recogida.morroQueFalta);
+    mandos.elevator = sostiene ? sostenida : conElMorro;
     recogida.ultimoMando = mandos.elevator;
     /*
      * **Y un bimotor de hélice no corta el gas al empezar a recoger: lo va
