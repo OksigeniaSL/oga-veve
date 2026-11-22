@@ -390,8 +390,8 @@ describe("la recogida de un reactor va a la pista en su punto", () => {
      *
      * **Y desde H34h, dos**: bajo el punto el morro ya no baja de la actitud de
      * recoger más dos grados (ver `morroQueFaltaAlPunto`), y la semilla 14,
-     * que el punto bajaba al suelo con el morro a 1,3°, toca a 602 m, dos
-     * metros pasada la zona. Las de más de 2 m/s, de 4 a 3. La más larga, la de
+     * que el punto ponía en el suelo dentro de la zona, toca a 602 m, dos
+     * metros pasada. Las de más de 2 m/s, de 4 a 3. La más larga, la de
      * la semilla 56, de 716 a 722 m.
      */
     const delJuego = mesa(palancaDelReactorEnLaRecogida, 60, true);
