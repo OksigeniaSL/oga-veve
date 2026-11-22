@@ -41192,8 +41192,8 @@ export class Game {
 
   /**
    * **La puerta por la que sube la gente**, en el mundo: la corredera del
-   * costado derecho del Super Puma, el vacío `puerta-corredera` del modelo de
-   * Gaudí —ver `modelos/jaz-super-puma.py`—, en el centro del hueco y a ras del
+   * costado derecho del Super Puma, el vacío `puerta-corredera` del modelo
+   * —ver `modelos/jaz-super-puma.py`—, en el centro del hueco y a ras del
    * fuselaje. `null` con la silueta de cajas, que no tiene puerta.
    */
   private puertaDelHelicoptero(): PuntoDeLaPuerta | null {

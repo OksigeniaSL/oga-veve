@@ -25,7 +25,7 @@ const fs = () =>
     readFileSync(ruta: string): Uint8Array;
   };
 
-/** El tope de triángulos de cada ficha (las «Fichas para Gaudí»). */
+/** El tope de triángulos de la ficha de encargo de cada sitio. */
 const TOPE: Record<string, number> = {
   itaipu: 12_000,
   "puente-encarnacion": 8_000,

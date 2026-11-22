@@ -13,7 +13,7 @@ El trabajo va en cuatro pasos, y cada uno se mira antes de lanzar el siguiente:
 
 1. **El modelo de vuelo y este documento.** Hecho.
 2. El helicóptero en Blender: por fuera, con el rotor girando, y la cabina con sus botones. **Hecho**: por fuera con
-   el rotor de Gaudí (08a31e23, 4d4c2ff4) y la cabina por dentro, de pantallas, la familia D (b8cc1ba1, 4c16f8b2).
+   el rotor del kit de arte (08a31e23, 4d4c2ff4) y la cabina por dentro, de pantallas, la familia D (b8cc1ba1, 4c16f8b2).
 3. Los mandos —teclado, dedo y mando— y la pantalla: el par y las vueltas del rotor en vez de lo de un reactor; qué
    estabilización lleva cada peldaño; arrancar y rodar. **Hecho**: la pantalla de helicóptero en los cuatro peldaños
    y en el teléfono (6706ff99), el sonido (4616507d), y arrancar, parar y rodar (8c4a2764, 7a8cc0e8).
@@ -150,8 +150,8 @@ del Ejército** junto a Los Rodeos (GCXM, puesto a mano con los datos del AIP, q
   del gas se llama **COLL**: es el colectivo, no un gas. Velocidad, altura y velocidad vertical, las del cuadro de
   siempre. Ni flaps, ni tren, ni aerofrenos, ni reversa, ni piloto automático: no los lleva.
 - **El modelo de verdad** (`modelos/jaz-super-puma.py`, el paso 2) se carga como los de los aviones, y la silueta de
-  cajas se queda solo mientras llega. **Su rotor es el de Gaudí** (`world/rotor-del-helicoptero.ts`, del kit de arte
-  de hq): parado, las palas caen sobre su bisagra; girando, se enderezan, suben al cono con el empuje y se funden en un
+  cajas se queda solo mientras llega. **Su rotor es el del kit de arte** (`world/rotor-del-helicoptero.ts`):
+  parado, las palas caen sobre su bisagra; girando, se enderezan, suben al cono con el empuje y se funden en un
   disco translúcido con el aro de las puntas en terracota y cuatro sombras de pala que giran despacio. Nunca las palas
   de verdad a toda velocidad, que a sesenta imágenes por segundo harían la rueda de carro: mientras se ven, el eje no
   gira a más de 0,6 vueltas por segundo, y según se funden se para y giran las sombras. El disco toma el color de las
@@ -183,7 +183,7 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
 | Del rotor al de cola | 9,4 m: la «D-value» de 18,70 m menos un radio de cada uno | Airbus |
 | Techos en estacionario | 2.300 m fuera del efecto suelo; 3.250 m dentro | Airbus, sin decir a qué peso; se toman al máximo |
 | Crucero recomendado | 136 kt | Airbus |
-| Ruedas, altura del rotor y del rotor de cola | De rueda a rueda 5,2 m, vía de 3,1 m, el plano de las palas a 4,30 m del suelo | La muestra de Gaudí: el plano de tres vistas del AS 332 de fuselaje corto, a la escala de la ficha |
+| Ruedas, altura del rotor y del rotor de cola | De rueda a rueda 5,2 m, vía de 3,1 m, el plano de las palas a 4,30 m del suelo | La muestra de arte: el plano de tres vistas del AS 332 de fuselaje corto, a la escala de la ficha |
 | Cuerda de la pala, torsión, perfil, inercias, centro de gravedad | Supuestos | Valores normales; las inercias, del orden del UH-60 del informe de la NASA |
 | Sentido de giro | Horario visto desde arriba | aerospaceweb.org; tripulaciones del Puma |
 
@@ -198,7 +198,7 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
 **Lo que no se ajusta, y se mira:**
 
 - **El techo dentro del efecto suelo**: sale en **3.296 m** con las ruedas a un metro del suelo —el plano de las palas a
-  5,3 m, con la altura de la muestra de Gaudí—, frente a los 3.250 de Airbus. Es la prueba de que el efecto suelo y la potencia
+  5,3 m, con la altura de la muestra de arte—, frente a los 3.250 de Airbus. Es la prueba de que el efecto suelo y la potencia
   están bien a la vez.
 - **El estacionario a nivel del mar** pide 1.993 kW, el 73 % de la potencia de despegue, y volado pide lo mismo que la
   cuenta sin volarlo.
@@ -224,7 +224,7 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
   orienta sola y **se gira con los pedales**, que mueven el rotor de cola. Las principales agarran de lado y frenan.
 - **Despegar sin corregir con el cíclico**: el helicóptero que se aligera se inclina sobre sus ruedas —el mástil cae
   hacia delante y el rotor de cola empuja a un lado—, sale torcido y, sin nadie que lo sostenga, en el aire se va. Con
-  las medidas de la muestra de Gaudí se inclina veinte grados de morro antes de despegar; con las supuestas de antes,
+  las medidas de la muestra de arte se inclina veinte grados de morro antes de despegar; con las supuestas de antes,
   más estrechas, volcaba de lado, que es el vuelco dinámico. Con la estabilización sube derecho, porque posada sigue
   sosteniendo la actitud. Lo que no hace posada es acumular: la actitud que sostiene sigue despacio la que tiene sobre
   las ruedas, y en el modo de actitud el cíclico de la mano llega además tal cual al rotor para poder rodar.

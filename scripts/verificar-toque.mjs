@@ -1,8 +1,8 @@
 /**
  * **El dedo, en tres preguntas**, y el panel de accesibilidad de la casa.
  *
- * Las tres preguntas las trajo Gaudí, el agente de arte, de mirar webs
- * premiadas con un teléfono en la mano:
+ * Las tres preguntas salen de mirar webs premiadas con un teléfono en la
+ * mano:
  *
  * 1. **Un toque no deja el `:hover` pegado.** En una pantalla táctil el
  *    navegador da el `:hover` al tocar y lo deja puesto hasta que se toca otra

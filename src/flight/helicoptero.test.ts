@@ -96,7 +96,7 @@ describe("lo que puede sostener, contra lo que publica Airbus", () => {
   });
 
   it("y el de dentro, cerca de los 3.250 m, sin ajustar nada: con las ruedas a un metro del suelo", () => {
-    // El plano de las palas va a 4,3 m del suelo posado (la muestra de Gaudí); con las ruedas a un metro, a 5,3.
+    // El plano de las palas va a 4,3 m del suelo posado (la muestra de arte); con las ruedas a un metro, a 5,3.
     const dentro = techo(5.3);
     expect(dentro).toBeGreaterThan(3050);
     expect(dentro).toBeLessThan(3450);
@@ -622,7 +622,7 @@ describe("arrancar, parar y rodar", () => {
    * **Despegar sin corregir con el cíclico**: el helicóptero que se aligera se
    * inclina sobre sus ruedas —el mástil cae hacia delante y el rotor de cola empuja
    * a un lado—, sale del suelo torcido y, sin nadie que lo sostenga, en el aire se
-   * va. Con la estabilización sube derecho. Con las medidas de la muestra de Gaudí
+   * va. Con la estabilización sube derecho. Con las medidas de la muestra de arte
    * se inclina veinte grados de morro antes de despegar y no llega a volcar en el
    * suelo; con las supuestas de antes, más estrechas, volcaba de lado.
    */

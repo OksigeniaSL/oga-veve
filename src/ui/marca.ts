@@ -84,8 +84,8 @@ export function cielo(): string {
         <!--
           Los cerros, en tierra y no en verde.
 
-          Kimi los proponía en el mismo verde del cielo, a tres opacidades. Se
-          pintó y no se veían: mismo color sobre mismo color no hace relieve, y
+          Primero fueron en el mismo verde del cielo, a tres opacidades, y no
+          se veían: mismo color sobre mismo color no hace relieve, y
           los cerros solo asomaban donde les daba la bruma. En tierra —que es
           el color que ya usa el juego para el suelo— cada plano se separa del
           de atrás y el horizonte aparece solo.

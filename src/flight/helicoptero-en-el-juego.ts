@@ -114,8 +114,8 @@ export const SUPER_PUMA_EN_EL_JUEGO: AircraftConfig = {
    * hacia atrás y los principales hacia arriba, a los carenados de los costados
    * (las descripciones del tipo y el boletín 11/99 de la AAIB, de un AS 332L,
    * que cuenta además que recogido asoman las ruedas principales). Fuera frena: ver
-   * `fuselaje.tren` en `super-puma.ts`. El modelo de Gaudí ya lo traía con sus
-   * bisagras.
+   * `fuselaje.tren` en `super-puma.ts`. El modelo del kit de arte ya lo traía
+   * con sus bisagras.
    *
    * Se sube en la lista de después de despegar: en el boletín, a 70 ft del
    * radioaltímetro. Lo que tarda no está en ninguna fuente a mano: supuesto,

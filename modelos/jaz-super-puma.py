@@ -23,17 +23,17 @@ lo que más cuidado lleva:
 cinco); la «D-value» de Airbus (18,70 m) pone el rotor de cola a 9,375 m del
 mástil. Lo que la ficha no trae —dónde van las ruedas, a qué altura giran las
 palas, de qué lado van el rotor de cola y el estabilizador— sale de la muestra
-de Gaudí del 11-11-2026, sacada de un plano de tres vistas a la escala de la
+de arte del 11-11-2026, sacada de un plano de tres vistas a la escala de la
 ficha y aprobada por Enrique: `arte-local/entregas/oga-veve/super-puma/muestra/`.
 Cuando las dos chocan, **manda la ficha**: el plano saca el cono de cola un 3 %
 largo, y aquí la cola se ha encogido hasta poner el rotor donde dice Airbus.
 
-**Y el rotor se entrega parado y recto**, que es el contrato con el rotor de
-Gaudí (`agents/arte/kit/oga-veve/rotor/` en hq): cada pala es una malla con
-`pala` en el nombre, hija del vacío que gira, con el mástil en la Z local de
-ese vacío. La caída de las palas paradas y el cono con el empuje los pone el
-juego al montarlo; si las palas vinieran caídas de aquí, se sumarían dos
-caídas. Ver `rotor_principal` y `rotor_de_cola`.
+**Y el rotor se entrega parado y recto**, que es el contrato con el rotor del
+kit de arte: cada pala es una malla con `pala` en el nombre, hija del vacío
+que gira, con el mástil en la Z local de ese vacío. La caída de las palas
+paradas y el cono con el empuje los pone el juego al montarlo; si las palas
+vinieran caídas de aquí, se sumarían dos caídas. Ver `rotor_principal` y
+`rotor_de_cola`.
 
 **Las piezas que se mueven**, por su nombre, que es el contrato con el juego:
 
@@ -126,9 +126,9 @@ COLORES.update({
     # Enrique en la muestra (los de Los Rodeos lo llevan negro).
     "rotor": (0.33, 0.35, 0.37, 1.0),
     # Las puntas de las palas, en el terracota de la casa. **Fijo y no del
-    # capó**: el aro que dibuja el rotor de Gaudí cuando gira es de este color
-    # y no lee la ficha, y una punta que no casara con su aro se vería al
-    # arrancar.
+    # capó**: el aro que dibuja el rotor del kit de arte cuando gira es de
+    # este color y no lee la ficha, y una punta que no casara con su aro se
+    # vería al arrancar.
     "punta-de-rotor": (0.745, 0.365, 0.22, 1.0),
     # El ocre de la casa, el del sol de las colas (`CASA.ocre` en
     # `src/flight/aircraft.ts`, #dd923f) y el de la muestra: va en el sol de la
@@ -342,8 +342,8 @@ def pala(nombre, direccion, arriba, sentido, estaciones, material_,
     `(radio, cuerda, espesor, paso en grados)`, y el eje de paso pasa por el
     cuarto de la cuerda, como en una pala de verdad.
 
-    **Recta**: ni caída ni cono. Los pone el rotor de Gaudí en el juego, y si
-    vinieran de aquí se sumarían dos.
+    **Recta**: ni caída ni cono. Los pone el rotor del kit de arte en el
+    juego, y si vinieran de aquí se sumarían dos.
     """
     d = Vector(direccion).normalized()
     w = Vector(arriba).normalized()
@@ -365,7 +365,7 @@ def rotor_principal():
     El rotor principal: el vacío que gira y, colgando de él, las cuatro palas,
     sus puntas y la cabeza.
 
-    **El contrato con el juego**, el del rotor de Gaudí:
+    **El contrato con el juego**, el del rotor del kit de arte:
 
     - El vacío se llama `rotor-principal` y está en el buje, en el plano de
       las palas. Su **Z local**, ya en el glTF, es el mástil hacia arriba, cinco
@@ -682,7 +682,8 @@ def cristales(piezas):
 # `material` en `comun.py`), así que desde el asiento un fuselaje sin forros es
 # una pecera entera: se veía el mundo por todas partes y, por debajo, la pata
 # de la rueda de morro. Por dentro, **lo que no se forra es ventana**; por eso
-# los forros dejan justo los huecos de las ventanas de Gaudí, y ninguno más.
+# los forros dejan justo los huecos de las ventanas de la muestra, y ninguno
+# más.
 #
 # El ojo: el del comandante, en el asiento de la derecha, a 3,55 m por delante
 # del mástil y 2,30 sobre el suelo posado —el de la silueta de cajas era
@@ -693,8 +694,8 @@ Y_SUELO = -0.70
 Y_RESPALDO = 0.40
 PLAZAS = (0.40, -0.40)
 ATRAS = -3.05          # el mamparo entre la cabina de mando y la de carga
-# Las ventanas de abajo de Gaudí, `(z0, z1, y0, y1)`: la de los pies, en el
-# costado del morro hasta el radomo, y la de la puerta. Ver `cristales`.
+# Las ventanas de abajo de la muestra, `(z0, z1, y0, y1)`: la de los pies, en
+# el costado del morro hasta el radomo, y la de la puerta. Ver `cristales`.
 VENTANA_DE_LOS_PIES = (-4.54, -4.04, -0.62, -0.07)
 VENTANA_DE_LA_PUERTA = (-3.98, -3.56, -0.58, -0.07)
 DENTRO = 0.03          # lo que se separa el forro de la piel

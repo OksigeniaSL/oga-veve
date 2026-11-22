@@ -195,7 +195,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         estacionario: f.gasPara(0),
         helipuerto: sitio ? { x: sitio[0], z: -sitio[1] } : null,
         anguloDelRotor: juego.aircraftMesh.rotores?.angulo ?? null,
-        // Si lo que se dibuja es el modelo de verdad (con el rotor de Gaudí) o la silueta de cajas.
+        // Si lo que se dibuja es el modelo de verdad (con el rotor del kit de arte) o la silueta de cajas.
         modeloDeVerdad: juego.aircraftMesh.deVerdad === true,
         percance: juego.percance,
       };

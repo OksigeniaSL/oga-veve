@@ -1,6 +1,6 @@
 /**
- * Los símbolos de la carta, de la hoja de estilo de Gaudí (`simbolos/`), tal
- * cual llegaron: aquí solo se giran y se recortan por calco.
+ * Los símbolos de la carta, de su hoja de estilo (`simbolos/`), tal cual
+ * llegaron: aquí solo se giran y se recortan por calco.
  *
  * Se meten en línea —`?raw`— y no como imagen porque giran: el grupo de la
  * pista de cada aeródromo va con el rumbo verdadero de su pista, y el norte
