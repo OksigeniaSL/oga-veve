@@ -296,3 +296,60 @@ el banco, que en ellos no ha cambiado.
 - **El helicóptero y el modelo sencillo** no pasan por aquí: el primero tiene
   su gobernador (`gobernador.ts`) y el segundo un gas que es una palanca de
   velocidad.
+
+## Enmienda: la toma dura del 747 en Tukã
+
+El 747 en Tukã con la pista ocupada tocó a 3,36 m/s con el motor que tarda
+(antes, 1,31). Se ha mirado con la traza del ala, con lo que da el motor
+rehecho desde el gas con la cuenta de `respuesta-del-motor.ts`, y volando otra
+vez el mismo caso con el motor nuevo y las leyes de antes del banco (el gas de
+la final a 0,04 y 0,01, la frustrada desde los 4°), ya con lo que da el motor en
+la traza (`me`).
+
+| Vuelo | Gas en la final (desv.) | Al empezar la recogida | Toma |
+|---|---|---|---|
+| Motor al instante, leyes de antes (H34h) | 0,077 | 13 m de ruedas, bajando 3,1 m/s, palanca −0,2 subiendo a 0 | 1,31 m/s |
+| Motor que tarda, leyes nuevas | 0,084 | **nivelado**: bajando 1,7 m/s, palanca −0,29 | **3,36 m/s** |
+| Motor que tarda, leyes de antes | 0,124 | 13 m de ruedas, bajando 2,8 m/s, palanca −0,06 subiendo | 1,15 m/s, 66 de 66 |
+
+**Lo que pasó en la que tocó duro**, por orden:
+
+1. **El aire**: entre 45 y 35 m el avión se hundió a 5 m/s con la carga en
+   0,84–0,90 g. El gas subió a 0,5.
+2. **El motor**: el empuje llegó dos o tres segundos tarde —0,44 a 34 m, con el
+   gas ya en 0,18—, justo cuando el automático subía el morro de 0,3° a 2,8°
+   para volver a la senda. Con las dos cosas a la vez, **el avión se niveló a
+   trece metros de ruedas**.
+3. **El banco**: la recogida empezó con el avión bajando 1,7 m/s donde el
+   perfil pedía 3,6. Eso es flotar: el gas fuera (H55c), bien; y la palanca
+   **sostenida** en la que llevaba, −0,29, que era la del automático bajando el
+   morro tras el globo. Sostenerla dos segundos le bajó el morro de 2,7° a
+   −0,9° y la caída creció a 3,6 m/s; cuando tiró, a nueve metros, el ala de
+   sesenta metros ya no llegaba.
+
+**El motor no deja empuje de menos al quitar el gas**: deja de más, y eso es lo
+que niveló el avión antes de los treinta pies. **La ley nueva del gas no baila
+más que la de antes** (0,084 frente a 0,124 de desviación): las dos tiradas con
+el motor nuevo tuvieron aire distinto, y en la de las leyes de antes la recogida
+empezó en su perfil. Lo que convierte el globo en un golpe es del banco.
+
+**El arreglo, en el banco** (`recoger` en `verificar-vuelo-entero.mjs` y su
+copia `palancaDelReactorEnLaRecogida` en `recogida-del-reactor.mjs`): en un
+reactor, **lo que se sostiene es la actitud, no la palanca**. Mientras se
+sostiene, el morro no baja del que llevaba al empezar a sostener: «Hold
+sufficient back pressure on the control column to keep the pitch attitude
+constant» (FCTM 777/787, p. 6.10). En la mesa de la recogida (60 finales del
+747, veinte nudos de cara, rachas): la ley de ahora pasa de 10 a 9 malas (0
+largas, de 10 a 9 duras); a la Vref del juego con el punto, de 10 duras a 8 y
+una larga a 621 m; a la Vref más ocho de H53 con el punto, de 1 larga a 2, la
+más larga igual, 670 m. Menos duras y alguna larga más, que es el cambio que
+hace sostener la actitud. Dos pruebas de la mesa cambian de criterio con el
+número escrito: la de ahora tiene que fallar menos que la de antes (era la
+mitad; ahora 9 frente a 14), y con el punto no más de una larga más que sin él.
+
+**Sin volar con el arreglo**: el candado del navegador lo tenía otro banco
+desde las 10:21, y la segunda tirada del 747 en Tukã no cabía antes de la hora
+de entrega. Tampoco el 747 en Gran Canaria ni el JAZ 40 con la pista ocupada.
+
+El vitest entero, una vez y al final, con todo lo de aquí: 576 ficheros, 11.529
+pruebas en verde, 31 saltadas. `tsc` limpio.
