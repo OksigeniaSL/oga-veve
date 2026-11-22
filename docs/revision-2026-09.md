@@ -723,7 +723,7 @@ _Y 13 medias más en este frente, en el diario del run._
   - Dónde: `public/assets/aeronaves/jaz-20.glb, imagen 4 (material `mech_intr_hor`, JPEG de 100 KB)`
   - Arreglo: Lo resuelve el hallazgo anterior (modelo propio).
 - **327 de 407 commits públicos acreditan una herramienta de IA como coautora**
-  - Dónde: `git log --format=%b | grep -c 'Co-Authored-By: Claude' → 327`
+  - Dónde: `git log --format=%b | grep -c 'Co-Authored-By' → 327`
   - Arreglo: Decisión de Oksigenia: (a) reescribir el historial con git filter-repo quitando los dos trailers y forzar el push (el repo es de un solo autor, así que el coste es bajo), y (b) un hook commit-msg más un paso de CI que rechace cualquier commit con 'Co-Authored-.
 - **El nombre de la niña de cuatro años está en el código público y en un commit**
   - Dónde: `src/world/sigueme.ts:227, src/game.ts:850, y el mensaje del commit ccbcfe8 («feat(sígame): en un campo particu`
@@ -754,7 +754,7 @@ _Y 13 medias más en este frente, en el diario del run._
   - Arreglo: Leer developers.google.com/maps/documentation/tile/policies antes de activar la clave en granjaoga.com y anotar la fecha en CREDITOS como se hizo con ElevenLabs y EOX.
 - **Herramientas de IA y rutas de su cuaderno nombradas en ficheros públicos del repositorio**
   - Dónde: `/home/eraorahan/Downloads/flyjazz/docs/vision.md:283-290 (ocho enlaces a claude.ai/code/artifact/…)`
-  - Arreglo: Copiar los ocho informes a docs/informes/ (o a un sitio de Oksigenia) y enlazarlos ahí; ver.mjs y ver-kimi.mjs fuera del árbol o renombrados a «maquetas» con el directorio parametrizado; en los bancos, un directorio de salida relativo e ignorado (salida/ o el .
+  - Arreglo: Copiar los ocho informes a docs/informes/ (o a un sitio de Oksigenia) y enlazarlos ahí; los dos guiones de las maquetas fuera del árbol (hecho el 22-11-2026); en los bancos, un directorio de salida relativo e ignorado (salida/ o el .
 - **La pantalla de créditos del juego imprime «Cessna» en tres idiomas, y CC BY 4.0 no lo exige**
   - Dónde: `src/i18n/es-PY.ts:201, src/i18n/en.ts:191, src/i18n/gug.ts:276, src/i18n/i18n.test.ts:115`
   - Arreglo: Reescribir la frase como «Modelo de la avioneta de TonyWony (sketchfab.com/TonyWony), bajo CC BY 4.0» y quitar la excepción `!c.startsWith("credits.")` del test para que la regla valga en toda la interfaz.

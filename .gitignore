@@ -42,7 +42,7 @@ dist/
 .idea/
 # ── IDEs ───────────────────────────────────────────────────────────────
 *.iml
-.kimi/
+.maquetas/
 # Los .hgt de NASADEM son ~25 MB por tesela y son dominio público: se
 node_modules/
 !public/assets/terreno/.gitkeep
