@@ -538,11 +538,17 @@ arriba es cuando una maleta suelta se va para atrás, y a esa altura el
 despegue ya está hecho y queda aire para volver.
 
 - **Hasta dónde llega**: la pared de atrás de la bodega. En el 172R, la
-  estación 142: la bodega 1 va de la 82 a la 108 y la 2 de la 108 a la 142,
-  sin tabique entre las dos, y la nota de la figura 6-3 del manual
-  («Loading Arrangements») da la pared, «aft baggage wall (approximate
-  station 142)». Va en la hoja de cada tipo, `fondoDeLaBodega`. Es el tope:
-  la cuenta da lo más que se corre el centro.
+  estación 142. La bodega 1 va de la 82 a la 108 y la 2 de la 108 a la 142
+  (p. 2-7), y la nota de la figura 6-3 («Loading Arrangements», p. 6-9) da
+  la pared: «The rear cabin wall (approximate station 108) or aft baggage
+  wall (approximate station 142) can be used as convenient interior
+  reference points». La figura 6-4 («Internal Cabin Dimensions», p. 6-10)
+  enseña por dónde: el suelo sigue de una a otra, y la bodega 2 se abre a ras
+  de suelo con 10¼ pulgadas de alto debajo de la pared de la cabina. Una
+  maleta que quepa por ahí acostada —las de la hoja son de 11 kg— llega al
+  fondo; una más alta se pararía en la pared de la cabina, la 108. Va en la
+  hoja de cada tipo, `fondoDeLaBodega`. Es el tope: la cuenta da lo más que
+  se corre el centro.
 - **Qué se corre**: lo de las bodegas que no va amarrado. Si la hoja no lleva
   maletas, el ejercicio pone las suyas: cuatro de 11 kg en la bodega 1, por
   debajo de las 120 lb de su rótulo. Lo que eligió quien juega, también el
@@ -597,23 +603,48 @@ eso no salen los camiones.
 
 De dónde sale:
 
-- **Cessna, *Pilot's Operating Handbook* del 172R**: sección 6, la figura
-  6-3 con las dos bodegas y la pared de atrás, y el rótulo de cada bodega en
-  la sección 2; y la sección 7, «Baggage Compartment»: la red de la bodega
-  se ata a las anillas de amarre del suelo, que es para lo que están.
-- **FAA, *Airplane Flying Handbook* (FAA-H-8083-3C)**, el centro de gravedad
-  trasero en el capítulo de la pérdida: con el centro atrás el avión es
-  menos estable en cabeceo, la nariz tiende a subir y de la pérdida se sale
-  peor. De ahí el orden: primero el avión, con la palanca adelante, y
-  después todo suave y con velocidad de sobra.
-- **FAA, *Pilot's Handbook of Aeronautical Knowledge* (FAA-H-8083-25C)**,
-  capítulo del peso y el centrado: la carga se asegura para que no se mueva
-  en vuelo, porque al moverse se lleva el centro de gravedad.
+Leídas, no de memoria, en las mismas ediciones que cita el repositorio:
 
-Lo de aterrizar en el campo más cercano no es una norma escrita para esta
-avería en el manual del 172, que no tiene procedimiento de emergencia para
-la carga: es lo que se hace con cualquier avión que vuela distinto de como
-debe, y es lo que pide el encargo.
+- **Cessna, *Pilot's Operating Handbook* del 172R** (1996, rev. 7, la copia
+  de `kerrville.cap.gov` que leyó la H38b):
+  - p. 2-7, los rótulos: «Baggage Area 1 - Station 82 to 108: 120 lbs.
+    Baggage Area 2 - Station 108 to 142: 50 lbs.», y «The maximum combined
+    weight capacity for baggage areas 1 and 2 is 120 lbs.»;
+  - p. 6-8, «Baggage Tie-Down»: «A nylon baggage net having tie-down straps
+    is provided as standard equipment to secure baggage on the cabin floor
+    aft of the rear seat (baggage area 1) and in the aft baggage area
+    (baggage area 2). Six eyebolts serve as attaching points for the net», y
+    cuáles se usan según dónde vaya la carga;
+  - p. 6-9, la figura 6-3 con las estaciones y la pared de atrás, y p. 6-10,
+    la figura 6-4 con la bodega 2 a ras de suelo y los seis anillos de
+    amarre;
+  - p. 6-19, la lista de equipo: la red («Baggage Retaining Net») y los
+    anillos («Cargo Tie Down Rings») son de serie;
+  - p. 7-14, «Baggage Compartment»: «A baggage net with tiedown straps is
+    provided for securing baggage and is attached by tying the straps to
+    tiedown rings provided in the airplane».
+- **FAA, *Airplane Flying Handbook* (FAA-H-8083-3C)**:
+  - capítulo 2, p. 2-14: «Unsecured baggage or improperly loaded baggage may
+    adversely affect the center of gravity of the aircraft»;
+  - capítulo 5, p. 5-26: peso en la bodega de atrás, aun dentro de los
+    límites, «could seriously affect the spin and recovery characteristics»;
+  - capítulo 13, p. 13-14: «At aft CG, the airplane is less stable […] and
+    less desirable stall characteristics».
+- **FAA, *Pilot's Handbook of Aeronautical Knowledge* (FAA-H-8083-25C)**,
+  capítulo 10, p. 10-3, «Effects of Adverse Balance»: «As the CG moves aft,
+  a less stable condition occurs», y «Loading in a tail heavy condition has
+  a serious effect upon longitudinal stability, and reduces the capability
+  to recover from stalls and spins. Tail heavy loading also produces very
+  light control forces».
+
+Ninguna de las tres escribe un procedimiento para la carga que se corre en
+vuelo: el manual del 172 no tiene uno. Lo que dan es el porqué —menos
+estable, fuerzas ligeras, peor salida de la pérdida— y de ahí sale el orden
+que cuenta la instructora: primero el avión, palanca adelante y compensar;
+después nada brusco y con velocidad de sobra, lejos de la pérdida; y a
+tierra en el campo más cercano, que es lo que se hace con un avión que vuela
+distinto de como debe. La nariz que quiere subir no está escrita en ellas:
+es el par del modelo con el centro atrás, `ΔCm = CL·Δx/c̄`.
 
 ### El amarre, en la hoja de carga
 
@@ -635,6 +666,21 @@ pone: `&amarradas=1,1`.
 Ni ruido ni alarma: el 172 no tiene ningún aviso para esto, y lo que se nota
 es la palanca. Si sale mal, sale mal el ejercicio y se cierra como los otros,
 «vamos otra vez»; si sale bien, `ejercicio.carga.bien`.
+
+### La V2 que el 172 no tiene
+
+El banco subía a la V2 que daba el juego, y para el 172 eran 49 nudos.
+Salía de `velocidadesDeDespegue`, que para todo avión de pistón contaba la
+«línea azul» del bimotor, la velocidad con la que mejor sube con un motor
+parado. Con un solo motor eso es la de menor caída sin motor, cinco nudos por
+encima de su pérdida limpia y sin inclinar: 44 KIAS a 2.450 lb, con el
+centro delante o atrás (figura 5-3, p. 5-12; los 48 de la tabla son con 30°
+de inclinación). Un monomotor no tiene ni V2 ni línea azul, y su manual no las
+da. Ahora es `null`.
+
+Quien juega no la veía: no sale en el HUD ni en la aguja, y no se dice. La
+leían el banco, en `ejercicioParaBanco`, y la velocidad de un motor que pide
+la instructora, que solo llega en los bimotores.
 
 ### Las frases
 
@@ -691,19 +737,28 @@ Y en la hoja y el hangar, que solo se leen: `hangar.ejercicio.carga`,
     umbral y se cerró en «vuelta». Pero el piloto del banco subía a 49 nudos,
     la V2 que da el juego para el 172, y el avisador de pérdida sonó a 103 m,
     antes de soltarse la maleta: justo lo contrario de la lección. Ahora sube
-    a su Vy, 74 nudos —1,15 veces su vref—, con los flaps dentro desde los
-    60 m, y el banco mira además que el avisador no suene. Y tocó duro —la
+    a 74 nudos —1,15 veces su vref—, la Vy que el juego ya usa para el JAZ 20
+    (`SUBIDA_DEL_JAZ_20`, del 172S) y dentro de la subida del despegue del
+    172R, «Normal Climb Out 70-80 KIAS» (p. 4-5; su Vy a nivel del mar es 79),
+    con los flaps dentro desde los 60 m, y el banco mira además que el
+    avisador no suene. Y tocó duro —la
     instructora dijo `vuelo.tocasteDuro`—, sin percance: la recogida del
     piloto del banco es la de siempre, hecha para los de línea, y no se tocó.
-  - **La segunda tirada, con la Vy, no llegó a volar**: esperó al navegador
-    hasta el tope del encargo detrás de la ronda de cierre de otra sesión.
-    Está por pasar; el arreglo es solo del piloto del banco, no del juego.
+  - **La segunda tirada, a 74 nudos y con la V2 del monomotor ya en `null`,
+    dio 9 de 9.** Subió a 74–76 nudos; se soltó a 115 m sobre el umbral; el
+    centrado del modelo pasó otra vez de 6,4 a 11,7 cm; tras soltarse bajó a
+    70 nudos mientras el piloto del banco empujaba y volvió a 74; el
+    avisador de pérdida no sonó en todo el vuelo; ni llamada ni bomberos;
+    tocó en la pista a 184 m del umbral y se cerró en «vuelta» con
+    `ejercicio.carga.bien`. El banco ya escribe «V2 —» para el 172. En la
+    final la instructora propuso irse al aire, cosa del piloto del banco en
+    esa final y no del ejercicio, y aterrizó.
   - Las cinco frases se piden y se callan por sin grabar, como tiene que
     ser hasta que se graben.
-- **Sin pasar por el navegador**: la segunda tirada, el banco con
-  `OGA_AMARRADA=1` y el de carteles con `OGA_SOLO=hoja`, que ya lleva el
-  toque del amarre. El navegador lo usaba la ronda de cierre de otra sesión
-  y no dio tiempo.
+- **Sin pasar por el navegador**: el banco con `OGA_AMARRADA=1` y el de
+  carteles con `OGA_SOLO=hoja`, que ya lleva el toque del amarre. Esperaron
+  turno en el candado del navegador más de media hora detrás de las rondas
+  de otras sesiones, y se pararon al acabarse el tiempo del encargo.
 
 ### Lo que queda
 
@@ -711,5 +766,6 @@ Y en la hoja y el hangar, que solo se leen: `hangar.ejercicio.carga`,
   ejercicio. Cada avión que la reciba, con el fondo de su bodega, lo tendrá
   sin tocar nada más.
 - Las cinco frases, por grabar.
-- La segunda tirada del banco, la de la maleta amarrada y la de los
-  carteles de la hoja, por pasar en el navegador.
+- La tirada del banco con la maleta amarrada y la de los carteles de la
+  hoja, por pasar en el navegador: el toque del amarre no se ha mirado
+  todavía en pantalla.
