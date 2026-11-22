@@ -1145,6 +1145,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const { mandosPara, memoriaNueva } = await import(
     "/src/flight/piloto-automatico.ts"
   );
+  /*
+   * Y la flota, con lo que rueda cada avión, para el tope del alerón (H34f):
+   * ver `topeDeAleronEnVuelo`. Aquí, junto a la otra espera, y no allí: una
+   * espera más abajo dejaría correr los ganchos ya puestos antes de que lo de
+   * después esté declarado.
+   */
+  const { AIRCRAFT: LA_FLOTA, aircraftById: avionPorId, propulsionDe } = await import(
+    "/src/flight/aircraft.ts"
+  );
+  const { alabeoAFondo } = await import("/src/flight/mano.ts");
   /** La senda que vuela el automático: altitud, su ritmo y desde cuándo. */
   let senda = null;
   let memoriaDeSenda = null;
@@ -1398,6 +1408,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           pasado: -alUmbral(s),
           porElSuelo: porElSuelo(s),
           caida: recogida.caida,
+          // Y desde dónde recoge: a ras de suelo, como mucho una toma firme (H34f).
+          altura: recogida.altura,
         });
       } catch {
         // Sin pista a la que medir: el perfil, como siempre.
@@ -3469,6 +3481,46 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const TOPE_DE_ALERON_EN_VUELO = 0.35;
   /**
+   * **Y ese tercio es un ritmo de alabeo, no un recorrido** (H34f).
+   *
+   * Lo que el tope impide es rodar hacia el cuchillo más deprisa de lo que se
+   * coge la inclinación, y eso es un ritmo: se puso con la avioneta, donde 0,35
+   * son unos veinte grados por segundo. Pero el mismo recorrido rueda distinto
+   * en cada avión —`clAileron/|clP| · 2V/b`, ver `alabeoAFondo` en
+   * `flight/mano.ts`—, y el JAZ 120 a su Vref rueda doce grados por segundo con
+   * el alerón entero: con un tercio, cuatro. En Gran Canaria, con 025/20, una
+   * racha a 48 m de ruedas lo clavó en 0,35 siete segundos y se fue de +0,3 a
+   * −22 m del eje (tanda 21): tocó a 15,2 m, y a 9,4 al repetir. Un piloto
+   * mete todo el alerón que haga falta para sacar el avión de una racha, y la
+   * norma pide que se pueda (14 CFR 25.147(f): «recovery from upsets produced
+   * by gusts»).
+   *
+   * Así que el tope deja a cada avión, a su Vref, **al menos el ritmo que da
+   * 0,35 al más lento de los de hélice** —el Twin Otter, unos ocho grados por
+   * segundo—, que son con los que se puso y se afinó, y el JAZ 50 con ellos
+   * sostiene el eje con el cruzado racheado de Los Rodeos (#192). Ninguno de
+   * hélice cambia, por construcción: a todos les da eso o más con 0,35. El
+   * JAZ 90 pasa a 0,48, el JAZ 110 a 0,64 y el JAZ 120 a 0,70; ninguno de ellos
+   * rueda así ni la mitad de deprisa que la avioneta con su tercio, que es
+   * donde se vio el cuchillo. En Guyrami no cuenta: ahí el alerón ya es la
+   * inclinación.
+   */
+  const topeDeAleronEnVuelo = (() => {
+    try {
+      const este = avionPorId(suyas.id);
+      if (!este) return TOPE_DE_ALERON_EN_VUELO;
+      const aSuVref = (a) => alabeoAFondo(a, a.approachSpeed);
+      const elMasLento = Math.min(
+        ...LA_FLOTA.filter((a) => propulsionDe(a) === "helice").map(
+          (a) => TOPE_DE_ALERON_EN_VUELO * aSuVref(a),
+        ),
+      );
+      return Math.min(1, Math.max(TOPE_DE_ALERON_EN_VUELO, elMasLento / aSuVref(este)));
+    } catch {
+      return TOPE_DE_ALERON_EN_VUELO;
+    }
+  })();
+  /**
    * Y cuánto se puede inclinar: veinticinco grados.
    *
    * Es lo que llamaría viraje normal cualquier manual, y aquí además es la
@@ -3590,8 +3642,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     if (SENCILLO) return Math.max(-1, Math.min(1, quiere / INCLINACION_A_FONDO_SENCILLO));
     const alabeo = o.actitud?.().alabeo ?? 0;
     return Math.max(
-      -TOPE_DE_ALERON_EN_VUELO,
-      Math.min(TOPE_DE_ALERON_EN_VUELO, (quiere - alabeo) * gananciaDeAlabeo),
+      -topeDeAleronEnVuelo,
+      Math.min(topeDeAleronEnVuelo, (quiere - alabeo) * gananciaDeAlabeo),
     );
   };
   /** La inclinación del alerón a fondo en el modelo sencillo, rad: `VISUAL_BANK`. */
@@ -4767,7 +4819,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const medirElViraje = (s, paso) => {
     const v = Math.hypot(s.velocity.x, s.velocity.z);
     const tray = Math.atan2(s.velocity.x, -s.velocity.z);
-    const alTope = !s.onGround && Math.abs(c.aileron) >= TOPE_DE_ALERON_EN_VUELO - 0.01;
+    const alTope = !s.onGround && Math.abs(c.aileron) >= topeDeAleronEnVuelo - 0.01;
     if (alTope && alTopeAntes && trayectoriaAntes !== null && paso > 0.05 && v > 20) {
       const giro = Math.abs(error(tray, trayectoriaAntes)) / paso;
       // Despacio hacia lo medido: un viraje entero son decenas de muestras.
