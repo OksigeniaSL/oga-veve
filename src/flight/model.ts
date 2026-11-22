@@ -289,9 +289,10 @@ export interface FlightState {
    */
   secondsToImpact: number;
   /**
-   * Velocidad de descenso del último aterrizaje, m/s. Cero mientras no se
-   * haya tocado nunca. Sirve para afinar los umbrales sin adivinar, y es lo
-   * que necesitará una misión que puntúe la toma.
+   * Velocidad de descenso del último aterrizaje, m/s, **contra el suelo donde
+   * se tocó** y no contra el variómetro: lo que se le acercaba, que es lo que
+   * carga el tren (H63, ver `caidaContraElSuelo`). Cero mientras no se haya
+   * tocado nunca. De ella cuelgan el veredicto de la toma y el percance.
    */
   touchdownSinkRate: number;
 }
