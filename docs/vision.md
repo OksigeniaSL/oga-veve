@@ -297,14 +297,14 @@ multimonitor, joystick, y volar acompañados.
 
 | Tema | Documento |
 |---|---|
-| Niveles por edad | https://claude.ai/code/artifact/5947108b-c11f-4eff-996b-3fbabe21f979 |
-| Jugabilidad y referencias | https://claude.ai/code/artifact/d7a874b9-b217-47f7-97ea-9b6196e7099e |
-| Progresión y recompensas | https://claude.ai/code/artifact/d32d414a-6a89-4be2-a497-3cd8be6d6473 |
-| Diseño sonoro | https://claude.ai/code/artifact/3396cd40-bf34-4064-9b3d-09ee4f3b490e |
-| Física y astronomía | https://claude.ai/code/artifact/e4cfde90-0a12-43c9-9bae-fcda858a0a59 |
-| Meteorología y cielo | https://claude.ai/code/artifact/e6f00713-ed9b-4b90-b20f-800edbeb550f |
-| Paisajes del mundo | https://claude.ai/code/artifact/479ad253-de9b-4c18-9bcc-7730e5288ffe |
-| Dirección de arte | https://claude.ai/code/artifact/7c13ae56-e259-4a65-ab7a-38cc88b3dc16 |
+| Niveles por edad | [Cuatro aves, un avión](informes/niveles-por-edad.md) |
+| Jugabilidad y referencias | [Robar para volar](informes/jugabilidad-y-referencias.md) |
+| Progresión y recompensas | [La Libreta de Vuelo](informes/progresion-y-recompensas.md) |
+| Diseño sonoro | [El paisaje sonoro, del pistón al arpa](informes/diseno-sonoro.md) |
+| Física y astronomía | [Física que se ve volando](informes/fisica-y-astronomia.md) |
+| Meteorología y cielo | [El cielo de Óga Veve](informes/meteorologia-y-cielo.md) |
+| Paisajes del mundo | [Paisajes de Óga Veve](informes/paisajes-del-mundo.md) |
+| Dirección de arte | [Mundo Tejido](informes/direccion-de-arte.md) |
 
 Lenguaje sin letras, atlas paraguayo, navegación, interfaz y auditoría de
 arquitectura están recogidos en los issues correspondientes.
