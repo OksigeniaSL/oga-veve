@@ -984,6 +984,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       f: +mandos.flaps.toFixed(2),
       e: +mandos.elevator.toFixed(3),
       g: +mandos.throttle.toFixed(2),
+      // Y lo que da el motor, que no es el gas: tarda (ADR 0034).
+      me: (() => {
+        const da = o.juegoParaTrazas?.()?.flight?.gasDelMotor?.();
+        return typeof da === "number" ? +da.toFixed(3) : null;
+      })(),
       vy: +s.velocity.y.toFixed(2),
       /*
        * Y de eso, lo que pone el aire: el bache que el modelo sencillo suma a
@@ -1680,9 +1685,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     recogida.alPunto = alPunto !== null;
     // Sostener la palanca es sostener el morro: con lo que pica el suelo de
     // más desde el último fotograma (H56).
+    const picadoAntes = recogida.picado ?? picado;
     const sostenida =
       recogida.ultimoMando !== undefined
-        ? Math.max(-0.6, Math.min(0.8, recogida.ultimoMando + picado - (recogida.picado ?? picado)))
+        ? Math.max(-0.6, Math.min(0.8, recogida.ultimoMando + picado - picadoAntes))
         : calculado;
     recogida.picado = picado;
     /*
@@ -1701,7 +1707,35 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         ? globalThis.__morroQueFaltaAlPunto({ cabeceo: morro, alEmpezar: recogida.morroAlEmpezar })
         : 0;
     const conElMorro = Math.min(0.8, calculado + (recogida.porAngulo ?? 0) * recogida.morroQueFalta);
-    mandos.elevator = sostiene ? sostenida : conElMorro;
+    /*
+     * **Y en un reactor, lo que se sostiene es la actitud, no la palanca**
+     * (H64): «Hold sufficient back pressure on the control column to keep the
+     * pitch attitude constant» (FCTM 777/787, p. 6.10). La palanca de ese
+     * instante puede ser la de una corrección a medias: en Tukã con la pista
+     * ocupada, el 747 que se había nivelado a trece metros de ruedas —el
+     * empuje que llegaba tarde y el automático subiendo el morro a la senda—
+     * empezó a recoger con −0,29, la del automático bajando el morro, y
+     * sostenerla dos segundos le bajó el morro de 2,7° a −0,9° y lo tiró al
+     * suelo a 3,36 m/s. Mientras se sostiene, el morro no baja del que llevaba
+     * al empezar a sostener. Ver `palancaDelReactorEnLaRecogida`.
+     */
+    let sostenidaDelReactor = sostenida;
+    if (sostiene && RECOGIDA_DE_REACTOR && typeof morro === "number") {
+      if (recogida.sostenMorro === undefined) {
+        recogida.sostenMorro = morro;
+        recogida.sostenBase = sostenida;
+      } else {
+        recogida.sostenBase = Math.max(-0.6, Math.min(0.8, recogida.sostenBase + picado - picadoAntes));
+      }
+      sostenidaDelReactor = Math.min(
+        0.8,
+        recogida.sostenBase + (recogida.porAngulo ?? 0) * Math.max(0, recogida.sostenMorro - morro),
+      );
+    } else {
+      recogida.sostenMorro = undefined;
+      recogida.sostenBase = undefined;
+    }
+    mandos.elevator = sostiene ? sostenidaDelReactor : conElMorro;
     recogida.ultimoMando = mandos.elevator;
     /*
      * **Y un bimotor de hélice no corta el gas al empezar a recoger: lo va
@@ -7899,8 +7933,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       if (CON_EL_AUTOMATICO) {
         const err = quiere - s.airspeed;
         const deHelice = suyas.propulsion === "helice";
-        const kp = deHelice ? 0.08 : 0.04;
-        const ki = deHelice ? 0.03 : 0.01;
+        /*
+         * **Y en un reactor, el doble a la tendencia y la mitad a lo
+         * acumulado**, desde que su motor tarda lo que tarda (ADR 0034): con
+         * las de antes, lo acumulado seguía empujando la palanca mientras el
+         * empuje pedido aún no había llegado, y la velocidad del JAZ 90 en el
+         * arco a la final iba y venía de 120 a 127 nudos con la pedida en 123;
+         * a la salida del viraje bajaba 5,20 m/s de media, por encima de los
+         * mil pies por minuto. Es lo que pide el manual al que viene de la
+         * hélice: «Pilots should anticipate the need for adding power from low
+         * power settings» (FAA-H-8083-3C, 16-3). Con éstas, por debajo otra
+         * vez: `arco-a-la-final.test.ts` y `ascendente-en-la-final.test.ts`.
+         */
+        const kp = 0.08;
+        const ki = deHelice ? 0.03 : 0.005;
         c.throttle = Math.max(
           0,
           Math.min(1, c.throttle + (err - (errorDeGasAntes ?? err)) * kp + err * ki * paso),

@@ -81,6 +81,8 @@ function enLaFinal(a: AircraftConfig, tier: Tier): VueloDeBanco {
         gas: v.gas,
         empujeAFondo: empujeLleno(a, airDensity(s.position.y), s.airspeed),
         masa: a.mass,
+        // Y lo que da el motor, que tarda, como se lo da el juego (ADR 0034).
+        ...(v.modelo.gasDelMotor ? { daElMotor: v.modelo.gasDelMotor() } : {}),
         ...(tier.model === "simple"
           ? { equilibrio: v.modelo.gasPara(trueFromIndicated(ias, s.position.y)) }
           : {}),

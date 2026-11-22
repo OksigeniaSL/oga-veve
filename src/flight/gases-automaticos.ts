@@ -215,6 +215,15 @@ export interface EstadoDeGases {
   readonly verdadera?: number;
   /** El ritmo de subida que se le pide al empuje en `THR`, m/s. */
   readonly subidaPedida?: number;
+  /**
+   * **Lo que da el motor ahora**, como el gas que lo daría sin inercia, de 0 a
+   * 1. Ver `FlightModel.gasDelMotor`. Lo que la palanca ya ha pedido y el
+   * motor todavía no da es aceleración que viene en camino, y unos gases que no
+   * la cuentan siguen empujando la palanca hasta pasarse. Los de verdad la
+   * cuentan: llevan la palanca a por un N1 y miran el N1 que hay. Sin él, la
+   * palanca es el motor.
+   */
+  readonly daElMotor?: number;
 }
 
 /**
@@ -270,6 +279,8 @@ export function gasDeLosAutomaticos(
     e.empujeAFondo !== undefined && e.masa !== undefined
       ? Math.max(0.05, e.empujeAFondo / Math.max(1, e.masa))
       : ACELERA_SIN_SABER;
+  // La aceleración que ya viene: lo pedido que el motor aún no da. Ver `daElMotor`.
+  const enCamino = e.daElMotor !== undefined ? porUnidad * (e.gas - e.daElMotor) : 0;
   if (modo === "THR") {
     if (e.vertical === undefined || e.verdadera === undefined || e.subidaPedida === undefined)
       return hacia(GAS_DE_SUBIDA);
@@ -282,7 +293,7 @@ export function gasDeLosAutomaticos(
      * que el empuje de subida.
      */
     const v = Math.max(1, e.verdadera);
-    const gana = e.vertical + (v * m.aceleracion) / GRAVEDAD;
+    const gana = e.vertical + (v * (m.aceleracion + enCamino)) / GRAVEDAD;
     const falta = e.subidaPedida - gana;
     const mover = (falta * GRAVEDAD) / (porUnidad * v * PARA_EL_EMPUJE);
     return acotar(e.gas + acotar(mover * dt, -paso, paso), 0, GAS_DE_SUBIDA);
@@ -298,6 +309,6 @@ export function gasDeLosAutomaticos(
    * masa —arriba la mitad que abajo—, con un suelo, porque sin motor que
    * responda no hay cuenta que valga y la palanca no debe salir disparada.
    */
-  const mover = (quiere - m.aceleracion) / (porUnidad * PARA_EL_EMPUJE);
+  const mover = (quiere - m.aceleracion - enCamino) / (porUnidad * PARA_EL_EMPUJE);
   return acotar(e.gas + acotar(mover * dt, -paso, paso), 0, 1);
 }

@@ -6,6 +6,7 @@ import type { TardaElTren } from "./tren";
 import type { PiesDeLaCuenta } from "./avisos-de-altura";
 import type { FichaDeHelicoptero } from "./helicoptero";
 import { MK_VI, type TerrInhibit } from "./inhibir-terreno";
+import { exponenteDelEmpuje, type RespuestaDelMotor } from "./respuesta-del-motor";
 
 /**
  * Fichas técnicas de las aeronaves.
@@ -393,15 +394,12 @@ export function vueltasDelMotor(
   gas: number,
 ): number {
   const g = Math.max(0, Math.min(1, gas));
-  const parte = s.engine === "turbofan" ? Math.pow(g, EMPUJE_POR_VUELTAS) : g;
+  // El exponente, dos y medio en el turbofán —entre el cuadrado y el cubo con
+  // que crece su empuje con las vueltas del fan—, es el mismo con el que el
+  // motor acelera: ver `respuesta-del-motor.ts`.
+  const parte = Math.pow(g, 1 / exponenteDelEmpuje(s));
   return s.idleRpm + parte * (s.maxRpm - s.idleRpm);
 }
-
-/**
- * El exponente de la raíz: dos y medio, entre el cuadrado y el cubo con que
- * crece el empuje de un turbofán con las vueltas del fan.
- */
-const EMPUJE_POR_VUELTAS = 1 / 2.5;
 
 /**
  * ¿Tiene reversa este avión?
@@ -1747,6 +1745,15 @@ export interface AircraftConfig {
    */
   recogeLosFlaps?: { readonly pies: number; readonly kt: number };
 
+  /**
+   * **Cuánto tarda el motor en dar lo que pide el gas**, s, subiendo y
+   * bajando: del ralentí al 95 % del empuje de despegue y del empuje de
+   * despegue a que le quede el 5 %. Cero, al instante, que es lo del pistón.
+   * Es de su motor y va con la fuente en cada ficha. Ver
+   * `respuesta-del-motor.ts` y el ADR 0034.
+   */
+  respuestaDelMotor: RespuestaDelMotor;
+
   appearance: AircraftAppearance;
   sound: AircraftSound;
   aero: AeroCoefficients;
@@ -1930,6 +1937,12 @@ export const PYKASU: AircraftConfig = {
     ...LIBREA,
     blades: 2,
   },
+  /*
+   * **Al instante**, como el gas: un pistón pasa del ralentí a pleno «relatively
+   * rapid» (FAA-H-8083-3C, 16-3), en lo que tarda la mezcla en llegar al
+   * cilindro. La inercia que se oye es la de la hélice, y la pone el sonido.
+   */
+  respuestaDelMotor: { subida: 0, bajada: 0 },
   sound: {
     engine: "piston",
     cylinders: 4,
@@ -2141,6 +2154,12 @@ export const MAINUMBY: AircraftConfig = {
     ...LIBREA,
     blades: 3,
   },
+  /*
+   * **Al instante**, como el gas: un pistón pasa del ralentí a pleno «relatively
+   * rapid» (FAA-H-8083-3C, 16-3), en lo que tarda la mezcla en llegar al
+   * cilindro. La inercia que se oye es la de la hélice, y la pone el sonido.
+   */
+  respuestaDelMotor: { subida: 0, bajada: 0 },
   sound: {
     // Radial de fumigador: más cilindros, más lento y mucho más grave. Es el
     // golpeteo que uno reconoce sin verlo pasar.
@@ -2420,6 +2439,12 @@ export const PANAMBI: AircraftConfig = {
     blades: 2,
     motivo: "sol",
   },
+  /*
+   * **Al instante**, como el gas: un pistón pasa del ralentí a pleno «relatively
+   * rapid» (FAA-H-8083-3C, 16-3), en lo que tarda la mezcla en llegar al
+   * cilindro. La inercia que se oye es la de la hélice, y la pone el sonido.
+   */
+  respuestaDelMotor: { subida: 0, bajada: 0 },
   sound: {
     /*
      * **Seis cilindros, a 2575 vueltas**: los del TSIO-360-E, con su ralentí
@@ -2910,6 +2935,14 @@ export const JAZ_50: AircraftConfig = {
     blades: 3,
     motivo: "sol",
   },
+  /*
+   * **Cuatro segundos del ralentí al 95 %, y cuatro de vuelta.** El PT6A es de
+   * turbina libre, y su potencia «lags for several seconds when the pilot moves
+   * the power lever from flight idle to a high power setting» (FAA-H-8083-3C,
+   * 15-11); la norma le deja cinco (14 CFR 33.73(b)). Bajando, la misma
+   * constante de tiempo que subiendo: ver el ADR 0034.
+   */
+  respuestaDelMotor: { subida: 4, bajada: 4 },
   sound: {
     engine: "turboprop",
     cylinders: 0,
@@ -3368,6 +3401,14 @@ export const ARASUNU: AircraftConfig = {
     blades: 4,
     motivo: "sol",
   },
+  /*
+   * **Cuatro segundos del ralentí al 95 %, y cuatro de vuelta.** El PT6A-67D es de
+   * turbina libre, y su potencia «lags for several seconds when the pilot moves
+   * the power lever from flight idle to a high power setting» (FAA-H-8083-3C,
+   * 15-11); la norma le deja cinco (14 CFR 33.73(b)). Bajando, la misma
+   * constante de tiempo que subiendo: ver el ADR 0034.
+   */
+  respuestaDelMotor: { subida: 4, bajada: 4 },
   sound: {
     engine: "turboprop",
     cylinders: 0,
@@ -3842,6 +3883,14 @@ export const ARAI: AircraftConfig = {
     blades: 0,
     motivo: "sol",
   },
+  /*
+   * **Cinco segundos del ralentí de vuelo al 95 % del empuje de despegue**, lo
+   * que la norma pide a todo turbofán (14 CFR 33.73(b); CS-E 745(a)(3)): los
+   * dos primeros apenas empujan y los dos últimos dan casi todo. Bajando, la
+   * misma constante de tiempo, y como el empuje va con la potencia 2,5 de las
+   * vueltas, en dos segundos le queda el 5 %. Ver el ADR 0034.
+   */
+  respuestaDelMotor: { subida: 5, bajada: 2.1 },
   sound: {
     engine: "turbofan",
     cylinders: 0,
@@ -4296,6 +4345,16 @@ export const YVAGA: AircraftConfig = {
     blades: 0,
     motivo: "sol",
   },
+  /*
+   * **Seis segundos del ralentí al 95 %**: un motor de fan enorme y de los
+   * setenta, con el rotor más pesado de la flota. La norma pide cinco desde el
+   * 15 % del empuje (14 CFR 33.73(b)), que se salta lo más lento del arranque,
+   * y admite más «for the very large engines … because of the inertia of their
+   * rotors» (AMC E 745); el JT8D de su misma casa y época tardaba tres segundos
+   * lentos y tres rápidos del ralentí a pleno (NASA TM-2009-215668, p. 1).
+   * Bajando, la misma constante de tiempo. Ver el ADR 0034.
+   */
+  respuestaDelMotor: { subida: 6, bajada: 2.5 },
   sound: {
     engine: "turbofan",
     cylinders: 0,
@@ -4646,6 +4705,14 @@ export const TIJERETA: AircraftConfig = {
     blades: 0,
     motivo: "sol",
   },
+  /*
+   * **Cinco segundos del ralentí de vuelo al 95 %**, los de la norma (14 CFR
+   * 33.73(b); CS-E 745(a)(3)), como el JAZ 90: un fan grande con regulador
+   * digital. El 777 de Emirates en Dubái tardaba unos seis del ralentí al TO/GA
+   * con las palancas llevadas a mano en dos (GCAA, AIFN/0008/2016). Bajando,
+   * la misma constante de tiempo. Ver el ADR 0034.
+   */
+  respuestaDelMotor: { subida: 5, bajada: 2.1 },
   sound: {
     engine: "turbofan",
     cylinders: 0,

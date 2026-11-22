@@ -47,7 +47,16 @@ function enPista(a: AircraftConfig, tier: Tier, kt: number): EnPista {
     m.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: v0 });
     modelo = m;
   } else {
-    const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: tier.assists });
+    /*
+     * El gas de `rueda` no es un piloto: es la carrera alargada, que sostiene
+     * la velocidad en el acto con un proporcional fuerte. Con el motor que
+     * tarda (ADR 0034) ese lazo oscila —el JAZ 60, con sus cuatro segundos,
+     * no se quedaba en su velocidad— y lo que se mide aquí es el pie, no el
+     * motor; en una carrera de verdad el gas está quieto y la inercia del
+     * motor no pinta nada. Así que aquí, al instante.
+     */
+    const alInstante = { ...a, respuestaDelMotor: { subida: 0, bajada: 0 } };
+    const m = new CoefficientFlightModel({ aircraft: alInstante, ground: () => 0, assist: tier.assists });
     const s = m.state;
     s.onGround = true;
     s.position.set(0, a.gearHeight, 0);
