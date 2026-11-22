@@ -753,8 +753,8 @@ _Y 13 medias más en este frente, en el diario del run._
   - Dónde: `/home/eraorahan/Downloads/flyjazz/src/ui/hud.ts:1818-1824`
   - Arreglo: Leer developers.google.com/maps/documentation/tile/policies antes de activar la clave en granjaoga.com y anotar la fecha en CREDITOS como se hizo con ElevenLabs y EOX.
 - **Herramientas de IA y rutas de su cuaderno nombradas en ficheros públicos del repositorio**
-  - Dónde: `/home/eraorahan/Downloads/flyjazz/docs/vision.md:283-290 (ocho enlaces a claude.ai/code/artifact/…)`
-  - Arreglo: Copiar los ocho informes a docs/informes/ (o a un sitio de Oksigenia) y enlazarlos ahí; los dos guiones de las maquetas fuera del árbol (hecho el 22-11-2026); en los bancos, un directorio de salida relativo e ignorado (salida/ o el .
+  - Dónde: `/home/eraorahan/Downloads/flyjazz/docs/vision.md:283-290 (ocho enlaces a informes publicados fuera del repositorio)`
+  - Arreglo: Copiar los ocho informes a docs/informes/ (o a un sitio de Oksigenia) y enlazarlos ahí (hecho el 22-11-2026: los ocho están en `docs/informes/` y la tabla de `docs/vision.md` los enlaza con ruta relativa); los dos guiones de las maquetas fuera del árbol (hecho el 22-11-2026); en los bancos, un directorio de salida relativo e ignorado (salida/ o el .
 - **La pantalla de créditos del juego imprime «Cessna» en tres idiomas, y CC BY 4.0 no lo exige**
   - Dónde: `src/i18n/es-PY.ts:201, src/i18n/en.ts:191, src/i18n/gug.ts:276, src/i18n/i18n.test.ts:115`
   - Arreglo: Reescribir la frase como «Modelo de la avioneta de TonyWony (sketchfab.com/TonyWony), bajo CC BY 4.0» y quitar la excepción `!c.startsWith("credits.")` del test para que la regla valga en toda la interfaz.
