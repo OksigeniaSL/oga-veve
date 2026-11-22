@@ -110,7 +110,8 @@ como el combustible en las inercias de `ponerMasa`.
 
 ### La carga que se mueve en vuelo queda preparada
 
-La emergencia del #90 no entra aquí. Lo que necesita, sí:
+La emergencia del #90 no entra aquí —entró después: ver la enmienda H38g—. Lo
+que necesita, sí:
 
 - `ponerCentrado` se puede llamar en pleno vuelo y en cada fotograma;
 - `moverCarga(masa, kg, desde, hasta)` da lo que se mueve el centro al llevar
@@ -509,3 +510,206 @@ siempre, fuera de la zona y después del arreglo.
   más natural, pero pide seguir el dedo fuera del botón donde empezó. Se
   dejó para no meter otra manera de tocar en una hoja que ya funciona con
   toques.
+
+## Enmienda H38g (22-11-2026): la carga que se suelta
+
+Lo que la sección «La carga que se mueve en vuelo queda preparada» dejaba
+para otro encargo ya está: **un ejercicio del catálogo, «La carga suelta»**
+(#91, «La carga que se mueve»; #90, el marco). Subiendo, la maleta de la
+bodega que no va amarrada se corre hacia la cola, el centro de gravedad se
+va con ella y el avión cambia de carácter en pleno vuelo. La lección es la
+frase del issue: **por eso se amarra**.
+
+### Dónde y para quién
+
+- **Solo en los aviones con hoja de centrado** (`centradoDeSuTipo`): hoy, el
+  JAZ 20. Hace falta el fondo de la bodega de su manual, y sin hoja no hay de
+  dónde sacarlo.
+- **Desde Taguató**, el peldaño en que la hoja de carga enseña el centro. Más
+  abajo no se ve dónde va cada maleta, y la lección no tendría de dónde venir.
+- **Se elige y se anuncia**, como todos los del catálogo: la instructora lo
+  cuenta antes de soltar frenos. Nunca por sorpresa (ADR 0014).
+
+### Qué pasa, con el modelo que hay
+
+Es una avería más de `practica.ts`, `que: "carga"`, con la lección de dar
+una vuelta: se despega y, **subiendo a 400 ft**, se suelta. Con la nariz
+arriba es cuando una maleta suelta se va para atrás, y a esa altura el
+despegue ya está hecho y queda aire para volver.
+
+- **Hasta dónde llega**: la pared de atrás de la bodega. En el 172R, la
+  estación 142: la bodega 1 va de la 82 a la 108 y la 2 de la 108 a la 142,
+  sin tabique entre las dos, y la nota de la figura 6-3 del manual
+  («Loading Arrangements») da la pared, «aft baggage wall (approximate
+  station 142)». Va en la hoja de cada tipo, `fondoDeLaBodega`. Es el tope:
+  la cuenta da lo más que se corre el centro.
+- **Qué se corre**: lo de las bodegas que no va amarrado. Si la hoja no lleva
+  maletas, el ejercicio pone las suyas: cuatro de 11 kg en la bodega 1, por
+  debajo de las 120 lb de su rótulo. Lo que eligió quien juega, también el
+  amarre, no se toca.
+- **Poco a poco**: llega al fondo en ocho segundos, con una curva que arranca
+  despacio y frena contra la pared (`TARDA_EN_CORRERSE`, `cuantoSeHaCorrido`).
+  Es como lo cuenta el issue, «el avión volviéndose progresivamente más
+  difícil», y da tiempo a ir empujando.
+- **El centro, con la palanca de siempre**: `moverCarga` con lo suelto
+  llevado al fondo, sumado al centrado de la hoja (`cargaCorrida` en
+  `game.ts`) y puesto en el modelo con `ponerCentrado` en cada paso mientras
+  se corre. Después se queda al fondo hasta el vuelo siguiente: una maleta
+  no vuelve sola a su sitio.
+
+No hay castigo encima. Lo que cambia es lo que el modelo ya hace con un
+centro más atrás: el par del aire, la estabilidad y el timón que lo sostiene.
+Medido con la gente de su ficha —quien pilota y uno delante—, 60 kg de
+combustible y las maletas del ejercicio (`carga-suelta.test.ts`):
+
+| | antes | con la maleta al fondo |
+|---|---|---|
+| Centro de gravedad | 41,8 in · 27,1 % MAC | 43,9 in · 30,6 % MAC |
+| Límite trasero del POH | 47,3 in | 47,3 in |
+| Margen hasta el punto neutro del modelo | 20,4 cm · 13,6 % MAC | 15,2 cm · 10,1 % MAC |
+| Timón que lo sostiene a nivel, a 1,5 Vr | −0,000 | −0,054 |
+| Sin tocar nada durante 20 s: ángulo de ataque máximo | 4,3° | 8,1° |
+| Y la velocidad al final, desde 82 kt | 81 kt | 68 kt |
+
+O sea: el centro se va 5,2 cm atrás y sigue dentro de la envolvente, el
+avión sigue volviendo solo pero menos, y **pide empujar**. Si nadie empuja
+ni compensa, la nariz sube sola y la velocidad cae hacia la pérdida, que en
+este modelo está a 16°. Con cien kilos de combustible sale casi igual: 5,0 cm,
+de 13,7 a 10,4 % MAC. En el 172 una maleta de 44 kg no saca al avión de su
+envolvente; lo que enseña es que el avión cambia, y por qué. Con gente atrás
+y la bodega 2 cargada, el mismo corrimiento sí la saca, y eso ya lo enseña la
+hoja en el hangar antes de despegar.
+
+### El procedimiento, de fuentes de verdad
+
+La instructora lo cuenta con calma y en el orden de quien vuela:
+
+1. **Mantener el control: palanca adelante y compensar.** Con la maleta en
+   marcha, y en ese momento: `ejercicio.carga.suelta`, con el dibujo de la
+   nariz abajo.
+2. **Nada brusco y con velocidad de sobra, lejos de la pérdida; y a tierra en
+   el campo más cercano.** Cuando ya llegó al fondo: `ejercicio.carga.despacio`.
+   El más cercano es el de salida, y se vuelve a él.
+
+Sin declarar: ni llamada ni bomberos, que nada se ha roto y el avión vuela.
+`practica.ts` no marca la emergencia como declarada para esta avería, y por
+eso no salen los camiones.
+
+De dónde sale:
+
+- **Cessna, *Pilot's Operating Handbook* del 172R**: sección 6, la figura
+  6-3 con las dos bodegas y la pared de atrás, y el rótulo de cada bodega en
+  la sección 2; y la sección 7, «Baggage Compartment»: la red de la bodega
+  se ata a las anillas de amarre del suelo, que es para lo que están.
+- **FAA, *Airplane Flying Handbook* (FAA-H-8083-3C)**, el centro de gravedad
+  trasero en el capítulo de la pérdida: con el centro atrás el avión es
+  menos estable en cabeceo, la nariz tiende a subir y de la pérdida se sale
+  peor. De ahí el orden: primero el avión, con la palanca adelante, y
+  después todo suave y con velocidad de sobra.
+- **FAA, *Pilot's Handbook of Aeronautical Knowledge* (FAA-H-8083-25C)**,
+  capítulo del peso y el centrado: la carga se asegura para que no se mueva
+  en vuelo, porque al moverse se lleva el centro de gravedad.
+
+Lo de aterrizar en el campo más cercano no es una norma escrita para esta
+avería en el manual del 172, que no tiene procedimiento de emergencia para
+la carga: es lo que se hace con cualquier avión que vuela distinto de como
+debe, y es lo que pide el encargo.
+
+### El amarre, en la hoja de carga
+
+El reparto lleva ahora **si lo de cada bodega va amarrado**
+(`Reparto.amarradas`). En la hoja, con alguna maleta puesta, sale debajo de
+la envolvente un toque con dos maletas dibujadas: «Sin amarrar», y al
+tocarlo, «Amarradas», con las dos cintas de la red por encima de las
+maletas, ahí y en las bodegas del avión dibujado. Se lee en el dibujo, y la
+palabra acompaña. Amarrar no mueve el centro, y sobrevive a otra maleta y a
+otro asiento.
+
+Y en el ejercicio, **lo amarrado no se suelta**: la instructora dice que la
+maleta iba amarrada y no se movió, «por eso se amarra», y el vuelo sigue
+normal hasta el cierre de siempre. Para los bancos, la dirección también lo
+pone: `&amarradas=1,1`.
+
+### Sin morbo
+
+Ni ruido ni alarma: el 172 no tiene ningún aviso para esto, y lo que se nota
+es la palanca. Si sale mal, sale mal el ejercicio y se cierra como los otros,
+«vamos otra vez»; si sale bien, `ejercicio.carga.bien`.
+
+### Las frases
+
+Cinco, de la instructora y en calma, en `es-PY` y en `en`; el guaraní no se
+toca. Van en `LOS_EJERCICIOS` de `sin-instructora.ts` —son de seguridad— y en
+`DE_LA_CARGA_SUELTA`, al final de `frases-para-grabar.mjs`, para no
+renumerar lo grabado. Están **sin grabar**: hasta que se graben, se ven en la
+tarjeta y la voz se calla, como cualquier frase de ejercicio sin su toma.
+
+- `ejercicio.carga.antes`
+- `ejercicio.carga.suelta`
+- `ejercicio.carga.despacio`
+- `ejercicio.carga.amarrada`
+- `ejercicio.carga.bien`
+
+Y en la hoja y el hangar, que solo se leen: `hangar.ejercicio.carga`,
+`hoja.amarrar`, `hoja.amarradas` y `hoja.sueltas`.
+
+### Comprobado
+
+- **`carga-suelta.test.ts`**, en vitest:
+  - sin maletas en la hoja, el ejercicio pone las suyas en la bodega 1, sin
+    amarrar y por debajo del rótulo; con maletas, las de la hoja y su amarre;
+  - la maleta se va poco a poco, cada segundo más, y se para en la estación
+    142: con la palanca entera, 44 kg de la 95 a la 142;
+  - el avión lo nota: más cerca del punto neutro sin pasarlo, y el timón que
+    lo sostiene a nivel, más hacia adelante;
+  - en vuelo y sin tocar nada, con la maleta soltándose la nariz sube más de
+    0,3° por encima de la del avión con la maleta quieta, y la velocidad cae;
+  - amarrada no se corre nada; con una bodega amarrada, solo la otra; y
+    amarrar no cambia ni el centro ni el peso;
+  - el ejercicio se ofrece en Taguató y Taguató Ruvichá con el 172, en
+    ningún otro avión de la flota y en ningún peldaño de abajo; se anuncia;
+  - la práctica: presentación, nada por debajo de los 400 ft, la avería a
+    125 m sin motor parado, después ni velocidad de un motor ni bandera ni
+    llamada ni bomberos, y al pararse en la pista, «vuelta».
+- **`hoja-de-carga.test.ts`**: sin maletas no sale el toque del amarre; con
+  una, sale «Sin amarrar»; al tocarlo, las cintas encima, el centro igual, y
+  el amarre sigue tras otra maleta y otro asiento.
+- **`practica.test.ts`**: en Taguató, al 172 se le ofrecen el planeo y la
+  carga suelta.
+- **El vitest entero**, con el código terminado: 575 de 575 ficheros y
+  11.516 pruebas en verde, con 31 saltadas y una pendiente.
+- **El banco de emergencias**, `verificar-emergencias.mjs carga`, con el
+  JAZ 20 en Gran Canaria y en Taguató. Presenta, despega, se suelta subiendo,
+  el piloto del banco empuja —vuela por actitud—, da el circuito y aterriza
+  en la pista de salida. Mira que el centrado del modelo se va más de 4 cm
+  hacia la cola, que se piden las dos frases, que el avisador de pérdida no
+  suena, que no hay llamada ni bomberos, que toca en la pista y que se cierra
+  con `ejercicio.carga.bien`.
+  - **La primera tirada dio 8 de 8**, con lo que miraba entonces. Se soltó a
+    115 m sobre el umbral; el centrado del modelo pasó de 6,4 a 11,7 cm, 5,4
+    cm hacia la cola; ni llamada ni bomberos; tocó en la pista a 129 m del
+    umbral y se cerró en «vuelta». Pero el piloto del banco subía a 49 nudos,
+    la V2 que da el juego para el 172, y el avisador de pérdida sonó a 103 m,
+    antes de soltarse la maleta: justo lo contrario de la lección. Ahora sube
+    a su Vy, 74 nudos —1,15 veces su vref—, con los flaps dentro desde los
+    60 m, y el banco mira además que el avisador no suene. Y tocó duro —la
+    instructora dijo `vuelo.tocasteDuro`—, sin percance: la recogida del
+    piloto del banco es la de siempre, hecha para los de línea, y no se tocó.
+  - **La segunda tirada, con la Vy, no llegó a volar**: esperó al navegador
+    hasta el tope del encargo detrás de la ronda de cierre de otra sesión.
+    Está por pasar; el arreglo es solo del piloto del banco, no del juego.
+  - Las cinco frases se piden y se callan por sin grabar, como tiene que
+    ser hasta que se graben.
+- **Sin pasar por el navegador**: la segunda tirada, el banco con
+  `OGA_AMARRADA=1` y el de carteles con `OGA_SOLO=hoja`, que ya lleva el
+  toque del amarre. El navegador lo usaba la ronda de cierre de otra sesión
+  y no dio tiempo.
+
+### Lo que queda
+
+- Solo el 172 tiene hoja de centrado, y por eso solo él tiene este
+  ejercicio. Cada avión que la reciba, con el fondo de su bodega, lo tendrá
+  sin tocar nada más.
+- Las cinco frases, por grabar.
+- La segunda tirada del banco, la de la maleta amarrada y la de los
+  carteles de la hoja, por pasar en el navegador.

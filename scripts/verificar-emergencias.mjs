@@ -417,7 +417,16 @@ try {
 
         if (tramo === "subida") {
           c.throttle = 1;
-          const v2 = vel.v2 ?? vref * 1.2;
+          /*
+           * **La avioneta de la carga suelta sube a su Vy**, 74 nudos en el
+           * manual del 172R —1,15 veces su vref—, y con los flaps dentro en
+           * cuanto tiene altura. La V2 del juego es de los que deciden con V1:
+           * la primera tirada subió a 49 nudos, la que da el juego para el
+           * 172, y el avisador de pérdida sonó antes de soltarse la maleta.
+           * La lección es justo la contraria: velocidad de sobra.
+           */
+          if (modo === "carga" && sobre > 60) o.pedirFlaps(0);
+          const v2 = modo === "carga" ? vref * 1.15 : (vel.v2 ?? vref * 1.2);
           if (deLineaAzul && (ej?.fase !== "armada" || modo === "tren")) {
             /*
              * Sin bajar de la Vr, subiendo lo justo mientras le falte para la
@@ -794,6 +803,12 @@ try {
         ? dice(pedido, "ejercicio.carga.amarrada") && !dice(pedido, "ejercicio.carga.suelta")
         : dice(pedido, "ejercicio.carga.suelta") && dice(pedido, "ejercicio.carga.despacio"),
       pedido.filter((k) => /ejercicio\.carga\./.test(k)).join(" · ") || "no",
+    );
+    const perdida = r.todoCantado.filter((k) => /^stall/.test(k));
+    comprobar(
+      "y lejos de la pérdida: el avisador no suena en todo el vuelo",
+      perdida.length === 0,
+      perdida.join(" · ") || "callado",
     );
     comprobar(
       "sin llamada ni bomberos: nada se ha roto",
