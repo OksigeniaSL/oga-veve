@@ -53,6 +53,8 @@ import {
   resistenciaDeOnda,
 } from "./limites";
 import {
+  centradoDe,
+  conCentrado,
   conMasa,
   esDeChorro,
   loQueDaElMotor,
@@ -806,7 +808,25 @@ export class CoefficientFlightModel implements FlightModel {
    */
   ponerMasa(kg: number): void {
     if (Math.abs(kg - masaDe(this.aircraft)) < 0.5) return;
-    this.aircraft = conMasa(this.ficha, kg);
+    this.aircraft = conCentrado(conMasa(this.ficha, kg), centradoDe(this.aircraft));
+  }
+
+  /**
+   * **Dónde va el centro de gravedad**, m por detrás del de su modelo. Ver
+   * `ponerCentrado` en `model.ts` y `flight/centrado.ts`.
+   *
+   * Se puede llamar en pleno vuelo y en cada fotograma: es lo que necesita la
+   * carga que se suelta y se va hacia la cola (#90), que no está todavía.
+   * Como la masa, mueve la copia y no la ficha, y las inercias se quedan las
+   * de su ficha.
+   */
+  ponerCentrado(dx: number): void {
+    if (Math.abs(dx - centradoDe(this.aircraft)) < 1e-4) return;
+    this.aircraft = conCentrado(this.aircraft, dx);
+  }
+
+  centradoAhora(): number {
+    return centradoDe(this.aircraft);
   }
 
   masaAhora(): number {
@@ -877,7 +897,12 @@ export class CoefficientFlightModel implements FlightModel {
   timonDeEquilibrio(flaps = 0): number {
     const a = this.aircraft.aero;
     const alfa = this.alfaDeEquilibrio(this.state.airspeed, this.state.position.y, flaps);
-    return clamp(-(a.cm0 + a.cmAlpha * alfa) / a.cmElevator, -1, 1);
+    const cl = a.cl0 + a.clAlpha * alfa + sustentacionDeLosFlaps(this.aircraft, flaps);
+    return clamp(
+      -(a.cm0 + a.cmAlpha * alfa + parDelCentrado(this.aircraft, cl)) / a.cmElevator,
+      -1,
+      1,
+    );
   }
 
   reset(initial: InitialConditions): void {
@@ -1518,6 +1543,18 @@ export class CoefficientFlightModel implements FlightModel {
 
     let rollMoment = qS * ac.wingSpan * clMoment;
     let pitchMoment = qSSimetria * ac.chord * cmMoment;
+    /*
+     * **Y el centrado de hoy.** Los coeficientes de cabeceo de la ficha están
+     * ajustados para un centro de gravedad, el de la carga de su ficha; con
+     * otra carga, la fuerza del aire sigue pasando por el mismo sitio y el
+     * centro se ha movido. Trasladado el par al centro de hoy, es la fuerza
+     * normal por lo que se ha ido: `ΔCm = CN·Δx/c̄`. Con el centro atrás,
+     * morro arriba; y como la fuerza crece con el ángulo, la estabilidad cae
+     * en `CLα·Δx/c̄`, hasta perderse en el punto neutro. Ver
+     * `flight/centrado.ts`. Con la carga de su ficha es cero y no suma nada.
+     */
+    const centrado = centradoDe(ac);
+    if (centrado !== 0) pitchMoment += this.apoyoDelAire * centrado;
     /*
      * Y el par de los motores, que con todos en marcha es cero y con uno
      * parado es lo que tiene que sujetar el timón. Ver `parDeLosMotores`.
@@ -2842,7 +2879,21 @@ export function timonQueSostiene(a: AircraftConfig, indicada: number, flaps: num
     -0.05,
     anguloDePerdida(a, flaps) * 0.85,
   );
-  return clamp(-(a.aero.cm0 + a.aero.cmAlpha * alfa) / a.aero.cmElevator, -1, 1);
+  return clamp(
+    -(a.aero.cm0 + a.aero.cmAlpha * alfa + parDelCentrado(a, cl)) / a.aero.cmElevator,
+    -1,
+    1,
+  );
+}
+
+/**
+ * **Lo que suma el centrado de hoy al coeficiente de cabeceo** con este
+ * coeficiente de sustentación: `CL·Δx/c̄`, el mismo par que `step` traslada
+ * con la fuerza normal. Cero con la carga de su ficha. Ver `flight/centrado.ts`.
+ */
+export function parDelCentrado(a: AircraftConfig, cl: number): number {
+  const dx = centradoDe(a);
+  return dx === 0 ? 0 : (cl * dx) / a.chord;
 }
 
 /**

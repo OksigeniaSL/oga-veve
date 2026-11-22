@@ -16,14 +16,14 @@
  * **La marca sale del modelo, no de un número escrito a mano.** En un avión de
  * verdad depende sobre todo del centro de gravedad: con el morro pesado hace
  * falta más morro arriba, y por eso el de un reactor se calcula para cada
- * despegue y el indicador lleva una franja, no una raya. Este modelo no tiene
- * centro de gravedad —el par de cabeceo es `cm0 + cmα·α + cmδ·δ`, igual con
- * cualquier carga—, así que la marca es el timón que sostiene el avión, con
- * sus flaps de despegue y el peso de hoy, a la velocidad de la subida
- * inicial (`timonQueSostiene` en `fdm.ts`). Con esa velocidad atada a la
- * pérdida el peso se va de la cuenta: el ala vuela al mismo ángulo pese lo que
- * pese. Si el modelo gana un día su centro de gravedad, la marca lo seguirá
- * sola.
+ * despegue y el indicador lleva una franja, no una raya. La marca es el timón
+ * que sostiene el avión, con sus flaps de despegue, el peso de hoy y **su
+ * centrado de hoy**, a la velocidad de la subida inicial (`timonQueSostiene`
+ * en `fdm.ts`). Con esa velocidad atada a la pérdida el peso se va de la
+ * cuenta: el ala vuela al mismo ángulo pese lo que pese. El centrado no: con
+ * el centro de gravedad delante la marca va más hacia morro arriba, y con él
+ * detrás, menos. Lo sigue sola desde que el modelo lo tiene (H38b,
+ * `flight/centrado.ts`); `a` lo trae puesto con `conCentrado`.
  *
  * Funciones puras: no hablan ni dibujan. La lista que lo pide es
  * `ListaDeAntesDeDespegar`, en `flaps-de-despegue.ts`.
@@ -77,9 +77,9 @@ export interface CompensadorDeDespegue {
 }
 
 /**
- * **La marca de despegue de este avión, con su franja.** `a` con el peso de
- * hoy (`avionConPeso` en `game.ts`): la pérdida, y con ella la marca, salen
- * de él.
+ * **La marca de despegue de este avión, con su franja.** `a` con el peso y el
+ * centrado de hoy (`avionConPeso` en `game.ts`): la pérdida, y con ella la
+ * marca, salen de él.
  */
 export function compensadorDeDespegue(a: AircraftConfig): CompensadorDeDespegue {
   const flaps = a.llevaFlaps ? flapsDeDespegue(a) : 0;

@@ -136,6 +136,7 @@ import { ESCENARIO_DEL_HELICOPTERO, esHelicoptero, SUPER_PUMA_EN_EL_JUEGO } from
 import { aeronavePorId, laQueSeVuelaEn } from "./flight/aeronaves";
 import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
 import { pasajerosDeSuFicha, type Hoja } from "./flight/hoja-de-carga";
+import { pasajerosDelReparto, repartoDeLaDireccion } from "./flight/centrado";
 import { vecinosQueSeMontan } from "./world/vecinos-del-vuelo";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { cerrarPilotos, elegirPiloto } from "./ui/pantalla-pilotos";
@@ -365,8 +366,17 @@ let hojaElegida: (Hoja & { readonly avion?: string }) | undefined =
     ? {
         pasajeros: Number(params.get("pasajeros") ?? Number.NaN),
         llenos: params.get("llenos") === "1",
+        ...repartoDeLaDireccion(params),
       }
     : undefined;
+/*
+ * **Y dónde se sienta cada uno**, para los bancos del centrado:
+ * `&filas=0,2` —cuántos pasajeros en cada fila, de delante a atrás— y
+ * `&bodegas=0,20` —los kilos de cada bodega—. Con filas, los pasajeros son
+ * los que suman. Ver `flight/centrado.ts`.
+ */
+if (hojaElegida?.reparto)
+  hojaElegida = { ...hojaElegida, pasajeros: pasajerosDelReparto(hojaElegida.reparto) };
 let destino: string | undefined = rearranque
   ? /*
      * El de antes, si lo había. Se descartaba con el argumento de que era del
@@ -872,6 +882,7 @@ const game = new Game({
             ? hojaElegida.pasajeros
             : pasajerosDeSuFicha(avion),
           llenos: hojaElegida.llenos,
+          ...(hojaElegida.reparto ? { reparto: hojaElegida.reparto } : {}),
         },
       }
     : {}),

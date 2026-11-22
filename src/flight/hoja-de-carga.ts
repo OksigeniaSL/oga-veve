@@ -25,7 +25,8 @@
  * campo: `pistaNecesariaHoy`, la misma cuenta que usa el vuelo, contra la TORA
  * del campo. Es la barra del hangar.
  *
- * El centrado —dónde va el peso, no cuánto— no entra aquí: es otra hoja.
+ * El centrado —dónde va el peso, no cuánto— no entra aquí: es otra hoja,
+ * `centrado.ts`. De aquí solo le llega dónde se sienta cada uno, `reparto`.
  *
  * Los aviones de los que no se ha podido leer la masa en vacío en una fuente
  * de primera mano —el Ag Cat, el Seneca II y el 787— no llevan renglón de
@@ -40,6 +41,7 @@ import { DE_SU_CLASE } from "./ficha-tecnica";
 import { pistaNecesariaHoy } from "./carrera";
 import { aireDelParte, airDensity } from "./atmosphere";
 import type { Superficie } from "../world/superficie";
+import type { Reparto } from "./centrado";
 
 /** Lo que pesa cada cosa de la hoja en este tipo, con su fuente al lado. */
 export interface CargaDeSuTipo {
@@ -122,6 +124,12 @@ export interface Hoja {
   readonly pasajeros: number;
   /** Si se llenan los depósitos en vez de cargar lo del plan. */
   readonly llenos: boolean;
+  /**
+   * **Dónde se sienta cada uno y qué va en cada bodega**, si no es lo de
+   * siempre —la gente llenando las filas de delante a atrás, sin bodega—.
+   * Solo cuenta en el avión con hoja de centrado. Ver `centrado.ts`.
+   */
+  readonly reparto?: Reparto;
 }
 
 /** El renglón de gente de este avión, o `null` si su masa en vacío no se ha leído. */
@@ -148,14 +156,20 @@ export function hojaDeSuFicha(a: AircraftConfig): Hoja {
 }
 
 /**
- * **Lo que pesa sin combustible con esta gente**, kg. Sin renglón de gente, la
+ * **Lo que pesa sin combustible con esta gente**, kg, y con lo que se haya
+ * puesto en las bodegas del reparto (`Hoja.reparto`). Sin renglón de gente, la
  * masa sin combustible de su ficha.
  */
-export function masaSinCombustibleDeLaHoja(a: AircraftConfig, pasajeros: number): number {
+export function masaSinCombustibleDeLaHoja(
+  a: AircraftConfig,
+  pasajeros: number,
+  reparto?: Reparto,
+): number {
   const t = cargaDeSuTipo(a);
   if (!t) return a.masaSinCombustible;
   const n = Math.max(0, Math.min(t.plazas, Math.round(pasajeros)));
-  return t.vacio + (t.bodega ?? 0) + n * t.porPersona;
+  const enBodega = (reparto?.bodegas ?? []).reduce((s, kg) => s + Math.max(0, kg), 0);
+  return t.vacio + (t.bodega ?? 0) + n * t.porPersona + enBodega;
 }
 
 /** El peso máximo al despegue de su manual, kg, o `null` si no se ha leído. */
@@ -208,7 +222,7 @@ export interface Pesada {
  * sale sin el combustible legal: elige un destino más cerca.
  */
 export function pesar(a: AircraftConfig, hoja: Hoja, delPlan: number): Pesada {
-  const sinCombustible = masaSinCombustibleDeLaHoja(a, hoja.pasajeros);
+  const sinCombustible = masaSinCombustibleDeLaHoja(a, hoja.pasajeros, hoja.reparto);
   const combustible = hoja.llenos ? loQueCabe(a) : Math.min(loQueCabe(a), delPlan);
   const despegue = sinCombustible + combustible;
   const maximo = pesoMaximo(a);
