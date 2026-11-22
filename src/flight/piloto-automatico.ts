@@ -565,6 +565,8 @@ export interface Estado {
   readonly subirCon?: (ritmo: number) => number;
   /** El empuje con las palancas a fondo, aquí, N. Para los gases. */
   readonly empujeAFondo?: number;
+  /** Lo que da el motor ahora, como gas. Para los gases: ver `EstadoDeGases.daElMotor`. */
+  readonly daElMotor?: number;
   /** La masa del avión, kg. Para los gases. */
   readonly masa?: number;
   /** El gas que sostiene la velocidad pedida, si el modelo lo sabe de cierto. */
@@ -949,6 +951,7 @@ export function mandosPara(
         velocidad: e.velocidad,
         gas: e.gas,
         ...(e.empujeAFondo !== undefined ? { empujeAFondo: e.empujeAFondo } : {}),
+        ...(e.daElMotor !== undefined ? { daElMotor: e.daElMotor } : {}),
         ...(e.masa !== undefined ? { masa: e.masa } : {}),
         ...(e.equilibrio !== undefined ? { equilibrio: e.equilibrio } : {}),
         vertical: e.vertical,

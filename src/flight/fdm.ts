@@ -294,6 +294,7 @@ export interface FdmOptions {
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import { DURO_DE_TRANSPORTE } from "./aterrizaje";
 import { perdidaCon, V2_SOBRE_LA_PERDIDA } from "./velocidades-de-despegue";
+import { avanzarGiro, gasQueDa, giroAsentado, type GiroDelMotor } from "./respuesta-del-motor";
 
 /**
  * **Lo lenta que es la lenta, sobre la segura**, cuando salen de la pérdida: la
@@ -764,6 +765,17 @@ export class CoefficientFlightModel implements FlightModel {
     return this.ultimoEmpuje;
   }
 
+  /**
+   * **Cómo va el motor**, o `null` recién colocado: el primer paso lo asienta
+   * en el gas que haya, porque un avión que se coloca en la final llega con
+   * el motor ya dando lo de la final. Ver `respuesta-del-motor.ts`.
+   */
+  private giro: GiroDelMotor | null = null;
+
+  gasDelMotor(): number {
+    return this.giro ? gasQueDa(this.giro, this.aircraft) : 0;
+  }
+
   setOnRunway(enPista: boolean): void {
     this.state.onRunway = enPista;
   }
@@ -993,8 +1005,10 @@ export class CoefficientFlightModel implements FlightModel {
         : null;
     this.trimSettle = 0;
     this.trimVisto = null;
-    // Un vuelo nuevo empieza con todos los motores en marcha.
+    // Un vuelo nuevo empieza con todos los motores en marcha, y asentados en
+    // el gas del primer paso. Ver `giro`.
     this.reponerLosMotores();
+    this.giro = null;
     this.updateDerived();
     // Y el timón que lo sostiene, para quien lo coja volando. Ver `timonAhora`.
     if (initial.equilibrado) {
@@ -1466,9 +1480,17 @@ export class CoefficientFlightModel implements FlightModel {
      * nada que repartir: ni empuje ni par. Eso es `sin-motor.ts`, y su planeo
      * se calcula con la polar limpia, que es la que vuela aquí.
      */
+    /*
+     * **Y lo que empuja es lo que da el motor, no lo que pide el gas**: un
+     * reactor tarda segundos en pasar del ralentí al empuje de ida al aire, un
+     * turbohélice algo menos y un pistón nada. Ver `respuesta-del-motor.ts`.
+     */
+    const pedido = controls.engineOn ? assisted.throttle : 0;
+    if (this.giro === null) this.giro = giroAsentado(ac, pedido);
+    else avanzarGiro(this.giro, ac, pedido, dt);
     const n = this.motores.length;
     const cadaUno =
-      ((controls.engineOn ? assisted.throttle : 0) *
+      ((controls.engineOn ? gasQueDa(this.giro, ac) : 0) *
         empujeLleno(ac, density, speed)) /
       n;
     let motoresQueFrenan = 0;

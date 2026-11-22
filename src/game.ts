@@ -25122,9 +25122,11 @@ export class Game {
       const par = this.input.controls.engineOn ? this.flight.modelo.rotor().par : 0;
       return Array.from({ length: this.aircraft.motores }, () => par);
     }
+    // Lo que da el motor y no lo que pide la palanca: la aguja sigue al
+    // motor, igual que el sonido. Ver `FlightModel.gasDelMotor`.
     const va = regimen(
       this.aircraft,
-      this.input.controls.throttle,
+      this.flight.gasDelMotor?.() ?? this.input.controls.throttle,
       this.input.controls.engineOn,
     );
     const estados = this.flight.motoresAhora?.();
@@ -31931,9 +31933,9 @@ export class Game {
      */
     const haciaAtras =
       this.aircraft.sound.engine === "turboprop" ? this.reversa.empuje * 0.75 : 0;
-    const quiere = this.input.controls.engineOn
-      ? 6 + Math.max(this.input.controls.throttle, haciaAtras) * 96
-      : 0;
+    // Lo que da el motor, como lo que se oye: ver `FlightModel.gasDelMotor`.
+    const daElMotor = this.flight.gasDelMotor?.() ?? this.input.controls.throttle;
+    const quiere = this.input.controls.engineOn ? 6 + Math.max(daElMotor, haciaAtras) * 96 : 0;
     const prisa = quiere > this.giroDeHelice ? 1.4 : 0.6;
     this.giroDeHelice +=
       (quiere - this.giroDeHelice) * (1 - Math.exp(-dt * prisa));
@@ -35854,6 +35856,8 @@ export class Game {
         // con eso cuánto acelera cada trozo de palanca.
         empujeAFondo: empujeLleno(this.aircraft, airDensity(s.position.y, aire), s.airspeed),
         masa: this.masaDeAhora(),
+        // Y lo que da el motor, que tarda: ver `EstadoDeGases.daElMotor`.
+        ...this.loQueDaElMotor(),
         // Y lo que mueve su morro su timón: ver `AUTORIDAD_SUFICIENTE`.
         autoridadDelTimon: autoridadDelTimon(
           this.aircraft,
@@ -37712,6 +37716,15 @@ export class Game {
   }
 
   /**
+   * **Lo que da el motor**, para los gases automáticos, en el modelo que lo
+   * sabe; nada en los demás. Ver `EstadoDeGases.daElMotor`.
+   */
+  private loQueDaElMotor(): { daElMotor?: number } {
+    const da = this.flight.gasDelMotor?.();
+    return da === undefined ? {} : { daElMotor: da };
+  }
+
+  /**
    * **Los mandos, como se oyen**: los de siempre, y en la escena de pasaje
    * con el empuje que pone la tripulación en lugar del gas. En el peldaño de
    * la escena el gas es una palanca de velocidad —ver `gasEsVelocidad`—, y al
@@ -37721,7 +37734,13 @@ export class Game {
    */
   private get mandosQueSeOyen(): ControlInputs {
     const empuje = this.inicio instanceof MotorDelPasaje ? this.manosDeLinea?.empuje : undefined;
-    return empuje === undefined ? this.input.controls : { ...this.input.controls, throttle: empuje };
+    if (empuje !== undefined) return { ...this.input.controls, throttle: empuje };
+    // Y lo que suena es el motor, no la palanca: un reactor tarda segundos en
+    // dar lo que se le pide. Ver `FlightModel.gasDelMotor`.
+    const daElMotor = this.flight.gasDelMotor?.();
+    return daElMotor === undefined
+      ? this.input.controls
+      : { ...this.input.controls, throttle: daElMotor };
   }
 
   /** La lista de después del aterrizaje leída en este vuelo, con su hora. Para el banco. */
@@ -39064,6 +39083,7 @@ export class Game {
         gas: this.input.controls.throttle,
         empujeAFondo: empujeLleno(this.aircraft, airDensity(s.position.y, aire), s.airspeed),
         masa: this.masaDeAhora(),
+        ...this.loQueDaElMotor(),
         ...(this.tier.model === "simple"
           ? {
               equilibrio: this.flight.gasPara(

@@ -406,6 +406,14 @@ export interface FlightModel {
    */
   empujeAhora(): number;
   /**
+   * **Lo que da el motor ahora**, como el gas que lo daría en un motor sin
+   * inercia, de 0 a 1. No es el gas: un reactor tarda segundos en dar lo que
+   * pide la palanca. Lo oyen el sonido y las agujas, que siguen al motor y no
+   * a la palanca. Solo lo tiene el modelo de coeficientes; en el sencillo el
+   * gas es una palanca de velocidad. Ver `respuesta-del-motor.ts`.
+   */
+  gasDelMotor?(): number;
+  /**
    * **Lo que da aquí esa parte del empuje de despegue**, de 0 a 1, en newtons.
    * Solo lo tiene el modelo cuyo gas es una palanca de velocidad: en él, el gas
    * no dice lo que dan los motores, y quien lo sabe por otro lado —la tripulación
