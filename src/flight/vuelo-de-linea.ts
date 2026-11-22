@@ -146,6 +146,12 @@ export interface LecturaDeLinea {
   /** De las ruedas al suelo, m. */
   readonly altura: number;
   readonly vertical: number;
+  /**
+   * **Lo que apunta el modelo al tocar**, m/s: contra la pista, no contra el
+   * variómetro. Ver `caidaContraElSuelo`. Sin él, la del variómetro del paso
+   * de antes, que en una pista llana es lo mismo.
+   */
+  readonly caidaAlTocar?: number;
   readonly motor: boolean;
   /** Dónde están los flaps, 0 a 1, y el tren, 0 dentro y 1 fuera. */
   readonly flaps: number;
@@ -714,7 +720,11 @@ export class VueloDeLinea {
     if (!l.enTierra) this.vioElAire = true;
     if (l.enTierra && this.vioElAire && !this.tocado) {
       this.tocado = true;
-      this.caidaAlTocar = Math.max(0, -this.ultimaVertical);
+      /*
+       * La que apunta el modelo, que es contra la pista (H63): con el
+       * variómetro, la 03 de Gran Canaria, que baja, ponía tres décimas de más.
+       */
+      this.caidaAlTocar = Math.max(0, l.caidaAlTocar ?? -this.ultimaVertical);
       this.pasarA("frenando");
     }
     this.ultimaVertical = l.vertical;

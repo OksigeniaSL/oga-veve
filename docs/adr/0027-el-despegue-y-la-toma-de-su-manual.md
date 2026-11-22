@@ -10202,3 +10202,136 @@ vitest entero no se ha corrido: no se ha tocado `src/`.
   reactor de verdad tarda segundos en ir del gas de la final al ralentí.
 - **La recogida que sube el morro casi cinco grados** con una racha, donde el
   FCTM dice dos o tres: el tope de morro no mueve la mesa, y no se ha puesto.
+
+## Enmienda H63 (22-11-2026): la toma se mide contra la pista, no con el variómetro
+
+H34h lo dejó escrito en «Lo que queda»: el juego apuntaba lo fuerte que se
+toca como `−velocity.y`, lo que marca el variómetro —`touchdownSinkRate` en
+`resolveGround` de `flight/fdm.ts`, y lo mismo en `arcade.ts` con su subida y
+en `helicoptero.ts` bajo cada rueda—. Lo que carga el tren, lo que mide la
+norma —el «limit descent velocity» de CS 25.473 es velocidad contra la
+pista— y lo que nota quien va dentro es **lo que se le acerca el suelo**: la
+velocidad a lo largo de la normal de la superficie donde toca. En una pista
+llana es lo mismo. En la 03 de Gran Canaria, que baja un 0,4 % hacia el norte,
+la pista se aparta 0,29–0,30 m/s bajo un 747 a la Vref (H34h), y el juego le
+apuntaba esas tres décimas de más; en una que sube, se quedaba corto. Y de ese
+número cuelgan el veredicto de la toma («tocaste duro»), el percance al tocar,
+la rotura, las gafas y lo que se le cuenta a quien juega. Es la regla 4: quien
+aprenda aquí que una toma fue dura tiene que reconocerla el día que la note.
+
+### Lo que se cambia
+
+**1. Una cuenta, en un sitio** (`caidaContraElSuelo`, en
+`flight/caida-contra-el-suelo.ts`): la velocidad del avión a lo largo de la
+normal del suelo en el punto donde toca, con el signo cambiado. La pendiente
+sale **del mismo `GroundSampler` del que el modelo saca la altura del suelo**
+—el que le da `game.ts`, `terrain.sampleSurface`, con su pavimento—, por
+diferencias centradas a diez metros a cada lado. Diez y no un palmo porque el
+pavimento va dentro de ese suelo guardado en centímetros sobre celdas de dos
+metros (`world/mapa-del-pavimento.ts`): con medio metro de base, un centímetro
+de redondeo es medio por ciento de pendiente, más que la de Gran Canaria
+entera; con veinte metros se queda en cinco centésimas por ciento, unas tres
+centésimas de metro por segundo bajo un 747. Sin pendiente devuelve `−vy`
+**sin hacer la cuenta**, así que en llano es lo de antes bit a bit; y si el
+suelo no contesta un número a los lados, también.
+
+**2. Los tres modelos, al tocar**:
+
+- **El de los peldaños de arriba** (`fdm.ts`), con la velocidad del centro de
+  gravedad y el suelo bajo él, que es donde ya lo medía. Y también **para
+  romper**: lo que rompe el tren es lo que se le acerca el suelo, no el
+  variómetro.
+- **El de Guyrami** (`arcade.ts`), con la velocidad con la que `step` acaba de
+  mover el avión —en ese modelo no hay viento—, que no es `state.velocity`:
+  ese se rehace después, con el morro.
+- **El helicóptero** (`helicoptero.ts`), bajo cada rueda que toca y con la
+  peor, como ya hacía. Con la velocidad del centro y no la de cada rueda: la de
+  cada rueda lleva el cabeceo y el alabeo, y cambiaría también la toma en
+  llano, que aquí no se toca.
+
+**3. Quién más leía el variómetro para juzgar la toma.** El veredicto
+(`aterrizaje.ts`), el percance al tocar, el golpe que no deja apuntar el
+aterrizaje en el cuaderno, el aviso que suena, las gafas, los galones, lo que
+dice la instructora, la toma de la escena de aterrizar y la caída de las
+misiones cuelgan todos de `touchdownSinkRate` o del veredicto, y con eso ya
+leen el número nuevo; los sellos y la bitácora no miden la toma. **Uno no**: la
+tripulación de línea (`vuelo-de-linea.ts`, la de las escenas de pasaje) se
+apuntaba la suya con el variómetro del paso de antes. Ahora lee la del modelo
+(`caidaAlTocar` en su lectura), y sin ella, la de siempre.
+
+**4. El banco deja de contarla aparte.** `pistaAlTocar`, en
+`verificar-vuelo-entero.mjs`, decía al lado de la caída del juego la que se
+quedaba contra la pista; ahora la del juego ya lo es, y se quita. La caída de
+reserva del banco —la que usa si el juego no dice a qué se tocó— va también
+contra la pista con lo que baja ella en la recogida. Lo que **no** se quita es
+`pistaBaja` en `recoger`: eso no juzga la toma, la vuela —la recogida va contra
+la pista desde antes de H34h—.
+
+### Las pruebas
+
+`caida-contra-el-suelo.test.ts`:
+
+- **En llano, bit a bit**: cada modelo se vuela envuelto —el método del suelo
+  de cada uno—, se coge la velocidad justo antes del paso que toca y se compara
+  la caída apuntada con la cuenta de antes con `Object.is`, a cota cero y a
+  731,3 m; el fdm, soltado desde tres alturas.
+- **En pendiente**, con una pista que baja un 1 % hacia donde se vuela y otra
+  que sube: los tres modelos apuntan la cuenta contra la normal, la que baja
+  apunta menos que el variómetro —más de 0,3 m/s a 34 m/s— y la que sube, más.
+- **La cuenta sola**: en llano, `−vy` con `Object.is` a cuatro cotas y cinco
+  velocidades, el `−0` incluido; la 03 de Gran Canaria bajo un 747 a 72 m/s,
+  entre 0,28 y 0,30 m/s menos; la componente de lado; y el suelo que no
+  contesta.
+
+Y en `vuelo-de-linea.test.ts`, que la tripulación se apunta la del modelo y,
+sin ella, la del variómetro.
+
+### Los bancos
+
+`verificar-vuelo-entero.mjs` en el puerto 5686, con la traza del ala
+(`OGA_TRAZA_ALA`), y el navegador de uno en uno con el candado compartido. La
+traza apunta el variómetro en cada fotograma de los últimos treinta metros, así
+que la última muestra en el aire da, **en la misma toma**, lo que habría
+apuntado la cuenta de antes. Lo de antes, en la columna de la izquierda, es de
+otra tirada (H34h).
+
+| Vuelo | Antes | Con H63 |
+|---|---|---|
+| JAZ 120, Gran Canaria, `taguato 1`, 025/20 | con main, en H34h: 2,7 m del eje, 564 m, 2,54 m/s (2,26 contra la pista); 62 de 63 (✗ la toma) | 1,8 m, 643 m, **2,15 m/s** contra la pista —2,42 de variómetro en el último fotograma en el aire—; 59 de 62 (✗ la zona, ✗ la toma, ✗ las gafas) |
+| JAZ 20, Tenerife Norte, `guyrami 3`, 040/12 | JAZ 25 en H58: 0,74 m/s, 293 m; 60 de 61 | 0,0 m, 368 m, **1,04 m/s** contra la pista —1,23 de variómetro—, «firme» y las gafas; **62 de 62** |
+| JAZ 20, Tenerife Norte, `taguato 1` | — | no volado |
+
+**El JAZ 120 en Gran Canaria**: la pista se apartó bajo el avión lo mismo que
+en H34h. La última muestra en el aire marcaba 2,42 m/s de variómetro y el juego
+apuntó 2,15: 0,27 menos, lo que da un 0,4 % a 70 m/s. Con la cuenta de antes
+el veredicto no habría cambiado: fue «largo», por los 643 m, que va detrás del
+golpe duro y no depende de la caída. Los tres rojos son de esa toma: tocó 43 m
+pasada la zona, a más de dos metros por segundo, y la toma larga no da gafas.
+Recogió a 15 m de ruedas, 75 m antes del umbral, bajando 4,9 m/s a 152 nudos:
+es la toma que llega con energía de más de H34h, y la de «Las largas que trae
+el morro». Es una tirada, no una cifra.
+
+**El JAZ 20 en Guyrami** (el modelo sencillo, `arcade.ts`): la pista de Los
+Rodeos también baja bajo el avión, y la toma, a 36 m/s, quedó 0,19 m/s más
+suave contra ella que en el variómetro. Todo en verde.
+
+**El JAZ 20 en taguato no cupo**: el navegador lo tuvo otro banco de 09:00 a
+09:33, Guyrami voló de 09:33 a 09:40, y a reloj por uno la avioneta no cabía
+antes de la entrega. El modelo de los peldaños de arriba ya lo voló el 747.
+
+### El vitest entero
+
+Con el código terminado: **576 ficheros y 11.529 pruebas en verde**, 31
+saltadas y una por hacer, en 19 minutos.
+
+### Lo que queda
+
+- **El JAZ 20 en Tenerife Norte con el modelo de arriba**
+  (`tenerife-norte taguato 1 jaz-20`), sin volar.
+- **El helicóptero, en el navegador**: solo en vitest. Toca con la velocidad
+  del centro, como antes; la de cada rueda llevaría el cabeceo y el alabeo, y
+  cambiaría también la toma en llano.
+- **El 747 de Gran Canaria sigue tocando largo y a más de dos metros por
+  segundo** contra la pista: lo que H34h dejó en «El resto de la distancia
+  entre el navegador y la mesa» y «Las largas que trae el morro» sigue igual;
+  esta enmienda solo quita del número las tres décimas que no eran del avión.

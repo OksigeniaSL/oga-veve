@@ -49,6 +49,7 @@ import {
 } from "./escalera-de-velocidades";
 import { actitudEnTierra, alturaSobreLasRuedas } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
+import { caidaContraElSuelo } from "./caida-contra-el-suelo";
 import {
   fraccionDeLosFlaps,
   resistenciaDeLosFlaps,
@@ -1809,7 +1810,24 @@ export class ArcadeFlightModel implements FlightModel {
     if (rodando) s.position.y = wheelLevel;
 
     if (s.position.y <= wheelLevel) {
-      if (wasFlying) s.touchdownSinkRate = Math.max(0, -this.climb);
+      /*
+       * Contra la pista, no contra el variómetro (H63): lo que se le acerca el
+       * suelo. La velocidad por encima del suelo es la con la que `step` acaba
+       * de mover el avión —en este modelo no hay viento—. En llano, `−climb`
+       * bit a bit. Ver `caidaContraElSuelo`.
+       */
+      if (wasFlying)
+        s.touchdownSinkRate = Math.max(
+          0,
+          caidaContraElSuelo(
+            this.ground,
+            s.position.x,
+            s.position.z,
+            Math.sin(this.heading) * this.speed,
+            this.climb,
+            -Math.cos(this.heading) * this.speed,
+          ),
+        );
       s.position.y = wheelLevel;
       s.onGround = true;
       if (this.climb < 0) this.climb = 0;
