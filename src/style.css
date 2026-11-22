@@ -9325,6 +9325,60 @@ button.motor__tecla::after {
   background: #c9a27a;
 }
 
+/* Las amarradas, con dos cintas de la red por encima: lo que en vuelo no se corre. */
+.hoja__maletas--amarradas {
+  position: relative;
+}
+
+.hoja__maletas--amarradas::before,
+.hoja__maletas--amarradas::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ocre);
+}
+
+.hoja__maletas--amarradas::before {
+  top: 22%;
+}
+
+.hoja__maletas--amarradas::after {
+  bottom: 22%;
+}
+
+/* El toque del amarre, debajo de la envolvente: la cinta en el dibujo y la palabra al lado. */
+.hoja__amarre {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  margin-top: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--r-m);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.hoja__amarre[aria-pressed="true"] {
+  border-color: var(--ocre);
+}
+
+.hoja__amarre:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 2px;
+}
+
+.hoja__amarre .hoja__maletas {
+  grid-template-columns: repeat(2, 10px);
+}
+
 /* La que pasa del rótulo de su bodega, rayada en ámbar como lo que pasa de la raya de la báscula. */
 .hoja__maleta--demas {
   background: repeating-linear-gradient(-45deg, var(--precaucion) 0 3px, rgb(232 177 58 / 0.4) 3px 6px);

@@ -126,6 +126,15 @@
  * después. Pide un campo con monte medido (`monteDelCampo`) y un avión cuyo
  * manual y cuyo modelo den las dos velocidades (`subidaDe`), y la lleva
  * `pista-corta.ts`. Ver el ADR 0027, enmienda H35a.
+ *
+ * ## Y la carga que se suelta
+ *
+ * «La carga suelta» (#91, #90) es una avería más, `que: "carga"`: subiendo,
+ * la maleta de la bodega que no va amarrada se corre hacia la cola, y el
+ * centro de gravedad con ella. Solo en los aviones con hoja de centrado en su
+ * manual (`centradoDeSuTipo`), y desde Taguató, como la hoja que la enseña.
+ * La cuenta es de `carga-suelta.ts`; la hace pasar `practica.ts`, como un
+ * motor. Ver el ADR 0033, enmienda H38g.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -145,6 +154,7 @@ import { cabeElCruzado, cruzadoDelCampo } from "./final-con-viento-cruzado";
 import { cabinaDelGps } from "./gps-con-apagones";
 import { monteDelCampo, subidaDe } from "./pista-corta";
 import { conV1 } from "./decide-con-v1";
+import { centradoDeSuTipo } from "./centrado";
 
 export type EjercicioId =
   | "planeo"
@@ -175,7 +185,8 @@ export type EjercicioId =
   | "gps"
   | "cangrejo"
   | "ala-baja"
-  | "pista-corta";
+  | "pista-corta"
+  | "carga";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -211,10 +222,11 @@ export type Momento =
 /** Qué falla. */
 export interface Averia {
   /**
-   * Un motor —el de fuera, de un lado o del otro—, todos, o el aire de la
-   * cabina: la despresurización, que se vuela con los motores bien.
+   * Un motor —el de fuera, de un lado o del otro—, todos, el aire de la
+   * cabina —la despresurización, que se vuela con los motores bien— o la
+   * carga de la bodega que se suelta y se va hacia la cola.
    */
-  readonly que: "motor" | "motores" | "presion";
+  readonly que: "motor" | "motores" | "presion" | "carga";
   readonly cuando: Momento;
 }
 
@@ -1030,6 +1042,34 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => monteDelCampo(oaci) !== null,
     ensena:
       "de una pista corta se sale con los frenos puestos y el motor a tope, y en el aire despacio y empinado, a la de mejor ángulo, hasta pasar los árboles; después, a la de mejor régimen, que sube más deprisa",
+  },
+  /*
+   * **La carga suelta** (#91, H38g): subiendo, la maleta sin amarrar se va al
+   * fondo de la bodega y el avión se pone cola pesada. Palanca adelante y
+   * compensar, nada brusco y con velocidad de sobra, y a tierra en el campo
+   * más cercano, que aquí es el de salida. Ver `carga-suelta.ts`.
+   */
+  {
+    id: "carga",
+    /*
+     * **Desde Taguató**, el peldaño de la hoja de centrado: allí se ve dónde
+     * va cada maleta y si va amarrada, y esto es lo que pasa en vuelo con
+     * eso. Más abajo la hoja no enseña el centro, y la lección no tendría de
+     * dónde venir.
+     */
+    peldanos: DESDE_TAGUATO,
+    // Donde el manual da la hoja de centrado y el fondo de la bodega: hoy, el JAZ 20.
+    valePara: (a) => centradoDeSuTipo(a) !== null,
+    leccion: "vuelta",
+    /*
+     * **Subiendo, a cuatrocientos pies**: es con la nariz arriba cuando una
+     * maleta suelta se va para atrás, y a esa altura el despegue ya está
+     * hecho y queda aire para volver al campo. El de salida es el más
+     * cercano: se vuelve a él.
+     */
+    averias: [{ que: "carga", cuando: { en: "subida", metros: 400 * 0.3048 } }],
+    ensena:
+      "la carga suelta que se va hacia la cola se lleva el centro de gravedad: la nariz quiere subir, se empuja y se compensa, nada brusco y con velocidad de sobra, y a tierra en el campo más cercano. Por eso se amarra",
   },
 ];
 

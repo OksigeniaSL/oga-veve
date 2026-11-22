@@ -26,13 +26,20 @@
  *   `PilotoDelDescenso`—, y desde donde se respira se viene a la pista de
  *   casa y se aterriza, con la torre contestando el MAYDAY y los bomberos del
  *   aeródromo esperando.
+ * - `carga`: la carga suelta (H38g), en Taguató con la avioneta. Subiendo, la
+ *   maleta sin amarrar se va al fondo de la bodega y el centro de gravedad
+ *   con ella: el piloto del banco empuja lo que haga falta —vuela por
+ *   actitud—, sigue el circuito sin nada brusco y aterriza en el campo de
+ *   salida, que es el más cercano. Sin llamada ni bomberos. Con
+ *   `OGA_AMARRADA=1`, la maleta va amarrada en la hoja de carga: no se mueve
+ *   nada, y se dice.
  *
  * **Las voces que no están grabadas no suenan** —ver `decirDelEjercicio` en
  * `game.ts`—, y el juego apunta cada una que se calla en `cantados`. Así que
  * lo que se mira aquí es que se **pidió**, grabado o no: lo dicho por la
  * instructora y lo callado por sin grabar.
  *
- * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres>
+ * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga>
  *        [escenario] [avion] [tramo]`
  *
  * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien.
@@ -49,16 +56,23 @@ const EJERCICIO = {
   tren: "tren-arriba",
   planeo: "planeo",
   despres: "despresurizacion",
+  carga: "carga",
 }[MODO];
 if (!EJERCICIO) {
   console.error(
-    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres> [escenario] [avion] [tramo]",
+    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga> [escenario] [avion] [tramo]",
   );
   process.exit(2);
 }
 const ESCENARIO = process.argv[3] ?? "gran-canaria";
 const AVION =
-  process.argv[4] ?? (MODO === "planeo" ? "jaz-20" : MODO === "carrera" || MODO === "tren" ? "jaz-40" : "jaz-90");
+  process.argv[4] ??
+  (MODO === "planeo" || MODO === "carga" ? "jaz-20" : MODO === "carrera" || MODO === "tren" ? "jaz-40" : "jaz-90");
+/**
+ * Con `OGA_AMARRADA=1`, en `carga` la hoja de carga lleva la maleta del
+ * ejercicio amarrada en la bodega 1, y no se tiene que mover nada.
+ */
+const AMARRADA = MODO === "carga" && process.env.OGA_AMARRADA === "1";
 /** Los que se paran en la pista: antes de V1, y el bimotor de pistón con el tren fuera. */
 const PARA = MODO === "antes" || MODO === "carrera";
 /** Los que siguen volando con un motor. */
@@ -126,7 +140,8 @@ try {
     }, process.env.OGA_MOTOR);
   await page.goto(
     `${BASE}/?escenario=${ESCENARIO}&hora=12&avion=${AVION}&tramo=${TRAMO}` +
-      `&ejercicio=${EJERCICIO}&teselas=0&meteo=`,
+      `&ejercicio=${EJERCICIO}&teselas=0&meteo=` +
+      (AMARRADA ? "&pasajeros=1&filas=1,0&bodegas=44,0&amarradas=1,1" : ""),
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 90000,
@@ -236,6 +251,9 @@ try {
       let alFallar = null;
       let aseguradoEn = null;
       let recorridoAlParar = null;
+      // En la carga suelta: el centro con que vuela el modelo al soltarse, y lo más atrás que llega.
+      let centradoAlFallar = null;
+      let centradoMaximo = -Infinity;
       const puntos = [
         [pista.length + 3000, 0],
         [pista.length + 3000 + tendido, tendido],
@@ -286,7 +304,10 @@ try {
         if (ej?.fase !== "armada" && desdeElFallo === null) {
           desdeElFallo = ahora;
           alFallar = { sobre, trenFuera: o.trenQueSePide() };
+          centradoAlFallar = ej?.centrado ?? null;
         }
+        if (ej?.fase !== "armada" && typeof ej?.centrado === "number")
+          centradoMaximo = Math.max(centradoMaximo, ej.centrado);
         // Sin tren: se mete cuando lo piden, que es en cuanto falla.
         if (sinTren && ej?.fase !== "armada" && !s.onGround && o.trenQueSePide()) o.pedirTren(false);
         if (ej?.asegurado && aseguradoEn === null) aseguradoEn = ahora;
@@ -563,6 +584,8 @@ try {
         pedalMaximo,
         bandera: aseguradoEn !== null && desdeElFallo !== null ? aseguradoEn - desdeElFallo : null,
         alFallar,
+        centradoAlFallar,
+        centradoMaximo,
         recorridoAlParar,
         largo: pista.length,
         percance: o.percance(),
@@ -596,12 +619,15 @@ try {
     ej && ej.fase !== "armada" &&
       (MODO === "despres"
         ? ej.averia?.que === "presion"
-        : MODO === "planeo"
-          ? ej.motorParado === null
-          : ej.motorParado !== null) &&
+        : MODO === "carga"
+          ? ej.averia?.que === "carga" && ej.motorParado === null && r.alFallar?.sobre > 100
+          : MODO === "planeo"
+            ? ej.motorParado === null
+            : ej.motorParado !== null) &&
       (!PARA || (ej.parar ?? ej.antesDeV1)) &&
       (!SIGUE || !(ej.parar ?? ej.antesDeV1)),
     `fase ${ej?.fase} · motor ${ej?.motorParado} · se para ${ej?.parar ?? ej?.antesDeV1} · ` +
+      `${r.alFallar ? `a ${Math.round(r.alFallar.sobre)} m · ` : ""}` +
       `V1 ${nudos(r.velocidades.v1)} Vr ${nudos(r.velocidades.vr)} V2 ${nudos(r.velocidades.v2)} Vmc ${nudos(r.velocidades.vmc)} kt`,
   );
   /*
@@ -752,6 +778,36 @@ try {
         : `no llegó · lo más bajo ${Math.round(r.bajo)} m`,
     );
   }
+  if (MODO === "carga") {
+    const cm = (m) => (m === null || !Number.isFinite(m) ? "—" : `${(m * 100).toFixed(1)} cm`);
+    const corrido = (r.centradoMaximo ?? -Infinity) - (r.centradoAlFallar ?? Infinity);
+    comprobar(
+      AMARRADA ? "la maleta amarrada no se mueve: el centro se queda" : "la maleta se corre y el centro se va hacia la cola",
+      AMARRADA ? Number.isFinite(corrido) && Math.abs(corrido) < 0.002 : corrido > 0.04,
+      `centrado al soltarse ${cm(r.centradoAlFallar)} · lo más atrás ${cm(r.centradoMaximo)} · corrido ${cm(corrido)}`,
+    );
+    comprobar(
+      AMARRADA
+        ? "la instructora dice que iba amarrada, y por eso no se movió"
+        : "la instructora pide empujar y compensar, y después cuenta cómo se sigue",
+      AMARRADA
+        ? dice(pedido, "ejercicio.carga.amarrada") && !dice(pedido, "ejercicio.carga.suelta")
+        : dice(pedido, "ejercicio.carga.suelta") && dice(pedido, "ejercicio.carga.despacio"),
+      pedido.filter((k) => /ejercicio\.carga\./.test(k)).join(" · ") || "no",
+    );
+    comprobar(
+      "sin llamada ni bomberos: nada se ha roto",
+      !ej?.declarada && !ej?.bomberos && !dice(r.torre, "mayday") && !dice(r.torre, "panpan"),
+      `declarada ${ej?.declarada} · bomberos ${ej?.bomberos} · torre ${r.torre.filter((k) => /mayday|panpan/i.test(k)).join(" · ") || "sin emergencia"}`,
+    );
+    comprobar(
+      "vuelve al campo de salida, toca en la pista y se cierra el ejercicio",
+      r.tocoEn?.enPista && ej?.cierre === "vuelta",
+      r.tocoEn
+        ? `tocó ${r.tocoEn.enPista ? "en la pista" : "fuera"} a ${Math.round(r.tocoEn.a)} m del umbral a ${r.tocoEn.vs.toFixed(1)} m/s · cierre ${ej?.cierre}`
+        : `no llegó · lo más bajo ${Math.round(r.bajo)} m`,
+    );
+  }
   if (MODO === "planeo") {
     comprobar(
       "se para el motor y empieza el planeo, con calma",
@@ -769,10 +825,11 @@ try {
       `cierre ${ej?.cierre} · lo más bajo ${Math.round(r.bajo)} m`,
     );
   }
+  const cierreQueToca = MODO === "carga" && !AMARRADA ? "ejercicio.carga.bien" : "ejercicio.bien";
   comprobar(
     "y la instructora lo cierra celebrándolo",
-    dice(pedido, "ejercicio.bien"),
-    pedido.filter((k) => /ejercicio\.(bien|bomberos)/.test(k)).join(" · ") || "no",
+    dice(pedido, cierreQueToca),
+    pedido.filter((k) => /ejercicio\.(bien|bomberos|carga\.bien)/.test(k)).join(" · ") || "no",
   );
   const mal = resultados.some((x) => !x.ok);
   if (process.env.OGA_TRAZA || mal) {

@@ -11,6 +11,7 @@ import { compensadorDeDespegue } from "../flight/compensador-de-despegue";
 import { hojaDeSuFicha, MALETA, masaSinCombustibleDeLaHoja, type Hoja } from "../flight/hoja-de-carga";
 import { setLocale } from "../i18n";
 import {
+  amarrarEnLaHoja,
   centroDeLaHoja,
   conGente,
   hojaDelPeldano,
@@ -149,6 +150,27 @@ describe("dónde va cada uno", () => {
     expect(tres).toContain("La bodega 2 admite 23 kg y lleva 33 kg");
     expect(tres).toContain('data-hoja-maleta="1,-1"');
     expect(tocarBodega(avion, tocarBodega(avion, h, 1, -1), 1, -1).reparto?.bodegas).toEqual([0, 0]);
+  });
+
+  it("las maletas se amarran con un toque, y la cinta se ve encima (H38g)", () => {
+    // Sin maletas no hay nada que amarrar, y el toque no sale.
+    expect(vistaDeLaHoja(del172(hojaDeSuFicha(avion)))).not.toContain("data-hoja-amarre");
+    const h = tocarBodega(avion, hojaDeSuFicha(avion), 0, 1);
+    const suelta = vistaDeLaHoja(del172(h));
+    expect(suelta).toContain('data-hoja-amarre="1"');
+    expect(suelta).not.toContain("hoja__maletas--amarradas");
+    const atada = amarrarEnLaHoja(avion, h, true);
+    expect(atada.reparto?.amarradas).toEqual([true, true]);
+    const html = vistaDeLaHoja(del172(atada));
+    expect(html).toContain('data-hoja-amarre="0"');
+    expect(html).toContain("hoja__maletas--amarradas");
+    // Amarrar no mueve el centro, y el amarre sobrevive a otra maleta y a otro asiento.
+    const c1 = centroDeLaHoja(del172(h), veredicto(del172(h)).pesada)!;
+    const c2 = centroDeLaHoja(del172(atada), veredicto(del172(atada)).pesada)!;
+    expect(c2.cg.brazo).toBe(c1.cg.brazo);
+    expect(tocarBodega(avion, atada, 0, 1).reparto?.amarradas).toEqual([true, true]);
+    expect(tocarAsiento(avion, atada, 1, 0).reparto?.amarradas).toEqual([true, true]);
+    expect(amarrarEnLaHoja(avion, atada, false).reparto?.amarradas).toEqual([false, false]);
   });
 
   it("fuera de la zona se ve en ámbar y se dice con calma, con su arreglo", () => {

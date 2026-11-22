@@ -3187,6 +3187,10 @@ export const ES_PY = {
   "hoja.asiento.ocupado": "Pasajero: pasarlo a la otra fila",
   "hoja.maleta.poner": "Poner una maleta en la bodega {n}",
   "hoja.maleta.sacar": "Sacar una maleta de la bodega {n}",
+  // El amarre de las bodegas: las anillas y la red. Ver `flight/carga-suelta.ts`.
+  "hoja.amarrar": "Amarrar las maletas con la red",
+  "hoja.amarradas": "Amarradas",
+  "hoja.sueltas": "Sin amarrar",
   "hoja.centro.adelante": "Pasar a alguien adelante",
   "hoja.centro.atras": "Pasar a alguien atrás",
   "hoja.centro.detras.largo": "Así no sale bien: el centro de gravedad quedó muy atrás y la nariz se levanta sola. Pasá a alguien adelante o sacá maletas de atrás.",
@@ -3396,6 +3400,7 @@ export const ES_PY = {
   "hangar.ejercicio.cangrejo": "Aterrizar en cangrejo",
   "hangar.ejercicio.ala-baja": "Aterrizar con el ala baja",
   "hangar.ejercicio.pista-corta": "Despegar de una pista corta",
+  "hangar.ejercicio.carga": "La carga suelta",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3787,6 +3792,21 @@ export const ES_PY = {
     "Pasaste muy cerca de los árboles. La próxima, recién despegado, despacio y con la nariz alta hasta pasarlos: así se sube más en cada metro",
   "ejercicio.pista-corta.cierreParado":
     "¡Bien decidido! Parar en la pista cuando no da también es despegar bien",
+  /*
+   * **La carga suelta** (#91, H38g): subiendo, la maleta sin amarrar se va al
+   * fondo de la bodega y el avión se pone cola pesada. Lo que se dice va en
+   * el orden del procedimiento: el avión primero —empujar y compensar—, y
+   * después suave, con velocidad de sobra y a la pista más cercana. Ver
+   * `flight/carga-suelta.ts`.
+   */
+  "ejercicio.carga.antes":
+    "Hoy practicamos la carga suelta. La maleta de la bodega va sin amarrar, y subiendo se va a correr para atrás. Empujamos la palanca, compensamos y volvemos a la pista, con calma",
+  "ejercicio.carga.suelta": "Se corrió la maleta para atrás, y la nariz quiere subir. Empujá la palanca y compensá",
+  "ejercicio.carga.despacio":
+    "Ahora suave: sin virajes fuertes y con velocidad de sobra, lejos de la pérdida. Volvemos a la pista más cercana",
+  "ejercicio.carga.amarrada": "La maleta iba amarrada, y no se movió. Por eso se amarra",
+  "ejercicio.carga.bien":
+    "Ejercicio hecho: con la carga corrida, palanca adelante, suave y a tierra. Por eso la carga va siempre amarrada",
   // La palabra de Tukã para soltar los frenos: «¡Frená!» diría lo contrario.
   "palabra.solta": "¡Soltá!",
   /*

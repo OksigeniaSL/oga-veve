@@ -76,6 +76,12 @@ export interface CentradoDeSuTipo {
   readonly bodegas: readonly { readonly brazo: number; readonly maximo: number }[];
   /** Lo que admiten todas las bodegas juntas, kg. */
   readonly bodegaMaxima: number;
+  /**
+   * **El fondo de la bodega**, m por detrás del datum: la pared de atrás, que
+   * es hasta donde puede llegar una maleta suelta que se corre hacia la cola.
+   * Ver `carga-suelta.ts`.
+   */
+  readonly fondoDeLaBodega: number;
   /** El brazo del combustible utilizable. */
   readonly combustible: number;
   /** Los límites del centro de gravedad, de menos a más masa. */
@@ -104,6 +110,11 @@ export const CENTRADO_DE_SU_TIPO: Readonly<Record<string, CentradoDeSuTipo>> = {
    *   asiento—, los traseros en la 73, la bodega 1 en la 95 y la 2 en la 123,
    *   y el combustible en la 48,0: «Loading Arrangements», figura 6-3, p. 6-9;
    * - las bodegas, 120 lb la 1 y 50 la 2, y no más de 120 entre las dos, p. 2-7;
+   * - el fondo de la bodega, la estación 142: la bodega 1 va de la 82 a la
+   *   108 y la 2 de la 108 a la 142, sin tabique entre las dos, y la nota de
+   *   la misma figura 6-3 da la pared de atrás, «aft baggage wall
+   *   (approximate station 142)». Lo que se suelta en la 1 puede llegar hasta
+   *   ahí;
    * - la envolvente de categoría normal, p. 2-7: el límite delantero en la
    *   35,0 hasta 1.950 lb y en recta hasta la 40,0 a 2.450; el trasero, en la
    *   47,3 con cualquier peso.
@@ -125,6 +136,7 @@ export const CENTRADO_DE_SU_TIPO: Readonly<Record<string, CentradoDeSuTipo>> = {
       { brazo: 123 * PULGADA, maximo: 50 * LIBRA },
     ],
     bodegaMaxima: 120 * LIBRA,
+    fondoDeLaBodega: 142 * PULGADA,
     combustible: 48 * PULGADA,
     envolvente: {
       delante: [
@@ -151,7 +163,17 @@ export function centradoDeSuTipo(a: Pick<AircraftConfig, "id">): CentradoDeSuTip
 export interface Reparto {
   readonly filas: readonly number[];
   readonly bodegas?: readonly number[];
+  /**
+   * **Si lo de cada bodega va amarrado**, con sus anillas y su red. No cambia
+   * el centro de gravedad: cambia lo que pasa si en vuelo algo la empuja, que
+   * es la lección de `carga-suelta.ts`. Sin decir, suelto.
+   */
+  readonly amarradas?: readonly boolean[];
 }
+
+/** El amarre de un reparto, si lo lleva: para no perderlo al rehacer filas o bodegas. */
+const conSuAmarre = (r: Reparto): { readonly amarradas?: readonly boolean[] } =>
+  r.amarradas ? { amarradas: r.amarradas } : {};
 
 /**
  * **El reparto de siempre**: la gente llenando las filas de delante a atrás,
@@ -186,12 +208,14 @@ export function repartoQueVale(
     Math.max(0, Math.min(f.asientos, Math.round(pedido.filas[i] ?? 0))),
   );
   const bodegas = t.bodegas.map((_, i) => Math.max(0, pedido.bodegas?.[i] ?? 0));
-  return { filas, bodegas };
+  const amarradas = pedido.amarradas ? t.bodegas.map((_, i) => pedido.amarradas?.[i] === true) : null;
+  return { filas, bodegas, ...(amarradas ? { amarradas } : {}) };
 }
 
 /**
  * **El reparto puesto en la dirección**, `?filas=0,2&bodegas=0,20`, o nada si
- * no hay `filas`. Para los bancos; quien juega lo elige en la hoja de carga.
+ * no hay `filas`; y `&amarradas=1,0`, lo que va amarrado en cada bodega. Para
+ * los bancos; quien juega lo elige en la hoja de carga.
  */
 export function repartoDeLaDireccion(params: URLSearchParams): { readonly reparto?: Reparto } {
   const filas = params.get("filas");
@@ -202,7 +226,14 @@ export function repartoDeLaDireccion(params: URLSearchParams): { readonly repart
       .filter((x) => x.trim() !== "")
       .map((x) => Math.max(0, Number(x) || 0));
   const bodegas = numeros(params.get("bodegas"));
-  return { reparto: { filas: numeros(filas), ...(bodegas.length ? { bodegas } : {}) } };
+  const amarradas = numeros(params.get("amarradas")).map((x) => x > 0);
+  return {
+    reparto: {
+      filas: numeros(filas),
+      ...(bodegas.length ? { bodegas } : {}),
+      ...(amarradas.length ? { amarradas } : {}),
+    },
+  };
 }
 
 /** Cuántos pasajeros lleva un reparto. */
@@ -229,7 +260,7 @@ export function repartoConGente(t: CentradoDeSuTipo, r: Reparto, pasajeros: numb
     filas[i]! -= baja;
     falta += baja;
   }
-  return { filas, bodegas: repartoQueVale(t, 0, r).bodegas ?? [] };
+  return { filas, bodegas: repartoQueVale(t, 0, r).bodegas ?? [], ...conSuAmarre(r) };
 }
 
 /**
@@ -245,7 +276,7 @@ export function pasarDeFila(t: CentradoDeSuTipo, r: Reparto, desde: number, hast
   if (desde === hasta || de === undefined || a === undefined || de <= 0 || a >= sitio) return r;
   filas[desde] = de - 1;
   filas[hasta] = a + 1;
-  return { filas, bodegas: repartoQueVale(t, 0, r).bodegas ?? [] };
+  return { filas, bodegas: repartoQueVale(t, 0, r).bodegas ?? [], ...conSuAmarre(r) };
 }
 
 /**
@@ -258,7 +289,22 @@ export function conBodega(t: CentradoDeSuTipo, r: Reparto, bodega: number, kg: n
   const bodegas = (v.bodegas ?? []).slice();
   if (bodega < 0 || bodega >= bodegas.length) return r;
   bodegas[bodega] = Math.max(0, kg);
-  return { filas: v.filas, bodegas };
+  return { filas: v.filas, bodegas, ...conSuAmarre(v) };
+}
+
+/**
+ * **Amarrar o soltar lo de las bodegas**, todas a la vez: las anillas del
+ * suelo y la red, que en el 172 se ponen igual en las dos. No mueve nada: ver
+ * `Reparto.amarradas`.
+ */
+export function conAmarre(t: CentradoDeSuTipo, r: Reparto, amarrada: boolean): Reparto {
+  const v = repartoQueVale(t, 0, r);
+  return { ...v, amarradas: t.bodegas.map(() => amarrada) };
+}
+
+/** Si todo lo que va en las bodegas va amarrado; sin nada en ellas, también. */
+export function todoAmarrado(t: CentradoDeSuTipo, r: Reparto): boolean {
+  return t.bodegas.every((_, i) => (r.bodegas?.[i] ?? 0) <= 0 || r.amarradas?.[i] === true);
 }
 
 /** El centro de gravedad: lo que pesa el avión, kg, y dónde está, m por detrás del datum. */
@@ -373,10 +419,9 @@ export function puntoNeutro(a: AircraftConfig): number {
  * m, positivo hacia la cola: `kg·(hasta − desde)/masa`. Vale para cualquier
  * avión, tenga o no hoja de centrado, porque es solo la palanca.
  *
- * Es la pieza que necesita **la carga que se suelta y se va hacia la cola**
- * (#90), que no está todavía: esa emergencia sumará esto, poco a poco, al
- * centrado de hoy con `ponerCentrado` del modelo de vuelo, que ya acepta
- * cambiarlo en pleno vuelo.
+ * Es la pieza de **la carga que se suelta y se va hacia la cola** (#90): ese
+ * ejercicio suma esto, poco a poco, al centrado de hoy con `ponerCentrado`
+ * del modelo de vuelo, que lo acepta en pleno vuelo. Ver `carga-suelta.ts`.
  */
 export function moverCarga(masa: number, kg: number, desde: number, hasta: number): number {
   return (kg * (hasta - desde)) / Math.max(1, masa);

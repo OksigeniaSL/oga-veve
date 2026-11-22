@@ -59,6 +59,7 @@ import {
   pasarEnLaHoja,
   tocarAsiento,
   tocarBodega,
+  amarrarEnLaHoja,
   PASO_CARGA,
   veredicto as veredictoDeLaHoja,
   vistaDeLaHoja,
@@ -2061,6 +2062,23 @@ const EJ_GPS = escena(`
   <path d="M100 42 l5 -6 l5 6 Z" style="fill: #f2f5f7" />
 `);
 
+/**
+ * **La carga suelta**: el avión de perfil subiendo, y dentro la maleta que se
+ * fue al fondo de la bodega, con su sombra donde iba y la flecha hacia la
+ * cola. Ver `flight/carga-suelta.ts`.
+ */
+const EJ_CARGA = escena(`
+  <path class="leccion__loma" d="M0 68 q22-10 40-2 q18 8 34-3 q16-10 46 2 v19 H0 Z" />
+  <path class="leccion__estela" d="M104 58 q-12-6 -20-12" stroke-dasharray="4 4" />
+  <g transform="translate(58 34) rotate(12)">
+    ${AVION_DE_PERFIL("scale(4.4)")}
+    <rect x="2" y="0.5" width="9" height="8" rx="1.6" style="fill: none; stroke: #2b2f36; stroke-width: 1.2; stroke-dasharray: 2 1.6; opacity: 0.55" />
+    <path d="M12.5 4.5 H20.5 M17.5 1.8 L20.5 4.5 L17.5 7.2" style="fill: none; stroke: #2b2f36; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round" />
+    <rect x="22" y="0.5" width="9" height="8" rx="1.6" style="fill: #ffb02e; stroke: #2b2f36; stroke-width: 1.2" />
+    <path d="M24.5 0.5 v-1.6 h4 v1.6" style="fill: none; stroke: #2b2f36; stroke-width: 1.2" />
+  </g>
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -2100,6 +2118,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   gps: EJ_GPS,
   // La hierba que se acaba, la subida empinada y el monte. Ver `pista-corta.ts`.
   "pista-corta": EJ_PISTA_CORTA,
+  // La maleta que se fue al fondo de la bodega. Ver `carga-suelta.ts`.
+  carga: EJ_CARGA,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {
@@ -3161,7 +3181,8 @@ export function abrirHangar(
       const asiento = boton.getAttribute("data-hoja-asiento");
       const maleta = boton.getAttribute("data-hoja-maleta");
       const pasar = boton.getAttribute("data-hoja-pasar");
-      if (paso !== null || llenos !== null || quitar !== null || asiento || maleta || pasar) {
+      const amarre = boton.getAttribute("data-hoja-amarre");
+      if (paso !== null || llenos !== null || quitar !== null || asiento || maleta || pasar || amarre) {
         const h = hojaDeAhora();
         const plazas = cargaDeSuTipo(avion)?.plazas ?? 0;
         const gente = (n: number): number => Math.max(0, Math.min(plazas, n));
@@ -3174,6 +3195,7 @@ export function abrirHangar(
         else if (asiento) ponerHoja(tocarAsiento(avion, h, ...par(asiento)));
         else if (maleta) ponerHoja(tocarBodega(avion, h, ...par(maleta)));
         else if (pasar) ponerHoja(pasarEnLaHoja(avion, h, ...par(pasar)));
+        else if (amarre) ponerHoja(amarrarEnLaHoja(avion, h, amarre === "1"));
         else ponerHoja(conGente(avion, h, gente(h.pasajeros - Number(quitar))));
         voz.ruido("clic");
         repintarLaHoja();

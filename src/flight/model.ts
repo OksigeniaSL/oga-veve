@@ -561,6 +561,8 @@ export interface FlightModel {
    * el sencillo no tiene par de cabeceo que mover. Ver `flight/centrado.ts`.
    */
   ponerCentrado?(dx: number): void;
+  /** Y el que tiene puesto, m: el banco mira con él la carga que se suelta. */
+  centradoAhora?(): number;
   /**
    * La ráfaga de este instante, en m/s y en ejes del mundo.
    *

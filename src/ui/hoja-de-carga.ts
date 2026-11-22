@@ -31,6 +31,7 @@ import { loQueCabe } from "../flight/combustible";
 import {
   centradoDeSuTipo,
   centroDeGravedad,
+  conAmarre,
   conBodega,
   dondeCae,
   enLaCuerda,
@@ -39,6 +40,7 @@ import {
   pasajerosDelReparto,
   repartoConGente,
   repartoQueVale,
+  todoAmarrado,
   type CentradoDeSuTipo,
   type CentroDeGravedad,
   type Reparto,
@@ -267,7 +269,7 @@ export function tocarAsiento(avion: AircraftConfig, hoja: Hoja, fila: number, as
   if (desde !== undefined) return conReparto(hoja, pasarDeFila(t, r, desde, fila));
   const filas = r.filas.slice();
   filas[fila] = aqui + 1;
-  return conReparto(hoja, { filas, bodegas: r.bodegas ?? [] });
+  return conReparto(hoja, { ...r, filas, bodegas: r.bodegas ?? [] });
 }
 
 /** **Poner o sacar una maleta de una bodega**, de las de bodega de la hoja de carga, 11 kg. */
@@ -278,6 +280,17 @@ export function tocarBodega(avion: AircraftConfig, hoja: Hoja, bodega: number, m
   const hay = Math.round((r.bodegas?.[bodega] ?? 0) / MALETA);
   const quedan = Math.max(0, Math.min(MALETAS_POR_BODEGA, hay + maletas));
   return conReparto(hoja, conBodega(t, r, bodega, quedan * MALETA));
+}
+
+/**
+ * **Amarrar o soltar las maletas**, con las anillas del suelo y la red de la
+ * bodega. No mueve el centro: lo que cambia es que en el ejercicio de la
+ * carga suelta, lo amarrado no se corre. Ver `flight/carga-suelta.ts`.
+ */
+export function amarrarEnLaHoja(avion: AircraftConfig, hoja: Hoja, amarrada: boolean): Hoja {
+  const t = centradoDeSuTipo(avion);
+  if (!t) return hoja;
+  return conReparto(hoja, conAmarre(t, repartoQueVale(t, hoja.pasajeros, hoja.reparto), amarrada));
 }
 
 /** **Pasar a uno de una fila a otra**, que es el arreglo de un centro que se fue. */
@@ -492,12 +505,14 @@ function planta(c: Centro, x: (brazo: number) => number, desde: number | null): 
       maletas += `<i class="hoja__maleta${demas ? " hoja__maleta--demas" : ""}"></i>`;
     }
     enBodega += n * MALETA;
+    // Las amarradas, con la cinta de la red por encima.
+    const amarrada = n > 0 && reparto.amarradas?.[i] === true;
     piezas += boton(
       x(b.brazo),
       ARRIBA,
       `<button class="hoja__toque hoja__toque--bodega" type="button" data-hoja-maleta="${i},1"
                aria-label="${t("hoja.maleta.poner", { n: i + 1 })}">
-         <span class="hoja__maletas">${maletas}</span><span class="hoja__mas">+</span>
+         <span class="hoja__maletas${amarrada ? " hoja__maletas--amarradas" : ""}">${maletas}</span><span class="hoja__mas">+</span>
        </button>`,
     );
     piezas += boton(
@@ -606,8 +621,27 @@ function vistaDelCentrado(v: VueloDeLaHoja, c: Centro): string {
               </div>`
             : ""
         }
+        ${amarre(c)}
       </div>
     </div>`;
+}
+
+/**
+ * **El amarre de las maletas**, si las hay: un toque las amarra con la red y
+ * otro las suelta. Se ve en el dibujo —la cinta por encima de las maletas,
+ * aquí y en las bodegas del avión— y la palabra acompaña. Amarrar no mueve el
+ * centro: es lo que decide si en vuelo se corren. Ver `flight/carga-suelta.ts`.
+ */
+function amarre(c: Centro): string {
+  const hay = (c.reparto.bodegas ?? []).some((kg) => kg > 0);
+  if (!hay) return "";
+  const todas = todoAmarrado(c.tipo, c.reparto);
+  return `
+    <button class="hoja__amarre" type="button" data-hoja-amarre="${todas ? "0" : "1"}"
+            aria-pressed="${todas}" aria-label="${t("hoja.amarrar")}">
+      <span class="hoja__maletas${todas ? " hoja__maletas--amarradas" : ""}" aria-hidden="true"><i class="hoja__maleta"></i><i class="hoja__maleta"></i></span>
+      <span>${t(todas ? "hoja.amarradas" : "hoja.sueltas")}</span>
+    </button>`;
 }
 
 /** Qué arregla la hoja, si no cabe: la gente, el depósito o el destino. */
