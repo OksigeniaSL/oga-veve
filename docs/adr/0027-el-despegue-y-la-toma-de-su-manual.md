@@ -9769,7 +9769,7 @@ la rama que ya está en main, y el JAZ 90 en Tukã de H55c.
 |---|---|---|
 | JAZ 120, Tukã, pista ocupada | 13,1 m del eje, 448 m, 1,92 m/s; 65 de 66 (✗ el eje) | **2,1 m**, 627 m, 2,03 m/s; 64 de 67 (✗ la zona, ✗ la toma, ✗ las gafas) |
 | JAZ 120, Tukã, pista ocupada, la segunda | — | no volado |
-| JAZ 120, Gran Canaria, 025/20 | 1,4 m, 429 m, 1,25 m/s y 2,5 m, 313 m, 1,74 m/s; 62 de 62 las dos | no volado |
+| JAZ 120, Gran Canaria, 025/20 | 1,4 m, 429 m, 1,25 m/s y 2,5 m, 313 m, 1,74 m/s; 62 de 62 las dos | 4,1 m, 384 m, 2,15 m/s; 61 de 62 (✗ la toma) |
 | JAZ 90, Tukã | 1,2 m, 384 m, 0,68 m/s; 66 de 67 (✗ la consola al arrancar) | no volado |
 | JAZ 90, Los Rodeos | 1,3 m, 363 m, 1,12 m/s; 62 de 62 | no volado |
 
@@ -9800,6 +9800,19 @@ la bajada llegó a 1,3 m/s a metro y medio, la palanca tiró tarde y tocó a
 (2,06 m/s) y en la tanda 21 (2,01): la recogida que empieza con energía de
 más (H34f, «Lo que queda»). Se cuenta abajo.
 
+**El JAZ 120 en Gran Canaria**, con 5,7: a la puerta a 152 nudos, a 13,5 m
+del eje cruzándolo a 0,7° (en H34f, 5 y 9,1 m), y tocó a 4,1 m del eje. Esta
+final tuvo más aire que las dos de H34f: el alerón, de media, en 0,12 y hasta
+0,50 (allí 0,05–0,07 y hasta 0,29), y el error de alabeo de 1,8° de media
+cuadrática en los últimos 2,5 km (1,0 y 1,3). El rojo es otra vez la toma, y
+otra vez longitudinal: de 30 a 17 m de ruedas el morro bajó de 1,8° a −0,5° y
+la bajada creció de 2,7 a 5,1 m/s; recogió a 14,8 m bajando 4,8 m/s a 155
+nudos, el perfil la niveló alto, a 6,5 m (0,8 m/s), y desde ahí cayó hasta
+2,9 m/s y tocó a 2,15. La inclinación en la recogida llegó a 4°, que en la
+sustentación es un 0,2 %. Con una tirada no se puede decir si la mano más
+firme tiene algo que ver con esa bajada; el alerón no mueve el cabeceo en el
+modelo, pero sí la guiñada (`cnAileron`), y eso no se ha medido.
+
 ### El vitest
 
 Las pruebas del banco (`scripts/`, siete ficheros, 55 pruebas), en verde, y
@@ -9818,10 +9831,14 @@ Las pruebas del banco (`scripts/`, siete ficheros, 55 pruebas), en verde, y
   de ahora ya no se pasa como en H34f; si hiciera falta más, es ahí.
 - **La peor del 747 en Taguató con σ_w 2**, que en la mesa pasa de 30 a 34 m
   con la mano nueva (la media y el p90 bajan).
-- **Los vuelos que no cupieron**: la segunda tirada del 747 en Tukã, el 747
-  en Gran Canaria y los dos del JAZ 90, en Tukã y en Los Rodeos. El navegador
-  es de uno en uno y estuvo ocupado por otros bancos hasta pasada la hora de
-  entrega. Por construcción, el JAZ 90 en Los Rodeos no cambia: en Taguató su
-  ganancia es cuatro en toda la final. El 747 en Gran Canaria pasa de cuatro
-  a 5,7 y el JAZ 90 en Tukã a 6,2, y esos sí hay que volarlos; en la mesa los
-  dos mejoran.
+- **Los vuelos que no cupieron**: la segunda tirada del 747 en Tukã y los
+  dos del JAZ 90, en Tukã y en Los Rodeos. El navegador es de uno en uno y
+  estuvo ocupado por otros bancos; el primero de los míos entró veintitrés
+  minutos después de pedirlo y el segundo, quince. Por construcción, el JAZ 90
+  en Los Rodeos no cambia: en Taguató su ganancia es cuatro en toda la final.
+  El JAZ 90 en Tukã pasa a 6,2 y hay que volarlo; en la mesa mejora.
+- **El 747 en Gran Canaria, otra vez**: 61 de 62 por la toma (2,15 m/s, con
+  una bajada de 5 m/s a veinte metros que es del cabeceo), donde H34f dio 62
+  de 62 dos veces. Una tirada no separa la racha de la mano; hay que volarlo
+  más veces, y medir si el alerón de más, por la guiñada, mueve algo en la
+  recogida.
