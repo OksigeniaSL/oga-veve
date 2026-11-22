@@ -262,6 +262,7 @@ compartido, que estuvo ocupado de 08:51 a 09:09.
 | Vuelo | Antes | Aquí |
 |---|---|---|
 | JAZ 120, Tukã, pista ocupada (`gran-canaria tuka 1 jaz-120`) | 67 de 67, 1,31 m/s (H34h) | **64 de 66**: ✗ la toma, a 3,36 m/s; ✗ las gafas, por lo mismo |
+| JAZ 90, Tenerife Norte (`tenerife-norte taguato 1 jaz-90`) | 63 de 63 (H34g) | **62 de 62**: a 1,11 m/s (0,81 contra la pista), 448 m, 2,4 m del eje |
 
 **El 747 con la pista ocupada**: la torre lo mandó al aire a 50 m, frustró con
 el motor que tarda sin que sonara el avisador ni una vez, se llevó el galón de
@@ -272,10 +273,13 @@ Es una tirada, y no se ha separado si es del motor que tarda, del gas de la
 final nuevo, que lo quitó antes, o del aire que le tocó: es lo primero que
 queda por mirar.
 
-**No volados**: el JAZ 90 en Tenerife Norte (ver abajo si llegó), el 747 en
-Gran Canaria, el JAZ 40 con la pista ocupada y el JAZ 20 en Tenerife Norte. Los
-dos de pistón no cambian de motor; lo que les toca es el banco, que en ellos no
-ha cambiado.
+**El JAZ 90 en Tenerife Norte**, con el gas de la final nuevo: recogió a 14,9
+m, 95 m antes del umbral, bajando 5,3 m/s a 121 nudos, y tocó a 1,11 m/s, en la
+zona, sin que sonara el avisador. Todo en verde.
+
+**No volados**: el 747 en Gran Canaria, el JAZ 40 con la pista ocupada y el JAZ
+20 en Tenerife Norte. Los dos de pistón no cambian de motor; lo que les toca es
+el banco, que en ellos no ha cambiado.
 
 ## Lo que no
 
