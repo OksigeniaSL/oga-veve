@@ -18,9 +18,10 @@
  *    puesto hasta que se arrancan con la tecla.
  * 4. El pasador y el saludo, con su tarjeta, y que al quedar libre se rueda hacia
  *    delante hacia la raya.
- * 5. La radio de tierra: en el de cabina, la autorización de la ruta y el permiso de la
- *    torre al pedir el tractor, y las tres frases de la persona de tierra, todo en su
- *    orden y cada frase a la vista en la tira; en Guyrami, nada de eso.
+ * 5. La radio de tierra: en el de cabina, la autorización de la ruta —si se va a otro
+ *    campo; en una vuelta al campo, ninguna— y el permiso de la torre al pedir el
+ *    tractor, los dos con tu matrícula, y las tres frases de la persona de tierra, todo en
+ *    su orden y cada frase a la vista en la tira; en Guyrami, nada de eso.
  *
  * Uso: `node scripts/ver-remolque-de-quien-juega.mjs carpeta`. Con `OGA_GPU=1`, con
  * la tarjeta de verdad; con `OGA_PRISA`, el reloj del juego más deprisa; con
@@ -320,15 +321,41 @@ try {
 
     // ── 5. La radio de tierra: el permiso de la torre y la persona de tierra, en cabina ──
     const radios = await page.evaluate(() => globalThis.__radios);
-    const deLaSalida = radios.filter((x) => /cleared to|pushback|Cabina, tierra|aparcamiento|Desconecto/.test(x));
+    /*
+     * **Lo de la torre, con tu matrícula** (H66). Se cogía cualquier «cleared to», y en
+     * Barajas el primero de la tira era el «runway three six left, cleared to land» de
+     * un avión del tráfico que aterrizaba, metido entre el empujar y el freno: daba la
+     * radio fuera de orden con la tuya sin decirse. La tira escribe tu matrícula
+     * delante de lo que la torre te dice a ti, y tu indicativo dicho dentro. Lo de la
+     * persona de tierra va por el cable y solo es para ti.
+     */
+    const yo = await page.evaluate(() => {
+      const i = globalThis.__oga.indicativo();
+      return { matricula: i.yo, dicho: i.yoDicho };
+    });
+    const esMia = (x) => x.startsWith(yo.matricula) || x.includes(yo.dicho);
+    const deLaSalida = radios.filter(
+      (x) => (esMia(x) && /cleared to|pushback/.test(x)) || /Cabina, tierra|aparcamiento|Desconecto/.test(x),
+    );
+    /*
+     * **Y la ruta solo si se va a alguna parte**: en una vuelta al campo la torre no
+     * nombra límite (`autorizarLaRuta` en `game.ts`), y el mundo de Barajas no tiene
+     * vecinos —es el del capítulo de la noche de Madrid, fuera del hangar—, así que su
+     * despegue es una vuelta al campo.
+     */
+    const ruta = await page.evaluate(() => globalThis.__oga.rutaDelVuelo());
+    const conRuta = ruta.destino !== ruta.salida;
+    console.log(t(`la ruta: ${ruta.salida} → ${ruta.destino}${conRuta ? "" : " (vuelta al campo)"} · tu matrícula ${yo.matricula}, «${yo.dicho}»`));
     console.log(t(`la radio de la salida: ${deLaSalida.join(" | ") || "nada"}`));
     if (tramo === "guyrami") {
       if (deLaSalida.some((x) => !/cleared to/.test(x)))
         fallos.push(t("en Guyrami no habla la radio de tierra: lo cuenta la instructora"));
     } else {
+      if (!conRuta && deLaSalida.some((x) => /cleared to/.test(x)))
+        fallos.push(t("en una vuelta al campo la torre te da una ruta"));
       // La ruta primero, que es lo primero que se recibe en el puesto; y cada frase a la vista.
       const orden = [
-        /cleared to/,
+        ...(conRuta ? [/cleared to/] : []),
         /pushback and start-up approved/,
         /Cabina, tierra: empezamos a empujar/,
         /freno de aparcamiento/,

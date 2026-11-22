@@ -1754,11 +1754,93 @@ EC-PSH sale del 13 —«R», de pasarela y B3XM en la misma carta—, sobre su p
   compararlo. Ver «Lo que queda».
 - **`npm run rodaje`**: 6 de 6.
 
+## Enmienda (22-11-2026, H66): en Barajas no hay ruta que autorizar, y el banco busca la tuya
+
+### El caso
+
+El rojo que dejó la H65: `OGA_GPU=1 OGA_ESCENARIO=barajas node scripts/ver-remolque-de-quien-juega.mjs`, en el peldaño
+de cabina, daba **«la radio de tierra, fuera de orden (2, 0, 1, 3, 4)»**. En la tira no estaba el «cleared to» de la ruta
+de quien juega, y el `/cleared to/` del banco cogía el «runway three six left, cleared to land» de EC-HEQ, que aterrizaba
+entre el empujar y el freno.
+
+### Ya pasaba antes
+
+El mismo banco, solo en el de cabina y con la tarjeta Intel, sobre dos copias fijas:
+
+- **La tanda 22 publicada** (3028690a): **«en cabina falta algo de la radio de tierra (−1, 0, 1, 2, 3)»**. La tira tiene
+  el permiso de empujar, las tres frases de la persona de tierra y, del tráfico, un «rodando a la cabecera» y un «hold
+  short»; ningún «cleared to», ni tuyo ni de otros. Es el mismo hueco: la H65 lo vio «fuera de orden» porque esa vez
+  aterrizaba alguien y su «cleared to land» lo rellenaba.
+- **Antes de la H60e** (8a1c7a0d): **«la radio de tierra, fuera de orden (4, 0, 1, 2, 3)»**. El mismo hueco, y esta vez
+  el «cleared to land» de EC-TFF, que aterrizaba después del «Desconecto», lo cogía al final.
+
+En las dos se sale del mismo puesto que en la H60d —36 m de empuje y 91° de giro—, y en las dos falta lo mismo. No empieza
+en ningún commit de estas tandas: la regla que calla la ruta es de cuando la torre empezó a decir a dónde se va
+(99e3e1a7, septiembre), y Barajas entró después y sin destino (4998d27a, noviembre). Hasta la H65 el banco de Barajas
+solo se había volado en Guyrami, donde la radio de tierra no habla.
+
+### Qué era
+
+**No hay ruta.** El mundo de Barajas no tiene destinos —`MADRID_BARAJAS` no lleva `destino`: es el del capítulo de la
+noche de Madrid, fuera del hangar, y Asunción no se monta como vecino—, así que el juego no monta ningún campo más y su
+despegue es una vuelta al campo (`rutaDelVuelo`: de `barajas` a `barajas`). `autorizarLaRuta` sale sin decir nada con
+`this.vecinos.length === 0 || this.destinoId === this.salidaId`, que es la regla general: en una vuelta al campo la torre
+no nombra límite. La comandante dice lo mismo en la misma tira: «Hoy damos una vuelta por los alrededores y volvemos acá
+mismo». En Los Rodeos, sin destino pedido, `destinoDeSalida` da el vecino más cercano, Tenerife Sur, y por eso allí sale
+«cleared to Tenerife Sur» antes del empuje.
+
+Las otras dos explicaciones no son: el campo tiene torre y no es AFIS (el «pushback and start-up approved», que mira lo
+mismo, sí se dice), y `autorizarLaRuta` no mira de qué puesto se sale, así que los puestos del AIP de la H60e y la H60f
+no tocan esto.
+
+### Decisión
+
+**El juego no se toca.** Callar la ruta en una vuelta al campo es la regla de todos los campos, y en Barajas se cumple.
+
+**El banco** (`ver-remolque-de-quien-juega.mjs`):
+
+1. **Lo de la torre, solo si es para ti**: el «cleared to» y el «pushback» cuentan si la tira lleva tu matrícula delante
+   —la escribe delante de lo que la torre te dice a ti— o tu indicativo dicho dentro (`__oga.indicativo()`). Lo de la
+   persona de tierra va por el cable y es solo tuyo, como antes.
+2. **La ruta, solo si se va a otro campo** (`__oga.rutaDelVuelo()`): con destino, la ruta primero y después el resto, como
+   siempre; en una vuelta al campo, el permiso de empujar primero, y es un fallo que la torre te dé una ruta.
+3. Escribe la ruta del vuelo y tu matrícula, para que la próxima vez se vea a la primera.
+
+### Lo medido
+
+- **El remolque de quien juega en Barajas** (`OGA_ESCENARIO=barajas`), con el JAZ 90, la tarjeta Intel y el banco nuevo,
+  en los dos peldaños: **todo en orden**. La ruta, de `barajas` a `barajas`, vuelta al campo; en Guyrami, nada de la radio
+  de tierra; en el de cabina, «pushback and start-up approved» con ZP-ARI delante, el «empezamos a empujar», el freno y el
+  «Desconecto», en su orden y una vez cada uno, y ningún «cleared to» tuyo. El empuje, lo mismo que en la H65: desde el
+  516, −1,00 contra el morro, 122 de 122 m, giro de 91° con radio 11,5 m, rumbo al acabar 181°, 13° en Guyrami y 0° en el
+  de cabina en los primeros treinta metros, nada dentro de un edificio.
+- **El remolque de quien juega en Los Rodeos por la 12**, con el banco nuevo, la tarjeta Intel y solo el peldaño de
+  cabina: **la radio, en orden**: la ruta, de `tenerife-norte` a `tenerife-sur`; «cleared to Tenerife Sur» y «pushback
+  and start-up approved», los dos con ZP-ARI delante, el «empezamos a empujar», el freno y el «Desconecto», una vez cada
+  uno. El empuje, 119 de 119 m, giro de 140° con radio 11,5 m y rumbo al acabar 201°, como en la H65,
+  pero con la máquina cargada —carga media de 64 en el minuto— tardó más de los 180 s que espera el banco, y el banco dio
+  tres rojos de reloj: «no acaba de empujar», «sin motores el tractor no espera (empujando)» y «en cabina los motores
+  arrancaron empujando sin pedirlo», que es la tecla del final pulsada a destiempo. No se pudo repetir.
+- **Por la 30** (`OGA_VIENTO=300/10`): **no se voló**. Esperó turno de navegador 24 minutos detrás de una ronda de
+  cierre y se cortó al llegar el tope de tiempo del encargo.
+
+### Lo que queda
+
+- **Un avión de línea que sale de Barajas lleva su autorización de ruta** —de «Madrid Autorizaciones», antes de pedir el
+  empuje— y no hace vueltas al campo: Barajas no es un campo para volar suelto (`MADRID_BARAJAS`). El banco lo vuela así
+  porque es la única forma de sacar a quien juega empujado de un puesto de Barajas. Darle a ese despegue su ruta pide un
+  destino que el juego no monta como vecino —Asunción, el del capítulo— y no se ha hecho.
+- **La voz de la torre y de la persona de tierra de Barajas es la paraguaya**: `hablaDe` da «canario» a los OACI que
+  empiezan por GC y «paraguayo» a todo lo demás, así que LEMD sale con la torre de Asunción y con Celso. Una de Madrid
+  pide grabar sus frases.
+- **El tráfico de Barajas aterriza por la 36L**, porque el juego opera una sola pista por campo; en la configuración norte
+  el AIP da las llegadas por la 32L y la 32R (AD 2-LEMD, 2.20), y la 36L es de salidas.
+
 ## Lo que queda
 
-**La radio de tierra en Barajas, en el peldaño de cabina** (H65): el banco del remolque de quien juega no encuentra el
-«cleared to» de la ruta de quien juega, y su `/cleared to/` coge el «cleared to land» del tráfico. Falta ver si la ruta no
-se dice o se dice antes de que el banco escuche, y que el banco busque el «cleared to» de su matrícula.
+**Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
+no da ruta, que es la regla; un avión de línea de allí la tendría. Y el banco de Los Rodeos por la 30 con el banco nuevo,
+que no se voló. Ver «Lo que queda» de la H66.
 
 **La Palma, Lanzarote y Pettirossi, a su punto publicado** (H60f). Los dos primeros llevan lo del AIP pero no se
 mueven: en La Palma los dieciséis puestos quedan a 29–98 m de su punto publicado, todos por su raya, y llevados allí
