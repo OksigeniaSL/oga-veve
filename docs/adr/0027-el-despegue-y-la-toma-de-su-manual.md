@@ -9842,3 +9842,351 @@ Las pruebas del banco (`scripts/`, siete ficheros, 55 pruebas), en verde, y
   de 62 dos veces. Una tirada no separa la racha de la mano; hay que volarlo
   más veces, y medir si el alerón de más, por la guiñada, mueve algo en la
   recogida.
+
+## Enmienda H34h (22-11-2026): la toma del 747 en el banco, cuando llega con energía de más
+
+El 747 del banco lleva cuatro tandas tocando entre 2,0 y 2,6 m/s, y con el eje
+ya resuelto (H34g) los dos rojos que quedaban eran de la toma: en Tukã con la
+pista ocupada recogió a la Vref más trece, se niveló a 2,4 m y el punto de toma
+lo empujó al suelo (2,03 m/s, pasada la zona); en Gran Canaria bajó a 5 m/s
+entre 30 y 17 m, se niveló alto, a 6,5 m, y cayó (2,15 m/s). Aquí se miró con
+las trazas del ala (las de H34g y una nueva) y con la mesa de la recogida de
+H34f, a la que se le añadió un diagnóstico por final (`h34h/mesa.ts` del
+scratchpad: dónde se nivela, cuánto sube el morro, cuándo entra el punto, lo
+acumulado) y la pista con pendiente. Salen dos cosas, las dos del banco: **bajo
+el punto de toma el morro ya no baja de la recogida**, y **la comprobación de
+la toma dice también la caída contra la pista**, porque la 03 de Gran Canaria
+baja y el juego mide el variómetro.
+
+### La velocidad de la final, contra el FCTM
+
+El FCTM de Boeing de los de fuselaje ancho (*777/787 Flight Crew Training
+Manual*, FCT 777/787 (TM), rev. 14, 30-6-2021, pp. 1.18 y 6.9-6.10, copia de
+`fctm.txt` del scratchpad):
+
+- **Con el automático de gases**, «position command speed to VREF + 5 knots.
+  Sufficient wind and gust protection is available with the autothrottle
+  connected», y con viento fuerte o racheado, para tomar a mano, «consider
+  positioning the command speed to VREF + 10 knots».
+- **Sin él**, «add one half of the reported steady headwind component plus the
+  full gust increment above the steady wind to the reference speed. The minimum
+  command speed setting is VREF + 5 knots», hasta la Vref más quince en el 777
+  y el 787. La tabla de la misma página no suma los cinco a lo del viento:
+  «360 at 16 — 8 — VREF + 8 knots».
+- **Hasta dónde**: «maintain reference speed plus any wind additive until
+  approaching the flare»; en la recogida se van los cinco y algo de lo del
+  viento, «Plan to maintain gust correction until touchdown», y «Touchdown
+  should occur at no less than VREF − 5 knots».
+
+**El banco pide eso.** Con 025/20 en la 03, lo que sopla de cara son veinte
+nudos: el margen del juego es diez, y lo que se deja para el umbral
+(`enElUmbral`, la mitad de lo que sopla de cara) también, así que la Vref más
+diez se sostiene hasta el umbral y no hay nada que sangrar antes
+(`SE_QUITA_EL_MARGEN_DESDE` quita la diferencia, que es cero). En la traza de
+Tukã la indicada va de 150 a 154 en los últimos trescientos metros, alrededor de
+los 152 pedidos: el gas del banco la sostiene a dos nudos. **Los «155» de la
+recogida son esos diez y una racha**: en el segundo de empezar, la de cara pasa
+de −1,8 a +0,3 m/s en Tukã y de +0,3 a +2,5 en Gran Canaria, unos cuatro nudos.
+Ni el gas deja de sangrar ni el banco suma un margen suyo.
+
+**Y no es la velocidad lo que hace la toma dura.** En la mesa (doscientas
+finales del 747 con veinte nudos de cara, la de H34f, con la ley de antes):
+
+| Final a la Vref más | σ_w | Más de 2 m/s | Pasadas de 600 m | Mediana | La más dura | Bajo la Vref − 5 |
+|---|---|---|---|---|---|---|
+| 5 kt | 1 | 19 | 2 | 1,27 m/s | 3,98 | **64** |
+| | 1,5 | 66 | 10 | 1,62 | **12,48** | 86 |
+| 8 kt (H34f) | 1 | 23 | 7 | 1,26 | 2,94 | 29 |
+| | 1,5 | 52 | 9 | 1,42 | 3,98 | 45 |
+| 10 kt | 1 | 21 | 4 | 1,26 | 3,06 | 14 |
+| | 1,5 | 56 | 7 | 1,55 | 4,87 | 27 |
+| 13 kt | 1 | 12 | 3 | 1,19 | 3,35 | 3 |
+| | 1,5 | 51 | 15 | 1,42 | 4,88 | 12 |
+
+Volar la Vref más cinco con este viento —lo del automático de gases sin el
+«VREF + 10» que el mismo FCTM aconseja con viento fuerte y toma a mano— es
+peor: la tercera parte de las tomas por debajo de la Vref menos cinco y, con
+rachas fuertes, una de 12,5 m/s. Las dos reglas del FCTM dan aquí la Vref más
+diez, y es lo que pide el juego (H25e): se queda.
+
+**El gas, a los treinta pies.** El banco lo quita de golpe; el FCTM empieza a
+quitarlo a los 25 pies con el automático de gases y llega al ralentí al tocar
+(«smoothly retard the thrust levers to idle […] Ideally, main gear touchdown
+should occur simultaneously with thrust levers reaching idle»). Y el modelo no
+tiene la inercia del motor: el empuje sigue al gas en el mismo paso (`fdm.ts`),
+así que el corte del banco es un escalón que un reactor de verdad no da. Se
+probó en la mesa quitarlo con la altura, del de la senda a los treinta pies a
+cero al tocar: con σ_w 1, de 23 a 18 duras pero **de 7 a 22 largas**, la más
+larga de 716 a 1.189 m, y la mediana de la toma sesenta metros más allá; con
+1,5, de 52 a 55 duras y de 9 a 28 largas. Es lo que el banco lleva peleando
+desde H53: el gas de más flota. No se cambia.
+
+**La altura de la recogida** sigue en tres segundos de senda, 13–15 m en el 747
+(44–49 pies), y no en los treinta del FCTM: H34f lo midió y con esta ley
+duplica las duras.
+
+### La recogida que se nivela alto: las trazas
+
+**Tukã, pista ocupada** (H34g, `h34g/r/ala-120-tuka-1.txt`), cada segundo desde
+los 30 m: el automático baja de 3,1 a 3,9 m/s con el morro de 0,7° a −0,2°.
+Empieza a recoger a 13,6 m; en el primer segundo la palanca pasa de −0,16 a
++0,05 y lo acumulado sube a su tope, 2, en 3,6 s, porque el avión baja de medio
+a ocho décimas de metro por segundo más que el perfil. El gas sale a los
+treinta pies, y a 5,3 m una racha le quita 2,1 m/s de cara: de 154 a 146 nudos
+en dos segundos. La ley tira más —lo que pierde de velocidad, lo que falta, lo
+acumulado—, la carga llega a 1,16 g y el morro sube de −0,2° a **4,6°**, casi
+cinco grados donde el FCTM dice dos o tres: se nivela a 2,4 m y flota, y la
+racha vuelve (+1,8 m/s de cara a 1,7 m). **Ahí pelea el punto de toma con la
+recogida**: entra a 3,2 m, pide hasta 1,9 m/s y la palanca va de +0,10 a
+−0,15; el morro baja de 4,6° a 1,9° en tres segundos, la bajada pasa de 0,5 a
+2,0 m/s a medio metro, la palanca vuelve a tirar (+0,23) y ya no llega: 627 m y
+2,03 m/s, a la Vref menos dos.
+
+**Gran Canaria** (H34g, `ala-120-gc.txt`), cada medio segundo: a 42–35 m una
+racha de cara de +2,6 a +3,7 m/s sube la indicada a 159 y el automático empuja
+(palanca −0,35); al irse la racha, a 33 m, el morro cae de 2,6° a −0,5° a
+1,2 °/s y la bajada crece de 2,5 a 5,1 m/s a 17 m, donde el automático pedía
+3,6. Es el automático del juego respondiendo a una racha, no la recogida. La
+recogida empieza a 14,8 m bajando 4,8 y con otra racha de cara que llega a
++4,1 m/s: tira hasta +0,09, la carga sube a 1,23 g y a 6,5 m baja solo 0,8 m/s.
+Desde ahí la palanca se sostiene (bajaba menos de lo pedido) y el gas ya estaba
+fuera; la racha se va en segundo y medio, la indicada cae de 155 a 138 en tres
+segundos, y se hunde: de 1,5 a 2,9 m/s entre 5,7 y 2,8 m. El punto entra a 5 m,
+cuando ya baja más de lo que pide, así que **aquí no pelea**: tira con la
+recogida, tarde. Toca a 2,15 m/s y a la Vref menos seis.
+
+**Gran Canaria otra vez** (la primera tirada de aquí, con main,
+`h34h/r/ala-120-gc-1.txt`): **2,54 m/s**, y sin energía de más. Recoge a 13,8 m
+bajando 4,5 m/s a 146 nudos, la Vref más cuatro; lo acumulado llega a su tope a
+6 m y el morro sube de 0,3° a 4,1°: se nivela a 2,7 m. El punto entra a 2,7 m y
+pide de 1,1 a 2,0 m/s a un avión que no baja; la palanca va de −0,04 a −0,17 y
+el morro baja de 4,1° a **1,3°** en tres segundos, mientras una racha de cara de
+hasta +5,3 m/s lo sostiene. La racha se va en un segundo, la indicada cae de 151
+a 138, y con el morro abajo pasa de no bajar a 2,5 m/s en dos segundos. Es la
+de Tukã, más clara.
+
+Las tres son lo mismo: una racha en la recogida, una ley que tira de más y se
+nivela por encima del suelo, y luego, empujada o sin velocidad, una caída que un
+ala de sesenta metros no para a tiempo. En dos de ellas, lo que la tira es el
+punto de toma bajando el morro por debajo de donde empezó la recogida.
+
+### Lo que dice la mesa, y lo que no sirve
+
+En la mesa de H34f, con σ_w 1, de las 23 tomas de más de 2 m/s **solo dos** se
+habían nivelado por encima de metro y medio, y en 14 lo acumulado estaba en su
+tope: casi todas llegan cayendo, sin recogida bastante, y las que se nivelan
+alto (a 6–9 m) son las largas. Lo de las trazas —nivelarse a pocos metros y que
+el punto empuje— sale en tres de doscientas. Lo que se probó, doscientas
+finales por fila, el 747 a la Vref más ocho con veinte de cara:
+
+| Variante | σ_w 1: duras · largas · mediana | σ_w 1,5: duras · largas · mediana |
+|---|---|---|
+| La de antes | 23 · 7 · 1,26 | 52 · 9 · 1,42 |
+| Lo acumulado no crece mientras el morro sube | 31 · 5 · 1,33 | 57 · 5 · 1,50 |
+| Tope de morro, el de empezar más 3° | 24 · 5 · 1,20 | 51 · 5 · 1,42 |
+| …más 4° | 22 · 5 · 1,24 | 53 · 6 · 1,38 |
+| …más 5° | 21 · 6 · 1,26 | 51 · 9 · 1,42 |
+| Techo de lo acumulado en 3 | 23 · 11 · 1,29 | 52 · 16 · 1,48 |
+| …en 4 | 26 · 15 · 1,29 | 50 · 20 · 1,48 |
+| El gas quitado con la altura (arriba) | 18 · 22 · 1,23 | 55 · 28 · 1,51 |
+| Con las ayudas de Tukã, no las de Taguató | 17 · 4 · 1,22 | 55 · 14 · 1,47 |
+| **Bajo el punto, el morro no baja de la recogida más 2°** | **19 · 8 · 1,17** | **45 · 14 · 1,38** |
+
+Las de arriba no mueven las duras fuera de lo que da el azar en doscientas sin
+pagarlo en largas, que es lo que ya vieron H53, H55c y H34f. El tope de morro,
+que es lo que dice el FCTM de la recogida («increasing pitch attitude
+approximately 2° - 3°», «Avoid rapid control column movements»), casi no hace
+nada: las duras de la mesa no se nivelan arriba. Las ayudas de Tukã —la
+amortiguación de más frena también el cabeceo— no lo empeoran. La última es la
+que entra (abajo), y también cambia duras por largas, menos que las otras.
+
+### Lo que aparta el navegador de la mesa: la pista baja
+
+Las trece tomas del 747 en el navegador de H53 a H34g —2,12, 2,1, 1,4, 2,06,
+2,07, 1,88, 2,36, 2,01, 1,25, 1,74, 1,92, 2,03, 2,15 m/s— tienen la mediana en
+2,03, y la mesa con σ_w 1 la tiene en 1,26. Y la turbulencia del navegador es
+menor que la de la mesa: en el último kilómetro, la racha de cara va con σ de
+0,87 a 0,98 m/s en las dos trazas de H34g, y en la mesa con σ_w 1, con 1,28.
+
+**Las trece son en Gran Canaria, y la 03 de Gran Canaria baja.** La recogida del
+banco va contra la pista (`contraLaPista`, el variómetro menos lo que baja la
+pista por delante), y en las cinco trazas del ala del 747 que había, tres de
+H34f y dos de H34g, esa pista baja de 0,29 a 0,30 m/s bajo el avión en toda la
+recogida (`h34h/pista.mjs` del scratchpad): un 0,4 % hacia el norte, que es lo
+que tiene la de verdad (umbral de la 03L a 78 ft, de la 21R a 33 ft, 13,7 m en
+3.100 m; de airport-data.com, no leído en la AD 2.12 del AIP). El suelo del
+modelo es el mismo: la altura de ruedas que mide el banco y la del modelo no se
+separan más de cuatro décimas en los seiscientos metros. Y **la caída que
+apunta el juego al tocar es la del variómetro** —`touchdownSinkRate` en
+`resolveGround`, `flight/fdm.ts`, es `−velocity.y`—, no lo que se le acerca el
+suelo al tren.
+
+En la mesa, a la Vref más diez, con la pista bajando un 0,4 % desde el umbral
+(la ley de antes):
+
+| Pista | σ_w | Más de 2 m/s | Más de 1,5 | Mediana | Pasadas de 600 m | Mediana de la toma |
+|---|---|---|---|---|---|---|
+| Llana | 1 | 21 | 73 | 1,26 m/s | 4 | 444 m |
+| | 1,5 | 56 | 103 | 1,55 | 7 | 425 |
+| Baja 0,4 % | 1 | **39** | **113** | **1,57** | 10 | 488 |
+| | 1,5 | 72 | 127 | 1,72 | 16 | 477 |
+| Sube 0,4 % | 1 | 15 | 46 | 1,02 | 4 | 392 |
+| | 1,5 | 51 | 95 | 1,46 | 2 | 376 |
+
+La mediana sube tres décimas, lo que se aparta la pista: el banco toca igual
+contra el suelo, y el juego lo lee 0,3 m/s más duro. Contra la pista, las cinco
+con traza quedan en 0,98, 1,49 y 1,64 (H34f) y en 1,75 y 1,89 (H34g), y si las
+otras ocho bajaban lo mismo, las trece entre 0,95 y 2,06. La de Los Rodeos
+también baja bajo el JAZ 90 de H34f, 0,30 m/s (tocó a 1,12 de variómetro, 0,82
+contra la pista).
+
+Se probaron dos cosas para tocar más suave en el variómetro, y no sirven: que
+el final firme del punto (H34f) sea de variómetro, como ya lo es el del perfil
+(de 39 a 36 duras, la mediana de 1,57 a 1,52), y recoger con el variómetro en
+vez de contra la pista (26 duras pero 18 largas, la mediana de la toma en 532
+m, y la mediana de la caída 1,50): en una pista que baja el avión flota, el
+punto entra más y lo pone en el suelo.
+
+**De quién es.** Lo que nota el tren es lo que se le acerca el suelo; el juego
+mide el variómetro, y en una pista con pendiente no es lo mismo. Es del juego
+—el veredicto de la toma y las gafas cuelgan de ese número— y aquí no se toca.
+**Esto explica tres décimas de las tres cuartas partes de metro por segundo**
+que separan el navegador de la mesa: la mesa con la pista que baja da 1,57 de
+mediana y el navegador 2,03. **El resto no se ha encontrado** (ver «Lo que
+queda»).
+
+### Lo que se cambia, en el banco
+
+**1. Bajo el punto de toma, el morro no baja de la recogida**
+(`morroQueFaltaAlPunto`, en `scripts/recogida-del-reactor.mjs`, que el banco
+copia a la página y usa en `recoger`, y la ley del módulo con el cabeceo que se
+le dé). Mientras manda el punto, si el morro va por debajo de la actitud con la
+que empezó a recoger más dos grados, se suma lo que falta pasado a palanca con
+el cabeceo del avión, como lo demás de la recogida. El FCTM recoge subiendo el
+morro dos o tres grados y luego «make small pitch attitude adjustments to
+maintain the desired descent rate to the runway. Hold sufficient back pressure
+on the control column to keep the pitch attitude constant»: el punto le quita
+a la recogida lo que flota, que es lo que pide «Do not allow the airplane to
+float», pero ya no la deshace. Solo los reactores, y solo mientras manda el
+punto; con tres grados en vez de dos, menos duras y más largas todavía (en la
+mesa a la Vref más diez, 14 y 8 donde la de dos da 16 y 5). La traza del ala
+lo apunta (`rmf`, en grados).
+
+**2. La comprobación de la toma dice al lado la caída contra la pista**
+(`pistaAlTocar`, en `verificar-vuelo-entero.mjs`): lo que bajaba la pista bajo
+el avión al tocar, que ya calculaba `recoger`, y la caída que nota el tren: en
+el JAZ 90 de Tukã de abajo, «a 1.95 m/s (contra la pista, 1.65: la pista baja
+0.30 m/s bajo el avión)». **El
+veredicto sigue con la del juego**, que es la que juzga a quien juega: cambiar
+la vara para que el 747 salga en verde sería que la regla de medir se comiera
+la prueba.
+
+**El juego no cambia.**
+
+### Las mesas, antes y después
+
+La de la recogida de H34f (doscientas finales por fila, veinte nudos de cara en
+Gran Canaria y seis en Los Rodeos; `h34h/antes-despues.txt` del scratchpad),
+más de 2 m/s · pasadas de 600 m (la más larga):
+
+| | σ_w | Antes | Con H34h |
+|---|---|---|---|
+| JAZ 120, Vref más ocho | 1 | 23 · 7 (716 m) | **19** · 8 (748 m) |
+| | 1,5 | 52 · 9 (800 m) | **45** · 14 (835 m) |
+| JAZ 120 a 146, más ocho | 1 | 15 · 3 (741 m) | 12 · 6 (741 m) |
+| JAZ 120, más diez, la pista baja 0,4 % | 1 | 39 · 10 (694 m) | **23** · 14 (771 m) |
+| | 1,5 | 72 · 16 (796 m) | 58 · 32 (809 m) |
+| JAZ 110 | 1 | 6 · 4 (726 m) | 5 · 7 (750 m) |
+| | 1,5 | 37 · 3 (667 m) | 32 · 6 (**881 m**) |
+| JAZ 90, Los Rodeos | 1 | 2 · 0 | 2 · 0 |
+| | 1,5 | 25 · 0 | 24 · 0 |
+
+La de antes se reproduce a la final con esta mesa (la fila de arriba es la de
+H34f). Las duras bajan en todos los reactores salvo el JAZ 90, en el que el
+punto casi nunca entra, y las largas suben: es el mismo trueque que el de
+H34f, y con la pista de Gran Canaria compensa —de 49 rojos a 37 con
+σ_w 1—. Con rachas fuertes y la pista que baja, no: de 88 a 90. Y el JAZ 110
+con σ_w 1,5 tiene una de 881 m, que antes no pasaba de 667.
+
+`recogida-del-reactor.test.mjs` vuela con el cabeceo: en sus sesenta finales,
+la semilla 14, que el punto ponía antes en el suelo dentro de la zona, toca
+ahora a 602 m, dos metros pasada, y la prueba pide como mucho dos largas donde
+pedía una; las de más de 2 m/s, de 4 a 3. Una prueba nueva mira la función, la
+página y la suma en la ley.
+
+La lateral de H34g no la toca nada de aquí; vuelta a correr, el 747 en Tukã con
+su mano y σ_w 1,5 cruza el umbral a 2,40 m del eje de media (cien finales; 2,46
+en las doscientas de H34g).
+
+### Volado
+
+`verificar-vuelo-entero.mjs`, reloj por uno, sobre copias fijas (`h34h/vuelos*`
+del scratchpad) y con la traza del ala; el navegador, de uno en uno con el
+candado compartido. Lo de antes es de H34g (`h34g/r/`) y de H55c.
+
+| Vuelo | Antes | Aquí |
+|---|---|---|
+| JAZ 120, Gran Canaria, 025/20 | 4,1 m del eje, 384 m, 2,15 m/s; 61 de 62 (✗ la toma) | con main: 2,7 m, 564 m, **2,54 m/s** (2,26 contra la pista); 62 de 63 (✗ la toma) |
+| JAZ 90, Tukã (Los Rodeos) | 1,2 m, 384 m, 0,68 m/s; 66 de 67 (H55c) | 1,0 m, 228 m, 1,95 m/s (1,65 contra la pista); 65 de 66 (✗ el avisador, en la vuelta tras frustrar) |
+| JAZ 120, Tukã, pista ocupada, con el cambio | 2,1 m, 627 m, 2,03 m/s; 64 de 67 (✗ la zona, ✗ la toma, ✗ las gafas) | no volado |
+| JAZ 90, Los Rodeos, con el cambio | 1,3 m, 363 m, 1,12 m/s; 62 de 62 (H34f) | no volado |
+| JAZ 120, Gran Canaria y Tukã, las segundas | — | no voladas |
+
+Cada vuelo es una tirada, con las rachas que le tocan: no es una cifra.
+
+**El JAZ 120 en Gran Canaria** se voló antes del cambio, con main: es la
+tercera traza de arriba, la del punto que baja el morro de 4,1° a 1,3° a dos
+metros y medio. A la puerta llegó a 146 nudos, a 10,9 m del eje cruzándolo a
+1,3°; en el último kilómetro y medio, con la mano de 5,5–5,7 de H34g, el error
+de alabeo fue de 2,2° de media cuadrática y el avión no se apartó más de cinco
+metros del eje.
+
+**El JAZ 90 en Tukã** (`tenerife-norte tuka 1 jaz-90`), con la medida de la
+pista y sin el cambio del morro, que en esta toma no habría hecho nada: el punto
+no entró en ningún fotograma. La torre lo mandó al aire a 60 m en la primera
+final (`pistaOcupada`, un tráfico del juego aterrizando), y la segunda llegó a
+la puerta a 124 nudos (Vref 118), a 4,9 m del eje; en el último kilómetro y
+medio, con la mano de 6,15 que le da H34g en Tukã, el error de alabeo fue de
+1,2° de media cuadrática, la inclinación 1,5 s detrás de la pedida, y tocó a 1,0
+m del eje, a 228 m y a 1,95 m/s de variómetro —1,65 contra la pista, que en Los
+Rodeos también baja, 0,31 m/s bajo el avión—. **El rojo es de la vuelta al
+circuito después de frustrar**: a los 784–797 s, en la etapa de subir, el banco
+llevaba el gas a cero y la palanca quieta en +0,33 con 21–31° de inclinación
+mientras salían los flaps de 0,22 a 0,67, la indicada bajó de 134 a 100 nudos y
+el ángulo llegó a 17,1°, el del avisador, a 146 m del suelo. No es de la toma ni
+de nada de aquí; queda abajo.
+
+**Con el cambio del morro no se ha volado nada.** El navegador es de uno en uno
+y lo tuvieron otros bancos: el 747 en Tukã con la pista ocupada esperó el
+candado desde las 08:04 sin cogerlo antes de la entrega. Lo que dice del
+cambio es la mesa, arriba.
+
+### Las pruebas del banco
+
+Las de `scripts/`, siete ficheros y 56 pruebas, en verde, y `tsc` limpio. El
+vitest entero no se ha corrido: no se ha tocado `src/`.
+
+### Lo que queda
+
+- **La caída del juego en una pista con pendiente**: `touchdownSinkRate` es el
+  variómetro, y en la 03 de Gran Canaria lee 0,3 m/s de más; en una pista que
+  sube, de menos. Es del juego, con el veredicto de la toma y las gafas detrás.
+- **El resto de la distancia entre el navegador y la mesa**, unas cuatro
+  décimas de mediana con la pendiente ya contada. No se ha mirado si es de la
+  bajada del automático por debajo de los treinta metros —en las tres trazas el
+  morro cae y la bajada crece justo antes de recoger—, de la recogida del
+  banco, que vive en dos copias (`recoger` y `palancaDelReactorEnLaRecogida`), o
+  de cómo es la turbulencia a ras de suelo en cada sitio. Volar el 747 en una
+  pista llana lo separaría.
+- **Volar el cambio del morro**: el 747 en Gran Canaria y en Tukã con la pista
+  ocupada, dos de cada, y el JAZ 90 en Los Rodeos. Es lo primero.
+- **Las largas que trae el morro**: con rachas fuertes el 747 y el JAZ 110
+  flotan más (el JAZ 110 hasta 881 m en la mesa con σ_w 1,5).
+- **El JAZ 90 en la vuelta tras frustrar, en Tukã**: subiendo con el gas a
+  cero, la palanca quieta y los flaps saliendo, hasta el avisador (arriba). Es
+  del circuito del banco después de la frustrada (H34e), no de la toma; no se
+  ha mirado por qué el gas estaba a cero.
+- **El motor sin inercia**: el empuje sigue al gas en el mismo paso, y un
+  reactor de verdad tarda segundos en ir del gas de la final al ralentí.
+- **La recogida que sube el morro casi cinco grados** con una racha, donde el
+  FCTM dice dos o tres: el tope de morro no mueve la mesa, y no se ha puesto.
