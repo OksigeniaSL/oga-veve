@@ -109,12 +109,14 @@ function arco(tope: (gs: number) => number): Arco {
       memoria,
     );
     c.elevator = r.elevator;
-    // El gas del banco: a la Vref más cinco nudos.
+    // El gas del banco: a la Vref más cinco nudos, con el doble de mano a la
+    // tendencia y la mitad a lo acumulado desde que el motor tarda (ADR 0034;
+    // `CON_EL_AUTOMATICO` en `verificar-vuelo-entero.mjs`).
     const quiereV = (a.approachSpeed + 5 * NUDO) / raiz(s.position.y);
     const error = quiereV - s.airspeed;
     c.throttle = Math.max(
       0,
-      Math.min(1, c.throttle + (error - (errorAntes ?? error)) * 0.04 + error * 0.01 * DT),
+      Math.min(1, c.throttle + (error - (errorAntes ?? error)) * 0.08 + error * 0.005 * DT),
     );
     errorAntes = error;
     bajadas.push({ t, baja: -s.velocity.y });

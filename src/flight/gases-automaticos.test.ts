@@ -149,6 +149,8 @@ function volar(
         timon: t === 0 ? trim : modelo.timonAhora(),
         empujeAFondo: empujeLleno(a, airDensity(s.position.y), s.airspeed),
         masa: a.mass,
+        // Y lo que da el motor, que tarda, como se lo da el juego (ADR 0034).
+        ...(modelo.gasDelMotor ? { daElMotor: modelo.gasDelMotor() } : {}),
         ...(modelo instanceof ArcadeFlightModel
           ? {
               subirCon: (ritmo: number) => modelo.mandoParaSubir(ritmo),

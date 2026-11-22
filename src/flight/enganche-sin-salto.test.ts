@@ -16,8 +16,13 @@ import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { aircraftById, type AircraftConfig } from "./aircraft";
 import { aireDelParte, airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
-import { CoefficientFlightModel } from "./fdm";
-import { gasDeSubida, llevaGasesAutomaticos } from "./gases-automaticos";
+import { CoefficientFlightModel, empujeLleno } from "./fdm";
+import {
+  gasDeLosAutomaticos,
+  gasDeSubida,
+  llevaGasesAutomaticos,
+  memoriaDeGasesNueva,
+} from "./gases-automaticos";
 import { neutralControls } from "./model";
 import { autoridadDelTimon, mandosPara, memoriaNueva } from "./piloto-automatico";
 import { TAGUATO } from "./tiers";
@@ -88,6 +93,8 @@ function soltarYEnganchar(
     vertical: s.velocity.y,
     velocidad: indicada(),
     gas: c.throttle,
+    // Y lo que da el motor, que tarda, como se lo da el juego a los gases.
+    daElMotor: m.gasDelMotor(),
     verdadera: s.airspeed,
     ritmoDeCabeceo: s.pitchRate,
     autoridadDelTimon: autoridadDelTimon(a, airDensity(s.position.y, AIRE), s.airspeed),
@@ -96,10 +103,31 @@ function soltarYEnganchar(
   // La subida de antes: a 3 m/s, con el gas que sostiene la velocidad de partida.
   let gas = m.gasPara(s.airspeed, { flaps: 0, tren: 0, aerofrenos: 0 }, Math.asin(3 / s.airspeed));
   const antes = memoriaNueva();
+  /*
+   * Y la velocidad, con la mano de los gases del juego, que cuenta el empuje
+   * que el motor aún no da. Era un integrador a secas sobre el gas —sin
+   * amortiguar más que lo que frena el aire—, que con el motor al instante se
+   * quedaba quieto y con el motor que tarda (ADR 0034) oscilaba hasta el tope:
+   * el JAZ 90 llegaba al enganche con el gas a cero y el JAZ 60 a fondo.
+   */
+  const deLosGases = memoriaDeGasesNueva();
   for (let t = 0; t < 15; t += DT) {
     const r = mandosPara(estado(), { rumbo: null, altitud: y0 + 3 * (t + 10), ritmo: 3, velocidad: null }, DT, antes);
     c.elevator = r.elevator;
-    gas = Math.max(0, Math.min(1, gas + (deSalida - indicada()) * 0.2 * DT));
+    c.throttle = gas;
+    gas = gasDeLosAutomaticos(
+      {
+        velocidad: indicada(),
+        gas,
+        empujeAFondo: empujeLleno(a, airDensity(s.position.y, AIRE), s.airspeed),
+        masa: m.masaAhora(),
+        daElMotor: m.gasDelMotor(),
+      },
+      "SPD",
+      deSalida,
+      DT,
+      deLosGases,
+    );
     c.throttle = gas;
     m.step(DT, c);
   }
@@ -205,11 +233,17 @@ describe("quien tira o empuja un segundo, suelta y engancha (H57b)", () => {
    * se mira lo que es del enganche. Y el avisador: el JAZ 90 lo hace sonar
    * medio segundo tirando, y la cola de ese tirón llega al enganche —0,05 s,
    * igual con el promedio—; pasado el primer segundo, ni uno.
+   *
+   * Con el motor que tarda (ADR 0034) la cola es de 0,13 s: los gases que
+   * sostienen la subida de antes traen la velocidad más despacio, y el JAZ 90
+   * llega al tirón a 189 nudos en vez de 192, con el ala 0,3° dentro del
+   * avisador al enganchar en vez de 0,3° fuera. Es del tirón, no del enganche:
+   * pasado el primer segundo sigue sin sonar.
    */
   it.each(casos)("%s con %f de tirón: arranca sin salto y el avisador callado", (id, tiron) => {
     const r = soltarYEnganchar(id, 10, { tiron, sostiene: 1, espera: 0.5 });
     expect(r.salto).toBeLessThan(0.05);
-    expect(r.avisador).toBeLessThan(0.1);
+    expect(r.avisador).toBeLessThan(0.15);
     expect(r.avisadorTarde).toBe(0);
   });
 });

@@ -63,6 +63,8 @@ function moverElGas(f: Final): void {
       gas: v.gas,
       empujeAFondo: empujeLleno(v.aircraft, airDensity(s.position.y), s.airspeed),
       masa: v.aircraft.mass,
+      // Y lo que da el motor, que tarda, como se lo da el juego (ADR 0034).
+      ...(v.modelo.gasDelMotor ? { daElMotor: v.modelo.gasDelMotor() } : {}),
       ...(v.tier.model === "simple" ? { equilibrio: v.modelo.gasPara(f.ias) } : {}),
     },
     "SPD",

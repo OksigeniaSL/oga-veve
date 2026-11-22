@@ -115,6 +115,8 @@ function vuela(
           gas: p.v.gas,
           empujeAFondo: empujeLleno(p.v.aircraft, airDensity(s.position.y), s.airspeed),
           masa: p.v.aircraft.mass,
+          // Y lo que da el motor, que tarda, como se lo da el juego (ADR 0034).
+          ...(p.v.modelo.gasDelMotor ? { daElMotor: p.v.modelo.gasDelMotor() } : {}),
           ...(p.v.tier.model === "simple" ? { equilibrio: p.v.modelo.gasPara(p.ias) } : {}),
         },
         "SPD",

@@ -7910,8 +7910,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       if (CON_EL_AUTOMATICO) {
         const err = quiere - s.airspeed;
         const deHelice = suyas.propulsion === "helice";
-        const kp = deHelice ? 0.08 : 0.04;
-        const ki = deHelice ? 0.03 : 0.01;
+        /*
+         * **Y en un reactor, el doble a la tendencia y la mitad a lo
+         * acumulado**, desde que su motor tarda lo que tarda (ADR 0034): con
+         * las de antes, lo acumulado seguía empujando la palanca mientras el
+         * empuje pedido aún no había llegado, y la velocidad del JAZ 90 en el
+         * arco a la final iba y venía de 120 a 127 nudos con la pedida en 123;
+         * a la salida del viraje bajaba 5,20 m/s de media, por encima de los
+         * mil pies por minuto. Es lo que pide el manual al que viene de la
+         * hélice: «Pilots should anticipate the need for adding power from low
+         * power settings» (FAA-H-8083-3C, 16-3). Con éstas, por debajo otra
+         * vez: `arco-a-la-final.test.ts` y `ascendente-en-la-final.test.ts`.
+         */
+        const kp = 0.08;
+        const ki = deHelice ? 0.03 : 0.005;
         c.throttle = Math.max(
           0,
           Math.min(1, c.throttle + (err - (errorDeGasAntes ?? err)) * kp + err * ki * paso),

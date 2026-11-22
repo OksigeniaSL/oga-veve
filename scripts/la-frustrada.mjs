@@ -69,6 +69,15 @@
  * con dos y medio de aviso, la racha de la mesa lo dejaba a 1,4°; con cuatro,
  * a 2,6° como poco. Los de hélice siguen con sus ocho grados y su techo de
  * doce.
+ *
+ * **Y desde los cinco, desde que el motor tarda lo que tarda** (ADR 0034).
+ * TO/GA ya no es empuje en el acto: el 747 tarda seis segundos en darlo, el JAZ
+ * 90 y el JAZ 110 cinco, y en esos segundos el avión va más despacio y el ala
+ * más cerca del avisador. Con cuatro, la racha de la mesa a los tres segundos
+ * dejaba el 747 a 2,18° y el JAZ 110 a 2,15°; con cinco, a 2,73° y 3,42°, y el
+ * JAZ 90 a 3,11°. Es la cuenta del piloto que sabe que el empuje no ha
+ * llegado: «the slow acceleration of jet engines» (FAA-H-8083-3C, 16-4) pide
+ * no gastar en morro lo que el motor todavía no da.
  */
 
 /**
@@ -79,7 +88,7 @@
 export const LEY_DEL_REACTOR = Object.freeze({
   cabeceo: (15 * Math.PI) / 180,
   techo: (15 * Math.PI) / 180,
-  margen: (4 * Math.PI) / 180,
+  margen: (5 * Math.PI) / 180,
   acerca: 2,
   amortigua: 3,
 });
