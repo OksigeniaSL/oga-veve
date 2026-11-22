@@ -10,12 +10,21 @@
  * retroceso.
  */
 import { describe, expect, it } from "vitest";
+import type { Aerodrome } from "./aerodrome";
 import { conSuAerodromo, SCENARIOS } from "./scenarios";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { AIRCRAFT } from "../flight/aircraft";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
-import { edificiosDePasarela, empujeDesdeElPuesto, entradaDelPuesto, quedaSobreLaRaya, vector } from "./remolque";
+import {
+  diferencia,
+  edificiosDePasarela,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
+  quedaSobreLaRaya,
+  rumboDeLaPintada,
+  vector,
+} from "./remolque";
 
 const GRADO = Math.PI / 180;
 
@@ -82,5 +91,43 @@ describe("las líneas de entrada de los puestos", async () => {
   it("y el aeródromo desplazado la lleva con él", () => {
     const movido = desplazarAerodromo(aero, 1000, -500);
     for (const p of movido.parkingPositions!) expect(p.entrada!.at(-1)).toEqual(p.xy);
+  });
+});
+
+/*
+ * **La raya que llega a una esquina de la terminal** (H60e). La pared que cuenta es también
+ * la que tiene delante, no solo la más cercana: en una esquina la más cercana puede ser la
+ * del ala de al lado, a noventa grados de la raya.
+ */
+describe("la raya pintada que llega a una esquina de la terminal", async () => {
+  // Una terminal en L: la fachada a 53 m al oeste del puesto y el ala a 37 m al sur.
+  const enL = [{ polygon: [[-53, 200], [-53, -37], [100, -37], [100, -80], [-120, -80], [-120, 200]] as [number, number][] }];
+  const raya = (desde: [number, number]) => [{ x: desde[0], z: -desde[1] }, { x: desde[0] / 2, z: -desde[1] / 2 }, { x: 0, z: 0 }];
+
+  it("la que va de frente a la fachada vale, aunque el ala le quede más cerca", () => {
+    const r = rumboDeLaPintada(0, 0, enL, raya([60, 0]));
+    expect(r).not.toBeNull();
+    expect(Math.abs(diferencia(r!, 270 * GRADO)) / GRADO).toBeLessThan(0.5);
+  });
+
+  it("y la que va de espaldas a las dos, no", () => {
+    expect(rumboDeLaPintada(0, 0, enL, raya([-60, 0]))).toBeNull();
+  });
+
+  it("en Barajas, el 312, el 560 y el 562 en su sitio del AIP se aparcan sobre la suya; y el 23 de Los Rodeos sigue", async () => {
+    const mira = (a: Aerodrome, ref: string): number | null => {
+      const p = a.parkingPositions!.find((q) => q.ref === ref && q.entrada)!;
+      return rumboDeLaPintada(p.xy[0], -p.xy[1], edificiosDePasarela(a), entradaDelPuesto(a, p.xy[0], -p.xy[1]));
+    };
+    const barajas = (await conSuAerodromo(SCENARIOS.find((e) => e.id === "barajas")!)).aerodrome!;
+    // AD 2-LEMD PDC 2.5 (WEF 01-OCT-26): de contacto, en retroceso; la raya, hacia la terminal.
+    for (const [ref, rumbo] of [["312", 90], ["560", 270], ["562", 270]] as const) {
+      const r = mira(barajas, ref);
+      expect(r, `el ${ref}`).not.toBeNull();
+      expect(Math.abs(diferencia(r!, rumbo * GRADO)) / GRADO, `el ${ref}`).toBeLessThan(3);
+    }
+    // La raya del 23 corta antes un chaflán de la fachada; la pared más cercana sigue valiendo.
+    const rodeos = await conSuAerodromo(SCENARIOS.find((e) => e.id === "tenerife-norte")!);
+    expect(mira(rodeos.aerodrome!, "23")).not.toBeNull();
   });
 });
