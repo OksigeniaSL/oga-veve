@@ -9631,3 +9631,214 @@ Las pruebas del banco (`scripts/`, siete ficheros, 55 pruebas), en verde, y
   H55c, que se sostiene a diez metros perdiendo velocidad, va de 608 a 716 m.
 - **El JAZ 40 con la pista ocupada, en el navegador**, y el JAZ 110, que
   cambia como el JAZ 120 y solo se ha medido en las mesas.
+
+## Enmienda H34g (22-11-2026): la mano de la final del banco, en tiempo y no en alerón por radián
+
+`OGA_PISTA_OCUPADA=1 verificar-vuelo-entero.mjs gran-canaria tuka 1 jaz-120`,
+el 747 en Tukã con la torre mandando al aire, llevaba tres tandas en 65 de 66
+con un rojo distinto cada vez: la puerta a 50 m del eje (H55b), la toma a
+2,01–2,07 m/s (H55c y la ronda de la tanda 21) y el eje a 13,1 m (H34f).
+H34f dejó apuntado que lo del eje era la ley lateral de fuera del banco. Es
+del banco, sí, pero no de la mirada: es la mano que sostiene el ala.
+
+### Lo que pasaba: la traza
+
+La traza del ala de H34f (`h34f/r/ala-120-tuka.txt` del scratchpad), segunda
+final, cada segundo:
+
+- **Se va.** De 1,8 a 0,9 km del umbral, catorce segundos, el banco pidió de
+  +1,2° a +3,1° de inclinación y el ala se quedó entre −1,3° y +0,6°, con el
+  alerón entre 0,05 y 0,22 —el tope es 0,70— y el aire metiendo rachas de
+  alabeo de −3 a −4 °/s y una de lado de 6 m/s. El avión pasó de −2 a −13 m
+  del eje, y siguió hasta −16 a seiscientos metros del umbral.
+- **Se pasa.** Cuando el ala por fin llegó (+3,8° a 313 m del umbral) lo
+  pedido ya había bajado a +2°; la trayectoria se fue a 2,3–2,8° hacia el
+  eje, el banco empezó a pedir al revés a 170 m del umbral (−0,1°; −2,6° en el
+  umbral, −4,1° cien metros pasado, −6° ya recogiendo) y el ala fue detrás, de
+  dos a tres segundos: +1,4° a 100 m pasado el umbral, −2,2° a 240 m, −5° al
+  tocar. Cruzó el eje a unos doce metros de ruedas y siguió hasta +13.
+- En el último kilómetro y medio, el error de alabeo fue de 2,4° de media
+  cuadrática, la inclinación iba 2,25 s detrás de la pedida (el retraso de
+  mejor correlación) y el alerón, de media, en 0,14; el que más, 0,40.
+
+El tope no se tocó, y la mirada pidió lo que tenía que pedir: lo que no
+llegaba era el ala.
+
+### Por qué: cuatro es alerón por radián, y la mano es un tiempo
+
+La mano de la final pone cuatro de alerón por radián de inclinación que falta
+(#192). Lo que falta se cierra a `ganancia · ritmo por unidad de alerón`, por
+segundo, y el ritmo por unidad es de cada avión —`clAileron/|clP| · 2V/b`,
+`alabeoAFondo` en `flight/mano.ts`— y de cada peldaño: el modelo suma al
+amortiguamiento de alabeo 0,5·`extraDamping` mientras no lleve el alabeo la
+mano del juego (`fdm.ts`), y el banco no la lleva. A la Vref de cada uno
+—en los reactores, al suelo de velocidad que pone el modelo, 0,35 veces el
+crucero, que les queda por encima: por eso su ritmo no cambia en toda la
+final—:
+
+| | Por unidad, Taguató (0,35) | El ala llega en | Por unidad, Tukã (1) | El ala llega en |
+|---|---|---|---|---|
+| JAZ 90 | 12,3 °/s | **1,2 s** | 8,0 °/s | 1,8 s |
+| JAZ 110 | 9,4 | 1,5 | 6,2 | 2,3 |
+| JAZ 120 | 8,7 | 1,7 | 5,7 | **2,5** |
+| JAZ 50 | 18,0 | 0,8 | 12,3 | 1,2 |
+
+Cuatro se afinó con el JAZ 90 y el JAZ 50 en Los Rodeos, en Taguató: una mano
+que trae el ala en un segundo y pico. El 747 en Tukã, con la misma mano, tarda
+dos y medio. Y la ley de fuera lo nota más en el 747 que en ningún otro: la
+mirada crece con la velocidad, y con ella el lazo de la captura —alabeo en
+proporción al rumbo que falta— queda menos amortiguado cuanto más deprisa se
+vuela. Con el ala instantánea, a 33 m/s y mirando a 120 m su amortiguamiento
+es de 0,64; a 79 m/s y mirando a 290 m, lo que mira el 747 cruzando el
+umbral, de 0,41 (la cuenta del lazo linealizado). Dos segundos y medio de
+retraso encima de eso es lo que se ve en la traza: se va porque el ala no
+llega, y se pasa porque cuando llega ya hace falta la contraria.
+
+**No es que la ayuda de Tukã se pelee con el banco.** Las dos ayudas que
+tocan el alabeo en Tukã son el nivelador de alas y la amortiguación de más.
+El nivelador no entra: con la senda el banco declara el automático
+(`mandos.automatico`), y con él se aparta. La amortiguación de más frena lo
+que gira el avión, venga de la mano o de la racha, así que lo que el aire le
+mete en el ala lo frena igual: en la mesa, con el mismo viento y la mano de
+cuatro, el 747 cruza el umbral a 6,1 m del eje de media en Tukã (200
+finales) y a 6,1 en Taguató (100), con σ_w 1,5. Lo que la amortiguación sí
+cambia es lo que tarda la mano.
+
+### Lo que se cambia, en el banco
+
+`gananciaEnLaFinal`, en `verificar-vuelo-entero.mjs`: cada avión lleva en la
+final **la ganancia que le da el mismo tiempo que al JAZ 90 en Taguató con
+cuatro**, contando lo que rueda por unidad de alerón a la velocidad que lleva
+y con la amortiguación de su peldaño, y nunca menos de cuatro. Ninguno de
+hélice cambia en Taguató, por construcción, ni el JAZ 90, que es la
+referencia; en Tukã el Twin Otter queda en cuatro a su Vref —algo más por
+debajo de ella, ya recogiendo— y los demás de hélice, en cuatro. Cambian el
+JAZ 90 en Tukã (6,2), el JAZ 110 (5,3 en Taguató, 8,0 en Tukã) y el 747 (5,7 y
+8,7). La cuenta va con la ficha del avión y la tabla de peldaños del juego,
+sin ninguna cifra para el 747. El tope de H34f no se toca: es una razón entre
+dos aviones, y la amortiguación del peldaño los frena a los dos casi igual.
+En Guyrami no cuenta: el alerón ya es la inclinación. **El juego no cambia.**
+
+La traza del ala apunta la ganancia (`ka`).
+
+### La mesa
+
+La mesa lateral de H34f (`h34g/lat2.ts` del scratchpad, la de `h34f/mesa/lat.ts`
+con el peldaño y la mano a elegir): el modelo del juego y sus rachas, el
+automático en la senda, el gas del banco, la ley de alerón del banco en la
+final mirando cada décima de segundo, de cinco kilómetros al umbral; 200
+finales por fila. Sin rachas el 747 cruza a 0,02 m, y con la mano de cuatro
+da lo mismo que la mesa de H34f (el 747 con 025/20: 3,53, 5,48 y 7,28 m de
+media con σ_w 1, 1,5 y 2, donde aquella daba 3,53, 5,51 y 7,2). Del eje al
+cruzar el umbral, cuatro / la de ahora:
+
+| | Viento | σ_w | Media | p90 | La peor | Más de 10 m | Error de alabeo bajo 100 m (rms) | Cambios de signo del alerón, último km y medio |
+|---|---|---|---|---|---|---|---|---|
+| JAZ 120, Tukã, 4 / 8,7 | 0,7 m/s de lado | 1 | 3,64 / **1,62** m | 7,55 / 3,48 | 13,5 / 5,7 | 7 / 0 | 1,15° / 0,69° | 2,3 / 3,9 |
+| | | 1,5 | 6,11 / **2,46** | 12,0 / 5,1 | 24,3 / 10,5 | 35 / 1 | 1,80° / 1,04° | 2,4 / 4,1 |
+| | | 2 | 7,46 / **3,54** | 15,2 / 7,0 | 35,3 / 14,8 | 56 / 8 | 2,32° / 1,40° | 2,5 / 4,1 |
+| JAZ 120, Taguató, 4 / 5,7 | 025/20 en la 03 | 1 | 3,53 / 2,45 | 7,14 / 5,10 | 12,5 / 8,8 | 5 / 0 | 1,48° / 1,18° | 3,6 / 4,6 |
+| | | 1,5 | 5,48 / 3,41 | 11,8 / 7,1 | 23,3 / 13,1 | 29 / 4 | 2,21° / 1,72° | 3,9 / 4,7 |
+| | | 2 | 7,28 / 5,67 | 14,9 / 12,5 | 30,0 / 34,1 | 53 / 28 | 2,99° / 2,39° | 3,8 / 4,7 |
+| JAZ 110, Tukã, 4 / 8,0 | 0,7 de lado | 1,5 | 5,23 / 2,39 | 12,3 / 5,4 | 21,0 / 10,2 | 32 / 1 | 1,69° / 1,01° | 2,4 / 4,0 |
+| JAZ 110, Taguató, 4 / 5,3 | 025/20 | 1,5 | 4,67 / 3,54 | 10,2 / 6,9 | 18,3 / 16,5 | 20 / 5 | 2,13° / 1,76° | 4,1 / 4,9 |
+| | | 2 | 7,00 / 5,48 | 14,5 / 11,9 | 47,9 / 30,9 | 48 / 30 | 3,00° / 2,54° | 4,1 / 5,0 |
+| JAZ 90, Tukã, 4 / 6,2 | 0,7 de lado | 1,5 | 3,77 / 2,37 | 8,0 / 5,0 | 28,1 / 22,1 | 11 / 1 | 1,76° / 1,33° | 4,1 / 5,8 |
+| JAZ 90, Taguató, 4 / 4 | 6 de lado | 1, 1,5, 2 | igual al centímetro: 2,41, 3,93, 6,03 | | | | | 5,6–5,9 |
+| JAZ 50, Tukã, 4 / 4 | 6 de lado | 1,5 | igual: 2,45 | | | | | 10,0 |
+
+El alerón cambia de signo cuatro veces en el último kilómetro y medio, y no
+dos y media: menos que el JAZ 90 en Taguató, con el que se afinó la mano. No es
+un temblor. La única fila que no mejora en todo es la peor del 747 en Taguató
+con σ_w 2 (30 → 34 m), con 28 de 200 por encima de diez metros en vez de 53.
+
+**Contarla sin la amortiguación del peldaño, no.** Con la razón de los ritmos
+sin ella, el 747 llevaría 5,8 también en Tukã: con seis, 3,6 m de media con
+σ_w 1,5 (100 finales), donde la de ahora deja 2,4. **Ni más mano porque
+sí**: con dieciséis quedan 1,3 m —es lo que queda de la mirada con rachas—,
+pero eso ya no es la mano de nadie con la que se haya afinado nada.
+
+### Volado
+
+`verificar-vuelo-entero.mjs`, reloj por uno, sobre una copia fija del commit
+(`h34g/vuelos/` del scratchpad) y con la traza del ala; el navegador, de uno
+en uno con el candado compartido. Lo de antes es de H34f (`h34f/r/`), sobre
+la rama que ya está en main, y el JAZ 90 en Tukã de H55c.
+
+| Vuelo | Antes | Con H34g |
+|---|---|---|
+| JAZ 120, Tukã, pista ocupada | 13,1 m del eje, 448 m, 1,92 m/s; 65 de 66 (✗ el eje) | **2,1 m**, 627 m, 2,03 m/s; 64 de 67 (✗ la zona, ✗ la toma, ✗ las gafas) |
+| JAZ 120, Tukã, pista ocupada, la segunda | — | no volado |
+| JAZ 120, Gran Canaria, 025/20 | 1,4 m, 429 m, 1,25 m/s y 2,5 m, 313 m, 1,74 m/s; 62 de 62 las dos | 4,1 m, 384 m, 2,15 m/s; 61 de 62 (✗ la toma) |
+| JAZ 90, Tukã | 1,2 m, 384 m, 0,68 m/s; 66 de 67 (✗ la consola al arrancar) | no volado |
+| JAZ 90, Los Rodeos | 1,3 m, 363 m, 1,12 m/s; 62 de 62 | no volado |
+
+Cada vuelo es una tirada, con las rachas que le tocan: no es una cifra.
+
+**El JAZ 120 en Tukã con la torre mandando al aire** (a 60 m, «pistaOcupada»,
+como en H34f): frustró y volvió por el circuito. La segunda final llegó a la
+puerta a 153 nudos bajando 4,1 m/s, a 3,9 m de la senda y 2,2 m del eje,
+cruzándolo a 1°. En el último kilómetro y medio, con la ganancia entre 8,4 y
+8,7, **el error de alabeo fue de 0,64° de media cuadrática** (2,44° en H34f),
+la inclinación iba 1,5 s detrás de la pedida (2,25 s) y el alerón, de media,
+en 0,07, como mucho 0,23; el avión no se apartó más de dos metros del eje y
+tocó a 2,1. Ojo: esta final tuvo menos aire que la de H34f —rachas de lado de
+2 m/s como mucho, donde aquella tuvo una de 6—, así que lo que dice de la
+mano es la mesa, no este vuelo.
+
+**Los tres rojos son de la toma, y no del alerón**: el alerón no toca ni la
+sustentación ni la resistencia en el modelo (solo los momentos de alabeo y
+de guiñada, `fdm.ts`), y el ala no pasó de un grado de inclinación en toda la
+recogida. Empezó a recoger a 13,6 m, 45 m pasado el umbral, bajando 3,6 m/s a
+**155 nudos, trece por encima de la Vref**, y una racha de cara de 2,4 m/s a
+nueve metros lo subió a 158. El punto de toma de H53 entró a 4,7 m; el perfil
+lo niveló a 2,4 m de ruedas y flotó ahí dos segundos y medio (de 346 a 542 m
+pasado el umbral, bajando de 0,2 a 0,8 m/s) con el punto pidiendo 1,9 m/s
+—el tope de H34f a esa altura—; para dárselos, el morro bajó de 4,8° a 1,8°,
+la bajada llegó a 1,3 m/s a metro y medio, la palanca tiró tarde y tocó a
+627 m y 2,03 m/s. Es lo de la toma del 747 en Tukã que ya se vio en H55c
+(2,06 m/s) y en la tanda 21 (2,01): la recogida que empieza con energía de
+más (H34f, «Lo que queda»). Se cuenta abajo.
+
+**El JAZ 120 en Gran Canaria**, con 5,7: a la puerta a 152 nudos, a 13,5 m
+del eje cruzándolo a 0,7° (en H34f, 5 y 9,1 m), y tocó a 4,1 m del eje. Esta
+final tuvo más aire que las dos de H34f: el alerón, de media, en 0,12 y hasta
+0,50 (allí 0,05–0,07 y hasta 0,29), y el error de alabeo de 1,8° de media
+cuadrática en los últimos 2,5 km (1,0 y 1,3). El rojo es otra vez la toma, y
+otra vez longitudinal: de 30 a 17 m de ruedas el morro bajó de 1,8° a −0,5° y
+la bajada creció de 2,7 a 5,1 m/s; recogió a 14,8 m bajando 4,8 m/s a 155
+nudos, el perfil la niveló alto, a 6,5 m (0,8 m/s), y desde ahí cayó hasta
+2,9 m/s y tocó a 2,15. La inclinación en la recogida llegó a 4°, que en la
+sustentación es un 0,2 %. Con una tirada no se puede decir si la mano más
+firme tiene algo que ver con esa bajada; el alerón no mueve el cabeceo en el
+modelo, pero sí la guiñada (`cnAileron`), y eso no se ha medido.
+
+### El vitest
+
+Las pruebas del banco (`scripts/`, siete ficheros, 55 pruebas), en verde, y
+`tsc` limpio. El vitest entero no se ha corrido: no se ha tocado `src/`.
+
+### Lo que queda
+
+- **La toma del 747 cuando empieza a recoger con energía de más**: en Tukã,
+  a la Vref más trece, el perfil lo nivela a dos metros y medio, flota y el
+  punto de toma lo empuja al suelo pasada la zona y a 2 m/s. Es longitudinal
+  y de antes (H55c, la tanda 21, H34f), y con la mano lateral arreglada es lo
+  que deja al 747 en Tukã sin el 66 de 66. No se ha tocado aquí.
+- **La ley de fuera, la mirada**, sigue como estaba: con rachas deja 1,3 m de
+  media al umbral aunque el ala fuera perfecta (la mesa con dieciséis), y a la
+  velocidad del 747 va menos amortiguada que a la de la avioneta. Con la mano
+  de ahora ya no se pasa como en H34f; si hiciera falta más, es ahí.
+- **La peor del 747 en Taguató con σ_w 2**, que en la mesa pasa de 30 a 34 m
+  con la mano nueva (la media y el p90 bajan).
+- **Los vuelos que no cupieron**: la segunda tirada del 747 en Tukã y los
+  dos del JAZ 90, en Tukã y en Los Rodeos. El navegador es de uno en uno y
+  estuvo ocupado por otros bancos; el primero de los míos entró veintitrés
+  minutos después de pedirlo y el segundo, quince. Por construcción, el JAZ 90
+  en Los Rodeos no cambia: en Taguató su ganancia es cuatro en toda la final.
+  El JAZ 90 en Tukã pasa a 6,2 y hay que volarlo; en la mesa mejora.
+- **El 747 en Gran Canaria, otra vez**: 61 de 62 por la toma (2,15 m/s, con
+  una bajada de 5 m/s a veinte metros que es del cabeceo), donde H34f dio 62
+  de 62 dos veces. Una tirada no separa la racha de la mano; hay que volarlo
+  más veces, y medir si el alerón de más, por la guiñada, mueve algo en la
+  recogida.

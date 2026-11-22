@@ -1045,6 +1045,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             bq: alabeoPedido !== null ? g(alabeoPedido) : null,
             alf: g(o.actitud?.().alabeo ?? 0),
             ai: +mandos.aileron.toFixed(3),
+            // Y la ganancia de la mano de la final, si la lleva (H34g). Ver
+            // `gananciaEnLaFinal`.
+            ka: manoDeLaFinal ? +gananciaEnLaFinal(s.airspeed).toFixed(2) : null,
             ru: +(mandos.rudder ?? 0).toFixed(3),
             be: g(s.beta ?? 0),
             pr: g(s.rollRate ?? 0),
@@ -1155,6 +1158,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     "/src/flight/aircraft.ts"
   );
   const { alabeoAFondo } = await import("/src/flight/mano.ts");
+  // Y la amortiguación de más de cada peldaño, para la mano de la final: ver
+  // `gananciaEnLaFinal`.
+  const { TIERS: LOS_PELDANOS, TAGUATO } = await import("/src/flight/tiers.ts");
   /** La senda que vuela el automático: altitud, su ritmo y desde cuándo. */
   let senda = null;
   let memoriaDeSenda = null;
@@ -3601,7 +3607,69 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * aire de Los Rodeos, cada vuelo es distinto.
    */
   const GANANCIA_DE_ALABEO_EN_FINAL = 4;
-  let gananciaDeAlabeo = GANANCIA_DE_ALABEO;
+  /**
+   * **Y la mano firme es un tiempo, no un número** (H34g).
+   *
+   * Cuatro es alerón por radián que falta, y con eso la mano no dice lo que
+   * se quería de ella —«sostiene las alas contra cada racha en un segundo»—,
+   * porque lo que tarda el ala en llegar depende de lo que rueda cada avión
+   * por unidad de alerón. Lo que falta de inclinación se cierra a
+   * `ganancia · ritmo por unidad`, por segundo. Con cuatro, el JAZ 90 en
+   * Taguató, con el que se afinó (#192), rueda 12,3 °/s por unidad y trae el
+   * ala en 1,2 s; el 747 rueda 8,7 y tarda 1,7, y en Tukã, con la
+   * amortiguación de más del peldaño, 5,7 y tarda 2,5. Con una mano el doble
+   * de lenta, la ley de fuera —que a la velocidad del 747 ya va poco
+   * amortiguada, con la mirada de trescientos metros— se pasa: en la traza de
+   * H34f, con el 747 en Tukã, el ala se quedó dos y tres grados por detrás de
+   * lo pedido catorce segundos con el alerón en 0,05–0,22, se fue a −16 m, y
+   * al corregir la inclinación iba tres segundos detrás de la pedida y cruzó
+   * el eje hasta +13 m. El tope (0,70) no se tocó.
+   *
+   * Así que cada avión lleva la ganancia que le da **el mismo tiempo que al
+   * JAZ 90 en Taguató con cuatro**, contando lo que rueda con la amortiguación
+   * de su peldaño —la de `extraDamping` en `flight/fdm.ts`, que suma
+   * 0,5·extraDamping al `clP` mientras no lleve el alabeo la mano del juego, y
+   * el banco no la lleva—, y nunca menos de cuatro. Ninguno de hélice cambia
+   * en Taguató, por construcción; en Tukã, con la amortiguación entera, el
+   * Twin Otter queda igual al JAZ 90 de referencia y los demás de hélice por
+   * encima. El JAZ 90 pasa a 6,2 en Tukã, el 747 a 5,7 en Taguató y a 8,7 en
+   * Tukã. Más ganancia no es un temblor: en la mesa lateral, con el modelo
+   * del juego y sus rachas, el ala del 747 sigue a la pedida con poco más de
+   * la mitad de error, y el alerón cambia de signo cuatro veces en el último
+   * kilómetro y medio en vez de dos y media, menos que el JAZ 90 con el que se
+   * afinó (cinco y media). Y no es que la ayuda de Tukã se pelee
+   * con el banco: con el mismo viento, Tukã y Taguató dejan al 747 igual de
+   * lejos del eje con cuatro, porque la amortiguación de más frena igual lo
+   * que gira el avión por la racha; el nivelador de alas no entra, que con la
+   * senda el banco declara el automático. Ver ADR 0027, H34g.
+   */
+  const gananciaEnLaFinal = (() => {
+    try {
+      const conSuAmortiguacion = (a, verdadera, extra) => {
+        const clp = Math.abs(a.aero.clP);
+        return (alabeoAFondo(a, verdadera) * clp) / (clp + 0.5 * extra);
+      };
+      const este = avionPorId(suyas.id);
+      const delPeldano =
+        LOS_PELDANOS.find((t) => t.id === peldano)?.assists.extraDamping ?? 0;
+      const elDeReferencia = avionPorId("jaz-90");
+      const conElQueSeAfino = conSuAmortiguacion(
+        elDeReferencia,
+        elDeReferencia.approachSpeed,
+        TAGUATO.assists.extraDamping,
+      );
+      return (verdadera) =>
+        Math.max(
+          GANANCIA_DE_ALABEO_EN_FINAL,
+          (GANANCIA_DE_ALABEO_EN_FINAL * conElQueSeAfino) /
+            conSuAmortiguacion(este, verdadera, delPeldano),
+        );
+    } catch {
+      return () => GANANCIA_DE_ALABEO_EN_FINAL;
+    }
+  })();
+  /** Si el alerón lo lleva la mano de la final: ver `gananciaEnLaFinal`. */
+  let manoDeLaFinal = false;
   /**
    * La última inclinación que pidió `alRumbo` en el aire, rad. Solo para la
    * traza del ala: sin ella no se distingue un serpenteo que pide el banco de
@@ -3641,9 +3709,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     if (SENCILLO) return Math.max(-1, Math.min(1, quiere / INCLINACION_A_FONDO_SENCILLO));
     const alabeo = o.actitud?.().alabeo ?? 0;
+    const ganancia = manoDeLaFinal
+      ? gananciaEnLaFinal(o.estado().airspeed)
+      : GANANCIA_DE_ALABEO;
     return Math.max(
       -topeDeAleronEnVuelo,
-      Math.min(topeDeAleronEnVuelo, (quiere - alabeo) * gananciaDeAlabeo),
+      Math.min(topeDeAleronEnVuelo, (quiere - alabeo) * ganancia),
     );
   };
   /** La inclinación del alerón a fondo en el modelo sencillo, rad: `VISUAL_BANK`. */
@@ -6595,8 +6666,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       etapa === "final" || (etapa === "subir" && aDonde >= 3)
         ? TOPE_DE_INCLINACION_EN_LA_BASE
         : TOPE_DE_INCLINACION;
-    gananciaDeAlabeo =
-      etapa === "final" ? GANANCIA_DE_ALABEO_EN_FINAL : GANANCIA_DE_ALABEO;
+    manoDeLaFinal = etapa === "final";
     if (etapa === "subir" && (enLaPuerta || masAltoEnFinal > 0)) {
       enLaPuerta = null;
       masAltoEnFinal = 0;
