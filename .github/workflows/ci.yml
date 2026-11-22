@@ -1,26 +1,31 @@
 # CI de Óga Veve.
 #
-# Comprueba tipos, pasa los tests del modelo de vuelo y verifica que el juego
-# compila, en cada push a main y en cada pull request. Tarda menos de un
-# minuto: si tarda más, deja de mirarse y deja de servir.
+# **En cada push y en cada propuesta, solo los cerrojos**: que ningún commit
+# acredite una herramienta y que no se suba un secreto. Son segundos, y son lo
+# que no se puede dejar para luego: un secreto subido ya está publicado.
 #
-# Node 20 es el mínimo declarado en `package.json`. Se prueba también en 22
-# **en las propuestas**, que es donde una regresión de runtime hay que cazarla:
-# después de entrar en main ya es tarde y cuesta el doble.
+# **Tipos, tests y build, solo con una etiqueta de versión o a mano**
+# (`workflow_dispatch`), una vez por tanda cerrada. Antes de cada push se pasan
+# en el portátil, que tarda menos y no hace esperar a nadie, y solo se sube en
+# verde: GitHub queda como la confirmación del final, no como el sitio donde se
+# descubren los fallos. En cada push eran de quince a treinta y cinco minutos
+# de GitHub (noviembre de 2026) para confirmar lo que el portátil ya sabía.
+#
+# Node 20 es el mínimo declarado en `package.json` y 22 el más alto que se
+# prueba: los dos, porque ahora esto corre poco y es donde una regresión de
+# runtime hay que cazarla.
 name: CI
 
 on:
   push:
     branches: [main]
-    # Lo que no puede romper una compilación no la dispara. Un cambio en el
-    # README encendía cuatro trabajos: dos de CI y dos de despliegue.
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-      - 'LICENSE'
+    tags: ['v*']
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 # **Una tanda por rama, y gana la última.**
 #
@@ -72,19 +77,41 @@ jobs:
           fi
           echo "✓ historia limpia"
 
+  # **Que no se suba un secreto.** La historia entera, por lo mismo que la
+  # atribución: lo que se quiere garantizar es que el repositorio esté limpio,
+  # no solo lo que llega. La versión, fijada y comprobada contra su suma, que va
+  # escrita aquí y no se baja del mismo sitio que el programa; es la misma que se
+  # pasa en el portátil. Lo que señala y no es un secreto, en `.gitleaksignore`
+  # con su porqué.
+  secretos:
+    name: Sin secretos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout con la historia entera
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks 8.30.1, contra su suma
+        run: |
+          V=8.30.1
+          curl -sSLf "https://github.com/gitleaks/gitleaks/releases/download/v${V}/gitleaks_${V}_linux_x64.tar.gz" -o /tmp/gitleaks.tgz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tgz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          /tmp/gitleaks version
+
+      - name: Ningún secreto en la historia
+        run: /tmp/gitleaks git --redact --verbose --exit-code 1 .
+
   verificar:
     name: Tipos, tests y build (Node ${{ matrix.node }})
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # **Las dos versiones en la propuesta, una al entrar.**
-        #
-        # Probar en 20 y en 22 existe para que una regresión de runtime no
-        # aparezca solo en producción, y el sitio donde eso hay que cazarlo es
-        # **antes** de entrar, no después. En cada push a main era pagar el
-        # doble por enterarse más tarde. Ver `engines` en `package.json`.
-        node: ${{ github.event_name == 'pull_request' && fromJSON('["20","22"]') || fromJSON('["22"]') }}
+        # Ver `engines` en `package.json`.
+        node: ['20', '22']
 
     steps:
       - name: Checkout

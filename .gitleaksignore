@@ -1,0 +1,8 @@
+# Lo que Gitleaks señala y no es un secreto, con su porqué.
+#
+# Los identificadores de voz de ElevenLabs de `docs/voces/voces.json`: dicen qué
+# voz lee cada papel y no abren nada sin la clave de la cuenta, que nunca ha
+# estado en el repositorio. La regla genérica de claves los confunde por su
+# forma. Va con la huella exacta, no con el fichero entero: una clave de verdad
+# que entrara ahí saldría igual.
+44f06f54af0f4886c3a0f81862a557e34923dcd3:docs/voces/voces.json:generic-api-key:7
