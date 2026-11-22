@@ -2804,5 +2804,20 @@
   ],
   "vuelo.sinAutorizacion": [
     "vuelo.sinAutorizacion"
+  ],
+  "ejercicio.carga.antes": [
+    "ejercicio.carga.antes"
+  ],
+  "ejercicio.carga.suelta": [
+    "ejercicio.carga.suelta"
+  ],
+  "ejercicio.carga.despacio": [
+    "ejercicio.carga.despacio"
+  ],
+  "ejercicio.carga.amarrada": [
+    "ejercicio.carga.amarrada"
+  ],
+  "ejercicio.carga.bien": [
+    "ejercicio.carga.bien"
   ]
 }

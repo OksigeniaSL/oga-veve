@@ -23339,5 +23339,80 @@
     "idioma": "es-PY",
     "texto": "Salimos sin que la torre nos autorizara a despegar. Eso se espera en el eje, hasta que la luz se pone verde fija. La pista es nuestra: seguí, y la próxima, esperala",
     "para": "con la pista dada, quien empieza la carrera sin la verde fija ni su «autorizado a despegar», en los tres peldaños de abajo"
+  },
+  {
+    "id": "ejercicio.carga.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos la carga suelta. La maleta de la bodega va sin amarrar, y subiendo se va a correr para atrás. Empujamos la palanca, compensamos y volvemos a la pista, con calma",
+    "para": "la carga suelta, antes de empezar: la maleta sin amarrar se va a correr subiendo",
+    "dicho": "Hoy practicamos la carga suelta. La maleta de la bodega va sin amarrar, y subiendo se va a correr para atrás. Empujamos la palanca, compensamos y volvemos a la pista, con calma.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.carga.suelta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se corrió la maleta para atrás, y la nariz quiere subir. Empujá la palanca y compensá",
+    "para": "la carga suelta: la maleta se corrió para atrás, empujar y compensar",
+    "dicho": "Se corrió la maleta para atrás, y la nariz quiere subir. Empujá la palanca y compensá.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.carga.despacio",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora suave: sin virajes fuertes y con velocidad de sobra, lejos de la pérdida. Volvemos a la pista más cercana",
+    "para": "la carga suelta, con la maleta ya al fondo: suave, con velocidad de sobra y a la pista más cercana",
+    "dicho": "Ahora suave: sin virajes fuertes y con velocidad de sobra, lejos de la pérdida. Volvemos a la pista más cercana.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.carga.amarrada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La maleta iba amarrada, y no se movió. Por eso se amarra",
+    "para": "la carga suelta, con las maletas amarradas en la hoja: no se movió nada",
+    "dicho": "La maleta iba amarrada, y no se movió. Por eso se amarra.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.carga.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ejercicio hecho: con la carga corrida, palanca adelante, suave y a tierra. Por eso la carga va siempre amarrada",
+    "para": "el cierre de la carga suelta, aterrizado",
+    "dicho": "Ejercicio hecho: con la carga corrida, palanca adelante, suave y a tierra. Por eso la carga va siempre amarrada.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   }
 ]

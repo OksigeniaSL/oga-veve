@@ -897,3 +897,8 @@
 897	vuelo.sinRemontar	La torre nos dijo ir primero por la pista y dar la vuelta, para tener más pista por delante. Hoy alcanza igual: seguí
 898	vuelo.sinRemontarNoAlcanza	La torre nos dijo ir primero por la pista y dar la vuelta: desde acá no alcanza la pista para despegar
 899	vuelo.sinAutorizacion	Salimos sin que la torre nos autorizara a despegar. Eso se espera en el eje, hasta que la luz se pone verde fija. La pista es nuestra: seguí, y la próxima, esperala
+900	ejercicio.carga.antes	Hoy practicamos la carga suelta. La maleta de la bodega va sin amarrar, y subiendo se va a correr para atrás. Empujamos la palanca, compensamos y volvemos a la pista, con calma
+901	ejercicio.carga.suelta	Se corrió la maleta para atrás, y la nariz quiere subir. Empujá la palanca y compensá
+902	ejercicio.carga.despacio	Ahora suave: sin virajes fuertes y con velocidad de sobra, lejos de la pérdida. Volvemos a la pista más cercana
+903	ejercicio.carga.amarrada	La maleta iba amarrada, y no se movió. Por eso se amarra
+904	ejercicio.carga.bien	Ejercicio hecho: con la carga corrida, palanca adelante, suave y a tierra. Por eso la carga va siempre amarrada

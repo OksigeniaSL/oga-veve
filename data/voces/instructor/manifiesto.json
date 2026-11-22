@@ -327,6 +327,26 @@
       "ms": 2317,
       "h": "c470a1a536"
     },
+    "ejercicio.carga.amarrada": {
+      "ms": 3407,
+      "h": "e6d443b828"
+    },
+    "ejercicio.carga.antes": {
+      "ms": 10007,
+      "h": "b5694eb219"
+    },
+    "ejercicio.carga.bien": {
+      "ms": 6707,
+      "h": "323a9fb6c4"
+    },
+    "ejercicio.carga.despacio": {
+      "ms": 6407,
+      "h": "23e1b9657c"
+    },
+    "ejercicio.carga.suelta": {
+      "ms": 4707,
+      "h": "f28626375a"
+    },
     "ejercicio.cortar": {
       "ms": 4207,
       "h": "3d31b756e9"
@@ -6418,6 +6438,21 @@
     ],
     "vuelo.sinAutorizacion": [
       "vuelo.sinAutorizacion"
+    ],
+    "ejercicio.carga.antes": [
+      "ejercicio.carga.antes"
+    ],
+    "ejercicio.carga.suelta": [
+      "ejercicio.carga.suelta"
+    ],
+    "ejercicio.carga.despacio": [
+      "ejercicio.carga.despacio"
+    ],
+    "ejercicio.carga.amarrada": [
+      "ejercicio.carga.amarrada"
+    ],
+    "ejercicio.carga.bien": [
+      "ejercicio.carga.bien"
     ]
   }
 }
