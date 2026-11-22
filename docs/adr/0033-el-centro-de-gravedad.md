@@ -264,6 +264,17 @@ atrás y 22 kg en la bodega 2, lo que admite. Pesa 1.055 kg, con el centro a
 - Despega a 26 m/s de aguja tras 328 m, y sube 2,2 m/s con las manos fuera.
 - En la marca del compensador el avión sigue volando.
 
+Y con 80 kg en la bodega 2 (`&bodegas=0,80`), fuera de la envolvente y
+pasado el punto neutro, con 1.113 kg:
+
+- **21 de 22** también;
+- despega a 26 m/s tras 420 m;
+- sube 2,1 m/s con las manos fuera.
+
+En dieciocho segundos con el compensador en su marca, la inestabilidad no
+llega a verse. Es lo que mide el tirón de la tabla: un grado que no vuelve en
+seis segundos.
+
 El piloto del banco tira hasta medio recorrido, contando el compensador, así
 que con la cola pesada la mano pone menos. No mide la palanca que hace falta,
 y eso lo mide la tabla de arriba.
