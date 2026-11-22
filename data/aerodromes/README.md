@@ -54,6 +54,27 @@ añadieron el 21-11-2026. En las fichas que no se rehicieron con
 `puestosDeOsm` (#191) hay puestos en mitad de su línea de entrada —el centro
 que sacaba el extractor de antes—; esos llevan la línea hasta ellos.
 
+### Lo que dice el AIP de cada puesto
+
+En los campos españoles con cartas PDC, cada puesto lleva en `aip` lo que
+publica la tabla de características de los puestos del AIP de ENAIRE: la
+salida (`R` empujado, `A` por sus medios, `AR` las dos), el mayor avión que
+admite y, donde la carta lo dice, si tiene pasarela; y la ficha lleva en
+`aipPuestos` las hojas de las que sale, con su fecha (WEF). La tabla entera,
+puesto a puesto, va en `aip/<campo>.pdc.json`. Esos datos no son de
+OpenStreetMap: son hechos de una publicación oficial (ver `CREDITOS.md`).
+
+```
+pdftotext -layout LE_AD_2_GCXO_PDC_1_en.pdf gcxo.txt
+node scripts/puestos-del-aip.mjs extraer GCXO gcxo.txt     # la tabla, a aip/gcxo.pdc.json
+node scripts/puestos-del-aip.mjs juntar GCXO LEMD GCLP     # a la ficha, y cada puesto a su punto publicado
+node scripts/puestos-del-aip.mjs juntar GCLA GCRR --sin-mover
+```
+
+`juntar` lleva al punto publicado el puesto que está a más de diez metros de
+él, con su línea de entrada cortada o alargada hasta allí (ADR 0025, enmienda
+H60f). En La Palma y Lanzarote se junta sin mover: ver la enmienda.
+
 ## La rejilla del pavimento, horneada
 
 Cada `<id>.pavimento.bin` es la rejilla de dos metros con la que las ruedas

@@ -18,6 +18,7 @@
  * (docs/adr/0002-modelo-de-vuelo-propio.md).
  */
 
+import { delAipEn } from "./world/puestos-del-aip";
 import {
   Box3,
   CanvasTexture,
@@ -23412,7 +23413,8 @@ export class Game {
     if (enElPuesto > 5) return;
     // Solo en un campo con pasarelas: ver `edificiosDePasarela`.
     const edificios = edificiosDePasarela(aero);
-    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, morro)) return;
+    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, morro, delAipEn(aero, puesto[0], puesto[1])))
+      return;
     const raya = this.rayaParaLaTripulacion();
     /*
      * Sobre su raya pintada, si la tiene y el tractor puede sacarlo por ella hasta la del
@@ -23554,7 +23556,8 @@ export class Game {
     // Desde la rueda de morro, que es lo que se para en el punto del puesto. Ver `world/rueda-de-morro.ts`.
     const rueda = ruedaDeMorroEn(s.position, s.heading, morro);
     const aqui: [number, number] = [rueda.x, rueda.z];
-    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, morro)) return false;
+    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, morro, delAipEn(this.plan?.aerodromoActual, aqui[0], aqui[1])))
+      return false;
     // Y con el morro al edificio, que si no se sale de frente como siempre.
     const pared = paredMasCercana(aqui[0], aqui[1], edificios);
     if (!pared || Math.abs(diferenciaDeRumbo(s.heading, pared.rumbo)) > Math.PI / 3) return false;

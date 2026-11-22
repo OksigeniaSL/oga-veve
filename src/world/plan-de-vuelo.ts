@@ -62,7 +62,15 @@ import { radioDeGiro } from "../flight/cabe";
 import { DE_LADO_RODANDO } from "../flight/fdm";
 import { ESPERA_MAXIMA } from "../flight/radio";
 import { PuertaAsignada } from "./puerta-asignada";
-import { edificiosDePasarela, empujeDesdeElPuesto, entradaDelPuesto, esPuestoDeContacto, rumboDeLaPintada } from "./remolque";
+import {
+  edificiosDePasarela,
+  empujeDesdeElPuesto,
+  entradaDelPuesto,
+  esPuestoDeContacto,
+  rayaDeLado,
+  rumboDeLaPintada,
+} from "./remolque";
+import { admite, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
 import { YA_EN_SU_SITIO } from "../flight/senalero";
 import {
@@ -1116,6 +1124,9 @@ const FRENADA = 1.6;
  * adivinarla.
  */
 const RADIO_CURVA = 18;
+
+/** Cuántos puestos más prueba el plan si del elegido se sale de lado: ver `saleDeLado`. */
+const OTROS_SI_SALE_DE_LADO = 8;
 
 /**
  * A partir de qué giro un codo de la ruta es una media vuelta, en radianes.
@@ -2503,7 +2514,7 @@ export class PlanDeVuelo {
    * Y en el asfalto **dibujado**, no en el de la holgura de la raya: ver
    * `puestosEnElPavimento` en `rodaje.ts`.
    */
-  private puestosEnElAsfalto(): readonly { ref: string | null; xy: Punto }[] {
+  private puestosEnElAsfalto(): readonly { ref: string | null; xy: Punto; aip?: DelAip }[] {
     /*
      * **Y una vez por campo.** Mirar cada puesto contra cada pista, calle y
      * plataforma del fichero son 425 puestos por 756 calles en Barajas, y
@@ -2512,18 +2523,23 @@ export class PlanDeVuelo {
      * Sale de los puestos del fichero y del grafo, y el grafo se rehace al
      * mudarse de campo: guardado contra él, se tira solo.
      */
-    if (this.asfaltoGuardado?.grafo !== this.grafo)
-      this.asfaltoGuardado = {
-        grafo: this.grafo,
-        puestos: puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo),
-      };
+    if (this.asfaltoGuardado?.grafo !== this.grafo) {
+      const todos = puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo);
+      /*
+       * **Y de esos, los que admiten este avión** según el AIP (H60f): el mayor que publica
+       * cada puesto, por envergadura. Si no admite ninguno, todos, como antes: el avión tiene
+       * que tener dónde estar, y que llegue a ese campo no lo decide el puesto.
+       */
+      const admitidos = todos.filter((p) => admite(p.aip, this.avion.wingSpan));
+      this.asfaltoGuardado = { grafo: this.grafo, puestos: admitidos.length ? admitidos : todos };
+    }
     return this.asfaltoGuardado.puestos;
   }
 
   /** Ver `puestosEnElAsfalto`. */
   private asfaltoGuardado: {
     readonly grafo: Grafo;
-    readonly puestos: readonly { ref: string | null; xy: Punto }[];
+    readonly puestos: readonly { ref: string | null; xy: Punto; aip?: DelAip }[];
   } | null = null;
 
   /** Los puestos de los que puede salir una avioneta, sin ordenar. */
@@ -2609,7 +2625,14 @@ export class PlanDeVuelo {
     if (!this.deLineaGuardados) {
       const todos = this.aero.parkingPositions ?? [];
       const hueco = Math.min(this.avion.wingSpan, ENVERGADURA_DE_CLAVE_C) + HOLGURA_DE_CLAVE_C;
-      const sinPared = this.puestosEnElAsfalto().filter((p) => this.cabeDeLinea(p.xy));
+      /*
+       * Lejos de las paredes, o con un mayor avión publicado en el AIP que lo admite (H60f):
+       * ese número ya cuenta las paredes, las pasarelas y el puesto de al lado. El 24 de Los
+       * Rodeos es de B744 y tiene el tejado del pasillo de las pasarelas a un ala (H59).
+       */
+      const sinPared = this.puestosEnElAsfalto().filter(
+        (p) => (p.aip?.max != null && admite(p.aip, this.avion.wingSpan)) || this.cabeDeLinea(p.xy),
+      );
       const conSitio = sinPared.filter((p) => conSitioParaElAla(p, todos, hueco));
       /*
        * **Y en una plataforma pequeña, uno sí y otro no.** En Encarnación los
@@ -2726,13 +2749,20 @@ export class PlanDeVuelo {
    * **Los puestos de contacto para este avión**: los de pasarela, pegados a un
    * edificio con el morro sin meterse en él, y solo en un campo que embarca por
    * pasarela. Ver `esPuestoDeContacto` y `edificiosDePasarela`.
+   *
+   * **Y que el AIP no lo desmienta** (H60f, `valeParaElEmpuje`): de contacto si la carta
+   * lo dice, de salida con tractor y que admita el avión. Por la 18 de Barajas el plan
+   * sacaba a los reactores empujados del 329, que la regla de la pared daba por de
+   * contacto y el AIP publica de salida autónoma y sin pasarela.
    */
   private puestosDeContacto(): { ref: string | null; xy: Punto }[] {
     if (this.deContactoGuardados) return this.deContactoGuardados;
     const morro = morroDe(this.avion);
     const edificios = edificiosDePasarela(this.aero);
     this.deContactoGuardados = vaALaPasarela(this.avion)
-      ? this.puestosEnElAsfalto().filter((p) => esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, morro))
+      ? this.puestosEnElAsfalto().filter(
+          (p) => esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, morro) && valeParaElEmpuje(p.aip, this.avion.wingSpan),
+        )
       : [];
     return this.deContactoGuardados;
   }
@@ -2865,9 +2895,54 @@ export class PlanDeVuelo {
       viaje: Math.round(p.viaje),
       cruza: p.cruza,
     }));
-    const donde = this.elegirSalida(pares);
+    let donde = this.elegirSalida(pares);
+    /*
+     * **Y de un puesto del que el tractor sepa sacarlo** (H60f): si de ahí se sale empujado y
+     * la raya sale del puesto de lado —el empuje se queda en quince metros con el avión
+     * atravesado a ella—, el siguiente de la lista que no, hasta `OTROS_SI_SALE_DE_LADO`; si
+     * ninguno, el primero, como antes. Con el AIP el 329 de Barajas dejó de ser de contacto,
+     * y por la 18 el plan pasó al 330, que sale así (los «siguen mal» de la H60e).
+     */
+    if (donde && this.deContacto && vaALaPasarela(this.avion)) {
+      let quedan = pares;
+      let otro: ParDeSalida | null = donde;
+      for (let i = 0; otro && i < OTROS_SI_SALE_DE_LADO && this.saleDeLado(otro); i++) {
+        const fuera = otro.puesto;
+        quedan = quedan.filter((p) => p.puesto !== fuera);
+        otro = this.elegirSalida(quedan);
+      }
+      if (otro && !this.saleDeLado(otro)) donde = otro;
+    }
     if (donde) this.par = { puesto: donde.puesto, espera: donde.espera };
     return this.par;
+  }
+
+  /**
+   * **Si de este par se sale empujado con la raya de lado**: con la ruta como se pinta y el
+   * avión aparcado como lo pone `empujeDesdeElPuesto`, la raya sale a más de cincuenta grados
+   * de su cola (`rayaDeLado`). Solo si de ahí se sale empujado.
+   */
+  private saleDeLado(par: ParDeSalida): boolean {
+    const [px, py] = par.puesto.xy;
+    const x = px;
+    const z = -py;
+    const edificios = edificiosDePasarela(this.aero);
+    const morro = morroDe(this.avion);
+    if (!esPuestoDeContacto(x, z, edificios, morro)) return false;
+    const ruta = this.salidaDesde(par.puesto.xy, par.espera);
+    if (!ruta) return false;
+    const crudos = ruta.puntos.map((p) => [p[0], -p[1]] as Punto);
+    const { puntos } = alisarRuta(crudos, ruta.exactaDesde, Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)), ruta.exactaHasta);
+    const raya = puntos.map(([qx, qz]) => ({ x: qx, z: qz }));
+    const enElSuyo = empujeDesdeElPuesto(
+      { x, z },
+      edificios,
+      raya,
+      entradaDelPuesto(this.aero, x, z),
+      this.avion.batalla,
+      (r) => conLaRuedaEn({ x, z }, r, morro),
+    );
+    return enElSuyo !== null && rayaDeLado(enElSuyo.rumbo, raya);
   }
 
   /**

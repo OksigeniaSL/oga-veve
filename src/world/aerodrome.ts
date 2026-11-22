@@ -22,6 +22,7 @@
  * dos umbrales en vez de tumbarlo todo a una cota.
  */
 
+import type { DelAip } from "./puestos-del-aip";
 import { encogerConLaDistancia, lucesDeDosCaras } from "./material-de-luces";
 import { queSeVeaDeLejos, segarLaPista } from "./pista-de-hierba";
 import {
@@ -294,7 +295,20 @@ export interface Aerodrome {
      * `scripts/puestos-de-osm.mjs`.
      */
     readonly entrada?: readonly Punto[];
+    /**
+     * **Lo que publica el AIP del puesto**: cómo se sale, el mayor avión que admite y si
+     * es de contacto (H60f). Solo en los campos españoles con cartas PDC. Ver
+     * `world/puestos-del-aip.ts` y `scripts/puestos-del-aip.mjs`.
+     */
+    readonly aip?: DelAip;
   }[];
+  /** De dónde sale `aip` de los puestos: la fuente, cuándo se leyó y cada hoja con su fecha (WEF). */
+  readonly aipPuestos?: {
+    readonly fuente: string;
+    readonly url: string;
+    readonly leido: string;
+    readonly cartas: readonly { readonly carta: string | null; readonly wef: string | null }[];
+  };
   /**
    * Las ayudas **visuales** de OpenStreetMap: PAPI, VASI, luces de aproximación.
    *

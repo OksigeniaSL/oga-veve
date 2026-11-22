@@ -1549,19 +1549,174 @@ menos de lo que alcanza una pasarela de la terminal, que es la única regla que 
   Taguato Ruvicha, 10,1 m (sin ayuda, recto); de 18 m, Tukã 4,3 y Taguato 8,8; y Guyrami con el mando suelto llega al
   punto de espera sin pisar fuera del asfalto.
 
+## Enmienda (22-11-2026, H60f): cada puesto sabe de qué tipo es y cómo se sale, del AIP
+
+### El caso
+
+Lo que dejó la H60e: por la 18 de Barajas el plan sacaba a los tres reactores empujados del 329, que en el AIP (AD 2-LEMD
+PDC 2.3, WEF 25-DEC-25) es de la rampa R-12, de salida autónoma («A») y no está entre los de contacto, y su punto de la
+ficha caía a 32 m del publicado. El juego daba por de contacto cualquier puesto a lo que alcanza una pasarela de la
+terminal (`esPuestoDeContacto`), y no sabía de ninguno si se sale de él con tractor o por sus medios, ni qué avión cabe.
+
+### Lo que publica el AIP, puesto a puesto
+
+Las cartas PDC de la parte AD 2 (aip.enaire.es) traen la tabla «Características de los puestos de estacionamiento»:
+coordenadas, salida («R» retroceso, «A» autónoma, «A-R» o «A/R» las dos), mayor avión (designador de tipo de la OACI),
+hacia dónde queda el morro y observaciones, con las incompatibilidades. Si el puesto tiene pasarela lo dice una
+observación —la (2) en Los Rodeos, la (4) en Gran Canaria— o una lista —la observación (1) de cada carta de Barajas:
+«T-1 a T-35 y 70 a 74», «PRKG 300 a 312, 330 a 394 y 500 a 586»—. Tenerife Sur, Lanzarote, La Palma, Fuerteventura y
+El Hierro no lo dicen; Barajas no publica mayor avión. La Gomera y Cuatro Vientos no tienen carta PDC.
+
+| Campo | Hojas (WEF) | Puestos en la carta | De la ficha, casados por `ref` |
+|---|---|---|---|
+| Los Rodeos (GCXO) | PDC 1.2 (06-AUG-26) | 45 | 15 de 16 |
+| Barajas (LEMD) | PDC 1.3 a 1.7 (29-OCT-26), 2.3 (25-DEC-25), 2.4 a 2.6 (01-OCT-26) | 409 | 409 de 424 |
+| Gran Canaria (GCLP) | PDC 1.3 a 1.5 (09-JUL-26) | 84 | 81 de 82 |
+| Tenerife Sur (GCTS) | PDC 1.3 (16-APR-26) y 1.4 (05-SEP-24) | 56 | 56 de 65 |
+| Lanzarote (GCRR) | PDC 1 (01-OCT-26) | 31 | 27 de 55 |
+| La Palma (GCLA) | PDC 1.2 (15-MAY-25) | 19 | 16 de 18 |
+| Fuerteventura (GCFV) | PDC 1.2 y 1.3 (07-AUG-25) | 55 | 0 de 4 (los de la ficha son a mano) |
+| El Hierro (GCHI) | PDC 1 (11-JUN-26) | 6 | 6 de 9 |
+
+Se leen con `pdftotext -layout` y `scripts/puestos-del-aip.mjs extraer`, y la tabla entera, cada puesto con su hoja,
+va en `data/aerodromes/aip/<campo>.pdc.json`; `juntar` pone a cada puesto de la ficha `aip` —salida, mayor avión,
+contacto y hoja— y a la ficha `aipPuestos`, con las hojas y su fecha. Las filas sin salida —los puestos de prueba de
+motores de Barajas, los helipuertos de Fuerteventura, los de aviación general de Lanzarote— no se leen. En un campo
+cuyo AIP dice cuáles son de contacto, el puesto de la ficha que no está en la carta no lo es (`contacto: false`, salida
+`null`): en Barajas el lavadero, los cuatro de prueba de motores, el 403, dos copias del 177 y siete sin `ref`; en Los
+Rodeos y Gran Canaria, uno sin `ref` en cada uno.
+
+**Pettirossi.** La DINAC publica en AD 2.1-14.2 (07 AUG 2025, AMDT AIRAC 01) el plano de estacionamiento de la
+plataforma 1 con las coordenadas de las seis puertas, «GATE 1» a «GATE 6», y nada más: ni salida, ni mayor avión. Las
+cuatro primeras caen a 4–8 m de los puestos 1 a 4 de la ficha; el 5 y el 6, a 23 y 25 m. Se queda como estaba: sin la
+salida y el mayor avión no hay nada que el plan pueda usar, y mover el 6 —del que sale el plan por la 20— pide su
+barrido. Ver «Lo que queda».
+
+### Decisión
+
+1. **El plan solo saca empujado de un puesto que el AIP no desmiente** (`valeParaElEmpuje`, en
+   `world/puestos-del-aip.ts`): de contacto si la carta lo dice, de salida con tractor («R» o «AR») y que admita el
+   avión. La regla de la pared se queda —es la que sabe dónde está la pasarela en el dibujo—, y el AIP quita lo que ella
+   deja pasar y no es así. Sin el dato, manda la pared, como antes.
+2. **Nadie va a un puesto que no lo admite** (`admite`, en `puestosEnElAsfalto`): el mayor avión de cada puesto, por
+   envergadura, que es lo que da la letra de clave de la OACI. Un puesto de helicóptero no admite ningún avión. Si en un
+   campo no lo admite ninguno, todos, como antes: el avión tiene que tener dónde estar.
+3. **De un puesto «A» se sale por sus medios** (`saleConRemolque`, con lo del AIP): el tractor no se engancha y el
+   avión rueda hacia delante, como la avioneta; y lo mismo en uno que la carta no da por de contacto. El tráfico usa la
+   misma regla, sin envergadura, que la suya no se sabe allí.
+4. **Si el AIP publica un mayor avión que lo admite, cabe** (`puestosDeLinea`): ese número ya cuenta las paredes, las
+   pasarelas y el puesto de al lado. Sin esto, en Los Rodeos el JAZ 110 —que solo cabe en los de B744, el 12 y el 24,
+   con el tejado del pasillo de las pasarelas a un ala (H59)— se iba a la regla de la avioneta.
+5. **El plan no elige un puesto del que se sale de lado** (`saleDeLado`, en `parDeSalida`): si del elegido se sale
+   empujado y la raya sale del puesto a más de cincuenta grados de la cola (`rayaDeLado`), prueba el siguiente de la
+   lista, hasta ocho; si ninguno, el primero. Por la 18 de Barajas, sin el 329, el siguiente era el 330, que sale así:
+   quince metros de empuje con el avión atravesado (era de los «siguen mal» de la H60e, y lo sigue siendo).
+6. **El puesto lejos de su punto publicado, a él por su raya** (`juntar`): la regla de la H60e —el puesto va a su
+   parada— con el AIP como fuente de la parada. A más de diez metros (`LEJOS`), el puesto va al punto publicado, con su
+   línea de entrada cortada o alargada hasta él; si el punto publicado no cae en su raya ni en su prolongación (tres
+   metros), la ficha y el AIP no dicen el mismo puesto, y no se mueve. Dos copias con su `ref` en el mismo punto se
+   quedan en una.
+
+| Campo | A su punto publicado | Lejos y fuera de su raya, sin mover | Copias quitadas |
+|---|---|---|---|
+| Barajas | 327, de 12 a 124 m (mediana 45) | 14: el T27, el T31, el 626 al 628, el 120 al 124A y el LAV2 | 9 |
+| Gran Canaria | 76, de 10 a 36 m | — | — |
+| Tenerife Sur | 1, el S41, 14 m | — | — |
+| Los Rodeos | — | 1, el 13, a 11 m al lado de su raya | — |
+
+**La Palma y Lanzarote, sin mover** (`--sin-mover`): con ellos movidos —los 16 de La Palma, de 29 a 98 m, y 8 de
+Lanzarote— salían de lado diez filas de La Palma y tres del T6 de Lanzarote que salían bien, y tres del plan en La
+Palma. Llevan lo del AIP y siguen donde estaban. Ver «Lo que queda».
+
+### Los puestos que cambian
+
+**De tipo**, con el JAZ 90 —los de contacto de los que el plan lo puede sacar empujado—: en Los Rodeos dejan de serlo
+el 17 («A», ATR 72, sin pasarela) y uno sin `ref`; en Gran Canaria, diez —el T13, el T12A, el T10, del M01 al M04, el
+N02 y el N03 sin pasarela en la carta, y uno sin `ref`—; en Barajas, seis —del 320 al 329, de la R-12, que la carta no
+da por de contacto— y pasan a serlo 36 que estaban en el centro de su línea y ahora están en su parada. Con el JAZ 110 y
+el JAZ 120, además, los que no los admiten: en Los Rodeos se quedan el 12 y el 24 (el JAZ 120, solo el 24: al 12 ya no
+llegaba por la regla de la pared), en La Palma el 6A y el 4A (A339), en Tenerife Sur tres de nueve, en Gran Canaria dos de 23 y en
+Lanzarote ocho de catorce. **De sitio**, 404: los de la tabla de arriba.
+
+**El puesto del que se sale con pasaje**, el de `puesto-de-salida-de-cada-campo.json`, rehecho con
+`OGA_REHACER_SALIDAS=1` después de mirarlo (58 de sus 418 claves cambian; 19 con pasaje):
+
+| Campo, avión y pista | Antes | Ahora | En el AIP |
+|---|---|---|---|
+| Barajas, JAZ 90, 36 | 540 | **516** | «R», de contacto, APROAR S (PDC 2.4) |
+| Barajas, JAZ 110 y 120, 36 | 578 | **508** | «R», de contacto, APROAR S (PDC 2.4) |
+| Barajas, JAZ 90 y 110, 18 | 329 | **332** | «R», de contacto, APROAR N (PDC 2.3) |
+| Barajas, JAZ 120, 18 | 329 | **334** | ídem |
+| Gran Canaria, los tres, 03 | T13 (sin pasarela) | **T12** | «R», B744, pasarela (PDC 1.4) |
+| Gran Canaria, JAZ 90, 21 | M02 (ATR 72, sin pasarela) | **T01** | «R», C17, pasarela |
+| Gran Canaria, JAZ 110 y 120, 21 | M02 | **T12** | ídem que arriba |
+| Los Rodeos, JAZ 120, 30 | uno sin `ref`, junto al 12 | **24** | «R», B744, pasarela (PDC 1.2) |
+| Tenerife Sur, JAZ 110 y 120, 07 | H43 (B763) | **R42** | «R», B77W |
+| Lanzarote, JAZ 110 y 120, 03 | T2 (B763) | **T1** | «R», B744 |
+| La Palma, JAZ 110 y 120, 18 | 10 (A321) | **6A** | «R», A339 |
+
+En Barajas por la 36 el puesto cambia porque el 516 y el 508 estaban en el centro de su línea, a 59 m de su parada y
+demasiado lejos de la terminal para ser de contacto; en su sitio lo son, y se rueda menos desde ellos.
+
+### Lo medido
+
+- **El barrido** (`OGA_BARRIDO_DEL_EMPUJE=1`), antes —main en 0ef15dda— y después:
+
+  | | Antes | Con el AIP, sin el punto 5 y con La Palma y Lanzarote movidos | Después |
+  |---|---|---|---|
+  | Empujes | 904 | 890 | **878** |
+  | Sobre la raya y mirando por ella | 848 | 780 | **782** |
+  | Del puesto que elige el plan | 42 de 42 | 36 de 42 | **42 de 42** |
+  | Salen de lado | 45 | 95 | 75 |
+  | Aparcados sobre su raya pintada, de los que la tienen | 729 de 798 | 663 de 754 | 662 de 740 |
+
+  Fila a fila, contra antes: **6 de bien a mal**, las del N01 de Gran Canaria con los tres por las dos cabeceras, y 4 de
+  mal a bien, el 306 de Barajas con el JAZ 110 y el JAZ 120. El N01 es de contacto y «R» en el AIP (PDC 1.3), pero su
+  punto publicado queda a 36 m del de la ficha, que estaba en el centro de su línea: los «bien» de antes eran de un
+  puesto que no está ahí, como el 560 de la H60d. Desde su sitio la raya sale de lado, y el plan no lo elige. Salen 252
+  filas —los puestos que el AIP no da por de contacto, de salida autónoma o que no admiten el avión, y las copias— y
+  entran 226, de los puestos que pasan a ser de contacto en su parada: 180 bien y 46 no, todos en Barajas (el 538, el
+  539, el 548, el 579 y del 582 al 585). Siguen mal el 330 y el 370 de Barajas.
+- **Vitest de lo tocado**: el barrido, la prueba nueva (`puestos-del-aip.test.ts`), los puestos de línea, el empuje con
+  quien juega en su puesto —el reactor del tráfico de Los Rodeos sale ahora empujado del 14 y no del 17—, las líneas de
+  entrada y la salida de Barajas: 6 ficheros, 74 pruebas en verde; y antes, con 22 ficheros de lo tocado, 455 en verde y
+  11 en rojo que son las de arriba y el puesto de salida de cada campo, rehecho.
+- **Vitest entero**, una vez, con el código terminado y el barrido dentro: 578 de 578 ficheros, 11.550 pruebas en
+  verde, 30 saltadas y una pendiente, ninguna en rojo, en 1.281 s con dos hilos y los bancos del navegador volando al
+  lado. El barrido de dentro, el mismo: 782 de 878 y 42 de 42.
+- **El remolque de quien juega**, por la 12 y con la tarjeta Intel, en los dos peldaños: **todo en orden**, lo mismo
+  que en la H60e: desde el 24 —«R», B744 y pasarela—, −1,00 contra el morro, 119 de 119 m empujado, giro de 140° con
+  radio 11,5 m, rumbo al acabar 201° y 0° en los primeros treinta metros rodando; nada dentro de un edificio. En la
+  captura del empuje va de culo por la raya verde con la persona de tierra en el morro, y en la del saludo está en la Z
+  mirando al sur-suroeste, con el tractor apartado y la raya por delante.
+- **El remolque de quien juega con el viento del 300** (`OGA_VIENTO=300/10`), con la tarjeta Intel: **todo en orden**
+  en los dos peldaños, lo mismo que en la H60e. Desde el 12, sobre su pintada; 161 de 161 m empujado, giro de 108° con
+  radio 11,5 m, rumbo al acabar 112°, y 11° en Guyrami y 0° en el de cabina en los primeros treinta metros rodando;
+  nada dentro de un edificio. En la captura del saludo está en la calle con la raya por delante y el tractor apartado.
+- **El remolque de quien juega en Barajas** (`OGA_ESCENARIO=barajas`, por la 36L), con el JAZ 90, la tarjeta Intel y
+  solo el peldaño de Guyrami: **todo en orden**. Ahora desde el 516, de contacto, con el morro a 50,6 m de la terminal y
+  de frente a ella; −1,00 contra el morro, **122 de 122 m empujado, giro de 91° con radio 11,5 m, rumbo al acabar 181°**
+  —el APROAR S del AIP— y 13° en los primeros treinta metros rodando; nada dentro de un edificio y la terminal de 56,2 a
+  174,9 m. En la captura del puesto el avión mira a los pilares de la T4 con la baliza por encender, y en la del saludo
+  está en la calle mirando al sur, con el tractor apartado, el señalero saludando y la raya verde por delante.
+- **No se volvió a mirar** el remolque del tráfico en el navegador: en el vitest, el reactor del tráfico de Los Rodeos
+  sale ahora empujado del 14, con el tractor antes de cinco segundos; el banco del tráfico (`ver-remolque-del-trafico`)
+  mira el 17, y hay que mirarlo con el 14.
+
 ## Lo que queda
 
-**El 329 de Barajas, del que se sale por la 18.** El plan saca de él a los tres reactores con pasaje, empujados, y en el
-AIP (AD 2-LEMD PDC 2.3, WEF 25-DEC-25) es de la rampa R-12, de salida autónoma («A») y no está entre los de contacto
-(«PRKG 300 a 312, 330 a 394 y 500 a 586»); el punto de la ficha, que lo tiene dos veces, queda a 32 y 34 m del
-publicado. El juego da por puesto de contacto cualquiera que quede a lo que alcanza una pasarela de la terminal
-(`esPuestoDeContacto`), y el 329 cae dentro. Arreglarlo pide saber de cada puesto si es de
-contacto y cómo sale, que el AIP publica y la ficha no trae, y rehacer el puesto de salida por la 18. Ver la H60e.
-Siguen saliendo mal en el barrido, como antes, el 306, el 330 y el 370 de Barajas.
+**La Palma, Lanzarote y Pettirossi, a su punto publicado** (H60f). Los dos primeros llevan lo del AIP pero no se
+mueven: en La Palma los dieciséis puestos quedan a 29–98 m de su punto publicado, todos por su raya, y llevados allí
+salen de lado diez empujes que salían bien y tres del plan; en Lanzarote, el T6. Lo que falta es lo de la H60e para el
+330 de Barajas: que el avión sepa salir de un puesto cuya raya del plan arranca de lado. Pettirossi: la DINAC publica
+las coordenadas de las seis puertas (AD 2.1-14.2, 07 AUG 2025) y nada más; el 5 y el 6 quedan a 23 y 25 m de la ficha.
+Moverlos pide su barrido y el banco de Asunción. **El APROAR del AIP** —hacia dónde queda el morro al acabar el
+retroceso— está en `data/aerodromes/aip/` y el empuje no lo usa. Siguen saliendo mal en el barrido el 330 y el 370 de
+Barajas, y de los nuevos de contacto el 538, el 539, el 548, el 579 y del 582 al 585; el plan no los elige.
 
-**Los puestos de las fichas de antes de #191**, en La Palma, Lanzarote, Gran Canaria, Pettirossi y Barajas: siguen en
-el centro de su línea de entrada y repetidos con su nodo, salvo los que tienen otra calle cruzando su línea, que
-están en su parada desde la H60e. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y Tenerife Sur, mueve el
+**Los puestos de las fichas de antes de #191**, en La Palma, Lanzarote y Pettirossi: siguen en el centro de su línea
+de entrada y repetidos con su nodo. Los de Barajas y Gran Canaria están en su parada desde la H60f, salvo los catorce
+de Barajas cuyo punto publicado no cae en su raya. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y Tenerife Sur, mueve el
 puesto del que se sale en esos campos y pide su barrido y sus bancos: con los 440 de los cuatro campos con respuesta
 guardada llevados a su parada, el barrido daba 27 de 42 del plan (H60d, sin la regla de la H60e).
 
