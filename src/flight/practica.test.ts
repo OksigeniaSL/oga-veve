@@ -95,6 +95,8 @@ describe("los ejercicios que se ofrecen", () => {
       "en-la-carrera",
       "tren-arriba",
       "un-motor",
+      // Y el tren de nariz que no sale, que es de su tren: ver abajo.
+      "tren-de-morro",
     ]);
     // Y ninguno de los suyos se le ofrece a los de turbina.
     for (const a of [JAZ_50, ARASUNU, ARAI, TIJERETA, YVAGA]) {
@@ -420,5 +422,68 @@ describe("si sale mal, se repite", () => {
       p.reiniciar();
     }
     expect(vistas.size).toBe(3);
+  });
+});
+
+/*
+ * **El tren de nariz que no sale** (#90, H70): al pedir el tren fuera para
+ * aterrizar, la pata de morro se queda en su pozo. Lo de su manual: la
+ * extensión de emergencia por debajo de 85 KIAS (POH del Seneca III, VB-1110,
+ * p. 7-7); y si tampoco, PAN PAN, los bomberos esperando y la toma.
+ */
+describe("el tren de nariz que no sale", () => {
+  const VP = { v1: 34, vr: 37 };
+  const morro = () => new Practica(ejercicioPorId("tren-de-morro")!, PANAMBI, VP, () => 0.1);
+  const volando = { ...QUIETO, enElSuelo: false, enPista: false, parado: false, sobreElCampo: 300 };
+
+  it("solo en el bimotor de tren retráctil y desde Taguató", () => {
+    const e = ejercicioPorId("tren-de-morro")!;
+    expect(esAvisado(e)).toBe(true);
+    for (const a of AIRCRAFT) {
+      const ofrece = ejerciciosPara("taguato", a).some((x) => x.id === "tren-de-morro");
+      expect(ofrece, a.id).toBe(a.id === "jaz-40");
+      expect(ejerciciosPara("tuka", a).some((x) => x.id === "tren-de-morro"), a.id).toBe(false);
+    }
+  });
+
+  it("sin haber metido el tren no falla nada: no hay pata que no salga", () => {
+    const p = morro();
+    p.paso({ ...QUIETO, corriendo: true, parado: false, indicada: 40 }, 0.1);
+    expect(cuales(durante(p, { ...volando, tren: "fuera", indicada: 45 }, 5))).toEqual([]);
+    expect(p.fase).toBe("armada");
+  });
+
+  it("al sacar el tren, falla; la de emergencia, despacio; y tampoco: PAN PAN y los bomberos", () => {
+    const p = morro();
+    p.paso({ ...QUIETO, corriendo: true, parado: false, indicada: 40 }, 0.1);
+    durante(p, { ...volando, tren: "dentro", indicada: 50 }, 3);
+    expect(p.paso({ ...volando, tren: "fuera", indicada: 50 }, 0.1)).toEqual([
+      { que: "fallo", averia: "morro", motor: null, parar: false, enElSuelo: false },
+    ]);
+    // Deprisa no se prueba: por encima de 85 KIAS el manual no deja.
+    expect(cuales(durante(p, { ...volando, tren: "fuera", indicada: 46 }, 10))).toEqual([]);
+    expect(p.extensionProbada).toBe(false);
+    const despacio = p.paso({ ...volando, tren: "fuera", indicada: 42 }, 0.1);
+    expect(cuales(despacio)).toEqual(["extension"]);
+    expect(p.extensionProbada).toBe(true);
+    // Lo que tarda en salir un tren, y no sale.
+    expect(cuales(durante(p, { ...volando, tren: "fuera", indicada: 42 }, 6.5))).toEqual([]);
+    const tampoco = durante(p, { ...volando, tren: "fuera", indicada: 42 }, 1);
+    expect(tampoco).toEqual([{ que: "tampoco" }, { que: "declarar", socorro: "panpan" }]);
+    expect(p.declaradaYa).toBe(true);
+    expect(cuales(durante(p, { ...volando, tren: "fuera", indicada: 42, enFinal: true }, 1))).toEqual(["bomberos"]);
+    // En la pista, rodando, y al pararse, «vuelta».
+    durante(p, { ...QUIETO, parado: false, indicada: 30, tren: "fuera" }, 5);
+    expect(cuales(durante(p, { ...QUIETO, tren: "fuera" }, 1))).toEqual(["cerrar"]);
+    expect(p.cierre).toBe("vuelta");
+  });
+
+  it("y si sale mal, sale mal el ejercicio", () => {
+    const p = morro();
+    p.paso({ ...QUIETO, corriendo: true, parado: false, indicada: 40 }, 0.1);
+    durante(p, { ...volando, tren: "dentro", indicada: 50 }, 1);
+    p.paso({ ...volando, tren: "fuera", indicada: 50 }, 0.1);
+    expect(cuales(p.paso({ ...QUIETO, percance: true }, 0.1))).toEqual(["cerrar"]);
+    expect(p.cierre).toBe("otraVez");
   });
 });

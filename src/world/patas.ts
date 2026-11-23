@@ -55,13 +55,19 @@ interface Pata {
   readonly eje: Vector3;
   /** Lo que gira de fuera a dentro, en radianes. */
   readonly angulo: number;
+  /** Si es la pata de morro, por el nombre de su bisagra. */
+  readonly deMorro: boolean;
 }
 
 export interface Patas {
   /** Cuántas patas se meten. Cero si este modelo no trae tren con bisagra. */
   readonly cuantas: number;
-  /** Las pone donde toca. `donde` es 0 dentro y 1 fuera. Ver `tren.ts`. */
-  poner(donde: number): void;
+  /**
+   * Las pone donde toca. `donde` es 0 dentro y 1 fuera. Ver `tren.ts`. Con
+   * `sinMorro`, la de morro se queda en su pozo: el ejercicio del tren de
+   * nariz que no sale (ADR 0014, enmienda H70).
+   */
+  poner(donde: number, sinMorro?: boolean): void;
 }
 
 /**
@@ -110,16 +116,18 @@ export function prepararPatas(raiz: Object3D): Patas | null {
       reposo: o.quaternion.clone(),
       eje: enElPadre,
       angulo: (grados * Math.PI) / 180,
+      deMorro: /morro/.test(o.name),
     });
   });
   if (!patas.length) return null;
   const giro = new Quaternion();
   return {
     cuantas: patas.length,
-    poner(donde: number) {
-      const fuera = Math.max(0, Math.min(1, donde));
-      const metida = suave(1 - fuera);
+    poner(donde: number, sinMorro = false) {
+      const todas = Math.max(0, Math.min(1, donde));
       for (const p of patas) {
+        const fuera = sinMorro && p.deMorro ? 0 : todas;
+        const metida = suave(1 - fuera);
         giro.setFromAxisAngle(p.eje, p.angulo * metida);
         p.bisagra.quaternion.multiplyQuaternions(giro, p.reposo);
         // Dentro del todo no se dibuja: ya está en el pozo, tapada por la

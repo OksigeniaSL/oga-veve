@@ -3401,6 +3401,7 @@ export const ES_PY = {
   "hangar.ejercicio.ala-baja": "Aterrizar con el ala baja",
   "hangar.ejercicio.pista-corta": "Despegar de una pista corta",
   "hangar.ejercicio.carga": "La carga suelta",
+  "hangar.ejercicio.tren-de-morro": "El tren de nariz no sale",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3807,6 +3808,23 @@ export const ES_PY = {
   "ejercicio.carga.amarrada": "La maleta iba amarrada, y no se movió. Por eso se amarra",
   "ejercicio.carga.bien":
     "Ejercicio hecho: con la carga corrida, palanca adelante, suave y a tierra. Por eso la carga va siempre amarrada",
+  /*
+   * **El tren de nariz que no sale** (#90, H70): al bajar el tren para
+   * aterrizar, la rueda de adelante se queda en su hueco. En el orden de su
+   * manual: primero la bajada de emergencia, y si tampoco, las ruedas de
+   * atrás con la nariz arriba todo lo que aguante, y abajo despacito, sin
+   * frenos. «Tren de nariz», como se dice de este lado del mar; sin cifras en
+   * la voz, que las unidades cambian con el peldaño.
+   */
+  "ejercicio.tren-de-morro.antes":
+    "Hoy practicamos el tren de nariz que no sale. Despegamos y metemos el tren. Al bajarlo para aterrizar, la rueda de adelante se va a quedar adentro: probamos la bajada de emergencia y, si tampoco sale, aterrizamos con la nariz arriba, con calma",
+  "ejercicio.morro.noSale":
+    "Bajó el tren, pero la rueda de adelante no salió: hay dos luces verdes y no tres, y en el espejo no está. Andá más despacio, que la compañera prueba la bajada de emergencia",
+  "ejercicio.morro.emergencia": "La compañera tira de la perilla de emergencia, y el tren cae por su peso. Esperamos un poquito",
+  "ejercicio.morro.tampoco":
+    "Tampoco salió. No pasa nada: avisamos a la torre y aterrizamos sobre las ruedas de atrás, con la nariz arriba todo lo que aguante. Cuando ya no aguante, la bajamos despacito, y sin frenos",
+  "ejercicio.morro.bien":
+    "Ejercicio hecho: primero la bajada de emergencia, después las ruedas de atrás y la nariz arriba todo lo que aguantó, y abajo despacito. Así sale bien casi siempre",
   // La palabra de Tukã para soltar los frenos: «¡Frená!» diría lo contrario.
   "palabra.solta": "¡Soltá!",
   /*

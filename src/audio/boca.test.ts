@@ -679,6 +679,11 @@ describe("y la megafonía va por el mismo turno", () => {
       // La carga suelta (ADR 0033, H67): cómo se sigue y por qué no se movió, hasta el cierre.
       "ejercicio.carga.despacio",
       "ejercicio.carga.amarrada",
+      // El tren de nariz (ADR 0014, H70): la presentación y sus tres pasos, hasta el siguiente o el cierre.
+      "ejercicio.tren-de-morro.antes",
+      "ejercicio.morro.noSale",
+      "ejercicio.morro.emergencia",
+      "ejercicio.morro.tampoco",
     ]) {
       expect(valeHastaElPasoSiguiente(c), c).toBe(true);
       expect(cuantoAguanta(c, "normal"), c).toBe(Infinity);
@@ -1644,6 +1649,7 @@ describe("lo que cierra el vuelo no se pierde", () => {
       "ejercicio.carga.bien",
       "ejercicio.autorrotacion.bien",
       "ejercicio.tormenta.bienCerca",
+      "ejercicio.morro.bien",
       "ejercicio.paradoTrasV1Cuatro",
     ])
       expect(cierraElVuelo(c), c).toBe(true);
@@ -1654,6 +1660,7 @@ describe("lo que cierra el vuelo no se pierde", () => {
       "ejercicio.paramos",
       "ejercicio.cortar",
       "ejercicio.carga.despacio",
+      "ejercicio.morro.tampoco",
     ])
       expect(cierraElVuelo(c), c).toBe(false);
     expect(cuantoAguanta("senalero.calzos")).toBe(Infinity);

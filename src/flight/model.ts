@@ -573,6 +573,16 @@ export interface FlightModel {
   /** Y el que tiene puesto, m: el banco mira con él la carga que se suelta. */
   centradoAhora?(): number;
   /**
+   * **Si la rueda de morro no ha salido**: el ejercicio del tren de morro
+   * (#90). Solo lo hace el modelo de coeficientes, y solo con el avión que
+   * lleva `morroSinRueda`. Ver el ADR 0014, enmienda H70.
+   */
+  ponerSinRuedaDeMorro?(sin: boolean): void;
+  /** Cómo llegó el morro a la pista sin su rueda, o `null`. Lo lee el banco. */
+  readonly morroPosado?: { readonly velocidad: number; readonly bajada: number } | null;
+  /** Si la panza del morro va ahora sobre la pista. */
+  readonly morroEnLaPista?: boolean;
+  /**
    * La ráfaga de este instante, en m/s y en ejes del mundo.
    *
    * Va aparte del viento del parte porque son dos cosas distintas: el viento es

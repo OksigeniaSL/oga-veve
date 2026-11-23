@@ -33,13 +33,22 @@
  *   salida, que es el más cercano. Sin llamada ni bomberos. Con
  *   `OGA_AMARRADA=1`, la maleta va amarrada en la hoja de carga: no se mueve
  *   nada, y se dice.
+ * - `morro`: el tren de nariz que no sale (H70), en Taguató con el bimotor de
+ *   pistón. Se despega, se mete el tren y, al sacarlo en la final, la rueda de
+ *   morro se queda dentro. El piloto del banco va a 80 nudos, por debajo de
+ *   los 85 de la extensión de emergencia; la compañera la prueba, no sale, se
+ *   declara PAN PAN y se aterriza sobre las principales con la nariz arriba,
+ *   sostenida hasta casi todo el timón y bajada después, sin frenos
+ *   (FAA-H-8083-3C, p. 18-12). Mira que la nariz llegue a la pista por debajo
+ *   de 64 KIAS, el arco blanco del POH: aguantó hasta que el ala dejó de volar.
+ *   Y cuenta como fallo una frase del ejercicio que la boca tire en la cola.
  *
  * **Las voces que no están grabadas no suenan** —ver `decirDelEjercicio` en
  * `game.ts`—, y el juego apunta cada una que se calla en `cantados`. Así que
  * lo que se mira aquí es que se **pidió**, grabado o no: lo dicho por la
  * instructora y lo callado por sin grabar.
  *
- * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga>
+ * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro>
  *        [escenario] [avion] [tramo]`
  *
  * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien.
@@ -57,17 +66,22 @@ const EJERCICIO = {
   planeo: "planeo",
   despres: "despresurizacion",
   carga: "carga",
+  morro: "tren-de-morro",
 }[MODO];
 if (!EJERCICIO) {
   console.error(
-    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga> [escenario] [avion] [tramo]",
+    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro> [escenario] [avion] [tramo]",
   );
   process.exit(2);
 }
 const ESCENARIO = process.argv[3] ?? "gran-canaria";
 const AVION =
   process.argv[4] ??
-  (MODO === "planeo" || MODO === "carga" ? "jaz-20" : MODO === "carrera" || MODO === "tren" ? "jaz-40" : "jaz-90");
+  (MODO === "planeo" || MODO === "carga"
+    ? "jaz-20"
+    : MODO === "carrera" || MODO === "tren" || MODO === "morro"
+      ? "jaz-40"
+      : "jaz-90");
 /**
  * Con `OGA_AMARRADA=1`, en `carga` la hoja de carga lleva la maleta del
  * ejercicio amarrada en la bodega 1, y no se tiene que mover nada.
@@ -254,6 +268,12 @@ try {
       // En la carga suelta: el centro con que vuela el modelo al soltarse, y lo más atrás que llega.
       let centradoAlFallar = null;
       let centradoMaximo = -Infinity;
+      // En el tren de nariz: a qué velocidad se probó la de emergencia, y cómo se sostiene la nariz al tocar.
+      let alExtender = null;
+      let narizObjetivo = null;
+      let narizDesde = 0;
+      let narizSoltando = false;
+      let narizSoltadaA = null;
       const puntos = [
         [pista.length + 3000, 0],
         [pista.length + 3000 + tendido, tendido],
@@ -311,6 +331,8 @@ try {
         // Sin tren: se mete cuando lo piden, que es en cuanto falla.
         if (sinTren && ej?.fase !== "armada" && !s.onGround && o.trenQueSePide()) o.pedirTren(false);
         if (ej?.asegurado && aseguradoEn === null) aseguradoEn = ahora;
+        // La indicada, que es la que pide su manual: en Gando la verdadera va dos nudos por encima.
+        if (ej?.morro?.extension && alExtender === null) alExtender = o.indicada();
 
         if (tramo === "crucero") {
           // Hasta que se va el aire, recto y a nivel hacia la pista de casa.
@@ -404,7 +426,16 @@ try {
          * Y en `tren`, el despegue de siempre con los dos: el tren dentro con
          * la subida hecha, que es lo que el ejercicio espera para el fallo.
          */
-        if (!s.onGround && (ej?.fase !== "armada" || (modo === "tren" && !sinTren))) {
+        /*
+         * Y en `morro`, el tren dentro en cuanto sube, y abajo en la final: es
+         * al sacarlo cuando la rueda de morro no sale. Después del fallo, no se
+         * vuelve a meter.
+         */
+        const meteElTren =
+          modo === "morro"
+            ? ej?.fase === "armada" && tramo !== "final"
+            : ej?.fase !== "armada" || (modo === "tren" && !sinTren);
+        if (!s.onGround && meteElTren) {
           /*
            * «After establishing a climb»: en el de pistón, con la subida hecha
            * aunque sea poca. Y no antes: metido a un metro del suelo, con la
@@ -428,7 +459,7 @@ try {
            * antes de soltarse la maleta. La lección es la contraria: velocidad
            * de sobra.
            */
-          if (modo === "carga" && sobre > 60) o.pedirFlaps(0);
+          if ((modo === "carga" || modo === "morro") && sobre > 60) o.pedirFlaps(0);
           const v2 = modo === "carga" ? vref * 1.15 : (vel.v2 ?? vref * 1.2);
           if (deLineaAzul && (ej?.fase !== "armada" || modo === "tren")) {
             /*
@@ -495,8 +526,44 @@ try {
             (18 * Math.PI) / 180,
           );
           if (s.onGround) {
-            if (tocoEn === null) tocoEn = { enPista: !!s.onRunway, a: p.a, vs: s.verticalSpeed };
+            if (tocoEn === null)
+              tocoEn = {
+                enPista: !!s.onRunway,
+                a: p.a,
+                vs: s.verticalSpeed,
+                cabeceo: o.actitud().cabeceo,
+                // Lo que tocó: las principales solas, o ya la panza del morro.
+                morroEnLaPista: !!ej?.morro?.enLaPista || !!ej?.morro?.posado,
+              };
             c.throttle = 0;
+            if (modo === "morro") {
+              /*
+               * **Lo del manual de la FAA**: la nariz arriba, sostenida con el
+               * timón hasta que haga falta casi todo —nueve décimas—, y
+               * entonces se suelta poco a poco, dos grados por segundo, para
+               * que baje despacio. Sin frenos, y por el eje con el pie: sin
+               * rueda de morro, el volante no gira nada.
+               */
+              const cab = o.actitud().cabeceo;
+              if (narizObjetivo === null) narizObjetivo = cab;
+              narizDesde += dt;
+              let e = acota(20 * (narizObjetivo - cab) - 4 * s.pitchRate, -1, 1);
+              if (!narizSoltando && e >= 0.9 && narizDesde > 1.5) {
+                narizSoltando = true;
+                narizSoltadaA = s.airspeed;
+              }
+              if (narizSoltando) {
+                narizObjetivo -= ((2 * Math.PI) / 180) * dt;
+                e = acota(20 * (narizObjetivo - cab) - 4 * s.pitchRate, -1, 1);
+              }
+              c.elevator = e;
+              c.brakes = 0;
+              c.reversa = 0;
+              const rumbo = error(h - Math.atan(p.c * 0.02), s.heading);
+              c.rudder = acota(rumbo * 4 + 3 * s.beta, -1, 1);
+              c.aileron = 0;
+              return;
+            }
             c.brakes = 1;
             c.reversa = 1;
             c.elevator = 0;
@@ -512,7 +579,17 @@ try {
           );
           if (sobre < 14) quiereVs = -0.9 - sobre * 0.07;
           c.elevator = porSubida(s, quiereVs, dt);
-          c.throttle = sobre < 10 ? 0 : gasPara(s, vref * 1.1, dt);
+          /*
+           * En `morro`, desde que la rueda no sale hasta que la compañera
+           * prueba la de emergencia, a 80 nudos: por debajo de los 85 a los
+           * que su manual la deja probar. Después, la final de siempre: «GEAR
+           * UP LANDING — Approach: Normal» (POH del Seneca III, p. 3-8). A 80
+           * nudos con todo fuera y sin gas la primera tirada tocó plana y a
+           * 3,2 m/s, con la instructora diciendo «lento».
+           */
+          const enLaFinal =
+            modo === "morro" && ej?.fase !== "armada" && !ej?.morro?.extension ? 80 * 0.514444 : vref * 1.1;
+          c.throttle = sobre < 10 ? 0 : gasPara(s, enLaFinal, dt);
           bajo = Math.min(bajo, sobre);
         }
       };
@@ -598,6 +675,9 @@ try {
         alFallar,
         centradoAlFallar,
         centradoMaximo,
+        alExtender,
+        narizSoltadaA,
+        caida: o.caida?.() ?? null,
         recorridoAlParar,
         largo: pista.length,
         percance: o.percance(),
@@ -633,6 +713,8 @@ try {
         ? ej.averia?.que === "presion"
         : MODO === "carga"
           ? ej.averia?.que === "carga" && ej.motorParado === null && r.alFallar?.sobre > 100
+          : MODO === "morro"
+            ? ej.averia?.que === "morro" && ej.motorParado === null && r.alFallar?.trenFuera === true
           : MODO === "planeo"
             ? ej.motorParado === null
             : ej.motorParado !== null) &&
@@ -826,6 +908,51 @@ try {
         : `no llegó · lo más bajo ${Math.round(r.bajo)} m`,
     );
   }
+  if (MODO === "morro") {
+    const kt = (v) => (v === null || v === undefined ? "—" : `${Math.round(v * 1.943844)} kt`);
+    comprobar(
+      "el tren sale y la rueda de morro no: se queda en su pozo, y se dice",
+      ej?.morro?.dentro && dice(pedido, "ejercicio.morro.noSale"),
+      `morro dentro ${ej?.morro?.dentro} · ${pedido.filter((k) => /ejercicio\.morro\.noSale/.test(k)).join(" · ") || "no dicho"}`,
+    );
+    comprobar(
+      "la compañera prueba la extensión de emergencia, por debajo de los 85 nudos de su manual",
+      ej?.morro?.extension && r.alExtender !== null && r.alExtender <= 85 * 0.514444 + 0.3 &&
+        dice(pedido, "ejercicio.morro.emergencia"),
+      `probada ${ej?.morro?.extension} a ${kt(r.alExtender)} · ` +
+        `${pedido.filter((k) => /ejercicio\.morro\.emergencia/.test(k)).join(" · ") || "no dicho"}`,
+    );
+    comprobar(
+      "tampoco sale: se cuenta la toma, se declara PAN PAN y los bomberos esperan",
+      dice(pedido, "ejercicio.morro.tampoco") && ej?.declarada && dice(r.torre, "panpan") && ej?.bomberos,
+      `declarada ${ej?.declarada} · torre ${r.torre.filter((k) => /panpan|mayday/i.test(k)).join(" · ") || "sin llamada"} · ` +
+        `bomberos ${ej?.bomberos} · ${ej?.camiones} camiones`,
+    );
+    comprobar(
+      "toca en la pista sobre las principales, con la nariz arriba",
+      r.tocoEn?.enPista && r.tocoEn.cabeceo > 0 && !r.tocoEn.morroEnLaPista,
+      r.tocoEn
+        ? `tocó ${r.tocoEn.enPista ? "en la pista" : "fuera"} a ${Math.round(r.tocoEn.a)} m del umbral, ` +
+            `${((r.tocoEn.cabeceo * 180) / Math.PI).toFixed(1)}° de nariz` +
+            `${r.tocoEn.morroEnLaPista ? ", con la panza ya en la pista" : ", sobre las principales"}` +
+            `${typeof r.caida === "number" ? `, cayendo ${r.caida.toFixed(1)} m/s` : ""}`
+        : `no llegó · lo más bajo ${Math.round(r.bajo)} m`,
+    );
+    const posado = ej?.morro?.posado;
+    comprobar(
+      "la nariz llega a la pista despacio: por debajo de 64 KIAS, la pérdida con todo fuera",
+      posado && posado.indicada < 64 * 0.514444,
+      posado
+        ? `posada a ${kt(posado.indicada)}, bajando ${posado.bajada.toFixed(2)} m/s; soltada a ${kt(r.narizSoltadaA)}`
+        : "no llegó a posarse",
+    );
+    const tiradas = r.descartadas.filter((k) => /ejercicio\./.test(String(k)));
+    comprobar(
+      "y nada del ejercicio se cae esperando en la cola",
+      tiradas.length === 0,
+      tiradas.join(" · ") || "nada tirado",
+    );
+  }
   if (MODO === "planeo") {
     comprobar(
       "se para el motor y empieza el planeo, con calma",
@@ -843,11 +970,12 @@ try {
       `cierre ${ej?.cierre} · lo más bajo ${Math.round(r.bajo)} m`,
     );
   }
-  const cierreQueToca = MODO === "carga" && !AMARRADA ? "ejercicio.carga.bien" : "ejercicio.bien";
+  const cierreQueToca =
+    MODO === "carga" && !AMARRADA ? "ejercicio.carga.bien" : MODO === "morro" ? "ejercicio.morro.bien" : "ejercicio.bien";
   comprobar(
     "y la instructora lo cierra celebrándolo",
     dice(pedido, cierreQueToca),
-    pedido.filter((k) => /ejercicio\.(bien|bomberos|carga\.bien)/.test(k)).join(" · ") || "no",
+    pedido.filter((k) => /ejercicio\.(bien|bomberos|carga\.bien|morro\.bien)/.test(k)).join(" · ") || "no",
   );
   const mal = resultados.some((x) => !x.ok);
   if (process.env.OGA_TRAZA || mal) {

@@ -1501,6 +1501,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.ala-baja": "Landing wing-low",
   "hangar.ejercicio.pista-corta": "Short-field takeoff",
   "hangar.ejercicio.carga": "Loose cargo",
+  "hangar.ejercicio.tren-de-morro": "Nose gear won't extend",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1780,6 +1781,15 @@ export const EN: Dictionary = {
   "ejercicio.carga.amarrada": "The bag was tied down, and it didn't move. That's why we tie it down",
   "ejercicio.carga.bien":
     "Exercise done: with the cargo shifted, yoke forward, gently and down to land. That's why cargo is always tied down",
+  "ejercicio.tren-de-morro.antes":
+    "Today we practise a nose gear that won't come down. We take off and raise the gear. When we lower it to land, the nose wheel will stay up: we try the emergency extension and, if it still won't come, we land holding the nose up, calmly",
+  "ejercicio.morro.noSale":
+    "The gear came down, but not the nose wheel: two green lights, not three, and it isn't in the mirror. Slow down, and the other pilot will try the emergency extension",
+  "ejercicio.morro.emergencia": "The other pilot pulls the emergency knob, and the gear falls under its own weight. We wait a moment",
+  "ejercicio.morro.tampoco":
+    "It still didn't come. That's fine: we tell the tower and land on the main wheels, holding the nose up as long as it will stay. When it won't, we lower it gently, and no brakes",
+  "ejercicio.morro.bien":
+    "Exercise done: first the emergency extension, then the main wheels with the nose held up as long as it would stay, and down gently. That way it almost always goes well",
   "palabra.solta": "Let go!",
   "ejercicio.rumbo.antes": "Follow the river: the sun has just set. Look how the water shines",
   "ejercicio.rumbo.anochece": "It's night now and the river is getting dark. Keep the arrow still on the mark",

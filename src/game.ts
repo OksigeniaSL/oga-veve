@@ -858,6 +858,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   "pista-corta": "subida",
   // La nariz que hay que bajar: con la carga al fondo, la nariz quiere subir. Ver `carga-suelta.ts`.
   carga: "nariz-abajo",
+  // El tren, que es lo que se practica: sale, y la rueda de morro no. Ver el ADR 0014, enmienda H70.
+  "tren-de-morro": "tren",
 };
 
 /**
@@ -4366,6 +4368,12 @@ export class Game {
    * elija se autoriza al alinearse, como sin motor: ver `mirarLaOtraCabecera`.
    */
   private emergenciaDeclarada = false;
+  /**
+   * **Si la rueda de morro se quedó en su pozo**: el ejercicio del tren de
+   * nariz, desde que se pidió el tren fuera hasta el vuelo siguiente. Lo
+   * miran las patas del dibujo, el modelo de vuelo y la luz roja.
+   */
+  private morroAtascado = false;
   /** Lo que dice el EICAS del motor parado. Ver `listaDelMotor`. */
   private mensajesDeMotor: readonly MensajeDeMotor[] = [];
   /** Los bomberos del aeropuerto. Ver `world/bomberos.ts`. */
@@ -4398,6 +4406,14 @@ export class Game {
     readonly descenso: { readonly segundos: number | null; readonly terminado: boolean } | null;
     /** El centro de gravedad con el que vuela el modelo, m por detrás del de su ficha: la carga suelta lo mueve. */
     readonly centrado: number;
+    /** El tren de nariz: si se quedó dentro, si se probó la de emergencia y cómo llegó la nariz a la pista. */
+    readonly morro: {
+      readonly dentro: boolean;
+      readonly extension: boolean;
+      readonly enLaPista: boolean;
+      /** Indicada al posarse, m/s, y lo que bajaba la panza, m/s. */
+      readonly posado: { readonly indicada: number; readonly bajada: number } | null;
+    };
   } | null {
     const p = this.practica;
     if (!p) return null;
@@ -4423,6 +4439,21 @@ export class Game {
           }
         : null,
       centrado: this.flight.centradoAhora?.() ?? this.centradoDeAhora(),
+      morro: {
+        dentro: this.morroAtascado,
+        extension: p.extensionProbada,
+        enLaPista: this.flight.morroEnLaPista ?? false,
+        posado: this.flight.morroPosado
+          ? {
+              indicada: indicatedAirspeed(
+                this.flight.morroPosado.velocidad,
+                this.flight.state.position.y,
+                this.flight.aireDelDia(),
+              ),
+              bajada: this.flight.morroPosado.bajada,
+            }
+          : null,
+      },
     };
   }
 
@@ -14820,6 +14851,8 @@ export class Game {
     this.mensajesDeMotor = [];
     this.bomberos.quitar();
     this.bomberosPor = null;
+    // Y la rueda de morro, en su sitio: el tren de un vuelo nuevo sale entero.
+    this.morroAtascado = false;
     this.laOtraCabecera.reiniciar();
     // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
     // tenerlo junto: antes eran cinco líneas repartidas por el reinicio.
@@ -22483,7 +22516,12 @@ export class Game {
      * resistencia que quita meterlo— se siente pero no se ve, y un mando que
      * no cambia nada en la pantalla no parece un mando. Ver `world/patas.ts`.
      */
-    this.aircraftMesh.patas?.poner(this.input.controls.tren);
+    this.aircraftMesh.patas?.poner(this.input.controls.tren, this.morroAtascado);
+    /*
+     * Y el modelo de vuelo, sin la rueda de morro mientras siga en su pozo:
+     * lo que para el morro en la pista es la panza. Ver `ponerSinRuedaDeMorro`.
+     */
+    this.flight.ponerSinRuedaDeMorro?.(this.morroAtascado);
     /*
      * Y los flaps, donde **están**, no donde está la palanca: la misma cifra
      * que sustenta en el modelo de vuelo y que marca la aguja. Ver
@@ -25290,6 +25328,7 @@ export class Game {
       case "fallo":
         if (suceso.averia === "presion") return this.fallaLaPresion();
         if (suceso.averia === "carga") return this.seSueltaLaCarga();
+        if (suceso.averia === "morro") return this.noSaleElMorro();
         return this.fallaElMotor(suceso.motor, suceso.parar, suceso.enElSuelo);
       case "velocidad":
         return this.pedirLaVelocidadDeUnMotor();
@@ -25297,6 +25336,12 @@ export class Game {
         return this.asegurarElMotor(suceso.motor);
       case "declarar":
         return this.declararLaEmergencia(suceso.socorro);
+      case "extension":
+        // La compañera tira de la perilla: se dice, y nada más se mueve, que la rueda no sale.
+        this.decirDelEjercicio("ejercicio.morro.emergencia", "normal");
+        return;
+      case "tampoco":
+        return this.tampocoSaleElMorro();
       case "bomberos":
         // Los de la autorrotación no: la frase y la espera son de un avión que vuelve a su pista.
         if (this.aircraft.helicoptero) return;
@@ -25315,7 +25360,8 @@ export class Game {
    */
   private sostenerLosMotores(): void {
     const p = this.practica;
-    if (!p || p.fase === "armada" || p.averia.que === "presion" || p.averia.que === "carga") return;
+    if (!p || p.fase === "armada" || p.averia.que === "presion" || p.averia.que === "carga" || p.averia.que === "morro")
+      return;
     if (p.averia.que === "motores") {
       if (p.fase === "fallo") this.input.controls.engineOn = false;
       return;
@@ -25397,6 +25443,33 @@ export class Game {
       if (this.practica?.fase !== "fallo") return;
       this.decirDelEjercicio("ejercicio.carga.despacio", "normal");
     });
+  }
+
+  /**
+   * **La rueda de morro que no sale**, que es el ejercicio del tren de nariz:
+   * salen las principales y la de morro se queda en su pozo —se ve en el
+   * avión, y la luz roja del tren se queda encendida—. La instructora lo dice
+   * con calma y pide ir más despacio, que la extensión de emergencia de su
+   * manual tiene una velocidad máxima; la prueba la compañera. Sin ruido:
+   * el bimotor de pistón no tiene más aviso que sus luces. Ver el ADR 0014,
+   * enmienda H70.
+   */
+  private noSaleElMorro(): void {
+    this.morroAtascado = true;
+    const dicho = this.avisoCon("ejercicio.morro.noSale", "palabra.tren");
+    this.hud.senal.mostrar("tren", dicho.rotulo, null, { segundos: 8, prioridad: IMPORTANTE });
+    this.decirDelEjercicio("ejercicio.morro.noSale", "mando");
+  }
+
+  /**
+   * **Y por la de emergencia tampoco**: se declara —lo hace la práctica— y se
+   * cuenta la toma, con su dibujo: las ruedas de atrás y la nariz arriba todo
+   * lo que aguante, y abajo despacio, sin frenos (FAA-H-8083-3C, p. 18-12).
+   */
+  private tampocoSaleElMorro(): void {
+    const dicho = this.avisoCon("ejercicio.morro.tampoco", "palabra.narizArriba");
+    this.hud.senal.mostrar("nariz-arriba", dicho.rotulo, null, { segundos: 10, prioridad: IMPORTANTE });
+    this.decirDelEjercicio("ejercicio.morro.tampoco", "normal");
   }
 
   /**
@@ -25687,9 +25760,17 @@ export class Game {
    */
   private declararLaEmergencia(socorro: "mayday" | "panpan"): void {
     this.emergenciaDeclarada = true;
-    if (socorro === "mayday") this.declararMayday("engine failure, returning");
-    else this.declararPanPan("engine failure, returning");
-    if (laInstructoraLoExplica(this.tier.avisos))
+    // Lo que se dice en la llamada: lo que pasa. El tren, con su nombre de radio.
+    const motivo =
+      this.practica?.averia.que === "morro" ? "nose gear unsafe" : "engine failure, returning";
+    if (socorro === "mayday") this.declararMayday(motivo);
+    else this.declararPanPan(motivo);
+    /*
+     * Y en el del tren de nariz, no: «avisamos a la torre» ya va en su
+     * «tampoco», que se pide en el mismo instante, y un paso nuevo retiraría
+     * ese de la cola. Un suceso, una voz.
+     */
+    if (laInstructoraLoExplica(this.tier.avisos) && this.practica?.averia.que !== "morro")
       this.decirDelEjercicio("ejercicio.declarar", "normal");
   }
 
@@ -25826,6 +25907,8 @@ export class Game {
           ? "ejercicio.autorrotacion.bien"
           : this.practica?.ejercicio.id === "carga" && como === "vuelta" && this.cargaSeCorrio()
             ? "ejercicio.carga.bien"
+          : this.practica?.ejercicio.id === "tren-de-morro" && como === "vuelta" && this.morroAtascado
+            ? "ejercicio.morro.bien"
           : como === "seguidoAntesDeV1" && !conV1(this.aircraft)
             ? SEGUIDO_CON_EL_TREN_FUERA
             : this.segunLosMotores(CIERRE_DEL_EJERCICIO[como]);
@@ -34775,6 +34858,13 @@ export class Game {
    */
   private trenFueraDeSitio(): boolean {
     if (!this.aircraft.trenRetractil) return false;
+    /*
+     * Con la rueda de morro en su pozo y la palanca abajo, el tren no está
+     * abajo y trabado: la roja se queda, como en el de verdad (POH del Seneca
+     * III, p. 7-10a: «If the gear is in neither the full up nor the full down
+     * position, a red warning light […] illuminates»).
+     */
+    if (this.morroAtascado && this.input.trenQueSePide) return true;
     return luzRojaDelTren(
       this.input.controls.tren,
       this.input.trenQueSePide,

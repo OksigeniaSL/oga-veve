@@ -2079,6 +2079,19 @@ const EJ_CARGA = escena(`
   </g>
 `);
 
+/**
+ * **El tren de morro que no sale**: el avión sobre la pista con las ruedas de
+ * atrás y la nariz arriba, y el hueco de la rueda de morro vacío, con su
+ * raya. Es la postura que se practica. Ver el ADR 0014, enmienda H70.
+ */
+const EJ_TREN_DE_MORRO = escena(`
+  <path class="leccion__asfalto" d="M0 76 H120 V84 H0 Z" />
+  ${AVION_DE_PERFIL("translate(60 56) rotate(10) scale(4)")}
+  <circle cx="62" cy="73" r="3" style="fill: #2b2f36" />
+  <circle cx="33" cy="69.5" r="3" style="fill: none; stroke: #2b2f36; stroke-width: 1.2; stroke-dasharray: 2 1.6; opacity: 0.6" />
+  <path class="ejercicio__flecha" d="M14 34 q-4 12 2 24 M12 53 l4 5 l3 -6" />
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -2120,6 +2133,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   "pista-corta": EJ_PISTA_CORTA,
   // La maleta que se fue al fondo de la bodega. Ver `carga-suelta.ts`.
   carga: EJ_CARGA,
+  // Las de atrás en la pista y la nariz arriba, sin su rueda. Ver el ADR 0014, enmienda H70.
+  "tren-de-morro": EJ_TREN_DE_MORRO,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {
