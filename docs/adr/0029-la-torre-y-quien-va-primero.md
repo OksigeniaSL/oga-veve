@@ -2607,3 +2607,29 @@ Y el vitest entero de la rama: 581 ficheros, 11.566 pruebas en verde.
   (`trasIrse` en `final-de-la-torre.ts` y `la-final-tras-irse.ts`) siguen
   como estaban, ahora por encima de una fase que ya no vuelve a «final» en la
   frustrada. Si se quitan, que sea con su prueba.
+
+## Enmienda (23-11-2026, H71): sin radio, la torre habla con la lámpara
+
+El fallo de radio (ADR 0014, enmienda H71) le pide dos cosas a la torre, y
+las dos son de este ADR:
+
+- **Que lleve el turno de quien vuelve sin radio aunque la lección no lleve
+  torre.** La vuelta al campo (`VUELTA`) no tiene torre: no hay permiso de
+  despegar ni de aterrizar, y la torre solo contestaba las llamadas de
+  emergencia. Con la radio callada, el turno de la pista y el permiso de
+  aterrizar en su final van por `laTorreTeLleva` —la lección con torre, o la
+  radio callada—: un 7600 en la pantalla de la torre es alguien que vuelve a
+  aterrizar, y se le turna como a cualquiera, con el tráfico que haya.
+- **Que diga lo mismo sin voz.** Lo que la torre decide no cambia: la orden
+  de irse con la pista ocupada, la otra punta o la salida tapada, y el
+  permiso de aterrizar cuando la pista es tuya. Cambia cómo llega: la voz de
+  la torre y la del otro avión se caen en su boca (`callaSalvo`), la tira no
+  escribe, y lo que se dice se enciende: la orden, roja fija; el permiso,
+  verde fija; y mientras te cuenta en su circuito sin haberte dejado todavía,
+  destellos verdes —«regrese para aterrizar», SERA, apéndice 1, tabla AP
+  1-1—. La regla va en `flight/fallo-de-radio.ts`, con su prueba; el permiso,
+  que esperaba a que su voz empezara a sonar para pintar la verde, sin radio
+  la pinta en el acto, que no hay voz que esperar.
+
+Lo demás de la torre queda como estaba, y al cerrarse el ejercicio vuelve la
+radio.

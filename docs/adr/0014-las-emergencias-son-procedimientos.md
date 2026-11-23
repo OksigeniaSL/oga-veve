@@ -968,3 +968,305 @@ tarjeta y la voz se calla.
 - `ejercicio.morro.bien`
 
 Y en el hangar, que solo se lee: `hangar.ejercicio.tren-de-morro`.
+
+## Enmienda H71 (23-11-2026): el fallo de radio
+
+### El caso
+
+Del catálogo del #90, en vuelo: «**Fallo de radio.** Hay un número que se
+pone en el transpondedor y que lo dice por ti (#83). De las cosas que más
+gustan al descubrirlas». Y del #83, el transpondedor: «si se pierde la radio,
+hay un número que decirlo por ti». Lo que se descubre son dos cosas: que un
+número habla por ti y que una luz te contesta.
+
+### De dónde sale el procedimiento
+
+Leídas, no de memoria, y en el PDF oficial de cada una:
+
+- **SERA**, Reglamento de Ejecución (UE) n.º 923/2012, texto consolidado
+  02012R0923 — 01.05.2025 — 012.001 (el último; recoge hasta el 2024/1111),
+  en español y en inglés, con la misma paginación. Bajado del repositorio de
+  la Oficina de Publicaciones de la UE, que es de donde lo sirve EUR-Lex: la
+  página de EUR-Lex no se dejó leer por un programa.
+  - SERA.13005 a) 2), p. 69: el piloto de una aeronave con SSR «seleccionará
+    el código 7600 para indicar un estado de fallo de la radiocomunicación».
+  - SERA.14083 c), pp. 80–81: con la radio fallida, «1) La aeronave, cuando
+    forme parte del tránsito de aeródromo en un aeródromo controlado, se
+    mantendrá alerta a la espera de las instrucciones que puedan emitir las
+    señales visuales. 2) La aeronave regulará el transpondedor en código
+    7600, modo A […]. 3) Un vuelo VFR seguirá volando en condiciones
+    meteorológicas de vuelo visual, aterrizará en el aeródromo adecuado más
+    próximo y notificará su llegada […]». Y la g), p. 83: las señales, las del
+    apéndice 1. SERA.8035 b), p. 53, remite aquí.
+  - Apéndice 1, 3.1.1, tabla AP 1-1, p. 94, **a las aeronaves en vuelo**:
+    verde fija, «Autorizado para aterrizar»; roja fija, «Ceda el paso a las
+    otras aeronaves y siga en el circuito»; serie de destellos verdes,
+    «Regrese para aterrizar (\*)»; serie de destellos rojos, «Aeródromo
+    peligroso, no aterrice»; serie de destellos blancos, «Aterrice en este
+    aeródromo y diríjase a la plataforma (\*)»; luz pirotécnica roja, «A pesar
+    de las instrucciones previas, no aterrice por ahora». «(\*) A su debido
+    tiempo se le dará permiso para aterrizar y para el rodaje».
+  - Apéndice 1, 3.1.2 a), p. 95, el acuse de recibo en vuelo: «1) durante las
+    horas de luz diurna: — alabeando, excepto en los tramos básicos y final
+    de la aproximación; 2) durante las horas de oscuridad: — emitiendo
+    destellos dos veces con los faros de aterrizaje de la aeronave, o si no
+    dispone de ellos, encendiendo y apagando, dos veces, las luces de
+    navegación».
+  - SERA.3225, p. 29: en un aeródromo, ajustarse al circuito de las otras
+    aeronaves o evitarlo, y virajes a la izquierda salvo que el ATC diga otra
+    cosa.
+- **OACI, Anexo 2**, undécima edición (julio de 2024, en vigor desde el
+  28-11-2024; la décima ya no lo está y su enlace en la OACI está caído), en
+  inglés, la copia que distribuye la autoridad suiza; recoge hasta la
+  enmienda 48, y la 49 no se ha leído.
+  - 3.6.5.2, p. 3-13: «when forming part of the aerodrome traffic at a
+    controlled aerodrome, shall keep a watch for such instructions as may be
+    issued by visual signals», y en VMC, seguir en VMC y aterrizar en el
+    aeródromo adecuado más próximo. El 7600 solo sale en el caso IFR
+    (3.6.5.2.2 b) 2)), como hito de tiempo, no como orden de marcarlo.
+  - Apéndice 1, 4.1.1, p. APP 1-4: la misma tabla que el SERA. 4.1.2 a) 1),
+    p. APP 1-5: «by rocking the aircraft's wings», con su *Note.— This signal
+    should not be expected on the base and final legs of the approach*.
+- **DINAC R 2**, *Reglamento del Aire*, séptima edición (2024), Resolución
+  1854/2024: 3.6.5.2, p. 16/19, como el Anexo 2, y el 7600 solo en el caso
+  IFR (p. 17/19); apéndice 1, 4.1.1, p. 4/22, y 4.1.2, p. 5/22, la tabla y el
+  alabeo con la misma nota que la OACI.
+- **FAA, *Aeronautical Information Manual***, edición básica del 20-2-2025
+  con los cambios 1, 2 y 3 (este, del 9-7-2026):
+  - 4-2-13, p. 4-2-9: con el transmisor y el receptor averiados, «Remain
+    outside or above the Class D surface area until the direction and flow of
+    traffic has been determined; then, join the airport traffic pattern and
+    maintain visual contact with the tower to receive light signals»; de día,
+    «rocking your wings», sin salvedad para la base ni la final; de noche,
+    «blinking the landing or navigation lights». El 4-2-13 no nombra el 7600.
+  - 4-3-13, pp. 4-3-20 y 4-3-21, tabla 4-3-1, en vuelo: verde fija, «Cleared
+    to land»; verde a destellos, «Return for landing (to be followed by
+    steady green at the proper time)»; roja fija, «Give way to other aircraft
+    and continue circling»; roja a destellos, «Airport unsafe, do not land»;
+    blanca a destellos, «Not applicable»; roja y verde alternas, «Exercise
+    extreme caution». Y en la b): el piloto puede no estar mirando a la torre,
+    y la luz solo aprueba o deniega.
+  - 6-4-1, p. 6-4-1: en condiciones VFR, «continue the flight under VFR and
+    land as soon as practicable». El 7600 está en el 6-4-2, p. 6-4-2: «the
+    pilot should adjust the transponder to reply on Mode A/3, Code 7600».
+
+### Lo que no coincide, y cuál gana
+
+Gana la del espacio aéreo donde se vuela, y el ejercicio se vuela en
+Canarias: **el SERA**. Dónde no coinciden:
+
+- **La blanca a destellos en vuelo**: la FAA dice que no se usa; la OACI, la
+  DINAC y el SERA, «aterrice en este aeródromo y diríjase a la plataforma».
+  No sale en el ejercicio, pero si saliera sería la del SERA.
+- **El alabeo para contestar**: la FAA no pone salvedad; la OACI y la DINAC
+  ponen una nota; el SERA lo sube a la norma, «excepto en los tramos básicos
+  y final». Aquí no se pide alabear en la base ni en la final, y la torre no
+  enciende los destellos ahí: en la final lo que toca es la fija.
+- **La roja y verde alternas** solo existe en la FAA; la pirotecnia roja,
+  solo en la OACI, la DINAC y el SERA. Ninguna sale.
+- **El 7600**: el SERA lo manda (*shall*); la FAA lo aconseja (*should*); el
+  Anexo 2 y la DINAC leídos no lo mandan en VFR, y la DINAC remite a su R10,
+  volumen II, que no se ha leído.
+- **Cómo se llega**: solo la FAA da el paso a paso —quedarse fuera hasta ver
+  el flujo del tráfico, entrar en el circuito y mirar a la torre—. Aquí se
+  sale del propio campo y se está ya en su circuito, que es justo donde el
+  SERA pide estar atento a las señales.
+
+### El campo, el avión y el peldaño
+
+- **El campo**: uno con torre —con lámpara: ni AFIS ni sin servicio— de los
+  que vuelan con el SERA, los de España (`campoConLamparaYSera`). **En
+  Paraguay todavía no**: el 7600 en VFR no está en lo leído de la DINAC, y lo
+  que no está en una fuente leída no entra. Cuando se lea su R10, se abre.
+  La aeronáutica no cambia de un lado al otro del mar —la tabla de las luces
+  es la misma—, pero lo que se dice tiene que estar escrito.
+- **El avión**: las avionetas de pistón, el JAZ 20 y el JAZ 40. Son las que
+  vuelan circuitos en visual, que es donde se aterriza con la lámpara. Un
+  avión de línea vuela por instrumentos y, sin radio, sigue su autorización
+  —es otra lección, la de la parte IFR del 6-4-1 y del SERA.14083 c) 4)—; el
+  fumigador no es de campos con torre.
+- **El peldaño**: Taguató y Taguató Ruvichá. El #90 deja abajo solo el motor
+  parado, y el 7600 es un número que se ve marcar, del peldaño de las cifras.
+  La lámpara se entiende sin leer, y lo esencial va por ella —color y si
+  destella—, pero el procedimiento entero lleva su número.
+
+### El ejercicio
+
+`fallo-de-radio`, en `flight/ejercicios.ts`, con la avería `que: "radio"`, en
+la vuelta al campo y a los cuatrocientos pies de la subida, como la carga
+suelta: el despegue está hecho y queda el circuito entero.
+
+1. **La instructora lo presenta** en la pista, con el dibujo del
+   transpondedor: `ejercicio.fallo-de-radio.antes`.
+2. **Se calla la radio**: lo que se decía se corta, lo que esperaba turno se
+   retira, y desde ahí ni la torre ni la frecuencia suenan ni se escribe nada
+   en la tira (`seCallaLaRadio`). La instructora: `ejercicio.radio.callada`
+   —se calló, marco siete seis cero cero, seguimos el circuito mirando la
+   torre—, y en la tarjeta del transpondedor se ven las cifras una a una,
+   7, 76, 760, 7600, en el hueco de la letra, que un número se reconoce sin
+   leer. Lo marca ella, como el transpondedor de después de aterrizar.
+3. **La torre lo ve** a los diez segundos de tener el código entero
+   (`LA_TORRE_LO_VE`, sin fuente: lo que tarda una pantalla en refrescarse y
+   alguien en coger la lámpara) y, si te cuenta en su circuito y no vas en la
+   base ni en la final, **enciende los destellos verdes**: regrese para
+   aterrizar. La instructora: `ejercicio.radio.destellos` —quiere decir que
+   volvamos para aterrizar, y se contesta moviendo las alas—, o de noche
+   `ejercicio.radio.destellosDeNoche`, que contesta ella con los faros: el
+   juego no tiene interruptor de faros en la mano de quien vuela.
+4. **Las alas contestan**: más de diez grados a un lado y, en menos de cuatro
+   segundos, al otro (`AlasQueContestan`); un viraje del circuito, largo y
+   siempre del mismo lado, no cuenta. La instructora: `ejercicio.radio.alas`.
+   Si no se contesta no pasa nada: la torre sigue igual, que la luz no espera
+   respuesta para ser verdad.
+5. **En la final**, la regla de siempre: la **verde fija** con el permiso de
+   aterrizar (`ejercicio.radio.verde`) o la **roja fija** si te manda irte
+   (`ejercicio.radio.roja`: ceder el paso, subir y otra vuelta mirando la
+   torre). Tras la roja, de nuevo en su circuito, los destellos otra vez.
+6. **El cierre**, parado en la pista: `ejercicio.radio.bien` si se tocó con
+   la verde fija; si no, `ejercicio.radio.bienSinLaVerde`, que lo cuenta sin
+   reproche —sin radio, la pista es tuya con la verde; la próxima, otra
+   vuelta—. La radio vuelve al cerrarse.
+
+Sin llamada ni bomberos: no hay radio con qué llamar, y nada se ha roto.
+
+### La lámpara, con la regla de los permisos
+
+`flight/fallo-de-radio.ts`, sin dibujo, con su prueba. **No decide nada
+nuevo**: lee la orden de irse y el permiso de aterrizar que el juego ya
+decide con su tráfico (`turno-de-pista.ts`, `la-aproximacion.ts`) y los
+enciende. En orden: la roja si hay orden de irse —gana a un permiso viejo—,
+la verde fija con el permiso, y los destellos si te cuenta en su circuito con
+el 7600 visto y fuera de la base y la final. En tierra, ninguna: las de en
+vuelo no dicen lo mismo en el suelo.
+
+Para que haya permiso y orden en la vuelta al campo, que no lleva torre
+(`VUELTA.torre` es `false`), **con la radio callada la torre lleva el turno de
+la pista** (`laTorreTeLleva`): un 7600 en su pantalla es alguien que vuelve a
+aterrizar sin radio, y se le hace sitio como a cualquiera. Ver la enmienda
+H71 del ADR 0029.
+
+En el HUD, la lámpara de siempre, **grande y sin letras** (`torre--sin-radio`):
+las letras serían la radio hablando. La roja lleva la mano de parar y no la
+flecha de subir, para que la forma la distinga de la verde sin el color.
+
+### Lo que se calla
+
+- **La voz de la torre y la del otro avión**, en su boca (`callaSalvo`): lo
+  que pida decir se cae antes de entrar en la cola, con su apunte.
+- **La frecuencia**, con `loQueCalla.laFrecuencia`: el tráfico sigue volando y
+  la torre turnándolo; solo deja de oírse.
+- **La tira de la radio** (`Hud.ponerSinRadio`).
+- **Lo que la instructora diría de una frustrada o de una pista que vuelve a
+  estar libre**: lo cuenta el paso de la luz. Un suceso, una voz.
+
+### El banco
+
+`verificar-emergencias.mjs radio`, con el JAZ 20 en Gran Canaria y Taguató.
+Despega, sube a 74 nudos, y a los cuatrocientos pies se calla la radio; da el
+circuito y, al ver los destellos en la subida, el tramo cruzado o el viento
+en cola, alabea dieciocho grados a cada lado; en la final, si a sesenta
+metros no tiene la verde, o si tiene la roja, se va y da otra vuelta. Con
+`OGA_PISTA_OCUPADA=1` pone a uno a despegar en la final antes de la verde.
+Mira:
+
+- que se presente y que se calle subiendo, sin motor parado, y se diga;
+- el 7600 marcado cifra a cifra;
+- que ni la torre ni la frecuencia digan nada desde que se calla hasta que
+  vuelve, ni se escriba en la tira;
+- la lámpara grande y sin letras;
+- las luces en su orden: destellos y verde fija, sin roja; y con la pista
+  ocupada, destellos, la roja con alguien en la pista y la verde tras otra
+  vuelta;
+- que a los destellos se conteste alabeando y se explique cada luz;
+- que toque en la pista con la verde fija y sin percance;
+- sin llamada ni bomberos, el cierre celebrado con `ejercicio.radio.bien`;
+- y nada del ejercicio tirado por la boca (H67 del ADR 0033).
+
+### Comprobado
+
+Cuatro tiradas, todas con el JAZ 20 en Gran Canaria y en Taguató:
+
+- **La primera, 11 de 13.** La radio se calló a 115 m, el 7600 se marcó
+  cifra a cifra, nadie habló y la lámpara salió grande y sin letras; pero
+  la torre encendió la **verde fija a 170 m, en la subida**. Subiendo por
+  el eje, un bache dejó la vertical por debajo de `SIN_SUBIR` y la torre te
+  metió en su final: la vuelta al campo no llevaba torre y nadie lo había
+  visto, y con la torre llevando el turno daba el permiso subiendo. Ahora,
+  al callarse la radio, la torre te trata como recién despegado
+  (`FinalDeLaTorre.despegado`): no hay final hasta haberse dado la vuelta,
+  como tras irse al aire (H69 del ADR 0029). Con su prueba.
+- **La segunda, 9 de 13**: los destellos a 177 m, las alas contestaron a
+  los tres segundos y la verde en la final; pero a 130 m el piloto del
+  banco, lento, pidió todo el gas, subió quince metros y la torre lo dio por
+  ido al aire (`seVaDeVerdad`): se apagó la verde, se fue a los sesenta
+  metros sin ella y no le dio tiempo a otra vuelta. Era del banco: en la
+  final sin radio ya no pide más de 0,85 de gas.
+- **La tercera, 13 de 13**: destellos a 179 m, las alas a los 3,0 s, la
+  verde fija a 297 m al entrar en la final, tocó en la pista a 96 m del
+  umbral con la verde, sin percance, y `ejercicio.radio.bien`. Ni la torre
+  ni la frecuencia dijeron nada mientras duró, y nada del ejercicio se cayó
+  de la cola.
+- **La de la pista ocupada, 13 de 13**: destellos, alas, la verde en la
+  final; a 75 m del suelo despega EC-PSO, la torre pone la **roja** a 67 m
+  con EC-PSO en la pista, el banco se va, los **destellos** vuelven a 106 m
+  en la subida, otra vuelta y la **verde**; tocó a 223 m del umbral con
+  ella. La torre volvió a hablar —«expedite vacating»— al cerrarse el
+  ejercicio, parado en la pista, con la radio ya de vuelta.
+
+Las frases están sin grabar, así que se callan en la puerta y no entran en
+la cola: lo que tira la boca (H67 del ADR 0033) no se puede ver hasta
+grabarlas, y es para entonces.
+
+`tsc --noEmit -p .` en verde, y **el vitest entero** de la rama: 583 de 583
+ficheros y 11.605 pruebas en verde, con 32 saltadas y una pendiente. Dentro,
+`fallo-de-radio.test.ts`: la regla de la lámpara —destellos en su circuito
+con el código visto, nada antes ni fuera ni en la base y la final, la verde
+con el permiso, la roja que gana a un permiso viejo, nada en tierra—, las
+cifras del 7600, las alas que contestan y el viraje que no, dónde y con qué
+se ofrece, `hayLampara` contra `sinTorre` y `esAfis` en todos los
+escenarios, la frecuencia que se calla y la torre que sigue viendo su final,
+la final que no se coge recién despegado y la práctica paso a paso.
+
+### Lo que queda
+
+- **Grabar las frases** de abajo.
+- **Paraguay**: abrir el ejercicio en Asunción, Encarnación y Minga Guazú
+  cuando se lea dónde manda la DINAC el 7600 en VFR (su R10, volumen II).
+- **La verde fija parpadea un fotograma** cuando se acaba el rato de la
+  tarjeta del permiso: `mostrarElPermiso` apaga la lámpara y el paso
+  siguiente la vuelve a encender. En el registro de los bancos sale como
+  «apagada» y «verde» a la misma altura. El arreglo es una línea —que ese
+  apagado no toque la lámpara con la radio callada— y no entró: pedía otro
+  vitest entero, y el anillo de memoria estaba lleno de trabajos de otros.
+- **Y los destellos se apagan unos segundos** en la esquina del tramo
+  cruzado, donde la torre deja de contarte en su circuito. Es la regla —lo
+  que no cuenta, no se llama—, pero se ve como un hueco.
+- **El viento en cola del banco va fuera del circuito de la torre** —su
+  circuito es más ancho que el del juego—, y ahí la lámpara se apaga. Es la
+  regla —lo que no cuenta, no se llama—, pero un circuito de los que vuela
+  quien juega lleva los destellos hasta la base.
+- **Los faros**: de noche contesta la instructora, porque quien vuela no
+  tiene interruptor de faros. El día que lo tenga, se contestan con dos
+  destellos suyos.
+- **El receptor solo o el transmisor solo**, que la FAA separa y el SERA
+  cuenta en el SERA.14085: aquí falla todo.
+
+### Las frases
+
+Nueve, de la instructora y en calma, en `es-PY` y en `en`; el guaraní no se
+toca. «Siete seis cero cero» con letras. Van en `LOS_EJERCICIOS` de
+`sin-instructora.ts` y en `DEL_FALLO_DE_RADIO`, al final de
+`frases-para-grabar.mjs`. **Sin grabar**: hasta que se graben, se ven en la
+tarjeta y la voz se calla.
+
+- `ejercicio.fallo-de-radio.antes`
+- `ejercicio.radio.callada`
+- `ejercicio.radio.destellos`
+- `ejercicio.radio.destellosDeNoche`
+- `ejercicio.radio.alas`
+- `ejercicio.radio.roja`
+- `ejercicio.radio.verde`
+- `ejercicio.radio.bien`
+- `ejercicio.radio.bienSinLaVerde`
+
+Y en el hangar, que solo se lee: `hangar.ejercicio.fallo-de-radio`.
