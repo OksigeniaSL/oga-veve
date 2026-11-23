@@ -324,6 +324,15 @@ try {
         const sobre = s.position.y - cota;
         if (ej?.fase !== "armada" && desdeElFallo === null) {
           desdeElFallo = ahora;
+          /*
+           * **Y en `morro`, desde la avería a la velocidad de verdad** (H70b).
+           * A cuatro por uno la final dura unos veinte segundos de pared, y lo
+           * que la instructora tiene que decir —la rueda que no salió, la
+           * perilla y el «tampoco», con el PAN PAN y la torre en medio— pasa
+           * de veinticuatro: con las frases grabadas, el «tampoco» llegaba con
+           * el avión ya parado. Las voces no van más deprisa con el reloj.
+           */
+          if (modo === "morro") o.acelerar?.(1);
           alFallar = { sobre, trenFuera: o.trenQueSePide() };
           centradoAlFallar = ej?.centrado ?? null;
         }
