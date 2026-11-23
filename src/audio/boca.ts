@@ -176,7 +176,7 @@ export function cuantoAguanta(
     esLaInformacionDeTrafico(clave) ||
     esDelDescenso(clave) ||
     cuentaPorDondeSeSale(clave, urgencia) ||
-    cuentaUnPasoDeRadio(clave)
+    valeHastaElPasoSiguiente(clave)
   )
     return Infinity;
   return clave?.startsWith("torre.") ||
@@ -247,9 +247,9 @@ const DEL_DESCENSO =
   /^(?:vuelo\.(?:cabinaSinPresion(?:ConTren)?|primeroLaTuya\.\w+|yaSeRespira)|comandante\.(?:descensoDeEmergencia|mascaras|alturaSegura|yaSeRespira)|tripulacion\.(?:canario\.)?mascaras)$/;
 
 /**
- * **Un paso de un ejercicio de radio**: «la pista queda de ese lado», «virá
- * ahora», «ahora la senda, que está arriba», «las dos agujas en cruz». Aguanta
- * lo que dura el paso, no un reloj.
+ * **Un paso de un ejercicio que vale hasta el paso siguiente**: «la pista
+ * queda de ese lado», «virá ahora», «ahora la senda, que está arriba», «las
+ * dos agujas en cruz». Aguanta lo que dura el paso, no un reloj.
  *
  * Tenía los cuatro segundos de un aviso, y cada paso llega cuando la radio
  * del campo tiene más que decir: medido en el banco del ILS con el bimotor y
@@ -261,12 +261,27 @@ const DEL_DESCENSO =
  * lo que haga falta, y lo retira el ejercicio al pedir el siguiente o al
  * cerrarse, que es quien sabe que ya no vale. Ver `decirDelEjercicio` en
  * `game.ts` y el ADR 0030, enmienda H26k.
+ *
+ * **Y los de la carga suelta**, que no son de radio pero son lo mismo: «ahora
+ * suave, con velocidad de sobra, a la pista más cercana» vale desde que la
+ * maleta llega al fondo hasta tocar tierra, y «iba amarrada, por eso no se
+ * movió», hasta el cierre. Con los cuatro segundos de un aviso caducaban
+ * detrás de lo que dice el vuelo al subir —recoger los flaps, «ya estamos
+ * volando», ir rápido—, y mientras estaban sin grabar no se veía: se callaban
+ * en la puerta y el banco las daba por pedidas. Grabadas, «caducó esperando»
+ * en las dos tiradas, y el ejercicio se quedaba sin cómo se sigue ni por qué
+ * se amarra (ADR 0033, enmienda H67).
+ *
+ * No lo es todo ejercicio: lo del altímetro es una explicación que se cuenta
+ * entera y en su orden —ver `porDecirDelAltimetro` en `game.ts`—, y lo que
+ * pide un instante, como el pie de un motor parado, deja de ser verdad antes
+ * de que nadie lo retire.
  */
-export function cuentaUnPasoDeRadio(clave: string | undefined): boolean {
-  return !!clave && DE_UN_EJERCICIO_DE_RADIO.test(clave);
+export function valeHastaElPasoSiguiente(clave: string | undefined): boolean {
+  return !!clave && DE_UN_PASO_QUE_DURA.test(clave);
 }
 
-const DE_UN_EJERCICIO_DE_RADIO = /^ejercicio\.(?:aguja|radial|interceptar|cruce|ils)\./;
+const DE_UN_PASO_QUE_DURA = /^ejercicio\.(?:aguja|radial|interceptar|cruce|ils|carga)\./;
 
 /**
  * **El ejercicio de la tormenta**, que tampoco es un comentario: qué es, por

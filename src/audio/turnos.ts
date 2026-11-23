@@ -244,13 +244,22 @@ const EXPLICA_UN_MANDO =
  * crece una plaza. Y lo que se queda viejo antes de sonar no lo tira un
  * reloj sino quien sabe que ya no vale —la seña siguiente, el motor
  * apagado—. Ver `retirarLoDelPuesto` en `game.ts`.
+ *
+ * **Y el «bien» de cualquier ejercicio**, no los de una lista: el de la
+ * autorrotación y el de la carga suelta se escribieron en `cerrarElEjercicio`
+ * sin entrar aquí, y el de la carga, grabado, caducaba detrás de las gafas de
+ * sol y del «abandonando»: el ejercicio acababa en la pista sin que nadie lo
+ * celebrara (ADR 0033, enmienda H67). Toda felicitación de un ejercicio lleva
+ * «bien» en su clave —`ejercicio.bien`, `ejercicio.bienParado`,
+ * `ejercicio.carga.bien`, `ejercicio.tormenta.bienCerca`—, así que es la
+ * clave la que lo dice, y la que se escriba mañana entra sola.
  */
 export function cierraElVuelo(clave: string | undefined): boolean {
   return !!clave && CIERRA_EL_VUELO.test(clave);
 }
 
 const CIERRA_EL_VUELO =
-  /^(?:vuelo\.(?:apagado|enPuesto|cortaMotores|alto|flapsArribaAlSalir|alPuestoConFlaps|despuesDelAterrizaje|despues\.(?:aerofrenos|luces|transpondedor))|senalero\.(?:alto|frenos|calzos)|ejercicio\.(?:bien|bienParado|bienDespresurizacion|paradoTrasV1|paradoTrasV1Cuatro|seguidoAntesDeV1|seguidoConElTrenFuera|bomberos|bomberosUno|bomberosFrenos)|gafas\.ganadas|fin\.(?:explica|llegaste|bien|muyBien|redondo))(?:[@~]|$)/;
+  /^(?:vuelo\.(?:apagado|enPuesto|cortaMotores|alto|flapsArribaAlSalir|alPuestoConFlaps|despuesDelAterrizaje|despues\.(?:aerofrenos|luces|transpondedor))|senalero\.(?:alto|frenos|calzos)|ejercicio\.(?:(?:\w+\.)?bien\w*|paradoTrasV1|paradoTrasV1Cuatro|seguidoAntesDeV1|seguidoConElTrenFuera|bomberos|bomberosUno|bomberosFrenos)|gafas\.ganadas|fin\.(?:explica|llegaste|bien|muyBien|redondo))(?:[@~]|$)/;
 
 /**
  * **Lo que cuenta una seña del señalero**: la voz de las de parar y lo que
