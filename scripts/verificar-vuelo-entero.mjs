@@ -5948,7 +5948,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             Math.abs(a.y - s.position.y) < 150
           ) {
             deFrente++;
-            deFrenteDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.matricula} a ${Math.round(d)} m y ${Math.round(a.y - s.position.y)} m de altura`;
+            /*
+             * Y qué hacía el que venía: su tipo, si llega, con permiso o
+             * dando la vuelta de espera, y su rumbo frente al tuyo. Sin esto
+             * no se supo qué hacía EC-XGI de frente en la final (H69).
+             */
+            const tuRumbo = ((s.heading * 180) / Math.PI + 360) % 360;
+            deFrenteDonde ??=
+              `${t.toFixed(0)} s en «${fase}»: ${a.matricula} a ${Math.round(d)} m y ${Math.round(a.y - s.position.y)} m de altura` +
+              ` · ${a.tipo}${a.llegando ? " llegando" : ""}${a.conPermiso ? " con permiso" : ""}` +
+              `${a.esperandoTurno ? " en la vuelta de espera" : ""}${a.enLaPista ? " en la pista" : ""}` +
+              ` · rumbo ${Math.round(a.rumbo)}° frente a tu ${Math.round(tuRumbo)}° · se cruzan a ${Math.round(cerca)} m en ${Math.round(tc)} s`;
           }
         }
       } else traficoAntes.clear();

@@ -2588,9 +2588,10 @@ En el navegador, sobre una copia fija de la rama:
 
 ### Lo que queda
 
-- **Qué hacía EC-XGI** de frente a 4,2 km de la final. Hace falta que el
-  parte diga, de quien viene de frente, su camino (`porDentro`), si da la
-  vuelta de espera y si la torre le mandó al aire, y volar ese banco otra vez.
+- **Qué hacía EC-XGI** de frente a 4,2 km de la final. El parte dice ahora,
+  de quien viene de frente, su tipo, si llega y con permiso, si da la vuelta
+  de espera, su rumbo frente al tuyo y dónde y cuándo os cruzaríais. Falta
+  volar ese banco otra vez y leerlo.
 - **El JAZ 40 con la pista ocupada** (`OGA_PISTA_OCUPADA=1 … tenerife-norte
   taguato 1 jaz-40`) no se voló: detrás del segundo vuelo el anillo de
   memoria lo tenían los bancos y los vitest de otros, y no cabía con el vitest
