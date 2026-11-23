@@ -248,6 +248,19 @@ export class FinalDeLaTorre {
     return true;
   }
 
+  /**
+   * **Recién despegado, como tras irse al aire**: no se entra en la final
+   * hasta haberse dado la vuelta. Subiendo por el eje con el plan de la
+   * vuelta al campo, un bache que deja la vertical por debajo de
+   * `SIN_SUBIR` metía en la final de la torre a quien acababa de despegar, y
+   * con la torre llevando el turno —el fallo de radio (H71)— le daba el
+   * permiso de aterrizar en la subida. Lo pide quien sabe que se acaba de
+   * despegar: ver `seCallaLaRadio` en `game.ts`.
+   */
+  despegado(): void {
+    this.salir("seVa");
+  }
+
   /** Otro vuelo, o se puso el avión en otro sitio: ninguna final. */
   reiniciar(): void {
     this.salir(null);

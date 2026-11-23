@@ -145,6 +145,15 @@
  * en la pista sin ella lo hace el modelo de vuelo (`ponerSinRuedaDeMorro`); el
  * orden —la de emergencia, PAN PAN, la toma— es de `practica.ts`. Ver el ADR
  * 0014, enmienda H70.
+ *
+ * ## Y el fallo de radio
+ *
+ * «Sin radio» (#90, #83) es la avería `que: "radio"`: subiendo, la radio se
+ * calla. Se marca el 7600, se vuelve al circuito mirando a la torre y se
+ * aterriza con su lámpara. Solo en un campo con torre de los que vuelan con el
+ * SERA (`campoConLamparaYSera`), y en las avionetas de pistón, que son las que
+ * hacen circuitos en visual. La regla de la lámpara es de `fallo-de-radio.ts`;
+ * el orden, de `practica.ts`. Ver el ADR 0014, enmienda H71.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -165,6 +174,8 @@ import { cabinaDelGps } from "./gps-con-apagones";
 import { monteDelCampo, subidaDe } from "./pista-corta";
 import { conV1 } from "./decide-con-v1";
 import { centradoDeSuTipo } from "./centrado";
+import { hayLampara } from "./fallo-de-radio";
+import { oaciDe, SCENARIOS } from "../world/scenarios";
 
 export type EjercicioId =
   | "planeo"
@@ -197,7 +208,8 @@ export type EjercicioId =
   | "ala-baja"
   | "pista-corta"
   | "carga"
-  | "tren-de-morro";
+  | "tren-de-morro"
+  | "fallo-de-radio";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -241,10 +253,10 @@ export interface Averia {
   /**
    * Un motor —el de fuera, de un lado o del otro—, todos, el aire de la
    * cabina —la despresurización, que se vuela con los motores bien— o la
-   * carga de la bodega que se suelta y se va hacia la cola, o la pata de
-   * morro, que se queda en su pozo.
+   * carga de la bodega que se suelta y se va hacia la cola, la pata de
+   * morro, que se queda en su pozo, o la radio, que se calla.
    */
-  readonly que: "motor" | "motores" | "presion" | "carga" | "morro";
+  readonly que: "motor" | "motores" | "presion" | "carga" | "morro" | "radio";
   readonly cuando: Momento;
 }
 
@@ -1115,7 +1127,57 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     ensena:
       "si la rueda de morro no sale, primero la extensión de emergencia; y si tampoco, se aterriza sobre las de atrás con la nariz arriba todo lo que aguante, se la deja bajar despacio y sin frenos. Sale bien casi siempre",
   },
+  /*
+   * **El fallo de radio** (#90, #83, H71): subiendo, la radio se calla. La
+   * instructora marca el 7600, que se lo dice a la torre; se vuelve al
+   * circuito mirando a la torre, que contesta con su lámpara —los destellos
+   * verdes, «regresar para aterrizar», que se contestan alabeando; la roja fija
+   * si hay que ceder el paso; la verde fija para aterrizar—, y se aterriza con
+   * la verde. Ver `fallo-de-radio.ts` y el ADR 0014, enmienda H71.
+   */
+  {
+    id: "fallo-de-radio",
+    /*
+     * **Desde Taguató**, el peldaño de las cifras: el 7600 es un número que se
+     * ve marcar y que se lee, y el #90 deja abajo solo el motor parado. La
+     * lámpara se entiende antes de leer, pero lo que se practica es el
+     * procedimiento entero, y el número es la mitad.
+     */
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **Las avionetas de pistón**, el JAZ 20 y el JAZ 40: las que vuelan
+     * circuitos en visual, que es donde se aterriza con la lámpara. Un avión
+     * de línea vuela por instrumentos, y sin radio sigue lo autorizado —otra
+     * lección—; el fumigador no es de campos con torre.
+     */
+    valePara: (a) => a.sound.engine === "piston" && a.helicoptero === undefined,
+    dondeVale: campoConLamparaYSera,
+    leccion: "vuelta",
+    /*
+     * **Subiendo, a cuatrocientos pies**, como la carga suelta: el despegue ya
+     * está hecho y queda el circuito entero para volver, que es lo que pide el
+     * SERA con la radio callada: seguir en visual y al aeródromo adecuado más
+     * próximo, que es el de salida.
+     */
+    averias: [{ que: "radio", cuando: { en: "subida", metros: 400 * 0.3048 } }],
+    ensena:
+      "sin radio, el 7600 en el transpondedor se lo dice a la torre; se vuelve al circuito mirando a la torre, que habla con luces: los destellos verdes, regresar para aterrizar, que se contestan alabeando; la roja fija, ceder el paso y seguir en el circuito; y la verde fija, aterrizar",
+  },
 ];
+
+/**
+ * **Si en este campo se practica el fallo de radio**: con torre de verdad
+ * —con lámpara, ni AFIS ni sin servicio— y en un país que vuela con el SERA,
+ * que es la fuente leída que manda el 7600 y dice cómo se contesta a la
+ * lámpara (ADR 0014, H71). En el Reglamento del Aire de la DINAC leído, el
+ * 7600 solo sale en el caso IFR, y lo que remite al R10 no se ha leído: hasta
+ * leerlo, en Paraguay no se ofrece.
+ */
+export function campoConLamparaYSera(oaci: string | null): boolean {
+  if (!oaci) return false;
+  const esc = SCENARIOS.find((e) => oaciDe(e) === oaci);
+  return !!esc && esc.pais === "es" && hayLampara(esc.aerodrome);
+}
 
 export function ejercicioPorId(id: string | null | undefined): Ejercicio | null {
   return EJERCICIOS.find((e) => e.id === id) ?? null;

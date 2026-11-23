@@ -11008,6 +11008,38 @@ button.motor__tecla::after {
 }
 
 /*
+ * **Y sin radio, la lámpara grande y sin letras** (H71, el fallo de radio).
+ * La torre ya no habla: lo que dice es el color y si destella, y eso es lo
+ * que se tiene que ver de un vistazo, como se ve desde una cabina la lámpara
+ * de la torre. Las letras se van porque serían la radio hablando; tu avión y
+ * tu placa se quedan, que dicen a quién apunta.
+ */
+.torre--sin-radio .torre__luz {
+  width: clamp(84px, 13vw, 128px);
+  height: clamp(84px, 13vw, 128px);
+}
+
+.torre--sin-radio .torre__texto {
+  display: none;
+}
+
+.torre--sin-radio {
+  padding-right: 14px;
+}
+
+.torre--sin-radio.torre--verde .torre__luz {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 40px 12px rgba(126, 200, 106, 0.8);
+}
+
+.torre--sin-radio.torre--roja .torre__luz {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 40px 12px rgba(181, 55, 46, 0.75);
+}
+
+/*
  * En el peldaño de los pequeños **no se enseña ni una palabra**, y se corta
  * aquí y no en cada sitio que escribe.
  *

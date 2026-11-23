@@ -4959,6 +4959,24 @@ export class Hud {
   /** Se recuerda: `render()` rehace el marcado. Ver `ponerQuienLlevaElGas`. */
   private quienLlevaElGas: "avion" | "ayuda" | null = null;
 
+  /** Si la radio está callada. Ver `ponerSinRadio`. */
+  private sinRadio = false;
+
+  /**
+   * **La radio callada** (H71, el fallo de radio): la tira de la radio no
+   * escribe nada —no hay radio con qué oírlo— y la lámpara de la torre se
+   * enciende grande y sin letras, que lo que dice es su color y si destella.
+   * Se apaga la tira que hubiera puesta. Ver `seCallaLaRadio` en `game.ts`.
+   */
+  ponerSinRadio(sin: boolean): void {
+    this.sinRadio = sin;
+    this.torre?.classList.toggle("torre--sin-radio", sin);
+    if (sin && this.radioCaja) {
+      this.radioEnCola.length = 0;
+      esconder(this.radioCaja, true);
+    }
+  }
+
   setLuzDeTorre(
     /**
      * Y «rodar» son los destellos verdes, «autorizado para rodaje»: la de quien
@@ -5013,6 +5031,7 @@ export class Hud {
     const caja = this.torre;
     if (!caja) return;
     esconder(caja, luz === null);
+    caja.classList.toggle("torre--sin-radio", this.sinRadio);
     caja.classList.toggle("torre--verde", luz === "verde" || luz === "rodar");
     caja.classList.toggle("torre--destellos", luz === "rodar");
     caja.classList.toggle("torre--roja", luz === "roja");
@@ -5732,6 +5751,8 @@ export class Hud {
   ): void {
     const caja = this.radioCaja;
     if (!caja) return;
+    // Sin radio no hay nada que escribir en su tira: ver `ponerSinRadio`.
+    if (this.sinRadio) return;
     /*
      * **Y por turnos: la de ahora no tapa a la de antes en el mismo instante.**
      *

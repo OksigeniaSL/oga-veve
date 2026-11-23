@@ -1502,6 +1502,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.pista-corta": "Short-field takeoff",
   "hangar.ejercicio.carga": "Loose cargo",
   "hangar.ejercicio.tren-de-morro": "Nose gear won't extend",
+  "hangar.ejercicio.fallo-de-radio": "No radio",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1790,6 +1791,23 @@ export const EN: Dictionary = {
     "It still didn't come. That's fine: we tell the tower and land on the main wheels, holding the nose up as long as it will stay. When it won't, we lower it gently, and no brakes",
   "ejercicio.morro.bien":
     "Exercise done: first the emergency extension, then the main wheels with the nose held up as long as it would stay, and down gently. That way it almost always goes well",
+  "ejercicio.fallo-de-radio.antes":
+    "Today we practise losing the radio. As we climb it will go quiet, on purpose. That's fine: we set a number on the transponder that tells the tower, we fly back into the circuit and watch the tower, which will talk to us with lights",
+  "ejercicio.radio.callada":
+    "The radio has gone quiet: we can't hear the tower, and it can't hear us. That's fine: I set seven six zero zero on the transponder, and that number tells the tower we have no radio. We stay in the circuit, watching the tower",
+  "ejercicio.radio.destellos":
+    "Look at the tower: a flashing green light. It means come back to land. We answer by rocking the wings, from side to side",
+  "ejercicio.radio.destellosDeNoche":
+    "Look at the tower: a flashing green light. It means come back to land. At night we answer with the landing lights: I switch them on and off twice",
+  "ejercicio.radio.alas":
+    "That's it: the wings told the tower we saw it. Now we wait for the steady green light to land",
+  "ejercicio.radio.roja":
+    "Steady red light: we give way to another aircraft and stay in the circuit. We don't land: we climb, go round again and watch the tower",
+  "ejercicio.radio.verde": "Steady green light: the tower is clearing us to land",
+  "ejercicio.radio.bien":
+    "We landed without a radio! Seven six zero zero told the tower for us, and the tower spoke to us with its light. That's how a real pilot does it",
+  "ejercicio.radio.bienSinLaVerde":
+    "We're on the ground. Without a radio, the runway is ours when the tower shows the steady green: next time, we wait for it and go round again",
   "palabra.solta": "Let go!",
   "ejercicio.rumbo.antes": "Follow the river: the sun has just set. Look how the water shines",
   "ejercicio.rumbo.anochece": "It's night now and the river is getting dark. Keep the arrow still on the mark",
