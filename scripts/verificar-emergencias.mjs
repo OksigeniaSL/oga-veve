@@ -274,6 +274,7 @@ try {
       let narizDesde = 0;
       let narizSoltando = false;
       let narizSoltadaA = null;
+      let recogida = null;
       const puntos = [
         [pista.length + 3000, 0],
         [pista.length + 3000 + tendido, tendido],
@@ -579,6 +580,20 @@ try {
           );
           if (sobre < 14) quiereVs = -0.9 - sobre * 0.07;
           c.elevator = porSubida(s, quiereVs, dt);
+          /*
+           * **Y en `morro`, la recogida de su manual**: «Touch down at minimum
+           * airspeed» (POH del Seneca III, p. 3-9), con la nariz arriba y no
+           * plana. La de siempre del banco, hecha para los de línea, tocaba a
+           * 75 nudos con la nariz 2,6° abajo. Aquí, por debajo de ocho metros,
+           * la nariz sube un grado y medio por segundo mientras el avión se
+           * hunda y se queda donde está si no, hasta ocho grados: se sostiene
+           * en el aire mientras frena, que es la recogida de una toma corta.
+           */
+          if (modo === "morro" && sobre < 8) {
+            if (recogida === null) recogida = o.actitud().cabeceo;
+            if (s.verticalSpeed < -0.3) recogida = Math.min(recogida + ((1.5 * Math.PI) / 180) * dt, (8 * Math.PI) / 180);
+            c.elevator = profundidad(s, recogida, dt);
+          }
           /*
            * En `morro`, desde que la rueda no sale hasta que la compañera
            * prueba la de emergencia, a 80 nudos: por debajo de los 85 a los
