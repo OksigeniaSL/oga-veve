@@ -1437,3 +1437,9 @@ Y en el hangar, que solo se lee: `hangar.ejercicio.fallo-de-radio`.
   de después del juntado acabó en «destellos» y no en la verde. En los cinco
   segundos de después de tocar (`REBOTE`) se queda lo que había; pasado eso,
   seguir en el aire ya es irse.
+
+Comprobado tras el juntado: el banco con la pista ocupada, 13 de 13, con
+las luces destellos → verde → roja con EC-PSO en la pista → destellos →
+verde y ni un apagado en el aire; y el vitest entero de la rama juntada,
+583 de 583 ficheros y 11.616 pruebas en verde, con 32 saltadas y una
+pendiente.
