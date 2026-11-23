@@ -100,6 +100,17 @@ describe("la lámpara no se apaga por geometría", () => {
     expect(l.paso({ ...EN_SU_CIRCUITO, enLaBaseOEnLaFinal: true })).toBe("destellos");
   });
 
+  it("y un bote no la cambia: lo que había antes de tocar, hasta que se vuela de verdad", () => {
+    const l = new LamparaSinRadio();
+    l.paso(EN_SU_CIRCUITO);
+    expect(l.paso({ ...EN_SU_CIRCUITO, teDejaAterrizar: true, enLaBaseOEnLaFinal: true })).toBe("verde");
+    expect(l.paso({ ...EN_SU_CIRCUITO, enElAire: false })).toBeNull();
+    // El permiso se gastó al tocar; en el bote, la verde de antes.
+    expect(l.paso({ ...EN_SU_CIRCUITO, desdeQueToco: 1 })).toBe("verde");
+    // Pasado el bote, ya es irse: la torre lo llama otra vez.
+    expect(l.paso({ ...EN_SU_CIRCUITO, desdeQueToco: 6 })).toBe("destellos");
+  });
+
   it("los primeros no se encienden en la base ni en la final, y en tierra se apaga", () => {
     const l = new LamparaSinRadio();
     expect(l.paso({ ...EN_SU_CIRCUITO, enLaBaseOEnLaFinal: true })).toBeNull();

@@ -93,7 +93,20 @@ export interface LoQueVeLaTorre {
   readonly enLaBaseOEnLaFinal: boolean;
   /** Segundos desde que el 7600 está marcado entero, o `null` sin él. */
   readonly conElCodigo: number | null;
+  /**
+   * Segundos desde la última vez que se tocó el suelo, o `null` si no se ha
+   * tocado desde el despegue. Ver `REBOTE`.
+   */
+  readonly desdeQueToco?: number | null;
 }
+
+/**
+ * **Lo que dura un bote**, s. Al tocar se gasta el permiso —lo que venga
+ * después es otra final— y un bote de un segundo encendía los destellos a
+ * siete metros de la pista: la torre no cambia de señal por un bote. Lo que
+ * sigue en el aire pasado esto ya es irse.
+ */
+export const REBOTE = 5;
 
 /**
  * **La luz que toca**, para quien no tiene radio. Primero la orden de irse,
@@ -133,6 +146,8 @@ export function luzParaQuienNoTieneRadio(v: LoQueVeLaTorre): LuzSinRadio {
 export class LamparaSinRadio {
   /** Si la torre ya te llamó con los destellos en este vuelo. */
   private llamado = false;
+  /** La última luz encendida en el aire, que es la que se queda en un bote. */
+  private ultima: LuzSinRadio = null;
 
   /** Un paso: la luz de ahora. */
   paso(v: LoQueVeLaTorre): LuzSinRadio {
@@ -140,6 +155,13 @@ export class LamparaSinRadio {
       this.llamado = false;
       return null;
     }
+    // En un bote, lo que había antes de tocar. Ver `REBOTE`.
+    if (v.desdeQueToco !== undefined && v.desdeQueToco !== null && v.desdeQueToco < REBOTE) return this.ultima;
+    this.ultima = this.luzDelAire(v);
+    return this.ultima;
+  }
+
+  private luzDelAire(v: LoQueVeLaTorre): LuzSinRadio {
     const luz = luzParaQuienNoTieneRadio(v);
     if (luz === "destellos") this.llamado = true;
     if (luz !== null) return luz;
@@ -149,6 +171,7 @@ export class LamparaSinRadio {
   /** Otro vuelo, o la radio de vuelta. */
   reiniciar(): void {
     this.llamado = false;
+    this.ultima = null;
   }
 }
 

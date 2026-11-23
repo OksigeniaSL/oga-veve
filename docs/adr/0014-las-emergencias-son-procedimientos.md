@@ -1430,3 +1430,10 @@ Y en el hangar, que solo se lee: `hangar.ejercicio.fallo-de-radio`.
   encenderse en la base y en la final; y si vuelven ahí de día —un permiso
   que se fue sin orden—, la instructora no pide alabear, que ahí no se
   contesta, y no dice nada: se ven.
+- **Ni entre una señal y otra, ni en un bote.** Al levantarse la orden de
+  irse, la lámpara se apagaba un fotograma antes de los destellos; ya no. Y
+  al tocar se gasta el permiso, así que el bote de la toma —un segundo, a
+  siete metros— encendía los destellos encima de la pista: el primer banco
+  de después del juntado acabó en «destellos» y no en la verde. En los cinco
+  segundos de después de tocar (`REBOTE`) se queda lo que había; pasado eso,
+  seguir en el aire ya es irse.

@@ -4405,6 +4405,8 @@ export class Game {
   private readonly lamparaQueNoSeApaga = new LamparaSinRadio();
   /** Si, sin radio, se va en la base o en la final: ahí no se pide alabear. */
   private enLaBaseOEnLaFinalSinRadio = false;
+  /** En el reloj del juego, la última vez que se tocó el suelo con la radio callada. Ver `REBOTE`. */
+  private tocoSinRadioEn: number | null = null;
   /** Lo que dice el EICAS del motor parado. Ver `listaDelMotor`. */
   private mensajesDeMotor: readonly MensajeDeMotor[] = [];
   /** Los bomberos del aeropuerto. Ver `world/bomberos.ts`. */
@@ -13037,7 +13039,8 @@ export class Game {
       );
       if (queDice !== "aterrizar") {
         this.laTorreMandaEnLaLuz = false;
-        this.luzDeTorre(null);
+        // Sin radio, la lámpara la lleva `encenderSinRadio`, y no se apaga entre una señal y otra.
+        if (!this.radioCallada) this.luzDeTorre(null);
       }
       if (queDice === "nada") return;
       /*
@@ -25418,6 +25421,7 @@ export class Game {
     if (this.tarjetaDelTiempo?.abierta) return;
     this.sostenerLosMotores();
     // Sin radio, la lámpara de este paso, antes de que la práctica la lea.
+    if (this.radioCallada && this.flight.state.onGround) this.tocoSinRadioEn = this.relojDelJuego;
     if (this.radioCallada && !this.flight.state.onGround) this.encenderSinRadio();
     const s = this.flight.state;
     const fase = this.vistaActual?.fase;
@@ -25677,6 +25681,7 @@ export class Game {
   private seCallaLaRadio(): void {
     this.radioCallada = true;
     this.lamparaQueNoSeApaga.reiniciar();
+    this.tocoSinRadioEn = null;
     this.torre.callaSalvo = () => false;
     this.otroAvion.callaSalvo = () => false;
     BOCA.retirar((c) => !!c && (c.startsWith("torre.") || c.startsWith("otro.")));
@@ -25736,6 +25741,7 @@ export class Game {
       teCuenta: enSuCircuito || this.enLaFinalDeLaTorre,
       enLaBaseOEnLaFinal: this.enLaBaseOEnLaFinalSinRadio,
       conElCodigo: this.codigoDesde === null ? null : this.relojDelJuego - this.codigoDesde - MARCADO_EN,
+      desdeQueToco: this.tocoSinRadioEn === null ? null : this.relojDelJuego - this.tocoSinRadioEn,
     });
     if (luz === "roja") this.luzDeTorre("roja", "alAire");
     else if (luz === "verde") this.luzDeTorre("verde");
