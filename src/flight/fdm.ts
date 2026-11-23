@@ -262,6 +262,23 @@ const RECORRIDO_DE_LA_COLA = 0.1;
  */
 const AMORTIGUA_LA_PATA = 0.7;
 
+/**
+ * **Lo que cede la panza del morro** cuando apoya sin su rueda, rad: medio
+ * grado, poco más de dos centímetros a la distancia de la rueda de un
+ * bimotor ligero. Es chapa y cuadernas, no una pata con aceite: lo justo para
+ * que el apoyo no sea un tope seco. Ver `momentoDelTren`.
+ */
+const RECORRIDO_DE_LA_PANZA = 0.008;
+
+/**
+ * **El roce de la panza contra la pista**, como fracción de lo que carga.
+ * Sin fuente leída para el aluminio sobre asfalto: es el orden del freno a
+ * fondo de una rueda en seco, y frena por lo que carga el morro, que es poco.
+ * Lo que se enseña no depende de la cifra —el morro que toca frena, y se
+ * posa tarde para que frene menos rato—. Ver el ADR 0014, enmienda H70.
+ */
+export const ROCE_DE_LA_PANZA = 0.4;
+
 /** Cuánto tiene que aguantar el ángulo pasado para que sea pérdida, s. */
 const STALL_DELAY = 0.35;
 
@@ -985,6 +1002,8 @@ export class CoefficientFlightModel implements FlightModel {
     s.stalled = false;
     s.stallWarning = false;
     this.stallFor = 0;
+    this.pesoEnElMorro = 0;
+    this.morroPosado = null;
     s.loadFactor = 1;
     /*
      * **Y la ayuda de subida, con lo colocado como petición.** Al soltar los
@@ -1590,6 +1609,7 @@ export class CoefficientFlightModel implements FlightModel {
 
     // Con las ruedas en el suelo, lo que manda en el cabeceo es el tren. Ver
     // `momentoDelTren`.
+    this.pesoEnElMorro = 0;
     if (s.onGround) pitchMoment += this.momentoDelTren(-forceZ);
 
     // Ayudas que actúan como momentos y no como mandos: amortiguamiento
@@ -2129,6 +2149,20 @@ export class CoefficientFlightModel implements FlightModel {
     this.updateBodyAxes();
     const lateral = s.velocity.dot(this.right);
     s.velocity.addScaledVector(this.right, -lateral * Math.min(1, dt * 9));
+    /*
+     * **Y la panza que roza por delante tuerce el avión**, si no va en el eje
+     * de su camino. El roce tira de la nariz hacia atrás del camino, y con la
+     * nariz por delante del centro eso la aparta más: si toca torcido, se
+     * tuerce más, y hay que sostenerlo con el pie. Es lo contrario de una
+     * flecha, que lleva el roce detrás. Recto, no hace nada. Ver el ADR 0014,
+     * enmienda H70.
+     */
+    const rapidezSobreElSuelo = s.velocity.length();
+    if (this.pesoEnElMorro > 0 && rapidezSobreElSuelo > 0.5) {
+      const brazo = ac.batalla - ac.mainWheelsAft;
+      const tuerce = (ROCE_DE_LA_PANZA * this.pesoEnElMorro * brazo * lateral) / rapidezSobreElSuelo;
+      s.yawRate -= (tuerce / ac.inertia.zz) * dt;
+    }
 
     /*
      * **Y el freno frenaba como el de un coche.**
@@ -2193,8 +2227,16 @@ export class CoefficientFlightModel implements FlightModel {
       freno = Math.max(freno, frenoDelAutofreno(objetivo, sinFreno, aFondo));
     }
     this.frenoDeAhora = freno;
+    /*
+     * **Y la panza del morro, si apoya sin su rueda**: lo que carga no va en
+     * ruedas que rueden, va arrastrándose, y frena con su roce. Las
+     * principales frenan sobre lo que queda.
+     */
+    const enLaPanza = Math.min(apoyado, this.pesoEnElMorro);
     const frena =
-      ((ROZAMIENTO[this.superficie] + mu * freno) * apoyado + reversa) /
+      ((ROZAMIENTO[this.superficie] + mu * freno) * (apoyado - enLaPanza) +
+        ROCE_DE_LA_PANZA * enLaPanza +
+        reversa) /
       masaDe(ac);
     s.velocity.addScaledVector(
       this.forward,
@@ -2242,7 +2284,8 @@ export class CoefficientFlightModel implements FlightModel {
      * **Y lo que manda es la geometría del avión, no un número igual para
      * todos.** Ver `esteGiro`.
      */
-    const nosewheel = autoridadDeLaRueda(longitudinal);
+    // Sin rueda de morro, nada que gire con ella: queda el timón.
+    const nosewheel = this.topeDelMorro() !== 0 ? 0 : autoridadDeLaRueda(longitudinal);
     s.yawRate +=
       (esteGiro(ac, controls.aileron * nosewheel, longitudinal) - s.yawRate) *
       settle;
@@ -2319,17 +2362,84 @@ export class CoefficientFlightModel implements FlightModel {
           2 * AMORTIGUA_LA_PATA * Math.sqrt(muelle * ac.inertia.yy);
         par -= Math.max(0, muelle * (cabeceo - desde) + amortiguador * s.pitchRate);
       }
-    } else if (cabeceo <= 0) {
-      const brazo = brazoDelTren(ac, 0);
-      const muelle = (peso * brazo) / Math.max(0.002, -ac.minGroundPitch);
-      const amortiguador =
-        2 * AMORTIGUA_LA_PATA * Math.sqrt(muelle * ac.inertia.yy);
-      par += Math.max(
-        0,
-        apoyado * brazo - muelle * cabeceo - amortiguador * s.pitchRate,
-      );
+    } else {
+      /*
+       * **Y sin la rueda de morro, lo que para el morro es la panza**, más
+       * abajo: el mismo apoyo cargado de serie, pero en `morroSinRueda` y con
+       * el recorrido de una chapa que roza y no el de una pata con aceite.
+       * Hasta llegar ahí no hay nada debajo: lo que sostiene el morro es el
+       * timón de profundidad contra el peso, y cuando la velocidad ya no le da
+       * para ganarle, el morro baja. Es lo que cuenta el manual de la FAA
+       * (FAA-H-8083-3C, p. 18-12). Ver el ADR 0014, enmienda H70.
+       */
+      const tope = this.topeDelMorro();
+      if (cabeceo <= tope) {
+        const sinRueda = tope !== 0;
+        const brazo = brazoDelTren(ac, tope);
+        const recorrido = sinRueda
+          ? RECORRIDO_DE_LA_PANZA
+          : Math.max(0.002, -ac.minGroundPitch);
+        const muelle = (peso * brazo) / recorrido;
+        const amortiguador =
+          2 * AMORTIGUA_LA_PATA * Math.sqrt(muelle * ac.inertia.yy);
+        const empuja = Math.max(
+          0,
+          apoyado * brazo - muelle * (cabeceo - tope) - amortiguador * s.pitchRate,
+        );
+        par += empuja;
+        // La primera vez: a qué velocidad y cómo de deprisa bajaba, por la batalla.
+        if (sinRueda && this.morroPosado === null)
+          this.morroPosado = {
+            velocidad: s.airspeed,
+            bajada: Math.max(0, -s.pitchRate) * ac.batalla,
+          };
+        /*
+         * Lo que carga la panza, N: el par que hace, por lo que va por delante
+         * del centro el sitio de la rueda que falta. La panza que toca va algo
+         * más adelante, y la cuenta del roce no lo necesita más fino.
+         */
+        if (sinRueda) this.pesoEnElMorro = empuja / Math.max(0.5, ac.batalla - ac.mainWheelsAft);
+      }
     }
     return par;
+  }
+
+  /**
+   * **Si la rueda de morro no ha salido**, que es el ejercicio del tren de
+   * morro (#90): lo pone el juego mientras la pata de morro siga en su pozo
+   * con las principales fuera. Solo cambia algo en el avión que lleva
+   * `morroSinRueda` en su ficha. Ver el ADR 0014, enmienda H70.
+   */
+  ponerSinRuedaDeMorro(sin: boolean): void {
+    this.sinRuedaDeMorro = sin;
+    if (!sin) this.morroPosado = null;
+  }
+
+  private sinRuedaDeMorro = false;
+
+  /**
+   * Lo que carga la panza del morro sobre la pista en este paso, N: cero con
+   * la rueda, o con el morro todavía arriba. Lo apunta `momentoDelTren`, y lo
+   * mira `resolveGround` para el roce.
+   */
+  private pesoEnElMorro = 0;
+
+  /**
+   * **Cómo llegó el morro a la pista** la primera vez sin su rueda: la
+   * velocidad del avión, m/s verdaderos, y lo deprisa que bajaba la panza,
+   * m/s. `null` mientras no ha llegado. Lo lee el banco.
+   */
+  morroPosado: { readonly velocidad: number; readonly bajada: number } | null = null;
+
+  /** Si la panza del morro está ahora sobre la pista. */
+  get morroEnLaPista(): boolean {
+    return this.pesoEnElMorro > 0;
+  }
+
+  /** El cabeceo al que para el morro: el de la pata, o el de la panza sin ella. */
+  private topeDelMorro(): number {
+    const sin = this.aircraft.morroSinRueda;
+    return this.sinRuedaDeMorro && sin !== undefined ? sin : 0;
   }
 
   /**
@@ -2356,7 +2466,8 @@ export class CoefficientFlightModel implements FlightModel {
      *
      * Ver `minGroundPitch`, donde está la cuenta de la que sale cada uno.
      */
-    const min = this.aircraft.minGroundPitch;
+    const tope = this.topeDelMorro();
+    const min = tope !== 0 ? tope - RECORRIDO_DE_LA_PANZA : this.aircraft.minGroundPitch;
 
     if (pitch > max) {
       this.rotateAboutMainWheels(max - pitch);

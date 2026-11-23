@@ -41,6 +41,13 @@
  * se suelta, y lo que se corre lo cuenta `carga-suelta.ts`. Su procedimiento
  * es volar el avión y aterrizar en el campo más cercano, sin declarar: ni
  * llamada ni bomberos, que nada se ha roto. Ver el ADR 0033, enmienda H38g.
+ *
+ * **El tren de morro que no sale** tampoco: al sacar el tren para aterrizar,
+ * la pata de morro se queda en su pozo. Lo primero es lo de su manual, la
+ * extensión de emergencia, que la compañera prueba en cuanto se va por debajo
+ * de la velocidad a la que se puede; no sale, y entonces se declara —PAN PAN:
+ * algo va mal y hay tiempo— y se aterriza con la nariz arriba. Los bomberos,
+ * esperando. Ver el ADR 0014, enmienda H70.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -127,6 +134,10 @@ export type Suceso =
    * parado a mirarle los frenos.
    */
   | { readonly que: "bomberos"; readonly donde: "pista" | "avion" }
+  /** La compañera prueba la extensión de emergencia del tren: el pomo. */
+  | { readonly que: "extension" }
+  /** Y la rueda de morro tampoco sale así: se aterriza con la nariz arriba. */
+  | { readonly que: "tampoco" }
   | { readonly que: "cerrar"; readonly como: Cierre };
 
 export type FaseDePractica = "armada" | "fallo" | "cerrada";
@@ -153,6 +164,22 @@ export const IDENTIFICAR_Y_BANDERA = 4;
 /** Y lo que se tarda en declarar después de asegurar, s. */
 export const Y_DECLARAR = 4;
 
+/**
+ * **Lo que se espera desde que la rueda de morro no sale hasta probar la de
+ * emergencia**, s: lo que tarda la instructora en contarlo —las dos luces y
+ * el espejo de la góndola, que es donde se ve la rueda (POH del Seneca III,
+ * VB-1110, p. 7-10a)— antes de que la compañera haga nada. Un paso no se
+ * pisa con el siguiente: ver `valeHastaElPasoSiguiente` en `audio/boca.ts`.
+ */
+export const ANTES_DE_LA_EMERGENCIA = 10;
+
+/**
+ * **Y lo que se espera a que salga por la de emergencia**, s: lo que tarda en
+ * salir su tren de siempre, los siete segundos de su manual. Pasado eso, no
+ * ha salido.
+ */
+export const LO_QUE_SE_ESPERA_AL_TREN = 7;
+
 /** Por encima de esto se está volando de verdad, no botando, m. */
 const EN_EL_AIRE = 15;
 
@@ -175,13 +202,19 @@ export class Practica {
   private yaCorrio = false;
   private conElTrenFuera = false;
   private comoCerro: Cierre | null = null;
+  /** Si el tren llegó a pedirse dentro: sin eso, no hay pata de morro que no salga. */
+  private trenMetido = false;
+  /** Si la compañera ya probó la extensión de emergencia, y desde cuándo. */
+  private extendida = false;
+  private desdeLaExtension = 0;
 
   constructor(
     readonly ejercicio: Ejercicio,
     private readonly avion: Pick<
       AircraftConfig,
       "motores" | "motoresA" | "sound" | "motorParado"
-    >,
+    > &
+      Partial<Pick<AircraftConfig, "extensionDeEmergenciaHasta">>,
     private velocidades: Velocidades,
     private readonly azar: () => number = Math.random,
   ) {
@@ -221,6 +254,11 @@ export class Practica {
   /** Si ya se aseguró el motor parado. */
   get aseguradoYa(): boolean {
     return this.asegurada;
+  }
+
+  /** Si la compañera ya probó la extensión de emergencia del tren. */
+  get extensionProbada(): boolean {
+    return this.extendida;
   }
 
   /** Si ya se declaró la emergencia. Desde ahí, la torre da prioridad. */
@@ -267,6 +305,9 @@ export class Practica {
     this.yaCorrio = false;
     this.conElTrenFuera = false;
     this.comoCerro = null;
+    this.trenMetido = false;
+    this.extendida = false;
+    this.desdeLaExtension = 0;
     this.elegida = this.sortear();
   }
 
@@ -284,6 +325,7 @@ export class Practica {
       return sucesos;
     }
     if (l.corriendo) this.yaCorrio = true;
+    if (this.yaCorrio && l.tren === "dentro") this.trenMetido = true;
 
     if (this.faseActual === "armada") {
       if (this.tocaFallar(this.elegida.cuando, l)) {
@@ -307,6 +349,10 @@ export class Practica {
     // ── Después del fallo ────────────────────────────────────────────────
     this.desdeElFallo += dt;
     if (!l.enElSuelo && l.sobreElCampo > EN_EL_AIRE) this.volo = true;
+    if (this.elegida.que === "morro") {
+      this.pasoDelMorro(l, dt, sucesos);
+      return sucesos;
+    }
     /*
      * **Y el bimotor de pistón que sigue vuela desde el fallo.** Si su manual
      * le deja seguir —el tren ya pedido dentro—, la compañera no espera a los
@@ -388,6 +434,35 @@ export class Practica {
     return sucesos;
   }
 
+  /**
+   * **El tren de morro que no sale, en el orden de su manual**: primero la
+   * extensión de emergencia, que la compañera prueba en cuanto la velocidad lo
+   * deja; esperado lo que tarda un tren, no ha salido, y se declara. Y se
+   * acaba como cualquier vuelta: parado en la pista.
+   */
+  private pasoDelMorro(l: Lectura, dt: number, sucesos: Suceso[]): void {
+    const hasta = this.avion.extensionDeEmergenciaHasta ?? Infinity;
+    if (!this.extendida) {
+      if (!l.enElSuelo && this.desdeElFallo >= ANTES_DE_LA_EMERGENCIA && l.indicada <= hasta) {
+        this.extendida = true;
+        this.desdeLaExtension = 0;
+        sucesos.push({ que: "extension" });
+      }
+    } else if (!this.declarada) {
+      this.desdeLaExtension += dt;
+      if (this.desdeLaExtension >= LO_QUE_SE_ESPERA_AL_TREN && !l.enElSuelo) {
+        this.declarada = true;
+        sucesos.push({ que: "tampoco" });
+        sucesos.push({ que: "declarar", socorro: "panpan" });
+      }
+    }
+    if (!this.bomberos && this.declarada && (l.enFinal || l.enElSuelo)) {
+      this.bomberos = true;
+      sucesos.push({ que: "bomberos", donde: "pista" });
+    }
+    if (l.enElSuelo && l.parado) this.cerrar("vuelta", sucesos);
+  }
+
   private cerrar(como: Cierre, sucesos: Suceso[]): void {
     this.faseActual = "cerrada";
     this.comoCerro = como;
@@ -419,6 +494,7 @@ export class Practica {
           // Y si no entra, a su altura falla igual: ver `sinTrenA`.
           (m.sinTrenA !== undefined && l.tren === "fuera" && l.sobreElCampo >= m.sinTrenA))
       );
+    if (m.en === "tren") return this.trenMetido && !l.enElSuelo && l.tren === "fuera";
     return !l.enElSuelo && this.segundos >= m.segundos;
   }
 

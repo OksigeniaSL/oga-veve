@@ -141,8 +141,8 @@ const HABLADOS = [
     // La tormenta, la autorrotación y las lecciones del helicóptero van al final de la lista: ver
     // `DE_LA_TORMENTA`, `DE_LA_AUTORROTACION` y `DE_LAS_LECCIONES_DEL_ROTOR`. Y lo que
     // «Se apaga el GPS» escribe delante de su frase, que se lee: ver `atenderAlGps`.
-    // Y la carga suelta, que es nueva: ver `DE_LA_CARGA_SUELTA`.
-    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga)\.|^ejercicio\.gps\.integOk$/,
+    // Y la carga suelta, que es nueva: ver `DE_LA_CARGA_SUELTA`. Y el tren de nariz: `DEL_TREN_DE_NARIZ`.
+    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro)\.|^ejercicio\.gps\.integOk$/,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],
@@ -3403,6 +3403,34 @@ const DE_LA_CARGA_SUELTA = [
   ["ejercicio.carga.bien", "el cierre de la carga suelta, aterrizado"],
 ];
 for (const [id, para] of DE_LA_CARGA_SUELTA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
+/**
+ * **El tren de nariz que no sale** (#90, H70): la presentación, la rueda que
+ * no sale, la bajada de emergencia, el «tampoco» con la toma y el cierre. De
+ * la instructora y en calma, como todo ejercicio, y detrás de todo: lo ya
+ * grabado no se renumera. Ver el ADR 0014, enmienda H70.
+ */
+const DEL_TREN_DE_NARIZ = [
+  ["ejercicio.tren-de-morro.antes", "el tren de nariz que no sale, antes de empezar: despegar, meter el tren y, al bajarlo, la de adelante se queda"],
+  ["ejercicio.morro.noSale", "el tren de nariz: bajó el tren y la rueda de adelante no salió; más despacio para la de emergencia"],
+  ["ejercicio.morro.emergencia", "el tren de nariz: la compañera tira de la perilla de emergencia"],
+  ["ejercicio.morro.tampoco", "el tren de nariz: tampoco salió; se avisa y se aterriza con la nariz arriba, sin frenos"],
+  ["ejercicio.morro.bien", "el cierre del tren de nariz, parado en la pista"],
+];
+for (const [id, para] of DEL_TREN_DE_NARIZ) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({

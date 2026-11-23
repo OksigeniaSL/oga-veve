@@ -272,6 +272,11 @@ const DEL_DESCENSO =
  * en las dos tiradas, y el ejercicio se quedaba sin cómo se sigue ni por qué
  * se amarra (ADR 0033, enmienda H67).
  *
+ * **Y los del tren de nariz que no sale**, por lo mismo: «andá más despacio»
+ * vale hasta que la compañera tira de la perilla, y «la nariz arriba todo lo
+ * que aguante», hasta el cierre. Se piden en la final, cuando más habla la
+ * torre (ADR 0014, enmienda H70).
+ *
  * No lo es todo ejercicio: lo del altímetro es una explicación que se cuenta
  * entera y en su orden —ver `porDecirDelAltimetro` en `game.ts`—, y lo que
  * pide un instante, como el pie de un motor parado, deja de ser verdad antes
@@ -281,7 +286,7 @@ export function valeHastaElPasoSiguiente(clave: string | undefined): boolean {
   return !!clave && DE_UN_PASO_QUE_DURA.test(clave);
 }
 
-const DE_UN_PASO_QUE_DURA = /^ejercicio\.(?:aguja|radial|interceptar|cruce|ils|carga)\./;
+const DE_UN_PASO_QUE_DURA = /^ejercicio\.(?:aguja|radial|interceptar|cruce|ils|carga|morro|tren-de-morro)\./;
 
 /**
  * **El ejercicio de la tormenta**, que tampoco es un comentario: qué es, por

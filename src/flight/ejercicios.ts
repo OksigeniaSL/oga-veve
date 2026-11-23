@@ -135,6 +135,16 @@
  * manual (`centradoDeSuTipo`), y desde Taguató, como la hoja que la enseña.
  * La cuenta es de `carga-suelta.ts`; la hace pasar `practica.ts`, como un
  * motor. Ver el ADR 0033, enmienda H38g.
+ *
+ * ## Y el tren de morro que no sale
+ *
+ * «El tren de morro no sale» (#90) es otra avería, `que: "morro"`, y llega
+ * cuando se saca el tren para aterrizar (`en: "tren"`): salen las principales
+ * y la de morro se queda en su pozo. Solo en el avión que tiene esa pata, su
+ * extensión de emergencia escrita y su panza medida en el dibujo. Lo que pasa
+ * en la pista sin ella lo hace el modelo de vuelo (`ponerSinRuedaDeMorro`); el
+ * orden —la de emergencia, PAN PAN, la toma— es de `practica.ts`. Ver el ADR
+ * 0014, enmienda H70.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -186,7 +196,8 @@ export type EjercicioId =
   | "cangrejo"
   | "ala-baja"
   | "pista-corta"
-  | "carga";
+  | "carga"
+  | "tren-de-morro";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -217,21 +228,29 @@ export type Momento =
       readonly sinTrenA?: number;
     }
   /** Ya en el aire desde el principio, a los segundos que se digan. */
-  | { readonly en: "aire"; readonly segundos: number };
+  | { readonly en: "aire"; readonly segundos: number }
+  /**
+   * **Al pedir el tren fuera para aterrizar**, ya volando y con el tren
+   * metido antes: el tren de morro que no sale. Sin haberlo metido no hay
+   * nada que no salga, y no falla.
+   */
+  | { readonly en: "tren" };
 
 /** Qué falla. */
 export interface Averia {
   /**
    * Un motor —el de fuera, de un lado o del otro—, todos, el aire de la
    * cabina —la despresurización, que se vuela con los motores bien— o la
-   * carga de la bodega que se suelta y se va hacia la cola.
+   * carga de la bodega que se suelta y se va hacia la cola, o la pata de
+   * morro, que se queda en su pozo.
    */
-  readonly que: "motor" | "motores" | "presion" | "carga";
+  readonly que: "motor" | "motores" | "presion" | "carga" | "morro";
   readonly cuando: Momento;
 }
 
 /** Lo que hace falta saber de un avión para ofrecerle un ejercicio. */
-export type AvionDelEjercicio = Pick<AircraftConfig, "id" | "motores" | "presurizacion" | "sound" | "helicoptero">;
+export type AvionDelEjercicio = Pick<AircraftConfig, "id" | "motores" | "presurizacion" | "sound" | "helicoptero"> &
+  Partial<Pick<AircraftConfig, "trenRetractil" | "morroSinRueda" | "extensionDeEmergenciaHasta">>;
 
 export interface Ejercicio {
   readonly id: EjercicioId;
@@ -1070,6 +1089,31 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     averias: [{ que: "carga", cuando: { en: "subida", metros: 400 * 0.3048 } }],
     ensena:
       "la carga suelta que se va hacia la cola se lleva el centro de gravedad: la nariz quiere subir, se empuja y se compensa, nada brusco y con velocidad de sobra, y a tierra en el campo más cercano. Por eso se amarra",
+  },
+  /*
+   * **El tren de morro que no sale** (#90, H70): se despega, se mete el tren
+   * y, al sacarlo para aterrizar, salen las principales y la de morro se
+   * queda dentro. Primero se prueba la extensión de emergencia de su manual
+   * —por debajo de su velocidad, el selector abajo y el pomo— y tampoco sale;
+   * entonces se declara y se aterriza sobre las principales con la nariz
+   * arriba todo lo que aguante, y se la deja bajar despacio, sin frenos. Ver
+   * el ADR 0014, enmienda H70.
+   */
+  {
+    id: "tren-de-morro",
+    // Taguató, como dice el #90, y Taguató Ruvichá, que lleva el catálogo entero.
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **Solo donde hay una rueda de morro que se mete**, con su extensión de
+     * emergencia escrita y su panza medida en el dibujo: hoy, el JAZ 40. Un
+     * tren fijo no puede dejar de salir.
+     */
+    valePara: (a) =>
+      !!a.trenRetractil && a.morroSinRueda !== undefined && a.extensionDeEmergenciaHasta !== undefined,
+    leccion: "vuelta",
+    averias: [{ que: "morro", cuando: { en: "tren" } }],
+    ensena:
+      "si la rueda de morro no sale, primero la extensión de emergencia; y si tampoco, se aterriza sobre las de atrás con la nariz arriba todo lo que aguante, se la deja bajar despacio y sin frenos. Sale bien casi siempre",
   },
 ];
 

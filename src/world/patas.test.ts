@@ -125,4 +125,24 @@ describe("las patas que se meten", () => {
     patas.poner(0.3);
     expect(bisagra.visible).toBe(true);
   });
+
+  /*
+   * **El tren de nariz que no sale** (ADR 0014, H70): salen las principales y
+   * la de morro se queda en su pozo, que es lo que se ve desde fuera.
+   */
+  it("con la rueda de morro atascada, salen las demás y ella se queda dentro", () => {
+    const { raiz, bisagra } = avion();
+    const nodo = bisagra.parent!;
+    const morro = new Object3D();
+    morro.name = "bisagra-morro";
+    morro.userData = { eje: [-1, 0, 0], grados: 90 };
+    nodo.add(morro);
+    const patas = prepararPatas(raiz)!;
+    expect(patas.cuantas).toBe(2);
+    patas.poner(1, true);
+    expect(bisagra.visible).toBe(true);
+    expect(morro.visible).toBe(false);
+    patas.poner(1);
+    expect(morro.visible).toBe(true);
+  });
 });

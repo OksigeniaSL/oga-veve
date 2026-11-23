@@ -1671,6 +1671,24 @@ export interface AircraftConfig {
    */
   minGroundPitch: number;
   /**
+   * **Hasta dónde baja el morro cuando su rueda no ha salido**, rad, negativo:
+   * el cabeceo al que, girando sobre las principales, lo primero que no es
+   * tren —la panza del morro— llega a la pista. **Es la del dibujo**, como el
+   * tope de cola: la mide `sin-rueda-de-morro.test.ts` en el `.glb`.
+   *
+   * Solo lo lleva el avión que tiene el ejercicio del tren de morro que no
+   * sale (#90), y por eso es opcional: sin él no se le ofrece. Ver
+   * `ponerSinRuedaDeMorro` en `fdm.ts`.
+   */
+  morroSinRueda?: number;
+  /**
+   * **Hasta qué velocidad se puede probar la extensión de emergencia** del
+   * tren, m/s indicados: la de su manual. Más deprisa, el aire no deja caer
+   * las patas, y el manual lo prohíbe. Solo la lleva el avión del ejercicio
+   * del tren de morro (#90).
+   */
+  extensionDeEmergenciaHasta?: number;
+  /**
    * **Si lleva flaps.**
    *
    * Casi todos, y no todos: un biplano fumigador de esta clase lleva alerones
@@ -2416,6 +2434,21 @@ export const PANAMBI: AircraftConfig = {
   maxGroundPitch: 19.7 * (Math.PI / 180),
   // 3,6 m de morro y diez centímetros: 1,6°.
   minGroundPitch: -0.028,
+  /*
+   * **17,6° con la rueda de morro dentro**, medidos en su dibujo: girando
+   * sobre las principales, lo primero que toca es la panza del morro, debajo
+   * de la bodega (`sin-rueda-de-morro.test.ts`). Las palas, paradas como las
+   * deja el modelo, quedan por encima. Ver el ADR 0014, enmienda H70.
+   */
+  morroSinRueda: -17.6 * (Math.PI / 180),
+  /*
+   * **85 KIAS**: «Emergency gear extension must not be attempted at
+   * airspeeds in excess of 85 KIAS» (POH del Seneca III, VB-1110, sección 7,
+   * p. 7-7; y en la lista de la sección 3, p. 3-8, «Airspeed — reduce (85
+   * KIAS max.)»). El del Seneca I da 100 MPH, que son 87 nudos (VB-423,
+   * p. 3-14).
+   */
+  extensionDeEmergenciaHasta: 85 * 0.514444,
   llevaFlaps: true,
   flapsLift: 0.5,
   flapsDrag: 0.07,

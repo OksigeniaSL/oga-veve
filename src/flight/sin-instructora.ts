@@ -260,6 +260,12 @@ const LOS_EJERCICIOS = [
   "ejercicio.carga.despacio",
   "ejercicio.carga.amarrada",
   "ejercicio.carga.bien",
+  // El tren de nariz que no sale (H70): presentación, los tres pasos y el cierre.
+  "ejercicio.tren-de-morro.antes",
+  "ejercicio.morro.noSale",
+  "ejercicio.morro.emergencia",
+  "ejercicio.morro.tampoco",
+  "ejercicio.morro.bien",
   /*
    * Y la tormenta, entera: es un ejercicio que se elige, y lo que dice —qué
    * es, por qué no se entra, que un rayo no hace nada— es el ejercicio mismo.
