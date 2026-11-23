@@ -817,3 +817,106 @@ Y `npm run carteles` entero, **1185 de 1185**. La ronda de cierre había dado
 se abre», que no llegó a abrir la página en noventa segundos. Esta vez se
 abrió, y sus quince comprobaciones —las que faltaban para 1185— salieron en
 verde: fue la página que no cargó, no la carta.
+
+## Enmienda H67 (23-11-2026): la carga suelta, con su «despacio» y su cierre
+
+### El caso
+
+En la ronda de cierre de la tanda 23, el banco de la carga suelta
+(`verificar-emergencias.mjs carga gran-canaria jaz-20 taguato`) dio 7 de 9:
+no se pidió `ejercicio.carga.despacio` —cómo se sigue: suave, con velocidad
+de sobra, a la pista más cercana— ni se celebró el cierre, aunque se cerró en
+«vuelta» y tocó en la pista. Con `OGA_AMARRADA=1`, 8 de 9: no se pidió
+`ejercicio.carga.amarrada`, el «iba amarrada, por eso no se movió», que es la
+lección entera. En los dos logs la página se había recargado al arrancar
+(«Failed to fetch dynamically imported module»).
+
+### Qué era
+
+**No era la recarga.** Volado otra vez en una copia de main sin que la página
+se recargara, salió lo mismo: 7 de 9 con los mismos dos rojos. Y no podía
+mezclar dos vidas de la página: lo que no se bajó fue `main.ts` o `game.ts`,
+así que en la primera vida no llegó a existir `__oga` y el banco espera a la
+segunda para todo lo que mira. Las tres «antes» de la lista son de una sola
+vida: la presentación del ejercicio que empieza mientras carga —pedida antes
+de que lleguen los manifiestos, de ahí el «espera a saber si está grabada»—
+y la de después de `reiniciar()`.
+
+**Eran las cinco frases grabadas** (b2290de7). Con el banco volcando lo que
+tira la boca, se ve: `ejercicio.carga.despacio: caducó esperando` a los 29 s
+de la primera frase y `ejercicio.carga.bien: caducó esperando` a los 209.
+Las dos se piden en `normal`, y una frase de ese peso aguanta los cuatro
+segundos de un aviso (`CADUCA`):
+
+- «despacio» llega diez segundos después de soltarse la maleta, subiendo,
+  detrás de recoger los flaps, «ya estamos volando» e ir rápido;
+- «amarrada» se pide en el mismo instante en que se suelta, en el mismo
+  peso y detrás de lo mismo —en su tirada no estaba el volcado—;
+- y «carga.bien», al pararse en la pista, detrás del «abandonando» y de las
+  gafas de sol.
+
+Mientras estaban sin grabar no se veía: `decirDelEjercicio` no las pedía
+—sin receta, se callan en la puerta— y apuntaba «sin grabar, se calla», que
+el banco cuenta como pedido. Grabadas entran en la cola, caducan sin sonar y
+no salen en ninguna de las dos listas. Las 9 de 9 de la H38g eran con ellas
+sin grabar. La A/B volada sobre 45d56056 —H38g juntada, sin grabar—, que lo
+diría con el navegador, quedó en cola: ver «Lo que queda».
+
+### El arreglo, con las reglas que ya había
+
+Sin frases nuevas y sin nada propio de la carga en el juego:
+
+- **«despacio» y «amarrada» son pasos que valen hasta el siguiente**, como
+  los de los ejercicios de radio (ADR 0030, H26k): esperan sin reloj y los
+  retira el ejercicio al pedir el paso siguiente o al cerrarse. La regla
+  estaba escrita para «un paso de un ejercicio de radio» y la carga suelta es
+  lo mismo sin radio: «ahora suave» vale desde que la maleta llega al fondo
+  hasta tocar tierra, y «iba amarrada», hasta el cierre. La función pasa a
+  llamarse por lo que mira, `valeHastaElPasoSiguiente` (en `audio/boca.ts`),
+  con la carga en su lista. No lo es todo ejercicio: lo del altímetro es una
+  explicación que se cuenta entera y en su orden (ADR 0031), y lo que pide un
+  instante —el pie de un motor parado— deja de ser verdad antes de que nadie
+  lo retire.
+- **`cerrarElEjercicio` retira lo que quedara de esos pasos**, también con un
+  percance: antes solo lo hacían los de radio en su propio cierre, y con la
+  espera sin reloj un «ahora suave» pendiente sonaría después de romperse el
+  avión.
+- **El «bien» de cualquier ejercicio cierra el vuelo** (`cierraElVuelo`, en
+  `audio/turnos.ts`): ni caduca, ni lo echa una cola llena, ni lo barre un
+  urgente. Era una lista, y el de la autorrotación y el de la carga suelta se
+  escribieron en `cerrarElEjercicio` sin entrar en ella. Toda felicitación
+  de un ejercicio lleva «bien» en su clave, así que la regla mira eso, y la
+  que se escriba mañana entra sola.
+
+Y el banco vuelca lo del ejercicio que tiró la boca con su porqué, al lado
+del instructor, la torre y la cabina: sin eso, un «no se pidió» no decía si
+se pidió y se cayó.
+
+Y en `boca.test.ts`: «despacio» y «amarrada» esperan sin reloj, y no un
+paso del altímetro ni `ejercicio.velocidad`; detrás de una frase de quince
+segundos, «despacio» suena y un aviso de paso caduca; y cierran el vuelo
+`ejercicio.carga.bien`, `ejercicio.autorrotacion.bien` y
+`ejercicio.tormenta.bienCerca`, y no `ejercicio.carga.despacio`.
+
+### Comprobado
+
+- **El banco, antes del arreglo**, en este código y sin recarga al arrancar:
+  7 de 9, con los mismos dos rojos que la ronda y lo tirado de arriba.
+- `tsc --noEmit -p .`, en verde.
+
+### Lo que queda
+
+- **Los dos bancos con el arreglo** —la carga suelta y la amarrada—, la A/B
+  sobre 45d56056 y la amarrada de antes del arreglo con lo que tira la boca
+  volcado: preparados en un solo turno del navegador, esperaron detrás de dos
+  bancos de otras sesiones de entre veinte y cincuenta minutos y no llegaron
+  a volar dentro del tiempo del encargo. Que «amarrada» caducaba, y no se
+  caía por otra cosa, se deduce de pedirse en `normal` en el mismo instante
+  que «suelta» detrás de lo mismo; no se ha visto en el volcado.
+- **El vitest entero**, por pasar: esperó sitio en el anillo de trabajos con
+  los bancos de otras sesiones dentro. Las pruebas nuevas de `boca.test.ts`
+  no se han corrido todavía.
+- **La autorrotación**, cuyo «bien» tampoco cerraba el vuelo, no se ha
+  volado con el cambio; ni los demás ejercicios con un banco que vuelque lo
+  que tira la boca, que es lo único que distingue una frase callada por sin
+  grabar de una que caducó esperando.
