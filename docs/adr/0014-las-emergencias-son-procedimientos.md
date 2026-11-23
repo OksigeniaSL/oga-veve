@@ -700,3 +700,271 @@ cambiado. El banco apunta ahora la espera en los dos relojes.
   saltadas).
 - **Sin comprobar**: el banco del vuelo entero con los pies desde su módulo;
   las cuentas son las mismas, letra a letra, pero no se ha volado.
+
+## Enmienda H70 (23-11-2026): el tren de morro que no sale
+
+### El caso
+
+Del catálogo del #90 faltaba, del aterrizaje, esto: «**El tren de morro no
+sale.** Se aterriza con las principales y se mantiene el morro arriba todo lo
+que aguante, para posarlo lo más despacio posible. Es una maniobra de pura
+finura, y sale bien casi siempre». En Taguató, como dice el issue, y en
+Taguató Ruvichá, que lleva el catálogo entero.
+
+### El avión
+
+**El JAZ 40**, el bimotor de pistón de la clase del Seneca II: es el único de
+Taguató con una rueda de morro que se mete y un manual que se puede leer. El
+JAZ 20 y el JAZ 25 llevan el tren fijo, y un tren fijo no puede dejar de
+salir. Los de turbina también la meten, pero de sus procedimientos de tren no
+hay nada leído aquí. La ficha lleva dos cosas nuevas, opcionales y solo en
+él: `morroSinRueda`, hasta dónde baja el morro sin su rueda, y
+`extensionDeEmergenciaHasta`, la velocidad de su manual. Sin las dos, el
+ejercicio no se ofrece.
+
+### De dónde sale el procedimiento
+
+Leídas, no de memoria:
+
+- **Piper, *Pilot's Operating Handbook* del PA-34-220T Seneca III**
+  (VB-1110, 1981, con revisiones hasta 2004; la copia de
+  `longislandaviators.com`). El del Seneca II no se ha podido leer, como ya
+  decía la H14a del ADR 0027; el tren de los dos es hidráulico y con caída
+  libre.
+  - Sección 3, p. 3-8, la lista: «MANUAL EXTENSION OF LANDING GEAR […]
+    Airspeed — reduce (85 KIAS max.) · Gear selector — GEAR DOWN LOCKED
+    position · Emerg. gear extend knob — pull · Indicator lights — 3 green ·
+    Leave emergency gear extension knob out». Y en la misma página y la 3-9,
+    «GEAR UP LANDING: Approach — Normal · Flaps — as desired · Throttles —
+    closed prior to touchdown · Battery switch — OFF · Fuel selector — OFF ·
+    Touch down at minimum airspeed».
+  - Sección 3, 3.15 a 3.19, pp. 3-19 y 3-20: la luz roja de tren y
+    «recycle the landing gear»; la extensión manual, «power should be reduced
+    to maintain airspeed below 85 KIAS»; y la toma sin tren, «Contact to the
+    surface should be made at a minimum airspeed».
+  - Sección 7, p. 7-6b: «should the hydraulic system fail for any reason,
+    gravity will allow the gear to extend […] the nose wheel retracts forward
+    into the nose section»; p. 7-7: «Emergency gear extension must not be
+    attempted at airspeeds in excess of 85 KIAS. […] Pulling this knob
+    releases the hydraulic pressure holding the gear in the up position and
+    allows the gear to fall free»; y junto a la figura 7-8, las tres luces
+    verdes, «A convex mirror on the left engine nacelle […] allows the pilot
+    to visually confirm the condition of the nose gear» y «If the gear is in
+    neither the full up nor the full down position, a red warning light on
+    the instrument panel illuminates».
+  - Sección 4, 4.41, p. 4-32: «check for three green lights on the panel and
+    look for the nose wheel in the nose wheel mirror».
+  - Sección 2, 2.5, p. 2-3: «White Arc (Flap Down) 64 to 115» KIAS. El
+    principio del arco blanco es la pérdida con todo fuera.
+- **Piper, manual del PA-34-200 Seneca** (VB-423, 1972, rev. 1977; la copia
+  de la Delaware State University), capítulo 3, p. 3-14: la misma extensión
+  manual con «airspeed not to exceed 100 MPH», 87 nudos, y la misma toma sin
+  tren.
+- **FAA, *Airplane Flying Handbook* (FAA-H-8083-3C)**, capítulo 18, p. 18-12,
+  «Landing Gear Malfunction», con la figura 18-8 en la 18-13:
+  - «Once the pilot has confirmed that the landing gear has in fact
+    malfunctioned and that one or more gear legs refuses to respond to the
+    conventional or alternate methods of gear extension contained in the
+    AFM/POH, a gear-up landing is considered inevitable. The pilot should
+    select an airport with crash and rescue facilities, if possible. The
+    pilot should not hesitate to request that emergency equipment is
+    standing by.»
+  - «When landing with a retracted nose-wheel (and the main gear extended and
+    locked), the pilot should hold the nose off the ground until almost full
+    up-elevator has been applied. [Figure 18-8] The pilot should then release
+    back pressure in such a manner that the nose settles slowly to the
+    surface. Applying and holding full up-elevator results in the nose
+    abruptly dropping to the surface as airspeed decays, possibly resulting
+    in burrowing and/or additional damage. Brake pressure should not be
+    applied during the landing roll unless absolutely necessary to avoid a
+    collision with obstacles.»
+
+O sea, y en este orden: **antes de aterrizar sin el morro se intenta la
+extensión de emergencia**, por debajo de 85 nudos; si tampoco, se pide a los
+bomberos que esperen; y se toma con la nariz arriba, sostenida hasta casi
+todo el timón y soltada después para que baje despacio, sin frenos.
+
+**Lo que no se enseña, y por qué:** el «recycle» de la luz roja (3.15), que
+el ejercicio se salta para ir a lo que se practica; la batería y el
+combustible cortados de la toma sin tren, que son de la toma con las tres
+patas dentro y el juego no los tiene como mandos en este ejercicio; y
+cualquier cifra de «despacio» para la nariz, que ninguna de las tres fuentes
+da. La velocidad con la que se mide, abajo, es la del arco blanco.
+
+**PAN PAN y no MAYDAY**: la FAA pide los bomberos esperando, y eso es
+declarar; pero el avión vuela bien y hay tiempo, que es la urgencia y no el
+socorro —el mismo criterio que el cuatrimotor que pierde un motor—. La
+llamada dice «nose gear unsafe».
+
+### El ejercicio
+
+`tren-de-morro`, en `flight/ejercicios.ts`: la lección de dar una vuelta y
+una avería nueva, `que: "morro"`, que llega **al pedir el tren fuera con el
+tren ya metido antes** (`Momento` `en: "tren"`): sin haberlo metido no hay
+pata que no salga.
+
+1. **La instructora lo presenta** antes de soltar frenos, con el dibujo del
+   tren: `ejercicio.tren-de-morro.antes`.
+2. **Sale el tren y la de morro no**: en el avión se ve la pata de morro en
+   su pozo (`poner(donde, sinMorro)` en `world/patas.ts`) y la luz roja del
+   tren se queda encendida, como dice su manual. La instructora:
+   `ejercicio.morro.noSale` —la rueda no salió, la roja sigue prendida, más
+   despacio—. Las dos verdes de su manual no se cuentan todavía: ver «Lo que
+   queda».
+3. **La compañera prueba la de emergencia**, a los diez segundos y por
+   debajo de los 85 nudos de su ficha: `ejercicio.morro.emergencia`. Se
+   espera lo que tarda su tren en salir, siete segundos, y no sale.
+4. **Tampoco**: `ejercicio.morro.tampoco` —avisamos a la torre, las ruedas
+   de atrás, la nariz arriba todo lo que aguante, abajo despacito, sin
+   frenos— con el dibujo de la nariz arriba; PAN PAN en la tira de la radio
+   y la torre contestando; y en la final, los bomberos de ese aeródromo
+   junto a la pista. La instructora no dice además «declaramos»: ya va en su
+   frase, y un paso nuevo retiraría ese de la cola.
+5. **El cierre**, parado en la pista: `ejercicio.morro.bien`, celebrándolo.
+   Sin música, sin rojo, y si sale mal, sale mal el ejercicio.
+
+Los cuatro pasos valen hasta el siguiente o el cierre
+(`valeHastaElPasoSiguiente`), como los de la carga suelta (ADR 0033, H67):
+se piden en la final, cuando más habla la torre. El «bien» cierra el vuelo
+porque lleva «bien» en su clave.
+
+### El modelo, solo lo que hace falta
+
+En `fdm.ts`, con `ponerSinRuedaDeMorro`, y solo en el avión con
+`morroSinRueda`:
+
+- **Lo que para el morro es la panza**, más abajo: el mismo apoyo que la
+  pata —cargado con el par del peso, con muelle y amortiguador— pero en
+  `morroSinRueda` y con medio grado de recorrido (`RECORRIDO_DE_LA_PANZA`).
+  Hasta llegar ahí no hay nada debajo: lo que sostiene la nariz es el timón
+  de profundidad contra el peso que cargan las principales, y cuando la
+  velocidad ya no le da, baja. No hay ninguna regla nueva para eso: es el par
+  del tren de siempre (`momentoDelTren`) sin la pata.
+- **17,6°**, medidos en su dibujo: girando sobre las principales, lo primero
+  que llega a la pista es la panza del morro, debajo de la bodega
+  (`sin-rueda-de-morro.test.ts` lo mide en el `.glb`). Las palas, quietas como
+  las deja el modelo, quedan por encima.
+- **El roce frena**: lo que carga la panza no rueda, se arrastra, con el 0,4
+  de lo que carga (`ROCE_DE_LA_PANZA`). **Sin fuente leída**: es el orden del
+  freno a fondo de una rueda en seco; lo que se enseña —la nariz que toca
+  pronto frena antes y más rato— no depende de la cifra.
+- **Y tuerce**: el roce va por delante del centro, así que si la panza va
+  torcida respecto a su camino la tuerce más —lo contrario de una flecha—, y
+  recta no hace nada. Y sin rueda de morro el volante no gira el avión en el
+  suelo: queda el pie.
+- **Sin percance que no tocaría**: tocar sobre las principales es una toma
+  como cualquiera —el tren está fuera, `trenAlTocar`—, y la nariz en la
+  pista no rompe nada. El percance de siempre sigue: tocar duro o fuera.
+
+Medido en vitest con el JAZ 40 en Taguató, todo fuera, sin gas y sin frenos,
+tocando a 71 nudos con 3,3° de nariz:
+
+| | la nariz en la pista | lo que bajaba la panza | hasta pararse |
+|---|---|---|---|
+| Con la rueda | — | — | no se para en 60 s: 1.206 m y 18 kt |
+| Soltada al tocar | a 69 kt | 2,8 m/s | 20,6 s, 410 m |
+| Sostenida hasta casi todo el timón y soltada a 2°/s | a 46 kt | 2,4 m/s | 32 s, 740 m |
+
+El timón, sosteniendo la nariz a +2°, se queda sin recorrido a 48,7 nudos.
+
+**Lo que el modelo no distingue**: el manual de la FAA dice que sostener todo
+el timón hasta el final deja caer la nariz «abruptly». Aquí, con la nariz
+por debajo de la horizontal el peso gana brazo —el centro va 1,6 m por
+encima de las ruedas y se adelanta al inclinarse—, y la panza llega a la
+pista a unos 2–2,4 m/s la sueltes como la sueltes. Lo que sí cambia, y mucho,
+es **a qué velocidad llega**: por eso el banco mide eso.
+
+### El banco
+
+`verificar-emergencias.mjs morro`, con el JAZ 40 en Taguató: despega, mete
+el tren, da el circuito y en la final lo saca. Desde que la rueda no sale
+hasta que la compañera tira de la perilla vuela a 80 nudos, por debajo de
+los 85 de la de emergencia, y después la final de siempre; recoge como dice
+su manual, con la nariz arriba y a la mínima; y en la pista hace lo del
+manual de la FAA —la nariz sostenida hasta nueve décimas de timón, soltada a
+dos grados por segundo—, sin frenos y por el eje con el pie. Mira:
+
+- que se presente, y que la avería llegue al sacar el tren, sin motor parado;
+- que la rueda de morro se quede dentro y se diga;
+- que la compañera pruebe la de emergencia por debajo de 85 nudos, y se diga;
+- que tampoco salga: el «tampoco», PAN PAN con la torre contestando y los
+  bomberos esperando;
+- que toque en la pista sobre las principales, con la nariz arriba;
+- que la nariz llegue a la pista **por debajo de 64 KIAS**, el arco blanco
+  del POH: aguantó arriba hasta que el ala ya no volaba;
+- sin percance, y el cierre celebrado con `ejercicio.morro.bien`;
+- y **nada del ejercicio tirado por la boca**: una frase pedida que caduca
+  en la cola es un fallo, como enseñó la H67 del ADR 0033.
+
+### Comprobado
+
+- **La primera tirada**, en Gran Canaria, dio 8 de 10. El tren salió a 272 m
+  en la final y la rueda de morro se quedó dentro; la compañera tiró de la
+  perilla a 85 nudos indicados; PAN PAN, la torre contestó
+  (`torre.canario.panpan`) y salieron los tres camiones de Gando; la nariz
+  llegó a la pista a 47 nudos, bajando 2,15 m/s, soltada a 50; sin percance,
+  y el cierre con `ejercicio.morro.bien`. Los dos rojos eran del banco:
+  - la extensión se miraba con la verdadera, 87 nudos en Gando, y su manual
+    habla de indicada: ahora lee `indicada()`;
+  - y la final entera a 80 nudos, con todo fuera, es lenta para este avión
+    —la instructora dijo «lento» y «lento y bajo»—: tocó plano y a 3,2 m/s
+    («tocaste duro», sin percance). El manual dice «Approach — Normal»: a 80
+    solo hasta probar la de emergencia, y después la de siempre.
+- **La segunda**, con los dos arreglos, 9 de 10: la perilla a 85 nudos
+  indicados, el «tampoco» un segundo después a 86, PAN PAN contestado, tres
+  camiones, la nariz en la pista a 53 nudos bajando 1,9 m/s —soltada a 55—,
+  sin percance y celebrado. El rojo, otra vez del banco: su recogida, la de
+  siempre, hecha para los de línea, tocó a 75 nudos con la nariz 2,6° abajo
+  y cayendo 2,6 m/s —sobre las principales, pero no con la nariz arriba—. La
+  de este modo es ahora la de su manual, «Touch down at minimum airspeed»:
+  por debajo de ocho metros la nariz sube grado y medio por segundo mientras
+  el avión se hunda, hasta ocho grados.
+- **La tercera, con esa recogida, no voló**: esperó memoria detrás del
+  vitest entero y se quitó de la cola al acabarse el tiempo del encargo.
+- **Lo que tira la boca**: nada del ejercicio en las dos tiradas. Con las
+  frases sin grabar la comprobación no puede ver nada —se callan en la
+  puerta y no entran en la cola—; vale el día que se graben, que es para lo
+  que está (H67).
+- `tsc --noEmit -p .`, en verde, y **el vitest entero**: 579 de 579 ficheros
+  y 11.563 pruebas en verde, con 32 saltadas y una pendiente. Dentro,
+  `sin-rueda-de-morro.test.ts` —el tope en el dibujo, el avión que con la
+  rueda no cambia, el que sin ella apoya la panza parado, la nariz sostenida
+  que se posa por debajo de 64 nudos y la soltada que se posa por encima, el
+  roce que frena más del doble que la rueda, el giro de la panza torcida y el
+  volante sin rueda— y las nuevas de `practica.test.ts`, `boca.test.ts` y
+  `patas.test.ts`. El cambio de la frase de la roja llegó después del vitest:
+  es solo texto.
+
+### Lo que queda
+
+- **Las luces del tren**: el cuadro pinta las tres luces con una sola
+  posición del tren, así que con la rueda de morro dentro siguen saliendo
+  tres verdes, aunque la roja se quede encendida. Hacen falta las luces por
+  pata para enseñar las dos verdes de su manual; mientras tanto la frase no
+  las cuenta y habla de la roja.
+- **La tercera tirada del banco**, con la recogida de su manual.
+- **Las palas**: en el dibujo, una pala en vertical llegaría a la pista a
+  unos 10,8° de nariz —0,42 m de holgura a 2,2 m por delante de las
+  principales—, antes que la panza. El modelo dibuja la hélice girando y no
+  tiene golpe de hélice; ninguna de las fuentes leídas dice qué toca primero
+  en uno de verdad.
+- Las cinco frases, por grabar.
+- El «recycle» del tren antes de la de emergencia (3.15), fuera del
+  ejercicio.
+
+### Las frases
+
+Cinco, de la instructora y en calma, en `es-PY` y en `en`; el guaraní no se
+toca. «Tren de nariz», que es como se dice de este lado del mar, y sin cifras
+en la voz: las unidades cambian con el peldaño. Van en `LOS_EJERCICIOS` de
+`sin-instructora.ts` —son de seguridad— y en `DEL_TREN_DE_NARIZ`, al final de
+`frases-para-grabar.mjs`. **Sin grabar**: hasta que se graben se ven en la
+tarjeta y la voz se calla.
+
+- `ejercicio.tren-de-morro.antes`
+- `ejercicio.morro.noSale`
+- `ejercicio.morro.emergencia`
+- `ejercicio.morro.tampoco`
+- `ejercicio.morro.bien`
+
+Y en el hangar, que solo se lee: `hangar.ejercicio.tren-de-morro`.
