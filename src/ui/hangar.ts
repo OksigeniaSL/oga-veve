@@ -2083,12 +2083,20 @@ const EJ_CARGA = escena(`
  * **El tren de morro que no sale**: el avión sobre la pista con las ruedas de
  * atrás y la nariz arriba, y el hueco de la rueda de morro vacío, con su
  * raya. Es la postura que se practica. Ver el ADR 0014, enmienda H70.
+ *
+ * **Con la pata puesta, y la cola en el aire** (H70b). Mirado con la tarjeta:
+ * a diez grados la cola quedaba a punto de rozar el asfalto, la rueda era una
+ * bola suelta debajo de la panza y la de morro, rayada, estaba en el suelo y
+ * no debajo del morro —se leía como una rueda que se cae—. A siete grados la
+ * nariz sigue arriba y la cola, lejos; la rueda cuelga de su pata, y la
+ * rayada, de la panza, donde tendría que estar.
  */
 const EJ_TREN_DE_MORRO = escena(`
   <path class="leccion__asfalto" d="M0 76 H120 V84 H0 Z" />
-  ${AVION_DE_PERFIL("translate(60 56) rotate(10) scale(4)")}
+  ${AVION_DE_PERFIL("translate(60 56) rotate(7) scale(4)")}
+  <path d="M61 67 L62 73" style="stroke: #2b2f36; stroke-width: 1.6; stroke-linecap: round" />
   <circle cx="62" cy="73" r="3" style="fill: #2b2f36" />
-  <circle cx="33" cy="69.5" r="3" style="fill: none; stroke: #2b2f36; stroke-width: 1.2; stroke-dasharray: 2 1.6; opacity: 0.6" />
+  <circle cx="32" cy="66.8" r="2.6" style="fill: none; stroke: #2b2f36; stroke-width: 1.2; stroke-dasharray: 2 1.6; opacity: 0.7" />
   <path class="ejercicio__flecha" d="M14 34 q-4 12 2 24 M12 53 l4 5 l3 -6" />
 `);
 

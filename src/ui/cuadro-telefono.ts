@@ -32,7 +32,7 @@
 
 import { CIFRAS_DE_AVISO_DESDE } from "../flight/escalera";
 import type { AircraftConfig } from "../flight/aircraft";
-import { luzDeTren } from "../flight/tren";
+import { lucesDeLasPatas, luzDeTren } from "../flight/tren";
 import { llevaVentanillaDeAltitud } from "../flight/altitud-seleccionada";
 import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
 import { RODAR } from "./cristal";
@@ -335,8 +335,9 @@ export class CuadroDelTelefono {
     escribir(this.pieza("hdg"), String(redondo === 0 ? 360 : redondo).padStart(3, "0"));
     poner(this.pieza("rosa"), "transform", `rotate(${decima(-rumbo)} 12 12)`);
 
-    const luz = luzDeTren(d.tren);
-    for (const l of this.luces) poner(l, "data-luz", luz);
+    // Cada luz, la de su pata: con la de morro en su pozo, la de en medio apagada. Ver `lucesDeLasPatas`.
+    const luces = lucesDeLasPatas(this.luces.length, d.tren, d.trenDeMorro);
+    this.luces.forEach((l, k) => poner(l, "data-luz", luces[k] ?? luzDeTren(d.tren)));
     escribir(this.pieza("flaps"), String(Math.round(enLaMuesca(c.flaps, d.flaps))));
   }
 }

@@ -13,6 +13,7 @@ import {
   cifrasMarcadas,
   hayLampara,
   LA_TORRE_LO_VE,
+  LamparaSinRadio,
   luzParaQuienNoTieneRadio,
   MARCADO_EN,
   type LoQueVeLaTorre,
@@ -76,6 +77,36 @@ describe("la lámpara para quien no tiene radio", () => {
     expect(
       luzParaQuienNoTieneRadio({ ...EN_SU_CIRCUITO, enElAire: false, teDejaAterrizar: true }),
     ).toBeNull();
+  });
+});
+
+describe("la lámpara no se apaga por geometría", () => {
+  it("llamado con los destellos, se quedan aunque la torre deje de contarte un rato", () => {
+    const l = new LamparaSinRadio();
+    expect(l.paso(EN_SU_CIRCUITO)).toBe("destellos");
+    // La esquina del tramo cruzado, fuera de su circuito: era un hueco apagado.
+    expect(l.paso({ ...EN_SU_CIRCUITO, teCuenta: false })).toBe("destellos");
+    // Y en la base y la final, hasta la verde.
+    expect(l.paso({ ...EN_SU_CIRCUITO, enLaBaseOEnLaFinal: true })).toBe("destellos");
+    expect(l.paso({ ...EN_SU_CIRCUITO, enLaBaseOEnLaFinal: true, teDejaAterrizar: true })).toBe("verde");
+  });
+
+  it("la verde sin permiso y la roja sin orden no se quedan: vuelven los destellos", () => {
+    const l = new LamparaSinRadio();
+    l.paso(EN_SU_CIRCUITO);
+    expect(l.paso({ ...EN_SU_CIRCUITO, teMandaIrte: true })).toBe("roja");
+    expect(l.paso({ ...EN_SU_CIRCUITO, teCuenta: false })).toBe("destellos");
+    expect(l.paso({ ...EN_SU_CIRCUITO, teDejaAterrizar: true })).toBe("verde");
+    expect(l.paso({ ...EN_SU_CIRCUITO, enLaBaseOEnLaFinal: true })).toBe("destellos");
+  });
+
+  it("los primeros no se encienden en la base ni en la final, y en tierra se apaga", () => {
+    const l = new LamparaSinRadio();
+    expect(l.paso({ ...EN_SU_CIRCUITO, enLaBaseOEnLaFinal: true })).toBeNull();
+    expect(l.paso(EN_SU_CIRCUITO)).toBe("destellos");
+    expect(l.paso({ ...EN_SU_CIRCUITO, enElAire: false })).toBeNull();
+    // Y otro vuelo empieza sin llamar.
+    expect(l.paso({ ...EN_SU_CIRCUITO, teCuenta: false })).toBeNull();
   });
 });
 
@@ -274,6 +305,23 @@ describe("la práctica sin radio", () => {
     ];
     expect(s.filter((x) => x.que === "acuse")).toEqual([{ que: "acuse", como: "alas" }]);
     expect(p.contestaciones).toBe(1);
+  });
+
+  it("a los destellos que vuelven en la base o la final, de día, no se pide alabear", () => {
+    const p = nueva();
+    hastaQueSeCalla(p);
+    const s = [
+      ...durante(p, { ...EN_EL_AIRE, lampara: "destellos", enLaBaseOEnLaFinal: true }, 1),
+      ...durante(p, { ...EN_EL_AIRE, lampara: "destellos", enLaBaseOEnLaFinal: true, alabeo: 15 * GRADO }, 1),
+      ...durante(p, { ...EN_EL_AIRE, lampara: "destellos", enLaBaseOEnLaFinal: true, alabeo: -15 * GRADO }, 1),
+    ];
+    expect(s.find((x) => x.que === "senal")).toEqual({
+      que: "senal",
+      luz: "destellos",
+      deNoche: false,
+      enLaBaseOEnLaFinal: true,
+    });
+    expect(s.some((x) => x.que === "acuse")).toBe(false);
   });
 
   it("y de noche contesta la instructora con los faros, con los destellos", () => {

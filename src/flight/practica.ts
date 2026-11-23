@@ -96,6 +96,8 @@ export interface Lectura {
   readonly alabeo?: number;
   /** Si es de noche: entonces se contesta con los faros, no con las alas. */
   readonly deNoche?: boolean;
+  /** Si se va en la base o en la final: ahí no se pide alabear (SERA, apéndice 1, 3.1.2 a) 1)). */
+  readonly enLaBaseOEnLaFinal?: boolean;
 }
 
 /** Las tres velocidades del despegue de hoy, indicadas. */
@@ -157,7 +159,13 @@ export type Suceso =
   /** Y la rueda de morro tampoco sale así: se aterriza con la nariz arriba. */
   | { readonly que: "tampoco" }
   /** Con la radio callada, la lámpara de la torre enciende otra luz. */
-  | { readonly que: "senal"; readonly luz: Exclude<LuzSinRadio, null>; readonly deNoche: boolean }
+  | {
+      readonly que: "senal";
+      readonly luz: Exclude<LuzSinRadio, null>;
+      readonly deNoche: boolean;
+      /** En la base o en la final: a los destellos de ahí no se contesta alabeando. */
+      readonly enLaBaseOEnLaFinal: boolean;
+    }
   /** Y se le contesta a sus destellos: con las alas, de día, o con los faros, de noche. */
   | { readonly que: "acuse"; readonly como: "alas" | "faros" }
   | { readonly que: "cerrar"; readonly como: Cierre };
@@ -520,9 +528,11 @@ export class Practica {
     if (luz !== null && luz !== this.ultimaLuz) {
       this.ultimaLuz = luz;
       const deNoche = l.deNoche ?? false;
-      sucesos.push({ que: "senal", luz, deNoche });
+      const enLaBaseOEnLaFinal = l.enLaBaseOEnLaFinal ?? false;
+      sucesos.push({ que: "senal", luz, deNoche, enLaBaseOEnLaFinal });
       this.alas = null;
-      if (luz === "destellos") {
+      // En la base y en la final, de día, no se pide alabear: ver `Lectura.enLaBaseOEnLaFinal`.
+      if (luz === "destellos" && (deNoche || !enLaBaseOEnLaFinal)) {
         if (deNoche) {
           this.contestadas++;
           sucesos.push({ que: "acuse", como: "faros" });

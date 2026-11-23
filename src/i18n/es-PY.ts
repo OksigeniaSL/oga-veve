@@ -3820,7 +3820,7 @@ export const ES_PY = {
   "ejercicio.tren-de-morro.antes":
     "Hoy practicamos el tren de nariz que no sale. Despegamos y metemos el tren. Al bajarlo para aterrizar, la rueda de adelante se va a quedar adentro: probamos la bajada de emergencia y, si tampoco sale, aterrizamos con la nariz arriba, con calma",
   "ejercicio.morro.noSale":
-    "Bajó el tren, pero la rueda de adelante no salió: la luz roja del tren sigue prendida. Andá más despacio, que la compañera prueba la bajada de emergencia",
+    "Bajó el tren, pero la rueda de adelante no salió: hay dos luces verdes y no tres, y la roja sigue prendida. Andá más despacio, que la compañera prueba la bajada de emergencia",
   "ejercicio.morro.emergencia": "La compañera tira de la perilla de emergencia, y el tren cae por su peso. Esperamos un poquito",
   "ejercicio.morro.tampoco":
     "Tampoco salió. No pasa nada: avisamos a la torre y aterrizamos sobre las ruedas de atrás, con la nariz arriba todo lo que aguante. Cuando ya no aguante, la bajamos despacito, y sin frenos",

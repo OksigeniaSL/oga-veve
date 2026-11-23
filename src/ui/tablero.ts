@@ -90,7 +90,7 @@ import {
   pantallaDeNavegacion,
   tamborDeAltitud,
 } from "./cristal";
-import { luzDeTren } from "../flight/tren";
+import { lucesDeLasPatas, luzDeTren } from "../flight/tren";
 import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
 import {
   DURA_EL_RESALTE,
@@ -158,6 +158,12 @@ export interface DatosDelTablero {
   readonly topeKt?: number;
   /** Dónde está el tren: 0 dentro, 1 fuera y trabado. Ver `flight/tren.ts`. */
   readonly tren: number;
+  /**
+   * Y dónde está la pata de morro, si no va con las demás: la que se queda en
+   * su pozo en el ejercicio del tren de nariz. Sin poner, va con `tren`. Ver
+   * `lucesDeLasPatas`.
+   */
+  readonly trenDeMorro?: number;
   readonly reversa: boolean;
   /** Las velocidades que se cantan, en nudos. `Infinity` si no aplican. */
   readonly v1: number;
@@ -1942,12 +1948,18 @@ export class Tablero {
     this.laCarta(d, cifras);
     this.laRadio(d, cifras);
     this.elGps();
-    const tren = this.pieza('[data-cristal="tren"]');
-    if (tren) {
-      const luz = luzDeTren(d.tren);
-      tren.classList.toggle("cr--moviendose", luz === "moviendose");
-      tren.classList.toggle("cr--dentro", luz === "dentro");
-    }
+    /*
+     * **Y cada rueda con su pata**: con la de morro en su pozo, dos verdes y
+     * la de en medio apagada, que es lo que enseña el de verdad. Ver
+     * `lucesDeLasPatas`.
+     */
+    const ruedas = this.todas('[data-cristal="tren"] [data-pata]');
+    const luces = lucesDeLasPatas(ruedas.length, d.tren, d.trenDeMorro);
+    ruedas.forEach((rueda, k) => {
+      const luz = luces[k] ?? luzDeTren(d.tren);
+      rueda.classList.toggle("cr--moviendose", luz === "moviendose");
+      rueda.classList.toggle("cr--dentro", luz === "dentro");
+    });
   }
 
   /**

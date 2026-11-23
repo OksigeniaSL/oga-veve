@@ -115,6 +115,43 @@ export function luzParaQuienNoTieneRadio(v: LoQueVeLaTorre): LuzSinRadio {
   return null;
 }
 
+/**
+ * **La lámpara no se apaga por geometría**: una vez que la torre te ha
+ * llamado con los destellos, en el aire la lámpara siempre dice algo, y lo
+ * último que dijo se queda hasta que mande otra cosa. Sin esto se apagaba
+ * unos segundos en la esquina del tramo cruzado, donde la torre deja de
+ * contarte en su circuito, y una lámpara de verdad no se apaga y se enciende
+ * por dónde vas. El SERA no pide apagarla en ningún sitio.
+ *
+ * Lo que no se queda es lo que dejó de ser verdad: la verde fija sin
+ * permiso, o la roja sin orden de irse. Entonces vuelven los destellos
+ * —«regrese para aterrizar»—, que es lo que la torre te está diciendo
+ * mientras no te deje aterrizar ni te mande irte. Lo que sí se mira solo al
+ * empezar es la base y la final: los primeros destellos no se encienden ahí,
+ * que es donde no se pide alabear para contestar.
+ */
+export class LamparaSinRadio {
+  /** Si la torre ya te llamó con los destellos en este vuelo. */
+  private llamado = false;
+
+  /** Un paso: la luz de ahora. */
+  paso(v: LoQueVeLaTorre): LuzSinRadio {
+    if (!v.enElAire) {
+      this.llamado = false;
+      return null;
+    }
+    const luz = luzParaQuienNoTieneRadio(v);
+    if (luz === "destellos") this.llamado = true;
+    if (luz !== null) return luz;
+    return this.llamado ? "destellos" : null;
+  }
+
+  /** Otro vuelo, o la radio de vuelta. */
+  reiniciar(): void {
+    this.llamado = false;
+  }
+}
+
 /** El alabeo que cuenta como mover las alas para contestar, rad: diez grados. */
 export const ALABEO_DE_ACUSE = (10 * Math.PI) / 180;
 

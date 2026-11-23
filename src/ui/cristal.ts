@@ -1683,10 +1683,13 @@ export function lucesDeTren(x: number, y: number, patas: number): string {
   let luces = "";
   for (let k = 0; k < patas; k++) {
     const cx = k * PASO + R;
+    // Cada rueda en su grupo: se enciende la suya, que es lo que dice su
+    // pata y no el tren entero. Ver `lucesDeLasPatas` en `flight/tren.ts`.
     luces +=
+      `<g data-pata="${k}">` +
       `<circle cx="${cx}" cy="${R}" r="${R}" class="cr__tren" />` +
       // El hueco de la llanta: es lo que la vuelve una rueda y no un punto.
-      `<circle cx="${cx}" cy="${R}" r="${R * 0.42}" class="cr__tren-buje" />`;
+      `<circle cx="${cx}" cy="${R}" r="${R * 0.42}" class="cr__tren-buje" /></g>`;
   }
   return `<g data-cristal="tren" data-explica="tren" transform="translate(${x} ${y})">${luces}
     <text x="${patas * PASO + 4}" y="${R + 5}" ${MARCA_ROTULO} class="cr__rotulo">GEAR</text></g>`;
