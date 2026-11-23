@@ -1505,7 +1505,7 @@ import {
   cuantoAguanta,
   esDeLaListaDeDespegue,
   cuentaPorDondeSeSale,
-  cuentaUnPasoDeRadio,
+  valeHastaElPasoSiguiente,
   esDelDescenso,
 } from "./audio/boca";
 import {
@@ -17472,7 +17472,7 @@ export class Game {
    * baja y dice la verdad. Sin grabar no ocupaban la boca y no se veía.
    *
    * No se cambia lo que aguanta en la cola: un paso de estos no es «virá
-   * ahora», que vale hasta el siguiente —ver `cuentaUnPasoDeRadio`—, sino una
+   * ahora», que vale hasta el siguiente —ver `valeHastaElPasoSiguiente`—, sino una
    * explicación que se cuenta entera y en su orden. Lo que se cambia es
    * cuándo la pide el ejercicio: detrás de la suya, con la boca a punto de
    * quedar libre, y cuatro segundos son de sobra para lo que no es del
@@ -25187,14 +25187,15 @@ export class Game {
   private decirDelEjercicio(clave: TranslationKey, peso: Urgencia, alSonar?: AlSonar): boolean {
     /*
      * **Y un paso nuevo retira lo que quedara por decir de los de antes.** Lo
-     * que cuenta un paso de un ejercicio de radio espera lo que haga falta
-     * —ver `cuentaUnPasoDeRadio`—, porque es verdad hasta el paso siguiente;
+     * que cuenta un paso de un ejercicio de radio, o de la carga suelta,
+     * espera lo que haga falta —ver `valeHastaElPasoSiguiente`—, porque es
+     * verdad hasta el paso siguiente;
      * llegado éste, ya no lo es, y quien lo sabe es el ejercicio. **Salvo la
      * presentación** (`….antes`), que no es un paso sino lo que los abre: en
      * «interceptar» sale en el mismo fotograma que «a tope», y las dos se
      * dicen, en su orden. Lo que la retira es el cierre.
      */
-    BOCA.retirar((c) => c !== clave && cuentaUnPasoDeRadio(c) && !c?.endsWith(".antes"));
+    BOCA.retirar((c) => c !== clave && valeHastaElPasoSiguiente(c) && !c?.endsWith(".antes"));
     if (!this.instructor.sabeLoGrabado) this.apuntarCanto(`${clave}: espera a saber si está grabada`);
     const pedida = this.instructor.decirGrabada(t(clave), clave, peso, undefined, (que, porque) => {
       if (que === "se-cae" && porque === "sin-grabar") this.apuntarCanto(`${clave}: sin grabar, se calla`);
@@ -25811,6 +25812,12 @@ export class Game {
   }
 
   private cerrarElEjercicio(como: Cierre): void {
+    /*
+     * Cerrado, lo que quedara por decir de sus pasos ya no es verdad: «ahora
+     * suave» de la carga suelta espera sin reloj hasta que lo retira alguien,
+     * y con un percance no lo retiraría el «bien». Ver `valeHastaElPasoSiguiente`.
+     */
+    BOCA.retirar((c) => valeHastaElPasoSiguiente(c));
     if (como === "otraVez") return;
     const clave =
       this.practica?.ejercicio.id === "despresurizacion" && como === "vuelta"
@@ -27714,8 +27721,8 @@ export class Game {
           ? contar("ils-en-cruz", "ejercicio.ils.pista", "palabra.bien", 8)
           : contar("frustrada", "ejercicio.ils.frustrada", "palabra.bien", 8);
       case "cerrar": {
-        // Cerrado, lo que quedara por decir de sus pasos ya no es verdad. Ver `cuentaUnPasoDeRadio`.
-        BOCA.retirar((c) => cuentaUnPasoDeRadio(c));
+        // Cerrado, lo que quedara por decir de sus pasos ya no es verdad. Ver `valeHastaElPasoSiguiente`.
+        BOCA.retirar((c) => valeHastaElPasoSiguiente(c));
         // Lo malo ya lo cuenta el percance; posado en otra parte, el suelo lo dice.
         if (suceso.como === "otraVez") return;
         /*

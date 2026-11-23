@@ -855,6 +855,9 @@ try {
     console.log(`    instructor: ${r.instructor.join(" · ")}`);
     console.log(`    torre: ${r.torre.join(" · ")}`);
     console.log(`    cabina: ${r.cantados.join(" · ")}`);
+    // Y lo del ejercicio que la boca tiró, con su porqué: sin esto, un «no se pidió» no dice si se pidió y se cayó.
+    const tiradas = r.descartadas.filter((k) => /ejercicio\./.test(String(k)));
+    console.log(`    tiradas: ${tiradas.join(" · ") || "ninguna del ejercicio"}`);
   }
   console.log(
     `\n  ${MODO} · ${ESCENARIO} · ${AVION} · ${TRAMO} · ${Math.round(r.reloj)} s de reloj`,

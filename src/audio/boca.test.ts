@@ -15,7 +15,7 @@ import {
   CADUCA,
   CADUCA_LA_ORDEN,
   cuantoAguanta,
-  cuentaUnPasoDeRadio,
+  valeHastaElPasoSiguiente,
   cuentaElPirep,
   cuentaPorDondeSeSale,
   explicaLaOtraPunta,
@@ -668,7 +668,7 @@ describe("y la megafonía va por el mismo turno", () => {
    * banco del ILS, a reloj normal, «enElLocalizador» caducaba a los cuatro
    * segundos detrás de la torre (ADR 0030, H26k). Lo retira el ejercicio.
    */
-  it("un paso de un ejercicio de radio espera sin reloj; los otros ejercicios, no", () => {
+  it("un paso que vale hasta el siguiente espera sin reloj: los de radio y la carga suelta; los otros ejercicios, no", () => {
     for (const c of [
       "ejercicio.ils.enElLocalizador",
       "ejercicio.ils.antes",
@@ -676,13 +676,36 @@ describe("y la megafonía va por el mismo turno", () => {
       "ejercicio.radial.centrada",
       "ejercicio.interceptar.aTope",
       "ejercicio.cruce.aqui",
+      // La carga suelta (ADR 0033, H67): cómo se sigue y por qué no se movió, hasta el cierre.
+      "ejercicio.carga.despacio",
+      "ejercicio.carga.amarrada",
     ]) {
-      expect(cuentaUnPasoDeRadio(c)).toBe(true);
-      expect(cuantoAguanta(c, "mando")).toBe(Infinity);
+      expect(valeHastaElPasoSiguiente(c), c).toBe(true);
+      expect(cuantoAguanta(c, "normal"), c).toBe(Infinity);
     }
-    expect(cuentaUnPasoDeRadio("ejercicio.velocidad")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.velocidad")).toBe(false);
     expect(cuantoAguanta("ejercicio.velocidad", "mando")).toBe(CADUCA);
-    expect(cuentaUnPasoDeRadio("ejercicio.ilsDeOtro")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.ilsDeOtro")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.altimetro.puesto")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.cargaDeOtro")).toBe(false);
+  });
+
+  /*
+   * **Y grabadas, esperan su turno detrás de lo que dice el vuelo al subir.**
+   * En el banco de la carga suelta, con las cinco frases grabadas, «despacio»
+   * y «amarrada» caducaban a los cuatro segundos detrás de recoger los flaps y
+   * de «ya estamos volando» (ADR 0033, H67).
+   */
+  it("la carga suelta: «despacio» espera detrás de lo que suena, y un aviso de paso no", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("normal", frase("ejercicio.carga.despacio"), "ejercicio.carga.despacio");
+    b.pedir("normal", frase("vuelo.rapido"), "vuelo.rapido");
+    reloj = 15000;
+    acabar["hablando"]!();
+    expect(dicho).toEqual(["hablando", "ejercicio.carga.despacio"]);
+    expect(b.descartadas.map(sinHora)).toEqual(["vuelo.rapido: caducó esperando"]);
   });
 });
 
@@ -1617,9 +1640,21 @@ describe("lo que cierra el vuelo no se pierde", () => {
       "ejercicio.bienDespresurizacion",
       "ejercicio.bomberosUno",
       "gafas.ganadas",
+      // El «bien» de cualquier ejercicio, también los que no estaban en la lista (ADR 0033, H67).
+      "ejercicio.carga.bien",
+      "ejercicio.autorrotacion.bien",
+      "ejercicio.tormenta.bienCerca",
+      "ejercicio.paradoTrasV1Cuatro",
     ])
       expect(cierraElVuelo(c), c).toBe(true);
-    for (const c of ["vuelo.despacio", "vuelo.rapido", "tutor.pedales", "ejercicio.paramos", "ejercicio.cortar"])
+    for (const c of [
+      "vuelo.despacio",
+      "vuelo.rapido",
+      "tutor.pedales",
+      "ejercicio.paramos",
+      "ejercicio.cortar",
+      "ejercicio.carga.despacio",
+    ])
       expect(cierraElVuelo(c), c).toBe(false);
     expect(cuantoAguanta("senalero.calzos")).toBe(Infinity);
     expect(cuantoAguanta("vuelo.cortaMotores")).toBe(Infinity);
