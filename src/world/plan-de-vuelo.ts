@@ -2229,6 +2229,21 @@ export class PlanDeVuelo {
     return this.vuelo.listaPorLeer;
   }
 
+  /**
+   * El gas y si hay puesta una orden de irse al aire: con ellos la fase sabe
+   * cuándo uno se va de verdad, y no vuelve a «final» en la frustrada. Ver
+   * `Vuelo.trasIrse`.
+   */
+  set paraIrse(v: { readonly gas: number; readonly orden: boolean }) {
+    this.vuelo.gas = v.gas;
+    this.vuelo.ordenDeIrse = v.orden;
+  }
+
+  /** Si se está en la frustrada, para el banco. Ver `Vuelo.trasIrse`. */
+  get enLaFrustrada(): boolean {
+    return this.vuelo.enLaFrustrada;
+  }
+
   /** Por qué la torre no te mira ahora. Ver `Vuelo.noTeMiraPor` (H48). */
   get noTeMiraPor(): string | null {
     return this.vuelo.noTeMiraPor;
