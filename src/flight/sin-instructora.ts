@@ -266,6 +266,16 @@ const LOS_EJERCICIOS = [
   "ejercicio.morro.emergencia",
   "ejercicio.morro.tampoco",
   "ejercicio.morro.bien",
+  // El fallo de radio (H71): presentación, la radio callada, cada luz, las alas y los dos cierres.
+  "ejercicio.fallo-de-radio.antes",
+  "ejercicio.radio.callada",
+  "ejercicio.radio.destellos",
+  "ejercicio.radio.destellosDeNoche",
+  "ejercicio.radio.alas",
+  "ejercicio.radio.roja",
+  "ejercicio.radio.verde",
+  "ejercicio.radio.bien",
+  "ejercicio.radio.bienSinLaVerde",
   /*
    * Y la tormenta, entera: es un ejercicio que se elige, y lo que dice —qué
    * es, por qué no se entra, que un rayo no hace nada— es el ejercicio mismo.

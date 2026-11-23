@@ -142,7 +142,8 @@ const HABLADOS = [
     // `DE_LA_TORMENTA`, `DE_LA_AUTORROTACION` y `DE_LAS_LECCIONES_DEL_ROTOR`. Y lo que
     // «Se apaga el GPS» escribe delante de su frase, que se lee: ver `atenderAlGps`.
     // Y la carga suelta, que es nueva: ver `DE_LA_CARGA_SUELTA`. Y el tren de nariz: `DEL_TREN_DE_NARIZ`.
-    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro)\.|^ejercicio\.gps\.integOk$/,
+    // Y el fallo de radio: `DEL_FALLO_DE_RADIO`.
+    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro|radio|fallo-de-radio)\.|^ejercicio\.gps\.integOk$/,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],
@@ -3431,6 +3432,38 @@ const DEL_TREN_DE_NARIZ = [
   ["ejercicio.morro.bien", "el cierre del tren de nariz, parado en la pista"],
 ];
 for (const [id, para] of DEL_TREN_DE_NARIZ) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
+/**
+ * **El fallo de radio** (#90, #83, H71): la presentación, la radio que se
+ * calla con su 7600, lo que dice cada luz de la lámpara, las alas que
+ * contestan y los dos cierres. De la instructora y en calma, detrás de todo.
+ * Ver el ADR 0014, enmienda H71.
+ */
+const DEL_FALLO_DE_RADIO = [
+  ["ejercicio.fallo-de-radio.antes", "el fallo de radio, antes de empezar: al subir se calla la radio, el número del transpondedor y la torre que habla con luces"],
+  ["ejercicio.radio.callada", "el fallo de radio: se calló la radio; la instructora marca siete seis cero cero y se sigue el circuito mirando la torre"],
+  ["ejercicio.radio.destellos", "el fallo de radio: la torre enciende la verde a destellos, de día; se contesta alabeando"],
+  ["ejercicio.radio.destellosDeNoche", "el fallo de radio: la torre enciende la verde a destellos, de noche; la instructora contesta con los faros"],
+  ["ejercicio.radio.alas", "el fallo de radio: las alas contestaron a los destellos"],
+  ["ejercicio.radio.roja", "el fallo de radio: la torre enciende la roja fija; se cede el paso y se sigue en el circuito"],
+  ["ejercicio.radio.verde", "el fallo de radio: la torre enciende la verde fija; se puede aterrizar"],
+  ["ejercicio.radio.bien", "el cierre del fallo de radio, parado en la pista tras tomar con la verde"],
+  ["ejercicio.radio.bienSinLaVerde", "el cierre del fallo de radio, parado en la pista sin haber visto la verde fija"],
+];
+for (const [id, para] of DEL_FALLO_DE_RADIO) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({

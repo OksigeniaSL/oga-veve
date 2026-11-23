@@ -139,8 +139,17 @@ export function loQueCallaElEjercicio(
   cerrado: boolean,
   seVaAlAire = false,
   pideElPie = false,
+  /**
+   * **Con la radio callada**, la del fallo de radio (H71): no se oye la
+   * frecuencia, porque no hay radio con qué oírla. La torre sí te ve —en su
+   * circuito y en su final, que es lo que le hace darte la pista— y te habla
+   * con la lámpara; su voz la calla el juego donde nace. Ver `seCallaLaRadio`
+   * en `game.ts`.
+   */
+  sinRadio = false,
 ): LoQueCalla {
   if (!ejercicio || cerrado) return NO_CALLA_NADA;
+  if (sinRadio) return { ...NO_CALLA_NADA, laFrecuencia: true };
   if (ejercicio.acabaEnElAire)
     return {
       laFase: true,

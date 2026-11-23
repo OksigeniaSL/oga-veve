@@ -42,13 +42,24 @@
  *   (FAA-H-8083-3C, p. 18-12). Mira que la nariz llegue a la pista por debajo
  *   de 64 KIAS, el arco blanco del POH: aguantó hasta que el ala dejó de volar.
  *   Y cuenta como fallo una frase del ejercicio que la boca tire en la cola.
+ * - `radio`: el fallo de radio (H71), en Taguató con la avioneta y en un campo
+ *   con torre del SERA. Subiendo, la radio se calla: la instructora marca el
+ *   7600, que se ve cifra a cifra; el piloto del banco sigue el circuito y,
+ *   cuando la torre enciende los destellos verdes, contesta alabeando —no en
+ *   la base ni en la final—; aterriza con la verde fija y, si en la final no
+ *   la tiene a sesenta metros, se va y da otra vuelta, que es lo que se hace
+ *   sin ella. Mira que ni la torre ni la frecuencia digan nada mientras dura
+ *   el fallo, que la lámpara se vea grande y sin letras, y las luces en su
+ *   orden. Con `OGA_PISTA_OCUPADA=1` sale uno a despegar cuando se va en la
+ *   final sin la verde todavía: la torre tiene que poner la roja fija, y tras
+ *   la otra vuelta, la verde.
  *
  * **Las voces que no están grabadas no suenan** —ver `decirDelEjercicio` en
  * `game.ts`—, y el juego apunta cada una que se calla en `cantados`. Así que
  * lo que se mira aquí es que se **pidió**, grabado o no: lo dicho por la
  * instructora y lo callado por sin grabar.
  *
- * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro>
+ * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro|radio>
  *        [escenario] [avion] [tramo]`
  *
  * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien.
@@ -67,17 +78,18 @@ const EJERCICIO = {
   despres: "despresurizacion",
   carga: "carga",
   morro: "tren-de-morro",
+  radio: "fallo-de-radio",
 }[MODO];
 if (!EJERCICIO) {
   console.error(
-    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro> [escenario] [avion] [tramo]",
+    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro|radio> [escenario] [avion] [tramo]",
   );
   process.exit(2);
 }
 const ESCENARIO = process.argv[3] ?? "gran-canaria";
 const AVION =
   process.argv[4] ??
-  (MODO === "planeo" || MODO === "carga"
+  (MODO === "planeo" || MODO === "carga" || MODO === "radio"
     ? "jaz-20"
     : MODO === "carrera" || MODO === "tren" || MODO === "morro"
       ? "jaz-40"
@@ -97,6 +109,11 @@ const SIGUE = MODO === "despues" || MODO === "tren";
  * pedir meterlo. El piloto del banco lo mete en cuanto se lo piden.
  */
 const SIN_TREN = MODO === "tren" && process.env.OGA_SIN_TREN === "1";
+/**
+ * Con `OGA_PISTA_OCUPADA=1`, en `radio` sale uno a despegar mientras se va en
+ * la final sin la verde: la torre tiene que poner la roja (H71).
+ */
+const PISTA_OCUPADA = MODO === "radio" && process.env.OGA_PISTA_OCUPADA === "1";
 const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
 // Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
@@ -163,7 +180,7 @@ try {
   await page.waitForTimeout(12000);
 
   const r = await page.evaluate(
-    async ({ modo, tope, sinTren }) => {
+    async ({ modo, tope, sinTren, pistaOcupada }) => {
       const o = globalThis.__oga;
       const espera = (ms) => new Promise((res) => setTimeout(res, ms));
       /*
@@ -275,6 +292,18 @@ try {
       let narizSoltando = false;
       let narizSoltadaA = null;
       let recogida = null;
+      // Sin radio: cuándo se calló y volvió, lo que tenían dicho la torre y la frecuencia, las alas y la pista ocupada.
+      let calladaEn = null;
+      let devueltaEn = null;
+      let dichoAlCallarse = null;
+      let dichoAlVolver = null;
+      let alasDesde = null;
+      let alasEn = null;
+      let sinVerdeEnLaFinal = 0;
+      let ocupadaPuesta = null;
+      let rojaConAlguienEnLaPista = null;
+      let lamparaVista = null;
+      let tiraConLaRadioCallada = null;
       const puntos = [
         [pista.length + 3000, 0],
         [pista.length + 3000 + tendido, tendido],
@@ -334,6 +363,38 @@ try {
         if (ej?.asegurado && aseguradoEn === null) aseguradoEn = ahora;
         // La indicada, que es la que pide su manual: en Gando la verdadera va dos nudos por encima.
         if (ej?.morro?.extension && alExtender === null) alExtender = o.indicada();
+        if (modo === "radio") {
+          const callada = !!ej?.radio?.callada;
+          if (callada && calladaEn === null) {
+            calladaEn = ahora;
+            const d = o.dichoTodo();
+            dichoAlCallarse = { torre: d.torre.length, otro: d.otro.length };
+          }
+          if (!callada && calladaEn !== null && devueltaEn === null) {
+            devueltaEn = ahora;
+            const d = o.dichoTodo();
+            dichoAlVolver = { torre: d.torre.slice(dichoAlCallarse.torre), otro: d.otro.slice(dichoAlCallarse.otro) };
+          }
+          if (callada) {
+            // La tira de la radio no escribe nada mientras está callada.
+            const tira = document.querySelector('[data-hud="radio"]');
+            if (tira && !tira.hidden && tira.textContent.trim() && tiraConLaRadioCallada === null)
+              tiraConLaRadioCallada = tira.textContent.trim().slice(0, 80);
+            // Y la lámpara, grande y sin letras: se mira la primera vez que se enciende.
+            const caja = document.querySelector('[data-hud="torre"]');
+            if (caja && !caja.hidden && lamparaVista === null) {
+              const luz = caja.querySelector('[data-hud="torre-luz"]');
+              const texto = caja.querySelector('[data-hud="torre-texto"]');
+              lamparaVista = {
+                clase: caja.className,
+                ancho: luz ? Math.round(luz.getBoundingClientRect().width) : 0,
+                letras: texto ? getComputedStyle(texto).display !== "none" && texto.textContent.trim() !== "" : false,
+              };
+            }
+          }
+          if (ej?.radio?.lampara === "roja" && rojaConAlguienEnLaPista === null)
+            rojaConAlguienEnLaPista = (o.trafico?.() ?? []).filter((a) => a.enLaPista).map((a) => a.matricula);
+        }
 
         if (tramo === "crucero") {
           // Hasta que se va el aire, recto y a nivel hacia la pista de casa.
@@ -460,8 +521,8 @@ try {
            * antes de soltarse la maleta. La lección es la contraria: velocidad
            * de sobra.
            */
-          if ((modo === "carga" || modo === "morro") && sobre > 60) o.pedirFlaps(0);
-          const v2 = modo === "carga" ? vref * 1.15 : (vel.v2 ?? vref * 1.2);
+          if ((modo === "carga" || modo === "morro" || modo === "radio") && sobre > 60) o.pedirFlaps(0);
+          const v2 = modo === "carga" || modo === "radio" ? vref * 1.15 : (vel.v2 ?? vref * 1.2);
           if (deLineaAzul && (ej?.fase !== "armada" || modo === "tren")) {
             /*
              * Sin bajar de la Vr, subiendo lo justo mientras le falte para la
@@ -492,6 +553,25 @@ try {
           const [pa, pc] = puntos[paso];
           const w = aMundo(pa, pc);
           c.aileron = alabear(s, rumboA(s, w.x, w.z), (20 * Math.PI) / 180);
+          if (modo === "radio") {
+            if (sobre > 60) o.pedirFlaps(0);
+            /*
+             * **Las alas que contestan a los destellos**: de un lado al otro,
+             * dieciocho grados, un segundo y medio cada uno, en la subida, el
+             * tramo cruzado o el viento en cola —no en la base, que el SERA lo
+             * deja fuera—, hasta que el juego lo cuente o seis segundos.
+             */
+            const destellos = ej?.radio?.lampara === "destellos";
+            if (destellos && (ej?.radio?.contestaciones ?? 0) === 0 && paso <= 2 && alasDesde === null) alasDesde = ahora;
+            if (alasDesde !== null && alasEn === null) {
+              const t = ahora - alasDesde;
+              if ((ej?.radio?.contestaciones ?? 0) > 0 || t > 6) alasEn = { t, contestaron: (ej?.radio?.contestaciones ?? 0) > 0 };
+              else {
+                const quiere = (t % 3 < 1.5 ? 1 : -1) * ((18 * Math.PI) / 180);
+                c.aileron = acota((quiere - o.actitud().alabeo) * 1.6 - s.rollRate * 0.3, -0.6, 0.6);
+              }
+            }
+          }
           c.elevator = porSubida(s, acota((alto - sobre) * 0.12, -4, 3), dt);
           c.throttle = gasPara(s, vref * 1.35, dt);
           if (Math.hypot(s.position.x - w.x, s.position.z - w.z) < 700) paso++;
@@ -569,6 +649,29 @@ try {
             c.reversa = 1;
             c.elevator = 0;
             return;
+          }
+          if (modo === "radio") {
+            const luz = ej?.radio?.lampara ?? null;
+            /*
+             * **Con `OGA_PISTA_OCUPADA=1`, uno a despegar en la final**, una
+             * vez, mientras no se tiene la verde: la torre tiene que poner la
+             * roja. Y con la roja, o sin la verde a sesenta metros, se va uno:
+             * sin radio, la pista es tuya con la verde fija.
+             */
+            if (pistaOcupada && ocupadaPuesta === null && luz !== "verde" && u < 2600 && u > 1200) {
+              o.traficoAnuncia("EC-PSO", "torre.clearedTakeoff");
+              ocupadaPuesta = { u: Math.round(u), sobre: Math.round(sobre), luz };
+            }
+            if (luz === "roja" || (luz !== "verde" && sobre < 60 && u > 0)) {
+              if (luz !== "roja") sinVerdeEnLaFinal++;
+              if (luz === "roja" || sinVerdeEnLaFinal <= 2) {
+                tramo = "circuito";
+                paso = 0;
+                lenta = 0;
+                c.throttle = 1;
+                return;
+              }
+            }
           }
           if (u < 5000) o.pedirTren(true);
           if (u < 4000 && s.airspeed < vfe * 1.05) o.pedirFlaps(u < 1800 ? 1 : 2 / 3);
@@ -692,6 +795,15 @@ try {
         centradoMaximo,
         alExtender,
         narizSoltadaA,
+        calladaEn,
+        devueltaEn,
+        dichoAlVolver,
+        alasEn,
+        sinVerdeEnLaFinal,
+        ocupadaPuesta,
+        rojaConAlguienEnLaPista,
+        lamparaVista,
+        tiraConLaRadioCallada,
         caida: o.caida?.() ?? null,
         recorridoAlParar,
         largo: pista.length,
@@ -707,7 +819,7 @@ try {
         descartadas: o.descartadas(),
       };
     },
-    { modo: MODO, tope: TOPE, sinTren: SIN_TREN },
+    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA },
   );
 
   const dice = (lista, trozo) => lista.some((k) => String(k).includes(trozo));
@@ -730,6 +842,8 @@ try {
           ? ej.averia?.que === "carga" && ej.motorParado === null && r.alFallar?.sobre > 100
           : MODO === "morro"
             ? ej.averia?.que === "morro" && ej.motorParado === null && r.alFallar?.trenFuera === true
+          : MODO === "radio"
+            ? ej.averia?.que === "radio" && ej.motorParado === null && r.alFallar?.sobre > 100
           : MODO === "planeo"
             ? ej.motorParado === null
             : ej.motorParado !== null) &&
@@ -968,6 +1082,82 @@ try {
       tiradas.join(" · ") || "nada tirado",
     );
   }
+  if (MODO === "radio") {
+    const luces = (ej?.radio?.luces ?? []).filter((l) => l.luz !== null).map((l) => l.luz);
+    comprobar(
+      "la radio se calla, y la instructora lo cuenta",
+      r.calladaEn !== null && dice(pedido, "ejercicio.radio.callada"),
+      `callada ${r.calladaEn !== null ? "sí" : "no"} · ${pedido.filter((k) => /ejercicio\.radio\.callada/.test(k)).join(" · ") || "no dicho"}`,
+    );
+    const cifras = r.todoCantado.map((c) => /^transpondedor: (\d+)/.exec(c)?.[1]).filter(Boolean);
+    comprobar(
+      "el 7600, marcado cifra a cifra",
+      cifras.join(" ") === "7 76 760 7600",
+      cifras.join(" → ") || "no se marcó",
+    );
+    const habla = r.dichoAlVolver ? [...r.dichoAlVolver.torre, ...r.dichoAlVolver.otro] : null;
+    comprobar(
+      "ni la torre ni la frecuencia dicen nada mientras la radio está callada, ni se escribe en la tira",
+      habla !== null && habla.length === 0 && r.tiraConLaRadioCallada === null,
+      habla === null
+        ? "la radio no volvió: el ejercicio no se cerró"
+        : `${habla.length ? `sonó: ${habla.join(" · ")}` : "nadie"}${r.tiraConLaRadioCallada ? ` · tira: «${r.tiraConLaRadioCallada}»` : ""}`,
+    );
+    comprobar(
+      "la lámpara, grande y sin letras",
+      r.lamparaVista && /torre--sin-radio/.test(r.lamparaVista.clase) && r.lamparaVista.ancho >= 80 && !r.lamparaVista.letras,
+      r.lamparaVista
+        ? `${r.lamparaVista.clase} · ${r.lamparaVista.ancho} px · ${r.lamparaVista.letras ? "con letras" : "sin letras"}`
+        : "no se encendió",
+    );
+    const enOrden = PISTA_OCUPADA
+      ? luces[0] === "destellos" &&
+        luces.includes("roja") &&
+        luces[luces.length - 1] === "verde" &&
+        luces.indexOf("roja") < luces.lastIndexOf("verde")
+      : luces[0] === "destellos" && !luces.includes("roja") && luces[luces.length - 1] === "verde";
+    comprobar(
+      PISTA_OCUPADA
+        ? "las luces en su orden: destellos, la roja con alguien en la pista, y la verde tras otra vuelta"
+        : "las luces en su orden: destellos verdes en el circuito y la verde fija en la final, sin roja",
+      enOrden && (!PISTA_OCUPADA || (r.rojaConAlguienEnLaPista?.length ?? 0) > 0),
+      `${luces.join(" → ") || "ninguna"}` +
+        (PISTA_OCUPADA
+          ? ` · despegue puesto ${r.ocupadaPuesta ? `a ${r.ocupadaPuesta.u} m del umbral, ${r.ocupadaPuesta.sobre} m, con ${r.ocupadaPuesta.luz ?? "la lámpara apagada"}` : "no"} · ` +
+            `en la pista con la roja: ${r.rojaConAlguienEnLaPista?.join(", ") || "nadie"}`
+          : "") +
+        ` · ${(ej?.radio?.luces ?? []).map((l) => `${l.luz ?? "apagada"}@${Math.round(l.alto)}m`).join(" ")}`,
+    );
+    comprobar(
+      "a los destellos se contesta alabeando, y la instructora explica cada luz",
+      (ej?.radio?.contestaciones ?? 0) >= 1 &&
+        dice(pedido, "ejercicio.radio.alas") &&
+        dice(pedido, "ejercicio.radio.destellos") &&
+        dice(pedido, "ejercicio.radio.verde") &&
+        (!PISTA_OCUPADA || dice(pedido, "ejercicio.radio.roja")),
+      `contestaciones ${ej?.radio?.contestaciones ?? 0}${r.alasEn ? ` a los ${r.alasEn.t.toFixed(1)} s` : ""} · ` +
+        `${pedido.filter((k) => /ejercicio\.radio\.(destellos|alas|roja|verde)/.test(k)).join(" · ") || "nada"}`,
+    );
+    comprobar(
+      "toca en la pista con la verde fija, sin percance",
+      r.tocoEn?.enPista && ej?.radio?.conLaVerde === true && !r.percance,
+      r.tocoEn
+        ? `tocó ${r.tocoEn.enPista ? "en la pista" : "fuera"} a ${Math.round(r.tocoEn.a)} m del umbral a ${r.tocoEn.vs.toFixed(1)} m/s · ` +
+            `con la verde ${ej?.radio?.conLaVerde} · finales sin la verde ${r.sinVerdeEnLaFinal}`
+        : `no llegó · lo más bajo ${Math.round(r.bajo)} m · finales sin la verde ${r.sinVerdeEnLaFinal}`,
+    );
+    comprobar(
+      "sin llamada ni bomberos: sin radio no hay llamada, y nada se ha roto",
+      !ej?.declarada && !ej?.bomberos,
+      `declarada ${ej?.declarada} · bomberos ${ej?.bomberos}`,
+    );
+    const tiradas = r.descartadas.filter((k) => /ejercicio\./.test(String(k)));
+    comprobar(
+      "y nada del ejercicio se cae esperando en la cola",
+      tiradas.length === 0,
+      tiradas.join(" · ") || "nada tirado",
+    );
+  }
   if (MODO === "planeo") {
     comprobar(
       "se para el motor y empieza el planeo, con calma",
@@ -986,11 +1176,17 @@ try {
     );
   }
   const cierreQueToca =
-    MODO === "carga" && !AMARRADA ? "ejercicio.carga.bien" : MODO === "morro" ? "ejercicio.morro.bien" : "ejercicio.bien";
+    MODO === "carga" && !AMARRADA
+      ? "ejercicio.carga.bien"
+      : MODO === "morro"
+        ? "ejercicio.morro.bien"
+        : MODO === "radio"
+          ? "ejercicio.radio.bien"
+          : "ejercicio.bien";
   comprobar(
     "y la instructora lo cierra celebrándolo",
     dice(pedido, cierreQueToca),
-    pedido.filter((k) => /ejercicio\.(bien|bomberos|carga\.bien|morro\.bien)/.test(k)).join(" · ") || "no",
+    pedido.filter((k) => /ejercicio\.(bien|bomberos|carga\.bien|morro\.bien|radio\.bien)/.test(k)).join(" · ") || "no",
   );
   const mal = resultados.some((x) => !x.ok);
   if (process.env.OGA_TRAZA || mal) {

@@ -277,6 +277,10 @@ const DEL_DESCENSO =
  * que aguante», hasta el cierre. Se piden en la final, cuando más habla la
  * torre (ADR 0014, enmienda H70).
  *
+ * **Y los del fallo de radio**: lo que dice cada luz de la lámpara vale
+ * mientras esa luz siga encendida, y la luz siguiente es el paso siguiente
+ * (ADR 0014, enmienda H71).
+ *
  * No lo es todo ejercicio: lo del altímetro es una explicación que se cuenta
  * entera y en su orden —ver `porDecirDelAltimetro` en `game.ts`—, y lo que
  * pide un instante, como el pie de un motor parado, deja de ser verdad antes
@@ -286,7 +290,7 @@ export function valeHastaElPasoSiguiente(clave: string | undefined): boolean {
   return !!clave && DE_UN_PASO_QUE_DURA.test(clave);
 }
 
-const DE_UN_PASO_QUE_DURA = /^ejercicio\.(?:aguja|radial|interceptar|cruce|ils|carga|morro|tren-de-morro)\./;
+const DE_UN_PASO_QUE_DURA = /^ejercicio\.(?:aguja|radial|interceptar|cruce|ils|carga|morro|tren-de-morro|radio|fallo-de-radio)\./;
 
 /**
  * **El ejercicio de la tormenta**, que tampoco es un comentario: qué es, por

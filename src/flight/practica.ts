@@ -48,11 +48,20 @@
  * de la velocidad a la que se puede; no sale, y entonces se declara —PAN PAN:
  * algo va mal y hay tiempo— y se aterriza con la nariz arriba. Los bomberos,
  * esperando. Ver el ADR 0014, enmienda H70.
+ *
+ * **La radio que se calla** tampoco: aquí solo se dice cuándo, y qué enseña
+ * la lámpara de la torre a cada paso —la lee el juego con la misma regla de
+ * sus permisos, ver `fallo-de-radio.ts`—. Cada luz nueva es un paso, y tras
+ * los destellos verdes se espera a que las alas contesten (de día; de noche
+ * contesta la instructora con los faros). Sin declarar nada: ni llamada, que
+ * no hay radio, ni bomberos, que nada se ha roto. Se acaba parado en la pista,
+ * y se sabe si se tomó con la verde. Ver el ADR 0014, enmienda H71.
  */
 
 import type { AircraftConfig } from "./aircraft";
 import { conV1, type Averia, type Ejercicio, type Momento } from "./ejercicios";
 import { motoresDeFuera } from "./motores";
+import { AlasQueContestan, type LuzSinRadio } from "./fallo-de-radio";
 
 /** Cómo va el vuelo, lo que la práctica necesita mirar. Todo en m y m/s. */
 export interface Lectura {
@@ -78,6 +87,15 @@ export interface Lectura {
    * bimotor de pistón, que decide con él: ver `conV1`.
    */
   readonly tren: "fuera" | "entrando" | "dentro";
+  /**
+   * **Con la radio callada, lo que enseña la lámpara de la torre** a este
+   * avión. Ver `luzParaQuienNoTieneRadio` en `fallo-de-radio.ts`.
+   */
+  readonly lampara?: LuzSinRadio;
+  /** El alabeo, rad, positivo a la derecha: las alas que contestan. */
+  readonly alabeo?: number;
+  /** Si es de noche: entonces se contesta con los faros, no con las alas. */
+  readonly deNoche?: boolean;
 }
 
 /** Las tres velocidades del despegue de hoy, indicadas. */
@@ -138,6 +156,10 @@ export type Suceso =
   | { readonly que: "extension" }
   /** Y la rueda de morro tampoco sale así: se aterriza con la nariz arriba. */
   | { readonly que: "tampoco" }
+  /** Con la radio callada, la lámpara de la torre enciende otra luz. */
+  | { readonly que: "senal"; readonly luz: Exclude<LuzSinRadio, null>; readonly deNoche: boolean }
+  /** Y se le contesta a sus destellos: con las alas, de día, o con los faros, de noche. */
+  | { readonly que: "acuse"; readonly como: "alas" | "faros" }
   | { readonly que: "cerrar"; readonly como: Cierre };
 
 export type FaseDePractica = "armada" | "fallo" | "cerrada";
@@ -207,6 +229,12 @@ export class Practica {
   /** Si la compañera ya probó la extensión de emergencia, y desde cuándo. */
   private extendida = false;
   private desdeLaExtension = 0;
+  /** Con la radio callada: la última luz encendida, y si a sus destellos ya se contestó. */
+  private ultimaLuz: LuzSinRadio = null;
+  private alas: AlasQueContestan | null = null;
+  private contestadas = 0;
+  /** Si al tocar la pista la lámpara estaba en verde fija. */
+  private conLaVerde: boolean | null = null;
 
   constructor(
     readonly ejercicio: Ejercicio,
@@ -261,6 +289,16 @@ export class Practica {
     return this.extendida;
   }
 
+  /** Cuántas veces se contestó a los destellos verdes de la lámpara. */
+  get contestaciones(): number {
+    return this.contestadas;
+  }
+
+  /** Si al tocar la pista la lámpara estaba en verde fija; `null` sin haber tocado. */
+  get tomoConLaVerde(): boolean | null {
+    return this.conLaVerde;
+  }
+
   /** Si ya se declaró la emergencia. Desde ahí, la torre da prioridad. */
   get declaradaYa(): boolean {
     return this.declarada;
@@ -308,6 +346,10 @@ export class Practica {
     this.trenMetido = false;
     this.extendida = false;
     this.desdeLaExtension = 0;
+    this.ultimaLuz = null;
+    this.alas = null;
+    this.contestadas = 0;
+    this.conLaVerde = null;
     this.elegida = this.sortear();
   }
 
@@ -351,6 +393,10 @@ export class Practica {
     if (!l.enElSuelo && l.sobreElCampo > EN_EL_AIRE) this.volo = true;
     if (this.elegida.que === "morro") {
       this.pasoDelMorro(l, dt, sucesos);
+      return sucesos;
+    }
+    if (this.elegida.que === "radio") {
+      this.pasoSinRadio(l, dt, sucesos);
       return sucesos;
     }
     /*
@@ -461,6 +507,35 @@ export class Practica {
       sucesos.push({ que: "bomberos", donde: "pista" });
     }
     if (l.enElSuelo && l.parado) this.cerrar("vuelta", sucesos);
+  }
+
+  /**
+   * **Sin radio, lo que enseña la lámpara**: cada luz nueva es un paso, y
+   * tras los destellos verdes se espera la contestación —de día, las alas;
+   * de noche, los faros, que los pone la instructora—. Se acaba como una
+   * vuelta, parado en la pista, apuntando si se tocó con la verde fija.
+   */
+  private pasoSinRadio(l: Lectura, dt: number, sucesos: Suceso[]): void {
+    const luz = l.enElSuelo ? null : (l.lampara ?? null);
+    if (luz !== null && luz !== this.ultimaLuz) {
+      this.ultimaLuz = luz;
+      const deNoche = l.deNoche ?? false;
+      sucesos.push({ que: "senal", luz, deNoche });
+      this.alas = null;
+      if (luz === "destellos") {
+        if (deNoche) {
+          this.contestadas++;
+          sucesos.push({ que: "acuse", como: "faros" });
+        } else this.alas = new AlasQueContestan();
+      }
+    }
+    if (this.alas && !l.enElSuelo && this.alas.paso(l.alabeo ?? 0, dt)) {
+      this.alas = null;
+      this.contestadas++;
+      sucesos.push({ que: "acuse", como: "alas" });
+    }
+    if (l.enElSuelo && this.conLaVerde === null && this.volo) this.conLaVerde = this.ultimaLuz === "verde";
+    if (l.enElSuelo && l.parado && this.volo) this.cerrar("vuelta", sucesos);
   }
 
   private cerrar(como: Cierre, sucesos: Suceso[]): void {

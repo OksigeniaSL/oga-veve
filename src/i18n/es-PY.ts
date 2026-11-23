@@ -3402,6 +3402,7 @@ export const ES_PY = {
   "hangar.ejercicio.pista-corta": "Despegar de una pista corta",
   "hangar.ejercicio.carga": "La carga suelta",
   "hangar.ejercicio.tren-de-morro": "El tren de nariz no sale",
+  "hangar.ejercicio.fallo-de-radio": "Sin radio",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3825,6 +3826,31 @@ export const ES_PY = {
     "Tampoco salió. No pasa nada: avisamos a la torre y aterrizamos sobre las ruedas de atrás, con la nariz arriba todo lo que aguante. Cuando ya no aguante, la bajamos despacito, y sin frenos",
   "ejercicio.morro.bien":
     "Ejercicio hecho: primero la bajada de emergencia, después las ruedas de atrás y la nariz arriba todo lo que aguantó, y abajo despacito. Así sale bien casi siempre",
+  /*
+   * **El fallo de radio** (H71): la presentación, la radio que se calla con
+   * su 7600, lo que dice cada luz de la lámpara, las alas que contestan y los
+   * dos cierres. «Siete seis cero cero» con letras, que es como se dice un
+   * código en voz alta, y la luz por su color y si parpadea: lo de cada luz
+   * es lo del SERA para un avión en vuelo (apéndice 1, tabla AP 1-1), y lo de
+   * contestar, su 3.1.2. Ver el ADR 0014, enmienda H71.
+   */
+  "ejercicio.fallo-de-radio.antes":
+    "Hoy practicamos quedarnos sin radio. Al subir se va a callar, a propósito. No pasa nada: ponemos un número en el transpondedor que se lo dice a la torre, volvemos al circuito y miramos la torre, que nos va a hablar con luces",
+  "ejercicio.radio.callada":
+    "Se calló la radio: no oímos a la torre, y ella no nos oye. Todo bien: marco siete seis cero cero en el transpondedor, y con ese número la torre ya sabe que estamos sin radio. Seguimos el circuito, mirando la torre",
+  "ejercicio.radio.destellos":
+    "Mirá la torre: una luz verde que parpadea. Quiere decir que volvamos para aterrizar. Le contestamos moviendo las alas, de un lado al otro",
+  "ejercicio.radio.destellosDeNoche":
+    "Mirá la torre: una luz verde que parpadea. Quiere decir que volvamos para aterrizar. De noche se contesta con los faros: los prendo y los apago dos veces",
+  "ejercicio.radio.alas":
+    "Eso: con las alas le dijimos que la vimos. Ahora esperamos la luz verde fija para aterrizar",
+  "ejercicio.radio.roja":
+    "Luz roja fija: le dejamos el paso a otro avión y seguimos en el circuito. No aterrizamos: subimos, damos otra vuelta y miramos la torre",
+  "ejercicio.radio.verde": "Luz verde fija: la torre nos deja aterrizar",
+  "ejercicio.radio.bien":
+    "¡Aterrizamos sin radio! El siete seis cero cero se lo dijo a la torre por nosotros, y la torre nos habló con su luz. Así lo hace un piloto de verdad",
+  "ejercicio.radio.bienSinLaVerde":
+    "Ya estamos en tierra. Sin radio, la pista es nuestra cuando la torre prende la verde fija: la próxima, la esperamos dando otra vuelta",
   // La palabra de Tukã para soltar los frenos: «¡Frená!» diría lo contrario.
   "palabra.solta": "¡Soltá!",
   /*

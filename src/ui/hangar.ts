@@ -2092,6 +2092,21 @@ const EJ_TREN_DE_MORRO = escena(`
   <path class="ejercicio__flecha" d="M14 34 q-4 12 2 24 M12 53 l4 5 l3 -6" />
 `);
 
+/**
+ * **El fallo de radio**: la torre con su lámpara encendida en verde y el haz
+ * hasta el avión, que vuelve hacia ella. Es lo que se descubre: que una luz
+ * habla. Ver el ADR 0014, enmienda H71.
+ */
+const EJ_FALLO_DE_RADIO = escena(`
+  <path class="leccion__asfalto" d="M0 76 H120 V84 H0 Z" />
+  <path d="M11 76 V42 H19 V76 Z" style="fill: #2b2f36" />
+  <path d="M6 42 H24 L22 31 H8 Z" style="fill: #2b2f36" />
+  <path d="M9.5 39 H20.5 L19.5 33.5 H10.5 Z" style="fill: #cfe3ea" />
+  <path d="M23 35 L92 18 L95 34 Z" style="fill: #7ec86a; opacity: 0.4" />
+  <circle cx="23" cy="35.5" r="3.4" style="fill: #7ec86a; stroke: #2b2f36; stroke-width: 1" />
+  ${AVION_DE_PERFIL("translate(90 26) scale(3.6)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -2135,6 +2150,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   carga: EJ_CARGA,
   // Las de atrás en la pista y la nariz arriba, sin su rueda. Ver el ADR 0014, enmienda H70.
   "tren-de-morro": EJ_TREN_DE_MORRO,
+  // La lámpara de la torre en verde, hasta el avión que vuelve. Ver el ADR 0014, enmienda H71.
+  "fallo-de-radio": EJ_FALLO_DE_RADIO,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {
