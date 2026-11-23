@@ -51,8 +51,8 @@
  *   sin ella. Mira que ni la torre ni la frecuencia digan nada mientras dura
  *   el fallo, que la lámpara se vea grande y sin letras, y las luces en su
  *   orden. Con `OGA_PISTA_OCUPADA=1` sale uno a despegar cuando se va en la
- *   final sin la verde todavía: la torre tiene que poner la roja fija, y tras
- *   la otra vuelta, la verde.
+ *   final a punto de llegar a la decisión, entre 75 y 62 m: la torre tiene
+ *   que poner la roja fija, y tras la otra vuelta, la verde.
  *
  * **Las voces que no están grabadas no suenan** —ver `decirDelEjercicio` en
  * `game.ts`—, y el juego apunta cada una que se calla en `cantados`. Así que
@@ -111,7 +111,8 @@ const SIGUE = MODO === "despues" || MODO === "tren";
 const SIN_TREN = MODO === "tren" && process.env.OGA_SIN_TREN === "1";
 /**
  * Con `OGA_PISTA_OCUPADA=1`, en `radio` sale uno a despegar mientras se va en
- * la final sin la verde: la torre tiene que poner la roja (H71).
+ * la final, entre 75 y 62 m, como en el banco del vuelo entero (H68): la
+ * torre tiene que poner la roja (H71).
  */
 const PISTA_OCUPADA = MODO === "radio" && process.env.OGA_PISTA_OCUPADA === "1";
 const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
@@ -121,7 +122,9 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
  * Lo más que se espera a que acabe el ejercicio, en segundos de reloj. El de
  * la despresurización empieza a cien kilómetros, arriba: más rato.
  */
-const TOPE = Number(process.env.OGA_TOPE ?? (MODO === "despres" ? 1800 : 1200));
+const TOPE = Number(
+  process.env.OGA_TOPE ?? (MODO === "despres" ? 1800 : MODO === "radio" && process.env.OGA_PISTA_OCUPADA === "1" ? 2600 : 1200),
+);
 
 const server = await createServer({
   root: process.cwd(),
@@ -654,11 +657,11 @@ try {
             const luz = ej?.radio?.lampara ?? null;
             /*
              * **Con `OGA_PISTA_OCUPADA=1`, uno a despegar en la final**, una
-             * vez, mientras no se tiene la verde: la torre tiene que poner la
-             * roja. Y con la roja, o sin la verde a sesenta metros, se va uno:
-             * sin radio, la pista es tuya con la verde fija.
+             * vez, entre 75 y 62 m: la torre tiene que poner la roja. Y con
+             * la roja, o sin la verde a sesenta metros, se va uno: sin radio,
+             * la pista es tuya con la verde fija.
              */
-            if (pistaOcupada && ocupadaPuesta === null && luz !== "verde" && u < 2600 && u > 1200) {
+            if (pistaOcupada && ocupadaPuesta === null && u > 0 && sobre < 75 && sobre > 62) {
               o.traficoAnuncia("EC-PSO", "torre.clearedTakeoff");
               ocupadaPuesta = { u: Math.round(u), sobre: Math.round(sobre), luz };
             }
@@ -707,7 +710,14 @@ try {
            */
           const enLaFinal =
             modo === "morro" && ej?.fase !== "armada" && !ej?.morro?.extension ? 80 * 0.514444 : vref * 1.1;
-          c.throttle = sobre < 10 ? 0 : gasPara(s, enLaFinal, dt);
+          /*
+           * Y sin radio, nunca a fondo en la final: a fondo y subiendo es
+           * irse al aire para la torre (`seVaDeVerdad`), que retira el
+           * permiso. Se vio en la segunda tirada: la avioneta lenta pidió
+           * todo el gas a 130 m, subió quince y la verde se apagó.
+           */
+          const tope = modo === "radio" ? 0.85 : 1;
+          c.throttle = sobre < 10 ? 0 : Math.min(tope, gasPara(s, enLaFinal, dt));
           bajo = Math.min(bajo, sobre);
         }
       };
