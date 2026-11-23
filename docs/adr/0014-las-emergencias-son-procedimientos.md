@@ -1443,3 +1443,133 @@ las luces destellos → verde → roja con EC-PSO en la pista → destellos →
 verde y ni un apagado en el aire; y el vitest entero de la rama juntada,
 583 de 583 ficheros y 11.616 pruebas en verde, con 32 saltadas y una
 pendiente.
+
+## Enmienda H71c (23-11-2026): sin radio, la verde fija subiendo, otra vez
+
+### El caso
+
+Con las nueve frases grabadas, sobre 0ce0af63, `verificar-emergencias.mjs
+radio gran-canaria jaz-20 taguato` dio 11 de 13: la radio se calló a 120 m,
+el 7600 quedó marcado a 136 m y la torre encendió la **verde fija a 176 m,
+subiendo a 69 nudos**. El juego celebró una frustrada a 213 m («going
+around. good decision») y no hubo un solo destello en todo el circuito: la
+verde se quedó puesta hasta la toma. Con la pista ocupada, en la misma
+copia, 13 de 13. Es lo que vio el primer banco de la H71 a 170 m, y lo que
+la H71 creyó arreglar.
+
+### Por qué
+
+La H71 lo achacó a la final de la torre y la cerró al callarse la radio
+(`FinalDeLaTorre.despegado`). No salía de ahí. El permiso se pide cuando la
+torre te ve en final, y **la torre mira la fase del plan antes que su propia
+final** (`faseQueVeLaTorre`, en `flight/lo-que-calla-el-ejercicio.ts`): si
+el plan dice «final», es final, esté cerrada la suya o no. Y el plan lo
+decía:
+
+- `deducir`, en `flight/vuelo.ts`, da «final» a quien ya ha volado —más de
+  120 m y quince segundos en el aire—, alineado, a menos de 400 m del eje,
+  por debajo de 300 m, **antes del centro de la pista** y bajando.
+- La 03L de Gando mide 3.104 m. El JAZ 20 se va del suelo a unos 300 m del
+  umbral y sube al doce por ciento: pasa los 120 m unos 300 m antes del
+  centro. En ese trozo, un bache que deja el variómetro medio segundo por
+  debajo de cero lo cumple todo.
+- Y una vez en «final», encima del asfalto se sigue en ella aunque se pase
+  el centro (`posandose`, pensado para quien flota en la recogida, que no
+  mira la altura), mientras no se suban veinte metros.
+
+La traza del banco cuadra con eso, aunque no apuntaba de dónde le salía la
+final a la torre: la verde a 176 m, pasado ya el centro, que es lo que da
+una «final» cogida antes y sostenida encima del asfalto; a los 72 s, a
+186 m y 1.859 m del umbral, el variómetro en −4,6; la frustrada a 213 m,
+que son los cuarenta metros sobre lo más bajo del bache que pide el
+detector, armado porque la fase era «final»; y `vuelo.enVuelo` detrás, la
+fase saliendo de ella. El permiso no se cayó al salir, porque lo que lo
+retira al dejar la final mira la de la torre, que no se había abierto: por
+eso la verde duró el circuito entero y no hubo destellos.
+
+No es del fallo de radio: es de cualquier despegue por una pista larga con
+un bache antes del centro. En una lección con torre habría sido un «cleared
+to land» subiendo; en la vuelta al campo, una «final» del plan con su
+detector de frustradas armado. Sin radio se vio porque la torre lleva el turno también
+en la vuelta al campo (H71) y enciende el permiso sin esperar a una voz.
+
+Un banco de diagnóstico de 170 s, con un apunte de dónde salía la final de
+la torre, no tuvo bache en la subida y no lo reprodujo. Lo reproduce la
+mesa de abajo, con la máquina de fases de verdad.
+
+### La regla
+
+**Recién despegado no hay final ni permiso de aterrizar hasta haberse dado
+la vuelta.** Va en `Vuelo`, al lado de `trasIrse`, la de la frustrada (H69
+del ADR 0029): `recienDespegado`.
+
+- **Se pone** al dejar el suelo después de haberlo tocado: un despegue o un
+  toque y despegue. Un bote no, que no pasa de los doce metros de
+  `EN_EL_AIRE`; y quien empieza en el aire sin haber pisado, tampoco.
+- **Se quita** al darse la vuelta (120°, `TORCIDO_PARA_SALIR`), al salir del
+  pasillo de la final (400 m del eje), al estar por delante de la pista o al
+  volver al suelo. Pasar el centro no lo quita, al revés que en la
+  frustrada: encima del asfalto se seguía en «final». «Por delante de la
+  pista» es lo que no deja sin final a quien llega a la pista de otro campo,
+  ni al avión que se coloca en una final desde el suelo.
+
+Como la torre lee esa fase, vale para ella y para todo lo que cuelga de
+«final» —la instructora, los aros, el detector de frustradas—, con radio y
+sin ella. `FinalDeLaTorre.despegado` se queda: cierra la final propia de la
+torre al callarse la radio, y no estorba. Y para el banco, un apunte nuevo:
+«la torre te ve en final: la fase del plan» o «su final», que habría dicho
+esto a la primera.
+
+### La prueba
+
+`flight/final-recien-despegado.test.ts`: la subida del banco con la máquina
+de fases y la torre como la mira el juego —la fase del plan y su propia
+final, cerrada como la cierra el fallo de radio—, por la 03L de Gando, con
+dos segundos de bache a 140 m antes del centro.
+Detrás, diez segundos subiendo a menos de un metro por segundo, como a los
+64 s del banco. Con el `vuelo.ts` de antes, la fase entra en «final» a
+139 m, 243 m antes del centro, y sigue en ella hasta 245 m pasado el centro,
+a 155 m: la verde del banco. Cuatro de ocho en rojo: la subida con el bache,
+la torre sin radio, la torre con radio y el toque y despegue. Las otras
+cuatro, en verde en los dos, son lo que no tiene que cambiar: la final de
+vuelta del circuito, la de quien empieza en el aire en una final y la de
+quien se coloca en una desde el suelo, de un salto o tras otro vuelo.
+
+### Comprobado
+
+En el navegador, con las voces grabadas y sobre una copia fija de la rama
+con el arreglo:
+
+- **`radio gran-canaria jaz-20 taguato`, dos veces seguidas: 13 de 13 y 13
+  de 13.** Destellos a 172 m y a 174 m en la subida —la primera luz, como
+  debe ser—, las alas a los 5,8 s y a los 2,8 s, la verde fija en la final a
+  293 m y a 199 m, y la toma con ella a 124 m y a 229 m del umbral, cerrada
+  con `ejercicio.radio.bien`. Ni la torre ni la frecuencia dijeron nada, y
+  nada del ejercicio se cayó de la cola.
+- **El mismo con `OGA_PISTA_OCUPADA=1`: 13 de 13.** Destellos a 188 m,
+  verde a 262 m en la final, EC-PSO despega delante a 75 m y la torre pone
+  la roja a 67 m; la frustrada, los destellos otra vez a 105 m, otra vuelta y
+  la verde a 301 m; tocó con ella a 108 m del umbral.
+- **`radio gran-canaria jaz-40 taguato`: 13 de 13.** Destellos a 221 m,
+  alas a los 6,0 s, la verde a 303 m y la toma con ella a 222 m del umbral.
+- **`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-20`, porque
+  se toca la fase: 58 de 58** (dos sin medir). Un permiso, en la final, a
+  los 547 y 554 s, a 198 y 182 m; nadie de frente; apagado a los 968 s.
+
+`tsc --noEmit -p .` en verde, y **el vitest entero** de la rama: 584 de 584
+ficheros y 11.624 pruebas en verde, con 32 saltadas y una pendiente.
+
+Lo que no se ha podido ver: el bache del banco cae cuando cae, y en estas
+cinco tiradas no se sabe si lo hubo antes del centro —sin «final» en la
+subida no queda apunte que lo diga—; lo que lo fija es la mesa. El apunte
+nuevo de la torre solo sale en la traza de un banco que falla o con
+`OGA_TRAZA=1`.
+
+### Lo que queda
+
+- **El permiso dado con una «final» que solo era del plan no se retira al
+  salir de ella**: en `game.ts` lo retira la salida de la final de la torre
+  («El permiso es de una aproximación»). Con esta regla y la de la H69 no se ha encontrado otra
+  «final» del plan sin la de la torre, pero si apareciera, la verde duraría
+  el circuito entero, como en el banco de arriba. Ver la enmienda H71c del
+  ADR 0029.

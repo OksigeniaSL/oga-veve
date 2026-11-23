@@ -2633,3 +2633,35 @@ las dos son de este ADR:
 
 Lo demás de la torre queda como estaba, y al cerrarse el ejercicio vuelve la
 radio.
+
+## Enmienda (23-11-2026, H71c): recién despegado, la torre no te ve en final
+
+El fallo de radio (ADR 0014, enmienda H71c) volvió a encender la verde fija
+subiendo, a 176 m, y no era de la final de la torre: era de **la fase del
+plan**, que la torre mira antes que su propia final (`faseQueVeLaTorre`).
+Por una pista larga, la avioneta pasa de los 120 m antes del centro, y ahí un
+bache daba «final» en `deducir`; encima del asfalto se seguía en ella
+(`posandose`). Es lo mismo que la H69 arregló para la frustrada, en el otro
+extremo del circuito.
+
+- **Recién despegado no hay final** (`recienDespegado` en `flight/vuelo.ts`),
+  hasta haberse dado la vuelta, haber salido del pasillo de la final, estar
+  por delante de la pista o volver al suelo. Como la torre lee esa fase, no
+  te da la pista ni te pide el permiso en la subida, ni con radio ni sin
+  ella. La final de la torre, que solo se coge delante del umbral, no cambia.
+- **Y el banco sabe de dónde le sale la final a la torre**: al pasar a
+  «final» queda apuntado «la torre te ve en final: la fase del plan» o «su
+  final». El primer arreglo de esto, en la H71, se puso en la final de la
+  torre porque nadie lo apuntaba.
+
+Lo que queda: el permiso dado con una «final» que solo era del plan no se
+retira al salir de ella —lo retira la salida de la final de la torre—. Con
+esta regla y la de la H69 no se ha encontrado otra «final» del plan sin la
+de la torre, ni en la subida ni en la frustrada; pero si apareciera, la
+verde duraría el circuito entero, como en este banco.
+
+Comprobado en el navegador, con las voces grabadas: el fallo de radio en
+Gran Canaria con el JAZ 20 dos veces seguidas, 13 de 13; con la pista
+ocupada, 13 de 13; con el JAZ 40, 13 de 13; y el vuelo entero de Tenerife
+Norte con el JAZ 20, 58 de 58, con un permiso y en la final. El vitest
+entero, 584 ficheros y 11.624 pruebas en verde.
