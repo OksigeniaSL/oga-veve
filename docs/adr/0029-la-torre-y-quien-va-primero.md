@@ -2339,3 +2339,140 @@ da en la doble raya, y del eje a la carrera no se espera nada.
   (`vuelo.test.ts`); con el piloto perfecto o el del banco no se llega así, y
   en el navegador no se ha forzado.
 - **«Report lined up»**, del CAP 413, sigue sin decirse (H41h).
+
+## Enmienda (23-11-2026, H68): la pista ocupada que ponía el banco, y las frustradas que no se pusieron
+
+### El caso
+
+En la ronda de cierre de la tanda 23 (copia fija 2f861096),
+`OGA_PISTA_OCUPADA=1 node scripts/verificar-vuelo-entero.mjs tenerife-norte
+taguato 1 jaz-20` dio **34 de 38**, y en la tanda 22 (3028690a) había salido en
+verde. Cuatro rojos:
+
+1. **No acabó**: «volver» a los 1800 s, con dos frustradas por la pista.
+2. **«Dos encima de la pista»**, 202 muestras desde los 1041 s, con quien juega
+   en final: EC-GIX (avioneta) y EC-PSO (turbohélice), los dos de salida.
+3. **El señalero sin gestos**, y «lo más cerca, 1 m» del puesto.
+4. **«Stall, stall» en la subida inicial**: 54 kt, α 13,4°, 46 m y 1,28 g, con
+   la primera muesca.
+
+### Por qué, uno por uno
+
+**El 2 lo puso el banco.** Con `OGA_PISTA_OCUPADA`, el banco le da un despegue
+a EC-PSO (`traficoAnuncia`) cuando quien juega, en final, pasa de 75 a 62 m
+«después de tu permiso». Lo de después de tu permiso era
+`tusAutorizaciones.length > 0`: que hubiera sonado alguno **en todo el
+vuelo**. Había sonado uno a los 683 s, en el ascenso de la primera frustrada,
+con el juego en «final» siete segundos a 281 m y 1.329 m pasado el umbral. En
+la segunda final no había permiso: la torre lo retenía por EC-GIX, una
+avioneta que había entrado en la pista a los 947,5 s y a los 1041 s volaba a
+197 m sobre el asfalto sin haber pasado su final, que es cuando la deja (Doc
+4444, 7.10.1; ver `encimaDeLaPista` en `world/trafico.ts`). El banco le metió
+detrás al turbohélice, y él mismo contó los dos. Ninguna torre lo hace, y la
+del juego tampoco lo hizo: no se lo autorizó nadie.
+
+**El 1 y el 3 son el presupuesto.** La primera frustrada, a los 617 s, fue por
+EC-IUV; la segunda, a los 1052 s, por EC-GIX, que ya la daba sola sin el
+turbohélice. Ninguna de las dos la puso el banco. Se tocó a los 1517 s, y a
+los 1800 el avión rodaba a cien metros de su puesto (−700, −470 frente a
+−653, −553). Sin frustradas ese vuelo acaba en 968 s —el mismo banco sin
+`OGA_PISTA_OCUPADA`, en la misma ronda—, cada circuito son unos 430 s y de la
+toma al puesto hay unos 305: dos frustradas son 1.830 s, y los treinta
+minutos se habían puesto para que cupieran dos. Y el señalero no tenía nada
+que hacer: el metro es el de la salida, que se empieza en el puesto.
+
+**El 4 es el piloto del banco.** Hasta los 120 m la avioneta sube por actitud,
+doce grados, y los sigue aunque la velocidad se caiga; a 62–64 kt con la
+primera muesca, una racha de Los Rodeos la dejó a 54 kt y 1,28 g. Su
+frustrada ya no hace eso desde la H34e del ADR 0027 —el ala lejos del
+avisador, cuatro grados— y la subida inicial no se había llevado lo mismo.
+
+**Las dos frustradas por las salidas**, que son las que no cupieron: EC-IUV y
+EC-GIX entraron en la pista a los 497,5 y 947,5 s, con el JAZ 20 en el viento
+en cola y la base, 47 y 29 s antes de coger la final, que en Los Rodeos le
+empieza a 3,4 km del umbral, dentro de las dos millas de tu permiso. Para no
+soltar a nadie así está `llegaAntesDeQueSalga`, que te mira también por el
+circuito (`QuienJuega.llegada`). Pero esa llegada por el circuito
+(`tuCircuitoParaLaTorre` en `game.ts`) es `null` con `haciaOtroCampo()`, y el
+banco vuela una vuelta al campo con el plan del juego puesto hacia otra isla:
+la instructora dijo «vuelo.enVueloDestino», que `guion-de-fases.ts` solo elige
+con `haciaOtroCampo`. Así que en el viento en cola y en la base la torre no te
+veía, y soltaba a quien salía. Es el banco haciendo lo que el juego no le
+propone: el plan es una isla, y la tarjeta del destino pasa también por tu
+propio campo, que es la vuelta al campo (`camposDelVuelo`, y `elDestino` da
+`null` con el destino en la salida), y el banco no la elige. Lo que la torre veía de ti al entrar cada uno, el parte de quién entra
+en la pista lo dice ahora (abajo).
+
+### Si pasaba en la tanda 22
+
+Lo que decide los cuatro es lo mismo en las dos: `world/trafico.ts`,
+`flight/turno-de-pista.ts`, `flight/salida-tapada.ts` y `flight/radio.ts` no
+cambian entre 3028690a y c16e9f0a, y en el banco tampoco la pista ocupada, el
+presupuesto ni la subida por actitud de la avioneta. Del motor que tarda (ADR
+0034) al JAZ 20 no le llega nada: el pistón responde en el acto. Lo que sí
+cambió en Los Rodeos es de dónde sale el tráfico —el tipo de cada puesto del
+AIP (H60f) y el 13 en vez del 14 (H65)—, y con eso a qué hora llega cada
+salida a su doble raya. Así que la ronda vio una tirada mala de lo que ya
+podía pasar; no una avería nueva.
+
+**El mismo banco sobre c16e9f0a**, tal cual, con la máquina menos cargada:
+**58 de 58**. Una frustrada, la puesta —EC-PSO a los 613 s con el avión a 75
+m, con el permiso oído—; apagado a los 1394 s; tocó a 1,06 m/s, a 0,5 m del
+eje; el avisador, ni una vez. Y en ese vuelo, a los 689 s, otra vez un «cleared
+to land» en el ascenso de la frustrada: es lo de los 683 s del primero, y
+queda abajo.
+
+### Lo que se cambia, en el banco
+
+- **La pista ocupada se pone con tu permiso en vigor y la pista vacía**: el
+  permiso, oído o sonando (`sendaYPermiso().permiso`), y nadie del tráfico
+  `enLaPista`. Es lo que se quería ver —alguien que entra después de tu
+  «cleared to land»— y con eso no se pone encima de otro.
+- **Y desde la segunda frustrada, diez minutos más de presupuesto**
+  (`CIRCUITO_DE_MAS`), una vez: si con eso no cabe, el parte lo dice.
+  `seQuedoSinTiempo` juzga con el tope que tuvo el vuelo, que va en el parte.
+- **La avioneta, lejos del avisador también en la subida inicial**: a menos de
+  cuatro grados del aviso, ni un grado más de morro que el que lleva, y la
+  palanca se afloja ocho veces lo que se pasa, como `palancaDeLaFrustrada`.
+- **Y quién entra en la pista dice qué veía la torre de ti**: la fase, tu
+  llegada por la final, por el circuito y por la ruta, la de la torre, quién
+  tapaba tu salida y lo de `porTuSalida`. Solo se lee.
+
+### Los 2,03 m/s del vuelo sin pista ocupada
+
+Es la recogida del banco. El juego mide la caída en la normal del suelo donde
+se toca, que es la de siempre (H63 del ADR 0027), y el banco midió lo mismo:
+2,03 del juego y 2,03 del modelo. La pista de Los Rodeos baja en el sentido
+de la toma, así que contra ella se toca más suave que con el variómetro, y la
+recogida del banco ya vuela contra la pista. Empezó a 8,3 m bajando 2,7 m/s;
+en el vuelo de arriba, a 7,5 m bajando 2,4, tocó a 1,06. No se toca.
+
+### Lo que queda
+
+- **La vuelta al campo del banco, con el plan en la vuelta al campo.** Lo que
+  dejó ciega a la torre es que el banco vuela el circuito de casa con el
+  destino del juego en otra isla. Elegir la vuelta al campo al empezar
+  (`ponerDestino` con el campo de salida) es lo que haría quien juega, pero
+  cambia con qué plan se vuela **cada** vuelo entero sin destino —la
+  ventanilla de la final se mide solo con el plan acabando aquí, y lo que
+  dicen la torre y la instructora al salir es otro—, y eso pide su ronda.
+- **Y la torre, que te vea en su circuito aunque tu plan vaya a otro sitio.**
+  Quien vuelve de verdad a su campo, con el plan puesto en otra isla, vuela el
+  viento en cola sin que la torre le cuente, igual que el banco. Una torre lo
+  ve; aquí la llegada por el circuito se apaga entera con `haciaOtroCampo()`,
+  también para quien ya va de vuelta.
+- **«Cleared to land» en el ascenso de la frustrada.** A los 683 s en la
+  ronda y a los 689 s en el vuelo de arriba: el juego pasa a «final» con el
+  avión nivelado a 270–280 m sobre la primera mitad de la pista
+  (`deducir` en `flight/vuelo.ts` admite la final hasta el centro de la pista,
+  pensado para quien flota en la recogida), y la torre autoriza. El banco ya
+  no se fía de eso para poner la pista ocupada.
+- **El presupuesto crece una vez.** Con la avioneta a tiempo real caben tres
+  frustradas (unos 2.260 s de 2.400); con cuatro no, y el parte lo dice.
+- **Los tres cambios del banco no se han volado todavía.** Detrás del vuelo de
+  arriba el navegador fue de la ronda, y a tiempo real no cabía otro antes de
+  entregar: lo que hay es la sintaxis y los tipos. La guarda de la subida
+  actúa también al soltar el suelo —en el vuelo de arriba, 39 de 831 muestras
+  de la subida inicial a menos de cuatro grados del aviso, todas en el medio
+  segundo de la rotación, a 1,35° lo más cerca—; es de esperar que no se
+  note, y es lo primero que hay que mirar en la siguiente ronda.

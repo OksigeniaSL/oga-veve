@@ -5166,8 +5166,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * y a los 1800 rodaba a cien metros de su puesto. Sin frustradas ese vuelo
    * acaba en 968 s, y cada circuito son unos 430; el puesto queda junto a la
    * cabecera y la salida de la pista, al final de ella. Así que desde la
-   * segunda, diez minutos más, y no más que eso: una tercera es otra pregunta,
-   * y el parte la dice.
+   * segunda, diez minutos más, y no más que eso: si con eso no cabe, es otra
+   * pregunta, y el parte la dice.
    */
   const CIRCUITO_DE_MAS = 600;
   const frustradasHastaAhora = () =>
