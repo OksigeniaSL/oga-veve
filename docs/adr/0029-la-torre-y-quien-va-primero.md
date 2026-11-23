@@ -2476,3 +2476,131 @@ en el vuelo de arriba, a 7,5 m bajando 2,4, tocó a 1,06. No se toca.
   de la subida inicial a menos de cuatro grados del aviso, todas en el medio
   segundo de la rotación, a 1,35° lo más cerca—; es de esperar que no se
   note, y es lo primero que hay que mirar en la siguiente ronda.
+
+## Enmienda (23-11-2026, H69): la torre ve tu circuito aunque tu plan vaya a otra isla, y en la frustrada no hay final
+
+### El caso
+
+Lo que quedó de H68, que eran dos fallos del juego y no del banco:
+
+1. **La torre no veía tu circuito si tu plan iba a otra isla.**
+   `tuCircuitoParaLaTorre` en `game.ts` era `null` entera con
+   `haciaOtroCampo()`. Quien despega con el plan a otro campo y vuelve —porque
+   se va al aire, porque se lo piensa mejor o porque es un ejercicio— volaba el
+   viento en cola y la base sin que la torre lo contara, y la torre le soltaba
+   salidas delante: EC-IUV y EC-GIX entraron en la pista 47 y 29 s antes de
+   que el JAZ 20 cogiera la final, y le costaron dos frustradas.
+2. **«Cleared to land» en la subida de la frustrada.** `deducir` en
+   `flight/vuelo.ts` daba «final» a cualquier altura por debajo de trescientos
+   metros hasta el centro de la pista, y en «final» se seguía encima de la
+   pista entera (`posandose`, pensado para quien flota en la recogida, que no
+   miraba la altura). En la subida de la frustrada el avión nivelaba a
+   270–280 m sobre la primera mitad, el variómetro pasaba un pelo por debajo
+   de cero y ya era «final». La torre mira la fase del plan antes que su propia
+   final (`faseQueVeLaTorre`), así que autorizaba: a los 683 y a los 689 s, a
+   quien se estaba yendo. La final de la torre ya no dejaba volver a entrar
+   tras irse (`trasIrse` en `flight/final-de-la-torre.ts`), y la voz de la fase
+   tampoco (`flight/la-final-tras-irse.ts`): los dos eran parches de lo mismo,
+   puestos donde se oía. Faltaba la fase.
+
+### Lo real
+
+Una torre ve a quien está en su circuito, vaya a donde vaya su plan: la
+separación entre llegadas y salidas se hace en el circuito (Doc 4444, 7.7.1.2,
+ya citado arriba), y ahí se cuenta a quien lo vuela. Pero la subida por el eje
+de la pista la vuela igual quien se va que quien da la vuelta; de verdad lo
+distingue lo que dice por radio, y aquí, que quien juega no lo dice, lo
+distingue su plan o haberse ido al aire en ese campo. Quien vuela el viento en
+cola o la base a la altura del circuito, sin subir, está en el circuito.
+
+Y quien se va al aire está en la frustrada y luego en el circuito: la
+autorización de aterrizar es de una aproximación (7.10.2, y «El permiso es de
+una aproximación» en `game.ts`), y la siguiente empieza cuando vuelve a estar
+en final.
+
+### Decisión
+
+- **La torre te cuenta en su circuito por dónde vuelas**
+  (`flight/circuito-de-la-torre.ts`, `CircuitoDeLaTorre`), con la misma franja
+  y la misma altura de siempre: con el plan aquí o tras irte al aire aquí
+  (`LaFinalTrasIrse.yendose`), todo el circuito, como antes; con el plan
+  fuera, desde que vuelas el viento en cola o la base sin subir (más de 1 m/s,
+  `SIN_SUBIR`, el mismo número de la final de la torre). Una vez visto, te
+  sigue viendo hasta que sales de la franja o de su altura, y un bache no te
+  borra de la fila. La subida por el eje con el plan fuera no se cuenta, y
+  quien vira de vuelta hacia su isla subiendo por el viento en cola tampoco.
+- **La fase del plan no vuelve a «final» en la frustrada** (`trasIrse` en
+  `flight/vuelo.ts`). Irse de verdad es lo mismo que mira la torre,
+  `seVaDeVerdad`: cien metros sobre lo más bajo de la final, o quince con el
+  gas de despegue o con una orden de irse puesta. Para eso el juego le pasa al
+  plan el gas y la orden (`PlanDeVuelo.paraIrse`), como ya le pasaba la pista
+  de otros. Y se vuelve al darse la vuelta (`TORCIDO_PARA_SALIR`, 120°), al
+  pasar el centro de la pista o al salir del pasillo de la final (400 m del
+  eje). Los veinte metros que sacan de la fase no bastan para cerrarla, a
+  propósito: son una corrección de senda con el teclado, y ésa sigue
+  volviendo a final al bajar.
+
+Sin frases nuevas: no hace falta ninguna.
+
+### La prueba
+
+- `flight/final-en-la-frustrada.test.ts`: la frustrada paso a paso con la
+  máquina de fases, de la decisión a la altura del circuito por el eje,
+  nivelando encima de la pista. Con el `vuelo.ts` de antes, cinco de seis en
+  rojo: «final» nivelando, y siguiendo en «final» trescientos metros pasado
+  el centro. La que no cambia, la corrección de senda, en verde en los dos.
+- `flight/circuito-de-la-torre.test.ts`: el circuito del JAZ 20 en Los Rodeos
+  con sus vértices y lo que queda por la línea quebrada, como en el juego. Con
+  la regla de antes, ningún punto del circuito con el plan fuera; ahora, el
+  viento en cola menos su esquina y la base entera, y nada de la salida por el
+  eje ni de la que vira de vuelta subiendo.
+- `flight/circuito-con-plan-a-otra-isla.test.ts`: la mesa de
+  `permiso-a-tiempo.test.ts` con el JAZ 20 por su viento en cola y su base y
+  el plan en otra isla, la frecuencia, el tráfico dibujado y el turno de Los
+  Rodeos; dos cabeceras, ocho momentos y tres semillas. Con la regla de
+  antes, **2 de 48** llegadas con una salida entrando en la pista en el
+  minuto de antes de la final y **5 al aire**; con la de ahora, **0 y 0**.
+
+### Lo medido
+
+En el navegador, sobre una copia fija de la rama:
+
+- **`OGA_PISTA_OCUPADA=1 … tenerife-norte taguato 1 jaz-20`: 58 de 58**
+  (dos sin medir). Una frustrada, la que pone el banco: EC-PSO entra a los
+  617,5 s con el avión en final a 75 m, «go around» a los 623,8 s por la
+  pista ocupada, a 60 m. Los permisos, uno por final: «aterrizar» y «cleared
+  to land» a los 542 y 549 s, a 189 m, y a los 978 y 986 s en la final
+  siguiente; **ninguno en la subida de la frustrada**, donde H68 los oyó a
+  los 683 y 689 s. Ninguna salida soltada delante en el viento en cola ni en
+  la base: la única que entró en la pista fue la del banco. Apagado a los
+  1.398 s.
+- **El mismo sin la pista ocupada: 57 de 58** (dos sin medir). Ninguna
+  frustrada —en la ronda de la tanda 23, sobre 2f861096, ese vuelo se fue una
+  vez al aire por EC-ABY encima—, un permiso, a los 548 y 555 s, y apagado a
+  los 973 s. El rojo es **«ningún tráfico viene de frente en la salida ni en
+  la final»**: 43 muestras desde los 566 s, en «final», con EC-XGI a 4.213 m
+  y 90 m por encima, de frente. El parte no dice qué hacía EC-XGI, y no está
+  averiguado si viene de esto: en la ronda anterior ese vuelo salió en verde,
+  y la torre le mandó al aire a dos del tráfico en los dos vuelos, como en
+  todos los de esa ronda. Las salidas que se quedan sin soltar delante de ti
+  cambian a qué hora vuela cada uno del tráfico, y con eso dónde está cada uno
+  cuando llegas.
+
+### Lo que queda
+
+- **Qué hacía EC-XGI** de frente a 4,2 km de la final. Hace falta que el
+  parte diga, de quien viene de frente, su camino (`porDentro`), si da la
+  vuelta de espera y si la torre le mandó al aire, y volar ese banco otra vez.
+- **El JAZ 40 con la pista ocupada** (`OGA_PISTA_OCUPADA=1 … tenerife-norte
+  taguato 1 jaz-40`) no se voló: detrás del segundo vuelo el anillo de
+  memoria lo tenían los bancos y los vitest de otros, y no cabía con el vitest
+  entero de esta rama antes de entregar. El circuito que vuela el JAZ 90 no
+  cambia, y su banco de Gran Canaria tampoco se voló.
+- **La subida por el eje con el plan fuera** sigue sin contar para la torre:
+  quien despega con el plan a otra isla y da la vuelta al campo desde la
+  subida, sin irse al aire, entra en su fila al llegar al viento en cola, no
+  antes. Es lo que distingue una salida de una vuelta sin oír a quien vuela.
+- **La final de la torre y la voz de la fase tras irse al aire**
+  (`trasIrse` en `final-de-la-torre.ts` y `la-final-tras-irse.ts`) siguen
+  como estaban, ahora por encima de una fase que ya no vuelve a «final» en la
+  frustrada. Si se quitan, que sea con su prueba.
