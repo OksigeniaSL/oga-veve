@@ -2869,6 +2869,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * toca, se deja ahí, y la velocidad sale sola.
    */
   const CABECEO_DE_SUBIDA = (12 * Math.PI) / 180;
+  /**
+   * Lo que el ala de la avioneta se queda del avisador como poco en la subida
+   * inicial, rad: el de su frustrada, repetido aquí porque esto corre en la
+   * página. Ver `MARGEN_AL_AVISADOR` en `la-frustrada.mjs`.
+   */
+  const MARGEN_AL_AVISADOR = (4 * Math.PI) / 180;
 
   /**
    * **Lo que gira el morro al rotar**, rad/s: tres grados por segundo.
@@ -3249,8 +3255,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * g a 50 m, con el ala a 1,8° del avisador. Ver `aSuRitmo`.
      */
     if (s.heightAboveGround < ASENTAR_LA_SUBIDA || SUBE_CON_EL_MORRO) {
-      const falta = CABECEO_DE_SUBIDA - cabeceoDe(s);
-      const actitud = ganancia(s) * Math.max(-0.35, Math.min(0.6, falta * 4));
+      /*
+       * **Y en la avioneta, el ala lejos del avisador también aquí** (H68),
+       * como en su frustrada: a menos de `MARGEN_AL_AVISADOR` del aviso, ni un
+       * grado más de morro que el que lleva, y la palanca se afloja en
+       * proporción a lo que se pasa. Los doce grados se perseguían aunque la
+       * velocidad se cayera: en Taguató, con la racha de Los Rodeos a 46 m, el
+       * JAZ 20 se quedó a 54 nudos con 1,28 g y 13,4° de ala, y sonó «stall,
+       * stall» en la subida inicial. Es lo que pide su manual: la velocidad de
+       * subida, no un ángulo (ver `la-frustrada.mjs`).
+       */
+      const sobraDeAla = (s.stallWarningAlpha ?? Infinity) - (s.alpha ?? 0);
+      const cercaDelAvisador = AVIONETA_COMPLETA && sobraDeAla < MARGEN_AL_AVISADOR;
+      const falta = cercaDelAvisador
+        ? Math.min(0, CABECEO_DE_SUBIDA - cabeceoDe(s))
+        : CABECEO_DE_SUBIDA - cabeceoDe(s);
+      const actitud =
+        ganancia(s) * Math.max(-0.35, Math.min(0.6, falta * 4)) -
+        (cercaDelAvisador ? ganancia(s) * (MARGEN_AL_AVISADOR - sobraDeAla) * 8 : 0);
       /*
        * **Y parando el morro, también empujando, desde donde estaba la
        * palanca** (H34d). `aSuRitmo` deja de tirar cuando el morro va
@@ -5136,6 +5158,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const TOPE = rutaPedida ? 3600 : 1800;
   /*
+   * **Y con la segunda frustrada, un circuito más de verdad** (H68).
+   *
+   * Los treinta minutos se pusieron para que cupieran dos, y con el avión más
+   * lento a tiempo real no caben: el JAZ 20 en Taguató, en Los Rodeos, con la
+   * pista ocupada y otra frustrada que no se había puesto, tocó a los 1517 s
+   * y a los 1800 rodaba a cien metros de su puesto. Sin frustradas ese vuelo
+   * acaba en 968 s, y cada circuito son unos 430; el puesto queda junto a la
+   * cabecera y la salida de la pista, al final de ella. Así que desde la
+   * segunda, diez minutos más, y no más que eso: una tercera es otra pregunta,
+   * y el parte la dice.
+   */
+  const CIRCUITO_DE_MAS = 600;
+  const frustradasHastaAhora = () =>
+    frustradasPorLaPista + frustradasPorTuSalida + frustradasPorElJuego;
+  const tope = () => TOPE + (frustradasHastaAhora() >= 2 ? CIRCUITO_DE_MAS : 0);
+  /*
    * Y el tiempo se lee del juego, no se cuenta por vueltas.
    *
    * Antes era `i * PASO`: «cien milisegundos por vuelta, luego esto son doce
@@ -5269,7 +5307,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * de verdad»—, y la de los toboganes en el puesto, sesenta.
    */
   const ATASCADO = 300;
-  const TOPE_DE_PARED = (TOPE + 600) * 1000;
+  const TOPE_DE_PARED = () => (tope() + 600) * 1000;
   let seQuedoSinPared = false;
   /** Por qué se cortó: `reloj`, `atascado` o `pared`. */
   let porQueSeCorto = null;
@@ -5357,10 +5395,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let leidoAntes = empezo;
   let t = 0;
   let i = 0;
-  for (; t < TOPE; i++) {
+  for (; t < tope(); i++) {
     await new Promise((r) => setTimeout(r, (PASO / veces) * 1000));
     const ahoraDePared = Date.now();
-    if (ahoraDePared - paredEmpezo > TOPE_DE_PARED) {
+    if (ahoraDePared - paredEmpezo > TOPE_DE_PARED()) {
       seQuedoSinPared = true;
       porQueSeCorto = "pared";
       break;
@@ -5514,6 +5552,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * tenga su fotograma, y el más cercano en el costado se apunta también:
        * en las paralelas dice si estaba en la de al lado.
        */
+      /*
+       * **Y se pone con tu permiso en vigor y la pista vacía** (H68), que es
+       * el caso que se quiere ver: alguien que entra después de tu «cleared
+       * to land». Se miraba si había sonado alguno en todo el vuelo, y con la
+       * torre reteniéndolo por otro que salía se puso igual: en Los Rodeos, el
+       * JAZ 20 en su segunda final sin permiso —uno que había sonado en el
+       * ascenso de la frustrada anterior— y una avioneta despegada sobre el
+       * asfalto, a 197 m y sin haber pasado el final de la pista. El banco
+       * metió al turbohélice detrás de ella y él mismo contó «dos encima de la
+       * pista» con quien juega en final: eso no lo hace ninguna torre, y no
+       * lo hizo el juego.
+       */
+      // Dado y sonando ya cuenta: lo que se pone es después de oírlo empezar.
+      const tuPermisoEnVigor = ["oido", "sonando"].includes(o.sendaYPermiso?.()?.permiso);
+      const pistaVacia = !(o.trafico?.() ?? []).some((a) => a.enLaPista);
       if (
         pistaOcupadaPedida &&
         pistaOcupadaPuesta === null &&
@@ -5521,6 +5574,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         !s.onGround &&
         (!destino || enElDestino) &&
         tusAutorizaciones.length > 0 &&
+        tuPermisoEnVigor &&
+        pistaVacia &&
         alto(s) < 75 &&
         alto(s) > 62
       ) {
@@ -6609,6 +6664,29 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           llegando: a.llegando,
           alto: Math.round(a.y - (o.cotaDePistaDeAhora?.(a.x, a.z) ?? 0)),
           nosotros: { etapa, umbral, alto: s.onGround ? 0 : Math.round(alto(s)) },
+          // Lo que veía la torre de ti al entrar él, y quién tapaba tu salida (H68). Solo se lee.
+          torre: (() => {
+            try {
+              const j = o.juegoParaTrazas?.();
+              const l = j?.tuLlegada?.();
+              const r = (x) => (typeof x === "number" ? Math.round(x) : x ?? null);
+              const p = j?.tuLlegadaParaLaTorre?.();
+              const d = (o.traficoPorDentro?.() ?? []).find((x) => x.matricula === a.matricula);
+              return {
+                fase: j?.faseDeAhora ?? null,
+                alUmbral: r(l?.alUmbral),
+                llegada: r(l?.llegada),
+                circuito: r(l?.porElCircuito),
+                ruta: r(l?.deRuta),
+                paraLaTorre: p ? `${Math.round(p.segundos)} s ${p.donde}` : null,
+                tapan: (j?.trafico?.tapanTuSalida?.() ?? []).map((q) => `${q.matricula} ${Math.round(q.leHace)}+${Math.round(q.espera)}${q.enLaPista ? " en pista" : ""}`),
+                porTuSalida: o.porTuSalida?.() ?? null,
+                suyo: d ? `${d.tipo} ${d.camino} ${d.recorrido}/${d.espera}/${d.despega}` : null,
+              };
+            } catch (e) {
+              return String(e).slice(0, 120);
+            }
+          })(),
         });
       }
       enLaPistaAntes.clear();
@@ -8736,6 +8814,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     gafas: o.gafas?.() ?? null,
     sellos: o.sellos?.() ?? null,
     segundos: +t.toFixed(1),
+    // Y hasta dónde llegaba el presupuesto, que crece con la segunda frustrada: ver `tope`.
+    tope: tope(),
     veces,
     subida,
     trazaDeLaFinal,
@@ -9341,7 +9421,7 @@ if (process.env.OGA_TRAZA_COCHE) {
  * no se llegó a aterrizar. Ver `comprobarSiVolo`.
  */
 const seQuedoSinTiempo =
-  vuelo.etapa !== "apagar" && vuelo.segundos >= (RUTA_PEDIDA ? 3550 : 1750);
+  vuelo.etapa !== "apagar" && vuelo.segundos >= (vuelo.tope ?? (RUTA_PEDIDA ? 3600 : 1800)) - 50;
 
 /*
  * **Y lo mismo cuando el que se agota es el reloj de pared.**
