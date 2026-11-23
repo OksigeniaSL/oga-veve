@@ -513,6 +513,34 @@ export class Vuelo {
    */
   private trasIrse = false;
   /**
+   * **Si se acaba de despegar y todavía no se ha dado la vuelta**: mientras
+   * tanto la fase no es «final», como en la frustrada (`trasIrse`). Recién
+   * despegado no hay final ni permiso de aterrizar; la final siguiente
+   * empieza volviendo.
+   *
+   * La fase volvía a «final» en la subida por el eje. Con una pista larga, la
+   * avioneta pasa de los ciento veinte metros —ya ha volado, ver `vuelve`—
+   * antes del centro de la pista, y ahí un bache que deja el variómetro un
+   * momento por debajo de cero cumplía «alineado, bajando y antes del
+   * centro»; y una vez en «final», encima del asfalto se sigue en ella
+   * (`posandose`), aunque se pase el centro. En el banco del fallo de radio en
+   * Gran Canaria, con la pista de 3.104 m, la torre te vio en final a 176 m
+   * subiendo y encendió la verde fija: la torre mira la fase del plan antes
+   * que su propia final (`faseQueVeLaTorre`), así que cerrar la final de la
+   * torre al callarse la radio (`FinalDeLaTorre.despegado`, H71) no bastaba.
+   * El sitio era éste, y vale para cualquier vuelo, con radio o sin ella.
+   *
+   * Se pone al dejar el suelo después de haberlo tocado —un despegue o un
+   * toque y despegue, no un bote, que no pasa de `EN_EL_AIRE`— y se quita al
+   * darse la vuelta, al salir del pasillo de la final, al estar por delante
+   * de la pista —que recién despegado no se está: o se ha dado la vuelta, o
+   * la pista es de otro campo, o el avión se puso ahí— o al volver al suelo.
+   * Ver `mirarSiAcabaDeDespegar`.
+   */
+  private recienDespegado = false;
+  /** Si el avión ha tocado el suelo desde que empezó el vuelo. Ver `recienDespegado`. */
+  private tocado = false;
+  /**
    * **El gas y si hay puesta una orden de irse al aire**, para saber si uno se
    * va de verdad. Los pone el juego antes de cada paso, como `pistaDeOtros`.
    * Ver `trasIrse`.
@@ -626,6 +654,8 @@ export class Vuelo {
     this.subidoEnFinal = 0;
     this.subidoDesdeLaFinal = null;
     this.trasIrse = false;
+    this.recienDespegado = false;
+    this.tocado = false;
     this.enElAire = 0;
     this.avisadoDeLaLuz = false;
     this.remonteSaltado = false;
@@ -679,9 +709,14 @@ export class Vuelo {
 
   paso(s: Situacion, dt: number): Paso {
     this.desde += dt;
+    // Pisando, y habiendo tocado de verdad: dejarlo así es despegar. Ver `recienDespegado`.
+    if (s.estado.onGround) this.tocado = true;
+    const pisabaDeVerdad = this.pisa && this.tocado;
     // El contacto manda; y sin él, solo la altura saca del suelo. Ver `pisa`.
     if (s.estado.onGround) this.pisa = true;
     else if (s.sobreElSuelo > EN_EL_AIRE) this.pisa = false;
+    if (pisabaDeVerdad && !this.pisa) this.recienDespegado = true;
+    this.mirarSiAcabaDeDespegar(s);
     if (s.sobreElSuelo > EN_EL_AIRE) {
       this.despego = true;
       this.enElAire += dt;
@@ -787,6 +822,36 @@ export class Vuelo {
       this.trasIrse = true;
   }
 
+  /**
+   * **Y cuándo se deja de estar recién despegado**: dándose la vuelta,
+   * saliendo del pasillo de la final, estando por delante de la pista o
+   * volviendo al suelo. Pasar el centro de la pista no basta, al revés que en
+   * la frustrada: encima del asfalto se seguía en «final» por `posandose`, y
+   * la final de una vuelta al campo empieza volviendo. Ver `recienDespegado`.
+   */
+  private mirarSiAcabaDeDespegar(s: Situacion): void {
+    if (!this.recienDespegado) return;
+    /*
+     * Por delante de la pista es antes de su cabecera más cercana, del lado
+     * por el que se llega: la mitad de la pista sale de lo que queda por
+     * delante, que es esa mitad menos lo andado desde el centro.
+     */
+    const mediaPista = s.pistaRestante + s.alLargoDePista;
+    const delanteDeLaPista = s.pistaRestante > 0 && s.alLargoDePista < -mediaPista;
+    if (
+      this.pisa ||
+      Math.abs(s.desalineado) > TORCIDO_PARA_SALIR ||
+      s.alEjeDePista >= PASILLO_DE_LA_FINAL ||
+      delanteDeLaPista
+    )
+      this.recienDespegado = false;
+  }
+
+  /** Si se acaba de despegar y no se ha dado la vuelta: ver `recienDespegado`. */
+  get acabaDeDespegar(): boolean {
+    return this.recienDespegado;
+  }
+
   /** Si se está en la frustrada: ver `trasIrse`. Lo mira el banco. */
   get enLaFrustrada(): boolean {
     return this.trasIrse;
@@ -822,6 +887,8 @@ export class Vuelo {
         this.haVolado &&
         // En la frustrada no se está en final, aunque se nivele alineado. Ver `trasIrse`.
         !this.trasIrse &&
+        // Ni recién despegado, subiendo por el eje. Ver `recienDespegado`.
+        !this.recienDespegado &&
         // Antes del centro de la pista: quien la ha pasado ya no está
         // entrando, está yéndose.
         (s.alLargoDePista < 0 || posandose) &&
