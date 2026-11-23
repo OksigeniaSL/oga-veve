@@ -25618,6 +25618,13 @@ export class Game {
     this.torre.callar();
     this.otroAvion.callar();
     this.hud.ponerSinRadio(true);
+    /*
+     * **Y para la torre, recién despegado**: desde aquí lleva tu turno, y tu
+     * final empieza al volver por el circuito, no en la subida. Ver
+     * `FinalDeLaTorre.despegado`.
+     */
+    this.finalDeLaTorre.despegado();
+    this.enLaFinalDeLaTorre = false;
     this.apuntarCanto("radio callada: ni la torre ni la frecuencia");
     this.codigoDesde = this.relojDelJuego;
     for (let i = 0; i < CODIGO_SIN_RADIO.length; i++)

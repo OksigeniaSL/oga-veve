@@ -17,6 +17,7 @@ import {
   MARCADO_EN,
   type LoQueVeLaTorre,
 } from "./fallo-de-radio";
+import { FinalDeLaTorre } from "./final-de-la-torre";
 import { loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
 import { Practica, type Lectura, type Suceso } from "./practica";
 import { valeHastaElPasoSiguiente } from "../audio/boca";
@@ -153,6 +154,32 @@ describe("dónde y con qué se ofrece", () => {
       const a = e.aerodrome;
       expect(hayLampara(a), oaciDe(e) ?? e.id).toBe(!!a && !sinTorre(a) && !esAfis(a));
     }
+  });
+});
+
+describe("recién despegado, la torre no te ve en su final hasta que das la vuelta", () => {
+  const subiendo = {
+    enElAire: true,
+    faseDelPlan: "en-vuelo",
+    enLaFinalDelPlan: false,
+    alUmbral: 3000,
+    torcido: 0,
+    sobreLaPista: 170,
+    // Un bache: la vertical cae un momento por debajo de lo que es subir.
+    vertical: 0.5,
+  };
+
+  it("sin más, un bache en la subida por el eje entra en su final: es lo que daba el permiso subiendo", () => {
+    expect(new FinalDeLaTorre().paso(subiendo)).toBe(true);
+  });
+
+  it("y despegado, no, hasta haberse dado la vuelta; después sí", () => {
+    const f = new FinalDeLaTorre();
+    f.despegado();
+    expect(f.paso(subiendo)).toBe(false);
+    // El viento en cola, al revés de la pista: ya se dio la vuelta.
+    expect(f.paso({ ...subiendo, torcido: 180, alUmbral: null })).toBe(false);
+    expect(f.paso({ ...subiendo, sobreLaPista: 150, vertical: -2 })).toBe(true);
   });
 });
 
