@@ -55,7 +55,7 @@ import { DIBUJOS, Senal } from "./senal";
 import { Cronometro } from "./cronometro";
 import { VentanaDeHistoria } from "./ventana-de-historia";
 import { OJO } from "./teclas";
-import { luzDeTren } from "../flight/tren";
+import { luzDelMando } from "../flight/tren";
 import { anguloDePerdida, luzDeFlaps } from "../flight/flaps";
 import { Mapa } from "./mapa";
 import type { Scenario } from "../world/scenarios";
@@ -3762,9 +3762,10 @@ export class Hud {
      * «¿en qué parte del panel veo que se está poniendo o quitando?». Dentro,
      * apagado; moviéndose, en ámbar; fuera y trabado, en verde. Los mismos
      * que las luces del cuadro, y con la misma regla: verde solo cuando de
-     * verdad está trabado. Ver `luzDeTren` en `flight/tren.ts`.
+     * verdad está trabado, y **todas** las patas: con la de morro en su pozo,
+     * ámbar. Ver `luzDelMando` en `flight/tren.ts`.
      */
-    const luz = luzDeTren(mandos?.tren ?? 1);
+    const luz = luzDelMando(mandos?.tren ?? 1, mandos?.trenDeMorro);
     this.trenTouch.classList.toggle("mando--fuera", luz === "fuera");
     this.trenTouch.classList.toggle("mando--moviendose", luz === "moviendose");
     /*

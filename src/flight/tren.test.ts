@@ -9,6 +9,7 @@ import {
   avisaDelTren,
   laDeMorro,
   luzDeTren,
+  luzDelMando,
   lucesDeLasPatas,
   luzRojaDelTren,
   mueveElTren,
@@ -218,6 +219,13 @@ describe("una luz por pata", () => {
     // La roja la enciende el juego con la de morro dentro: ver `trenFueraDeSitio`.
     expect(luzRojaDelTren(1, true)).toBe(false);
     expect(luzRojaDelTren(0, true)).toBe(true);
+  });
+
+  it("y el botón del mando no se pone verde con la de morro dentro", () => {
+    expect(luzDelMando(1)).toBe("fuera");
+    expect(luzDelMando(0)).toBe("dentro");
+    expect(luzDelMando(1, 0)).toBe("moviendose");
+    expect(luzDelMando(0.5)).toBe("moviendose");
   });
 
   it("sin patas que meter, ninguna luz", () => {

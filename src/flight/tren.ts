@@ -224,6 +224,20 @@ export function lucesDeLasPatas(
 }
 
 /**
+ * La luz del mando del tren, el botón de la pantalla: lo mismo que las del
+ * cuadro, pero en una sola. Verde solo si **todas** las patas están abajo y
+ * trabadas, apagada si todas están dentro, y ámbar si no —también con una
+ * pata que se quedó en su pozo—, que es «el tren no está donde lo pediste».
+ * Con la rueda de morro dentro se ponía verde: tres verdes en un botón.
+ */
+export function luzDelMando(donde: number, morro: number = donde): LuzDeTren {
+  const luces = lucesDeLasPatas(3, donde, morro);
+  if (luces.every((l) => l === "fuera")) return "fuera";
+  if (luces.every((l) => l === "dentro")) return "dentro";
+  return "moviendose";
+}
+
+/**
  * Si la luz roja del tren —la GEAR del panel de avisos— está encendida.
  *
  * ## Qué dice la de verdad
