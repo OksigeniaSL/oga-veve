@@ -82,7 +82,7 @@ import {
 import { PALETA } from "../ui/paleta";
 import { enLaMuesca } from "../flight/flaps";
 import { bienPuesta } from "../flight/altimetro";
-import { luzDeTren } from "../flight/tren";
+import { lucesDeLasPatas, luzDeTren } from "../flight/tren";
 import { POR_SEGUNDO_DESDE_FUERA } from "./pantallas-cabina";
 import type { LaRadioPintada } from "../ui/radio-en-la-rosa";
 
@@ -192,6 +192,13 @@ export interface DatosDeRelojes {
   } | null;
   /** Dónde está el tren: 0 dentro, 1 fuera y trabado. */
   readonly tren: number;
+  /** Y la pata de morro, si no va con las demás. Ver `lucesDeLasPatas`. */
+  readonly trenDeMorro?: number;
+  /**
+   * Y la luz roja del tren, la de «gear unsafe»: la misma que enciende el
+   * panel de avisos del cuadro plano. Ver `luzRojaDelTren`.
+   */
+  readonly trenRojo?: boolean;
   /** Las escalas de **este** avión: sin ellas la esfera miente. */
   readonly cuadro: Cuadro;
   /**
@@ -1068,14 +1075,38 @@ function deMotor(
  * trabado, ámbar mientras viaja y apagadas dentro. Las mismas que el cuadro
  * plano lleva en su placa —ver `lucesDeTren` en `ui/cristal.ts`—, y una rueda
  * con su llanta se reconoce sin saber leer.
+ *
+ * **Una por pata**, cada una con la suya: con la rueda de morro en su pozo,
+ * dos verdes y la de en medio apagada. Ver `lucesDeLasPatas`.
+ *
+ * **Y la roja, encima.** El panel de avisos del cuadro plano no se pinta desde
+ * el asiento de un avión de esferas, así que la luz de «gear unsafe» no se
+ * veía en ningún sitio desde dentro: con la rueda de morro en su pozo la
+ * instructora decía «la luz roja del tren sigue prendida» y en la cabina no
+ * había ninguna. En el Seneca III es una luz aparte en el panel (Piper,
+ * VB-1110, p. 7-10a: «a red warning light on the instrument panel
+ * illuminates»); aquí va sobre las tres ruedas, con su dibujo de rueda para
+ * que no sea solo un color.
  */
 function lucesDelTren(d: DatosDeRelojes, g: CanvasRenderingContext2D): void {
-  const luz = luzDeTren(d.tren);
   const patas = Math.max(1, d.cuadro.patas);
+  const luces = lucesDeLasPatas(patas, d.tren, d.trenDeMorro);
   const radio = R * 0.2;
   const paso = radio * 2.5;
   const x0 = C - ((patas - 1) * paso) / 2;
+  const roja = d.trenRojo === true;
+  g.globalAlpha = roja ? 0.95 : 0.3;
+  g.fillStyle = roja ? PALETA.limite : PALETA.apagado;
+  g.beginPath();
+  g.arc(C, C - 0.5 * R, radio * 0.8, 0, Math.PI * 2);
+  g.fill();
+  g.globalAlpha = 1;
+  g.fillStyle = PALETA.esfera;
+  g.beginPath();
+  g.arc(C, C - 0.5 * R, radio * 0.8 * 0.42, 0, Math.PI * 2);
+  g.fill();
   for (let k = 0; k < patas; k++) {
+    const luz = luces[k] ?? luzDeTren(d.tren);
     const x = x0 + k * paso;
     g.globalAlpha = luz === "dentro" ? 0.45 : 0.9;
     g.fillStyle =

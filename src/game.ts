@@ -14854,6 +14854,7 @@ export class Game {
     this.bomberosPor = null;
     // Y la rueda de morro, en su sitio: el tren de un vuelo nuevo sale entero.
     this.morroAtascado = false;
+    this.frasesDelTrenDeMorro.olvidar();
     this.laOtraCabecera.reiniciar();
     // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
     // tenerlo junto: antes eran cinco líneas repartidas por el reinicio.
@@ -22451,6 +22452,7 @@ export class Game {
         peldano: peldanoDe(this.tier.instruments),
         patas: patasDe(this.aircraft),
         tren: this.input.controls.tren,
+        trenDeMorro: this.trenDeMorro(),
         sobreElSuelo: this.flight.state.groundSpeed,
         // Desde las ruedas, como el radioaltímetro de verdad y como el cuadro plano.
         sobreElTerreno: Math.max(
@@ -22696,6 +22698,9 @@ export class Game {
         presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
         combustible: this.elDeposito(),
         tren: this.input.controls.tren,
+        // Una luz por pata, y la roja, que el panel de avisos no se ve desde este asiento.
+        trenDeMorro: this.trenDeMorro(),
+        trenRojo: this.trenFueraDeSitio(),
         cuadro: cuadroDe(this.aircraft),
         /*
          * **Y la radio, la misma de la pantalla**: desde el asiento de un
@@ -22795,6 +22800,8 @@ export class Game {
         flaps: this.input.controls.flaps,
         palancaDeFlaps: this.input.palancaDeFlaps,
         tren: this.input.controls.tren,
+        // Y la de morro, que puede quedarse en su pozo: una luz por pata. Ver `trenDeMorro`.
+        trenDeMorro: this.trenDeMorro(),
         objetivo: this.aDondeVoy,
         viento: this.vientoDeHoy,
         aire: this.flight.aireDelDia(),
@@ -25291,6 +25298,7 @@ export class Game {
    */
   private practicar(dt: number): void {
     this.bomberos.paso(dt);
+    this.frasesDelTrenDeMorro.soltar();
     this.contarLasVelocidades();
     const p = this.practica;
     if (!p) return;
@@ -25358,7 +25366,7 @@ export class Game {
         return this.declararLaEmergencia(suceso.socorro);
       case "extension":
         // La compañera tira de la perilla: se dice, y nada más se mueve, que la rueda no sale.
-        this.decirDelEjercicio("ejercicio.morro.emergencia", "normal");
+        this.frasesDelTrenDeMorro.pedir("ejercicio.morro.emergencia");
         return;
       case "tampoco":
         return this.tampocoSaleElMorro();
@@ -25466,6 +25474,30 @@ export class Game {
   }
 
   /**
+   * **Lo que cuenta la instructora del tren de nariz, de una en una**: como
+   * el GPS y la pista corta, cada frase se pide cuando la anterior del
+   * ejercicio ha acabado. Pedidas en cuanto pasaba su paso, con las frases ya
+   * grabadas, «la compañera tira de la perilla» esperaba detrás de «la rueda
+   * no salió» —ocho segundos y medio, y la torre en la final— y el «tampoco»
+   * la retiraba al llegar, siete segundos después; y el «tampoco», detrás de
+   * la llamada de PAN PAN y su respuesta, no cabía en la cola. En el banco:
+   * «ejercicio.morro.emergencia: ya no es verdad» y «ejercicio.morro.tampoco:
+   * no cabía en la cola» (ADR 0014, enmienda H70b). Lo que no espera es lo que
+   * se ve: la pata en su pozo, las luces y el dibujo de la nariz arriba salen
+   * en su instante. Ver `flight/frases-en-fila.ts`.
+   */
+  private readonly frasesDelTrenDeMorro = new FrasesEnFila<TranslationKey>({
+    decir: (clave, alSonar) =>
+      this.decirDelEjercicio(clave, clave === "ejercicio.morro.noSale" ? "mando" : "normal", alSonar),
+    reloj: () => this.relojDePared,
+    apuntar: (que) => this.apuntarCanto(que),
+    retirar: (clave) => BOCA.retirar((c) => c === clave),
+    tope: TOPE_DE_UNA_FRASE_DEL_ALTIMETRO,
+    otraVezSi: SE_PIDE_OTRA_VEZ,
+    otraVezHasta: OTRA_VEZ_SI_SE_CAE,
+  });
+
+  /**
    * **La rueda de morro que no sale**, que es el ejercicio del tren de nariz:
    * salen las principales y la de morro se queda en su pozo —se ve en el
    * avión, y la luz roja del tren se queda encendida—. La instructora lo dice
@@ -25478,7 +25510,7 @@ export class Game {
     this.morroAtascado = true;
     const dicho = this.avisoCon("ejercicio.morro.noSale", "palabra.tren");
     this.hud.senal.mostrar("tren", dicho.rotulo, null, { segundos: 8, prioridad: IMPORTANTE });
-    this.decirDelEjercicio("ejercicio.morro.noSale", "mando");
+    this.frasesDelTrenDeMorro.pedir("ejercicio.morro.noSale");
   }
 
   /**
@@ -25489,7 +25521,7 @@ export class Game {
   private tampocoSaleElMorro(): void {
     const dicho = this.avisoCon("ejercicio.morro.tampoco", "palabra.narizArriba");
     this.hud.senal.mostrar("nariz-arriba", dicho.rotulo, null, { segundos: 10, prioridad: IMPORTANTE });
-    this.decirDelEjercicio("ejercicio.morro.tampoco", "normal");
+    this.frasesDelTrenDeMorro.pedir("ejercicio.morro.tampoco");
   }
 
   /**
@@ -25919,6 +25951,8 @@ export class Game {
      * y con un percance no lo retiraría el «bien». Ver `valeHastaElPasoSiguiente`.
      */
     BOCA.retirar((c) => valeHastaElPasoSiguiente(c));
+    // Y lo que esperaba su turno en la fila del tren de nariz, también.
+    this.frasesDelTrenDeMorro.olvidar();
     if (como === "otraVez") return;
     const clave =
       this.practica?.ejercicio.id === "despresurizacion" && como === "vuelta"
@@ -34872,6 +34906,15 @@ export class Game {
    * segundos, que es lo que tarda en enterarse quien estaba mirando fuera.
    */
   private pilotoSeSolto = 0;
+
+  /**
+   * Dónde está la pata de morro, para su luz: con las demás, o en su pozo si
+   * se quedó dentro en el ejercicio del tren de nariz. Cada luz verde dice lo
+   * de su pata (ADR 0014, enmienda H70b). Ver `lucesDeLasPatas`.
+   */
+  private trenDeMorro(): number {
+    return this.morroAtascado ? 0 : this.input.controls.tren;
+  }
 
   /**
    * Si la luz roja del tren está encendida: el tren no está donde dice la

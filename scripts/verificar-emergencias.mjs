@@ -324,6 +324,15 @@ try {
         const sobre = s.position.y - cota;
         if (ej?.fase !== "armada" && desdeElFallo === null) {
           desdeElFallo = ahora;
+          /*
+           * **Y en `morro`, desde la avería a la velocidad de verdad** (H70b).
+           * A cuatro por uno la final dura unos veinte segundos de pared, y lo
+           * que la instructora tiene que decir —la rueda que no salió, la
+           * perilla y el «tampoco», con el PAN PAN y la torre en medio— pasa
+           * de veinticuatro: con las frases grabadas, el «tampoco» llegaba con
+           * el avión ya parado. Las voces no van más deprisa con el reloj.
+           */
+          if (modo === "morro") o.acelerar?.(1);
           alFallar = { sobre, trenFuera: o.trenQueSePide() };
           centradoAlFallar = ej?.centrado ?? null;
         }
@@ -584,14 +593,23 @@ try {
            * **Y en `morro`, la recogida de su manual**: «Touch down at minimum
            * airspeed» (POH del Seneca III, p. 3-9), con la nariz arriba y no
            * plana. La de siempre del banco, hecha para los de línea, tocaba a
-           * 75 nudos con la nariz 2,6° abajo. Aquí, por debajo de ocho metros,
-           * la nariz sube un grado y medio por segundo mientras el avión se
+           * 75 nudos con la nariz 2,6° abajo. Aquí, por debajo de diez metros,
+           * la nariz sube cuatro grados por segundo mientras el avión se
            * hunda y se queda donde está si no, hasta ocho grados: se sostiene
            * en el aire mientras frena, que es la recogida de una toma corta.
+           *
+           * **Antes, desde ocho metros y a grado y medio por segundo** (H70b):
+           * volada por primera vez, tocó con la nariz 0,9° abajo. A grado y medio por segundo el objetivo subía
+           * más despacio de lo que la parte lenta del lazo de actitud soltaba
+           * el morro abajo que llevaba toda la final, y el timón casi no se
+           * movía. Ahora esa parte empieza la recogida sin empujar abajo.
            */
-          if (modo === "morro" && sobre < 8) {
-            if (recogida === null) recogida = o.actitud().cabeceo;
-            if (s.verticalSpeed < -0.3) recogida = Math.min(recogida + ((1.5 * Math.PI) / 180) * dt, (8 * Math.PI) / 180);
+          if (modo === "morro" && sobre < 10) {
+            if (recogida === null) {
+              recogida = o.actitud().cabeceo;
+              deActitud = Math.max(deActitud, 0);
+            }
+            if (s.verticalSpeed < -0.3) recogida = Math.min(recogida + ((4 * Math.PI) / 180) * dt, (8 * Math.PI) / 180);
             c.elevator = profundidad(s, recogida, dt);
           }
           /*

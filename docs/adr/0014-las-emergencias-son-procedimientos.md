@@ -968,3 +968,151 @@ tarjeta y la voz se calla.
 - `ejercicio.morro.bien`
 
 Y en el hangar, que solo se lee: `hangar.ejercicio.tren-de-morro`.
+
+## Enmienda H70b (23-11-2026): una luz por pata, y el banco con las voces grabadas
+
+### Las luces mentían
+
+La H70 dejó escrito en «Lo que queda» que el cuadro pintaba las tres luces
+del tren con una sola posición: con la rueda de morro en su pozo salían
+**tres verdes**, que es justo lo que este ejercicio enseña a no creerse. La
+fuente es la misma de la H70, el POH del Seneca III (Piper, VB-1110), en la
+p. 7-10a, junto a la figura 7-8:
+
+- «The three green lights to the left of the landing gear selector switch
+  illuminate to indicate that each of the three landing gears is down and
+  locked.»
+- «If one or two of the three green lights do not illuminate when the gear
+  down position has been selected, any of the following conditions could
+  exist for each light that is out: (a) The gear is not locked down […]»
+- «If the gear is in neither the full up nor the full down position, a red
+  warning light on the instrument panel illuminates.»
+
+O sea: **una verde por pata y una roja aparte**. Con la de morro dentro, dos
+verdes y la roja.
+
+### Cómo quedan
+
+`lucesDeLasPatas` en `flight/tren.ts`: una luz por pata, cada una con su
+`luzDeTren`. Las luces van en fila y en fila el avión se lee desde arriba,
+así que **la de morro es la de en medio** (`laDeMorro`), también en el de
+cinco, con las dos del ala y las dos del fuselaje a los lados. El POH dice
+cuántas son y qué dice cada una, no cómo van colocadas; la fila ya estaba.
+
+Lo pintan, cada rueda con la suya, todos los sitios donde hay luces del tren,
+en todos los aviones que las llevan —los de tren que se mete; el de tren fijo
+no lleva ninguna—:
+
+- el cuadro plano (`lucesDeTren` en `ui/cristal.ts`, cada rueda en su
+  `data-pata`) y el del teléfono;
+- las pantallas de la cabina de los de cristal;
+- y la esfera del tren de los de esferas (`relojes-cabina.ts`).
+
+Con el tren sano todas dicen lo mismo que antes. Solo cambia con la rueda de
+morro en su pozo: `Game.trenDeMorro` la deja en cero.
+
+**Y dos cosas que salieron al mirarlo:**
+
+- **La roja no se veía desde la cabina.** El panel de avisos del cuadro plano
+  no se pinta desde el asiento de un avión de esferas, y el JAZ 40 lo es: la
+  instructora decía «la luz roja del tren sigue prendida» y dentro no había
+  ninguna. Ahora va en la esfera del tren, encima de las tres ruedas, con su
+  hueco de rueda para que no sea solo un color, y se enciende con lo mismo
+  que la del panel de avisos (`trenFueraDeSitio`).
+- **El botón del tren de la pantalla se ponía verde** con la rueda de morro
+  dentro: tres verdes en un botón. Su regla era la de las luces, «verde solo
+  cuando de verdad está trabado», y ahora es de todas las patas
+  (`luzDelMando`): con una en su pozo, ámbar, que es «el tren no está donde
+  lo pediste».
+
+### La frase
+
+`ejercicio.morro.noSale` decía «la luz roja del tren sigue prendida», que con
+las luces nuevas sigue siendo verdad, pero se callaba lo que más se ve y lo
+que enseña la lección del tren: que antes de aterrizar se cuentan tres
+verdes. Vuelve a contarlas, sin el espejo de la góndola, que el juego no
+tiene:
+
+> Bajó el tren, pero la rueda de adelante no salió: hay dos luces verdes y no
+> tres, y la roja sigue prendida. Andá más despacio, que la compañera prueba
+> la bajada de emergencia
+
+**Por regrabar**, en la voz de la instructora; hasta entonces suena la toma de
+antes, que no dice nada falso.
+
+### El banco
+
+`verificar-emergencias.mjs morro gran-canaria jaz-40 taguato`, con las cinco
+frases grabadas (09faba00). Lo que se vio, tirada a tirada:
+
+- **La primera, 6 de 10**, la que la H70 esperaba: «ejercicio.morro.emergencia:
+  ya no es verdad» y «ejercicio.morro.tampoco: no cabía en la cola». Grabadas,
+  entran en la cola: «la perilla» esperaba detrás de «la rueda no salió» —ocho
+  segundos y medio— y la retiraba el «tampoco» al llegar, que es lo que hace
+  un paso nuevo con los que valen hasta el siguiente; y el «tampoco», detrás
+  de la llamada de PAN PAN y su respuesta, era lo que sobraba en la cola. Y la
+  recogida nueva, volada por primera vez, tocó con la nariz 0,9° abajo.
+- **El arreglo, con la regla que ya había**: las frases del ejercicio, **de
+  una en una** (`FrasesEnFila`, la del GPS y la pista corta, que nació de lo
+  mismo en el altímetro, H26t del ADR 0031): cada una se pide cuando la
+  anterior ha acabado. Lo que se ve no espera: la pata en su pozo, las luces
+  y el dibujo de la nariz arriba salen en su instante. La fila se olvida al
+  cerrar el ejercicio y al volver a empezar.
+- **Y el banco**: la recogida, desde diez metros y a cuatro grados por
+  segundo, sin el morro abajo que la parte lenta del lazo de actitud traía de
+  la final —a grado y medio el objetivo subía más despacio de lo que ese
+  resto soltaba, y el timón casi no se movía—.
+- **La segunda, 8 de 10**: tocó a 1,5° de nariz sobre las principales, «la
+  perilla» se dijo, y el «tampoco» se pidió con el avión ya parado y lo
+  retiró el cierre. Ya no era la cola: **a cuatro por uno no cabe**. El banco
+  vuela acelerado, y desde la avería la final dura unos veinte segundos de
+  pared; lo que la instructora tiene que decir, con el PAN PAN y la torre en
+  medio, pasa de veinticuatro. Las voces no van más deprisa con el reloj. En
+  `morro`, desde la avería, el banco vuela a uno por uno.
+- **La tercera, 10 de 10**: la rueda dentro y dicha; la perilla a 85 nudos
+  indicados y dicha; el «tampoco», PAN PAN con la torre contestando
+  (`torre.canario.panpan`) y tres camiones; tocó a 351 m del umbral con 1,7°
+  de nariz, sobre las principales y cayendo 1,4 m/s; la nariz en la pista a
+  46 nudos, bajando 2,21 m/s, soltada a 48; sin percance; **nada tirado por
+  la boca**, y el cierre con `ejercicio.morro.bien`.
+
+### Mirado con la tarjeta
+
+`scripts/ver-el-tren-de-morro.mjs`, con `OGA_GPU=1` (Intel Iris Xe por
+ANGLE): despega unos segundos —el ejercicio solo cuenta un tren metido
+después de correr—, se pone en el aire a 450 m en la final de Gando, mete el
+tren y lo saca. Mira y fotografía:
+
+- **la pata de morro en su pozo**, de costado y desde abajo por delante: las
+  dos principales fuera y el morro limpio, sin pata;
+- **las luces en el cuadro plano**: dos verdes, la de en medio apagada, y la
+  roja «TREN» del panel de avisos encendida —el banco lo lee en las clases de
+  cada rueda y en la luz—;
+- **y en la cabina**, la esfera del tren de cerca: dos verdes, la de en medio
+  apagada y la roja encima;
+- **el dibujo del ejercicio en el hangar**, en «¿A qué jugás?» con el JAZ 40 y
+  Taguató.
+
+Lo que se veía mal era el dibujo: a diez grados la cola quedaba a punto de
+rozar el asfalto, la rueda era una bola suelta debajo de la panza y la de
+morro, rayada, estaba en el suelo y no debajo del morro —se leía como una
+rueda que se cae—. A siete grados la nariz sigue arriba y la cola, lejos; la
+rueda cuelga de su pata, y la rayada, de la panza, donde tendría que estar.
+
+Y **el vitest entero**, con todo lo de arriba menos el último cambio del
+banco: 579 de 579 ficheros y 11.569 pruebas en verde, con 32 saltadas y una
+pendiente. Dentro, «una luz por pata» en `tren.test.ts`. `tsc --noEmit -p .`
+en verde antes de cada commit.
+
+### Lo que queda
+
+- **La frase `ejercicio.morro.noSale`, por regrabar** con el texto nuevo.
+- **Dónde va cada luz en el panel del Seneca III**: el POH dice tres verdes
+  «to the left of the landing gear selector switch» y una roja aparte, no en
+  qué orden; la de morro en medio es la fila que ya había, leída desde
+  arriba. Y el ámbar de tránsito sigue siendo del juego: en el Seneca, en
+  tránsito, las verdes se apagan y se enciende la roja, que aquí también lo
+  hace.
+- **El espejo de la góndola** (p. 4-32, «look for the nose wheel in the nose
+  wheel mirror»), que el modelo no tiene y la frase ya no nombra.
+- Lo que ya quedaba de la H70: las palas y el «recycle».
