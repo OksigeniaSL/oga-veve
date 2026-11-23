@@ -25691,7 +25691,9 @@ export class Game {
     /*
      * **Y para la torre, recién despegado**: desde aquí lleva tu turno, y tu
      * final empieza al volver por el circuito, no en la subida. Ver
-     * `FinalDeLaTorre.despegado`.
+     * `FinalDeLaTorre.despegado`. La fase del plan, que la torre mira antes,
+     * ya no es «final» en la subida en ningún vuelo: ver `recienDespegado` en
+     * `flight/vuelo.ts` (H71c).
      */
     this.finalDeLaTorre.despegado();
     this.enLaFinalDeLaTorre = false;
@@ -31232,6 +31234,13 @@ export class Game {
     )
       this.permisoDeAterrizar = null;
     const torreAhora = this.faseParaLaTorre(vista.fase);
+    /*
+     * Y para el banco, de dónde le sale a la torre: la fase del plan, que mira
+     * antes, o su propia final. El permiso en la subida del fallo de radio
+     * (H71c) se buscó dos veces en el sitio equivocado por no saberlo.
+     */
+    if (torreAhora === "final" && torreAntes !== "final")
+      this.apuntarCanto(`la torre te ve en final: ${vista.fase === "final" ? "la fase del plan" : "su final"}`);
     this.faseDeLaTorre = torreAhora;
     /*
      * **La pista acaba de pasar a ser tuya**: antes de que la torre te la dé

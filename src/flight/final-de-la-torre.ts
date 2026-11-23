@@ -256,6 +256,12 @@ export class FinalDeLaTorre {
    * con la torre llevando el turno —el fallo de radio (H71)— le daba el
    * permiso de aterrizar en la subida. Lo pide quien sabe que se acaba de
    * despegar: ver `seCallaLaRadio` en `game.ts`.
+   *
+   * Esto solo cierra la final propia de la torre, y no bastó: la torre mira
+   * antes la fase del plan (`faseQueVeLaTorre`), y el permiso de la subida
+   * salía de ahí, de un «final» del plan subiendo por una pista larga. La
+   * regla para todos los vuelos está en `recienDespegado`, en
+   * `flight/vuelo.ts` (H71c).
    */
   despegado(): void {
     this.salir("seVa");
