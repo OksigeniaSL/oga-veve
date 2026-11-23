@@ -2586,6 +2586,8 @@ En el navegador, sobre una copia fija de la rama:
   cambian a qué hora vuela cada uno del tráfico, y con eso dónde está cada uno
   cuando llegas.
 
+Y el vitest entero de la rama: 581 ficheros, 11.566 pruebas en verde.
+
 ### Lo que queda
 
 - **Qué hacía EC-XGI** de frente a 4,2 km de la final. El parte dice ahora,
