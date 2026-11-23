@@ -23434,9 +23434,9 @@
     "id": "ejercicio.morro.noSale",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Bajó el tren, pero la rueda de adelante no salió: la luz roja del tren sigue prendida. Andá más despacio, que la compañera prueba la bajada de emergencia",
+    "texto": "Bajó el tren, pero la rueda de adelante no salió: hay dos luces verdes y no tres, y la roja sigue prendida. Andá más despacio, que la compañera prueba la bajada de emergencia",
     "para": "el tren de nariz: bajó el tren y la rueda de adelante no salió; más despacio para la de emergencia",
-    "dicho": "Bajó el tren, pero la rueda de adelante no salió: la luz roja del tren sigue prendida. Andá más despacio, que la compañera prueba la bajada de emergencia.",
+    "dicho": "Bajó el tren, pero la rueda de adelante no salió: hay dos luces verdes y no tres, y la roja sigue prendida. Andá más despacio, que la compañera prueba la bajada de emergencia.",
     "ajustes": {
       "stability": 0.85,
       "similarity_boost": 0.75,

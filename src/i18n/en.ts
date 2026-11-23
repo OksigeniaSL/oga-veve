@@ -1784,7 +1784,7 @@ export const EN: Dictionary = {
   "ejercicio.tren-de-morro.antes":
     "Today we practise a nose gear that won't come down. We take off and raise the gear. When we lower it to land, the nose wheel will stay up: we try the emergency extension and, if it still won't come, we land holding the nose up, calmly",
   "ejercicio.morro.noSale":
-    "The gear came down, but not the nose wheel: the red gear light stays on. Slow down, and the other pilot will try the emergency extension",
+    "The gear came down, but not the nose wheel: two green lights, not three, and the red one stays on. Slow down, and the other pilot will try the emergency extension",
   "ejercicio.morro.emergencia": "The other pilot pulls the emergency knob, and the gear falls under its own weight. We wait a moment",
   "ejercicio.morro.tampoco":
     "It still didn't come. That's fine: we tell the tower and land on the main wheels, holding the nose up as long as it will stay. When it won't, we lower it gently, and no brakes",

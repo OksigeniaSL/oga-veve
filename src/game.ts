@@ -22431,6 +22431,7 @@ export class Game {
         peldano: peldanoDe(this.tier.instruments),
         patas: patasDe(this.aircraft),
         tren: this.input.controls.tren,
+        trenDeMorro: this.trenDeMorro(),
         sobreElSuelo: this.flight.state.groundSpeed,
         // Desde las ruedas, como el radioaltímetro de verdad y como el cuadro plano.
         sobreElTerreno: Math.max(
@@ -22676,6 +22677,9 @@ export class Game {
         presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
         combustible: this.elDeposito(),
         tren: this.input.controls.tren,
+        // Una luz por pata, y la roja, que el panel de avisos no se ve desde este asiento.
+        trenDeMorro: this.trenDeMorro(),
+        trenRojo: this.trenFueraDeSitio(),
         cuadro: cuadroDe(this.aircraft),
         /*
          * **Y la radio, la misma de la pantalla**: desde el asiento de un
@@ -22775,6 +22779,8 @@ export class Game {
         flaps: this.input.controls.flaps,
         palancaDeFlaps: this.input.palancaDeFlaps,
         tren: this.input.controls.tren,
+        // Y la de morro, que puede quedarse en su pozo: una luz por pata. Ver `trenDeMorro`.
+        trenDeMorro: this.trenDeMorro(),
         objetivo: this.aDondeVoy,
         viento: this.vientoDeHoy,
         aire: this.flight.aireDelDia(),
@@ -34847,6 +34853,15 @@ export class Game {
    * segundos, que es lo que tarda en enterarse quien estaba mirando fuera.
    */
   private pilotoSeSolto = 0;
+
+  /**
+   * Dónde está la pata de morro, para su luz: con las demás, o en su pozo si
+   * se quedó dentro en el ejercicio del tren de nariz. Cada luz verde dice lo
+   * de su pata (ADR 0014, enmienda H70b). Ver `lucesDeLasPatas`.
+   */
+  private trenDeMorro(): number {
+    return this.morroAtascado ? 0 : this.input.controls.tren;
+  }
 
   /**
    * Si la luz roja del tren está encendida: el tren no está donde dice la

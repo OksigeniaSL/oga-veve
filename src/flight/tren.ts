@@ -178,6 +178,52 @@ export function luzDeTren(donde: number): LuzDeTren {
 }
 
 /**
+ * Cuál de las luces del tren es la de la pata de morro: **la de en medio**.
+ *
+ * Las luces van en fila, y en fila el avión se lee visto desde arriba: la
+ * pata izquierda a la izquierda, la derecha a la derecha y la de morro entre
+ * las dos. En el grande, de cinco, igual: las dos del ala, las dos del
+ * fuselaje y la de morro en el centro.
+ */
+export function laDeMorro(patas: number): number {
+  return Math.floor(patas / 2);
+}
+
+/**
+ * Las luces del tren, **una por pata**: lo que pinta el cuadro.
+ *
+ * ## Por qué una por pata
+ *
+ * Cada luz verde dice que **su** pata está abajo y trabada, no que lo esté el
+ * tren. Lo dice el manual del Seneca III (Piper, VB-1110, p. 7-10a): «The three
+ * green lights to the left of the landing gear selector switch illuminate to
+ * indicate that each of the three landing gears is down and locked», y «If one
+ * or two of the three green lights do not illuminate when the gear down
+ * position has been selected, any of the following conditions could exist for
+ * each light that is out: (a) The gear is not locked down». Y la roja aparte:
+ * «If the gear is in neither the full up nor the full down position, a red
+ * warning light on the instrument panel illuminates». Ver `luzRojaDelTren`.
+ *
+ * El cuadro pintaba las tres con una sola posición del tren, así que con la
+ * rueda de morro en su pozo enseñaba **tres verdes**: justo lo que el
+ * ejercicio del tren de nariz enseña a no creerse (ADR 0014, enmienda H70b).
+ *
+ * `donde` es dónde están las principales y `morro` dónde está la de morro,
+ * las dos de 0 dentro a 1 fuera y trabada; sin `morro`, la de morro va con
+ * las demás, que es lo que hace un tren sano.
+ */
+export function lucesDeLasPatas(
+  patas: number,
+  donde: number,
+  morro: number = donde,
+): LuzDeTren[] {
+  const deMorro = laDeMorro(patas);
+  return Array.from({ length: Math.max(0, patas) }, (_, k) =>
+    luzDeTren(k === deMorro ? morro : donde),
+  );
+}
+
+/**
  * Si la luz roja del tren —la GEAR del panel de avisos— está encendida.
  *
  * ## Qué dice la de verdad

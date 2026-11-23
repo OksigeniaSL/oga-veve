@@ -7,7 +7,9 @@ import {
   AVISA_DESDE,
   LO_MAS_QUE_TARDA_EL_TREN,
   avisaDelTren,
+  laDeMorro,
   luzDeTren,
+  lucesDeLasPatas,
   luzRojaDelTren,
   mueveElTren,
   resistenciaDelTren,
@@ -186,6 +188,40 @@ describe("las luces no mienten", () => {
   it("y apagado cuando está dentro del todo", () => {
     expect(luzDeTren(0)).toBe("dentro");
     expect(luzDeTren(0.01)).toBe("moviendose");
+  });
+});
+
+/*
+ * **Una luz por pata** (ADR 0014, enmienda H70b): con la rueda de morro en su
+ * pozo, dos verdes y no tres. «If one or two of the three green lights do not
+ * illuminate […] the gear is not locked down» (POH del Seneca III, p. 7-10a).
+ */
+describe("una luz por pata", () => {
+  it("la de morro va en medio, también en el de cinco", () => {
+    expect(laDeMorro(3)).toBe(1);
+    expect(laDeMorro(5)).toBe(2);
+  });
+
+  it("con el tren sano, todas dicen lo mismo", () => {
+    expect(lucesDeLasPatas(3, 1)).toEqual(["fuera", "fuera", "fuera"]);
+    expect(lucesDeLasPatas(3, 0.5)).toEqual(["moviendose", "moviendose", "moviendose"]);
+    expect(lucesDeLasPatas(5, 0)).toEqual(["dentro", "dentro", "dentro", "dentro", "dentro"]);
+  });
+
+  it("con la rueda de morro en su pozo, dos verdes y la de en medio apagada", () => {
+    expect(lucesDeLasPatas(3, 1, 0)).toEqual(["fuera", "dentro", "fuera"]);
+    // Y mientras salen las principales, ámbar las suyas y apagada la de morro.
+    expect(lucesDeLasPatas(3, 0.4, 0)).toEqual(["moviendose", "dentro", "moviendose"]);
+  });
+
+  it("y la roja sigue encendida con la palanca abajo", () => {
+    // La roja la enciende el juego con la de morro dentro: ver `trenFueraDeSitio`.
+    expect(luzRojaDelTren(1, true)).toBe(false);
+    expect(luzRojaDelTren(0, true)).toBe(true);
+  });
+
+  it("sin patas que meter, ninguna luz", () => {
+    expect(lucesDeLasPatas(0, 1)).toEqual([]);
   });
 });
 

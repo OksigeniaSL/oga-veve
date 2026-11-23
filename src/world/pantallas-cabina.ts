@@ -61,7 +61,7 @@ const COLOR_DEL_ECO: Record<Exclude<Eco, "nada">, string> = {
   rojo: PALETA.limite,
   magenta: PALETA.objetivo,
 };
-import { luzDeTren } from "../flight/tren";
+import { lucesDeLasPatas, luzDeTren } from "../flight/tren";
 import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
 import {
   franjaEnElVariometro,
@@ -294,6 +294,8 @@ export interface DatosDeCabina {
   readonly patas: number;
   /** Y dónde está: 0 dentro, 1 fuera y trabado. Ver `flight/tren.ts`. */
   readonly tren: number;
+  /** Y la pata de morro, si no va con las demás. Ver `lucesDeLasPatas`. */
+  readonly trenDeMorro?: number;
   /**
    * Altura **sobre el suelo**, m. La del radioaltímetro.
    *
@@ -2576,7 +2578,7 @@ function pintarFranja(
   if (d.cuadro.flaps.length > 1)
     reglaDeFlapsDePie(g, 16 * k, y, 22 * k, alto - y - 34 * k, d.flaps, d.cuadro.flaps);
   reglaDeCombustibleDePie(g, 78 * k, y, 22 * k, alto - y - 56 * k, d.combustible);
-  lucesDeTren(g, 12 * k, alto - 22, d.patas, d.tren);
+  lucesDeTren(g, 12 * k, alto - 22, d.patas, d.tren, d.trenDeMorro);
 }
 
 /** La regla de flaps de pie: la de `reglaDeFlaps` en `ui/cristal.ts` vertical. */
@@ -2752,7 +2754,7 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   reglaDeCombustible(g, 48, ALTO - 100, ANCHO - 160, 14, d.combustible);
   if (d.cuadro.flaps.length > 1)
     reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps, d.cuadro.flaps);
-  lucesDeTren(g, 16, ALTO - 30, d.patas, d.tren);
+  lucesDeTren(g, 16, ALTO - 30, d.patas, d.tren, d.trenDeMorro);
   g.restore();
 }
 
@@ -3247,13 +3249,16 @@ function lucesDeTren(
   y: number,
   patas: number,
   donde: number,
+  morro?: number,
 ): void {
   // El avión de tren fijo no lleva luces de tren. Ver `patasDe`.
   if (patas <= 0) return;
-  const luz = luzDeTren(donde);
+  // Cada rueda, la de su pata: con la de morro en su pozo, la de en medio apagada.
+  const luces = lucesDeLasPatas(patas, donde, morro);
   const R = 9;
   const PASO = R * 2 + 6;
   for (let k = 0; k < patas; k++) {
+    const luz = luces[k] ?? luzDeTren(donde);
     const cx = x + k * PASO + R;
     g.fillStyle =
       luz === "fuera"

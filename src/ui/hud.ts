@@ -3208,6 +3208,8 @@ export class Hud {
        */
       readonly palancaDeFlaps?: number;
       readonly tren: number;
+      /** La pata de morro, si no va con las demás. Ver `lucesDeLasPatas`. */
+      readonly trenDeMorro?: number;
       readonly objetivo: {
         readonly rumbo: number;
         readonly distancia: number;
@@ -3833,6 +3835,7 @@ export class Hud {
           flaps: mandos?.flaps ?? 0,
         }),
         tren: mandos?.tren ?? 1,
+        trenDeMorro: mandos?.trenDeMorro,
         reversa,
         v1: decisionSpeed * 1.94384,
         vr: this.vr * 1.94384,
