@@ -527,6 +527,10 @@
       "ms": 3407,
       "h": "3dfe0c9a79"
     },
+    "ejercicio.fallo-de-radio.antes": {
+      "ms": 12007,
+      "h": "1c494aa67f"
+    },
     "ejercicio.giroscopo.antes": {
       "ms": 4507,
       "h": "344e8f55e4"
@@ -822,6 +826,38 @@
     "ejercicio.radial.sintonizar": {
       "ms": 4007,
       "h": "1772ef1701"
+    },
+    "ejercicio.radio.alas": {
+      "ms": 5107,
+      "h": "30712231d0"
+    },
+    "ejercicio.radio.bien": {
+      "ms": 7907,
+      "h": "2aba5b54af"
+    },
+    "ejercicio.radio.bienSinLaVerde": {
+      "ms": 7307,
+      "h": "f8775eb16b"
+    },
+    "ejercicio.radio.callada": {
+      "ms": 11707,
+      "h": "f2dee41e04"
+    },
+    "ejercicio.radio.destellos": {
+      "ms": 7407,
+      "h": "530b1353fc"
+    },
+    "ejercicio.radio.destellosDeNoche": {
+      "ms": 8207,
+      "h": "fba8f9ceae"
+    },
+    "ejercicio.radio.roja": {
+      "ms": 8307,
+      "h": "773bc5592a"
+    },
+    "ejercicio.radio.verde": {
+      "ms": 2520,
+      "h": "f43b924db4"
     },
     "ejercicio.rumbo.anochece": {
       "ms": 4207,
@@ -6488,6 +6524,33 @@
     ],
     "ejercicio.morro.bien": [
       "ejercicio.morro.bien"
+    ],
+    "ejercicio.fallo-de-radio.antes": [
+      "ejercicio.fallo-de-radio.antes"
+    ],
+    "ejercicio.radio.callada": [
+      "ejercicio.radio.callada"
+    ],
+    "ejercicio.radio.destellos": [
+      "ejercicio.radio.destellos"
+    ],
+    "ejercicio.radio.destellosDeNoche": [
+      "ejercicio.radio.destellosDeNoche"
+    ],
+    "ejercicio.radio.alas": [
+      "ejercicio.radio.alas"
+    ],
+    "ejercicio.radio.roja": [
+      "ejercicio.radio.roja"
+    ],
+    "ejercicio.radio.verde": [
+      "ejercicio.radio.verde"
+    ],
+    "ejercicio.radio.bien": [
+      "ejercicio.radio.bien"
+    ],
+    "ejercicio.radio.bienSinLaVerde": [
+      "ejercicio.radio.bienSinLaVerde"
     ]
   }
 }

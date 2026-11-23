@@ -23489,5 +23489,140 @@
       "use_speaker_boost": false,
       "speed": 0.95
     }
+  },
+  {
+    "id": "ejercicio.fallo-de-radio.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos quedarnos sin radio. Al subir se va a callar, a propósito. No pasa nada: ponemos un número en el transpondedor que se lo dice a la torre, volvemos al circuito y miramos la torre, que nos va a hablar con luces",
+    "para": "el fallo de radio, antes de empezar: al subir se calla la radio, el número del transpondedor y la torre que habla con luces",
+    "dicho": "Hoy practicamos quedarnos sin radio. Al subir se va a callar, a propósito. No pasa nada: ponemos un número en el transpondedor que se lo dice a la torre, volvemos al circuito y miramos la torre, que nos va a hablar con luces.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.callada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se calló la radio: no oímos a la torre, y ella no nos oye. Todo bien: marco siete seis cero cero en el transpondedor, y con ese número la torre ya sabe que estamos sin radio. Seguimos el circuito, mirando la torre",
+    "para": "el fallo de radio: se calló la radio; la instructora marca siete seis cero cero y se sigue el circuito mirando la torre",
+    "dicho": "Se calló la radio: no oímos a la torre, y ella no nos oye. Todo bien: marco siete seis cero cero en el transpondedor, y con ese número la torre ya sabe que estamos sin radio. Seguimos el circuito, mirando la torre.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.destellos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá la torre: una luz verde que parpadea. Quiere decir que volvamos para aterrizar. Le contestamos moviendo las alas, de un lado al otro",
+    "para": "el fallo de radio: la torre enciende la verde a destellos, de día; se contesta alabeando",
+    "dicho": "Mirá la torre: una luz verde que parpadea. Quiere decir que volvamos para aterrizar. Le contestamos moviendo las alas, de un lado al otro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.destellosDeNoche",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá la torre: una luz verde que parpadea. Quiere decir que volvamos para aterrizar. De noche se contesta con los faros: los prendo y los apago dos veces",
+    "para": "el fallo de radio: la torre enciende la verde a destellos, de noche; la instructora contesta con los faros",
+    "dicho": "Mirá la torre: una luz verde que parpadea. Quiere decir que volvamos para aterrizar. De noche se contesta con los faros: los prendo y los apago dos veces.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.alas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Eso: con las alas le dijimos que la vimos. Ahora esperamos la luz verde fija para aterrizar",
+    "para": "el fallo de radio: las alas contestaron a los destellos",
+    "dicho": "Eso: con las alas le dijimos que la vimos. Ahora esperamos la luz verde fija para aterrizar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.roja",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Luz roja fija: le dejamos el paso a otro avión y seguimos en el circuito. No aterrizamos: subimos, damos otra vuelta y miramos la torre",
+    "para": "el fallo de radio: la torre enciende la roja fija; se cede el paso y se sigue en el circuito",
+    "dicho": "Luz roja fija: le dejamos el paso a otro avión y seguimos en el circuito. No aterrizamos: subimos, damos otra vuelta y miramos la torre.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.verde",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Luz verde fija: la torre nos deja aterrizar",
+    "para": "el fallo de radio: la torre enciende la verde fija; se puede aterrizar",
+    "dicho": "Luz verde fija: la torre nos deja aterrizar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizamos sin radio! El siete seis cero cero se lo dijo a la torre por nosotros, y la torre nos habló con su luz. Así lo hace un piloto de verdad",
+    "para": "el cierre del fallo de radio, parado en la pista tras tomar con la verde",
+    "dicho": "¡Aterrizamos sin radio! El siete seis cero cero se lo dijo a la torre por nosotros, y la torre nos habló con su luz. Así lo hace un piloto de verdad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.bienSinLaVerde",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos en tierra. Sin radio, la pista es nuestra cuando la torre prende la verde fija: la próxima, la esperamos dando otra vuelta",
+    "para": "el cierre del fallo de radio, parado en la pista sin haber visto la verde fija",
+    "dicho": "Ya estamos en tierra. Sin radio, la pista es nuestra cuando la torre prende la verde fija: la próxima, la esperamos dando otra vuelta.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   }
 ]
