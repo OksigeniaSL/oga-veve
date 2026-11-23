@@ -121,7 +121,7 @@ export const SUBIDA_CON_GAS = 15;
 export const GAS_DE_DESPEGUE = 0.95;
 
 /** Lo que se sube sin estar subiendo, m/s: un bache, no una subida. */
-const SIN_SUBIR = 1;
+export const SIN_SUBIR = 1;
 
 /** Lo que ve la torre de tu avión en este momento. */
 export interface LoQueVeLaTorre {
@@ -162,11 +162,15 @@ export interface LoQueVeLaTorre {
  * **Si con esto uno se está yendo al aire de verdad**, y no corrigiendo la
  * senda: subir cien metros sobre lo más bajo de la final, subir con el gas de
  * despegue, o subir con una orden de irse al aire puesta. Ver
- * `SUBIDA_QUE_SACA`.
+ * `SUBIDA_QUE_SACA`. Es también lo que saca de la fase «final» del plan y no
+ * la deja volver en la frustrada: ver `trasIrse` en `flight/vuelo.ts`.
  *
  * @param subido lo que se ha subido sobre lo más bajo de esta final, m
  */
-export function seVaDeVerdad(v: LoQueVeLaTorre, subido: number): boolean {
+export function seVaDeVerdad(
+  v: Pick<LoQueVeLaTorre, "vertical" | "gas" | "ordenDeIrse">,
+  subido: number,
+): boolean {
   if (subido > SUBIDA_QUE_SACA) return true;
   if (v.vertical <= SIN_SUBIR) return false;
   if ((v.gas ?? 0) >= GAS_DE_DESPEGUE && subido > SUBIDA_CON_GAS) return true;

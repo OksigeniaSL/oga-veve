@@ -52,6 +52,7 @@
 import type { FlightState } from "./model";
 import { LoRemontado } from "./lo-remontado";
 import { luzDeLaSalida } from "./luz-de-la-salida";
+import { seVaDeVerdad, TORCIDO_PARA_SALIR } from "./final-de-la-torre";
 
 export type Fase =
   | "estacionado"
@@ -415,6 +416,13 @@ export function dejaDeAterrizar(velocidadDeSalida?: number): number {
 const SUBIDA_QUE_SACA_DE_FINAL = 20;
 
 /**
+ * Lo lejos del eje de la pista que todavía es estar en su final, m. Más allá
+ * no se está entrando en ella, y quien se fue al aire y sale de aquí ya ha
+ * dejado esa aproximación. Ver `deducir` y `trasIrse`.
+ */
+const PASILLO_DE_LA_FINAL = 400;
+
+/**
  * Cuánto tiene que sostenerse una fase nueva para sustituir a la vieja, s.
  *
  * Es lo que permite deducir la fase cada fotograma sin que parpadee. Sin esto,
@@ -471,6 +479,46 @@ export class Vuelo {
    * `SUBIDA_QUE_SACA_DE_FINAL`.
    */
   private subidoEnFinal = 0;
+  /**
+   * Lo subido desde lo más bajo de la última final, m, también después de
+   * salir de ella, mientras no se deje su pasillo; `null` si no se viene de
+   * una final. Es la cuenta con la que se sabe si uno se fue al aire de
+   * verdad. Ver `trasIrse`.
+   */
+  private subidoDesdeLaFinal: number | null = null;
+  /**
+   * **Si se fue al aire y sigue en la frustrada**: subiendo por delante de la
+   * pista o encima de su primera mitad, sin haberse dado la vuelta ni haber
+   * dejado el pasillo de la final. Mientras tanto la fase no es «final»,
+   * aunque se nivele alineado por debajo de los trescientos.
+   *
+   * La fase volvía a «final» en la subida de la frustrada: el avión, a 280 m
+   * sobre la primera mitad de la pista, nivelaba, el variómetro pasaba de
+   * cero a un pelo por debajo, y con eso ya cumplía «alineado, bajando y
+   * antes del centro». La torre lo veía en final y le daba el «cleared to
+   * land» a quien se estaba yendo: en el banco del JAZ 20 en Los Rodeos, a
+   * los 683 s de un vuelo y a los 689 s de otro, siete segundos en «final»
+   * a 281 m y 1.329 m pasado el umbral (enmienda H68 del ADR 0029).
+   *
+   * Quien se va al aire está en la frustrada y luego en el circuito; final es
+   * cuando vuelve a estar en final. **Irse de verdad** es lo mismo que mira la
+   * torre —subir cien metros sobre lo más bajo de la final, o quince con el
+   * gas de despegue o con una orden de irse puesta: `seVaDeVerdad` en
+   * `flight/final-de-la-torre.ts`—, y no los veinte que sacan de la fase, que
+   * pueden ser una corrección de senda de quien vuela con el teclado: ésa
+   * sigue entrando en final en cuanto vuelve a bajar. Y **volver** es lo que
+   * deja atrás esa aproximación: darse la vuelta, pasar el centro de la pista
+   * o salirse del pasillo de su final, como en la final de la torre. En tierra
+   * se olvida.
+   */
+  private trasIrse = false;
+  /**
+   * **El gas y si hay puesta una orden de irse al aire**, para saber si uno se
+   * va de verdad. Los pone el juego antes de cada paso, como `pistaDeOtros`.
+   * Ver `trasIrse`.
+   */
+  gas = 0;
+  ordenDeIrse = false;
   /** Segundos en el aire desde el despegue. */
   private enElAire = 0;
   /** Ya se ha avisado de que se saltó la luz. Se avisa una vez por vuelo. */
@@ -576,6 +624,8 @@ export class Vuelo {
     this.despego = false;
     this.techo = 0;
     this.subidoEnFinal = 0;
+    this.subidoDesdeLaFinal = null;
+    this.trasIrse = false;
     this.enElAire = 0;
     this.avisadoDeLaLuz = false;
     this.remonteSaltado = false;
@@ -643,6 +693,7 @@ export class Vuelo {
       this.fase === "final"
         ? Math.max(0, this.subidoEnFinal + s.estado.verticalSpeed * dt)
         : 0;
+    this.mirarSiSeVa(s, dt);
 
     /*
      * **La autorización de despegar, con la lámpara que se vio**: la fase y
@@ -709,6 +760,39 @@ export class Vuelo {
   }
 
   /**
+   * **Si uno se ha ido al aire de verdad, y si ya ha dejado esa aproximación.**
+   * Lo subido se cuenta desde lo más bajo de la final, también después de
+   * salir de ella: la fase sale a los veinte metros y la frustrada se sabe a
+   * los quince con el gas de despegue o a los cien sin él. Ver `trasIrse`.
+   */
+  private mirarSiSeVa(s: Situacion, dt: number): void {
+    const vertical = s.estado.verticalSpeed;
+    if (this.fase === "final") this.subidoDesdeLaFinal = this.subidoEnFinal;
+    else if (this.subidoDesdeLaFinal !== null)
+      this.subidoDesdeLaFinal = Math.max(0, this.subidoDesdeLaFinal + vertical * dt);
+    const dejada =
+      this.pisa ||
+      Math.abs(s.desalineado) > TORCIDO_PARA_SALIR ||
+      s.alLargoDePista >= 0 ||
+      s.alEjeDePista >= PASILLO_DE_LA_FINAL;
+    if (dejada && this.fase !== "final") {
+      this.subidoDesdeLaFinal = null;
+      this.trasIrse = false;
+      return;
+    }
+    if (
+      this.subidoDesdeLaFinal !== null &&
+      seVaDeVerdad({ vertical, gas: this.gas, ordenDeIrse: this.ordenDeIrse }, this.subidoDesdeLaFinal)
+    )
+      this.trasIrse = true;
+  }
+
+  /** Si se está en la frustrada: ver `trasIrse`. Lo mira el banco. */
+  get enLaFrustrada(): boolean {
+    return this.trasIrse;
+  }
+
+  /**
    * Qué fase pide el mundo ahora mismo.
    *
    * Se lee de arriba abajo y la primera que encaja gana. El orden es el de la
@@ -736,6 +820,8 @@ export class Vuelo {
       const posandose = this.fase === "final" && s.enPista;
       const enFinal =
         this.haVolado &&
+        // En la frustrada no se está en final, aunque se nivele alineado. Ver `trasIrse`.
+        !this.trasIrse &&
         // Antes del centro de la pista: quien la ha pasado ya no está
         // entrando, está yéndose.
         (s.alLargoDePista < 0 || posandose) &&
@@ -745,7 +831,7 @@ export class Vuelo {
           ? this.subidoEnFinal < SUBIDA_QUE_SACA_DE_FINAL
           : s.estado.verticalSpeed < 0) &&
         Math.abs(s.desalineado) < 30 &&
-        s.alEjeDePista < 400;
+        s.alEjeDePista < PASILLO_DE_LA_FINAL;
       return enFinal ? "final" : "en-vuelo";
     }
 

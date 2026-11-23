@@ -101,6 +101,7 @@ import { SE_DICE_HASTA, seSigueEnV1, yaSeSigue } from "./flight/lo-que-se-dice-a
 import { LosOchentaNudos } from "./flight/los-ochenta-nudos";
 import { faseQueVeLaTorre, loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
+import { CircuitoDeLaTorre } from "./flight/circuito-de-la-torre";
 import { luzDeLaSalida, type LuzDeLaTorre } from "./flight/luz-de-la-salida";
 import {
   alturaDelEjercicio,
@@ -16526,31 +16527,50 @@ export class Game {
   /**
    * **Lo que te queda de circuito, en segundos**, si lo vuelas volviendo a
    * este campo: de donde estás, por la línea quebrada, hasta la entrada en
-   * final y de ahí al umbral. `null` si no estás en él, si vas a otro campo o
-   * si estás en el suelo. Ver `loQueQuedaDeCircuito`.
+   * final y de ahí al umbral. `null` si no estás en él, si estás en el suelo
+   * o si la torre no te cuenta en él. Ver `loQueQuedaDeCircuito`.
+   *
+   * **Por dónde vuelas, y no solo por tu plan.** Esto era `null` entero con el
+   * plan hacia otro campo, y quien despega con el plan a otra isla y vuelve
+   * volaba el viento en cola y la base sin que la torre lo contara: le
+   * soltaba salidas delante, y en el banco del JAZ 20 en Los Rodeos le
+   * costaron dos frustradas (enmienda H69 del ADR 0029). Ver
+   * `flight/circuito-de-la-torre.ts`.
    */
   private tuCircuitoParaLaTorre(): number | null {
     const c = this.circuitoDeLaTorre;
     const s = this.flight.state;
-    if (!c || s.onGround || this.haciaOtroCampo()) return null;
     const campo = this.elCampo();
-    if (campo.id !== c.campo) return null;
-    const alto = s.position.y - this.cotaDelCampo(campo);
-    if (alto < ALTO_PARA_EL_CIRCUITO || alto > 2 * c.altura) return null;
+    const alto = c ? s.position.y - this.cotaDelCampo(campo) : 0;
+    const enLaAltura = c !== null && alto >= ALTO_PARA_EL_CIRCUITO && alto <= 2 * c.altura;
     /*
      * Con el doble de ancho que el aviso de «estás en el circuito»: para la
      * torre sigue en él quien alarga el viento en cola —por un tráfico, o un
      * niño que se pasa de la esquina—, y con el ancho de siempre dejaba de
      * verle a 1.200 m y soltaba una salida que le mandaba al aire en la final
      * (el JAZ 20 del banco, alargado 1.558 m, dos motorales en una tirada).
-     * La altura y el campo ya dicen que vuelves aquí.
+     * La altura y el campo dicen que estás en él; si la torre te cuenta, lo
+     * dice por dónde lo vuelas.
      */
-    const queda = loQueQuedaDeCircuito(c.vertices, s.position.x, s.position.z, 2 * c.escala);
-    const ultimo = c.vertices[c.vertices.length - 1];
-    if (!queda || !ultimo) return null;
+    const queda =
+      c && !s.onGround && campo.id === c.campo && enLaAltura
+        ? loQueQuedaDeCircuito(c.vertices, s.position.x, s.position.z, 2 * c.escala)
+        : null;
+    const ultimo = c?.vertices[c.vertices.length - 1];
+    const teCuenta = this.circuitoQueVeLaTorre.paso({
+      enSuFranja: queda !== null && ultimo !== undefined,
+      tramo: queda?.tramo ?? null,
+      vuelvesAqui: !this.haciaOtroCampo(),
+      trasIrse: this.laFinalTrasIrse.yendose,
+      vertical: s.verticalSpeed,
+    });
+    if (!teCuenta || !queda || !ultimo) return null;
     const metros = queda.metros + distanciaAlUmbral(campo, ultimo.x, ultimo.z);
     return metros / Math.max(15, s.groundSpeed);
   }
+
+  /** Si la torre te cuenta en su circuito. Ver `flight/circuito-de-la-torre.ts`. */
+  private readonly circuitoQueVeLaTorre = new CircuitoDeLaTorre();
 
   /**
    * **Tu llegada como la ve la torre**, para ver con tiempo a quien tapa tu
@@ -30804,6 +30824,11 @@ export class Game {
      * en `flight/turno-de-pista.ts`.
      */
     this.plan.pistaDeOtros = this.turno.pistaDeOtros;
+    // Y lo que dice que uno se va al aire de verdad: ver `Vuelo.trasIrse`.
+    this.plan.paraIrse = {
+      gas: this.input.controls.throttle,
+      orden: this.laAproximacion.mandanFrustrar,
+    };
     this.plan.aire = this.flight.aireDelDia();
     const vista = this.plan.paso(
       this.flight.state,
