@@ -851,7 +851,8 @@ segundos de un aviso (`CADUCA`):
 - «despacio» llega diez segundos después de soltarse la maleta, subiendo,
   detrás de recoger los flaps, «ya estamos volando» e ir rápido;
 - «amarrada» se pide en el mismo instante en que se suelta, en el mismo
-  peso y detrás de lo mismo —en su tirada no estaba el volcado—;
+  peso y detrás de lo mismo —en su tirada no estaba el volcado; con el
+  arreglo, suena detrás de «ya estamos volando», que es donde caducaba—;
 - y «carga.bien», al pararse en la pista, detrás del «abandonando» y de las
   gafas de sol.
 
@@ -859,8 +860,9 @@ Mientras estaban sin grabar no se veía: `decirDelEjercicio` no las pedía
 —sin receta, se callan en la puerta— y apuntaba «sin grabar, se calla», que
 el banco cuenta como pedido. Grabadas entran en la cola, caducan sin sonar y
 no salen en ninguna de las dos listas. Las 9 de 9 de la H38g eran con ellas
-sin grabar. La A/B volada sobre 45d56056 —H38g juntada, sin grabar—, que lo
-diría con el navegador, quedó en cola: ver «Lo que queda».
+sin grabar. **La A/B lo confirma**: el mismo banco sobre 45d56056 —H38g
+juntada, sin grabar— da 9 de 9, con «suelta», «despacio» y «carga.bien» en
+la lista solo como «sin grabar, se calla» y nada tirado por la boca.
 
 ### El arreglo, con las reglas que ya había
 
@@ -902,17 +904,27 @@ segundos, «despacio» suena y un aviso de paso caduca; y cierran el vuelo
 
 - **El banco, antes del arreglo**, en este código y sin recarga al arrancar:
   7 de 9, con los mismos dos rojos que la ronda y lo tirado de arriba.
+- **Los dos bancos con el arreglo, 9 de 9 cada uno**, sin nada del ejercicio
+  tirado por la boca:
+  - la carga suelta: «suelta», «ya estamos volando», **«despacio»**, y al
+    pararse en la pista, **`ejercicio.carga.bien`**; se soltó a 115 m, el
+    centrado del modelo de 6,4 a 11,7 cm, el avisador callado, ni llamada ni
+    bomberos, tocó a 216 m del umbral y cerró en «vuelta»;
+  - la amarrada (`OGA_AMARRADA=1`): **«amarrada»** detrás de «ya estamos
+    volando», el centrado quieto en 6,4 cm, tocó a 219 m y cerró con
+    `ejercicio.bien`.
 - `tsc --noEmit -p .`, en verde.
 
 ### Lo que queda
 
-- **Los dos bancos con el arreglo** —la carga suelta y la amarrada—, la A/B
-  sobre 45d56056 y la amarrada de antes del arreglo con lo que tira la boca
-  volcado: preparados en un solo turno del navegador, esperaron detrás de dos
-  bancos de otras sesiones de entre veinte y cincuenta minutos y no llegaron
-  a volar dentro del tiempo del encargo. Que «amarrada» caducaba, y no se
-  caía por otra cosa, se deduce de pedirse en `normal` en el mismo instante
-  que «suelta» detrás de lo mismo; no se ha visto en el volcado.
+- **La amarrada de antes del arreglo con lo que tira la boca volcado**: no
+  voló, el turno del navegador llegó tarde. Que «amarrada» caducaba, y no se
+  caía por otra cosa, se deduce del peso, del momento y de que con el arreglo
+  suena justo detrás de lo que tenía delante; no se ha visto en el volcado.
+- En la tirada de la carga suelta con el arreglo no sonaron las gafas de sol
+  ni el sello de «manos de seda» antes de que el banco dejara de mirar; en la
+  amarrada, sí. No se ha mirado por qué: la toma de esa tirada acabó con el
+  pedal a fondo en la carrera.
 - **El vitest entero**, por pasar: esperó sitio en el anillo de trabajos con
   los bancos de otras sesiones dentro. Las pruebas nuevas de `boca.test.ts`
   no se han corrido todavía.
