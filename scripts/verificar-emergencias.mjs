@@ -301,6 +301,8 @@ try {
       let dichoAlCallarse = null;
       let dichoAlVolver = null;
       let alasDesde = null;
+      /** El lado al que alabea el banco ahora mismo, al contestar a los destellos. */
+      let ladoDeLasAlas = 1;
       let alasEn = null;
       let sinVerdeEnLaFinal = 0;
       let ocupadaPuesta = null;
@@ -569,17 +571,21 @@ try {
             if (sobre > 60) o.pedirFlaps(0);
             /*
              * **Las alas que contestan a los destellos**: de un lado al otro,
-             * dieciocho grados, un segundo y medio cada uno, en la subida, el
-             * tramo cruzado o el viento en cola —no en la base, que el SERA lo
-             * deja fuera—, hasta que el juego lo cuente o seis segundos.
+             * hasta que el avión pasa de catorce grados de ese lado, y no a
+             * reloj: con un segundo y medio por lado el bimotor iba al filo de
+             * los diez que pide el juego, y unas tiradas contestaba y otras no.
+             * En la subida, el tramo cruzado o el viento en cola —no en la
+             * base, que el SERA lo deja fuera—, hasta que el juego lo cuente o
+             * doce segundos, que es lo que insiste quien no ve respuesta.
              */
             const destellos = ej?.radio?.lampara === "destellos";
             if (destellos && (ej?.radio?.contestaciones ?? 0) === 0 && paso <= 2 && alasDesde === null) alasDesde = ahora;
             if (alasDesde !== null && alasEn === null) {
               const t = ahora - alasDesde;
-              if ((ej?.radio?.contestaciones ?? 0) > 0 || t > 6) alasEn = { t, contestaron: (ej?.radio?.contestaciones ?? 0) > 0 };
+              if ((ej?.radio?.contestaciones ?? 0) > 0 || t > 12) alasEn = { t, contestaron: (ej?.radio?.contestaciones ?? 0) > 0 };
               else {
-                const quiere = (t % 3 < 1.5 ? 1 : -1) * ((18 * Math.PI) / 180);
+                if (o.actitud().alabeo * ladoDeLasAlas > (14 * Math.PI) / 180) ladoDeLasAlas = -ladoDeLasAlas;
+                const quiere = ladoDeLasAlas * ((18 * Math.PI) / 180);
                 c.aileron = acota((quiere - o.actitud().alabeo) * 1.6 - s.rollRate * 0.3, -0.6, 0.6);
               }
             }
