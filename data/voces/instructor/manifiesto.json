@@ -659,6 +659,22 @@
       "ms": 8607,
       "h": "d999bc4b34"
     },
+    "ejercicio.morro.bien": {
+      "ms": 9307,
+      "h": "f9d912f6f7"
+    },
+    "ejercicio.morro.emergencia": {
+      "ms": 5307,
+      "h": "ebbf3fe767"
+    },
+    "ejercicio.morro.noSale": {
+      "ms": 8507,
+      "h": "50236b3a76"
+    },
+    "ejercicio.morro.tampoco": {
+      "ms": 10307,
+      "h": "0dcdeac9c5"
+    },
     "ejercicio.otraVez": {
       "ms": 5507,
       "h": "4faebff6b1"
@@ -906,6 +922,10 @@
     "ejercicio.tren-arriba.antes": {
       "ms": 12807,
       "h": "e06948bc59"
+    },
+    "ejercicio.tren-de-morro.antes": {
+      "ms": 13007,
+      "h": "23283a4551"
     },
     "ejercicio.un-motor.antes": {
       "ms": 9207,
@@ -6453,6 +6473,21 @@
     ],
     "ejercicio.carga.bien": [
       "ejercicio.carga.bien"
+    ],
+    "ejercicio.tren-de-morro.antes": [
+      "ejercicio.tren-de-morro.antes"
+    ],
+    "ejercicio.morro.noSale": [
+      "ejercicio.morro.noSale"
+    ],
+    "ejercicio.morro.emergencia": [
+      "ejercicio.morro.emergencia"
+    ],
+    "ejercicio.morro.tampoco": [
+      "ejercicio.morro.tampoco"
+    ],
+    "ejercicio.morro.bien": [
+      "ejercicio.morro.bien"
     ]
   }
 }

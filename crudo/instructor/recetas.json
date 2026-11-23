@@ -2819,5 +2819,20 @@
   ],
   "ejercicio.carga.bien": [
     "ejercicio.carga.bien"
+  ],
+  "ejercicio.tren-de-morro.antes": [
+    "ejercicio.tren-de-morro.antes"
+  ],
+  "ejercicio.morro.noSale": [
+    "ejercicio.morro.noSale"
+  ],
+  "ejercicio.morro.emergencia": [
+    "ejercicio.morro.emergencia"
+  ],
+  "ejercicio.morro.tampoco": [
+    "ejercicio.morro.tampoco"
+  ],
+  "ejercicio.morro.bien": [
+    "ejercicio.morro.bien"
   ]
 }

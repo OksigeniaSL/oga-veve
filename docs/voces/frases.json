@@ -23414,5 +23414,80 @@
       "use_speaker_boost": false,
       "speed": 0.95
     }
+  },
+  {
+    "id": "ejercicio.tren-de-morro.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos el tren de nariz que no sale. Despegamos y metemos el tren. Al bajarlo para aterrizar, la rueda de adelante se va a quedar adentro: probamos la bajada de emergencia y, si tampoco sale, aterrizamos con la nariz arriba, con calma",
+    "para": "el tren de nariz que no sale, antes de empezar: despegar, meter el tren y, al bajarlo, la de adelante se queda",
+    "dicho": "Hoy practicamos el tren de nariz que no sale. Despegamos y metemos el tren. Al bajarlo para aterrizar, la rueda de adelante se va a quedar adentro: probamos la bajada de emergencia y, si tampoco sale, aterrizamos con la nariz arriba, con calma.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.morro.noSale",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Bajó el tren, pero la rueda de adelante no salió: la luz roja del tren sigue prendida. Andá más despacio, que la compañera prueba la bajada de emergencia",
+    "para": "el tren de nariz: bajó el tren y la rueda de adelante no salió; más despacio para la de emergencia",
+    "dicho": "Bajó el tren, pero la rueda de adelante no salió: la luz roja del tren sigue prendida. Andá más despacio, que la compañera prueba la bajada de emergencia.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.morro.emergencia",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La compañera tira de la perilla de emergencia, y el tren cae por su peso. Esperamos un poquito",
+    "para": "el tren de nariz: la compañera tira de la perilla de emergencia",
+    "dicho": "La compañera tira de la perilla de emergencia, y el tren cae por su peso. Esperamos un poquito.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.morro.tampoco",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Tampoco salió. No pasa nada: avisamos a la torre y aterrizamos sobre las ruedas de atrás, con la nariz arriba todo lo que aguante. Cuando ya no aguante, la bajamos despacito, y sin frenos",
+    "para": "el tren de nariz: tampoco salió; se avisa y se aterriza con la nariz arriba, sin frenos",
+    "dicho": "Tampoco salió. No pasa nada: avisamos a la torre y aterrizamos sobre las ruedas de atrás, con la nariz arriba todo lo que aguante. Cuando ya no aguante, la bajamos despacito, y sin frenos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.morro.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ejercicio hecho: primero la bajada de emergencia, después las ruedas de atrás y la nariz arriba todo lo que aguantó, y abajo despacito. Así sale bien casi siempre",
+    "para": "el cierre del tren de nariz, parado en la pista",
+    "dicho": "Ejercicio hecho: primero la bajada de emergencia, después las ruedas de atrás y la nariz arriba todo lo que aguantó, y abajo despacito. Así sale bien casi siempre.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   }
 ]
