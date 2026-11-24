@@ -671,7 +671,8 @@ try {
               tm.fuera = true;
               tm.deprisa = Math.max(tm.deprisa, s.groundSpeed);
             }
-            if (s.onGround && s.onRunway) tm.desvio = Math.max(tm.desvio, Math.abs(p.c));
+            // Hasta que se va: quien deja la pista a propósito la cruza hasta el borde, y eso no es irse del eje.
+            if (s.onGround && s.onRunway && tramo !== "dejar") tm.desvio = Math.max(tm.desvio, Math.abs(p.c));
             if (s.groundSpeed < 0.5 && tm.parado === null) tm.parado = { a: p.a, c: p.c, enPista: !!s.onRunway };
           }
         }
