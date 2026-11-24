@@ -2126,6 +2126,164 @@ AIP. Y los siete de Barajas de la tabla, sin línea en OpenStreetMap o con la ca
 donde está el avión y no desde el puesto (`otroTramoDesde`), así que no lleva el APROAR, como no llevaba la salida por la
 raya pintada de la H60c.
 
+## Enmienda (24-11-2026, H79): la ruta empieza donde acaba el empuje
+
+### El caso
+
+Lo que dejó la H76. El T2 de Lanzarote por la 03: la ruta se trazaba desde donde la línea del puesto cruza la calle de la
+plataforma, con el morro al NE, y la C, que cruza esa calle por detrás, ya había quedado atrás. Se bajaba a la R por la B:
+2.316 m por los 1.761 de la C; el tráfico, 2.412 por 1.856. Y además: el segundo tramo no llevaba el APROAR, y la ruta no
+sabía de las restricciones de rodaje del AIP.
+
+### Decisión
+
+1. **El tractor empuja más allá del cruce si así se llega antes** (`pasandoElCruce` en `rodaje.ts`). De la ruta de espaldas
+   por el puesto se mira la calle hacia atrás del cruce, hasta cien metros y mientras siga en la misma recta; si en ese trozo
+   hay un ramal, se busca la ruta desde el fondo de él, en el sentido en el que se sale (`rodajesConSentido`). Si la ruta
+   toma el ramal, la de salida es: por la línea del puesto a la calle, por ella hacia atrás hasta treinta y dos metros antes
+   del ramal, y desde ahí hacia delante. Solo si se llega antes: se empuja a paso de persona y se rueda a quince nudos, así
+   que cada metro de más que se empuja tiene que ahorrar siete y medio de rodaje. Y solo si el tractor lo saca bien: las
+   tres de la H60b y, si lo publica, el APROAR.
+2. **La ruta da ahí la vuelta en seco** (`Ruta.vuelveEn`), y **el empuje la lee en la raya** (`dondeVuelve` en
+   `remolque.ts`): donde la raya vuelve por donde vino, hasta tres metros más allá lleva el tractor el avión. Con eso les
+   sirve a todos sin saber nada más: quien juega, el pasaje, el tráfico, los bancos y las pruebas. El plan la pinta en dos
+   trozos (`comoSePinta`), que alisada entera la vuelta saldría en redondo.
+3. **Y al acabar el empuje, la raya empieza en el avión** (`acabaElEmpuje`), en cualquier puesto: por delante del morro y
+   por la que traía, desde el primer sitio en su eje. Hasta aquí seguía empezando en el puesto, y los dos grandes, que acaban
+   a treinta y siete metros del cruce, la tenían que volver a trazar al echar a rodar. Si el empuje acaba de frente, a
+   medio camino, se queda como estaba.
+4. **El tráfico, igual** (`haciaSuAproar`): la misma ruta y el mismo empuje, que aquí no es el corto: del T2 por la 03 son
+   157 m, por los 37 de antes, y acaba en la calle de la plataforma, antes de la C.
+5. **El segundo tramo sale del puesto al que se llegó** (`salirEmpujadoDeDondeSeLlego`, `puestoEn`): la raya se traza desde
+   el punto del puesto, como la primera salida, con su raya pintada y su APROAR. Si de ahí no sale, desde donde está el
+   avión, como antes. El avión no se mueve: se empuja desde donde paró la rueda de morro, a un par de metros.
+6. **Las restricciones de rodaje van en la ficha** (`restriccionesDeRodaje`), con la frase del AIP, y el buscador las toma
+   como un paso en el que no cabe el ala (`construirGrafo`): encarecido, no prohibido. Se puede salir a la calle de la
+   plataforma desde el puesto y llegar a él por ella hasta la puerta más cercana; lo que no se toma es entera. Leídas en
+   el AD 2-GCRR, casilla 20 (AIRAC AMDT 10/26, WEF 29-OCT-26): la A —«Taxiing on the apron between gates A and B, and
+   between gates B and C, is prohibited for aircraft with a wingspan greater than 52 m. Taxiing on apron via gate B is
+   prohibited for aircraft with a wingspan greater than 50 m»— y la B, el acceso a la plataforma de aviación general con
+   más de 15 m. La misma casilla, en los aviones que exceden el aeródromo, dice por dónde se sale: del T1 y del T7 por la C y
+   del 14 por la A. Así salen ahora el JAZ 110 y el JAZ 120 (59,6 y 60,1 m).
+7. **`?puesto=T2`, solo en desarrollo**, y `OGA_PUESTO` en el banco del remolque: el plan elige el que menos rueda, y a los
+   demás solo se llegaba aterrizando.
+
+### Hasta dónde se remolca
+
+No cambia nada, y por qué. La carta lo dice en nueve puestos y **el juego no empuja de ninguno de ellos así**:
+
+- **El 580 y el 582** (PDC 2.7, observaciones 3 y 4): solo «en caso de retroceso aproando al sur, por TWY M23 hasta TWY
+  EB2» o EA2. El APROAR es «E/W/S», y el juego los deja al oeste sobre la M-23 por las dos cabeceras, que es por donde menos
+  se rueda; al sur no hay calle en el primer cruce. No hay metros que cumplir.
+- **El T34 y el T35** (PDC 1.7, observación 8, «remolcar por I12 hasta la altura de T-33 y desenganchar»): son de contacto
+  en la carta y a 24 m de la terminal, y la regla de la pared los da por buenos; lo que les falta es **la plataforma**: del
+  T12 al T35, ninguno está en el asfalto que trae la ficha (`puestosEnElAsfalto`), y el juego no los usa. La H76
+  decía que no los daba por de contacto; es esto. Y es un remolque hacia delante, con el morro al norte, no un empuje.
+- **El 109, el 110, el 135, el 140 y el 243**: no son de pasarela en la carta, y de ellos no se sale empujado.
+
+### El barrido, el plan y los metros
+
+Los tres reactores, las dos cabeceras y cada puesto de contacto, antes —main en a11c4e8a— y después. Los metros, los de la
+ruta entera, del puesto a la doble raya, con lo empujado dentro:
+
+| Campo | Empujes | Bien, antes → después | De lado | En un edificio | APROAR | Metros de media, antes → después |
+|---|---|---|---|---|---|---|
+| Los Rodeos | 18 | 17 → 17 | 1 → 1 | 0 → 0 | — | 1.707 → 1.707 |
+| La Palma | 26 | 26 → 26 | 0 → 0 | 0 → 0 | — | 407 → 407 |
+| Gran Canaria | 34 | 32 → 32 | 2 → 2 | 0 → 0 | — | 1.811 → 1.811 |
+| Tenerife Sur | 30 | 30 → 30 | 0 → 0 | 0 → 0 | no en los de contacto | 1.894 → 1.894 |
+| Lanzarote | 30 | 30 → 30 | 0 → 0 | 0 → 0 | 30 → 30 de 30 | 1.567 → **1.535** |
+| Barajas | 710 | 674 → 674 | 24 → 24 | 7 → 7 | 674 → 674 de 710 | 3.781 → **3.774** |
+| Pettirossi | 58 | 45 → 45 | 13 → 13 | 0 → 0 | — | 1.901 → 1.901 |
+| **Todos** | 906 | **854 → 854** | 40 → 40 | 7 → 7 | 704 → 704 de 740 | |
+
+**Ninguna fila de bien a mal.** Cambian doce: diez ruedan menos y dos, dieciocho metros más.
+
+| Puesto | Avión y pista | Empuje, m | Ruta, m | Por dónde |
+|---|---|---|---|---|
+| Lanzarote, T2 | JAZ 90, 03 | 113 → 161 | 2.316 → **1.859** | de la B a la C |
+| Lanzarote, 8 | JAZ 90, 21 | 92 → 113 | 1.435 → **878** | de la C a la B, que le quedaba detrás |
+| Lanzarote, T1 | JAZ 110 y 120, 21 | 115 → 113 | 1.190 → 1.208 | de la B a la C: lo manda el AIP |
+| Barajas, 348 | los tres, 36 | 80–86 → 117–138 | 2.090–2.332 → **1.246–1.676** | por la R-4, que cruza detrás |
+| Barajas, 348 | los tres, 18 | 80–86 → 117–138 | 5.422 → **4.526** | ídem |
+| Barajas, 560 | JAZ 110 y 120, 36 | 87 → 113 | 2.234 → **1.936** | por la G-14 |
+
+Los 1.859 del T2 son los 1.761 de la C más lo que se empuja de más y se vuelve a rodar. El 558 y el 559 de Barajas, y el
+560 por la 18, también podían pasar el cruce, pero empujaban de 26 a 80 m más para ahorrar de 134 a 251 de ruta: se tarda
+más, y se quedan como estaban.
+
+**Los metros de cada salida del plan** (42 de 42 bien; los mismos puestos):
+
+| Campo y pista | JAZ 90 | JAZ 110 | JAZ 120 |
+|---|---|---|---|
+| Los Rodeos, 12 | 24, 597 | 24, 1.018 | 24, 1.018 |
+| Los Rodeos, 30 | 12, 2.061 | 12, 2.256 | 24, 2.684 |
+| La Palma, 18 | 10, 444 | 6A, 618 | 6A, 618 |
+| La Palma, 36 | 8, 233 | 6A, 176 | 6A, 176 |
+| Tenerife Sur, 07 | H43, 999 | R42, 1.225 | R42, 1.225 |
+| Tenerife Sur, 25 | J8, 2.367 | J8, 2.468 | J8, 2.468 |
+| Gran Canaria, 03 | T12, 2.074 | T12, 2.074 | T12, 2.074 |
+| Gran Canaria, 21 | N01, 856 | N01, 989 | N01, 989 |
+| Lanzarote, 03 | T3, 1.810 | T1, 1.809 | T1, 1.809 |
+| Lanzarote, 21 | 9, 842 | T1, 1.190 → **1.208** | T1, 1.190 → **1.208** |
+| Barajas, 36 | 532, 509 | 508, 633 | 508, 633 |
+| Barajas, 18 | 520, 4.936 | 520, 4.936 | 520, 4.936 |
+| Pettirossi, 02 | 4, 1.564 | 4, 1.564 | 4, 1.564 |
+| Pettirossi, 20 | 6, 1.853 | 6, 1.853 | 6, 1.853 |
+
+Solo cambian los dos del T1 de Lanzarote por la 21, por la C en vez de por la B. El reactor del tráfico, en los dieciocho
+casos —los nueve campos con pasarelas y las dos cabeceras—, solo cambia en Lanzarote por la 03: del T2, **2.412 → 1.926 m**.
+
+### Lo medido
+
+- **La mesa**: el barrido de antes y el de después, con la medida de la prueba (`comoAcaba`), fuera de vitest; el de antes
+  es el publicado en la H76 (906, 854, 40, 780 y 704 de 740).
+- **Las paredes**, con la misma mesa: el morro, la cola y las puntas de las alas en cada medio metro de cada empuje contra
+  todos los edificios de la ficha. Se meten las mismas siete filas de Barajas —las seis del 330 y el 585—, a menos de cinco
+  metros pasan las mismas, y en los puestos que cambian lo más cerca es lo mismo: el morro parado en su punto.
+- **Elegir la salida** cuesta lo mismo: Barajas, de 1,15–1,42 s a 1,12–1,25 s en esta máquina.
+- **En planta**, dibujados el T2, el T1 y el 8 de Lanzarote, y el 348 y el 560 de Barajas: el avión queda en la calle, antes
+  del ramal, y la raya sale de él hacia delante y lo toma. El JAZ 110 en el T1 acaba al 032, con la calle al 028: la C está a
+  37 m y, con su radio, la raya empieza a torcer hacia ella antes.
+- **Pruebas nuevas** (`empieza-donde-acaba-el-empuje.test.ts`, 18): la ruta que pasa el cruce en una calle de mentira, y
+  cuándo no; el empuje de una raya que da la vuelta, y que un paso atrás del dibujo no lo es; el T2 por la 03, con la raya
+  que empieza en el avión al acabar y por la que se avanza; las treinta filas de Lanzarote, con la raya desde el avión; el
+  reactor del tráfico; el segundo tramo, con los tres reactores por las dos cabeceras; y las restricciones, con el T1 y el
+  T7 por la C saliendo y llegando. El `aproar.test.ts` del T2 se abre a los 161 m.
+- **`puesto-de-salida-de-cada-campo.json`** no cambia.
+- **Vitest entero**, con el código terminado y en tres partes (`--shard`), que en una sola pasada, con el barrido dentro, el
+  proceso llegó a los 2 GB de su tope a los catorce minutos y el núcleo lo cerró: 590 ficheros, 11.775 pruebas en verde, 32
+  saltadas y una pendiente, en 1.437 s con dos hilos. En rojo, una: la de `torre-de-cada-vuelo.test.ts`, que busca
+  `empezarOtroTramo()` por su firma y ahora lleva el puesto; arreglada, y vuelta a pasar con sus dos ficheros. El barrido no
+  va en ella: es el de la mesa.
+- **La raya, al acabar el empuje** (`acabaElEmpuje`), con la misma mesa y sin Barajas: de las filas en las que el avión acaba a
+  más de veinticinco metros de la raya, en Los Rodeos quedan 3 de 7, en La Palma 3 de 9, en Pettirossi 10 de 37, y en Gran
+  Canaria, Tenerife Sur y Lanzarote ninguna de 8, 13 y 8; ninguna raya sale más larga.
+- **El remolque de quien juega desde el T2 de Lanzarote** (`OGA_ESCENARIO=lanzarote OGA_PUESTO=T2`), por la 03, con el JAZ 90,
+  la tarjeta Intel y solo el peldaño de Guyrami: **todo en orden**. −1,00 contra el morro, **161 de 161 m empujado, giro de 91°
+  con radio 11,5 m, rumbo al acabar 28°** y 7° en los primeros treinta metros rodando; nada dentro de un edificio. En la
+  captura del saludo el avión está en la calle de la plataforma mirando al NE, con el tractor y el señalero a un lado, y la
+  raya sale del morro y tuerce a la derecha hacia la C; en la de después rueda ya por ella, con la C en la tarjeta y el sígame
+  delante.
+- **No se volaron** el de Lanzarote con su puesto de siempre ni el de la 12 de Los Rodeos: el turno de navegador llegó con
+  diez minutos. En Los Rodeos los dieciocho empujes del barrido salen igual, fila a fila. El segundo tramo está mirado en el
+  plan y en el texto de `game.ts`, y no en pantalla.
+
+### Lo que queda
+
+**Fuerteventura**: publica 23 puestos con APROAR (PDC 1.2 y 1.3) y los cuatro de su ficha son a mano. Traer los del AIP o los
+de OpenStreetMap cambia de dónde se sale y se llega en todo el campo y pide su barrido y sus bancos: es otra tanda.
+
+**La plataforma de la T1–T3 de Barajas**: sin ella el juego no usa del T12 al T35, y con ella vendría lo de «hasta la altura
+de T-33», que es un remolque hacia delante y el empuje no lo sabe hacer. Ver «Hasta dónde se remolca».
+
+**El empuje largo del tráfico en el T2 por la 03**: 157 m por la calle de la plataforma, por detrás del T1. Los metros van en
+su camino, como los de todos, así que los demás los ven; pero la torre no espera a que quepa para darlo, que es lo del
+«empuje largo por la plataforma para el tráfico» de abajo. Aquí es uno solo, y no está visto en el navegador.
+
+**El 584 de Barajas**, que la H76 ponía junto al T2: su calle, la EA-2, acaba a cinco metros al norte de su línea, y no hay
+recta hacia atrás por la que pasar el cruce. Sigue igual, y el plan no lo elige.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
@@ -2139,7 +2297,8 @@ La Palma y Lanzarote están en su punto desde la H75. El APROAR del AIP lo usa e
 Barajas que siguen saliendo mal (el 330, el 538, el 539, el 583, el 584 y el 585) o sin su APROAR (esos y el 586), y el
 N11 de Gran Canaria, no tienen línea en OpenStreetMap, salvo el 584. El plan no los elige.
 
-**El T2 de Lanzarote por la C, y las restricciones de rodaje de Lanzarote** (H76): ver «Lo que queda» de la H76.
+**La plataforma de la T1–T3 de Barajas y el 584, y Fuerteventura** (H79): ver «Lo que queda» de la H79. El T2 de Lanzarote
+por la C, sus restricciones de rodaje y el segundo tramo, hechos en ella.
 
 **Los puestos de las fichas de antes de #191**, en Pettirossi: ver arriba. Los de Barajas, Gran Canaria, La Palma y
 Lanzarote están en su parada desde la H60f y la H75, salvo los catorce de Barajas cuyo punto publicado no cae en su raya
