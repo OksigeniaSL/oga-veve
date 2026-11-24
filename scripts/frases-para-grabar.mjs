@@ -142,8 +142,8 @@ const HABLADOS = [
     // `DE_LA_TORMENTA`, `DE_LA_AUTORROTACION` y `DE_LAS_LECCIONES_DEL_ROTOR`. Y lo que
     // «Se apaga el GPS» escribe delante de su frase, que se lee: ver `atenderAlGps`.
     // Y la carga suelta, que es nueva: ver `DE_LA_CARGA_SUELTA`. Y el tren de nariz: `DEL_TREN_DE_NARIZ`.
-    // Y el fallo de radio: `DEL_FALLO_DE_RADIO`.
-    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro|radio|fallo-de-radio|reventon)\.|^ejercicio\.gps\.integOk$/,
+    // Y el fallo de radio: `DEL_FALLO_DE_RADIO`. Y el ave en el motor: `DEL_AVE`.
+    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro|radio|fallo-de-radio|reventon|ave)\.|^ejercicio\.gps\.integOk$/,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],
@@ -3495,6 +3495,39 @@ const DEL_REVENTON = [
   ["ejercicio.reventon.bienParado", "el cierre del reventón, parado en la pista sin haber despegado"],
 ];
 for (const [id, para] of DEL_REVENTON) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
+/**
+ * **El ave en el motor** (#90, H77): la presentación, el golpe de cada lado con
+ * su pie, qué son los estallidos, la palanca de ese motor y los dos cierres. De
+ * la instructora y en calma, detrás de todo. Las dos del golpe, cortas: piden
+ * el pie en el instante. Ver el ADR 0014, enmienda H77.
+ */
+const DEL_AVE = [
+  ["ejercicio.ave.antes", "el ave en el motor, antes de empezar: el golpe, los estallidos, volar primero, la palanca de ese motor y volver"],
+  ["ejercicio.ave.izquierdo", "el ave: entra en el motor izquierdo, subiendo; pie derecho y se sigue (corta, el pie se pide en el instante)"],
+  ["ejercicio.ave.derecho", "el ave: entra en el motor derecho, subiendo; pie izquierdo y se sigue (corta, el pie se pide en el instante)"],
+  ["ejercicio.ave.petardeo", "el ave: qué son los estallidos, mientras suenan, sin susto"],
+  ["ejercicio.ave.palanca", "el ave: con altura, la compañera lleva atrás la palanca de ese motor"],
+  ["ejercicio.ave.adelante", "el ave: el motor se calló, y la palanca va adelante despacio"],
+  ["ejercicio.ave.aguanta", "el ave: el motor aguanta, se deja ahí, se avisa y se vuelve"],
+  ["ejercicio.ave.noAguanta", "el ave: vuelve a estallar, se para ese motor, se avisa y se vuelve"],
+  ["ejercicio.ave.bien", "el cierre del ave con los dos motores andando, parado en la pista"],
+  ["ejercicio.ave.bienParado", "el cierre del ave con ese motor parado, parado en la pista"],
+];
+for (const [id, para] of DEL_AVE) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({

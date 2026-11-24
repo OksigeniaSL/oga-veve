@@ -3404,6 +3404,7 @@ export const ES_PY = {
   "hangar.ejercicio.tren-de-morro": "El tren de nariz no sale",
   "hangar.ejercicio.fallo-de-radio": "Sin radio",
   "hangar.ejercicio.reventon": "Se revienta una rueda",
+  "hangar.ejercicio.ave": "Un ave en el motor",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3849,6 +3850,32 @@ export const ES_PY = {
     "Ejercicio hecho: con una rueda rota, casi a la velocidad de despegar, conviene seguir. Volviste con toda la pista por delante, y así alcanza con frenar con calma",
   "ejercicio.reventon.bienParado":
     "Paraste dentro de la pista, y parar también es ganar. Con una rueda rota se frena peor: por eso, casi a la velocidad de despegar, lo que suele convenir es seguir, y volver con toda la pista por delante",
+  /*
+   * **El ave en el motor** (#90, H77): la presentación, el golpe de cada lado
+   * con su pie, qué son los estallidos, la palanca de ese motor —atrás,
+   * adelante, y si aguanta o no— y los dos cierres. Lo de «casi nunca es
+   * grave» y «primero volamos» es de la guía de la FAA para tripulaciones; lo
+   * de los veinte minutos del ensayo, de 14 CFR 33.76 (c)(7). «Estallido» y no
+   * «explosión»: nada explota. Ver el ADR 0014, enmienda H77.
+   */
+  "ejercicio.ave.antes":
+    "Hoy practicamos un ave que se mete en un motor, después de despegar. Vas a oír un golpe, y después unos estallidos con un fogonazo: es el aire del motor, que por un momento se da vuelta. Suena fuerte, y casi nunca es grave. Primero volamos: el pie del otro lado, y la velocidad. Después llevamos atrás la palanca de ese motor hasta que se calle, y volvemos",
+  "ejercicio.ave.izquierdo": "Entró un ave en el motor izquierdo: pie derecho, y seguimos subiendo",
+  "ejercicio.ave.derecho": "Entró un ave en el motor derecho: pie izquierdo, y seguimos subiendo",
+  "ejercicio.ave.petardeo":
+    "Esos estallidos son el aire del motor, que se da vuelta y sale por adelante con un fogonazo. El avión sigue subiendo: sostené el pie y la velocidad, con calma",
+  "ejercicio.ave.palanca":
+    "Ya tenemos altura. Llevo atrás la palanca de ese motor, sin apuro, hasta que se calle",
+  "ejercicio.ave.adelante":
+    "Se calló. Ahora la empujo de a poquito, a ver hasta dónde aguanta",
+  "ejercicio.ave.aguanta":
+    "Así aguanta, y ahí la dejamos, sin pasarnos. Avisamos a la torre, y volvemos con los dos motores andando",
+  "ejercicio.ave.noAguanta":
+    "Volvió a estallar: la llevo atrás del todo, y paro ese motor. El avión vuela bien con el otro. Avisamos a la torre, y volvemos",
+  "ejercicio.ave.bien":
+    "Ejercicio hecho: primero volar, y después la palanca de ese motor. A los motores así los ensayan metiéndoles aves a toda potencia, y tienen que seguir andando veinte minutos. Por eso se vuela con calma",
+  "ejercicio.ave.bienParado":
+    "Ejercicio hecho: primero volar, después la palanca, y como no aguantaba, lo paramos. A los motores así los ensayan metiéndoles aves, y con la más grande lo que se les pide es que se puedan parar sin peligro. Y el avión vuela bien con el otro",
   /*
    * **El fallo de radio** (H71): la presentación, la radio que se calla con
    * su 7600, lo que dice cada luz de la lámpara, las alas que contestan y los

@@ -11516,6 +11516,76 @@ button.motor__tecla::after {
 }
 
 /*
+ * El fogonazo del motor con un ave y la palanca que se mueve. El fogonazo, cada
+ * dos segundos y nunca más deprisa: se ve que va a golpes, y no parpadea. Ver
+ * `motorConAve` y `palancaDeGases` en `ui/senal.ts`.
+ */
+.senal__fogonazo {
+  fill: #ffb44a;
+  stroke: var(--tinta);
+  stroke-width: 0.5;
+  transform-origin: 6px 14.6px;
+  animation: senal-fogonazo 2s ease-out infinite;
+}
+
+@keyframes senal-fogonazo {
+  0% {
+    opacity: 0.15;
+    transform: scale(0.75);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.75);
+  }
+}
+
+.senal__palanca--atras {
+  transform: translateY(13px);
+  animation: senal-palanca-atras 2.4s ease-in-out infinite;
+}
+
+.senal__palanca--media {
+  transform: translateY(6px);
+  animation: senal-palanca-media 2.4s ease-in-out infinite;
+}
+
+@keyframes senal-palanca-atras {
+  0% {
+    transform: translateY(0);
+  }
+  60%,
+  100% {
+    transform: translateY(13px);
+  }
+}
+
+@keyframes senal-palanca-media {
+  0% {
+    transform: translateY(13px);
+  }
+  60%,
+  100% {
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .senal__fogonazo,
+  .senal__palanca--atras,
+  .senal__palanca--media {
+    animation: none;
+  }
+}
+.sin-movimiento :is(.senal__fogonazo, .senal__palanca--atras, .senal__palanca--media) {
+  animation: none;
+}
+
+/*
  * La franja del RA y el cuadrado del otro, en la tarjeta: los colores de la
  * cabina, con el filo de tinta para que se lean sobre el fondo de la tarjeta.
  * Ver `maniobra` en `ui/senal.ts`.

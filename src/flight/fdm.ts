@@ -110,6 +110,7 @@ import type {
   GroundSampler,
   InitialConditions,
   LoSacado,
+  MotorTocado,
 } from "./model";
 
 /** Paso máximo de integración. Por encima, el modelo se vuelve inestable. */
@@ -324,6 +325,7 @@ import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import { DURO_DE_TRANSPORTE } from "./aterrizaje";
 import { perdidaCon, V2_SOBRE_LA_PERDIDA } from "./velocidades-de-despegue";
 import { avanzarGiro, gasQueDa, giroAsentado, type GiroDelMotor } from "./respuesta-del-motor";
+import { Petardeo } from "./ave-en-el-motor";
 
 /**
  * **Lo lenta que es la lenta, sobre la segura**, cuando salen de la pérdida: la
@@ -785,6 +787,72 @@ export class CoefficientFlightModel implements FlightModel {
     const n = Math.max(1, this.aircraft.motoresA.length);
     this.motores = Array.from({ length: n }, () => "marcha" as const);
     this.paradoDesde = Array.from({ length: n }, () => 0);
+    this.tocado = null;
+  }
+
+  /**
+   * **Un motor con un ave dentro**, que es el ejercicio del ave (#90): cuál,
+   * hasta dónde le deja ir su palanca y desde qué empuje petardea. Lo pone el
+   * juego en cada paso mientras dura, y `null` cuando no hay ninguno: entonces
+   * nada de esto se calcula. Ese motor lleva desde aquí su propio giro, que
+   * sigue a su palanca y no a la de los demás. Ver `ave-en-el-motor.ts` y el
+   * ADR 0014, enmienda H77.
+   */
+  ponerMotorTocado(m: { readonly motor: number; readonly tope: number; readonly umbral: number } | null): void {
+    if (m === null || this.aircraft.motoresA.length < 2 || this.aircraft.motoresA[m.motor] === undefined) {
+      this.tocado = null;
+      return;
+    }
+    if (this.tocado === null || this.tocado.motor !== m.motor)
+      this.tocado = {
+        motor: m.motor,
+        tope: m.tope,
+        umbral: m.umbral,
+        giro: this.giro ? { ...this.giro } : null,
+        petardeo: new Petardeo(),
+        da: this.gasDelMotor(),
+      };
+    this.tocado.tope = m.tope;
+    this.tocado.umbral = m.umbral;
+  }
+
+  /** Cómo va ese motor: lo que da y lo que le queda, para su aguja y lo que suena. */
+  get motorTocado(): MotorTocado | null {
+    const t = this.tocado;
+    if (t === null) return null;
+    return {
+      motor: t.motor,
+      da: t.da,
+      empuje: t.petardeo.empuje,
+      vueltas: t.petardeo.vueltas,
+      estallidos: t.petardeo.estallidos,
+    };
+  }
+
+  private tocado: {
+    motor: number;
+    tope: number;
+    umbral: number;
+    giro: GiroDelMotor | null;
+    petardeo: Petardeo;
+    /** Lo que da, sin lo que le quita el petardeo, de 0 a 1. */
+    da: number;
+  } | null = null;
+
+  /**
+   * **Lo que le falta al motor tocado** para dar lo que dan los demás, N, en
+   * este paso: su palanca va por debajo, o petardea. Cero si está parado, que
+   * ya no da nada.
+   */
+  private loQueLeFalta(pedido: number, cadaUno: number, cadaUnoLleno: number, dt: number): number {
+    const t = this.tocado;
+    if (t === null || this.motores[t.motor] !== "marcha") return 0;
+    const suyo = Math.min(pedido, t.tope);
+    if (t.giro === null) t.giro = giroAsentado(this.aircraft, suyo);
+    else avanzarGiro(t.giro, this.aircraft, suyo, dt);
+    t.da = gasQueDa(t.giro, this.aircraft);
+    t.petardeo.paso(dt, t.da, t.umbral);
+    return cadaUno - t.da * t.petardeo.empuje * cadaUnoLleno;
   }
 
   /** El último empuje calculado, para el combustible. Ver `empujeAhora`. */
@@ -1540,7 +1608,17 @@ export class CoefficientFlightModel implements FlightModel {
         motoresQueFrenan += qDyn * areaDelMotor(ac, this.motores[i]!);
       }
     }
-    const thrust = controls.engineOn ? cadaUno * enMarcha(this.motores) : 0;
+    let thrust = controls.engineOn ? cadaUno * enMarcha(this.motores) : 0;
+    /*
+     * **Y con un ave en un motor, lo que le falta a ese**: menos empuje, y por
+     * su lado. Sin ejercicio `tocado` es `null` y no se toca nada: el modelo
+     * vuela bit a bit lo de siempre. Ver `ponerMotorTocado`.
+     */
+    let leFalta = 0;
+    if (this.tocado !== null && controls.engineOn && n > 1) {
+      leFalta = this.loQueLeFalta(pedido, cadaUno, empujeLleno(ac, density, speed) / n, dt);
+      thrust -= leFalta;
+    }
     // Se guarda para el combustible, que gasta por el empuje que se da y no
     // por el gas que se pide. Ver `empujeAhora` en `model.ts`.
     this.ultimoEmpuje = thrust;
@@ -1617,6 +1695,8 @@ export class CoefficientFlightModel implements FlightModel {
       (controls.engineOn && n > 1
         ? parDeLosMotores(ac, this.motores, cadaUno, qDyn)
         : 0);
+    // Y lo que le falta al motor del ave, que tira del morro hacia su lado.
+    if (this.tocado !== null) yawMoment += leFalta * (ac.motoresA[this.tocado.motor] ?? 0);
 
     // Con las ruedas en el suelo, lo que manda en el cabeceo es el tren. Ver
     // `momentoDelTren`.

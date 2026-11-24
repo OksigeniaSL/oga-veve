@@ -1905,6 +1905,48 @@ export class Audio {
   }
 
   /**
+   * **El golpe de un ave en el motor**: sordo y corto, lejos, que es en la
+   * góndola y no en la cabina. «The flight crew may notice a thud, bang or
+   * vibration» (FAA, *Airplane Turbofan Engine Operation and Malfunctions*,
+   * p. 23). Ver el ADR 0014, enmienda H77.
+   */
+  golpeDeAve(): void {
+    this.golpeSeco(190, 0.16, 0.3, 55);
+  }
+
+  /**
+   * **Un estallido del petardeo**: seco y corto, por encima del motor y por
+   * debajo de las voces. De verdad es «a very loud bang», más fuerte que nada
+   * que se haya oído en ese avión (la misma guía, p. 18); aquí se queda en lo
+   * que se reconoce, espaciado y sin cola: lo que se enseña es la calma, y
+   * nadie tiene que dar un bote. Ver el ADR 0014, enmienda H77.
+   */
+  estallidoDelMotor(): void {
+    this.golpeSeco(620, 0.13, 0.34, 82.41);
+  }
+
+  /** Un golpe de ruido filtrado y una nota grave, por el bus de interfaz, que se agacha cuando alguien habla. */
+  private golpeSeco(corte: number, largo: number, nivel: number, nota: number): void {
+    const ctx = this.context;
+    if (!ctx || ctx.state !== "running") return;
+    const t = ctx.currentTime;
+    const fuente = ctx.createBufferSource();
+    fuente.buffer = this.noiseBuffer();
+    const filtro = ctx.createBiquadFilter();
+    filtro.type = "lowpass";
+    filtro.Q.value = 0.7;
+    filtro.frequency.value = corte;
+    const sobre = ctx.createGain();
+    sobre.gain.setValueAtTime(0.0001, t);
+    sobre.gain.linearRampToValueAtTime(nivel, t + 0.005);
+    sobre.gain.exponentialRampToValueAtTime(0.0001, t + largo);
+    fuente.connect(filtro).connect(sobre).connect(this.bus("interfaz"));
+    fuente.start(t, Math.random() * 1.2, largo + 0.05);
+    fuente.stop(t + largo + 0.08);
+    this.pluck(nota, t, largo + 0.04, "interfaz", FUERZA * 0.8);
+  }
+
+  /**
    * **El golpe de una rueda que revienta**, en la carrera: un golpe seco,
    * grave y corto, debajo del suelo de la cabina, por el bus de interfaz, que
    * se agacha cuando alguien habla. Ni estallido ni cola: es lo que se oye

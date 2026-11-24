@@ -275,6 +275,17 @@ const LOS_EJERCICIOS = [
   "ejercicio.reventon.toma",
   "ejercicio.reventon.bien",
   "ejercicio.reventon.bienParado",
+  // El ave en el motor (H77): presentación, los pasos y los dos cierres.
+  "ejercicio.ave.antes",
+  "ejercicio.ave.izquierdo",
+  "ejercicio.ave.derecho",
+  "ejercicio.ave.petardeo",
+  "ejercicio.ave.palanca",
+  "ejercicio.ave.adelante",
+  "ejercicio.ave.aguanta",
+  "ejercicio.ave.noAguanta",
+  "ejercicio.ave.bien",
+  "ejercicio.ave.bienParado",
   // El fallo de radio (H71): presentación, la radio callada, cada luz, las alas y los dos cierres.
   "ejercicio.fallo-de-radio.antes",
   "ejercicio.radio.callada",

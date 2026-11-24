@@ -63,12 +63,22 @@
  * tren fuera y a los cuatrocientos pies se avisa con PAN PAN —algo va mal y
  * hay tiempo—; en la final se cuenta la toma, y al tocar se enseña otra vez el
  * pie. Ver el ADR 0014, enmienda H74.
+ *
+ * **El ave en el motor** es un motor que sigue en marcha y petardea. Primero se
+ * vuela, y no se toca nada: «the first priority task of the flight crew is to
+ * "fly the airplane"» (FAA, *Airplane Turbofan Engine Operation and
+ * Malfunctions*, p. 24). Con el avión sujeto y a cuatrocientos pies, la
+ * compañera lleva esa palanca atrás hasta que se calla, espera y la avanza
+ * despacio. Si aguanta, se deja donde aguanta y se avisa con PAN PAN; si vuelve
+ * a estallar, se para, y entonces es un bimotor con un motor: MAYDAY, como
+ * siempre. Y se vuelve. Ver el ADR 0014, enmienda H77.
  */
 
 import type { AircraftConfig } from "./aircraft";
 import { conV1, type Averia, type Ejercicio, type Momento } from "./ejercicios";
 import { motoresDeFuera } from "./motores";
 import { AlasQueContestan, type LuzSinRadio } from "./fallo-de-radio";
+import { PalancaDelAve, type PasoDeLaPalanca } from "./ave-en-el-motor";
 
 /** Cómo va el vuelo, lo que la práctica necesita mirar. Todo en m y m/s. */
 export interface Lectura {
@@ -105,6 +115,8 @@ export interface Lectura {
   readonly deNoche?: boolean;
   /** Si se va en la base o en la final: ahí no se pide alabear (SERA, apéndice 1, 3.1.2 a) 1)). */
   readonly enLaBaseOEnLaFinal?: boolean;
+  /** Con un ave en un motor, cuántas veces ha estallado. Ver `motorTocado` en `model.ts`. */
+  readonly estallidos?: number;
 }
 
 /** Las tres velocidades del despegue de hoy, indicadas. */
@@ -183,6 +195,8 @@ export type Suceso =
   | { readonly que: "toma" }
   /** Y al tocar, otra vez qué pie. */
   | { readonly que: "alTocar" }
+  /** Con un ave en un motor: por dónde va su palanca. Ver `PalancaDelAve`. */
+  | { readonly que: "palanca"; readonly motor: number; readonly paso: PasoDeLaPalanca }
   | { readonly que: "cerrar"; readonly como: Cierre };
 
 export type FaseDePractica = "armada" | "fallo" | "cerrada";
@@ -225,6 +239,21 @@ export const ANTES_DE_LA_EMERGENCIA = 10;
  */
 export const LO_QUE_SE_ESPERA_AL_TREN = 7;
 
+/**
+ * **Lo que se vuela antes de tocar la palanca del ave**, s: lo que tarda en
+ * decirse qué pie y qué son esos estallidos, con el avión sujeto mientras
+ * tanto. «Once the airplane is in stable flight at a safe altitude, the
+ * appropriate procedures […] can be accomplished» (FAA, *Airplane Turbofan
+ * Engine Operation and Malfunctions*, p. 24).
+ */
+export const ANTES_DE_LA_PALANCA = 14;
+
+/** Y lo más que se espera a que el avión vaya sujeto, s: pasado eso, se toca igual. */
+export const COMO_MUCHO_SIN_PALANCA = 30;
+
+/** El alabeo con el que el avión va sujeto, rad: un viraje suave. */
+const SUJETO = 0.44;
+
 /** Por encima de esto se está volando de verdad, no botando, m. */
 const EN_EL_AIRE = 15;
 
@@ -265,6 +294,10 @@ export class Practica {
   private avisadoDentro = false;
   private dichaLaToma = false;
   private tocada = false;
+  /** El motor en el que entró el ave, su palanca y cuánto hace que se sabe cómo queda. */
+  private motorTocado: number | null = null;
+  private palanca: PalancaDelAve | null = null;
+  private desdeQueSeSabe: number | null = null;
 
   constructor(
     readonly ejercicio: Ejercicio,
@@ -344,6 +377,26 @@ export class Practica {
     return this.elegida.que === "neumatico" && this.faseActual === "fallo";
   }
 
+  /**
+   * **El motor con un ave dentro**: cuál, hasta dónde le deja ir su palanca y
+   * desde qué empuje petardea. `null` antes del ave, y con el ejercicio
+   * cerrado. Lo mira el juego para ponérselo al modelo de vuelo.
+   */
+  get ave(): { readonly motor: number; readonly tope: number; readonly umbral: number } | null {
+    if (this.motorTocado === null || !this.palanca || this.faseActual !== "fallo") return null;
+    return { motor: this.motorTocado, tope: this.palanca.tope, umbral: this.palanca.umbral };
+  }
+
+  /** En qué motor entró el ave, o `null` si no ha entrado. Se queda después del cierre. */
+  get motorDelAve(): number | null {
+    return this.motorTocado;
+  }
+
+  /** Por dónde va la palanca del motor del ave. */
+  get pasoDeLaPalanca(): PasoDeLaPalanca | null {
+    return this.palanca?.paso ?? null;
+  }
+
   /** Si ya se declaró la emergencia. Desde ahí, la torre da prioridad. */
   get declaradaYa(): boolean {
     return this.declarada;
@@ -401,6 +454,9 @@ export class Practica {
     this.avisadoDentro = false;
     this.dichaLaToma = false;
     this.tocada = false;
+    this.motorTocado = null;
+    this.palanca = null;
+    this.desdeQueSeSabe = null;
     this.elegida = this.sortear();
   }
 
@@ -425,6 +481,10 @@ export class Practica {
         this.faseActual = "fallo";
         this.cual = this.elegida.que === "motor" ? this.cualSePara() : null;
         this.lado = this.elegida.que === "neumatico" ? this.cualRevienta() : null;
+        if (this.elegida.que === "ave") {
+          this.motorTocado = this.cualSePara();
+          this.palanca = new PalancaDelAve(this.seRecuperaDelAve());
+        }
         this.tocaParar = this.seParaAqui(l);
         this.falloEnElSuelo = l.enElSuelo;
         this.conElTrenFuera =
@@ -453,6 +513,10 @@ export class Practica {
     }
     if (this.elegida.que === "neumatico") {
       this.pasoDelReventon(l, sucesos);
+      return sucesos;
+    }
+    if (this.elegida.que === "ave") {
+      this.pasoDelAve(l, dt, sucesos);
       return sucesos;
     }
     /*
@@ -646,6 +710,59 @@ export class Practica {
     if (l.enElSuelo && l.parado) this.cerrar("vuelta", sucesos);
   }
 
+  /**
+   * **Con un ave en un motor, primero volar y después esa palanca**: con el
+   * avión sujeto y a cuatrocientos pies, atrás hasta que se calla, se espera y
+   * adelante despacio. Sabido si aguanta o si hay que parar, se declara. En el
+   * suelo no se toca nada: se aterriza con lo que haya.
+   */
+  private pasoDelAve(l: Lectura, dt: number, sucesos: Suceso[]): void {
+    const p = this.palanca!;
+    const motor = this.motorTocado!;
+    if (!l.enElSuelo) {
+      if (p.paso === "petardea") {
+        const sujeto = Math.abs(l.alabeo ?? 0) < SUJETO && l.vertical > -1;
+        const yaToca =
+          this.desdeElFallo >= ANTES_DE_LA_PALANCA &&
+          l.sobreElCampo >= ALTURA_PARA_ASEGURAR &&
+          (sujeto || this.desdeElFallo >= COMO_MUCHO_SIN_PALANCA);
+        if (yaToca) {
+          p.empezar();
+          sucesos.push({ que: "palanca", motor, paso: "atras" });
+        }
+      }
+      const llega = p.avanzar(dt, l.estallidos ?? 0);
+      if (llega !== null) {
+        if (llega === "parado") {
+          // Desde aquí es un motor parado y asegurado, como cualquiera.
+          this.cual = motor;
+          this.asegurada = true;
+        }
+        if (llega === "aguanta" || llega === "parado") this.desdeQueSeSabe ??= 0;
+        sucesos.push({ que: "palanca", motor, paso: llega });
+      }
+      if (this.desdeQueSeSabe !== null && !this.declarada) {
+        this.desdeQueSeSabe += dt;
+        if (this.desdeQueSeSabe >= Y_DECLARAR) {
+          this.declarada = true;
+          /*
+           * Con los dos en marcha, uno a media potencia, algo va mal y hay
+           * tiempo: urgencia. Con uno solo, lo de siempre en un bimotor.
+           */
+          sucesos.push({
+            que: "declarar",
+            socorro: p.paso === "parado" && this.avion.motores === 2 ? "mayday" : "panpan",
+          });
+        }
+      }
+    }
+    if (!this.bomberos && this.declarada && (l.enFinal || l.enElSuelo)) {
+      this.bomberos = true;
+      sucesos.push({ que: "bomberos", donde: "pista" });
+    }
+    if (l.enElSuelo && l.parado && this.volo) this.cerrar("vuelta", sucesos);
+  }
+
   private cerrar(como: Cierre, sucesos: Suceso[]): void {
     this.faseActual = "cerrada";
     this.comoCerro = como;
@@ -727,6 +844,15 @@ export class Practica {
   /** La rueda de un lado o la del otro: se practican los dos pies. */
   private cualRevienta(): "izquierdo" | "derecho" {
     return this.azar() < 0.5 ? "izquierdo" : "derecho";
+  }
+
+  /**
+   * Si el motor del ave aguanta al volver a avanzar su palanca. Dos de cada
+   * tres: **sin fuente**, que la guía dice que de las dos maneras pasa y no
+   * cuántas (FAA, p. 24). Se practican las dos, y más la de siempre.
+   */
+  private seRecuperaDelAve(): boolean {
+    return this.azar() < 2 / 3;
   }
 
   private sortear(): Averia {

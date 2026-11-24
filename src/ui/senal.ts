@@ -438,6 +438,50 @@ const reventon = (lado: "izquierda" | "derecha"): string =>
 `);
 
 /**
+ * **El ave en el motor y hacia dónde tira**: el avión por detrás, con el motor
+ * de ese lado en el rojo oscuro de la tarjeta, el fogonazo que se enciende y se
+ * apaga, y la flecha hacia ese lado. Visto por detrás, que así la izquierda del
+ * dibujo es la de quien vuela. Ver el ADR 0014, enmienda H77.
+ */
+const motorConAve = (lado: "izquierdo" | "derecho"): string =>
+  icono(`
+  <g${lado === "derecho" ? ' transform="matrix(-1 0 0 1 24 0)"' : ""}>
+    <path d="M11.2 1.2 h1.6 l0.5 4.8 h-2.6 Z" />
+    <circle cx="12" cy="8.6" r="3.4" />
+    <path d="M0.6 10.4 L9.6 9.4 h4.8 L23.4 10.4 v1.3 L14 12 h-4 L0.6 11.7 Z" />
+    <circle cx="18" cy="14.6" r="2.7" />
+    <circle class="senal__hueco" cx="18" cy="14.6" r="1.3" />
+    <path class="senal__fogonazo"
+          d="M6 8.4 L7.4 11.6 L10.6 10.2 L9.2 13.4 L12.2 14.8 L9.2 16.2 L10.4 19.2 L7.4 17.8 L6 20.8 L4.6 17.8 L1.6 19.2 L2.8 16.2 L-0.2 14.8 L2.8 13.4 L1.4 10.2 L4.6 11.6 Z" />
+    <circle class="senal__roja" cx="6" cy="14.6" r="2.7" />
+    <circle class="senal__hueco" cx="6" cy="14.6" r="1.2" />
+    <path class="senal__tira" d="M21.6 21.4 H14.6 M17.2 18.8 L14.2 21.4 L17.2 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+`);
+
+/**
+ * **La palanca de ese motor**: las dos palancas de gases, y la de ese lado, en
+ * el rojo oscuro de la tarjeta, que se va atrás —hacia abajo en el dibujo, que
+ * es hacia quien vuela— o vuelve adelante hasta la mitad. La otra, quieta
+ * arriba, en el contorno: esa no se toca. Ver el ADR 0014, enmienda H77.
+ */
+const palancaDeGases = (lado: "izquierda" | "derecha", haciaDonde: "atras" | "media"): string =>
+  icono(`
+  <g${lado === "derecha" ? ' transform="matrix(-1 0 0 1 24 0)"' : ""}>
+    <path d="M6.2 2.6 V21.4 M17.8 2.6 V21.4" fill="none" stroke="currentColor" stroke-width="1.6"
+          stroke-linecap="round" opacity="0.55" />
+    <rect x="13.8" y="3.2" width="8" height="4.4" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.7" />
+    <rect class="senal__roja senal__palanca senal__palanca--${haciaDonde}" x="2.2" y="3.2" width="8" height="4.4" rx="1.6" />
+    ${
+      haciaDonde === "atras"
+        ? '<path d="M12 8.6 V18.2 M9.6 15.8 L12 18.6 L14.4 15.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />'
+        : '<path d="M12 18.4 V10.6 M9.6 13 L12 10.2 L14.4 13 M9.8 8 H14.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />'
+    }
+  </g>
+`);
+
+/**
  * **Los bomberos del aeropuerto**: el camión, con su luz en el techo.
  *
  * Lo que se ve esperando junto a la pista cuando un avión vuelve con un motor
@@ -2208,6 +2252,12 @@ export const DIBUJOS = {
   "pie-derecho": pedal("derecho"),
   "reventon-izquierda": reventon("izquierda"),
   "reventon-derecha": reventon("derecha"),
+  "ave-izquierdo": motorConAve("izquierdo"),
+  "ave-derecho": motorConAve("derecho"),
+  "palanca-atras-izquierda": palancaDeGases("izquierda", "atras"),
+  "palanca-atras-derecha": palancaDeGases("derecha", "atras"),
+  "palanca-media-izquierda": palancaDeGases("izquierda", "media"),
+  "palanca-media-derecha": palancaDeGases("derecha", "media"),
   // Y sostener la velocidad de un motor es `velocidad`, la de la marca que toca.
   bomberos: BOMBEROS,
   ala: ALA,

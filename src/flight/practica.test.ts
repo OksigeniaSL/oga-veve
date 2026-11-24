@@ -9,6 +9,8 @@ import {
 } from "./ejercicios";
 import {
   ALTURA_PARA_ASEGURAR,
+  ANTES_DE_LA_PALANCA,
+  COMO_MUCHO_SIN_PALANCA,
   ladoDelMotor,
   Practica,
   type Lectura,
@@ -585,5 +587,132 @@ describe("el reventón en la carrera", () => {
     expect(p.ladoReventado).toBeNull();
     expect(p.fase).toBe("armada");
     expect(p.trenSeQuedaFuera).toBe(false);
+  });
+});
+
+/*
+ * **El ave en el motor** (#90, H77): primero volar, y después la palanca de ese
+ * motor (FAA, *Airplane Turbofan Engine Operation and Malfunctions*, p. 24).
+ */
+describe("el ave en el motor", () => {
+  const ave = (azar: () => number = () => 0.1, avion = ARAI) => new Practica(ejercicioPorId("ave")!, avion, V, azar);
+  const corriendo = { ...QUIETO, corriendo: true, parado: false, indicada: 75 };
+  const volando = {
+    ...QUIETO,
+    enElSuelo: false,
+    enPista: false,
+    parado: false,
+    vertical: 8,
+    indicada: 85,
+    tren: "dentro" as const,
+    alabeo: 0,
+    estallidos: 0,
+  };
+
+  /** Presentado, corrido y con el ave ya dentro, a cien metros. */
+  function conElAve(azar?: () => number, avion = ARAI): Practica {
+    const p = ave(azar, avion);
+    p.paso(QUIETO, 0.1);
+    p.paso(corriendo, 0.1);
+    p.paso({ ...volando, sobreElCampo: 101 }, 0.1);
+    return p;
+  }
+
+  it("se ofrece en los reactores de dos motores, desde Taguató, y se cuenta antes", () => {
+    const e = ejercicioPorId("ave")!;
+    expect(esAvisado(e)).toBe(true);
+    for (const a of AIRCRAFT) {
+      const bimotor = a.sound.engine === "turbofan" && a.motores === 2;
+      expect(ejerciciosPara("taguato", a).some((x) => x.id === "ave"), a.id).toBe(bimotor);
+      expect(ejerciciosPara("taguato-ruvicha", a).some((x) => x.id === "ave"), a.id).toBe(bimotor);
+      expect(ejerciciosPara("tuka", a).some((x) => x.id === "ave"), a.id).toBe(false);
+      expect(ejerciciosPara("guyrami", a).some((x) => x.id === "ave"), a.id).toBe(false);
+    }
+    expect(ejerciciosPara("taguato", ARAI).some((x) => x.id === "ave")).toBe(true);
+  });
+
+  it("entra subiendo, a cien metros, en un motor o en el otro, y no manda parar", () => {
+    const p = ave();
+    expect(cuales(p.paso(QUIETO, 0.1))).toEqual(["presentar"]);
+    expect(durante(p, corriendo, 2)).toEqual([]);
+    expect(durante(p, { ...volando, sobreElCampo: 95 }, 2)).toEqual([]);
+    expect(p.ave).toBeNull();
+    expect(p.paso({ ...volando, sobreElCampo: 101 }, 0.1)).toEqual([
+      { que: "fallo", averia: "ave", motor: null, parar: false, enElSuelo: false },
+    ]);
+    expect(p.motorDelAve).toBe(0);
+    expect(conElAve(() => 0.9).motorDelAve).toBe(1);
+    // En marcha y sin tocar su palanca: no es un motor parado.
+    expect(p.motorParado).toBeNull();
+    expect(p.ave).toMatchObject({ motor: 0, tope: 1 });
+  });
+
+  it("primero se vuela: ni por debajo de cuatrocientos pies, ni con el avión sin sujetar, se toca la palanca", () => {
+    const p = conElAve();
+    expect(durante(p, { ...volando, sobreElCampo: ALTURA_PARA_ASEGURAR - 1, estallidos: 3 }, ANTES_DE_LA_PALANCA + 5)).toEqual([]);
+    expect(p.ave!.tope).toBe(1);
+    expect(durante(p, { ...volando, sobreElCampo: 300, alabeo: 0.7, estallidos: 5 }, 5)).toEqual([]);
+    expect(p.paso({ ...volando, sobreElCampo: 300, estallidos: 5 }, 0.1)).toEqual([
+      { que: "palanca", motor: 0, paso: "atras" },
+    ]);
+    // Y si nunca se sujeta, se toca igual, que esperar más tampoco es volarlo.
+    const q = conElAve();
+    expect(cuales(durante(q, { ...volando, sobreElCampo: 300, alabeo: 0.7 }, COMO_MUCHO_SIN_PALANCA - 1))).toEqual([]);
+    expect(cuales(durante(q, { ...volando, sobreElCampo: 300, alabeo: 0.7 }, 2))).toEqual(["palanca"]);
+  });
+
+  it("si aguanta: atrás, se espera, adelante y ahí; PAN PAN, los bomberos y la vuelta", () => {
+    const p = conElAve();
+    const todo = durante(p, { ...volando, sobreElCampo: 500, estallidos: 4 }, 60);
+    expect(todo.filter((s) => s.que === "palanca").map((s) => (s.que === "palanca" ? s.paso : ""))).toEqual([
+      "atras",
+      "quieto",
+      "adelante",
+      "aguanta",
+    ]);
+    expect(todo.filter((s) => s.que === "declarar")).toEqual([{ que: "declarar", socorro: "panpan" }]);
+    expect(p.motorParado).toBeNull();
+    expect(p.ave!.tope).toBeCloseTo(0.6, 6);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 300, vertical: -4, enFinal: true }, 5))).toEqual(["bomberos"]);
+    expect(cuales(durante(p, { ...QUIETO, parado: false, indicada: 50 }, 3))).toEqual([]);
+    expect(cuales(durante(p, QUIETO, 1))).toEqual(["cerrar"]);
+    expect(p.cierre).toBe("vuelta");
+    // Cerrado, el modelo vuelve a ser el de siempre.
+    expect(p.ave).toBeNull();
+  });
+
+  it("si vuelve a estallar: se para ese motor, y entonces es un bimotor con uno, MAYDAY", () => {
+    // El primero elige el lado y el segundo, si aguanta: aquí no.
+    const p = conElAve(() => 0.9);
+    const va = { ...volando, sobreElCampo: 500, estallidos: 4 };
+    let todo: Suceso[] = [];
+    for (let t = 0; t < 60; t += 0.1)
+      todo = todo.concat(p.paso({ ...va, estallidos: p.pasoDeLaPalanca === "adelante" && p.ave!.tope > 0.3 ? 5 : 4 }, 0.1));
+    expect(todo.filter((s) => s.que === "palanca").map((s) => (s.que === "palanca" ? s.paso : ""))).toEqual([
+      "atras",
+      "quieto",
+      "adelante",
+      "noAguanta",
+      "parado",
+    ]);
+    expect(p.motorParado).toBe(1);
+    expect(p.aseguradoYa).toBe(true);
+    expect(todo.filter((s) => s.que === "declarar")).toEqual([{ que: "declarar", socorro: "mayday" }]);
+    durante(p, QUIETO, 1);
+    expect(p.cierre).toBe("vuelta");
+  });
+
+  it("en el suelo no se toca la palanca, y si sale mal, se repite entero", () => {
+    const p = conElAve();
+    expect(cuales(durante(p, { ...QUIETO, parado: false, indicada: 60, estallidos: 5 }, 30))).toEqual([]);
+    expect(p.pasoDeLaPalanca).toBe("petardea");
+    const q = conElAve();
+    expect(cuales(q.paso({ ...QUIETO, percance: true }, 0.1))).toEqual(["cerrar"]);
+    expect(q.cierre).toBe("otraVez");
+    q.reiniciar();
+    expect(q.fase).toBe("armada");
+    expect(q.motorDelAve).toBeNull();
+    expect(q.pasoDeLaPalanca).toBeNull();
+    expect(q.declaradaYa).toBe(false);
   });
 });

@@ -165,7 +165,8 @@ import {
   sortearIndicativo,
   type Indicativo,
 } from "./flight/matricula";
-import type { FlightModel, FlightState } from "./flight/model";
+import type { FlightModel, FlightState, MotorTocado } from "./flight/model";
+import type { PasoDeLaPalanca } from "./flight/ave-en-el-motor";
 import { Terrain, cabeceraContraria, cabeceraEnUso, soltarElMaterial } from "./world/terrain";
 import {
   rutaDe,
@@ -879,6 +880,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   "tren-de-morro": "tren",
   // La rueda reventada y hacia dónde tira. Ver el ADR 0014, enmienda H74.
   reventon: "reventon-izquierda",
+  // El motor que petardea y hacia dónde tira. Ver el ADR 0014, enmienda H77.
+  ave: "ave-izquierdo",
 };
 
 /**
@@ -1743,6 +1746,7 @@ import { plano } from "./ui/hangar";
 import type { FijoEnElPlano } from "./ui/fijo-en-el-plano";
 import { pavimentoDe, sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { signoDelGiro } from "./world/giro-de-las-helices";
+import { Llamarada } from "./world/llamarada";
 import { firmeDe } from "./world/firme";
 import { avionQueSuena, oidoDe } from "./audio/ruidos";
 import {
@@ -4402,6 +4406,13 @@ export class Game {
    */
   private ruedaReventada: -1 | 0 | 1 = 0;
   /**
+   * **Los estallidos del motor con un ave** que ya se han oído y visto, y el
+   * fogonazo de su toma y de su tobera. El ejercicio del ave, ADR 0014,
+   * enmienda H77.
+   */
+  private estallidosVistos = 0;
+  private readonly llamarada = new Llamarada();
+  /**
    * **Si la radio está callada**: el ejercicio del fallo de radio, desde que
    * se calla hasta que se cierra. Ni la torre ni la frecuencia suenan, ni se
    * escribe nada en la tira de la radio; la torre te sigue viendo y te habla
@@ -4473,6 +4484,15 @@ export class Game {
     };
     /** El reventón: de qué lado, y si el modelo lo vuela. Ver el ADR 0014, H74. */
     readonly reventon: { readonly lado: "izquierdo" | "derecho" | null; readonly enElModelo: -1 | 0 | 1 };
+    /** El ave: en qué motor, por dónde va su palanca, cómo va ese motor y sus agujas. Ver el ADR 0014, H77. */
+    readonly ave: {
+      readonly motor: number | null;
+      readonly paso: string | null;
+      readonly tope: number | null;
+      readonly tocado: MotorTocado | null;
+      readonly agujas: readonly number[];
+      readonly llamaradas: number;
+    };
   } | null {
     const p = this.practica;
     if (!p) return null;
@@ -4522,6 +4542,14 @@ export class Game {
         conLaVerde: p.tomoConLaVerde,
       },
       reventon: { lado: p.ladoReventado, enElModelo: this.flight.neumaticoReventado ?? 0 },
+      ave: {
+        motor: p.motorDelAve,
+        paso: p.pasoDeLaPalanca,
+        tope: p.ave?.tope ?? null,
+        tocado: this.flight.motorTocado ?? null,
+        agujas: this.agujasDeLosMotores(),
+        llamaradas: this.llamaradas,
+      },
     };
   }
 
@@ -15107,6 +15135,11 @@ export class Game {
     // Y las ruedas, enteras.
     this.ruedaReventada = 0;
     this.frasesDelReventon.olvidar();
+    // Y los motores, sin ave.
+    this.estallidosVistos = 0;
+    this.llamaradas = 0;
+    this.llamarada.apagar();
+    this.frasesDelAve.olvidar();
     // Y la radio, que vuelve: un vuelo nuevo sale con ella. Ver `seCallaLaRadio`.
     this.devolverLaRadio();
     this.frasesSinRadio.olvidar();
@@ -22586,7 +22619,7 @@ export class Game {
       anguloDePerdida(this.aircraft, this.input.controls.flaps) * 0.85,
       this.traqueteoAhora(),
       // Con uno parado, se oye la parte que va. Ver `enMarcha` en `audio.ts`.
-      estados ? enMarcha(estados) / Math.max(1, estados.length) : 1,
+      estados ? (enMarcha(estados) - this.loQueCallaElDelAve()) / Math.max(1, estados.length) : 1,
     );
     // Y el helicóptero suena a helicóptero: su rotor, su rotor de cola y sus turbinas.
     const heli = this.flight instanceof HelicopteroComoModelo ? this.flight.modelo : null;
@@ -22812,6 +22845,9 @@ export class Game {
     this.flight.ponerSinRuedaDeMorro?.(this.morroAtascado);
     // Y con la rueda reventada, si la hay. Ver `ponerNeumaticoReventado`.
     this.flight.ponerNeumaticoReventado?.(this.ruedaReventada);
+    // Y con un ave en un motor, si lo hay. Ver `ponerMotorTocado`.
+    this.flight.ponerMotorTocado?.(this.practica?.ave ?? null);
+    this.llamarada.paso(dt);
     /*
      * Y los flaps, donde **están**, no donde está la palanca: la misma cifra
      * que sustenta en el modelo de vuelo y que marca la aguja. Ver
@@ -25479,9 +25515,28 @@ export class Game {
       this.input.controls.engineOn,
     );
     const estados = this.flight.motoresAhora?.();
+    /*
+     * Y el del ave, la suya: lo que da con su palanca y lo que le quita cada
+     * estallido, que es como se reconoce cuál es. Ver `ave-en-el-motor.ts`.
+     */
+    const t = this.flight.motorTocado ?? null;
+    const suya =
+      t === null ? va : regimen(this.aircraft, t.da, this.input.controls.engineOn) * t.vueltas;
     return Array.from({ length: this.aircraft.motores }, (_, i) =>
-      agujaDelMotor(estados?.[i] ?? "marcha", va),
+      agujaDelMotor(estados?.[i] ?? "marcha", i === t?.motor ? suya : va),
     );
+  }
+
+  /**
+   * **Lo que deja de oírse del motor del ave**, en motores: con la palanca
+   * atrás o a mitad de un estallido se oye menos, y en marcha y sin petardear,
+   * nada menos. La mitad del sonido se queda, que sigue girando.
+   */
+  private loQueCallaElDelAve(): number {
+    const t = this.flight.motorTocado ?? null;
+    if (t === null || this.flight.motoresAhora?.()[t.motor] !== "marcha") return 0;
+    const van = Math.max(0.05, this.flight.gasDelMotor?.() ?? 1);
+    return 0.5 * (1 - Math.min(1, (t.da * t.empuje) / van));
   }
 
   /**
@@ -25580,6 +25635,7 @@ export class Game {
     this.frasesDelTrenDeMorro.soltar();
     this.frasesSinRadio.soltar();
     this.frasesDelReventon.soltar();
+    this.frasesDelAve.soltar();
     this.contarLasVelocidades();
     const p = this.practica;
     if (!p) return;
@@ -25626,9 +25682,12 @@ export class Game {
         alabeo: bankAngleOf(s.orientation),
         deNoche: this.sky.sunDirection.y <= 0,
         enLaBaseOEnLaFinal: this.enLaBaseOEnLaFinalSinRadio,
+        // Y con un ave en un motor, cuántas veces ha estallado.
+        estallidos: this.flight.motorTocado?.estallidos ?? 0,
       },
       dt,
     );
+    this.oirLosEstallidos();
     for (const suceso of sucesos) this.atenderLaPractica(suceso);
     /*
      * **Y la maleta que se va corriendo**, en cada paso hasta llegar al fondo:
@@ -25648,6 +25707,7 @@ export class Game {
         if (suceso.averia === "morro") return this.noSaleElMorro();
         if (suceso.averia === "radio") return this.seCallaLaRadio();
         if (suceso.averia === "neumatico") return this.revientaLaRueda();
+        if (suceso.averia === "ave") return this.entraElAve();
         return this.fallaElMotor(suceso.motor, suceso.parar, suceso.enElSuelo);
       case "velocidad":
         return this.pedirLaVelocidadDeUnMotor();
@@ -25675,6 +25735,8 @@ export class Game {
         return this.contarLaTomaReventada();
       case "alTocar":
         return this.ensenarElPieDelReventon();
+      case "palanca":
+        return this.mueveLaPalancaDelAve(suceso.motor, suceso.paso);
       case "bomberos":
         // Los de la autorrotación no: la frase y la espera son de un avión que vuelve a su pista.
         if (this.aircraft.helicoptero) return;
@@ -26061,6 +26123,148 @@ export class Game {
   }
 
   /**
+   * **Lo que cuenta la instructora del ave en el motor, de una en una**, como
+   * lo del reventón (ver `frasesDelReventon`). La del golpe manda, que pide el
+   * pie en el instante; las de la palanca, a su turno y mientras su paso sea
+   * verdad. Lo que no espera es lo que se ve y se oye: el golpe, los
+   * estallidos, el fogonazo y las tarjetas. Ver el ADR 0014, enmienda H77.
+   */
+  private readonly frasesDelAve = new FrasesEnFila<TranslationKey>({
+    decir: (clave, alSonar) =>
+      this.decirDelEjercicio(
+        clave,
+        clave === "ejercicio.ave.izquierdo" || clave === "ejercicio.ave.derecho"
+          ? "urgente"
+          : clave === "ejercicio.ave.petardeo"
+            ? "normal"
+            : "mando",
+        alSonar,
+      ),
+    reloj: () => this.relojDePared,
+    apuntar: (que) => this.apuntarCanto(que),
+    retirar: (clave) => BOCA.retirar((c) => c === clave),
+    tope: TOPE_DE_UNA_FRASE_DEL_ALTIMETRO,
+    otraVezSi: SE_PIDE_OTRA_VEZ,
+    otraVezHasta: OTRA_VEZ_SI_SE_CAE,
+  });
+
+  /** Cuántos fogonazos se han dibujado en este vuelo, para el banco. */
+  private llamaradas = 0;
+
+  /**
+   * **Entra un ave en un motor**: un golpe sordo, y enseguida los estallidos
+   * del petardeo, que salen del modelo de vuelo (`oirLosEstallidos`). Sin
+   * alarma ni mensaje: en la guía de la FAA los de un *surge* son «possible
+   * messages» (p. 31), según el avión, y el manual del suyo no se ha leído; lo
+   * que lo dice es la aguja de N1 que se va de la otra, y lo que se oye y se
+   * nota. La tarjeta enseña qué motor y hacia dónde tira, y enseguida el pedal
+   * del otro lado.
+   */
+  private entraElAve(): void {
+    const motor = this.practica?.motorDelAve ?? null;
+    if (motor === null) return;
+    this.estallidosVistos = 0;
+    const izquierdo = ladoDelMotor(this.aircraft, motor) === "izquierdo";
+    this.audio.golpeDeAve();
+    this.apuntarCanto(`golpe del ave en el motor ${izquierdo ? "izquierdo" : "derecho"}`);
+    const clave: TranslationKey = izquierdo ? "ejercicio.ave.izquierdo" : "ejercicio.ave.derecho";
+    const dicho = this.avisoCon(clave, izquierdo ? "palabra.pieDerecho" : "palabra.pieIzquierdo");
+    this.hud.senal.mostrar(izquierdo ? "ave-izquierdo" : "ave-derecho", dicho.rotulo, null, {
+      segundos: 4,
+      prioridad: URGENTE,
+    });
+    const petardea = (): boolean => this.practica?.pasoDeLaPalanca === "petardea" && this.practica.fase === "fallo";
+    this.agenda.luego(3.5, () => {
+      if (petardea()) this.ensenarElPieDelAve(motor);
+    });
+    this.frasesDelAve.pedir(clave, petardea);
+    this.frasesDelAve.pedir("ejercicio.ave.petardeo", petardea);
+  }
+
+  /** **El pedal del otro lado**: al entrar el ave, y otra vez con esa palanca atrás, que es cuando más tira. */
+  private ensenarElPieDelAve(motor: number): void {
+    const derecho = ladoDelMotor(this.aircraft, motor) === "izquierdo";
+    this.hud.senal.mostrar(
+      derecho ? "pie-derecho" : "pie-izquierdo",
+      // La palabra, en todos los peldaños que la leen: la frase larga de un motor parado no vale aquí.
+      this.tier.instruments === "none" ? "" : t(derecho ? "palabra.pieDerecho" : "palabra.pieIzquierdo"),
+      null,
+      { segundos: 8, prioridad: URGENTE },
+    );
+  }
+
+  /**
+   * **Cada estallido que da el modelo, se oye y se ve**: el golpe seco y el
+   * fogonazo por la toma y por la tobera. Uno por estallido, al instante.
+   */
+  private oirLosEstallidos(): void {
+    const tocado = this.flight.motorTocado ?? null;
+    if (tocado === null) return;
+    if (tocado.estallidos <= this.estallidosVistos) {
+      // Un avión recolocado empieza la cuenta: ver `sostenerLosMotores`.
+      this.estallidosVistos = tocado.estallidos;
+      return;
+    }
+    this.estallidosVistos = tocado.estallidos;
+    this.audio.estallidoDelMotor();
+    const lado = (this.aircraft.motoresA[tocado.motor] ?? 0) < 0 ? -1 : 1;
+    if (this.llamarada.encender(this.aircraftMesh.group, lado)) this.llamaradas++;
+    this.apuntarCanto(`estallido del motor ${lado < 0 ? "izquierdo" : "derecho"}`);
+  }
+
+  /**
+   * **La palanca de ese motor**, que la mueve la compañera y lo va contando:
+   * atrás, adelante despacio, y ahí se deja o se para. El dibujo enseña cuál de
+   * las dos y hacia dónde, en todos los peldaños que practican. Al pararlo es
+   * un motor parado como cualquiera: con su aguja y, en la pantalla, lo que se
+   * hizo —no «ENG FAIL», que lo paró la tripulación—.
+   */
+  private mueveLaPalancaDelAve(motor: number, paso: PasoDeLaPalanca): void {
+    const lado = ladoDelMotor(this.aircraft, motor) === "izquierdo" ? "izquierda" : "derecha";
+    const va = (...cuales: readonly PasoDeLaPalanca[]) => (): boolean => {
+      const ahora = this.practica?.pasoDeLaPalanca;
+      return !!ahora && cuales.includes(ahora) && !this.flight.state.onGround;
+    };
+    const tarjeta = (dibujo: DibujoDeSenal, clave: TranslationKey): void =>
+      this.hud.senal.mostrar(dibujo, this.rotulo(clave, "palabra.gas"), null, {
+        segundos: 8,
+        prioridad: IMPORTANTE,
+      });
+    this.apuntarCanto(`palanca del ave ${lado}: ${paso}`);
+    switch (paso) {
+      case "atras":
+        tarjeta(`palanca-atras-${lado}`, "ejercicio.ave.palanca");
+        this.agenda.luego(5, () => {
+          if (va("atras", "quieto")()) this.ensenarElPieDelAve(motor);
+        });
+        this.frasesDelAve.pedir("ejercicio.ave.palanca", va("atras", "quieto"));
+        return;
+      case "adelante":
+        tarjeta(`palanca-media-${lado}`, "ejercicio.ave.adelante");
+        this.frasesDelAve.pedir("ejercicio.ave.adelante", va("adelante"));
+        return;
+      case "aguanta":
+        tarjeta(`palanca-media-${lado}`, "ejercicio.ave.aguanta");
+        this.frasesDelAve.pedir("ejercicio.ave.aguanta", va("aguanta"));
+        return;
+      case "noAguanta":
+        tarjeta(`palanca-atras-${lado}`, "ejercicio.ave.noAguanta");
+        this.frasesDelAve.pedir("ejercicio.ave.noAguanta", va("noAguanta", "parado"));
+        return;
+      case "parado": {
+        this.flight.pararMotor?.(motor);
+        this.flight.asegurarMotor?.(motor);
+        this.mensajesDeMotor = listaDelMotor(this.aircraft, motor, true).slice(1);
+        this.hud.senal.mostrar("motor-parado", this.rotulo("ejercicio.enVuelo", "palabra.practica"), null, {
+          segundos: 6,
+          prioridad: IMPORTANTE,
+        });
+        return;
+      }
+    }
+  }
+
+  /**
    * **Falla un motor**, o todos.
    *
    * Todos es el vuelo sin motor de siempre, con su planeo, su flecha y su
@@ -26355,17 +26559,21 @@ export class Game {
         ? "nose gear unsafe"
         : averia === "neumatico"
           ? "burst tire, returning"
-          : "engine failure, returning";
+          : averia === "ave"
+            ? socorro === "mayday"
+              ? "bird strike, engine shut down, returning"
+              : "bird strike, returning"
+            : "engine failure, returning";
     if (socorro === "mayday") this.declararMayday(motivo);
     else this.declararPanPan(motivo);
     /*
      * Y en el del tren de nariz, no: «avisamos a la torre» ya va en su
      * «tampoco», que se pide en el mismo instante, y un paso nuevo retiraría
-     * ese de la cola. Un suceso, una voz. Y en el del reventón, tampoco: va en
+     * ese de la cola (y en el del ave, en «así aguanta» y en «volvió a estallar»). Un suceso, una voz. Y en el del reventón, tampoco: va en
      * «el tren lo dejamos afuera», y pedida aparte esperaba detrás de la torre
      * más de lo que aguanta y caducaba (H74).
      */
-    if (laInstructoraLoExplica(this.tier.avisos) && averia !== "morro" && averia !== "neumatico")
+    if (laInstructoraLoExplica(this.tier.avisos) && averia !== "morro" && averia !== "neumatico" && averia !== "ave")
       this.decirDelEjercicio("ejercicio.declarar", "normal");
   }
 
@@ -26497,6 +26705,7 @@ export class Game {
     // Y lo que esperaba su turno en la fila del tren de nariz, también.
     this.frasesDelTrenDeMorro.olvidar();
     this.frasesDelReventon.olvidar();
+    this.frasesDelAve.olvidar();
     // Y en la del fallo de radio; y la radio vuelve: lo que se vuele después ya es un vuelo.
     this.frasesSinRadio.olvidar();
     this.devolverLaRadio();
@@ -26518,6 +26727,10 @@ export class Game {
             ? como === "vuelta"
               ? "ejercicio.reventon.bien"
               : "ejercicio.reventon.bienParado"
+          : this.practica?.ejercicio.id === "ave" && como === "vuelta"
+            ? this.practica.motorParado === null
+              ? "ejercicio.ave.bien"
+              : "ejercicio.ave.bienParado"
           : como === "seguidoAntesDeV1" && !conV1(this.aircraft)
             ? SEGUIDO_CON_EL_TREN_FUERA
             : this.segunLosMotores(CIERRE_DEL_EJERCICIO[como]);
