@@ -1328,6 +1328,15 @@ export const EJERCICIOS: readonly Ejercicio[] = [
 const NORMA_LEIDA: ReadonlySet<Scenario["pais"]> = new Set<Scenario["pais"]>(["es", "py"]);
 
 /**
+ * **Los que tienen torre y ningún radar publicado que los vea** abajo, en el
+ * circuito (AIP Paraguay, ENR 1.6 y AD 2): Encarnación. El 7600 se marca
+ * igual, que lo manda la norma, pero las dos frases del ejercicio dicen que el
+ * número se lo dice a la torre, y allí nada publicado lo respalda. Se abre
+ * cuando haya una que sea verdad en ese campo (H86).
+ */
+const SIN_RADAR_PUBLICADO: ReadonlySet<string> = new Set(["SGEN"]);
+
+/**
  * **Si en este campo se practica el fallo de radio**: con torre de verdad
  * —con lámpara, ni AFIS ni sin servicio— y en un país cuya norma se ha leído.
  * La lámpara no hace falta buscarla campo a campo: donde hay torre, la hay
@@ -1336,7 +1345,7 @@ const NORMA_LEIDA: ReadonlySet<Scenario["pais"]> = new Set<Scenario["pais"]>(["e
  * está libre (R 11, apéndice 9, 11.1).
  */
 export function campoConLamparaY7600(oaci: string | null): boolean {
-  if (!oaci) return false;
+  if (!oaci || SIN_RADAR_PUBLICADO.has(oaci)) return false;
   const esc = SCENARIOS.find((e) => oaciDe(e) === oaci);
   return !!esc && NORMA_LEIDA.has(esc.pais) && hayLampara(esc.aerodrome);
 }

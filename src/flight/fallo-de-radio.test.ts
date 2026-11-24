@@ -182,7 +182,7 @@ describe("los faros que contestan de noche", () => {
 
 describe("dónde y con qué se ofrece", () => {
   it("en las avionetas de pistón, de Taguató para arriba, y en un campo con torre de España o de Paraguay", () => {
-    for (const oaci of ["GCXO", "GCLP", "SGAS", "SGES", "SGEN"]) {
+    for (const oaci of ["GCXO", "GCLP", "SGAS", "SGES"]) {
       expect(campoConLamparaY7600(oaci), oaci).toBe(true);
       for (const peldano of ["taguato", "taguato-ruvicha"] as const)
         for (const a of [PYKASU, PANAMBI])
@@ -194,9 +194,10 @@ describe("dónde y con qué se ofrece", () => {
     }
   });
 
-  it("en Paraguay, los tres con torre en el AIP y ninguno más: los demás son AFIS, sin servicio o privados", () => {
+  it("en Paraguay, los de torre con radar publicado, y ninguno más: Encarnación no lo tiene, y los demás son AFIS, sin servicio o privados", () => {
     const abiertos = SCENARIOS.filter((e) => e.pais === "py" && campoConLamparaY7600(oaciDe(e))).map((e) => oaciDe(e));
-    expect([...abiertos].sort()).toEqual(["SGAS", "SGEN", "SGES"]);
+    expect([...abiertos].sort()).toEqual(["SGAS", "SGES"]);
+    expect(campoConLamparaY7600("SGEN")).toBe(false);
   });
 
   it("y los inventados, nunca: sin aeródromo no hay torre, ni país del que leer la norma", () => {

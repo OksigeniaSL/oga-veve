@@ -2483,10 +2483,12 @@ frases**: no hay ninguna nueva ni nada que grabar.
 
 `campoConLamparaY7600`, que era `campoConLamparaYSera`: con torre de verdad y en un
 país cuya norma se ha leído, España o Paraguay (`NORMA_LEIDA`). En Paraguay salen
-**Asunción (SGAS), Minga Guazú (SGES) y Encarnación (SGEN)**, los tres que en el AIP
-tienen torre (AD 2.1-7, AD 2.2-8 y AD 2.5-7). Mariscal Estigarribia, Pedro Juan
-Caballero, Concepción y Pilar son AFIS; Ayolas no tiene servicio y Yvytu Rape es
-privado. `fallo-de-radio.test.ts` mira que sean esos tres y ninguno más.
+**Asunción (SGAS) y Minga Guazú (SGES)**, dos de los tres que en el AIP tienen torre
+(AD 2.1-7, AD 2.2-8 y AD 2.5-7). **Encarnación (SGEN), no todavía**: no publica radar
+(abajo), y las dos frases del ejercicio dicen que el número se lo dice a la torre
+(`SIN_RADAR_PUBLICADO`). Mariscal Estigarribia, Pedro Juan Caballero, Concepción y
+Pilar son AFIS; Ayolas no tiene servicio y Yvytu Rape es privado.
+`fallo-de-radio.test.ts` mira que sean esos dos y ninguno más.
 
 ### Lo que se vio al ir a volarlo
 
@@ -2542,7 +2544,9 @@ partes de `src/world` no llegaron a correr**: el turno del vitest no se libró a
   4.1-1). En Encarnación no publica ninguno, y el de Asunción está a unas 150 millas:
   por la curvatura de la Tierra no ve a un avión a la altura del circuito. El código
   se pone igual, que es lo mandado; que la torre lo vea en una pantalla, como dice la
-  instructora, ahí no está publicado.
+  instructora, ahí no está publicado. Por eso se queda fuera hasta que haya una frase
+  que sea verdad allí: que el número se marca igual, que esa torre no lo ve, y que por
+  eso se mira su lámpara desde el principio.
 - **El otro canal y el «transmitiendo a ciegas»** del R 10 II, que el SERA.14085
   también pide antes: aquí falla todo, el transmisor y el receptor.
 - **De noche en Paraguay** no se ha mirado que el avión sea de los homologados para
