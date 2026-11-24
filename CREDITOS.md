@@ -171,14 +171,16 @@ Y **cada puesto de estacionamiento** —dónde para la rueda de morro, si se sal
 de él empujado por un tractor («R») o por sus propios medios («A»), el mayor
 avión que admite y, donde la carta lo dice, si tiene pasarela— sale de la tabla
 de características de los puestos de las cartas PDC de la parte AD 2, leídas el
-22 de noviembre de 2026: AD 2-GCXO PDC 1.2 (WEF 06-AUG-26), AD 2-LEMD PDC 1.3 a
+22 de noviembre de 2026 (las de GCTS, GCRR y GCLA, otra vez el 24, por el mayor
+avión escrito con varios tipos): AD 2-GCXO PDC 1.2 (WEF 06-AUG-26), AD 2-LEMD PDC 1.3 a
 1.7 (WEF 29-OCT-26) y PDC 2.3 a 2.6 (WEF 25-DEC-25 y 01-OCT-26), AD 2-GCLP PDC
 1.3 a 1.5 (WEF 09-JUL-26), AD 2-GCTS PDC 1.3 y 1.4 (WEF 16-APR-26 y 05-SEP-24), AD 2-GCRR
 PDC 1 (WEF 01-OCT-26), AD 2-GCLA PDC 1.2 (WEF 15-MAY-25), AD 2-GCFV PDC 1.2 y
 1.3 (WEF 07-AUG-25) y AD 2-GCHI PDC 1 (WEF 11-JUN-26). Va, con la hoja y la
 fecha de cada puesto, en `data/aerodromes/aip/<campo>.pdc.json`, y en `aip` de
-cada puesto de la ficha (`scripts/puestos-del-aip.mjs`, ADR 0025, enmienda
-H60f). Son hechos de cada puesto, como los de arriba: no se reproduce la carta.
+cada puesto de la ficha (`scripts/puestos-del-aip.mjs`, ADR 0025, enmiendas
+H60f y H75). La línea del T7 de Lanzarote, en medio de las del T3 y el T4, es
+la que dibuja la carta GCRR PDC 1 (WEF 01-OCT-26). Son hechos de cada puesto, como los de arriba: no se reproduce la carta.
 
 Y **el ángulo de la senda de cada pista** —al que va reglado su PAPI y por el
 que baja su ILS o su aproximación RNP con guía vertical— sale de los

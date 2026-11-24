@@ -1836,26 +1836,167 @@ no tocan esto.
 - **El tráfico de Barajas aterriza por la 36L**, porque el juego opera una sola pista por campo; en la configuración norte
   el AIP da las llegadas por la 32L y la 32R (AD 2-LEMD, 2.20), y la 36L es de salidas.
 
+## Enmienda (24-11-2026, H75): La Palma y Lanzarote, a su punto publicado, y se aparca sobre la línea publicada
+
+### El caso
+
+Lo que dejó la H60f: La Palma y Lanzarote llevaban lo del AIP sin moverse. Llevados los dieciséis puestos de La Palma y
+los ocho de Lanzarote a su punto, salían de lado diez filas de La Palma y las del T6 de Lanzarote.
+
+### Por qué salían de lado
+
+No era el APROAR, ni la raya de la calle, ni metros que falten en OpenStreetMap. Eran dos cosas distintas:
+
+- **En La Palma, la regla de la pared.** El avión solo se aparcaba sobre su raya pintada si la raya iba de frente a una
+  pared (`rumboDeLaPintada`). Las líneas de La Palma van todas paralelas, de la R al este (91°), y pasan por los dos lados
+  de la terminal. Con los puestos a 29–98 m de su sitio, en mitad de la plataforma, la pared más cercana les quedaba casi
+  delante y la regla acertaba de casualidad; en su punto, el 10 la tiene a 56° a la derecha, el 11 a 86°, y el 4 y el 4A a
+  84° y 77° a la izquierda. Con la raya rechazada, el avión se ponía mirando de lado a la esquina de la terminal y la ruta,
+  que sale por la línea, le quedaba de lado. La carta (AD 2-GCLA PDC 1.1, WEF 02-OCT-25) dibuja los de retroceso mirando
+  al este, y la casilla 20 lo dice: «the entry line into the parking stand will be followed».
+- **En Lanzarote, la ficha.** El T6 no tenía raya. La línea estaba, pero apuntada aparte, como otro puesto sin nombre a 65 m
+  de su punto, en el centro de ella: es lo de las fichas de antes de #191, y había catorce. Trece llegan, por la otra
+  mitad, al punto publicado de un puesto que la ficha trae como nodo y sin línea —nueve acaban a menos de un metro de él;
+  el T2 y el T3 paran 22 y 15 m antes del final de la suya—, y la del 7, a su nodo. Además, el juego usaba esas copias como puestos, sin nada del
+  AIP: por la 21, con pasaje, el JAZ 110 y el JAZ 120 salían de la copia del 9, que es de ATR 72, y sin él, de la del 16
+  (B39M) por la 21 y de la del 23 (B752) por la 03.
+- **Y el mayor avión del T6 no se leía.** «A21N/B3XM» —con la marca de cambio de la enmienda en medio— y «A333/AS32» se
+  quedaban sin dato, y el T6, que es de A21N, admitía al JAZ 110 y al JAZ 120.
+
+### Decisión
+
+1. **La raya publicada vale sin mirar la pared** (`seEntraPorSuRaya`, `LineaDeEntrada.publicada`): si la carta da el puesto
+   de salida con tractor («R» o «AR») y el puesto está en su punto publicado, se aparca sobre su línea. Las paredes eran la
+   manera de saber, sin otro dato, si una raya dibujada era la de entrar de frente; la carta lo dice. Vale para el avión de
+   quien juega, la ruta de salida y el tráfico, en los seis campos con puntos casados.
+2. **El que no está en su punto, no** (`aip.lejos`): un puesto que no se pudo llevar al suyo porque no cae en su raya lleva
+   a cuántos metros queda, y para él manda la pared, como antes. Son los 14 de Barajas, el 13 de Los Rodeos y el 7 de
+   Lanzarote.
+3. **La línea sin nombre es del puesto a cuyo punto llega** (`casar`, en `scripts/puestos-del-aip.mjs`): un puesto sin `ref`
+   en el centro de su línea, si la otra mitad llega al punto publicado de uno que la ficha trae sin línea, es una copia: se
+   le da la línea, se lleva al publicado y la copia se quita. Y el que se llama de otra manera que la carta y está donde la
+   carta pone uno que la ficha no tiene es ese: el segundo «23» de Lanzarote es el 22, el «2» de La Palma el H2 (de
+   helicóptero), y el 403 de Barajas, que no está en la carta, el 402. El que no tiene ni nombre ni línea, a menos de veinte
+   metros de uno de la carta, se quita: uno de La Palma, a seis metros del eje de la R, del que salían las avionetas, y diez
+   de Lanzarote.
+4. **El ancho entre dos incompatibles, con la paralela a las de ellos** (`lineaEntreIncompatibles`, `entradaDeducida`): el
+   T7 de Lanzarote (A343, «INCOMP. T3, T4») no tiene línea en OpenStreetMap, y la carta (AD 2-GCRR PDC 1-1) la dibuja en
+   medio de las del T3 y el T4 y paralela. Solo si los incompatibles con línea quedan a los dos lados y sus líneas son
+   paralelas; sale el T7 y ninguno más.
+5. **Una pasarela llega por delante o por la izquierda** (`leLlegaLaPasarela`): en un puesto publicado con su línea, si la
+   carta no dice cuáles tienen pasarela, el plan no da por de contacto el que tiene la terminal a la derecha o detrás. Es
+   el 11 de La Palma, que en su punto queda a 78 m de la esquina y el plan pasaba a elegir por la 18; la carta dibuja las
+   pasarelas delante de la terminal, y el 11 queda al norte de ella.
+6. **El mayor avión con varios tipos** se lee y admite el que más (`admite`); el helicóptero que va con él no cuenta.
+7. **`--sin-mover` se quita**: ya no hay campo que lo use.
+
+El APROAR no hace falta para esto, y el empuje sigue sin usarlo: La Palma no lo publica. Ver «Lo que queda».
+
+### Lo que va a su punto
+
+| Campo | Puestos casados con la carta | En su punto | Sin mover, y por qué |
+|---|---|---|---|
+| La Palma | 17 (16 y el H2) | **17**: de 21 a 98 m movidos, todos por su raya, y el 12 y el 14 (autónomos, sin raya), a su punto de la plataforma | ninguno |
+| Lanzarote | 27 | **26**: 14 movidos, de 2 a 22 m, y los demás ya estaban a menos de diez | el **7**: el AIP lo publica en 285705.90N 0133627.65W, a 136 m de su fila, junto a la terminal y fuera de su línea. Con 0133622.65W caería a 0,7 m del final de su línea y a 3 m del nodo de OpenStreetMap, así que parece una errata de cinco segundos. No se usa: se queda en el nodo, con su línea |
+| Barajas | 401 | 387, con el 402 (35 m), que la ficha llamaba 403 | los 14 de la H60f |
+
+### El barrido y el plan
+
+Los tres reactores, las dos cabeceras y cada puesto de contacto, antes —main en 809545a4— y después:
+
+| | Antes | Después |
+|---|---|---|
+| Empujes | 878 | **846** |
+| Sobre la raya y mirando por ella | 782 | **775** |
+| No | 96 | **71** |
+| Salen de lado | 75 | **56** |
+| Del puesto que elige el plan | 42 de 42 | **42 de 42** |
+| Sobre su raya pintada | 662 | **711** |
+
+Con los puestos movidos y nada más, La Palma y Lanzarote daban 64 de 90 y 26 de lado; antes, 76 de 88; ahora, 56 de 56.
+
+Por campo:
+
+| Campo | Antes: bien de empujes · de lado | Después | De bien a mal | De mal a bien | Salen |
+|---|---|---|---|---|---|
+| La Palma | 26 de 26 · 0 | **26 de 26** · 0 | 0 | 0 | 0 |
+| Lanzarote | 50 de 62 · 6 | **30 de 30** · 0 | 0 | 6 | 32 |
+| Tenerife Sur | 23 de 30 · 7 | **30 de 30** · 0 | 0 | 7 | 0 |
+| Gran Canaria | 26 de 34 · 8 | **32 de 34** · 2 | 0 | 6 | 0 |
+| Barajas | 595 de 650 · 40 | 595 de 650 · 40 | 0 | 0 | 0 |
+| Los Rodeos | 17 de 18 · 1 | 17 de 18 · 1 | 0 | 0 | 0 |
+| Pettirossi | 45 de 58 · 13 | 45 de 58 · 13 | 0 | 0 | 0 |
+
+**Ninguna fila de bien a mal.** Las 32 que salen son de Lanzarote: las de las copias sin nombre, 20, y las doce del JAZ 110 y
+del JAZ 120 desde el T5, el T6 y el 10, que son de A21N (seis de ellas ya iban mal). Las que pasan a bien: en Lanzarote el T5, el
+T6, el T7 y el 10; en Tenerife Sur el R42, el H43 y el J8; en Gran Canaria el N01, el de la H60f. En Lanzarote los empujes
+de 150 a 296 m por la 03 pasan a 89–134, salvo el T2, 268 m. Las que siguen mal en Barajas (55) son de ocho puestos que no
+tienen línea en OpenStreetMap —el 330, el 538, el 539, el 548, el 579, el 582, el 583 y el 585— y de dos que la tienen y
+cuyo empuje se hace de frente, el 370 y el 584; en Gran Canaria, las del N11, sin línea.
+
+**El plan cambia de puesto** en siete de las 42: en La Palma, el JAZ 90 por la 36 del 6A al 8; en Lanzarote, por la 21, de
+la copia del 9 al T7 con el JAZ 110 y el JAZ 120 y al 10 con el JAZ 90 —el 10, «R», A21N/B3XM, de la T2, con la terminal
+delante—; y en Gran Canaria por la 21, los tres al N01 —«R», de pasarela (PDC 1.3)—, del que hasta aquí la raya salía de
+lado. De las 418 claves de `puesto-de-salida-de-cada-campo.json`, rehecho con `OGA_REHACER_SALIDAS=1` después de mirarlo,
+cambian 49: 15 con pasaje —las siete, y las ocho del mismo puesto en su sitio nuevo— y 34 sin él, 16 de La Palma, 13 de
+Lanzarote y 5 de Barajas (el 403, que es el 402). Sin pasaje, el JAZ 110 y el JAZ 120 salen en Lanzarote del 14 y del T1,
+los de B744.
+
+### Lo medido
+
+- **La mesa**: el barrido de antes y el de después, con la medida de la prueba (`comoAcaba`), fuera de vitest; el de antes
+  es el publicado (878, 782, 75 y 662).
+- **Las paredes**, con la misma mesa: el morro, la cola y las puntas de las alas en cada medio metro de cada empuje contra
+  todos los edificios de la ficha. Antes se metían en uno cinco filas —el J8 de Tenerife Sur por la 07 con los tres, y el T6
+  de Lanzarote por la 21 con el JAZ 110 y el JAZ 120—, y nueve más pasaban a menos de siete metros; después, en La Palma,
+  Lanzarote, Tenerife Sur y Gran Canaria no se mete ninguna, y lo más cerca que pasan es a 6,1 m, el morro del JAZ 90 parado en
+  el 4 de La Palma, de una torre de iluminación. En Barajas, Los Rodeos y Pettirossi, igual que antes, fila a fila.
+- **Pruebas nuevas**: cada puesto de los seis campos, a diez metros o menos de su punto publicado o con `lejos` dicho; las
+  catorce líneas de Lanzarote y el T7; el 2 de La Palma; el 11 sin pasarela; la raya publicada y `leLlegaLaPasarela` con
+  terminales de mentira; y, en La Palma, Lanzarote y Tenerife Sur, cada puesto de contacto con los tres reactores por las dos
+  cabeceras, sobre su raya, sin que salga de lado y acabando en la del plan. Y los que ya había, con el plan que no elige lo
+  que el AIP desmiente, en los seis campos.
+- **Vitest entero**, una vez, con el código terminado y el barrido dentro: 584 de 584 ficheros, 11.645 pruebas en verde,
+  31 saltadas y una pendiente, ninguna en rojo, en 1.364 s con dos hilos. El barrido de dentro, el mismo: 775 de 846 y 42
+  de 42.
+- **En planta**, dibujados los empujes de La Palma y Lanzarote sobre la ficha, con el avión en el puesto y al acabar: los de
+  La Palma, sobre su línea mirando al este y hasta la R; los de Lanzarote, hasta la calle de la plataforma, salvo el T2 de
+  la 03.
+- **No se voló el navegador**: los bancos del remolque de quien juega —por la 12 y la 30 de Los Rodeos, y los de La Palma y
+  Lanzarote— estuvieron cincuenta minutos en cola detrás de otros y no les tocó turno. En Los Rodeos los dieciocho empujes
+  del barrido salen igual, fila a fila, y no cambia ninguna de sus claves del puesto de salida.
+
+### Lo que queda
+
+**El T2 de Lanzarote por la 03**, del que sale el JAZ 90: 268 m de empuje por la C hasta la R (290 antes). La línea del T2
+cae donde la calle de la plataforma y la C se juntan: la ruta por la línea tuerce a la C a nueve metros de llegar a la
+calle, el empuje por ella no acaba mirando por la raya (`no-acaba-en-ella`), y el plan se queda con la ruta de siempre, que
+sale derecha a la C; el tractor la sigue entera, como antes. El AIP lo da con el morro al NE al acabar, en la calle de la
+plataforma: es el caso para usar el APROAR. **El APROAR**: lo publican Lanzarote y Barajas y el empuje no lo usa; medido
+con los puestos de contacto de después, el morro acaba hacia donde dice el AIP en 17 de las 30 filas de Lanzarote que lo
+tienen (17 de 42 antes, con las copias y los de A21N) y en 301 de las 638 de Barajas. Usarlo pide que la ruta elija el lado
+de la calle. Los ocho puestos de Barajas sin línea en OpenStreetMap, el 370 y el 584, y Pettirossi. Y la longitud del 7 de
+Lanzarote, por si el AIP la corrige.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
 no da ruta, que es la regla; un avión de línea de allí la tendría. Y el banco de Los Rodeos por la 30 con el banco nuevo,
 que no se voló. Ver «Lo que queda» de la H66.
 
-**La Palma, Lanzarote y Pettirossi, a su punto publicado** (H60f). Los dos primeros llevan lo del AIP pero no se
-mueven: en La Palma los dieciséis puestos quedan a 29–98 m de su punto publicado, todos por su raya, y llevados allí
-salen de lado diez empujes que salían bien y tres del plan; en Lanzarote, el T6. Lo que falta es lo de la H60e para el
-330 de Barajas: que el avión sepa salir de un puesto cuya raya del plan arranca de lado. Pettirossi: la DINAC publica
-las coordenadas de las seis puertas (AD 2.1-14.2, 07 AUG 2025) y nada más; el 5 y el 6 quedan a 23 y 25 m de la ficha.
-Moverlos pide su barrido y el banco de Asunción. **El APROAR del AIP** —hacia dónde queda el morro al acabar el
-retroceso— está en `data/aerodromes/aip/` y el empuje no lo usa. Siguen saliendo mal en el barrido el 330 y el 370 de
-Barajas, y de los nuevos de contacto el 538, el 539, el 548, el 579 y del 582 al 585; el plan no los elige.
+**Pettirossi, a su punto publicado** (H60f): la DINAC publica las coordenadas de las seis puertas (AD 2.1-14.2, 07 AUG
+2025) y nada más; el 5 y el 6 quedan a 23 y 25 m de la ficha. Moverlos pide su barrido y el banco de Asunción. Sus
+puestos siguen en el centro de su línea de entrada y repetidos con su nodo, como los de las fichas de antes de #191.
+La Palma y Lanzarote están en su punto desde la H75. **El APROAR del AIP** —hacia dónde queda el morro al acabar el
+retroceso— está en `data/aerodromes/aip/` y el empuje no lo usa; y los puestos de Barajas que siguen saliendo mal
+(el 330, el 370, el 538, el 539, el 548, el 579, del 582 al 585), y el N11 de Gran Canaria, no tienen línea en
+OpenStreetMap, salvo el 370 y el 584. El plan no los elige.
 
-**Los puestos de las fichas de antes de #191**, en La Palma, Lanzarote y Pettirossi: siguen en el centro de su línea
-de entrada y repetidos con su nodo. Los de Barajas y Gran Canaria están en su parada desde la H60f, salvo los catorce
-de Barajas cuyo punto publicado no cae en su raya. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y Tenerife Sur, mueve el
-puesto del que se sale en esos campos y pide su barrido y sus bancos: con los 440 de los cuatro campos con respuesta
-guardada llevados a su parada, el barrido daba 27 de 42 del plan (H60d, sin la regla de la H60e).
+**Los puestos de las fichas de antes de #191**, en Pettirossi: ver arriba. Los de Barajas, Gran Canaria, La Palma y
+Lanzarote están en su parada desde la H60f y la H75, salvo los catorce de Barajas cuyo punto publicado no cae en su raya
+y el 7 de Lanzarote. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y Tenerife Sur, mueve el puesto del que se sale en esos campos y
+pide su barrido y sus bancos: con los 440 de los cuatro campos con respuesta guardada llevados a su parada, el barrido
+daba 27 de 42 del plan (H60d, sin la regla de la H60e).
 
 El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando
 por su calle: ver «El empuje hasta la calle».
