@@ -108,7 +108,7 @@ describe("los puestos de Fuerteventura", async () => {
     expect(el("33B").aip).toMatchObject({ salida: "A", morro: "E", salePor: ["T3"] });
     for (const p of puestos) {
       if (p.aip!.salida === "A") expect(aproarDe(p.aip, la01), p.ref!).toBeNull();
-      else if (!p.aip!.general) expect(p.aip!.aproar, p.ref!).toBe("S");
+      else if (!p.aip!.uso) expect(p.aip!.aproar, p.ref!).toBe("S");
     }
     expect(aero.aipPuestos?.rodaje).toContain("casilla 20.5");
   });
@@ -145,7 +145,7 @@ describe("los puestos de Fuerteventura", async () => {
       for (const p of dentro(plan).puestosDeContacto()) {
         const nombre = `${rumbo.toFixed(0)}° · el ${p.ref}`;
         const aip = el(p.ref!).aip!;
-        expect(aip.general, nombre).toBeUndefined();
+        expect(aip.uso, nombre).toBeUndefined();
         expect(plan.reiniciarDesde(p.xy), nombre).toBe(true);
         const [x, z] = plan.arranque()!;
         const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
@@ -193,10 +193,30 @@ describe("los puestos de Fuerteventura", async () => {
   });
 
   it("las avionetas, a la plataforma de aviación general; el turbohélice y los reactores, no", () => {
+    expect(puestos.filter((p) => p.aip!.uso === "general").map((p) => p.ref)).toEqual(["52B", "52C", "53B", "54", "55", "56", "57", "58", "59", "60"]);
+    expect(puestos.filter((p) => p.aip!.uso === "carga").map((p) => p.ref)).toEqual(["51", "51B", "52", "53"]);
     for (const id of ["jaz-20", "jaz-25", "jaz-40"])
-      for (const p of dentro(planDe(id, la01, false)).puestosCandidatos()) expect(el(p.ref!).aip!.general, `${id} · ${p.ref}`).toBe(true);
+      for (const p of dentro(planDe(id, la01, false)).puestosCandidatos()) expect(el(p.ref!).aip!.uso, `${id} · ${p.ref}`).toBe("general");
     for (const id of ["jaz-50", "jaz-60", "jaz-90"])
-      for (const p of dentro(planDe(id, la01, false)).puestosDeLinea()) expect(el(p.ref!).aip!.general, `${id} · ${p.ref}`).toBeUndefined();
+      for (const p of dentro(planDe(id, la01, false)).puestosDeLinea()) expect(el(p.ref!).aip!.uso, `${id} · ${p.ref}`).toBeUndefined();
+  });
+
+  it("y el tráfico, igual: cada uno a un puesto que lo admite, por las calles del suyo", () => {
+    const refDe = (q: { x: number; z: number }) =>
+      [...puestos].sort((a, b) => Math.hypot(a.xy[0] - q.x, a.xy[1] + q.z) - Math.hypot(b.xy[0] - q.x, b.xy[1] + q.z))[0]!;
+    for (const heading of [la01, la19])
+      for (const t of [TIPOS.avioneta, TIPOS.bimotor, TIPOS.turbohelice]) {
+        const suelo = sueloDelTrafico(aero, { ...campo.runway, heading }, aero.runways[0]?.widthM ?? 45)!;
+        const sale = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(t), undefined, undefined, MORRO_DEL_TRAFICO[t.id], t.envergadura)!;
+        const llega = suelo.llegada(t.toca + t.frena, undefined, undefined, undefined, undefined, MORRO_DEL_TRAFICO[t.id], t.envergadura)!;
+        for (const q of [sale.camino[0]!, llega.camino.at(-1)!]) {
+          const p = refDe(q);
+          const nombre = `${heading.toFixed(0)}° · ${t.id} · el ${p.ref}`;
+          expect(Math.hypot(p.xy[0] - q.x, p.xy[1] + q.z), nombre).toBeLessThan(15);
+          expect(admite(p.aip, t.envergadura), nombre).toBe(true);
+          expect(p.aip!.uso, nombre).toBe(t.envergadura < 15 ? "general" : undefined);
+        }
+      }
   });
 
   it("de un autónomo se sale de frente a su calle de plataforma, y a él se llega por detrás, de la paralela", () => {
@@ -241,7 +261,7 @@ describe("los puestos de Fuerteventura", async () => {
       const m = MORRO_DEL_TRAFICO.reactor.rueda;
       const aip = delAipEn(aero, poses[0]!.x + Math.sin(poses[0]!.rumbo) * m, poses[0]!.z - Math.cos(poses[0]!.rumbo) * m)!;
       expect(aip.salida).toBe("R");
-      expect(aip.general).toBeUndefined();
+      expect(aip.uso).toBeUndefined();
       for (const q of poses) expect(pav([q.x, -q.z])).toBe(true);
       // La L por la que cruza de la A a la T: la que publica su puesto.
       const laL: Readonly<Record<string, number>> = { L1: 490, L2: 111, L3: -191, L4: -459 };

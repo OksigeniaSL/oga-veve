@@ -6008,7 +6008,18 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.2",
         "morro": "W",
-        "general": true
+        "uso": "carga",
+        "salePor": [
+          "A4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "A4"
+          ],
+          "sur": [
+            "A4"
+          ]
+        }
       }
     },
     {
@@ -6024,7 +6035,18 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true
+        "uso": "carga",
+        "salePor": [
+          "A4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "A4"
+          ],
+          "sur": [
+            "A4"
+          ]
+        }
       }
     },
     {
@@ -6051,7 +6073,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "carga",
         "salePor": [
           "B1"
         ],
@@ -6089,7 +6111,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B1"
         ],
@@ -6127,7 +6149,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B1"
         ],
@@ -6165,7 +6187,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "carga",
         "salePor": [
           "B1"
         ],
@@ -6203,7 +6225,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B1"
         ],
@@ -6241,7 +6263,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "S",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B1"
         ],
@@ -6279,7 +6301,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "S",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B1"
         ],
@@ -6317,7 +6339,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "S",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B1"
         ],
@@ -6355,7 +6377,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B2"
         ],
@@ -6393,7 +6415,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B2"
         ],
@@ -6431,7 +6453,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B2"
         ],
@@ -6469,7 +6491,7 @@
         "contacto": false,
         "carta": "AD 2-GCFV PDC 1.3",
         "morro": "N",
-        "general": true,
+        "uso": "general",
         "salePor": [
           "B2"
         ],

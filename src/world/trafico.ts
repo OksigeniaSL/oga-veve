@@ -1222,7 +1222,7 @@ export function trazar(
     const deOtros = conTuPuesto(tierra.deOtros, tierra.tuPuesto, t);
     // Con la rueda de morro en el punto del puesto, al llegar y al salir (#191). Ver `world/rueda-de-morro.ts`.
     const morro = MORRO_DEL_TRAFICO[t.id];
-    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, deOtros, morro);
+    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, deOtros, morro, t.envergadura);
     if (llega && llega.camino.length > 1) {
       const tomaDeVerdad = sobre(en(desplazado + t.toca, 0, 0));
       const rodando = llega.camino.map(sobre);
@@ -1266,6 +1266,7 @@ export function trazar(
       pasarela,
       deOtros,
       morro,
+      t.envergadura,
     );
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);

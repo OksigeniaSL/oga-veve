@@ -1157,6 +1157,9 @@ const DELANTE_DEL_MORRO = 1;
 const HASTA_DONDE_SE_BUSCA = 80;
 const HACIA_DONDE_SIGUE = Math.cos((20 * Math.PI) / 180);
 
+/** De cuántos puestos, de los más cercanos, se mira lo que se rueda por las calles que publica el AIP. Ver `puestoDeLlegada`. */
+const MIRA_POR_LAS_SUYAS = 12;
+
 /** Cuántos puestos más prueba el plan si del elegido se sale mal: ver `saleMal`. */
 const OTROS_SI_SALE_DE_LADO = 8;
 
@@ -2538,9 +2541,23 @@ export class PlanDeVuelo {
         undefined,
         { desdeFuera: true },
       );
+      let largos = rutas.map((r) => r?.largo ?? Infinity);
+      /*
+       * Y si el AIP dice por dónde se llega a cada uno (H85), lo que se rueda por ahí, en los doce más
+       * cercanos: en Fuerteventura el 36B queda a ciento sesenta metros de la E6 cruzando la plataforma,
+       * y a él se llega por el otro lado, por la L1 y la A1.
+       */
+      if (this.aero.aipPuestos?.callesDePlataforma) {
+        const cerca = new Set([...largos.keys()].sort((a, b) => largos[a]! - largos[b]!).slice(0, MIRA_POR_LAS_SUYAS));
+        largos = largos.map((l, k) => {
+          const xy = puestos[k]!.xy;
+          if (!cerca.has(k) || l === Infinity) return Infinity;
+          const r = rodajeEntre(this.grafoDeLlegada(xy), desde, xy, 600, undefined, { desdeFuera: true, ...this.llegaEn(xy) });
+          return r ? r.largo : l;
+        });
+      }
       for (const [k, p] of puestos.entries()) {
-        const ruta = rutas[k] ?? null;
-        const d = ruta ? ruta.largo : Infinity;
+        const d = largos[k]!;
         if (d < corto) {
           corto = d;
           mejor = p;
@@ -2601,7 +2618,7 @@ export class PlanDeVuelo {
     if (this.candidatosGuardados) return this.candidatosGuardados;
     const enElAsfalto = this.puestosEnElAsfalto();
     // Donde la carta dice cuáles son de aviación general, a esos (H85); si no, el tercio más apartado de todos.
-    const generales = enElAsfalto.filter((p) => p.aip?.general);
+    const generales = enElAsfalto.filter((p) => p.aip?.uso === "general");
     const puestos = generales.length ? generales : enElAsfalto;
     if (!puestos.length) return [];
     /*
@@ -2685,9 +2702,9 @@ export class PlanDeVuelo {
        * ese número ya cuenta las paredes, las pasarelas y el puesto de al lado. El 24 de Los
        * Rodeos es de B744 y tiene el tejado del pasillo de las pasarelas a un ala (H59).
        */
-      // Los de la plataforma de aviación general no son para el pasaje, si hay otros (H85).
+      // Los de la plataforma de carga y aviación general no son para el pasaje, si hay otros (H85).
       const enElAsfalto = this.puestosEnElAsfalto();
-      const comerciales = enElAsfalto.filter((p) => !p.aip?.general);
+      const comerciales = enElAsfalto.filter((p) => !p.aip?.uso);
       const sinPared = (comerciales.length ? comerciales : enElAsfalto).filter(
         (p) => (p.aip?.max != null && admite(p.aip, this.avion.wingSpan)) || this.cabeDeLinea(p.xy),
       );

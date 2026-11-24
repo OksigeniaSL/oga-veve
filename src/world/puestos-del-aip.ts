@@ -58,8 +58,12 @@ export interface DelAip {
    * «PRKG from 11 to 18: assigned stand - TWY A1 - L2». Ver `grafoPorSusCalles` en `rodaje.ts`.
    */
   readonly salePor?: readonly string[];
-  /** Si la carta lo da en la plataforma de carga y aviación general (H85): es la de las avionetas, y no la del pasaje. */
-  readonly general?: boolean;
+  /**
+   * **Si la carta lo da en la plataforma de carga y aviación general** (H85), de qué es: los que dan su
+   * mayor avión por envergadura —«24 m», «15 m»—, de las avionetas; los que lo dan por un tipo —B767,
+   * A321, A320 y CL-600—, de carga y ambulancia. Ahí no va el pasaje.
+   */
+  readonly uso?: "general" | "carga";
   /** Y por cuáles se llega, con la pista al norte y al sur. */
   readonly llegaPor?: { readonly norte: readonly string[]; readonly sur: readonly string[] };
 }

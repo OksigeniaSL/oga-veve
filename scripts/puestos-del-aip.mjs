@@ -99,8 +99,8 @@ const APROAR_POR_CONFIGURACION = {
  *   norte a sur: ahí no acaba ningún empuje. Es hacia dónde mira el avión en el puesto (`morro`).
  * - **Hacia dónde queda al acabar el empuje** lo dice la casilla 20.5 del AD 2, que da por dónde se
  *   sale de cada puesto y por dónde se llega según la pista: «PRKG from 11 to 18: assigned stand -
- *   TWY A1 - L2». Con el morro hacia la L por la A que nombra. Los del 51 («FM TWY A5») no van: donde
- *   él cae, OpenStreetMap llama A4 a esa calle, y no tiene otra.
+ *   TWY A1 - L2». Con el morro hacia la L por la A que nombra. Los del 51 («FM TWY A5»), por la A4:
+ *   donde él cae, OpenStreetMap llama así a esa calle.
  * - **Los de la plataforma de carga y aviación general** no son de pasarela: la carta dibuja las
  *   suyas en la terminal y ahí, solo el edificio de carga.
  */
@@ -124,6 +124,7 @@ const DE_LA_CARTA = {
       [{ desde: "31", hasta: "36" }, ["A1", "L2"]],
       [{ desde: "41", hasta: "44" }, ["A2", "L3"]],
       [{ desde: "45", hasta: "47" }, ["A3", "L4"]],
+      [{ desde: "51", hasta: "51" }, ["A4"]],
       [{ desde: "52", hasta: "56" }, ["B1"]],
       [{ desde: "57", hasta: "60" }, ["B2"]],
     ],
@@ -138,6 +139,7 @@ const DE_LA_CARTA = {
         [{ desde: "31", hasta: "36" }, ["T3"]],
         [{ desde: "41", hasta: "44" }, ["T4"]],
         [{ desde: "45", hasta: "47" }, ["T5"]],
+        [{ desde: "51", hasta: "51" }, ["A4"]],
         [{ desde: "52", hasta: "56" }, ["B1"]],
         [{ desde: "57", hasta: "60" }, ["B2"]],
       ],
@@ -150,6 +152,7 @@ const DE_LA_CARTA = {
         [{ desde: "31", hasta: "36" }, ["T3"]],
         [{ desde: "41", hasta: "44" }, ["T4"]],
         [{ desde: "45", hasta: "47" }, ["T5"]],
+        [{ desde: "51", hasta: "51" }, ["A4"]],
         [{ desde: "52", hasta: "56" }, ["B1"]],
         [{ desde: "57", hasta: "60" }, ["B2"]],
       ],
@@ -709,7 +712,8 @@ async function poner(id) {
     const general = enRango(a.ref, [regla.general.desde, regla.general.hasta]);
     const suyo = { salida: a.salida, max: a.max, contacto: general ? false : a.contacto, carta: a.carta };
     if (a.aproar) suyo.morro = a.aproar;
-    if (general) suyo.general = true;
+    // Los que dan su mayor avión por envergadura, de las avionetas; los de un tipo, de carga y ambulancia.
+    if (general) suyo.uso = ES_ENVERGADURA.test(a.max ?? "") ? "general" : "carga";
     if (salePor) {
       const aproar = a.salida !== "A" ? haciaSuSalida(ficha, salePor) : null;
       if (aproar) suyo.aproar = aproar;
