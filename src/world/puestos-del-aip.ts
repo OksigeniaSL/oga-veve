@@ -26,7 +26,7 @@ export interface DelAip {
   /**
    * El mayor avión que admite, por su designador de tipo de la OACI (Doc 8643); con varios,
    * separados por barra: «A21N/B3XM», o «A333/AS32», el mayor avión y el mayor helicóptero
-   * (H75). `null` si no lo publica.
+   * (H75); o su envergadura, si la carta lo da así: «24 m» (H85). `null` si no lo publica.
    */
   readonly max: string | null;
   /** Si la carta lo da por de contacto (con pasarela); `null` si no lo dice. */
@@ -42,6 +42,8 @@ export interface DelAip {
   /**
    * **El APROAR** (H76): hacia dónde queda el morro al acabar el empuje, en puntos cardinales
    * —«NE»—, o varios si la carta deja elegir —«NE/SW», «E/W/S»—. Sin él, la carta no lo publica.
+   * En Fuerteventura no es el de la columna, que es el `morro`: es hacia donde va la ruta que
+   * publica la casilla 20 (`salePor`, H85).
    */
   readonly aproar?: string;
   /**
@@ -49,6 +51,30 @@ export interface DelAip {
    * despegar hacia el norte (AD 2-LEMD PDC 1.7, observaciones 5 y 6).
    */
   readonly aproarPorPista?: { readonly norte: string; readonly sur: string };
+  /**
+   * **Hacia dónde mira el avión en el puesto** (H85), en puntos cardinales: es lo que publica en su
+   * columna APROAR la carta de Fuerteventura, también en los de salida autónoma.
+   */
+  readonly morro?: string;
+  /**
+   * **Por qué calles se sale de él a la paralela** (H85), como las da la casilla 20 del AD 2:
+   * «PRKG from 11 to 18: assigned stand - TWY A1 - L2». Ver `grafoPorSusCalles` en `rodaje.ts`.
+   */
+  readonly salePor?: readonly string[];
+  /**
+   * **Si la carta lo da en la plataforma de carga y aviación general** (H85), de qué es: los que dan su
+   * mayor avión por envergadura —«24 m», «15 m»—, de las avionetas; los que lo dan por un tipo —B767,
+   * A321, A320 y CL-600—, de carga y ambulancia. Ahí no va el pasaje.
+   */
+  readonly uso?: "general" | "carga";
+  /** Y por cuáles se llega, con la pista al norte y al sur. */
+  readonly llegaPor?: { readonly norte: readonly string[]; readonly sur: readonly string[] };
+}
+
+/** Por qué calles se llega a este puesto con esta pista de aterrizaje, en grados; `null` si no se publica. */
+export function llegaPorDe(aip: DelAip | null | undefined, rumboDePista: number): readonly string[] | null {
+  if (!aip?.llegaPor) return null;
+  return Math.cos((rumboDePista * Math.PI) / 180) >= 0 ? aip.llegaPor.norte : aip.llegaPor.sur;
 }
 
 const CARDINAL: Readonly<Record<string, number>> = { N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315 };
@@ -125,7 +151,9 @@ const ENVERGADURA: Readonly<Record<string, number>> = {
   B738: 35.79,
   B739: 35.79,
   B744: 64.44,
-  B747: 59.64,
+  // «B747», que es como lo escribe Fuerteventura, es la familia: el mayor, el 747-400, que el -8 es de
+  // letra F y su AIP lo manda a aparcar a la T4, «never on the apron» (AD 2-GCFV, 20.7; H85).
+  B747: 64.44,
   B748: 68.4,
   B752: 38.05,
   B753: 38.05,
@@ -137,6 +165,7 @@ const ENVERGADURA: Readonly<Record<string, number>> = {
   B77W: 64.8,
   C17: 51.75,
   C421: 12.53,
+  CL60: 19.61,
   CN35: 25.81,
   FA50: 18.86,
   G150: 16.94,
@@ -158,7 +187,7 @@ export function admite(aip: DelAip | null | undefined, envergadura: number): boo
   if (!aip?.max) return true;
   const aviones = aip.max.split("/").filter((tipo) => !HELICOPTEROS.has(tipo));
   if (!aviones.length) return false;
-  const suya = Math.max(...aviones.map((tipo) => ENVERGADURA[tipo] ?? Infinity));
+  const suya = Math.max(...aviones.map((tipo) => ENVERGADURA[tipo] ?? (/^[\d.]+ m$/.test(tipo) ? parseFloat(tipo) : Infinity)));
   return envergadura <= suya + 0.05;
 }
 
@@ -197,8 +226,8 @@ export function puestoEn(
   aero: Pick<Aerodrome, "parkingPositions"> | null | undefined,
   x: number,
   z: number,
-): { readonly xy: Punto; readonly aip?: DelAip } | null {
-  let mejor: { readonly xy: Punto; readonly aip?: DelAip } | null = null;
+): { readonly xy: Punto; readonly entrada?: readonly Punto[]; readonly aip?: DelAip } | null {
+  let mejor: { readonly xy: Punto; readonly entrada?: readonly Punto[]; readonly aip?: DelAip } | null = null;
   let cerca = 5;
   for (const p of aero?.parkingPositions ?? []) {
     const d = Math.hypot(p.xy[0] - x, -p.xy[1] - z);

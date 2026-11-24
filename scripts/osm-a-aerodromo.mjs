@@ -1148,7 +1148,7 @@ for (const icao of icaos) {
    * fichero de arriba, no objetos con `manual`, y sin esto se caían en la
    * primera extracción. Ver `Aerodrome.sinTorre`.
    */
-  for (const clave of ["privado", "granja", "sinTorre", "afis", "salidasPorInterseccion", "pasarelas", "restriccionesDeRodaje", "plataformasDeducidas", "helipuertosAMano", "lucesAMano"])
+  for (const clave of ["privado", "granja", "sinTorre", "afis", "salidasPorInterseccion", "pasarelas", "restriccionesDeRodaje", "aipPuestos", "plataformasDeducidas", "helipuertosAMano", "lucesAMano"])
     if (previo && clave in previo) salida[clave] = previo[clave];
   /*
    * **Y las luces de la pista que publica el AIP**, que mandan sobre las dos
