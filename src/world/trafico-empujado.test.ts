@@ -19,7 +19,8 @@ import {
   type EnTierra,
   type QuienJuega,
 } from "./trafico";
-import { edificiosDePasarela, esPuestoDeContacto, paredMasCercana, vector } from "./remolque";
+import { delAipEn } from "./puestos-del-aip";
+import { comoMiraALaTerminal, edificiosDePasarela, entradaDelPuesto, esDeContacto, esPuestoDeContacto, paredMasCercana, vector } from "./remolque";
 import { MORRO_DEL_TRAFICO, ruedaDeMorroEn } from "./rueda-de-morro";
 import { dondeSeAcerca } from "./tramo-de-frente";
 import { RETENIDO } from "../flight/radio";
@@ -71,12 +72,14 @@ describe("el reactor del tráfico sale empujado de un puesto de contacto, en cad
         const centro = llega.camino.at(-1)!;
         const antes = llega.camino.at(-2)!;
         // Donde para su rueda de morro, que es el punto del puesto.
-        const fin = ruedaDeMorroEn(centro, Math.atan2(centro.x - antes.x, -(centro.z - antes.z)), MORRO);
-        llegaDeContacto = esPuestoDeContacto(fin.x, fin.z, edificios, MORRO);
+        const rumbo = Math.atan2(centro.x - antes.x, -(centro.z - antes.z));
+        const fin = ruedaDeMorroEn(centro, rumbo, MORRO);
+        const aip = delAipEn(aero, fin.x, fin.z);
+        const entrada = entradaDelPuesto(aero, fin.x, fin.z);
+        llegaDeContacto = esDeContacto(fin.x, fin.z, edificios, MORRO, aip, entrada);
         if (llegaDeContacto) {
-          const d = Math.hypot(fin.x - antes.x, fin.z - antes.z);
-          const morro = { x: fin.x + ((fin.x - antes.x) / d) * 10, z: fin.z + ((fin.z - antes.z) / d) * 10 };
-          morroAlEdificio = paredMasCercana(morro.x, morro.z, edificios)!.distancia < paredMasCercana(fin.x, fin.z, edificios)!.distancia;
+          // O sobre su raya publicada, si se sabe que tiene pasarela (H87): el J1 de Tenerife Sur tiene la suya a la izquierda.
+          morroAlEdificio = comoMiraALaTerminal(fin, rumbo, edificios, MORRO, aip, entrada)!.mira;
           expect(morroAlEdificio, "entra con el morro al edificio").toBe(true);
         }
       }

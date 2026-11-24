@@ -253,7 +253,8 @@ describe("en Lanzarote", async () => {
           filas++;
         }
       }
-    expect(filas).toBe(30);
+    // Once empujes por cabecera: los siete de pasarela con el JAZ 90, y el T1 y el T7 con los otros dos (H87).
+    expect(filas).toBe(22);
   });
 
   it("el reactor del tráfico que sale del T2 por la 03, también por la C y con el morro al NE", () => {
