@@ -26,6 +26,7 @@ const CARTAS: Readonly<Record<string, () => Promise<unknown>>> = {
   GCLP: () => import("../../data/aerodromes/aip/gclp.pdc.json"),
   GCXO: () => import("../../data/aerodromes/aip/gcxo.pdc.json"),
   LEMD: () => import("../../data/aerodromes/aip/lemd.pdc.json"),
+  GCFV: () => import("../../data/aerodromes/aip/gcfv.pdc.json"),
 };
 
 const puesto = (salida: DelAip["salida"], max: string | null, contacto: boolean | null = null): DelAip => ({
@@ -131,6 +132,7 @@ describe("las fichas, con lo del AIP", async () => {
     ["GCTS", []],
     ["GCLP", []],
     ["GCXO", ["13"]],
+    ["GCFV", []],
     ["LEMD", ["T27", "T31", "626", "628", "627", "124", "124A", "123", "123A", "122", "122A", "120", "120A", "LAV2"]],
   ] as const)("%s: los puestos están en su punto publicado, o dicen a cuántos metros", async (id, fuera) => {
     const { default: carta } = (await CARTAS[id]!()) as unknown as {
@@ -207,7 +209,7 @@ describe("las fichas, con lo del AIP", async () => {
    * en ella mirando por donde va a rodar. Con la regla de la pared, en La Palma salían de lado el
    * 4, el 4A y el 10, que tienen la terminal al costado.
    */
-  it.each(["GCLA", "GCRR", "GCTS"])("%s: de cada puesto de contacto, por su raya y sin que salga de lado", (id) => {
+  it.each(["GCLA", "GCRR", "GCTS", "GCFV"])("%s: de cada puesto de contacto, por su raya y sin que salga de lado", (id) => {
     const campo = campos.find((c) => c.aerodrome!.id === id)!;
     const aero = campo.aerodrome!;
     const edificios = edificiosDePasarela(aero);
@@ -235,7 +237,7 @@ describe("las fichas, con lo del AIP", async () => {
     expect(mirados).toBeGreaterThan(20);
   });
 
-  it.each(["GCXO", "LEMD", "GCLP", "GCLA", "GCRR", "GCTS"])(
+  it.each(["GCXO", "LEMD", "GCLP", "GCLA", "GCRR", "GCTS", "GCFV"])(
     "%s: el puesto del que sale empujado cada reactor, por cada cabecera, lo admite el AIP",
     (id) => {
       const campo = campos.find((c) => c.aerodrome!.id === id)!;

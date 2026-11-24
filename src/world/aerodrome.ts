@@ -324,7 +324,8 @@ export interface Aerodrome {
     /**
      * Si esa línea no está en OpenStreetMap y es la paralela a las de los dos puestos con los
      * que la carta lo da por incompatible: el T7 de Lanzarote (H75, `lineaEntreIncompatibles`
-     * en `scripts/puestos-del-aip.mjs`).
+     * en `scripts/puestos-del-aip.mjs`). O, en un campo del que OpenStreetMap no trae ninguno, la
+     * que dibuja la carta, del eje de su calle a la parada: Fuerteventura (H85, `DE_LA_CARTA`).
      */
     readonly entradaDeducida?: boolean;
     /**
@@ -340,6 +341,10 @@ export interface Aerodrome {
     readonly url: string;
     readonly leido: string;
     readonly cartas: readonly { readonly carta: string | null; readonly wef: string | null }[];
+    /** De dónde salen `salePor` y `llegaPor` de los puestos, si los llevan (H85). */
+    readonly rodaje?: string;
+    /** Y las calles de la plataforma, por su letra: las que se toman solo si la ruta las nombra. Ver `grafoPorSusCalles`. */
+    readonly callesDePlataforma?: readonly string[];
   };
   /**
    * Las ayudas **visuales** de OpenStreetMap: PAPI, VASI, luces de aproximación.

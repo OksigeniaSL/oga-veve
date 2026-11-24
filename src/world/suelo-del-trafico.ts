@@ -34,7 +34,7 @@ import {
   type Empuje,
 } from "./remolque";
 import { conLaRuedaEn, MORRO_DEL_TRAFICO, type MorroDelAvion } from "./rueda-de-morro";
-import { construirGrafo, pasandoElCruce, puestosEnElPavimento, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
+import { construirGrafo, grafoPorSusCalles, pasandoElCruce, puestosEnElPavimento, rodajeEntre, rodajesDesde, type Ruta, type Tramo } from "./rodaje";
 import { delante, enEjesDePista } from "./rumbo";
 import { anchoDeLaCalleEn, pistaDesdeLaBoca } from "./plan-de-vuelo";
 import { GIRO_DE_MORRO } from "../flight/fdm";
@@ -1135,22 +1135,31 @@ export function sueloDelTrafico(
           const fin = h && empujeDelTrafico(p0, h.hastaLaRaya, pasarela)?.empuje?.poses.at(-1);
           return !!fin && cumpleElAproar(fin.rumbo, aproar);
         };
-        if (acabaHaciaEl(puntos)) return null;
+        // Por las calles que publica la casilla 20, si las publica (H85).
+        const salePor = delAipEn(aero, p0.x, p0.z)?.salePor;
+        const calles = aero.aipPuestos?.callesDePlataforma ?? [];
+        const suGrafo = salePor ? grafoPorSusCalles(grafo, salePor, new Set(calles)) : grafo;
+        const porLasSuyas = salePor
+          ? (r: Ruta): boolean =>
+              r.letras.includes(salePor[salePor.length - 1]!) && !r.letras.some((l) => calles.includes(l) && !salePor.includes(l))
+          : undefined;
+        if (!porLasSuyas && acabaHaciaEl(puntos)) return null;
         const pintada = rumboDeLaPintada(p0.x, p0.z, edificios, entradaDelPuesto(aero, p0.x, p0.z));
         if (pintada === null) return null;
         const sentido = aproar.map((r): Punto => [Math.sin(r), Math.cos(r)]);
         const deEspaldas: Punto = [-Math.sin(pintada), -Math.cos(pintada)];
+        for (const soloPorLasSuyas of porLasSuyas ? [true, false] : [false])
         for (const enLaPrimera of [true, false]) {
-          const ruta = rodajeEntre(grafo, puesto, destino, 220, undefined, { deEspaldas, sentido, enLaPrimera });
+          const ruta = rodajeEntre(suGrafo, puesto, destino, 220, undefined, { deEspaldas, sentido, enLaPrimera });
           if (!ruta) continue;
           /*
            * **Y empujando un poco más, si así se llega a un ramal que queda antes del cruce** (H79,
            * `pasandoElCruce`): la ruta empieza donde acaba el empuje. Es lo que hace el tractor en
            * el T2 de Lanzarote para salir por la C.
            */
-          const [pasando] = pasandoElCruce(grafo, [destino], [ruta], deEspaldas);
+          const [pasando] = pasandoElCruce(suGrafo, [destino], [ruta], deEspaldas, undefined, porLasSuyas);
           for (const r of [pasando, ruta])
-            if (r && valeParaSalir(false)(r.puntos) && acabaHaciaEl(r.puntos)) return [...r.puntos];
+            if (r && (!soloPorLasSuyas || porLasSuyas!(r)) && valeParaSalir(false)(r.puntos) && acabaHaciaEl(r.puntos)) return [...r.puntos];
         }
         return null;
       };

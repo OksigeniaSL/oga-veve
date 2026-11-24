@@ -5,6 +5,7 @@
  *
  *     node scripts/puestos-del-aip.mjs extraer GCXO carta.txt [otra.txt …]
  *     node scripts/puestos-del-aip.mjs juntar GCXO [GCLP …]
+ *     node scripts/puestos-del-aip.mjs poner GCFV
  *
  * `extraer` lee el texto de las cartas PDC de la parte AD 2 del AIP de ENAIRE
  * (aip.enaire.es), pasado por `pdftotext -layout`, y guarda la tabla
@@ -13,7 +14,9 @@
  * la que sale. `juntar` pone a cada puesto de la ficha lo suyo —`aip`: salida,
  * mayor avión, si es de contacto, hacia dónde queda el morro— y lleva a su punto publicado el que está lejos de
  * él (`LEJOS`): la regla de la H60e —el puesto va a su parada— con el AIP como
- * fuente de la parada.
+ * fuente de la parada. `poner` es para el campo cuyos puestos no están en OpenStreetMap
+ * (Fuerteventura, H85): los de la carta, en su punto, con la línea que ella dibuja y por
+ * donde la casilla 20 dice que se sale y se llega.
  *
  * El AIP es una publicación oficial: de él se toman los hechos de cada puesto, no
  * se reproduce la carta.
@@ -82,6 +85,78 @@ const APROAR_POR_CONFIGURACION = {
   LEMD: [{ carta: /PDC 1\./, observacion: /\([56]\)/, aproar: "S/E", norte: "S", sur: "E" }],
 };
 
+/**
+ * **El campo cuyos puestos se ponen enteros de la carta** (H85), porque OpenStreetMap no trae
+ * ninguno. En Fuerteventura, cero `parking_position`:
+ *
+ * - **La línea de cada uno**, la que dibuja AD 2-GCFV PDC 1.1 (WEF 11-JUN-26): recta, del eje de
+ *   la calle de enfrente a la parada y perpendicular a él, con el morro hacia donde dice la tabla.
+ *   El eje es el de OpenStreetMap. Las tres que la carta dibuja sesgadas, con su ángulo medido en
+ *   ella: entran hacia el oeste y un poco al sur. Las del 14B y el 51B, que no son rectas, no van.
+ * - **El APROAR no es el de otros campos.** Lo llevan también los de salida autónoma —del 31 al
+ *   47, al W, que es hacia donde se entra de la T y se sigue a la A; y del 33B al 36B, al E, que
+ *   salen «direct TWY T3»—, y en los de retroceso da al W, la terminal, con la calle de detrás de
+ *   norte a sur: ahí no acaba ningún empuje. Es hacia dónde mira el avión en el puesto (`morro`).
+ * - **Hacia dónde queda al acabar el empuje** lo dice la casilla 20.5 del AD 2, que da por dónde se
+ *   sale de cada puesto y por dónde se llega según la pista: «PRKG from 11 to 18: assigned stand -
+ *   TWY A1 - L2». Con el morro hacia la L por la A que nombra. Los del 51 («FM TWY A5») no van: donde
+ *   él cae, OpenStreetMap llama A4 a esa calle, y no tiene otra.
+ * - **Los de la plataforma de carga y aviación general** no son de pasarela: la carta dibuja las
+ *   suyas en la terminal y ahí, solo el edificio de carga.
+ */
+const DE_LA_CARTA = {
+  GCFV: {
+    carta: "AD 2-GCFV PDC 1.1",
+    wef: "11-JUN-26",
+    /** Cuánto se aparta la línea de la perpendicular, en grados: entrando, a la izquierda. */
+    sesgo: { "18B": 4, "19B": 4, 23: 4.6 },
+    sinLinea: ["14B", "51B"],
+    rodaje: "AD 2-GCFV, casilla 20.5, «Apron taxiing routes» (AMDT 408/26, 09-JUL-26)",
+    callesDePlataforma: ["A1", "A2", "A3", "A4", "A5", "B1", "B2", "L1", "L2", "L3", "L4", "L5"],
+    /** «APN CARGA & GA», en la carta: la plataforma de carga y aviación general. */
+    general: { desde: "51", hasta: "60" },
+    /** Por dónde se sale: igual en las dos configuraciones. La primera fila que le toca. */
+    salidas: [
+      [["33B", "34B", "35B", "36B"], ["T3"]],
+      [{ desde: "11", hasta: "18" }, ["A1", "L2"]],
+      [{ desde: "19", hasta: "24" }, ["A2", "L3"]],
+      [{ desde: "25", hasta: "28" }, ["A3", "L4"]],
+      [{ desde: "31", hasta: "36" }, ["A1", "L2"]],
+      [{ desde: "41", hasta: "44" }, ["A2", "L3"]],
+      [{ desde: "45", hasta: "47" }, ["A3", "L4"]],
+      [{ desde: "52", hasta: "56" }, ["B1"]],
+      [{ desde: "57", hasta: "60" }, ["B2"]],
+    ],
+    /** Por dónde se llega, con la pista al norte (01) y al sur (19). */
+    llegadas: {
+      norte: [
+        [["33B", "34B", "35B", "36B"], ["L1", "A1"]],
+        [{ desde: "11", hasta: "17" }, ["L1", "A1"]],
+        [{ desde: "18", hasta: "22" }, ["L2", "A2"]],
+        [{ desde: "23", hasta: "27" }, ["L3", "A3"]],
+        [{ desde: "28", hasta: "28" }, ["L4"]],
+        [{ desde: "31", hasta: "36" }, ["T3"]],
+        [{ desde: "41", hasta: "44" }, ["T4"]],
+        [{ desde: "45", hasta: "47" }, ["T5"]],
+        [{ desde: "52", hasta: "56" }, ["B1"]],
+        [{ desde: "57", hasta: "60" }, ["B2"]],
+      ],
+      sur: [
+        [["33B", "34B", "35B", "36B"], ["L2", "A1"]],
+        [{ desde: "11", hasta: "12" }, ["L1", "A1"]],
+        [{ desde: "13", hasta: "18" }, ["L2"]],
+        [{ desde: "19", hasta: "24" }, ["L3"]],
+        [{ desde: "25", hasta: "28" }, ["L4", "A3"]],
+        [{ desde: "31", hasta: "36" }, ["T3"]],
+        [{ desde: "41", hasta: "44" }, ["T4"]],
+        [{ desde: "45", hasta: "47" }, ["T5"]],
+        [{ desde: "52", hasta: "56" }, ["B1"]],
+        [{ desde: "57", hasta: "60" }, ["B2"]],
+      ],
+    },
+  },
+};
+
 /** El APROAR de un puesto por la configuración de pistas, o `null` si no depende de ella. */
 function aproarPorConfiguracion(id, a) {
   const r = (APROAR_POR_CONFIGURACION[id] ?? []).find(
@@ -135,6 +210,16 @@ const ES_TIPO = /^[A-Z][A-Z0-9]{1,3}(\/[A-Z][A-Z0-9]{1,3})*$/;
 const MARCA_DE_CAMBIO = /_<-_/g;
 /** La llamada a una observación pegada al tipo: «B738 (2)». */
 const LLAMADA = /\s*\(\d+\)$/;
+/** Los que la carta no escribe con su designador de la OACI (Doc 8643), y el suyo: los de Fuerteventura (H85). */
+const SU_DESIGNADOR = { ATR72: "AT72", "CL-600": "CL60" };
+/** El mayor avión dado por su envergadura: «24 m», en la plataforma de carga de Fuerteventura (H85). */
+const ES_ENVERGADURA = /^\d+(\.\d+)? m$/;
+/** El mayor avión de una columna, como lo entiende el juego; `null` si la columna es otra cosa. */
+function mayorAvion(t) {
+  const sin = t.replace(LLAMADA, "");
+  if (SU_DESIGNADOR[sin]) return SU_DESIGNADOR[sin];
+  return ES_TIPO.test(sin) || ES_ENVERGADURA.test(sin) ? sin : null;
+}
 /** Hacia dónde queda el morro, o varios: «NE/SW», y «E/W/S» en el 580 y el 582 de Barajas (H76). */
 const ES_APROAR = /^([NSEW]{1,2}(\/[NSEW]{1,2})*)$/;
 const NADA = /^[–—-]$/;
@@ -142,7 +227,8 @@ const NADA = /^[–—-]$/;
 /**
  * **La tabla de una carta**: cada fila con coordenadas es un puesto. Las columnas no
  * van alineadas igual en todos los campos, así que se lee por campos separados por
- * dos espacios o más, después de la salida: el mayor avión, si parece un designador
+ * dos espacios o más, después de la salida —la rampa puede faltar, como en el 51B de
+ * Fuerteventura—: el mayor avión, si parece un designador
  * de tipo; hacia dónde queda el morro, si son puntos cardinales; y lo demás, las
  * observaciones.
  */
@@ -150,25 +236,29 @@ function filasDe(texto) {
   const hojas = texto.split("\f");
   const filas = [];
   const FILA =
-    /^\s*([A-Z0-9][A-Z0-9-]*)\s+(\S+)\s+(\d{6}(?:\.\d+)?[NS])\s+(\d{7}(?:\.\d+)?[EW])\s+(Push-Back R(?: \(\d+\))?|A\/R|A-R|R\/A|R-A|A|R)(?=\s|$)(.*)$/;
+    /^\s*([A-Z0-9][A-Z0-9-]*)\s+(?:(\S+)\s+)?(\d{6}(?:\.\d+)?[NS])\s+(\d{7}(?:\.\d+)?[EW])\s+(Push-Back R(?: \(\d+\))?(?: \/)?|A\/R|A-R|R\/A|R-A|A|R(?: \(\d+\))?)(?=\s|$)(.*)$/;
   for (const hoja of hojas) {
     const cabeza = hoja.split("\n").slice(0, 8).join("\n");
     const carta = /AD 2-[A-Z]{4} PDC [0-9.]+/.exec(cabeza)?.[0] ?? null;
     // La fecha va detrás de «WEF», salvo en alguna hoja en la que el texto sale sin él (GCTS PDC 1.4).
     const wef = /(?:WEF )?(\d{2}-[A-Z]{3}-\d{2})/.exec(cabeza)?.[1] ?? null;
-    for (const linea of hoja.split("\n")) {
+    const lineas = hoja.split("\n");
+    for (const [n, linea] of lineas.entries()) {
       const m = FILA.exec(linea);
       if (!m) continue;
-      const salida = salidaDe(m[5]);
+      // «Push-Back R /» y debajo «A (4)», o «Push-Back R (6)» y debajo «/ A (7)»: las dos salidas (H85).
+      const debajo = lineas[n + 1] ?? "";
+      const deLasDos = (m[5].endsWith("/") ? /^\s*A(?: \(\d+\))?\s*$/ : /^\s*\/ A(?: \(\d+\))?\s*$/).test(debajo);
+      const salida = deLasDos ? "AR" : salidaDe(m[5].replace(/ \/$/, ""));
       if (!salida) continue;
       const resto = m[6].replace(MARCA_DE_CAMBIO, "").trim().split(/\s{2,}/).filter(Boolean);
       let max = null;
       let aproar = null;
       let llamada = "";
-      if (resto.length && (NADA.test(resto[0]) || ES_TIPO.test(resto[0].replace(LLAMADA, ""))) && !ES_APROAR.test(resto[0])) {
+      if (resto.length && (NADA.test(resto[0]) || mayorAvion(resto[0])) && !ES_APROAR.test(resto[0])) {
         const t = resto.shift();
         llamada = LLAMADA.exec(t)?.[0].trim() ?? "";
-        max = NADA.test(t) ? null : t.replace(LLAMADA, "");
+        max = NADA.test(t) ? null : mayorAvion(t);
       }
       if (resto.length && (NADA.test(resto[0]) || ES_APROAR.test(resto[0]))) {
         const t = resto.shift();
@@ -532,6 +622,116 @@ async function juntar(id) {
   if (movidos.length) console.log(`  movidos: ${movidos.join(", ")}`);
 }
 
+const CARDINALES = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+/** Hacia dónde apunta un rumbo en puntos cardinales, y al revés: en grados, del norte a la derecha. */
+const enCardinales = (grados) => CARDINALES[Math.round((((grados % 360) + 360) % 360) / 45) % 8];
+const rumboEntre = ([ax, ay], [bx, by]) => (Math.atan2(bx - ax, by - ay) * 180) / Math.PI;
+const diferencia = (a, b) => ((a - b + 540) % 360) - 180;
+
+/** Lo que se alarga el final de un eje para que lo encuentre la línea de un puesto, y lo más que se busca, m. */
+const ALARGA_EL_EJE = 5;
+const HASTA_LA_CALLE = 220;
+/** Lo atravesada que tiene que llegar la línea a la calle, en grados. */
+const ATRAVESADA = 60;
+
+/**
+ * **La línea de un puesto de la carta** (H85, `DE_LA_CARTA`): del eje de la calle que tiene detrás
+ * a su parada, perpendicular a él —más su sesgo— y con el morro al punto cardinal publicado.
+ * `null` si detrás no hay calle.
+ */
+function lineaDeLaCarta(ficha, xy, morro, sesgo) {
+  const cardinal = CARDINALES.indexOf(morro) * 45;
+  const cruza = (rumbo, calle) => {
+    let mejor = null;
+    const a = (rumbo * Math.PI) / 180;
+    const d = [-Math.sin(a), -Math.cos(a)];
+    for (let i = 1; i < calle.length; i++) {
+      const [p, q] = [calle[i - 1], calle[i]];
+      const l = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (l < 1e-6) continue;
+      const u = [(q[0] - p[0]) / l, (q[1] - p[1]) / l];
+      const den = d[0] * u[1] - d[1] * u[0];
+      if (Math.abs(den) < Math.sin((ATRAVESADA * Math.PI) / 180)) continue;
+      const w = [p[0] - xy[0], p[1] - xy[1]];
+      const t = (w[0] * u[1] - w[1] * u[0]) / den;
+      const k = (w[0] * d[1] - w[1] * d[0]) / den;
+      const desde = i === 1 ? -ALARGA_EL_EJE : 0;
+      const hasta = l + (i === calle.length - 1 ? ALARGA_EL_EJE : 0);
+      if (t < 3 || t > HASTA_LA_CALLE || k < desde || k > hasta) continue;
+      if (!mejor || t < mejor.t) mejor = { t, eje: rumboEntre(p, q), punto: [redondear(xy[0] + d[0] * t), redondear(xy[1] + d[1] * t)] };
+    }
+    return mejor;
+  };
+  const primera = (rumbo) =>
+    (ficha.taxiways ?? []).map((t) => cruza(rumbo, t.path)).reduce((m, c) => (c && (!m || c.t < m.t) ? c : m), null);
+  const eje = primera(cardinal)?.eje;
+  if (eje === undefined) return null;
+  const perpendicular = [eje + 90, eje - 90].find((r) => Math.abs(diferencia(r, cardinal)) < 45);
+  const c = perpendicular === undefined ? null : primera(perpendicular - sesgo);
+  return c ? [c.punto, xy] : null;
+}
+
+/** La fila de `lista` que le toca a un puesto: su ref, o el tramo de números en el que cae. */
+const filaDe = (lista, ref) =>
+  lista.find(([quien]) => (Array.isArray(quien) ? quien.includes(ref) : enRango(ref, [quien.desde, quien.hasta])))?.[1] ?? null;
+
+/**
+ * **Hacia dónde queda el morro al acabar el empuje, de la ruta que publica la casilla 20** (H85):
+ * por la calle de la plataforma que nombra, hacia la que sale de ella.
+ */
+function haciaSuSalida(ficha, [plataforma, sale]) {
+  if (!sale) return null;
+  const puntas = (ref) => (ficha.taxiways ?? []).filter((t) => t.ref === ref).map((t) => t.path);
+  const eje = puntas(plataforma)[0];
+  if (!eje) return null;
+  const [a, b] = [eje[0], eje[eje.length - 1]];
+  const lejos = (p) => Math.min(...puntas(sale).flat().map((q) => Math.hypot(q[0] - p[0], q[1] - p[1])));
+  return enCardinales(lejos(b) < lejos(a) ? rumboEntre(a, b) : rumboEntre(b, a));
+}
+
+/** Los puestos de la carta, en una ficha que no los trae de OpenStreetMap. Ver `DE_LA_CARTA`. */
+async function poner(id) {
+  const regla = DE_LA_CARTA[id];
+  if (!regla) throw new Error(`${id}: no es de los que se ponen de la carta (DE_LA_CARTA)`);
+  const ruta = join(SALIDA, `${id.toLowerCase()}.aero.json`);
+  const texto = await readFile(ruta, "utf8");
+  const ficha = JSON.parse(texto);
+  const aip = JSON.parse(await readFile(join(AIP, `${id.toLowerCase()}.pdc.json`), "utf8"));
+  const proyectar = proyector(ficha.origin.lat, ficha.origin.lon);
+  const sinLinea = [];
+  const puestos = aip.puestos.map((a) => {
+    const xy = proyectar(a.lat, a.lon);
+    const linea =
+      a.aproar && !regla.sinLinea.includes(a.ref) ? lineaDeLaCarta(ficha, xy, a.aproar, regla.sesgo[a.ref] ?? 0) : null;
+    if (!linea) sinLinea.push(a.ref);
+    const salePor = filaDe(regla.salidas, a.ref);
+    const general = enRango(a.ref, [regla.general.desde, regla.general.hasta]);
+    const suyo = { salida: a.salida, max: a.max, contacto: general ? false : a.contacto, carta: a.carta };
+    if (a.aproar) suyo.morro = a.aproar;
+    if (general) suyo.general = true;
+    if (salePor) {
+      const aproar = a.salida !== "A" ? haciaSuSalida(ficha, salePor) : null;
+      if (aproar) suyo.aproar = aproar;
+      suyo.salePor = salePor;
+    }
+    const norte = filaDe(regla.llegadas.norte, a.ref);
+    const sur = filaDe(regla.llegadas.sur, a.ref);
+    if (norte && sur) suyo.llegaPor = { norte, sur };
+    return { ref: a.ref, xy, ...(linea ? { entrada: linea, entradaDeducida: true } : {}), manual: true, aip: suyo };
+  });
+  const meta = {
+    fuente: aip.fuente,
+    url: aip.url,
+    leido: aip.leido,
+    cartas: [...aip.cartas, { carta: regla.carta, wef: regla.wef }],
+    rodaje: regla.rodaje,
+    callesDePlataforma: regla.callesDePlataforma,
+  };
+  await writeFile(ruta, conLosPuestos(texto, puestos, meta));
+  console.log(`${id}: ${puestos.length} puestos de la carta, ${puestos.length - sinLinea.length} con su línea; sin ella: ${sinLinea.join(" ") || "ninguno"}`);
+}
+
 /**
  * **La ficha con estos puestos**, tocando solo su lista y la clave `aipPuestos` y
  * dejando el resto del texto como estaba (la ficha no es `JSON.stringify` entera). La
@@ -564,10 +764,11 @@ function conLosPuestos(texto, puestos, meta) {
 
 const [modo, id, ...resto] = process.argv.slice(2);
 if (modo === "extraer" && id && resto.length) await extraer(id.toUpperCase(), resto);
+else if (modo === "poner" && id) await poner(id.toUpperCase());
 else if (modo === "juntar" && id) {
   for (const i of [id, ...resto]) await juntar(i.toUpperCase());
 }
 else {
-  console.error("uso: puestos-del-aip.mjs extraer ICAO carta.txt […] | juntar ICAO […]");
+  console.error("uso: puestos-del-aip.mjs extraer ICAO carta.txt […] | juntar ICAO […] | poner ICAO");
   process.exit(1);
 }
