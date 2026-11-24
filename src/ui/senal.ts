@@ -452,10 +452,10 @@ const motorConAve = (lado: "izquierdo" | "derecho"): string =>
     <circle cx="18" cy="14.6" r="2.7" />
     <circle class="senal__hueco" cx="18" cy="14.6" r="1.3" />
     <path class="senal__fogonazo"
-          d="M6 8.4 L7.4 11.6 L10.6 10.2 L9.2 13.4 L12.2 14.8 L9.2 16.2 L10.4 19.2 L7.4 17.8 L6 20.8 L4.6 17.8 L1.6 19.2 L2.8 16.2 L-0.2 14.8 L2.8 13.4 L1.4 10.2 L4.6 11.6 Z" />
+          d="M6 8.4 L7.4 11.6 L10.6 10.2 L9.2 13.4 L12.2 14.8 L9.2 16.2 L10.4 19.2 L7.4 17.8 L6 20.8 L4.6 17.8 L1.6 19.2 L2.8 16.2 L0.4 14.8 L2.8 13.4 L1.4 10.2 L4.6 11.6 Z" />
     <circle class="senal__roja" cx="6" cy="14.6" r="2.7" />
     <circle class="senal__hueco" cx="6" cy="14.6" r="1.2" />
-    <path class="senal__tira" d="M21.6 21.4 H14.6 M17.2 18.8 L14.2 21.4 L17.2 24" fill="none" stroke="currentColor"
+    <path class="senal__tira" d="M21.6 20.6 H14.6 M17.2 18 L14.2 20.6 L17.2 23.2" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
   </g>
 `);

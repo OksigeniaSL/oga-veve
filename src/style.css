@@ -11581,7 +11581,8 @@ button.motor__tecla::after {
     animation: none;
   }
 }
-.sin-movimiento :is(.senal__fogonazo, .senal__palanca--atras, .senal__palanca--media) {
+.sin-movimiento .senal__dibujo .senal__fogonazo,
+.sin-movimiento .senal__dibujo .senal__palanca {
   animation: none;
 }
 

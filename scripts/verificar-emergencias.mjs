@@ -91,6 +91,7 @@
  *
  * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien.
  */
+import { writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
@@ -228,6 +229,29 @@ try {
       };
     }, NO_AGUANTA);
   const fotosHechas = [];
+  /*
+   * **Y el fogonazo, del lienzo mismo**: dura un cuarto de segundo, y una
+   * captura de la página llega cuando ya se apagó. Se lee el lienzo nada más
+   * pintado el cuadro, que es cuando todavía está.
+   */
+  if (FOTOS && MODO === "ave") {
+    await page.addInitScript(() => {
+      const raf = globalThis.requestAnimationFrame.bind(globalThis);
+      globalThis.requestAnimationFrame = (cb) =>
+        raf((t) => {
+          cb(t);
+          if (!globalThis.__pideLienzo) return;
+          globalThis.__pideLienzo--;
+          const lienzo = [...document.querySelectorAll("canvas")].sort((a, b) => b.width * b.height - a.width * a.height)[0];
+          if (lienzo) void globalThis.__lienzo(globalThis.__pideLienzo, lienzo.toDataURL("image/jpeg", 0.9));
+        });
+    });
+    await page.exposeFunction("__lienzo", async (k, url) => {
+      const ruta = `${FOTOS}/${MODO}-${AVION}-${TRAMO}-fogonazo-${k}.jpg`;
+      writeFileSync(ruta, Buffer.from(url.split(",")[1], "base64"));
+      fotosHechas.push(ruta);
+    });
+  }
   if (FOTOS)
     await page.exposeFunction("__foto", async (nombre) => {
       const ruta = `${FOTOS}/${MODO}-${AVION}-${TRAMO}-${nombre}.png`;
@@ -400,6 +424,8 @@ try {
         palanca: [],
         pedales: 0,
         cuantos: 0,
+        pieMaximo: 0,
+        nariz: null,
         rumbo: null,
         yendose: 0,
         mensajes: [],
@@ -534,7 +560,8 @@ try {
           const n = ej.ave.tocado?.estallidos ?? 0;
           if (n > av.estallidos.length) {
             av.estallidos.push({ t, paso: ej.ave.paso });
-            if (av.estallidos.length <= 2) globalThis.__foto?.(`estallido-${av.estallidos.length}`);
+            // El segundo, con la subida ya hecha: seis cuadros seguidos del lienzo.
+            if (av.estallidos.length === 2) globalThis.__pideLienzo = 6;
           }
           const suya = ej.ave.agujas[av.motor] ?? 0;
           const otra = ej.ave.agujas[1 - av.motor] ?? 0;
@@ -717,6 +744,7 @@ try {
           av.pedales += c.rudder;
           av.cuantos++;
         }
+        if (modo === "ave" && tramo === "subida") av.pieMaximo = Math.max(av.pieMaximo, Math.abs(c.rudder));
 
         if (tramo === "subida") {
           c.throttle = 1;
@@ -733,10 +761,32 @@ try {
            */
           if ((modo === "carga" || modo === "morro" || modo === "radio") && sobre > 60) o.pedirFlaps(0);
           // Con los dos motores, la V2 y diez nudos, que es como se sube un reactor entero.
+          /*
+           * Y en `ave`, con los dos motores y lo que pesa hoy, a fondo subía a
+           * veintiocho metros por segundo con la nariz a veinte grados, y al ir
+           * a buscarla de golpe sonaba el avisador de pérdida encima de la
+           * tarjeta. Nueve décimas de gas, y la nariz a dos grados por segundo.
+           */
+          if (modo === "ave") {
+            c.throttle = 0.9;
+            const e = s.airspeed - ((vel.v2 ?? vref * 1.2) + 20 * 0.514444);
+            lenta = acota(lenta + 0.004 * e * dt, -0.3, 0.3);
+            av.nariz = av.nariz ?? o.actitud().cabeceo;
+            av.nariz = acota(acota(0.02 * e + lenta, -0.1, 0.28), av.nariz - 0.04 * dt, av.nariz + 0.035 * dt);
+            c.elevator = profundidad(s, av.nariz, dt);
+            c.aileron = alabear(s, h, 0.15);
+            // Recto hasta saber cómo queda el motor: primero el avión, y después el circuito.
+            const yaSeSabe = ej?.ave?.paso === "aguanta" || ej?.ave?.paso === "parado" || sobre > 1300;
+            if (sobre > alto - 40 && yaSeSabe) {
+              tramo = "circuito";
+              lenta = 0;
+            }
+            return;
+          }
           const v2 =
             modo === "carga" || modo === "radio"
               ? vref * 1.15
-              : (vel.v2 ?? vref * 1.2) + (modo === "reventon" || modo === "ave" ? 10 * 0.514444 : 0);
+              : (vel.v2 ?? vref * 1.2) + (modo === "reventon" ? 10 * 0.514444 : 0);
           if (deLineaAzul && (ej?.fase !== "armada" || modo === "tren")) {
             /*
              * Sin bajar de la Vr, subiendo lo justo mientras le falte para la
@@ -756,9 +806,7 @@ try {
             if (s.airspeed > v2 - 5.1 && sobre > 15) o.pedirFlaps(0);
           } else c.elevator = porVelocidad(s, v2, dt);
           c.aileron = alabear(s, h, 0.15);
-          // En `ave`, recto hasta saber cómo queda el motor: primero el avión, y después el circuito.
-          const yaSeSabe = modo !== "ave" || ej?.ave?.paso === "aguanta" || ej?.ave?.paso === "parado" || sobre > 1300;
-          if (sobre > alto - 40 && yaSeSabe) {
+          if (sobre > alto - 40) {
             tramo = "circuito";
             lenta = 0;
           }
@@ -1573,7 +1621,8 @@ try {
     const atras = de("atras");
     comprobar(
       "primero se vuela: la palanca no se toca hasta tener altura y el avión sujeto",
-      !!atras && atras.t >= 13.9 && atras.sobre >= 122 && Math.abs(atras.alabeo) < 0.45,
+      // Catorce segundos, con uno de margen: el reloj del piloto del banco va un cuadro por detrás, y una foto lo para.
+      !!atras && atras.t >= 12.9 && atras.sobre >= 122 && Math.abs(atras.alabeo) < 0.45,
       atras ? `a los ${cuando(atras)}, alabeo ${((atras.alabeo * 180) / Math.PI).toFixed(0)}°` : "no se tocó",
     );
     const quieto = de("quieto");
@@ -1593,8 +1642,9 @@ try {
     const pieMedio = av.cuantos ? av.pedales / av.cuantos : 0;
     comprobar(
       "el pie, del otro lado",
-      av.cuantos > 0 && (izq ? pieMedio > 0.1 : pieMedio < -0.1) && r.pedalMaximo < 0.95,
-      `pie medio ${pieMedio.toFixed(2)} con esa palanca atrás, máximo ${r.pedalMaximo.toFixed(2)}`,
+      // En la subida: en el suelo el pie del banco se va a fondo por el derrape de las ruedas, y no es de esto.
+      av.cuantos > 0 && (izq ? pieMedio > 0.1 : pieMedio < -0.1) && av.pieMaximo < 0.9,
+      `pie medio ${pieMedio.toFixed(2)} con esa palanca atrás, máximo en la subida ${av.pieMaximo.toFixed(2)}`,
     );
     comprobar(
       NO_AGUANTA
