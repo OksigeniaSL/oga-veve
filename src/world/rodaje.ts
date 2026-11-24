@@ -78,6 +78,9 @@ export interface Tramo {
    * Contado jugando con el 747: «hay edificios en mitad de las calles de
    * rodadura y el ala del avión pasa a través de ellos, aquí no cabe un
    * avión».
+   *
+   * Y si el AIP no deja rodar por aquí con esa envergadura (H79): ver
+   * `Aerodrome.restriccionesDeRodaje`.
    */
   readonly estrecho?: boolean;
 }
@@ -590,6 +593,9 @@ export function construirGrafo(
     };
   });
 
+  // Por dónde no deja rodar el AIP con esta envergadura (H79). Ver `Aerodrome.restriccionesDeRodaje`.
+  const prohibidas = (aero.restriccionesDeRodaje ?? []).filter((r) => 2 * semiala > r.masDeM);
+
   const tramos: Tramo[] = [];
   for (const t of trozos) {
     const a = nudoDe(t.path[0]!);
@@ -602,7 +608,7 @@ export function construirGrafo(
      * es lo más ancho que hay y además tiene su propia penalización.
      */
     const estrecho =
-      !t.pista && semiala > 0 && aprieta(path, estorbos, semiala);
+      !t.pista && semiala > 0 && (aprieta(path, estorbos, semiala) || prohibidas.some((r) => vaPor(path, t.ref, r)));
     const base = t.pista ? largo * PENALIZACION_PISTA : largo;
     tramos.push({
       a,
@@ -631,6 +637,18 @@ export function construirGrafo(
     alBordeDeLaPista: pavimentoGuardado(aero, "pista", AL_BORDE_DE_LA_PISTA),
     enPlataforma: pavimentoGuardado(aero, "plataforma", MARGEN_DEL_PAVIMENTO),
   };
+}
+
+/**
+ * **Si un tramo es de los que el AIP prohíbe a esa envergadura** (H79): los de esa letra, o los que
+ * van por esa línea, con sus dos puntas y su mitad en ella. El que la cruza no lo es.
+ */
+function vaPor(path: readonly Punto[], ref: string | null, r: { readonly calle?: string; readonly por?: readonly Punto[] }): boolean {
+  if (r.calle !== undefined) return ref === r.calle;
+  const por = r.por;
+  if (!por || por.length < 2) return false;
+  const mitad = path[Math.floor(path.length / 2)]!;
+  return [path[0]!, mitad, path[path.length - 1]!].every((p) => aLaLinea(p, por) <= SOLDADURA / 2);
 }
 
 /**
@@ -783,6 +801,12 @@ export interface Ruta {
    * Ver `vueltaPorLaPista` en `plan-de-vuelo.ts`.
    */
   readonly exactaHasta?: number;
+  /**
+   * **En qué punto de `puntos` la ruta da la vuelta en seco**, si la da (H79): hasta ahí lleva el
+   * tractor el avión, de espaldas, y desde ahí rueda hacia delante. La ruta empieza donde acaba el
+   * empuje, y no donde la línea del puesto cruza la calle. Ver `pasandoElCruce`.
+   */
+  readonly vuelveEn?: number;
 }
 
 /**
@@ -2151,6 +2175,135 @@ function rodajesConSentido(
     };
   };
   return destinos.map(alDestino);
+}
+
+/** Lo más que se empuja más allá del cruce de la línea del puesto con la calle, m. Ver `pasandoElCruce`. */
+const MAS_ALLA_DEL_CRUCE = 100;
+
+/**
+ * Lo que queda la calle recta por delante donde el tractor deja el avión antes de un ramal, m: los
+ * treinta con los que se mira hacia dónde sigue (`MIRA_LA_CALLE` en `remolque.ts`), y dos más. Es un
+ * largo del JAZ 90: la rueda de morro queda a veinte metros del ramal y la tripulación arranca recto.
+ */
+const RECTO_HASTA_EL_RAMAL = 32;
+
+/**
+ * **Empujar más solo si se llega antes.** Se empuja a paso de persona (`VA_EMPUJANDO` en
+ * `remolque.ts`, 1 m/s) y se rueda a unos quince nudos: cada metro de más que se empuja tiene que
+ * ahorrar siete y medio de rodaje. Hasta veinte metros pasado el cruce, que es lo que hace falta
+ * para dejar al JAZ 90 en la calle, no son de más.
+ */
+const RODANDO_VA = 7.5;
+const YA_SE_EMPUJA = 20;
+
+/** Cada cuánto se mira, hacia atrás del cruce, que la calle siga en la misma recta, y lo que se le deja torcer, m. */
+const PASO_DEL_CRUCE = 5;
+const EN_LA_MISMA_CALLE = 2.5;
+
+/**
+ * **La ruta que empieza donde acaba el empuje** (H79): el tractor lleva el avión de espaldas por la
+ * línea del puesto hasta la calle, y por ella, hacia atrás, hasta pasar un ramal que queda antes del
+ * cruce; lo deja allí con el morro hacia donde sale, y la ruta es desde ahí. Para cada ruta de
+ * `rutas`, la de siempre a su destino, la que sale así, o `null` si no la hay o no ahorra.
+ *
+ * El caso es el T2 de Lanzarote: la C cruza la calle de la plataforma ocho metros por detrás de
+ * donde la cruza la línea del puesto, y con el morro al NE, que es su APROAR, la ruta desde el
+ * cruce ya la había pasado y bajaba a la R por la B, quinientos cincuenta metros más. Un tractor
+ * empuja unos metros más y deja el avión antes de la C.
+ *
+ * La calle tiene que ir en la misma recta por detrás del cruce, hasta donde se empuja
+ * (`MAS_ALLA_DEL_CRUCE`), y no se tuerce en el ramal más de lo que se tuerce en ninguno
+ * (`NO_SE_VUELVE`).
+ */
+export function pasandoElCruce(
+  grafo: Grafo,
+  destinos: readonly Punto[],
+  rutas: readonly (Ruta | null)[],
+  deEspaldas: Punto,
+  ocupados?: Ocupados,
+): (Ruta | null)[] {
+  const salida: (Ruta | null)[] = rutas.map(() => null);
+  const u = unitario([0, 0], deEspaldas);
+  if (!u) return salida;
+  /** El cruce y hacia dónde va la ruta en la calle, una vez por cada uno que salga distinto. */
+  const cruces = new Map<string, { readonly x: Punto; readonly h: Punto; readonly en: number; readonly ks: number[] }>();
+  rutas.forEach((r, k) => {
+    const origen = r?.puntos[0];
+    if (!r || !origen || r.vuelveEn !== undefined) return;
+    const porDetras = (p: Punto) => (p[0] - origen[0]) * u[0] + (p[1] - origen[1]) * u[1];
+    const deLado = (p: Punto) => Math.abs((p[0] - origen[0]) * u[1] - (p[1] - origen[1]) * u[0]);
+    let i = 0;
+    while (i + 1 < r.puntos.length && deLado(r.puntos[i + 1]!) <= 2 * EN_LA_RECTA && porDetras(r.puntos[i + 1]!) > porDetras(r.puntos[i]!)) i++;
+    if (i < 1 || i + 1 >= r.puntos.length) return;
+    const x = r.puntos[i]!;
+    const h = haciaDondeVa(r.puntos.slice(i), 2 * COMO_LLEGA);
+    // Si la ruta sigue de espaldas, la calle no es esta.
+    if (!h || Math.abs(punto(h, u)) >= SIGUE_DE_ESPALDAS) return;
+    const clave = `${x[0].toFixed(1)},${x[1].toFixed(1)},${h[0].toFixed(2)},${h[1].toFixed(2)}`;
+    const ya = cruces.get(clave);
+    if (ya) ya.ks.push(k);
+    else cruces.set(clave, { x, h, en: i, ks: [k] });
+  });
+  for (const { x, h, en, ks } of cruces.values()) {
+    const porDetras = (p: Punto) => (x[0] - p[0]) * h[0] + (x[1] - p[1]) * h[1];
+    const deLado = (p: Punto) => Math.abs((p[0] - x[0]) * h[1] - (p[1] - x[1]) * h[0]);
+    const enElEje = (d: number): Punto => [x[0] - h[0] * d, x[1] - h[1] * d];
+    const cajas = cajasDeLosTramos(grafo.tramos);
+    // Hasta dónde va la calle en la misma recta, hacia atrás.
+    const cerca = grafo.tramos.filter((t, k) => !t.pista && aLaCaja(cajas, k, x) <= MAS_ALLA_DEL_CRUCE + EN_LA_MISMA_CALLE);
+    let llega = 0;
+    while (
+      llega + PASO_DEL_CRUCE <= MAS_ALLA_DEL_CRUCE &&
+      cerca.some((t) => aLaLinea(enElEje(llega + PASO_DEL_CRUCE), t.puntos) <= EN_LA_MISMA_CALLE)
+    )
+      llega += PASO_DEL_CRUCE;
+    // Y si en ese trozo hay algún cruce: sin él no hay ramal que tomar.
+    const hayRamal = grafo.nudos.some((n, k) => {
+      const d = porDetras(n);
+      return d > 1 && d + RECTO_HASTA_EL_RAMAL <= llega && deLado(n) <= EN_LA_MISMA_CALLE && (grafo.desde[k]?.length ?? 0) > 2;
+    });
+    if (!hayRamal) continue;
+    const desde = enElEje(llega);
+    const otras = rodajesConSentido(
+      grafo,
+      desde,
+      ks.map((k) => destinos[k]!),
+      2 * EN_LA_MISMA_CALLE,
+      ocupados,
+      [h],
+      { enLaCalle: true },
+    );
+    ks.forEach((k, n) => {
+      const r = rutas[k]!;
+      const otra = otras[n];
+      if (!otra) return;
+      // Donde deja la calle: el último punto que todavía va por ella, antes del cruce.
+      let j = 0;
+      while (j + 1 < otra.puntos.length && deLado(otra.puntos[j + 1]!) <= EN_LA_MISMA_CALLE && porDetras(otra.puntos[j + 1]!) > 1) j++;
+      const ramal = porDetras(otra.puntos[j]!);
+      const sigue = otra.puntos[j + 1];
+      if (j === 0 || !sigue || deLado(sigue) <= EN_LA_MISMA_CALLE) return;
+      const hasta = ramal + RECTO_HASTA_EL_RAMAL;
+      if (hasta > llega) return;
+      const vuelta = enElEje(hasta);
+      const hastaElCruce = Math.hypot(x[0] - r.puntos[0]![0], x[1] - r.puntos[0]![1]);
+      const metros = hastaElCruce + hasta;
+      const rodando = otra.largo - (llega - hasta);
+      if (r.largo - hastaElCruce - rodando < RODANDO_VA * (hasta - YA_SE_EMPUJA)) return;
+      const ida = [...r.puntos.slice(0, en + 1), vuelta];
+      salida[k] = {
+        tramos: otra.tramos,
+        puntos: [...ida, ...otra.puntos.filter((p, i) => i > 0 && !(i <= j && porDetras(p) > hasta - 0.5))],
+        largo: metros + rodando,
+        coste: metros + otra.coste,
+        ocupada: !!otra.ocupada || pasaPorUnOcupado(ida, ocupados),
+        letras: otra.letras,
+        enganche: r.enganche,
+        vuelveEn: ida.length - 1,
+      };
+    });
+  }
+  return salida;
 }
 
 /** La ruta entre dos puntos. Ver `rodajesDesde`, que es quien la busca. */

@@ -194,6 +194,20 @@ export interface Aerodrome {
     /** La frase del AIP, tal cual, y de dónde. */
     readonly fuente: string;
   };
+  /**
+   * **Por dónde no deja rodar su AIP con más de una envergadura** (H79), con la cita: las
+   * «restricciones de rodaje» de la casilla 20 del AD 2. Cada una, los metros de envergadura a
+   * partir de los que vale y por dónde: la calle de una letra (`calle`) o la que va por una línea
+   * (`por`), en los metros de la ficha. El buscador la encarece como un paso en el que no cabe el
+   * ala: ver `construirGrafo` en `rodaje.ts`. Va escrito a mano en el fichero del campo.
+   */
+  readonly restriccionesDeRodaje?: readonly {
+    readonly masDeM: number;
+    readonly calle?: string;
+    readonly por?: readonly Punto[];
+    /** La frase del AIP, tal cual, y de dónde. */
+    readonly fuente: string;
+  }[];
   readonly origin: { readonly lat: number; readonly lon: number };
   readonly elevationM: number | null;
   readonly runways: readonly Pista[];

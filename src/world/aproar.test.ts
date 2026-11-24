@@ -167,7 +167,8 @@ describe("el APROAR en los campos que lo publican", async () => {
   it("el T2 de Lanzarote por la 03, que se empujaba 268 m por la C: a la calle de la plataforma, con el morro al NE", () => {
     const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
     const t2 = [...empujes(de("GCRR"), jaz90, de("GCRR").runway.heading)].find((e) => e.ref === "T2")!;
-    expect(t2.empuje.largo).toBeLessThan(130);
+    // Hasta antes de la C, que queda por detrás del cruce (H79): ver `empieza-donde-acaba-el-empuje.test.ts`.
+    expect(t2.empuje.largo).toBeLessThan(175);
     expect(t2.empuje.poses.at(-1)!.rumbo / GRADO).toBeCloseTo(28, -1);
   });
 

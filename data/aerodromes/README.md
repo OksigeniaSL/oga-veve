@@ -78,6 +78,15 @@ que la ficha trae sin línea se le da a ese y la copia se quita; la del ancho
 entre dos incompatibles, si OpenStreetMap no la trae, es la paralela a las de
 ellos (`entradaDeducida`): ver la enmienda H75.
 
+### Por dónde no se rueda con más de una envergadura
+
+`restriccionesDeRodaje` es lo que dice la casilla 20 del AD 2 («Taxiing
+restrictions»), con la frase y la enmienda: a partir de cuántos metros de
+envergadura no se rueda por una calle (`calle`, su letra) o por una línea
+(`por`, en los metros de la ficha). Va escrito a mano, como
+`salidasPorInterseccion`, y se conserva al volver a extraer. Lo lleva
+Lanzarote (ADR 0025, enmienda H79).
+
 ## La rejilla del pavimento, horneada
 
 Cada `<id>.pavimento.bin` es la rejilla de dos metros con la que las ruedas
