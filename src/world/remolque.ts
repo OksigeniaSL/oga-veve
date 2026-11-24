@@ -585,6 +585,50 @@ function miraALaCalle(e: Empuje, raya: readonly PuntoXZ[]): boolean {
   return Math.abs(diferencia(fin.rumbo, rumboEntre(aLos(s), aLos(s + MIRA_LA_CALLE)))) < 5 * GRADO;
 }
 
+/** Lo que tiene que torcer la raya en un punto para ser una vuelta en seco. Ver `dondeVuelve`. */
+const VUELVE = 170 * GRADO;
+
+/** Y lo que tiene que volver por donde vino, m, y lo que se aparta de ello: un paso atrás del dibujo no es una vuelta. */
+const VUELVE_POR_DONDE_VINO = 15;
+const SE_APARTA_AL_VOLVER = 3;
+
+/**
+ * **Dónde da la vuelta en seco la raya**, si la da antes de `SIGUE_LA_RAYA`, y `null` si no (H79):
+ * hasta ahí lleva el tractor el avión, de espaldas, y la ruta empieza ahí, hacia delante. El plan
+ * la traza así cuando empujando unos metros más allá del cruce se llega a un ramal que queda antes
+ * de él (`pasandoElCruce` en `rodaje.ts`). Las medias vueltas de rodar no son esto: van dibujadas
+ * en redondo.
+ */
+export function dondeVuelve(raya: readonly PuntoXZ[]): number | null {
+  /** El punto de la raya a `VUELVE_POR_DONDE_VINO` del `i`, hacia atrás o hacia delante; `null` si no llega. */
+  const aQuince = (i: number, paso: 1 | -1): PuntoXZ | null => {
+    let quedan = VUELVE_POR_DONDE_VINO;
+    for (let k = i; k + paso >= 0 && k + paso < raya.length; k += paso) {
+      const a = raya[k]!;
+      const b = raya[k + paso]!;
+      const l = Math.hypot(b.x - a.x, b.z - a.z);
+      if (quedan <= l) return { x: a.x + ((b.x - a.x) * quedan) / (l || 1), z: a.z + ((b.z - a.z) * quedan) / (l || 1) };
+      quedan -= l;
+    }
+    return null;
+  };
+  let andado = 0;
+  for (let i = 1; i < raya.length - 1 && andado <= SIGUE_LA_RAYA; i++) {
+    const a = raya[i - 1]!;
+    const b = raya[i]!;
+    const c = raya[i + 1]!;
+    andado += Math.hypot(b.x - a.x, b.z - a.z);
+    if (Math.abs(diferencia(rumboEntre(a, b), rumboEntre(b, c))) <= VUELVE) continue;
+    const viene = aQuince(i, -1);
+    const sigue = aQuince(i, 1);
+    if (viene && sigue && Math.hypot(viene.x - sigue.x, viene.z - sigue.z) <= SE_APARTA_AL_VOLVER) return i;
+  }
+  return null;
+}
+
+/** Cuánto se empuja más allá de donde vuelve la raya, m: el avión queda con ella por delante. */
+const PASADA_LA_VUELTA = 3;
+
 /**
  * **Si el empuje saca el avión como se saca**: de culo en todo él, sobre la raya al acabar y con
  * el morro hacia donde sigue. Las tres de la H60b, para quien las mira desde fuera (H76).
@@ -689,6 +733,30 @@ export function empujeDesdeElPuesto(
   const opciones = { porLaPlataforma };
   const pintada = rumboDeLaPintada(puesto.x, puesto.z, edificios, entrada);
   let porQueNo: "no-la-encuentra" | "no-acaba-en-ella" | null = null;
+  /*
+   * **Y si la raya da la vuelta en seco, hasta ahí se empuja** (H79): de espaldas por el puesto, el
+   * giro a la calle y por ella hasta la vuelta, con el morro hacia donde sigue. Es también el empuje
+   * del tráfico, que los demás los hace cortos: la ruta no empieza hasta ahí.
+   */
+  const vuelve = dondeVuelve(raya);
+  if (vuelve !== null) {
+    const v = raya[vuelve]!;
+    let k = vuelve + 1;
+    while (k < raya.length - 1 && Math.hypot(raya[k]!.x - v.x, raya[k]!.z - v.z) < 15) k++;
+    const rumbo = pintada ?? porLaRuta;
+    const centro = centroCon(rumbo);
+    const empuje = rectaArcoRecta({ ...centro, rumbo }, v, rumboEntre(v, raya[k]!), batalla, DIRECCION_EN_EL_GIRO, PASADA_LA_VUELTA);
+    const bien = acabaEnLaCalle(empuje, raya, batalla);
+    return {
+      rumbo,
+      centro,
+      empuje: bien ? empuje : null,
+      porLaPintada: bien && pintada !== null,
+      porLaRuta,
+      pintada,
+      porQueNo: bien || pintada === null ? null : "no-acaba-en-ella",
+    };
+  }
   if (pintada !== null) {
     const centro = centroCon(pintada);
     const desde = { ...centro, rumbo: pintada };
@@ -1140,6 +1208,8 @@ function rectaArcoRecta(
   calle: number,
   batalla: number,
   direccion = DIRECCION_EN_EL_GIRO,
+  /** Si se sigue por la calle hasta pasar `cruce`, cuántos metros. Ver `dondeVuelve`. */
+  pasaElCruce: number | null = null,
 ): Empuje {
   // ── Las dos rectas: la de la cola saliendo del puesto y la de la calle ──
   const atras = desde.rumbo + Math.PI;
@@ -1173,12 +1243,16 @@ function rectaArcoRecta(
   const poses: Pose[] = [];
   const sentido = Math.sign(giro) || 1;
   const arco = radio * Math.abs(giro);
-  const largo = recto + arco + ENDEREZA;
   const inicioDelArco = { x: desde.x + b.x * recto, z: desde.z + b.z * recto };
   const centro = vector(atras + (sentido * Math.PI) / 2);
   const cx = inicioDelArco.x + centro.x * radio;
   const cz = inicioDelArco.z + centro.z * radio;
   const finDelArco = posicionEnElArco(cx, cz, radio, atras, sentido, Math.abs(giro));
+  const hastaElFin =
+    pasaElCruce === null
+      ? ENDEREZA
+      : Math.max(ENDEREZA, (cruce.x - finDelArco.x) * w.x + (cruce.z - finDelArco.z) * w.z + pasaElCruce);
+  const largo = recto + arco + hastaElFin;
   for (let s = 0; ; s = Math.min(largo, s + PASO)) {
     let p: PuntoXZ;
     let va: number;

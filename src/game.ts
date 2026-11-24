@@ -18,7 +18,7 @@
  * (docs/adr/0002-modelo-de-vuelo-propio.md).
  */
 
-import { delAipEn } from "./world/puestos-del-aip";
+import { delAipEn, puestoEn } from "./world/puestos-del-aip";
 import {
   Box3,
   CanvasTexture,
@@ -5330,7 +5330,13 @@ export class Game {
    * se está hasta el punto de espera. Lo del vuelo anterior ya se apuntó al
    * apagar.
    */
-  private empezarOtroTramo(): void {
+  private empezarOtroTramo(
+    /**
+     * El puesto al que se llegó, si de él se sale empujado, en los ejes del fichero: la raya
+     * empieza en él y no donde está el avión. Ver `salirEmpujadoDeDondeSeLlego`.
+     */
+    puesto: Punto | null = null,
+  ): void {
     this.mirarSiSeLlego();
     const aqui = this.elCampo();
     this.empezarLaRutaEn(aqui.id);
@@ -5364,7 +5370,8 @@ export class Game {
     // ver `otroTramoDesde`.
     this.mudarElPlanA(aqui);
     const p = this.flight.state.position;
-    this.plan?.otroTramoDesde([p.x, -p.z], this.leccion.arranque === "pista");
+    if (!puesto || !this.plan?.reiniciarDesde(puesto))
+      this.plan?.otroTramoDesde([p.x, -p.z], this.leccion.arranque === "pista");
     /*
      * **Y quien te guía en tierra, otra vez desde el principio.** El
      * señalero y el coche del sígame eran los del final del tramo anterior:
@@ -17189,8 +17196,13 @@ export class Game {
    * **El puesto del que sale este vuelo, si es uno concreto**: el primer capítulo del
    * viaje largo sale del T5 de la T1, que es de donde sale de verdad el vuelo de Asunción;
    * el juego, solo, elegiría la T4S. Ver `SALIDA_DE_BARAJAS` y `PlanDeVuelo.puestoPedido`.
+   *
+   * Y para los bancos, en desarrollo, el de `?puesto=T2`: el plan elige el que menos rueda, y a los
+   * demás solo se llegaba aterrizando.
    */
   private get puestoDeEsteVuelo(): string | null {
+    const aMano = import.meta.env.DEV ? new URLSearchParams(location.search).get("puesto") : null;
+    if (aMano) return aMano;
     return this.escenaDelInicio === "largo" && this.capituloDelLargo === 1 ? SALIDA_DE_BARAJAS.puesto : null;
   }
 
@@ -23937,7 +23949,12 @@ export class Game {
     // Y con el morro al edificio, que si no se sale de frente como siempre.
     const pared = paredMasCercana(aqui[0], aqui[1], edificios);
     if (!pared || Math.abs(diferenciaDeRumbo(s.heading, pared.rumbo)) > Math.PI / 3) return false;
-    this.empezarOtroTramo();
+    /*
+     * **Y la raya, la de salir empujado de ese puesto** (H79): por su raya pintada y hacia el
+     * APROAR que publica el AIP, como la primera salida. Se trazaba desde donde está el avión,
+     * que no es el puesto, y ahí no hay raya pintada ni APROAR que valgan.
+     */
+    this.empezarOtroTramo(puestoEn(this.plan?.aerodromoActual, aqui[0], aqui[1])?.xy ?? null);
     // Enganchado y nada más: la tarjeta del tractor sale sola, y el empuje se pide con ella.
     this.prepararElRemolque(aqui);
     if (!this.remolque) {
@@ -24171,6 +24188,8 @@ export class Game {
       const p = r.avion;
       this.posicionDelEmpuje.set(p.x, this.terrain.sampleSurface(p.x, p.z) + this.aircraft.gearHeight, p.z);
       this.flight.reset({ position: this.posicionDelEmpuje, heading: p.rumbo, airspeed: 0 });
+      // Y la raya empieza donde acaba el empuje, y no en el puesto (H79).
+      if (antes === "empujando" && r.fase !== "empujando") this.plan?.acabaElEmpuje(p);
     }
     // La persona de tierra saluda a la altura de la ventanilla de Ara: ver `Remolque.saludaA`.
     if (r.saludaA === null && antes === "empujando") r.saludaA = this.ventanillaDeAraPorDelante();

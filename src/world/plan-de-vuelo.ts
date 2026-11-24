@@ -82,6 +82,7 @@ import {
   cajasDeLosTramos,
   construirGrafo,
   HOLGURA_DE_LA_CAJA,
+  pasandoElCruce,
   puestosEnElPavimento,
   rectaPorPavimento,
   rodajeEntre,
@@ -1134,6 +1135,24 @@ const JUNTO_A_LA_CALLE = 3;
 
 /** Hacia dónde va un rumbo en los ejes del grafo, que tiene la y al norte. */
 const enElGrafo = (rumbo: number): Punto => [Math.sin(rumbo), Math.cos(rumbo)];
+
+/**
+ * A cuánto de donde la raya da la vuelta en seco, m, y con cuánto del morro hacia donde sigue, el
+ * empuje ya está donde la ruta empieza: lo que se pasa de ella el tractor es la mitad, y el giro a
+ * la calle se acaba antes. Ver `empiezaDondeAcabaElEmpuje`.
+ */
+const EN_LA_VUELTA = 6;
+
+/**
+ * Cómo tiene que quedar la raya que traía del puesto para que la de rodar siga por ella al acabar el
+ * empuje: a menos de tres metros del eje del avión —lo que se le pide al tractor, `quedaSobreLaRaya`—,
+ * hacia donde mira con cinco grados, y entre uno y ochenta metros por delante. Ver `acabaElEmpuje`.
+ */
+const EN_EL_EJE = 3;
+const SIGUE_POR_EL_EJE = Math.cos((5 * Math.PI) / 180);
+const DELANTE_DEL_MORRO = 1;
+const HASTA_DONDE_SE_BUSCA = 80;
+const HACIA_DONDE_SIGUE = Math.cos((20 * Math.PI) / 180);
 
 /** Cuántos puestos más prueba el plan si del elegido se sale de lado: ver `saleDeLado`. */
 const OTROS_SI_SALE_DE_LADO = 8;
@@ -2845,7 +2864,8 @@ export class PlanDeVuelo {
     const deEspaldas = desdeFuera ? null : this.deEspaldasDesde(puesto);
     if (deEspaldas) {
       const porLaPintada = rodajeEntre(this.grafo, puesto, espera, 220, ocupados, { deEspaldas });
-      if (porLaPintada && this.saleBienDeEspaldas(puesto, porLaPintada)) return porLaPintada;
+      if (porLaPintada && this.saleBienDeEspaldas(puesto, porLaPintada))
+        return this.desdeDondeAcabaElEmpuje(puesto, [espera], [porLaPintada], deEspaldas, ocupados)[0] ?? porLaPintada;
     }
     return rodajeEntre(this.grafo, puesto, espera, 220, ocupados, { desdeFuera });
   }
@@ -2876,8 +2896,7 @@ export class PlanDeVuelo {
     if (this.empujesMirados.size > 2000) this.empujesMirados.clear();
     const x = puesto[0];
     const z = -puesto[1];
-    const crudos = ruta.puntos.map((p) => [p[0], -p[1]] as Punto);
-    const { puntos } = alisarRuta(crudos, ruta.exactaDesde, Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)), ruta.exactaHasta);
+    const { puntos } = this.comoSePinta(ruta);
     const morro = morroDe(this.avion);
     const enElSuyo = empujeDesdeElPuesto(
       { x, z },
@@ -2941,13 +2960,41 @@ export class PlanDeVuelo {
     ];
     for (const manera of maneras) {
       if (rutas.every((r) => r)) break;
-      rodajesDesde(this.grafo, puesto, esperas, 220, ocupados, { ...manera, sentido }).forEach((r, k) => {
-        if (rutas[k] || !r || !this.saleBienDeEspaldas(puesto, r, aproar)) return;
-        this.conAproar.add(r);
-        rutas[k] = r;
+      const buenas = rodajesDesde(this.grafo, puesto, esperas, 220, ocupados, { ...manera, sentido }).map((r, k) =>
+        !rutas[k] && r && this.saleBienDeEspaldas(puesto, r, aproar) ? r : null,
+      );
+      // Y empujando un poco más, si así se llega a un ramal que queda antes del cruce (H79).
+      const pasando = manera.deEspaldas
+        ? this.desdeDondeAcabaElEmpuje(puesto, esperas, buenas, manera.deEspaldas, ocupados, aproar)
+        : [];
+      buenas.forEach((r, k) => {
+        const ruta = pasando[k] ?? r;
+        if (!ruta) return;
+        this.conAproar.add(ruta);
+        rutas[k] = ruta;
       });
     }
     return rutas;
+  }
+
+  /**
+   * **De estas rutas de espaldas, las que salen mejor empezando donde acaba el empuje** (H79,
+   * `pasandoElCruce` en `rodaje.ts`): si el tractor, empujando por la calle unos metros más allá
+   * del cruce, deja el avión antes de un ramal por el que se rueda menos, y lo saca bien así.
+   * `null` donde no.
+   */
+  private desdeDondeAcabaElEmpuje(
+    puesto: Punto,
+    esperas: readonly Punto[],
+    rutas: readonly (Ruta | null)[],
+    deEspaldas: Punto,
+    ocupados?: Ocupados,
+    aproar: readonly number[] | null = null,
+  ): (Ruta | null)[] {
+    if (!rutas.some((r) => r)) return rutas.map(() => null);
+    return pasandoElCruce(this.grafo, esperas, rutas, deEspaldas, ocupados).map((r) =>
+      r && this.saleBienDeEspaldas(puesto, r, aproar) ? r : null,
+    );
   }
 
   /**
@@ -3033,8 +3080,7 @@ export class PlanDeVuelo {
     if (!esPuestoDeContacto(x, z, edificios, morro)) return false;
     const ruta = this.salidaDesde(par.puesto.xy, par.espera);
     if (!ruta) return false;
-    const crudos = ruta.puntos.map((p) => [p[0], -p[1]] as Punto);
-    const { puntos } = alisarRuta(crudos, ruta.exactaDesde, Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)), ruta.exactaHasta);
+    const { puntos } = this.comoSePinta(ruta);
     const raya = puntos.map(([qx, qz]) => ({ x: qx, z: qz }));
     const enElSuyo = empujeDesdeElPuesto(
       { x, z },
@@ -3103,9 +3149,13 @@ export class PlanDeVuelo {
         const porLaPintada = deEspaldas
           ? rodajesDesde(this.grafo, puesto.xy, esperas, 220, undefined, { deEspaldas })
           : [];
-        comoSiempre.forEach((r, k) => {
+        const buenas = comoSiempre.map((_, k) => {
           const p = porLaPintada[k];
-          rutas[k] ??= p && this.saleBienDeEspaldas(puesto.xy, p) ? p : r;
+          return !rutas[k] && p && this.saleBienDeEspaldas(puesto.xy, p) ? p : null;
+        });
+        const pasando = deEspaldas ? this.desdeDondeAcabaElEmpuje(puesto.xy, esperas, buenas, deEspaldas) : [];
+        comoSiempre.forEach((r, k) => {
+          rutas[k] ??= pasando[k] ?? buenas[k] ?? r;
         });
       }
       esperas.forEach((espera, k) => {
@@ -3146,7 +3196,7 @@ export class PlanDeVuelo {
           porDelante: this.pistaQueQueda(espera),
           remonta: this.pistaParaRemontar(espera),
           vueltas:
-            mediasVueltas(ruta.puntos, SALIR_DEL_PUESTO) +
+            mediasVueltas(ruta.puntos.slice(ruta.vuelveEn ?? 0), ruta.vuelveEn === undefined ? SALIR_DEL_PUESTO : 0) +
             this.vueltasDeLaEntrada(espera),
         });
       });
@@ -4614,6 +4664,7 @@ export class PlanDeVuelo {
       this.acabaDeMudarse = false;
       this.alCambiarDeFase(p.fase);
     } else this.rehacerSiHaceFalta(p.fase, dt);
+    this.empiezaDondeAcabaElEmpuje();
     /*
      * **Y con ruta nueva, el avance se mide sobre ella ya, no en el fotograma
      * siguiente.**
@@ -7791,6 +7842,108 @@ export class PlanDeVuelo {
   /** Cuántas veces se ha puesto una ruta. Lo mira el banco. Ver #151. */
   vecesQueSePusoLaRuta = 0;
 
+  /**
+   * La ruta como se pinta y se rueda, en los ejes del mundo: ver `alisarRuta`. Si da la vuelta en
+   * seco, donde acaba el empuje (`Ruta.vuelveEn`), lo de antes y lo de después cada uno por su
+   * lado: alisada entera, la vuelta se dibujaría en redondo, y ahí el avión no gira.
+   */
+  private comoSePinta(ruta: Ruta | null): ReturnType<typeof alisarRuta> {
+    const crudos = ruta ? ruta.puntos.map((p) => [p[0], -p[1]] as Punto) : [];
+    // Nunca más cerrada que la curva de calle: la raya de un avión chico
+    // también tiene que leerse como una vuelta y no como un punto.
+    const radio = Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion));
+    const k = ruta?.vuelveEn;
+    if (k === undefined) return alisarRuta(crudos, ruta?.exactaDesde, radio, ruta?.exactaHasta);
+    const ida = alisarRuta(crudos.slice(0, k + 1), undefined, radio);
+    const sigue = alisarRuta(
+      crudos.slice(k),
+      ruta?.exactaDesde === undefined ? undefined : ruta.exactaDesde - k,
+      radio,
+      ruta?.exactaHasta === undefined ? undefined : ruta.exactaHasta - k,
+    );
+    return {
+      puntos: [...ida.puntos, ...sigue.puntos.slice(1)],
+      radios: [...ida.radios, ...sigue.radios.slice(1)],
+      exactos: [...ida.exactos, ...sigue.exactos.slice(1)],
+    };
+  }
+
+  /**
+   * **El tractor acaba de empujar, y la raya empieza ahí** (H79): donde está el avión, con el morro
+   * hacia donde va a rodar, y por delante la raya que traía del puesto, desde el primer sitio en el
+   * que le queda en el eje y va hacia donde mira. Hasta aquí empezaba en el puesto: con los dos
+   * grandes, que acaban a treinta y siete metros del cruce de su línea con la calle, se volvía a
+   * trazar entera al echar a rodar (`LEJOS_DE_LA_RAYA`). Si no queda ninguno en el eje —un empuje
+   * de frente, a medio camino—, la raya se queda como estaba.
+   */
+  acabaElEmpuje(donde: { readonly x: number; readonly z: number; readonly rumbo: number }): void {
+    if (this.destino !== "espera" || !this.ruta) return;
+    this.ultimaPos = [donde.x, -donde.z];
+    this.ultimoRumbo = donde.rumbo;
+    this.empiezaDondeAcabaElEmpuje();
+    const ruta = this.ruta;
+    const aqui = this.ultimaPos;
+    const [mx, my] = enElGrafo(donde.rumbo);
+    const porDelante = (p: Punto) => (p[0] - aqui[0]) * mx + (p[1] - aqui[1]) * my;
+    const deLado = (p: Punto) => Math.abs((p[0] - aqui[0]) * my - (p[1] - aqui[1]) * mx);
+    let andado = 0;
+    for (let i = 0; i + 1 < ruta.puntos.length && andado <= SIGUE_LA_RAYA; i++) {
+      const a = ruta.puntos[i]!;
+      const b = ruta.puntos[i + 1]!;
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const recto = l > 0.5 ? ((b[0] - a[0]) * mx + (b[1] - a[1]) * my) / l : 0;
+      // Lo que falta del tramo para quedar por delante del morro: el principio, si ya lo está.
+      const t = recto >= SIGUE_POR_EL_EJE ? Math.max(0, (DELANTE_DEL_MORRO - porDelante(a)) / (recto * l)) : Infinity;
+      const q: Punto = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      if (t < 1 && deLado(q) <= EN_EL_EJE && porDelante(q) <= HASTA_DONDE_SE_BUSCA) {
+        const puntos: Punto[] = [aqui, q, ...ruta.puntos.slice(i + 1)];
+        const corre = (n: number | undefined) => (n === undefined ? undefined : n - (i + 1) + 2);
+        const { exactaDesde, exactaHasta, ...resto } = ruta;
+        const desdeAhi: Ruta = {
+          ...resto,
+          puntos,
+          largo: Math.max(0, ruta.largo - andado - l * t + Math.hypot(q[0] - aqui[0], q[1] - aqui[1])),
+          ...(exactaDesde === undefined ? {} : { exactaDesde: corre(exactaDesde)! }),
+          ...(exactaHasta === undefined ? {} : { exactaHasta: corre(exactaHasta)! }),
+        };
+        if (this.conAproar.has(ruta)) this.conAproar.add(desdeAhi);
+        this.ponerRuta(desdeAhi);
+        return;
+      }
+      andado += l;
+    }
+  }
+
+  /**
+   * **La raya empieza donde acaba el empuje** (H79): la que da la vuelta en seco (`Ruta.vuelveEn`)
+   * se queda, en cuanto el tractor lleva el avión hasta ahí con el morro hacia delante, en lo que
+   * queda por rodar. Hasta entonces va entera, desde el puesto, que es por donde se empuja; con el
+   * avión ya allí, la ida y la vuelta son la misma línea y no se sabría por cuál va.
+   */
+  private empiezaDondeAcabaElEmpuje(): void {
+    const ruta = this.ruta;
+    const k = ruta?.vuelveEn;
+    if (!ruta || k === undefined || this.destino !== "espera") return;
+    const v = ruta.puntos[k]!;
+    const sigue = ruta.puntos[k + 1];
+    if (!sigue || Math.hypot(this.ultimaPos[0] - v[0], this.ultimaPos[1] - v[1]) > EN_LA_VUELTA) return;
+    const l = Math.hypot(sigue[0] - v[0], sigue[1] - v[1]) || 1;
+    const [mx, my] = enElGrafo(this.ultimoRumbo);
+    if (((sigue[0] - v[0]) * mx + (sigue[1] - v[1]) * my) / l < HACIA_DONDE_SIGUE) return;
+    let antes = 0;
+    for (let i = 1; i <= k; i++) antes += Math.hypot(ruta.puntos[i]![0] - ruta.puntos[i - 1]![0], ruta.puntos[i]![1] - ruta.puntos[i - 1]![1]);
+    const { vuelveEn: _, exactaDesde, exactaHasta, ...resto } = ruta;
+    const desdeAhi: Ruta = {
+      ...resto,
+      puntos: ruta.puntos.slice(k),
+      largo: Math.max(0, ruta.largo - antes),
+      ...(exactaDesde === undefined ? {} : { exactaDesde: exactaDesde - k }),
+      ...(exactaHasta === undefined ? {} : { exactaHasta: exactaHasta - k }),
+    };
+    if (this.conAproar.has(ruta)) this.conAproar.add(desdeAhi);
+    this.ponerRuta(desdeAhi);
+  }
+
   private ponerRuta(ruta: Ruta | null, salida: SalidaDeLaRuta | null = null): void {
     this.vecesQueSePusoLaRuta++;
     this.ruta = ruta;
@@ -7804,15 +7957,7 @@ export class PlanDeVuelo {
     // Ruta nueva, cuenta nueva: el avance que se llevaba era de otro camino.
     this.avance = 0;
     this.dondeEstaba = null;
-    const crudos = ruta ? ruta.puntos.map((p) => [p[0], -p[1]] as Punto) : [];
-    const { puntos, radios, exactos } = alisarRuta(
-      crudos,
-      ruta?.exactaDesde,
-      // Nunca más cerrada que la curva de calle: la raya de un avión chico
-      // también tiene que leerse como una vuelta y no como un punto.
-      Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)),
-      ruta?.exactaHasta,
-    );
+    const { puntos, radios, exactos } = this.comoSePinta(ruta);
     this.rutaMundo = puntos;
     this.radios = radios;
     this.exactos = exactos;

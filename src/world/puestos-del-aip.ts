@@ -10,7 +10,7 @@
  * de contacto. La regla de la pared se queda —es la que sabe dónde está la pasarela en
  * el dibujo—, y el AIP quita lo que la regla deja pasar y no es así.
  */
-import type { Aerodrome } from "./aerodrome";
+import type { Aerodrome, Punto } from "./aerodrome";
 
 /** Lo de un puesto en el AIP: ver `Aerodrome.parkingPositions`. */
 export interface DelAip {
@@ -174,7 +174,20 @@ export function delAipEn(
   x: number,
   z: number,
 ): DelAip | null {
-  let mejor: { readonly aip?: DelAip } | null = null;
+  return puestoEn(aero, x, z)?.aip ?? null;
+}
+
+/**
+ * **El puesto de la ficha que hay en (x, z)**, en los ejes del mundo y a menos de cinco metros, o
+ * `null`. Con él se traza la salida de quien sale empujado del puesto al que llegó (H79): el avión
+ * para con la rueda de morro en su punto, o a un par de metros.
+ */
+export function puestoEn(
+  aero: Pick<Aerodrome, "parkingPositions"> | null | undefined,
+  x: number,
+  z: number,
+): { readonly xy: Punto; readonly aip?: DelAip } | null {
+  let mejor: { readonly xy: Punto; readonly aip?: DelAip } | null = null;
   let cerca = 5;
   for (const p of aero?.parkingPositions ?? []) {
     const d = Math.hypot(p.xy[0] - x, -p.xy[1] - z);
@@ -183,5 +196,5 @@ export function delAipEn(
       mejor = p;
     }
   }
-  return mejor?.aip ?? null;
+  return mejor;
 }

@@ -34,7 +34,7 @@ import {
   type Empuje,
 } from "./remolque";
 import { conLaRuedaEn, MORRO_DEL_TRAFICO, type MorroDelAvion } from "./rueda-de-morro";
-import { construirGrafo, puestosEnElPavimento, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
+import { construirGrafo, pasandoElCruce, puestosEnElPavimento, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
 import { delante, enEjesDePista } from "./rumbo";
 import { anchoDeLaCalleEn, pistaDesdeLaBoca } from "./plan-de-vuelo";
 import { GIRO_DE_MORRO } from "../flight/fdm";
@@ -1142,7 +1142,15 @@ export function sueloDelTrafico(
         const deEspaldas: Punto = [-Math.sin(pintada), -Math.cos(pintada)];
         for (const enLaPrimera of [true, false]) {
           const ruta = rodajeEntre(grafo, puesto, destino, 220, undefined, { deEspaldas, sentido, enLaPrimera });
-          if (ruta && valeParaSalir(false)(ruta.puntos) && acabaHaciaEl(ruta.puntos)) return [...ruta.puntos];
+          if (!ruta) continue;
+          /*
+           * **Y empujando un poco más, si así se llega a un ramal que queda antes del cruce** (H79,
+           * `pasandoElCruce`): la ruta empieza donde acaba el empuje. Es lo que hace el tractor en
+           * el T2 de Lanzarote para salir por la C.
+           */
+          const [pasando] = pasandoElCruce(grafo, [destino], [ruta], deEspaldas);
+          for (const r of [pasando, ruta])
+            if (r && valeParaSalir(false)(r.puntos) && acabaHaciaEl(r.puntos)) return [...r.puntos];
         }
         return null;
       };

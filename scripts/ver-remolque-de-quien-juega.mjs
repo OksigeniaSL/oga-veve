@@ -27,7 +27,8 @@
  * la tarjeta de verdad; con `OGA_PRISA`, el reloj del juego más deprisa; con
  * `OGA_PUERTO`, el puerto de vite; con `OGA_ESCENARIO` y `OGA_AVION`, otro campo y otro
  * avión; con `OGA_VIENTO` (`300/10`), el viento a mano, que es lo que elige la
- * cabecera y, con ella, el puesto del que se sale; y con `OGA_TRAMO`, un peldaño solo.
+ * cabecera y, con ella, el puesto del que se sale; con `OGA_PUESTO` (`T2`), el puesto a mano; y
+ * con `OGA_TRAMO`, un peldaño solo.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -46,6 +47,7 @@ const PRISA = process.env.OGA_PRISA ? Number(process.env.OGA_PRISA) : null;
 const ESCENARIO = process.env.OGA_ESCENARIO ?? "tenerife-norte";
 const AVION = process.env.OGA_AVION ?? "jaz-90";
 const VIENTO = process.env.OGA_VIENTO ? `&viento=${process.env.OGA_VIENTO}` : "";
+const PUESTO = process.env.OGA_PUESTO ? `&puesto=${process.env.OGA_PUESTO}` : "";
 // Y con `OGA_TRAMO`, solo ese peldaño: la radio de tierra solo habla en el de cabina.
 const TRAMOS = process.env.OGA_TRAMO ? [process.env.OGA_TRAMO] : ["guyrami", "taguato-ruvicha"];
 
@@ -122,7 +124,7 @@ try {
         }
       }, 50);
     });
-    await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&leccion=despegue&tramo=${tramo}&avion=${AVION}${VIENTO}`);
+    await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&leccion=despegue&tramo=${tramo}&avion=${AVION}${VIENTO}${PUESTO}`);
     await page.bringToFront();
     await page.waitForFunction(() => globalThis.__oga?.aeronave?.().deVerdad === true, null, { timeout: 120000 });
     const renderer = await page.evaluate(() => {
