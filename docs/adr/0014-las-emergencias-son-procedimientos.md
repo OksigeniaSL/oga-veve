@@ -2171,3 +2171,224 @@ y la voz se calla, y el banco no puede ver si la boca las tira.
 - `ejercicio.ave.bien` y `ejercicio.ave.bienParado`
 
 Y en el hangar, que solo se lee: `hangar.ejercicio.ave`.
+
+## Enmienda H84 (24-11-2026): el reventón al tomar
+
+### El caso
+
+Del catálogo del #90 faltaba, del aterrizaje, esto: «**Reventón al tomar.**
+Mantener el eje, frenar con cabeza, no corregir de más». La mitad ya estaba en la
+H74 —el modelo de la rueda rota, el golpe, sus tarjetas y la toma con ella rota—;
+faltaba que reviente al tocar, y lo que se hace entonces.
+
+### De dónde sale el procedimiento
+
+Leídas, no de memoria:
+
+- **Boeing, *737 NG Flight Crew Training Manual*** (FCT 737 NG (TM), revisión 20,
+  30-6-2021; una copia en línea, que no es de Boeing), «Landing on a Flat Tire»,
+  **p. 8.40**:
+  - «Boeing airplanes are designed so that the landing gear and remaining tire(s)
+    have adequate strength to accommodate a flat nose gear tire or main gear
+    tire». Y, sabiéndolo antes de aterrizar: aproximación y recogida normales, «use
+    the center of the runway» y «differential braking as needed for directional
+    control».
+  - «Flat main gear tire(s) cause a general loss of braking effectiveness and a
+    **yawing moment toward the flat tire with light or no braking and a yawing
+    moment away from the flat tire if the brakes are applied harder**. **Maximum
+    use of reverse thrust is recommended. Do not use autobrakes**.»
+  - «With a single tire failure, towing is not necessary unless unusual vibration
+    is noticed or other failures have occurred», y la nota: «Extended taxi
+    distances or fast taxi speeds can cause significant increases in temperatures
+    on the remaining tires». En la p. 8.39, que haya quien mire «the wheels, tires,
+    and brakes before continued taxi».
+  - Y en «Reverse Thrust and Crosswind», **p. 6.45**, de recuperar el eje rodando:
+    «Use rudder pedal steering and differential braking as required, **to prevent
+    over correcting past the runway centerline**» y «symmetrical reverse thrust».
+  - Es de quien ya sabe antes de tomar que la lleva desinflada, o de una pista
+    resbaladiza; aquí revienta al tocar, y lo que se aplica es lo de la rodadura.
+- **FAA y la industria, *Takeoff Safety Training Aid***, 2.3.5.3.4, **p. 2.26**
+  —la del despegue, la misma copia de la H74—: «Failed tires do not in themselves
+  usually create directional control problems»; que el golpe puede oírse o no, y
+  no notarse nada, tirar a un lado o temblar el avión entero; y que al parar hay
+  que estar preparado para «the possible loss of hydraulic systems which may cause
+  speedbrake or thrust reverser problems».
+- **AAIB, *Bulletin* 12/2008, VP-CRC** (Global Express, Luton, 29-1-2008), un
+  reventón al tomar con el avión parado en la pista: «Shortly after a normal
+  touchdown […] a rumbling noise which they identified as a burst tyre»; «applied
+  normal braking»; a los quince segundos, dos sistemas hidráulicos sin presión; y
+  «brought the aircraft to a stop on the runway using normal brakes and, as fire
+  vehicles approached, shut down both engines» (p. 21). Los daños los hizo **la goma
+  suelta al girar la rueda**: «flailing of a substantial section of both tread and
+  carcass when the wheel then began to rotate», que rompió tuberías hidráulicas y
+  el mando de los flaps (p. 22).
+- **AAIB, *Bulletin* 4/2006, EI-WJN** (HS125, Prestwick, 20-9-2005), otro, con las
+  dos ruedas de la pata izquierda: «as the aircraft touched down […] it pulled
+  sharply to the left and […] the application of right rudder pedal and right brake
+  were needed»; lo avisaron a la torre y **dejaron la pista rodando**, por la última
+  salida (p. 35). La torre cerró la pista por los restos, y la llanta dañada dice que
+  la rueda fue girando al rodar y al salir (p. 36).
+- **14 CFR 25.735 (c)(2)**: quien vuela puede armar y desarmar el autofreno y
+  mandar sobre él con el pie; **(e)(2)**: el antideslizante manda siempre sobre el
+  autofreno. **25.733 (c)**, la de la H74: el neumático de al lado, para 1,07 veces
+  su carga.
+
+**La reversa, con cabeza, es esto**: entera, la misma en los dos motores, porque no
+depende de las ruedas; y sin contar con que salga, que una goma suelta puede
+haberse llevado un sistema hidráulico. Si el eje se va, se suelta el freno y se
+lleva al ralentí (p. 6.45): eso es de pista resbaladiza y no se enseña aquí.
+
+**Lo que no coincide, y cuál gana.** El manual de Boeing deja rodar con una sola
+rueda desinflada si no vibra; el EI-WJN rodó y acabó bien; el VP-CRC paró en la
+pista. El ejercicio enseña a parar: la de aquí vibra —el traqueteo va al doble—,
+nadie la ha mirado todavía, y lo que se ve de rodar con ella es la goma golpeando.
+Quien la deja rodando **no lo hace mal**: se le cuenta por qué es mejor parar.
+
+**Lo que no se ha leído**: el manual del E170, que no está en línea —ni el AOM ni el
+QRH—, y un informe de un E-Jet que revienta al tomar, que no se ha encontrado. El de
+9V-MBF (737-8, TSIB de Singapur) se ha buscado y su copia no se deja bajar.
+
+### El avión, el peldaño y el momento
+
+- **El JAZ 90**, por lo mismo que en la H74: dos ruedas por pata, que es lo que
+  tienen los aviones de las fuentes, y su tren medido (`ruedasPrincipales`).
+- **Desde Taguató**: el #90 no lo nombra en un peldaño; es la pareja del de la
+  carrera, y abajo solo deja el motor parado en vuelo. En Ruvichá, el catálogo
+  entero.
+- **Al tocar**, seis décimas después de que las ruedas se queden en la pista y
+  habiendo dado la vuelta (`Momento` `en: "toma"`, `REVIENTA_TRAS_TOCAR`): el golpe
+  llega detrás del de la toma, y no encima. Un bote no lo suelta, ni tocar fuera.
+
+### El ejercicio
+
+`reventon-al-tomar`, en `flight/ejercicios.ts`: la lección de dar una vuelta y la
+misma avería de la H74, `que: "neumatico"`.
+
+1. **La instructora lo presenta** antes de soltar frenos, con el dibujo.
+2. **El golpe** de la H74, sin alarma, y el traqueteo al doble. **Sin leer**: la
+   rueda aplastada y la flecha de hacia dónde tira; al segundo y medio, el pedal del
+   otro lado. «Se reventó una rueda de la izquierda: pie derecho, suavecito».
+3. **A los cuatro segundos y medio, el freno** (`ANTES_DEL_FRENO`; **sin fuente**, lo
+   que dura la frase del pie): la tarjeta nueva de los dos pedales pisados igual y
+   poco, con la escalera de dos peldaños de cuatro y la tecla; y «frená suave y
+   parejo, y sacá toda la reversa, que no es de las ruedas».
+4. **A treinta nudos, parar ahí** (`CASI_PARADO`): la tarjeta de la pista con la mano,
+   y «pará acá, en la pista. No hay apuro por salir».
+5. **Parado en la pista**, los bomberos de ese aeródromo junto al avión, se lee en la
+   tira «burst tire, stopped on the runway» —sin PAN PAN ni 7700: el avión está
+   parado en el suelo— y se celebra (`ejercicio.rueda.bien`).
+6. **Si se deja la pista rodando** —un segundo fuera—, la tarjeta de la goma que
+   golpea por debajo del ala, el traqueteo que sigue, y se cuenta una vez por qué es
+   mejor parar. Al pararse, los bomberos y el cierre, también hecho: «vuelta», con
+   `ejercicio.rueda.bienFuera`.
+7. **Si se va al aire** con la rueda rota, es la vuelta de la H74: el tren fuera, PAN
+   PAN, los bomberos esperando y la toma.
+
+**El juego no pide lo contrario.** Desde que se tocaba, pedía «frená» para la salida,
+«salí de la pista, que viene otro», «salí por la siguiente» y la torre «expedite
+vacating». Con este ejercicio, y las ruedas en el suelo (`paraEnLaPista`), se calla la
+fase del plan y lo suyo, como en la H26m (`SOLO_LA_FASE`), y no se pide nada de eso;
+sigue así después del cierre, que con la rueda rota no se rueda. Y **el autofreno no
+se arma** en la lista de antes de aterrizar (`sinAutofreno`): «do not use autobrakes».
+Quien lo arme lo lleva, y se suelta con el pie, como siempre.
+
+### El modelo
+
+**No se ha tocado**: es el de la H74, y sin el ejercicio el de siempre. Lo que aquella
+dejó sin fuente queda a medias resuelto: el roce sigue siendo un número sin fuente,
+pero **hacia dónde tira** —a la reventada con poco freno o ninguno, y a la otra
+frenando fuerte— es lo que dice la p. 8.40.
+
+Medido en la mesa, en llano, desde 125 nudos y con los aerofrenos fuera:
+
+| | con las cuatro | con una reventada |
+|---|---|---|
+| Freno a 0,4 y reversa, desde el principio | 658 m | 656 m, casi sin pie |
+| Freno a 0,4 desde los 4,5 s, y reversa | 769 m | 738 m; pie hasta 0,15, a 1,7 m del eje |
+| Freno a 0,4, sin reversa | 893 m | 890 m |
+| A fondo y con reversa | 359 m | 403 m; pie hasta 0,23, a 2,7 m |
+| A fondo, sin reversa | 414 m | 477 m; lo mismo |
+| Sin pie ni freno, seis segundos | en el eje | a 6,5 m y yéndose |
+| Sin pie, freno a 0,4 desde los 4,5 s | en el eje | a 17,9 m del eje |
+| Sin pie, freno a 0,4 desde el principio | en el eje | a 0,7 m |
+
+A cuatro décimas el roce y el freno que falta se compensan casi del todo: **el freno
+suave es también lo que más recto lo lleva**. Y corregir de más se ve en cuanto el pie
+llega tarde: con ocho décimas de retraso, el pie suave lo tiene a 2,1 m del eje y el
+pie a fondo lo lleva a 7,8; con un segundo, a 2,3 y a 11,1.
+
+### El banco
+
+`verificar-emergencias.mjs toma`, con el JAZ 90 en Taguató y en calma. Da la vuelta a
+cuatro por uno; la final y la rodadura, a la velocidad de verdad. Desde el golpe no
+toca nada ocho décimas; sostiene el eje con el pie, saca la reversa y a los cuatro
+segundos y medio frena a cuatro décimas hasta parar. `OGA_DEJA_LA_PISTA=1` deja la
+pista por su raya; `OGA_MOTOR`, `OGA_VIENTO` y `OGA_FOTOS`, como en `reventon`. Mira:
+
+- que se presente, y que reviente al poco de tocar y no en la carrera;
+- el golpe, su tarjeta y la frase del lado que toca;
+- hacia dónde se va sin tocar nada, el pie del otro lado sin pasar de seis décimas, y el
+  eje;
+- las tarjetas en su orden —rueda, pie, freno suave, parar en la pista— y lo dicho, sin
+  autofreno armado;
+- que **nadie pida dejar la pista**, ni con voz ni con tarjeta;
+- que pare en la pista y por el eje, los bomberos junto al avión y nada declarado;
+- sin percance, el cierre con `ejercicio.rueda.bien` (o `bienFuera`), y **nada del
+  ejercicio tirado por la boca** (ADR 0033, enmienda H67).
+
+### Comprobado
+
+- `tsc --noEmit -p .`, en verde antes de cada commit, y **el vitest entero**, con el
+  código terminado: 594 de 594 ficheros y 11.954 pruebas en verde, 32 saltadas y una
+  por hacer. Dentro, las nuevas de `practica.test.ts` —cuándo revienta y cuándo no, el
+  orden, quien deja la pista, quien se va al aire—, de `neumatico-reventado.test.ts`
+  —el freno suave y el de a fondo, la reversa que no es de las ruedas, el pie de más—,
+  de `lo-que-calla-el-ejercicio.test.ts` y de `boca.test.ts`.
+- **Las tres tarjetas nuevas**, dibujadas aparte y miradas, sin navegador.
+- **Volado en el banco, en calma, con la rueda izquierda: 12 de 12.** Gran Canaria,
+  el JAZ 90 en Taguató. Reventó a 124 nudos y a 37 m de tocar; se fue 0,48° a la
+  izquierda en ocho décimas sin tocar nada; el pie a la derecha, hasta 0,10, y nunca
+  más lejos del eje que donde tocó (4,3 m). Las tarjetas, rueda → pie → freno suave →
+  parar en la pista → bomberos; «autofreno off»; nadie pidió dejar la pista. Tocó a
+  418 m del umbral y paró a 1.297 de 3.104, a un metro del eje, con tres camiones al
+  lado; cierre «vuelta» con `ejercicio.rueda.bien`, y nada tirado por la boca.
+- **Miradas las fotos de esa tirada**, dos cosas de más, arregladas: la megafonía dio
+  la bienvenida a Gran Canaria a treinta nudos, encima del «pará acá» —callada con la
+  fase—, y las gafas de sol, si se ganan en esa toma, se celebraban rodando: ahora,
+  detrás del cierre. Después de eso, `tsc` en verde y vitest en parte: 564 de 564 en
+  `practica`, `lo-que-calla-el-ejercicio`, `neumatico-reventado`, `boca`, `dibujos`,
+  `hangar` y `torre-de-cada-vuelo`, y 424 de 424 en los nueve ficheros que leen
+  `game.ts`.
+- **Sin volar todavía**: la segunda tirada, con la rueda derecha, dejando la pista
+  (`OGA_DEJA_LA_PISTA=1`) y con la megafonía ya callada, se quedó en la cola del
+  navegador al acabarse el tiempo del encargo. Dejar la pista está probado en
+  `practica.test.ts`; su tarjeta, mirada dibujada y no en el juego.
+### Lo que queda
+
+- **Las ocho frases, por grabar**, y volver a volar el banco con ellas: sin grabar se
+  callan en la puerta, y el banco no puede ver si la boca tira alguna entre el golpe,
+  el freno y el «pará acá», que van en veinte segundos.
+- **La raya verde sigue dibujada** hasta la salida mientras se para en la pista: nadie
+  la nombra, pero se ve.
+- **El manual del E170**, sin leer, como en la H74.
+- **El neumático en el dibujo** y **los trozos que saltan**, lo mismo que en la H74.
+- **La hidráulica que se pierde** por la goma —lo del VP-CRC— no está: es una avería
+  cada vez.
+- **Quien se va al aire** con la rueda rota, con prueba y sin volar en el banco.
+
+### Las frases
+
+Ocho, de la instructora y en calma, en `es-PY` y en `en`; el guaraní no se toca. Van en
+`LOS_EJERCICIOS` de `sin-instructora.ts` y en `DE_LA_RUEDA`, al final de
+`frases-para-grabar.mjs`. Las de los pasos valen hasta el siguiente
+(`valeHastaElPasoSiguiente`), menos las dos del golpe, y van en fila (`FrasesEnFila`,
+la misma del reventón). **Sin grabar.**
+
+- `ejercicio.reventon-al-tomar.antes`
+- `ejercicio.rueda.izquierda` y `ejercicio.rueda.derecha`
+- `ejercicio.rueda.freno`
+- `ejercicio.rueda.para`
+- `ejercicio.rueda.rodando`
+- `ejercicio.rueda.bien` y `ejercicio.rueda.bienFuera`
+
+Y en el hangar, que solo se lee: `hangar.ejercicio.reventon-al-tomar`.
