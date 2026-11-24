@@ -18,12 +18,16 @@
 import {
   AdditiveBlending,
   ConeGeometry,
+  DataTexture,
+  Float32BufferAttribute,
   Group,
+  LinearFilter,
   Mesh,
   MeshBasicMaterial,
-  SphereGeometry,
+  SRGBColorSpace,
+  Sprite,
+  SpriteMaterial,
   Vector3,
-  type BufferGeometry,
   type Object3D,
 } from "three";
 
@@ -70,30 +74,63 @@ export function nacelaDe(grupo: Object3D, lado: -1 | 1): Nacela | null {
   };
 }
 
+/** Los puntos de lado del resplandor. */
+const LADO_DEL_RESPLANDOR = 32;
+
+let elResplandor: DataTexture | null = null;
+
+/** Un redondel que se apaga hacia el borde, hecho una vez: con un disco de borde duro parecía una bola. */
+function resplandorBlando(): DataTexture {
+  if (elResplandor) return elResplandor;
+  const n = LADO_DEL_RESPLANDOR;
+  const datos = new Uint8Array(n * n * 4);
+  for (let j = 0; j < n; j++)
+    for (let i = 0; i < n; i++) {
+      const r = Math.hypot(i + 0.5 - n / 2, j + 0.5 - n / 2) / (n / 2);
+      const q = Math.max(0, 1 - r) ** 1.6;
+      datos.set([255, Math.round(150 + 70 * q), Math.round(60 + 110 * q), Math.round(255 * q)], (j * n + i) * 4);
+    }
+  const t = new DataTexture(datos, n, n);
+  t.colorSpace = SRGBColorSpace;
+  t.magFilter = LinearFilter;
+  t.minFilter = LinearFilter;
+  t.needsUpdate = true;
+  return (elResplandor = t);
+}
+
 /**
- * Una llama: dos conos, el de fuera naranja y el de dentro claro, y el
- * resplandor de la boca, que suman luz.
+ * Una llama: dos conos que se apagan de la boca a la punta, el de fuera naranja
+ * y el de dentro claro, y el resplandor de la boca. Todos suman luz.
  */
 function llama(radio: number, largo: number, resplandor: number, haciaLaCola: boolean): Group {
   const g = new Group();
-  const pieza = (geometria: BufferGeometry, color: number, opacity: number): void => {
+  const brillo = new Sprite(
+    new SpriteMaterial({ map: resplandorBlando(), blending: AdditiveBlending, depthWrite: false, transparent: true }),
+  );
+  brillo.scale.set(resplandor * 2.6, resplandor * 2.6, 1);
+  g.add(brillo);
+  for (const [color, cuanto] of [
+    [[0.75, 0.3, 0.06], 1],
+    [[0.95, 0.75, 0.4], 0.6],
+  ] as const) {
+    const geometria = new ConeGeometry(radio * cuanto, largo * cuanto, 18, 6, true);
+    // El cono nace con la punta en +y: se tumba, con la base en la boca del motor.
+    geometria.translate(0, (largo * cuanto) / 2, 0);
+    const pos = geometria.getAttribute("position");
+    const colores: number[] = [];
+    for (let i = 0; i < pos.count; i++) {
+      // Sumando luz, negro es nada: se apaga hacia la punta.
+      const q = (1 - pos.getY(i) / (largo * cuanto)) ** 1.5;
+      colores.push(color[0] * q, color[1] * q, color[2] * q);
+    }
+    geometria.setAttribute("color", new Float32BufferAttribute(colores, 3));
+    geometria.rotateX(haciaLaCola ? Math.PI / 2 : -Math.PI / 2);
     g.add(
       new Mesh(
         geometria,
-        new MeshBasicMaterial({ color, transparent: true, opacity, blending: AdditiveBlending, depthWrite: false }),
+        new MeshBasicMaterial({ vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false }),
       ),
     );
-  };
-  pieza(new SphereGeometry(resplandor, 14, 10), 0xff9a3c, 0.35);
-  for (const [color, cuanto, opacidad] of [
-    [0xff8a2a, 1, 0.55],
-    [0xffe2a0, 0.55, 0.8],
-  ] as const) {
-    const geometria = new ConeGeometry(radio * cuanto, largo * cuanto, 14, 1, true);
-    // El cono nace con la punta en +y: se tumba, con la base en la boca del motor.
-    geometria.translate(0, (largo * cuanto) / 2, 0);
-    geometria.rotateX(haciaLaCola ? Math.PI / 2 : -Math.PI / 2);
-    pieza(geometria, color, opacidad);
   }
   return g;
 }
@@ -105,6 +142,8 @@ export class Llamarada {
   private hay = false;
 
   constructor() {
+    // Con su nombre, que lo busca el banco para contar los cuadros en que se ve.
+    this.grupo.name = "llamarada";
     this.grupo.visible = false;
   }
 
@@ -140,9 +179,10 @@ export class Llamarada {
     this.grupo.removeFromParent();
     this.grupo.traverse((o) => {
       const m = o as Mesh;
-      if (!m.isMesh) return;
-      m.geometry.dispose();
-      (m.material as MeshBasicMaterial).dispose();
+      if (m.isMesh) {
+        m.geometry.dispose();
+        (m.material as MeshBasicMaterial).dispose();
+      } else if ((o as Sprite).isSprite) (o as Sprite).material.dispose();
     });
     this.grupo.clear();
     const n = nacelaDe(avion, lado);

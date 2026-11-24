@@ -231,26 +231,33 @@ try {
   const fotosHechas = [];
   /*
    * **Y el fogonazo, del lienzo mismo**: dura un cuarto de segundo, y una
-   * captura de la página llega cuando ya se apagó. Se lee el lienzo nada más
-   * pintado el cuadro, que es cuando todavía está.
+   * captura de la página llega cuando ya se apagó; la que se pedía al ver el
+   * estallido, también. Se cuentan los cuadros en que la llamarada está puesta,
+   * y con `OGA_FOTOS` se lee el lienzo de los ocho primeros, nada más pintados.
    */
-  if (FOTOS && MODO === "ave") {
+  if (MODO === "ave") {
     await page.addInitScript(() => {
       const raf = globalThis.requestAnimationFrame.bind(globalThis);
+      let ultimo = -1;
+      globalThis.__cuadrosConLlama = 0;
       globalThis.requestAnimationFrame = (cb) =>
         raf((t) => {
           cb(t);
-          if (!globalThis.__pideLienzo) return;
-          globalThis.__pideLienzo--;
+          const grupo = globalThis.__oga?.aeronave?.().grupo;
+          if (!grupo?.getObjectByName("llamarada")?.visible) return;
+          if (t !== ultimo) globalThis.__cuadrosConLlama++;
+          ultimo = t;
+          if (!globalThis.__lienzo || globalThis.__cuadrosConLlama > 8) return;
           const lienzo = [...document.querySelectorAll("canvas")].sort((a, b) => b.width * b.height - a.width * a.height)[0];
-          if (lienzo) void globalThis.__lienzo(globalThis.__pideLienzo, lienzo.toDataURL("image/jpeg", 0.9));
+          if (lienzo) void globalThis.__lienzo(globalThis.__cuadrosConLlama, lienzo.toDataURL("image/jpeg", 0.9));
         });
     });
-    await page.exposeFunction("__lienzo", async (k, url) => {
-      const ruta = `${FOTOS}/${MODO}-${AVION}-${TRAMO}-fogonazo-${k}.jpg`;
-      writeFileSync(ruta, Buffer.from(url.split(",")[1], "base64"));
-      fotosHechas.push(ruta);
-    });
+    if (FOTOS)
+      await page.exposeFunction("__lienzo", async (k, url) => {
+        const ruta = `${FOTOS}/${MODO}-${AVION}-${TRAMO}-fogonazo-${k}.jpg`;
+        writeFileSync(ruta, Buffer.from(url.split(",")[1], "base64"));
+        fotosHechas.push(ruta);
+      });
   }
   if (FOTOS)
     await page.exposeFunction("__foto", async (nombre) => {
@@ -560,8 +567,6 @@ try {
           const n = ej.ave.tocado?.estallidos ?? 0;
           if (n > av.estallidos.length) {
             av.estallidos.push({ t, paso: ej.ave.paso });
-            // El segundo, con la subida ya hecha: seis cuadros seguidos del lienzo.
-            if (av.estallidos.length === 2) globalThis.__pideLienzo = 6;
           }
           const suya = ej.ave.agujas[av.motor] ?? 0;
           const otra = ej.ave.agujas[1 - av.motor] ?? 0;
@@ -1137,6 +1142,7 @@ try {
         todoInstructor: todo.instructor,
         // Y lo que se calló por no estar grabado, desde el principio también.
         todoCantado: o.cantados(),
+        cuadrosConLlama: globalThis.__cuadrosConLlama ?? 0,
         torre: todo.torre.slice(antes.torre),
         cantados: o.cantados().slice(antes.cantados),
         descartadas: o.descartadas(),
@@ -1612,10 +1618,11 @@ try {
         separados.every((x) => x > 3.5) &&
         av.separan > 0.05 &&
         (ej?.ave?.llamaradas ?? 0) >= 3 &&
+        r.cuadrosConLlama >= 3 &&
         dice(r.todoCantado, `estallido del motor ${lado}`) &&
         dice(pedido, "ejercicio.ave.petardeo"),
       `${av.estallidos.length} estallidos a los ${av.estallidos.map((x) => x.t.toFixed(1)).join(", ")} s · ` +
-        `las agujas se separan ${(av.separan * 100).toFixed(1)} % · ${ej?.ave?.llamaradas} fogonazos · guiñada ${((av.yendose * 180) / Math.PI).toFixed(1)}° · ` +
+        `las agujas se separan ${(av.separan * 100).toFixed(1)} % · ${ej?.ave?.llamaradas} fogonazos, en ${r.cuadrosConLlama} cuadros · guiñada ${((av.yendose * 180) / Math.PI).toFixed(1)}° · ` +
         `${pedido.filter((k) => /ave\.petardeo/.test(k)).join(" · ") || "no contado"}`,
     );
     const atras = de("atras");
