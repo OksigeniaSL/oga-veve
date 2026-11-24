@@ -167,6 +167,16 @@
  * (`ponerNeumaticoReventado`) y el orden, de `practica.ts`. Ver el ADR 0014,
  * enmienda H74.
  *
+ * ## Y el reventón al tomar
+ *
+ * «Se revienta una rueda al tocar» (#90) es la misma avería, `que:
+ * "neumatico"`, con su momento en la toma (`en: "toma"`): se da la vuelta y,
+ * al poco de tocar la pista, revienta una rueda principal. Tres cosas y nada
+ * más: el eje con el otro pie, sin corregir de más; el freno suave y parejo,
+ * con la reversa; y parar en la pista, sin prisa por dejarla (*737 NG Flight
+ * Crew Training Manual*, p. 8.40; AAIB, VP-CRC y EI-WJN). Ver el ADR 0014,
+ * enmienda H84.
+ *
  * ## Y el ave en el motor
  *
  * «Un ave en el motor» (#90) es la avería `que: "ave"`: subiendo, un ave entra
@@ -234,6 +244,7 @@ export type EjercicioId =
   | "tren-de-morro"
   | "fallo-de-radio"
   | "reventon"
+  | "reventon-al-tomar"
   | "ave";
 
 /**
@@ -274,7 +285,12 @@ export type Momento =
    * metido antes: el tren de morro que no sale. Sin haberlo metido no hay
    * nada que no salga, y no falla.
    */
-  | { readonly en: "tren" };
+  | { readonly en: "tren" }
+  /**
+   * **Al tocar la pista para aterrizar**, después de haber volado: la rueda
+   * que revienta al tomar. Ver `REVIENTA_TRAS_TOCAR` en `practica.ts`.
+   */
+  | { readonly en: "toma" };
 
 /** Qué falla. */
 export interface Averia {
@@ -283,8 +299,8 @@ export interface Averia {
    * cabina —la despresurización, que se vuela con los motores bien— o la
    * carga de la bodega que se suelta y se va hacia la cola, la pata de
    * morro, que se queda en su pozo, la radio, que se calla, una rueda
-   * principal, que revienta en la carrera, o un motor que sigue en marcha y
-   * petardea, con un ave dentro.
+   * principal, que revienta en la carrera o al tomar, o un motor que sigue en
+   * marcha y petardea, con un ave dentro.
    */
   readonly que: "motor" | "motores" | "presion" | "carga" | "morro" | "radio" | "neumatico" | "ave";
   readonly cuando: Momento;
@@ -1243,6 +1259,33 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     averias: [{ que: "neumatico", cuando: { en: "carrera", antesDeV1: true, aFaltaDe: CASI_A_V1 } }],
     ensena:
       "una rueda que revienta casi a V1 tira del avión hacia su lado: el eje con el otro pie, se sigue, el tren se queda fuera, se avisa y se vuelve a aterrizar frenando suave; y parar en la pista también vale",
+  },
+  /*
+   * **El reventón al tomar** (#90): se da la vuelta y, al tocar, una rueda
+   * principal revienta. El avión tira hacia ese lado y hay tres cosas que
+   * hacer: el eje con el otro pie, sin corregir de más; el freno suave y
+   * parejo, con la reversa, que no es de las ruedas; y parar en la pista, sin
+   * prisa por dejarla, con los bomberos al lado. Ver el ADR 0014, enmienda H84.
+   */
+  {
+    id: "reventon-al-tomar",
+    /*
+     * **Desde Taguató**, que es donde están las dos cosas que pide: el pie en
+     * el suelo y el freno medido, y el otro reventón, del que este es la
+     * pareja. El #90 no lo nombra en un peldaño, y abajo solo deja el motor
+     * parado en vuelo.
+     */
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **En el que tiene su tren medido**: el JAZ 90, por lo mismo que el de la
+     * carrera. Aquí no se decide con V1, pero lo que se lee —el manual de
+     * Boeing, los dos informes— es de reactores con dos ruedas por pata.
+     */
+    valePara: (a) => a.ruedasPrincipales !== undefined && a.sound.engine === "turbofan",
+    leccion: "vuelta",
+    averias: [{ que: "neumatico", cuando: { en: "toma" } }],
+    ensena:
+      "una rueda que revienta al tocar tira del avión hacia su lado: el eje con el otro pie, sin corregir de más; el freno suave y parejo, con toda la reversa, que no es de las ruedas; y parar en la pista, sin prisa por dejarla",
   },
   /*
    * **Un ave en el motor, y su petardeo** (#90): subiendo, un golpe sordo y

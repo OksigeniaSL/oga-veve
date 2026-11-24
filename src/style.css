@@ -11534,6 +11534,27 @@ button.motor__tecla::after {
   animation: none;
 }
 
+/* La goma suelta de la rueda rota, que golpea al rodar. Ver `GOMA_SUELTA` en `ui/senal.ts`. */
+.senal__dibujo .senal__goma {
+  transform-origin: 9px 15.6px;
+  animation: senal-goma 0.7s ease-in-out infinite;
+}
+
+@keyframes senal-goma {
+  50% {
+    transform: rotate(16deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .senal__dibujo .senal__goma {
+    animation: none;
+  }
+}
+.sin-movimiento .senal__dibujo .senal__goma {
+  animation: none;
+}
+
 /*
  * El fogonazo del motor con un ave y la palanca que se mueve. El fogonazo, cada
  * dos segundos y nunca más deprisa: se ve que va a golpes, y no parpadea. Ver

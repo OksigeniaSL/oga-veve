@@ -2128,6 +2128,20 @@ const EJ_REVENTON = escena(`
 `);
 
 /**
+ * **El reventón al tomar**: el avión por detrás en la pista, con la rueda de la
+ * derecha aplastada y la flecha de hacia dónde tira, y al lado lo que se hace,
+ * en su orden: el pedal del otro lado y el freno suave. Ver el ADR 0014,
+ * enmienda H84.
+ */
+const EJ_REVENTON_AL_TOMAR = escena(`
+  <path class="leccion__asfalto" d="M-6 84 L26 42 h34 L92 84 Z" />
+  <path d="M43 46 V56 M43 62 V84" style="stroke: #f2f1ec; stroke-width: 1.6; opacity: 0.7" />
+  <g class="ejercicio__pedal">${dibujoEn("reventon-derecha", 16, 22, 54)}</g>
+  <g class="ejercicio__pedal">${dibujoEn("pie-izquierdo", 88, 8, 26)}</g>
+  <g class="ejercicio__pedal">${dibujoEn("freno-suave", 86, 46, 30)}</g>
+`);
+
+/**
  * **El ave en el motor**: el ave por delante, el avión por detrás con el motor
  * de la izquierda petardeando, y al lado la palanca de ese motor atrás. El ave
  * vuela, y nada más: sin morbo. Ver el ADR 0014, enmienda H77.
@@ -2186,6 +2200,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   "fallo-de-radio": EJ_FALLO_DE_RADIO,
   // La rueda aplastada, hacia dónde tira y el pie que lo sostiene. Ver el ADR 0014, enmienda H74.
   reventon: EJ_REVENTON,
+  // Lo mismo al tocar, con el pie y el freno suave. Ver el ADR 0014, enmienda H84.
+  "reventon-al-tomar": EJ_REVENTON_AL_TOMAR,
   // El ave, el motor que petardea y su palanca atrás. Ver el ADR 0014, enmienda H77.
   ave: EJ_AVE,
 };

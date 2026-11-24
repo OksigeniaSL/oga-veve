@@ -880,6 +880,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   "tren-de-morro": "tren",
   // La rueda reventada y hacia dónde tira. Ver el ADR 0014, enmienda H74.
   reventon: "reventon-izquierda",
+  // Lo mismo al tocar. Ver el ADR 0014, enmienda H84.
+  "reventon-al-tomar": "reventon-izquierda",
   // El motor que petardea y hacia dónde tira. Ver el ADR 0014, enmienda H77.
   ave: "ave-izquierdo",
 };
@@ -962,6 +964,14 @@ const RELAMPAGUEA_CADA: readonly [number, number] = [6, 16];
  * `flight/practica-de-tormenta.ts`.
  */
 const CIMA_DE_LA_LLUVIA = CIMA_DE_LA_TORMENTA;
+
+/** Las del golpe de una rueda que revienta, que piden el pie en el instante. Ver `frasesDelReventon`. */
+const PIDE_EL_PIE_DEL_REVENTON: ReadonlySet<TranslationKey> = new Set<TranslationKey>([
+  "ejercicio.reventon.izquierda",
+  "ejercicio.reventon.derecha",
+  "ejercicio.rueda.izquierda",
+  "ejercicio.rueda.derecha",
+]);
 
 /** Qué se dice al acabar, según cómo. Ver `Cierre` en `flight/practica.ts`. */
 const CIERRE_DEL_EJERCICIO: Readonly<
@@ -4396,7 +4406,18 @@ export class Game {
       this.ils?.fase === "frustrando",
       this.finalConViento?.pideElPie ?? false,
       this.radioCallada,
+      this.paraEnLaPista,
     );
+  }
+
+  /**
+   * **Con la rueda reventada al tomar, en el suelo: se para en la pista**. Nada
+   * del juego pide frenar para la salida ni dejar la pista mientras dura. Con
+   * `yaTocoTierra`, que un bote no lo suelta. Ver `seParaEnLaPista` en
+   * `practica.ts` y el ADR 0014, enmienda H84.
+   */
+  private get paraEnLaPista(): boolean {
+    return this.yaTocoTierra && (this.practica?.seParaEnLaPista ?? false);
   }
   /**
    * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un
@@ -11275,7 +11296,7 @@ export class Game {
      * tocar».
      */
     const fuera = p.frenosDeTierraFuera;
-    if (fuera && !c.deTierra && c.t < AL_TOCAR && !c.sinFrenosDicho)
+    if (fuera && !c.deTierra && c.t < AL_TOCAR && !c.sinFrenosDicho && !this.paraEnLaPista)
       this.cantarLoGrabado("speedbrakes up", "vuelo.salenLosFrenosDeTierra", "mando");
     c.deTierra = fuera;
     /*
@@ -11324,7 +11345,8 @@ export class Game {
     // Y el autofreno que suelta el pie: ahora frena quien vuela.
     if (p.soltadoConElPie > c.sueltos) {
       c.sueltos = p.soltadoConElPie;
-      if (explica) this.decirLoGrabado("vuelo.autofrenoSuelto");
+      // Con la rueda reventada, el pie que frena ya lo pide el ejercicio. Ver `paraEnLaPista`.
+      if (explica && !this.paraEnLaPista) this.decirLoGrabado("vuelo.autofrenoSuelto");
     }
   }
 
@@ -17368,6 +17390,8 @@ export class Game {
     if (!this.gafasPorCelebrar || this.inicio) return;
     const s = this.flight.state;
     if (s.onGround && s.groundSpeed >= SE_CELEBRAN_LAS_GAFAS) return;
+    // Ni encima del «pará acá» del reventón al tomar: con el ejercicio cerrado, detrás de su cierre. Ver `paraEnLaPista`.
+    if (this.paraEnLaPista && this.practica?.fase !== "cerrada") return;
     this.gafasPorCelebrar = false;
     this.hud.senal.mostrar("gafas", t("gafas.ganadas"), null, {
       segundos: SE_QUEDA_EL_ARO * 2,
@@ -25746,6 +25770,8 @@ export class Game {
         enLaBaseOEnLaFinal: this.enLaBaseOEnLaFinalSinRadio,
         // Y con un ave en un motor, cuántas veces ha estallado.
         estallidos: this.flight.motorTocado?.estallidos ?? 0,
+        // Y con la rueda reventada al tomar, lo que se avanza por el suelo.
+        porElSuelo: s.groundSpeed,
       },
       dt,
     );
@@ -25797,6 +25823,12 @@ export class Game {
         return this.contarLaTomaReventada();
       case "alTocar":
         return this.ensenarElPieDelReventon();
+      case "freno":
+        return this.frenaConLaRuedaRota();
+      case "paraAqui":
+        return this.paraConLaRuedaRota();
+      case "rodando":
+        return this.contarQueRueda();
       case "palanca":
         return this.mueveLaPalancaDelAve(suceso.motor, suceso.paso);
       case "bomberos":
@@ -26096,9 +26128,12 @@ export class Game {
     decir: (clave, alSonar) =>
       this.decirDelEjercicio(
         clave,
-        clave === "ejercicio.reventon.izquierda" || clave === "ejercicio.reventon.derecha"
+        PIDE_EL_PIE_DEL_REVENTON.has(clave)
           ? "urgente"
-          : clave === "ejercicio.reventon.tren" || clave === "ejercicio.reventon.sacalo"
+          : clave === "ejercicio.reventon.tren" ||
+              clave === "ejercicio.reventon.sacalo" ||
+              clave === "ejercicio.rueda.freno" ||
+              clave === "ejercicio.rueda.para"
             ? "mando"
             : "normal",
         alSonar,
@@ -26112,20 +26147,28 @@ export class Game {
   });
 
   /**
-   * **Revienta una rueda en la carrera**: un golpe seco y corto, sin alarma
+   * **Revienta una rueda en la carrera, o al tomar**: un golpe seco y corto, sin alarma
    * —ese avión no lleva ninguna para esto—, el traqueteo de la pista que
    * crece, y el avión que tira hacia ese lado. La tarjeta enseña el avión por
    * detrás con la rueda de ese lado aplastada y la flecha de hacia dónde tira,
    * y enseguida el pedal que se pisa, que es el del otro. La instructora lo
-   * dice en una frase corta, que quedan cinco segundos para rotar. Lo que
-   * tira lo hace el modelo: ver `ponerNeumaticoReventado`.
+   * dice en una frase corta, que quedan cinco segundos para rotar, o que el
+   * avión ya está en la pista tirando. Lo que tira lo hace el modelo: ver
+   * `ponerNeumaticoReventado`.
    */
   private revientaLaRueda(): void {
     const izquierda = this.practica?.ladoReventado !== "derecho";
     this.ruedaReventada = izquierda ? -1 : 1;
     this.audio.golpeDeRueda();
     this.apuntarCanto(`golpe de la rueda ${izquierda ? "izquierda" : "derecha"}`);
-    const clave: TranslationKey = izquierda ? "ejercicio.reventon.izquierda" : "ejercicio.reventon.derecha";
+    const alTomar = this.practica?.averia.cuando.en === "toma";
+    const clave: TranslationKey = alTomar
+      ? izquierda
+        ? "ejercicio.rueda.izquierda"
+        : "ejercicio.rueda.derecha"
+      : izquierda
+        ? "ejercicio.reventon.izquierda"
+        : "ejercicio.reventon.derecha";
     const dicho = this.avisoCon(clave, izquierda ? "palabra.pieDerecho" : "palabra.pieIzquierdo");
     this.hud.senal.mostrar(izquierda ? "reventon-izquierda" : "reventon-derecha", dicho.rotulo, null, {
       segundos: 2,
@@ -26148,6 +26191,56 @@ export class Game {
       null,
       { segundos: 8, prioridad: URGENTE },
     );
+  }
+
+  /**
+   * **El freno, suave y parejo, y la reversa**: con la rueda reventada al
+   * tomar, después del pie. Los dos pedales en el dibujo y la tecla del freno.
+   * La reversa entera es lo que recomienda el manual de Boeing con una
+   * principal desinflada, y no depende de las ruedas (*737 NG FCTM*, p. 8.40).
+   */
+  private frenaConLaRuedaRota(): void {
+    const clave: TranslationKey = "ejercicio.rueda.freno";
+    const dicho = this.avisoCon(clave, "palabra.frena");
+    this.hud.senal.mostrar("freno-suave", dicho.rotulo, null, {
+      segundos: 8,
+      prioridad: URGENTE,
+      tecla: nombreDeTecla(this.input.preferredKey("brakes")),
+    });
+    this.frasesDelReventon.pedir(clave, () => this.flight.state.onGround && this.practica?.fase === "fallo");
+  }
+
+  /** **Y ya despacio, parar aquí, en la pista**, sin prisa por dejarla. */
+  private paraConLaRuedaRota(): void {
+    const clave: TranslationKey = "ejercicio.rueda.para";
+    const dicho = this.avisoCon(clave, "palabra.frena");
+    this.hud.senal.mostrar("para-en-la-pista", dicho.rotulo, null, { segundos: 8, prioridad: URGENTE });
+    this.frasesDelReventon.pedir(clave, () => this.flight.state.onRunway && this.practica?.fase === "fallo");
+  }
+
+  /**
+   * **Y si la deja rodando, por qué es mejor parar**: no se castiga, se ve. La
+   * rueda que da vueltas con la goma suelta golpeando por debajo —lo que le
+   * pasó al VP-CRC (AAIB, *Bulletin* 12/2008, p. 22)—, el traqueteo, que sigue
+   * al doble, y la instructora, que lo cuenta una vez y con calma.
+   */
+  private contarQueRueda(): void {
+    const clave: TranslationKey = "ejercicio.rueda.rodando";
+    const dicho = this.avisoCon(clave, "palabra.frena");
+    this.hud.senal.mostrar("goma-suelta", dicho.rotulo, null, { segundos: 9, prioridad: IMPORTANTE });
+    this.frasesDelReventon.pedir(clave, () => this.flight.state.onGround && this.practica?.fase === "fallo");
+  }
+
+  /**
+   * **Lo que se le dice a la torre, parado con la rueda reventada al tomar**:
+   * quien vuela lo avisa, como en el EI-WJN (AAIB, *Bulletin* 4/2006, p. 35), y
+   * se lee en la tira. Ni PAN PAN ni 7700: el avión ya está parado en el suelo.
+   */
+  private avisarDeLaRuedaRota(): void {
+    const conCifras = this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras || !this.hayTorreQueHable()) return;
+    const donde = this.practica?.paroEnLaPista ? "stopped on the runway" : "clear of the runway";
+    this.hud.radio(`${this.miIndicativo.dicho}, burst tire, ${donde}`, 9, true);
   }
 
   /**
@@ -26693,7 +26786,11 @@ export class Game {
       : canales.cifra
         ? t("palabra.bomberosCategoria", { n: String(categoria) })
         : t("explica.bomberos.corta");
-    this.hud.senal.mostrar("bomberos", rotulo, null, { segundos: 6 });
+    this.hud.senal.mostrar("bomberos", rotulo, null, {
+      segundos: 6,
+      // Con la rueda reventada al tomar, por encima de «pará acá», que ya se hizo.
+      prioridad: this.paraEnLaPista ? URGENTE : 0,
+    });
     if (donde === "avion") {
       this.bomberos.poner(
         juntoAlAvion(
@@ -26702,7 +26799,8 @@ export class Game {
           cuantos,
         ),
       );
-      this.bomberosPor = "frenos";
+      // Con la rueda reventada al tomar no se frenó fuerte: a qué vienen lo cuenta el cierre.
+      this.bomberosPor = this.paraEnLaPista ? null : "frenos";
       return;
     }
     const pista = this.elCampo().pista;
@@ -26772,6 +26870,8 @@ export class Game {
     this.frasesSinRadio.olvidar();
     this.devolverLaRadio();
     if (como === "otraVez") return;
+    const ruedaAlTomar = this.practica?.ejercicio.id === "reventon-al-tomar";
+    if (ruedaAlTomar) this.avisarDeLaRuedaRota();
     const clave =
       this.practica?.ejercicio.id === "fallo-de-radio" && como === "vuelta"
         ? this.practica.tomoConLaVerde
@@ -26789,6 +26889,10 @@ export class Game {
             ? como === "vuelta"
               ? "ejercicio.reventon.bien"
               : "ejercicio.reventon.bienParado"
+          : ruedaAlTomar
+            ? this.practica?.paroEnLaPista
+              ? "ejercicio.rueda.bien"
+              : "ejercicio.rueda.bienFuera"
           : this.practica?.ejercicio.id === "ave" && como === "vuelta"
             ? this.practica.motorParado === null
               ? "ejercicio.ave.bien"
@@ -31705,7 +31809,8 @@ export class Game {
     this.decirElGasSuelto(vista);
     this.flapsTrasLaToma(faseDeAntes, vista.fase);
     // Y la lista de después del aterrizaje, punto por punto. Ver `leerLaLista`.
-    this.leerLaLista(vista.fase, dt);
+    // Ni con la rueda reventada al tomar, que se para donde se pueda y no se sigue. Ver `paraEnLaPista`.
+    if (!this.paraEnLaPista) this.leerLaLista(vista.fase, dt);
     // Y los flaps del despegue: ponerlos, el aviso y recogerlos. Ver `atenderALosFlapsDelDespegue`.
     this.atenderALosFlapsDelDespegue(vista.fase, dt);
     /*
@@ -31728,7 +31833,8 @@ export class Game {
        * Una torre lo dice una vez: «next available» ya incluye las demás. Se
        * rearma al volver a despegar.
        */
-      if (!this.salidasDichas.dicha) this.decirSalPorLaSiguiente();
+      // Ni con la rueda reventada al tomar, que se para en la pista. Ver `paraEnLaPista`.
+      if (!this.salidasDichas.dicha && !this.paraEnLaPista) this.decirSalPorLaSiguiente();
       this.salidasDichas.dicha = true;
     }
     // Y si se le da paso a uno que viene de frente, también. Ver `decirQueDasPaso`.
@@ -32106,7 +32212,9 @@ export class Game {
       }
       if (
         antes === "abandonando" &&
-        (vista.fase === "a-plataforma" || vista.fase === "en-puesto")
+        (vista.fase === "a-plataforma" || vista.fase === "en-puesto") &&
+        // Con la rueda reventada al tomar, dejarla rodando no es lo que se celebra. Ver `paraEnLaPista`.
+        !this.paraEnLaPista
       ) {
         this.avisar("success");
         if (conLetras) this.hud.flash(t("vuelo.pistaLibre"), 3.2);
@@ -32343,6 +32451,8 @@ export class Game {
       // Y con las ruedas en el suelo de verdad, no a doce metros de él. Ver
       // `yaTocoTierra`.
       this.yaTocoTierra &&
+      // Ni con la rueda reventada: cómo se frena lo dice el ejercicio, y no es para la salida. Ver `paraEnLaPista`.
+      !this.paraEnLaPista &&
       /*
        * Y no con la frustrada de la toma larga propuesta y todavía a tiempo:
        * «frená» y «nos vamos al aire» a la vez son dos órdenes contrarias. Ver
@@ -40734,12 +40844,13 @@ export class Game {
     const trenAbajo =
       !this.aircraft.trenRetractil || this.input.trenQueSePide;
     const faltaLaPalanca = p.hayPalanca && p.palanca === "recogida";
-    const faltaElAutofreno = p.hayAutofreno && p.modo === "off";
+    // Y sin autofreno, en el reventón al tomar: ver `sinAutofreno` en `practica.ts`.
+    const faltaElAutofreno = p.hayAutofreno && p.modo === "off" && !this.practica?.sinAutofreno;
     if (!trenAbajo || (!faltaLaPalanca && !faltaElAutofreno)) return;
 
     const armar = (): void => {
       if (p.hayPalanca && p.palanca === "recogida") p.ponerPalanca("armada");
-      if (p.hayAutofreno && p.modo === "off")
+      if (faltaElAutofreno)
         p.ponerAutofreno(this.autofrenoParaLaPista());
     };
     if (!this.listaDeAterrizaje.pedida) {

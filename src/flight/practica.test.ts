@@ -10,9 +10,12 @@ import {
 import {
   ALTURA_PARA_ASEGURAR,
   ANTES_DE_LA_PALANCA,
+  ANTES_DEL_FRENO,
+  CASI_PARADO,
   COMO_MUCHO_SIN_PALANCA,
   ladoDelMotor,
   Practica,
+  REVIENTA_TRAS_TOCAR,
   type Lectura,
   type Suceso,
 } from "./practica";
@@ -714,5 +717,143 @@ describe("el ave en el motor", () => {
     expect(q.motorDelAve).toBeNull();
     expect(q.pasoDeLaPalanca).toBeNull();
     expect(q.declaradaYa).toBe(false);
+  });
+});
+
+/*
+ * **La rueda que revienta al tomar** (#90, H84): al poco de tocar, después de
+ * haber dado la vuelta. El pie, el freno suave y parejo, y parar en la pista
+ * (*737 NG Flight Crew Training Manual*, p. 8.40; AAIB, VP-CRC, p. 21).
+ */
+describe("el reventón al tomar", () => {
+  const alTomar = (azar = 0.1) => new Practica(ejercicioPorId("reventon-al-tomar")!, ARAI, V, () => azar);
+  const volando = { ...QUIETO, enElSuelo: false, enPista: false, parado: false, vertical: 5, indicada: 80 };
+  const rodando = { ...QUIETO, parado: false, indicada: 60, porElSuelo: 60, enFinal: true };
+
+  /** Despegado, dada la vuelta y en la final. */
+  function enLaFinal(azar = 0.1): Practica {
+    const p = alTomar(azar);
+    p.paso(QUIETO, 0.1);
+    durante(p, { ...QUIETO, corriendo: true, parado: false, indicada: 75, porElSuelo: 75 }, 5);
+    durante(p, { ...volando, sobreElCampo: 600, vertical: 0 }, 5);
+    durante(p, { ...volando, sobreElCampo: 80, vertical: -4, enFinal: true }, 3);
+    return p;
+  }
+
+  /** Y reventada: el suceso del fallo es el último. */
+  function reventada(azar = 0.1): Practica {
+    const p = enLaFinal(azar);
+    durante(p, rodando, 1);
+    expect(p.fase).toBe("fallo");
+    return p;
+  }
+
+  it("solo en el que tiene su tren medido, desde Taguató, avisado", () => {
+    const e = ejercicioPorId("reventon-al-tomar")!;
+    expect(esAvisado(e)).toBe(true);
+    for (const a of AIRCRAFT) {
+      expect(ejerciciosPara("taguato", a).some((x) => x.id === e.id), a.id).toBe(a.id === "jaz-90");
+      expect(ejerciciosPara("taguato-ruvicha", a).some((x) => x.id === e.id), a.id).toBe(a.id === "jaz-90");
+      expect(ejerciciosPara("tuka", a).some((x) => x.id === e.id), a.id).toBe(false);
+    }
+  });
+
+  it("no revienta en la carrera de despegue ni en un bote sin haber volado", () => {
+    const p = alTomar();
+    p.paso(QUIETO, 0.1);
+    expect(durante(p, { ...QUIETO, corriendo: true, parado: false, indicada: 75, porElSuelo: 75 }, 20)).toEqual([]);
+    durante(p, { ...volando, sobreElCampo: 8 }, 2);
+    expect(durante(p, rodando, 3)).toEqual([]);
+    expect(p.seParaEnLaPista).toBe(false);
+    // El freno es de quien vuela desde el principio: se presentó antes.
+    expect(p.sinAutofreno).toBe(true);
+  });
+
+  it("revienta al poco de tocar la pista, de los dos lados, y sin nada que decidir", () => {
+    const p = enLaFinal();
+    expect(p.seParaEnLaPista).toBe(true);
+    expect(durante(p, rodando, REVIENTA_TRAS_TOCAR - 0.1)).toEqual([]);
+    expect(durante(p, rodando, 0.2)).toEqual([
+      { que: "fallo", averia: "neumatico", motor: null, parar: false, enElSuelo: true },
+    ]);
+    expect(p.ladoReventado).toBe("izquierdo");
+    expect(reventada(0.9).ladoReventado).toBe("derecho");
+  });
+
+  it("ni tocando fuera de la pista, ni con las ruedas que botan sin quedarse", () => {
+    const p = enLaFinal();
+    expect(durante(p, { ...rodando, enPista: false }, 3)).toEqual([]);
+    for (let i = 0; i < 6; i++) {
+      expect(durante(p, rodando, 0.4)).toEqual([]);
+      expect(durante(p, { ...volando, sobreElCampo: 1, vertical: 0.5 }, 0.4)).toEqual([]);
+    }
+  });
+
+  it("primero el pie, después el freno, y ya despacio parar: en ese orden y una vez cada cosa", () => {
+    const p = reventada();
+    expect(cuales(durante(p, rodando, ANTES_DEL_FRENO - 0.8))).toEqual([]);
+    expect(cuales(durante(p, rodando, 1))).toEqual(["freno"]);
+    expect(cuales(durante(p, { ...rodando, indicada: 30, porElSuelo: 30 }, 5))).toEqual([]);
+    expect(cuales(durante(p, { ...rodando, indicada: CASI_PARADO, porElSuelo: CASI_PARADO }, 4))).toEqual(["paraAqui"]);
+    expect(durante(p, QUIETO, 1)).toEqual([
+      { que: "bomberos", donde: "avion" },
+      { que: "cerrar", como: "vuelta" },
+    ]);
+    expect(p.paroEnLaPista).toBe(true);
+    expect(p.declaradaYa).toBe(false);
+    // Y cerrado, sigue sin pedirse dejar la pista; el autofreno ya es de cualquiera.
+    expect(p.seParaEnLaPista).toBe(true);
+    expect(p.sinAutofreno).toBe(false);
+  });
+
+  it("quien para enseguida no oye cómo se frena, que ya lo hizo", () => {
+    const p = reventada();
+    durante(p, { ...rodando, indicada: 10, porElSuelo: 10 }, 2);
+    expect(cuales(durante(p, { ...rodando, indicada: 10, porElSuelo: 10 }, 4))).toEqual(["paraAqui"]);
+    expect(cuales(durante(p, QUIETO, 1))).toEqual(["bomberos", "cerrar"]);
+  });
+
+  it("quien deja la pista rodando no se castiga: se cuenta por qué es mejor parar, y se cierra igual", () => {
+    const p = reventada();
+    durante(p, rodando, 6);
+    durante(p, { ...rodando, indicada: 10, porElSuelo: 10 }, 3);
+    const fuera = { ...rodando, indicada: 8, porElSuelo: 8, enPista: false };
+    // Pisar la hierba un momento no es irse.
+    expect(cuales(durante(p, fuera, 0.5))).toEqual([]);
+    expect(cuales(durante(p, { ...rodando, indicada: 8, porElSuelo: 8 }, 1))).toEqual([]);
+    expect(cuales(durante(p, fuera, 5))).toEqual(["rodando"]);
+    expect(cuales(durante(p, { ...QUIETO, enPista: false }, 1))).toEqual(["bomberos", "cerrar"]);
+    expect(p.cierre).toBe("vuelta");
+    expect(p.paroEnLaPista).toBe(false);
+  });
+
+  it("y quien se va al aire con la rueda rota vuelve como en la de la carrera", () => {
+    const p = reventada();
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 20 }, 1))).toEqual(["trenFuera"]);
+    expect(p.trenSeQuedaFuera).toBe(true);
+    expect(durante(p, { ...volando, sobreElCampo: ALTURA_PARA_ASEGURAR + 1 }, 1)).toEqual([
+      { que: "declarar", socorro: "panpan" },
+    ]);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 300, vertical: -4, enFinal: true }, 3))).toEqual([
+      "bomberos",
+      "toma",
+    ]);
+    expect(cuales(durante(p, rodando, 3)).sort()).toEqual(["alTocar", "freno"]);
+    expect(cuales(durante(p, { ...rodando, indicada: 10, porElSuelo: 10 }, 2))).toEqual(["paraAqui"]);
+    expect(cuales(durante(p, QUIETO, 1))).toEqual(["cerrar"]);
+    expect(p.cierre).toBe("vuelta");
+    expect(p.paroEnLaPista).toBe(true);
+  });
+
+  it("y si sale mal, sale mal el ejercicio; y reiniciado, otra vez entero", () => {
+    const p = reventada();
+    expect(cuales(p.paso({ ...QUIETO, percance: true }, 0.1))).toEqual(["cerrar"]);
+    expect(p.cierre).toBe("otraVez");
+    p.reiniciar();
+    expect(p.ladoReventado).toBeNull();
+    expect(p.paroEnLaPista).toBeNull();
+    expect(p.seParaEnLaPista).toBe(false);
+    expect(p.fase).toBe("armada");
+    expect(durante(p, { ...QUIETO, parado: false, porElSuelo: 20 }, 3).map((x) => x.que)).toEqual(["presentar"]);
   });
 });
