@@ -26,10 +26,11 @@ import {
   edificiosDePasarela,
   empujeDesdeElPuesto,
   entradaDelPuesto,
-  esPuestoDeContacto,
+  esDeContacto,
   rayaDeLado,
   rumboDeLaPintada,
   rumboEnElPuesto,
+  saleConRemolque,
   vector,
   type Empuje,
 } from "./remolque";
@@ -605,9 +606,12 @@ export function sueloDelTrafico(
   /*
    * **Los que el AIP no desmiente como de contacto con salida empujada** (H60f): sin
    * envergadura, que la del tráfico no se sabe aquí; lo que sí se sabe es que de un puesto
-   * «A», o de uno que la carta no da por de pasarela, no sale nadie con tractor.
+   * «A», o de uno que la carta no da por de pasarela, no sale nadie con tractor. Y de contacto, los
+   * del plan de quien juega: ver `esDeContacto`.
    */
-  const conPasarelaEnElAip = new Set(delPavimento.filter((p) => valeParaElEmpuje(p.aip, 0)).map((p) => p.xy));
+  const conPasarelaEnElAip = new Map(delPavimento.filter((p) => valeParaElEmpuje(p.aip, 0)).map((p) => [p.xy, p.aip] as const));
+  /** Y los que admiten un avión: de los sin pasarela se sale empujado igual, si la carta los da así (H87). */
+  const queAdmiten = new Map(delPavimento.filter((p) => admite(p.aip, 0)).map((p) => [p.xy, p.aip] as const));
   // Los de un campo que embarca por pasarela: en otro no hay puesto de contacto. Ver `edificiosDePasarela`.
   const edificios = edificiosDePasarela(aero);
   /**
@@ -638,7 +642,11 @@ export function sueloDelTrafico(
     const hecho = deContacto.get(pasarela.batalla);
     if (hecho) return hecho;
     const morro = pasarela.morro ?? MORRO_DEL_TRAFICO.reactor;
-    const suyos = puestos.filter((xy) => conPasarelaEnElAip.has(xy) && esPuestoDeContacto(xy[0], -xy[1], edificios, morro));
+    const suyos = puestos.filter(
+      (xy) =>
+        conPasarelaEnElAip.has(xy) &&
+        esDeContacto(xy[0], -xy[1], edificios, morro, conPasarelaEnElAip.get(xy), entradaDelPuesto(aero, xy[0], -xy[1])),
+    );
     const lista = suyos.length ? suyos : puestos;
     deContacto.set(pasarela.batalla, lista);
     return lista;
@@ -665,10 +673,26 @@ export function sueloDelTrafico(
     return { lista: distintos.length ? distintos : puestos, deContacto: false };
   };
 
-  /** Si el camino empieza o acaba en un puesto de contacto para ese avión. */
-  const enUnPuestoDeContacto = (p: EnElPlano, pasarela: PasarelaDelTrafico): boolean =>
-    puestos.some((xy) => conPasarelaEnElAip.has(xy) && Math.hypot(xy[0] - p.x, -xy[1] - p.z) < 1) &&
-    esPuestoDeContacto(p.x, p.z, edificios, pasarela.morro ?? MORRO_DEL_TRAFICO.reactor);
+  /**
+   * Si el camino empieza o acaba en un puesto del que se sale empujado para ese avión: uno de contacto, o
+   * uno sin pasarela que la carta da de salida con tractor (H87). Al que se entra por su raya y se sale de
+   * espaldas. Ver `saleConRemolque`.
+   */
+  const enUnPuestoDeEmpuje = (p: EnElPlano, pasarela: PasarelaDelTrafico): boolean => {
+    const xy = puestos.find((q) => queAdmiten.has(q) && Math.hypot(q[0] - p.x, -q[1] - p.z) < 1);
+    return (
+      !!xy &&
+      saleConRemolque(
+        true,
+        p.x,
+        p.z,
+        edificios,
+        pasarela.morro ?? MORRO_DEL_TRAFICO.reactor,
+        queAdmiten.get(xy),
+        entradaDelPuesto(aero, p.x, p.z),
+      )
+    );
+  };
 
   /**
    * **Y entra en él por su raya**, con el morro al edificio: los últimos metros,
@@ -678,7 +702,7 @@ export function sueloDelTrafico(
    */
   const alPuestoPorSuRaya = (camino: EnElPlano[], pasarela: PasarelaDelTrafico): EnElPlano[] => {
     const fin = camino[camino.length - 1];
-    if (!fin || camino.length < 3 || !enUnPuestoDeContacto(fin, pasarela)) return camino;
+    if (!fin || camino.length < 3 || !enUnPuestoDeEmpuje(fin, pasarela)) return camino;
     // Por su raya pintada, si la tiene (H60b): es la que sigue quien entra.
     const rumbo = rumboEnElPuesto(fin.x, fin.z, edificios, [...camino].reverse(), entradaDelPuesto(aero, fin.x, fin.z));
     if (rumbo === null) return camino;
@@ -713,7 +737,7 @@ export function sueloDelTrafico(
    */
   const saleDeLado = (raya: readonly EnElPlano[], pasarela: PasarelaDelTrafico): boolean => {
     const p0 = raya[0];
-    if (!p0 || !enUnPuestoDeContacto(p0, pasarela)) return false;
+    if (!p0 || !enUnPuestoDeEmpuje(p0, pasarela)) return false;
     const enElSuyo = empujeDelTrafico(p0, raya, pasarela);
     return !!enElSuyo?.empuje && rayaDeLado(enElSuyo.rumbo, raya);
   };
@@ -730,7 +754,7 @@ export function sueloDelTrafico(
   const empujado = (s: SalidaDelPuesto, pasarela: PasarelaDelTrafico): SalidaDelPuesto => {
     const camino = s.camino;
     const p0 = camino[0];
-    if (!p0 || !enUnPuestoDeContacto(p0, pasarela)) return s;
+    if (!p0 || !enUnPuestoDeEmpuje(p0, pasarela)) return s;
     const acum: number[] = [0];
     for (let i = 1; i < camino.length; i++) acum.push(acum[i - 1]! + dist(camino[i - 1]!, camino[i]!));
     let k = 1;
@@ -1187,7 +1211,7 @@ export function sueloDelTrafico(
         const destino = puntos[puntos.length - 1]!;
         const p0 = alMundo(puesto);
         const aproar = aproarDe(delAipEn(aero, p0.x, p0.z), pista.heading);
-        if (!aproar || !enUnPuestoDeContacto(p0, pasarela)) return null;
+        if (!aproar || !enUnPuestoDeEmpuje(p0, pasarela)) return null;
         const acabaHaciaEl = (linea: readonly Punto[]): boolean => {
           const h = cortarEnLaRaya(linea.map(alMundo), ejes, ancho, mitad);
           const fin = h && empujeDelTrafico(p0, h.hastaLaRaya, pasarela)?.empuje?.poses.at(-1);

@@ -1398,6 +1398,9 @@ import {
   Remolque,
   empujeDesdeElPuesto,
   entradaDelPuesto,
+  esPuestoDeContacto,
+  rumboDeLaPintada,
+  sacaBienPorSuRaya,
   saleConRemolque,
   edificiosDePasarela,
   vector,
@@ -1406,7 +1409,7 @@ import {
 } from "./world/remolque";
 import { DibujoDelRemolque } from "./world/tractor-de-remolque";
 import { barraAlTrenDe, conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
-import { ruedasFuera } from "./world/ruedas-en-el-empuje";
+import { empujaSobrePavimento, ruedasFuera } from "./world/ruedas-en-el-empuje";
 import { pavimentoDibujado } from "./world/rodaje";
 import { AvisoDeLaRaya } from "./flight/aviso-de-la-raya";
 import { AvisoDeVelocidad } from "./flight/aviso-de-velocidad";
@@ -23857,7 +23860,8 @@ export class Game {
     if (enElPuesto > 5) return;
     // Solo en un campo con pasarelas: ver `edificiosDePasarela`.
     const edificios = edificiosDePasarela(aero);
-    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, morro, delAipEn(aero, puesto[0], puesto[1])))
+    const entrada = entradaDelPuesto(aero, puesto[0], puesto[1]);
+    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, morro, delAipEn(aero, puesto[0], puesto[1]), entrada))
       return;
     const raya = this.rayaParaLaTripulacion();
     /*
@@ -23869,11 +23873,21 @@ export class Game {
       { x: puesto[0], z: puesto[1] },
       edificios,
       raya,
-      entradaDelPuesto(aero, puesto[0], puesto[1]),
+      entrada,
       this.aircraft.batalla,
       (r) => conLaRuedaEn({ x: puesto[0], z: puesto[1] }, r, morro),
     );
     if (!enElSuyo?.empuje) return;
+    /*
+     * De uno sin pasarela y lejos de la terminal, solo si el tractor lo saca bien por su raya (H87): en las
+     * dos puntas de la plataforma de Tenerife Sur la ficha no tiene pavimento por donde empujar, y ahí se
+     * sale por sus medios, como hasta ahora.
+     */
+    if (
+      !esPuestoDeContacto(puesto[0], puesto[1], edificios, morro) &&
+      !(sacaBienPorSuRaya(enElSuyo, raya) && empujaSobrePavimento(this.aircraft, enElSuyo.empuje.poses, pavimentoDibujado(aero)))
+    )
+      return;
     const { rumbo, centro, empuje } = enElSuyo;
     this.posicionDelEmpuje.set(centro.x, this.terrain.sampleSurface(centro.x, centro.z) + this.aircraft.gearHeight, centro.z);
     this.flight.reset({ position: this.posicionDelEmpuje, heading: rumbo, airspeed: 0 });
@@ -24002,11 +24016,16 @@ export class Game {
     // Desde la rueda de morro, que es lo que se para en el punto del puesto. Ver `world/rueda-de-morro.ts`.
     const rueda = ruedaDeMorroEn(s.position, s.heading, morro);
     const aqui: [number, number] = [rueda.x, rueda.z];
-    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, morro, delAipEn(this.plan?.aerodromoActual, aqui[0], aqui[1])))
+    const entrada = entradaDelPuesto(this.plan?.aerodromoActual, aqui[0], aqui[1]);
+    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, morro, delAipEn(this.plan?.aerodromoActual, aqui[0], aqui[1]), entrada))
       return false;
-    // Y con el morro al edificio, que si no se sale de frente como siempre.
+    /*
+     * Y con el morro al edificio, o sobre su raya pintada —la pared más cercana puede quedarle de lado,
+     * como en el 4A de La Palma (H87)—, que si no se sale de frente como siempre.
+     */
     const pared = paredMasCercana(aqui[0], aqui[1], edificios);
-    if (!pared || Math.abs(diferenciaDeRumbo(s.heading, pared.rumbo)) > Math.PI / 3) return false;
+    const aparcado = [pared?.rumbo, rumboDeLaPintada(aqui[0], aqui[1], edificios, entrada)];
+    if (!pared || !aparcado.some((r) => r != null && Math.abs(diferenciaDeRumbo(s.heading, r)) <= Math.PI / 3)) return false;
     /*
      * **Y la raya, la de salir empujado de ese puesto** (H79): por su raya pintada y hacia el
      * APROAR que publica el AIP, como la primera salida. Se trazaba desde donde está el avión,
@@ -24724,7 +24743,7 @@ export class Game {
      * si un puesto es de contacto y hacia dónde mira en él, en grados. Ver
      * `comoMiraALaTerminal` en `world/remolque.ts`.
      */
-    readonly terminal: { readonly delMorro: number; readonly desviado: number; readonly deContacto: boolean } | null;
+    readonly terminal: { readonly delMorro: number; readonly desviado: number; readonly deContacto: boolean; readonly mira: boolean } | null;
   } | null {
     const s = this.flight.state;
     if (!s.onGround) return null;
@@ -24734,7 +24753,15 @@ export class Game {
     let desviado = ((pared.rumbo - s.heading) * 180) / Math.PI;
     desviado = ((((desviado + 180) % 360) + 360) % 360) - 180;
     const morro = morroDe(this.aircraft);
-    const terminal = comoMiraALaTerminal(ruedaDeMorroEn(s.position, s.heading, morro), s.heading, edificiosDePasarela(aero), morro);
+    const rueda = ruedaDeMorroEn(s.position, s.heading, morro);
+    const terminal = comoMiraALaTerminal(
+      rueda,
+      s.heading,
+      edificiosDePasarela(aero),
+      morro,
+      delAipEn(aero, rueda.x, rueda.z),
+      entradaDelPuesto(aero, rueda.x, rueda.z),
+    );
     return {
       delMorro: pared.distancia - morro.rueda - morro.punta,
       desviado,

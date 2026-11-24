@@ -59,7 +59,8 @@ const EN_LA_LINEA = 3;
  * pasarela, que no es la misma columna en todos. Los Rodeos y Gran Canaria lo ponen
  * como observación del puesto; Barajas, como una lista de puestos en la observación
  * (1) de cada carta. Los demás no lo dicen, y el puesto se queda sin saberlo (`null`):
- * manda la regla de siempre, la de la pared a lo que alcanza una pasarela.
+ * manda lo que se ve en la foto (`PASARELAS`, H87) y, si no se sabe, la regla de siempre,
+ * la de la pared a lo que alcanza una pasarela.
  */
 const CONTACTO = {
   // AD 2-GCXO PDC 1.3: «(2) Pasarela. // Boarding bridge.»
@@ -81,6 +82,22 @@ const CONTACTO = {
   // y ninguna en lo demás de la plataforma.
   SGAS: { rangos: [["1", "6"]] },
 };
+
+/**
+ * **Qué puestos tienen pasarela donde la carta no lo dice** (H87): Tenerife Sur, La Palma, Lanzarote y
+ * Fuerteventura, leído de la ortofoto del PNOA, que es donde se ven, y de lo que las cartas dan solo en
+ * los de pasarela. `true` o `false` si se sabe, y `undefined` si no: el puesto que no está en la lista se
+ * queda como estaba. Va en la ficha aparte de `contacto`, que es lo que dice la carta. Ver
+ * `aip/pasarelas.json`, que lleva de cada uno de dónde sale.
+ */
+const PASARELAS = JSON.parse(await readFile(join(AIP, "pasarelas.json"), "utf8"));
+const conPasarela = (id, ref) =>
+  PASARELAS.campos[id]?.puestos.find((g) => g.refs.some((r) => refNormalizado(r) === refNormalizado(ref)))?.pasarela;
+/** De dónde sale, para `aipPuestos` de la ficha. */
+const fuenteDeLasPasarelas = (id) =>
+  PASARELAS.campos[id]
+    ? { pasarelas: { fuente: PASARELAS.fuente, url: PASARELAS.url, foto: PASARELAS.campos[id].foto, leido: PASARELAS.leido } }
+    : {};
 
 /**
  * **El APROAR que depende de la pista en uso** (H76), por la observación que lo dice. AD 2-LEMD
@@ -552,13 +569,23 @@ async function juntar(id) {
        * y los puestos de prueba de motores de Barajas, o un nodo sin `ref` de OpenStreetMap junto
        * a los de pasarela de Los Rodeos. Lo demás de él no se sabe.
        */
-      puestos.push(CONTACTO[id] ? { ...limpio, aip: { salida: null, max: null, contacto: false, carta: null } } : limpio);
+      const suya = conPasarela(id, p.ref);
+      puestos.push(
+        CONTACTO[id]
+          ? { ...limpio, aip: { salida: null, max: null, contacto: false, carta: null } }
+          : suya === undefined
+            ? limpio
+            : { ...limpio, aip: { salida: null, max: null, contacto: null, pasarela: suya, carta: null } },
+      );
       continue;
     }
     cuenta.casan++;
     const publicado = a.xy;
     const lejos = Math.hypot(p.xy[0] - publicado[0], p.xy[1] - publicado[1]);
     const nuevo = { ...limpio, aip: { salida: a.salida, max: a.max, contacto: a.contacto, carta: a.carta } };
+    // Y si la carta no dice si tiene pasarela, lo que se ve (H87).
+    const suya = a.contacto === null ? conPasarela(id, a.ref) : undefined;
+    if (suya !== undefined) nuevo.aip.pasarela = suya;
     // Hacia dónde queda el morro al acabar el empuje, si la carta lo da (H76).
     if (a.aproar) {
       nuevo.aip.aproar = a.aproar;
@@ -617,7 +644,7 @@ async function juntar(id) {
     p.entradaDeducida = true;
     deducidas.push(p.ref);
   }
-  const meta = { fuente: aip.fuente, url: aip.url, leido: aip.leido, cartas: aip.cartas };
+  const meta = { fuente: aip.fuente, url: aip.url, leido: aip.leido, cartas: aip.cartas, ...fuenteDeLasPasarelas(id) };
   // Lo del AIP, al final de cada puesto: la ficha sale igual se junte las veces que se junte.
   const ordenados = finales.map(({ aip: suyo, ...p }) => (suyo ? { ...p, aip: suyo } : p));
   await writeFile(ruta, conLosPuestos(texto, ordenados, meta));
@@ -718,6 +745,8 @@ async function poner(id) {
     const salePor = filaDe(regla.salidas, a.ref);
     const general = enRango(a.ref, [regla.general.desde, regla.general.hasta]);
     const suyo = { salida: a.salida, max: a.max, contacto: general ? false : a.contacto, carta: a.carta };
+    const conSuya = suyo.contacto === null ? conPasarela(id, a.ref) : undefined;
+    if (conSuya !== undefined) suyo.pasarela = conSuya;
     if (a.aproar) suyo.morro = a.aproar;
     // Los que dan su mayor avión por envergadura, de las avionetas; los de un tipo, de carga y ambulancia.
     if (general) suyo.uso = ES_ENVERGADURA.test(a.max ?? "") ? "general" : "carga";
@@ -738,6 +767,7 @@ async function poner(id) {
     cartas: [...aip.cartas, { carta: regla.carta, wef: regla.wef }],
     rodaje: regla.rodaje,
     callesDePlataforma: regla.callesDePlataforma,
+    ...fuenteDeLasPasarelas(id),
   };
   await writeFile(ruta, conLosPuestos(texto, puestos, meta));
   console.log(`${id}: ${puestos.length} puestos de la carta, ${puestos.length - sinLinea.length} con su línea; sin ella: ${sinLinea.join(" ") || "ninguno"}`);

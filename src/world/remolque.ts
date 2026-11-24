@@ -39,7 +39,7 @@
  * al norte: se le da la vuelta aquí.
  */
 
-import { seEntraPorSuRaya, seSaleEmpujado, type DelAip } from "./puestos-del-aip";
+import { seEntraPorSuRaya, seSaleEmpujado, tienePasarela, type DelAip } from "./puestos-del-aip";
 import type { Aerodrome, Punto } from "./aerodrome";
 import type { MorroDelAvion } from "./rueda-de-morro";
 
@@ -165,10 +165,60 @@ export function esPuestoDeContacto(
 }
 
 /**
+ * **Lo que puede apartarse el morro de la pared de la terminal y mirarla**, rad: los cincuenta grados
+ * de siempre. Es lo que pide el banco y lo que se le pide a un puesto del que no se sabe si tiene
+ * pasarela. Ver `comoMiraALaTerminal` y `esDeContacto`.
+ */
+export const MIRA_A_LA_TERMINAL = 50 * GRADO;
+
+/**
+ * **Si este puesto es de contacto para este avión** (H87): con la terminal dibujada a lo que alcanza
+ * una pasarela (`esPuestoDeContacto`) y con pasarela, si se sabe si la tiene (`tienePasarela`): lo dice
+ * la carta o se ve en la foto. Y si no se sabe, además, que al avión aparcado en él le llegue una
+ * (`leLlegaLaPasarela`) y que con el morro mire a la terminal. La distancia sola daba por de contacto
+ * el H43 de Tenerife Sur, que la tiene a cuarenta y cinco metros y a cincuenta y cinco grados del morro,
+ * y al que se llega a pie por un camino pintado.
+ *
+ * **Con el dato no se mira hacia dónde queda la pared**: en Gran Canaria los once de pasarela de la T
+ * tienen la más cercana de sesenta y cinco a setenta y tres grados del morro, que es la del dique del que
+ * sale la suya, y la carta los da de contacto.
+ *
+ * **Y sin la terminal dibujada a su alcance, tampoco con el dato**: es la que tiene delante quien juega.
+ * Los de la T1 a la T3 de Barajas cuyo edificio no está en la ficha se quedan como estaban.
+ */
+export function esDeContacto(
+  x: number,
+  z: number,
+  edificios: Edificios,
+  morro: Pick<MorroDelAvion, "puerta" | "punta">,
+  aip: DelAip | null | undefined,
+  entrada: LineaDeEntrada | null | undefined,
+): boolean {
+  if (!esPuestoDeContacto(x, z, edificios, morro)) return false;
+  const dato = tienePasarela(aip);
+  if (dato !== null) return dato;
+  if (!leLlegaLaPasarela(x, z, edificios, entrada, morro)) return false;
+  const pared = paredMasCercana(x, z, edificios);
+  const pintada = rumboDeLaPintada(x, z, edificios, entrada);
+  return pared === null || pintada === null || Math.abs(diferencia(pintada, pared.rumbo)) <= MIRA_A_LA_TERMINAL;
+}
+
+/**
+ * **Si al puesto se entra y se sale empujado por su raya publicada, sin pasarela** (H87): la carta lo da
+ * de salida con tractor, está en su punto y se sabe que no tiene pasarela. De un puesto remoto en el que
+ * se aparca de morro también empuja el tractor, quede donde quede la terminal.
+ */
+function seEmpujaSinPasarela(aip: DelAip | null | undefined, entrada: LineaDeEntrada | null | undefined): boolean {
+  return aip?.pasarela === false && aip.salida !== null && seSaleEmpujado(aip) && entrada?.publicada === true;
+}
+
+/**
  * **Cómo mira a la terminal un avión parado en un puesto**, para el banco (H51): desde
  * su rueda de morro y contra los edificios de pasarela, que es donde y contra lo que
- * deciden `esPuestoDeContacto` y `rumboEnElPuesto`. Lo que queda de la punta del morro a
- * la pared, m; lo que se aparta el morro de mirarla de frente, rad; y si es de contacto.
+ * deciden `esDeContacto` y `rumboEnElPuesto`. Lo que queda de la punta del morro a
+ * la pared, m; lo que se aparta el morro de mirarla de frente, rad; si es de contacto; y si está como
+ * tiene que estar (`mira`): con el morro a la terminal, o sobre su raya publicada si se sabe si tiene
+ * pasarela (H87), que entonces la pared que le quede más cerca da igual.
  *
  * Existe porque el banco lo medía con otra regla —desde el centro del avión, contra
  * cualquier edificio y con cincuenta metros de tope— y las dos reglas solo coincidían
@@ -182,15 +232,23 @@ export function comoMiraALaTerminal(
   rumbo: number,
   edificios: Edificios,
   morro: Pick<MorroDelAvion, "puerta" | "punta">,
-): { readonly delMorro: number; readonly desviado: number; readonly deContacto: boolean } | null {
+  aip: DelAip | null = null,
+  entrada: LineaDeEntrada | null = null,
+): { readonly delMorro: number; readonly desviado: number; readonly deContacto: boolean; readonly mira: boolean } | null {
   const pared = paredMasCercana(rueda.x, rueda.z, edificios);
   if (!pared) return null;
+  const desviado = diferencia(rumbo, pared.rumbo);
+  const pintada = tienePasarela(aip) !== null && entrada?.publicada ? rumboDeLaPintada(rueda.x, rueda.z, edificios, entrada) : null;
   return {
     delMorro: pared.distancia - morro.punta,
-    desviado: diferencia(rumbo, pared.rumbo),
-    deContacto: esPuestoDeContacto(rueda.x, rueda.z, edificios, morro),
+    desviado,
+    deContacto: esDeContacto(rueda.x, rueda.z, edificios, morro, aip, entrada),
+    mira: Math.abs(desviado) <= MIRA_A_LA_TERMINAL || (pintada !== null && Math.abs(diferencia(rumbo, pintada)) <= SOBRE_SU_RAYA),
   };
 }
+
+/** Lo que puede apartarse el morro de su raya publicada y estar sobre ella, rad. */
+const SOBRE_SU_RAYA = 5 * GRADO;
 
 /**
  * **Los edificios junto a los que puede haber un puesto de contacto**: los del
@@ -220,6 +278,10 @@ export function edificiosDePasarela(
  * **Y si el AIP dice que de ahí se sale por sus medios, también** (H60f): un puesto
  * «A» se deja rodando hacia delante, sin tractor, como la avioneta; y uno que la carta
  * no da por de contacto no tiene pasarela de la que empujar. Ver `seSaleEmpujado`.
+ *
+ * **Empujar no es ser de pasarela** (H87): donde la carta no dice cuáles la tienen y se sabe por la foto,
+ * de un puesto sin ella y de salida con tractor empuja el tractor igual, por su raya publicada. Sin su
+ * raya —o en un puesto que la carta no trae—, la pared, como siempre.
  */
 export function saleConRemolque(
   deLinea: boolean,
@@ -228,9 +290,10 @@ export function saleConRemolque(
   edificios: Edificios,
   morro: Pick<MorroDelAvion, "puerta" | "punta">,
   aip: DelAip | null = null,
+  entrada: LineaDeEntrada | null = null,
 ): boolean {
   if (aip && (aip.contacto === false || !seSaleEmpujado(aip))) return false;
-  return deLinea && esPuestoDeContacto(x, z, edificios, morro);
+  return deLinea && (esPuestoDeContacto(x, z, edificios, morro) || seEmpujaSinPasarela(aip, entrada));
 }
 
 /**
@@ -666,6 +729,19 @@ export function quedaSobreLaRaya(fin: Pose, raya: readonly PuntoXZ[]): boolean {
     if (Math.abs(diferencia(fin.rumbo, rumboEntre(q, aLos(s + 15)))) < 5 * GRADO) return true;
   }
   return false;
+}
+
+/**
+ * **Si el tractor lo saca bien por su raya pintada** (H87): el avión está sobre ella, la del plan no le sale
+ * de lado y el empuje lo deja en ella. Es lo que se le pide al de un puesto remoto, que no tiene la
+ * terminal delante para ponerlo de otra manera. `enElSuyo` es lo de `empujeDesdeElPuesto`.
+ */
+export function sacaBienPorSuRaya(
+  enElSuyo: { readonly rumbo: number; readonly empuje: Empuje | null; readonly porLaPintada: boolean },
+  raya: readonly PuntoXZ[],
+): boolean {
+  const fin = enElSuyo.empuje?.poses.at(-1);
+  return !!fin && enElSuyo.porLaPintada && !rayaDeLado(enElSuyo.rumbo, raya) && quedaSobreLaRaya(fin, raya);
 }
 
 /**

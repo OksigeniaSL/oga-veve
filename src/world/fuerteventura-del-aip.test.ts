@@ -166,7 +166,8 @@ describe("los puestos de Fuerteventura", async () => {
         filas++;
       }
     }
-    expect(filas).toBe(id === "jaz-90" ? 38 : 10);
+    // Doce de pasarela (H87), cuatro de ellos de B747, por las dos cabeceras.
+    expect(filas).toBe(id === "jaz-90" ? 24 : 8);
   });
 
   it("del 18 la L2 queda detrás de su línea: se empuja más allá y se sale por ella, por las dos cabeceras", () => {

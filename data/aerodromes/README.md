@@ -94,6 +94,21 @@ mira el avión en el puesto (`aip.morro`); por dónde se sale y se llega, `aip.s
 lo dice la casilla 20.5 del AD 2, y `aipPuestos.callesDePlataforma` son las calles que solo se toman
 si la ruta las nombra (ADR 0025, enmienda H85).
 
+### Qué puestos tienen pasarela, donde la carta no lo dice
+
+Las cartas de Tenerife Sur, La Palma, Lanzarote y Fuerteventura no dicen cuáles
+son de contacto (`contacto: null`). Se ve en la ortofoto del PNOA, y va puesto
+a puesto en `aip/pasarelas.json`, con de dónde sale cada uno y el mes de la foto
+que da el servicio; `juntar` y `poner` lo llevan a la ficha como `aip.pasarela`,
+y a `aipPuestos.pasarelas` la fuente. Lo que dice la carta, si lo dice, manda
+(ADR 0025, enmienda H87).
+
+### El edificio que OpenStreetMap no trae
+
+La nave grande de la terminal de Tenerife Sur, del G10 al J1, no está en la
+extracción: va en `buildings` trazada a mano sobre la ortofoto del PNOA, con
+`manual` y su `fuente`.
+
 ### Por dónde no se rueda con más de una envergadura
 
 `restriccionesDeRodaje` es lo que dice la casilla 20 del AD 2 («Taxiing

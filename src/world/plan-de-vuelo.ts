@@ -67,8 +67,9 @@ import {
   edificiosDePasarela,
   empujeDesdeElPuesto,
   entradaDelPuesto,
+  esDeContacto,
   esPuestoDeContacto,
-  leLlegaLaPasarela,
+  saleConRemolque,
   rayaDeLado,
   rumboAlEdificio,
   rumboDeLaPintada,
@@ -2670,8 +2671,25 @@ export class PlanDeVuelo {
     if (!esDeLinea(this.avion)) return this.puestosCandidatos();
     // Con pasaje, a una pasarela, donde quepa: ver `deContacto`.
     if (this.deContacto) {
-      const caben = this.puestosDeContacto().filter((p) => this.cabeDeLinea(p.xy));
-      if (caben.length) return caben;
+      /*
+       * Y el que tiene pasarela en la foto y publica un mayor avión que lo admite, cabe (H87): ese número
+       * ya cuenta las paredes, como al salir (H60f). Con las alas medidas alrededor de la rueda de morro
+       * no cabía ninguno de los tres de La Palma, y se llegaba a uno sin ella.
+       */
+      const caben = this.puestosDeContacto().filter(
+        (p) => (p.aip?.pasarela === true && p.aip.max !== null) || this.cabeDeLinea(p.xy),
+      );
+      /*
+       * Y de esos, uno que el tráfico no tenga ni le toque las alas (H87): en La Palma son tres, y dos de
+       * ellos, el 5 y el 4A, son el mismo hueco. Si no queda ninguno, a un remoto libre, que es a donde se
+       * manda a un avión cuando no hay pasarela; y si tampoco, al suyo.
+       */
+      const libres = this.conTusAlasLibres(caben);
+      if (libres.length) return libres;
+      if (caben.length) {
+        const remotos = this.conTusAlasLibres(this.puestosDeLinea());
+        return remotos.length ? remotos : caben;
+      }
     }
     return this.puestosDeLinea();
   }
@@ -2754,17 +2772,17 @@ export class PlanDeVuelo {
   private libresDelTrafico(
     puestos: { ref: string | null; xy: Punto }[],
   ): { ref: string | null; xy: Punto }[] {
-    const otros = this.puestosDelTrafico();
-    if (!otros.length) return puestos;
-    const mia = this.avion.wingSpan / 2;
-    const libres = puestos.filter((p) =>
-      otros.every(
-        (o) =>
-          Math.hypot(o.xy[0] - p.xy[0], o.xy[1] - p.xy[1]) >=
-          mia + o.semiala + HOLGURA_DE_CLAVE_C,
-      ),
-    );
+    const libres = this.conTusAlasLibres(puestos);
     return libres.length ? libres : puestos;
+  }
+
+  /** De estos puestos, en los que caben tus alas con el tráfico que hay en los suyos, con la holgura de la clave C entre las dos puntas. */
+  private conTusAlasLibres<T extends { readonly xy: Punto }>(puestos: readonly T[]): T[] {
+    const otros = this.puestosDelTrafico();
+    const mia = this.avion.wingSpan / 2;
+    return puestos.filter((p) =>
+      otros.every((o) => Math.hypot(o.xy[0] - p.xy[0], o.xy[1] - p.xy[1]) >= mia + o.semiala + HOLGURA_DE_CLAVE_C),
+    );
   }
 
   /**
@@ -2832,31 +2850,40 @@ export class PlanDeVuelo {
   /**
    * **Los puestos de contacto para este avión**: los de pasarela, pegados a un
    * edificio con el morro sin meterse en él, y solo en un campo que embarca por
-   * pasarela. Ver `esPuestoDeContacto` y `edificiosDePasarela`.
+   * pasarela. Ver `esDeContacto` y `edificiosDePasarela`.
    *
    * **Y que el AIP no lo desmienta** (H60f, `valeParaElEmpuje`): de contacto si la carta
    * lo dice, de salida con tractor y que admita el avión. Por la 18 de Barajas el plan
    * sacaba a los reactores empujados del 329, que la regla de la pared daba por de
    * contacto y el AIP publica de salida autónoma y sin pasarela.
    *
-   * **Y si la carta no dice cuáles tienen pasarela, que le llegue una** (H75,
-   * `leLlegaLaPasarela`): con el avión sobre su línea publicada, la terminal delante o a su
-   * izquierda, que es por donde se embarca.
+   * **Y si la carta no dice cuáles tienen pasarela, los que la tienen en la foto** (H87,
+   * `tienePasarela`); y si tampoco se sabe, que le llegue una (H75, `leLlegaLaPasarela`) y que
+   * con el morro mire a la terminal: ver `esDeContacto`.
    */
-  private puestosDeContacto(): { ref: string | null; xy: Punto }[] {
+  private puestosDeContacto(): { ref: string | null; xy: Punto; aip?: DelAip }[] {
     if (this.deContactoGuardados) return this.deContactoGuardados;
     const morro = morroDe(this.avion);
     const edificios = edificiosDePasarela(this.aero);
     this.deContactoGuardados = vaALaPasarela(this.avion)
       ? this.puestosEnElAsfalto().filter(
           (p) =>
-            esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, morro) &&
             valeParaElEmpuje(p.aip, this.avion.wingSpan) &&
-            (p.aip?.contacto === true ||
-              leLlegaLaPasarela(p.xy[0], -p.xy[1], edificios, entradaDelPuesto(this.aero, p.xy[0], -p.xy[1]), morro)),
+            esDeContacto(p.xy[0], -p.xy[1], edificios, morro, p.aip, entradaDelPuesto(this.aero, p.xy[0], -p.xy[1])),
         )
       : [];
     return this.deContactoGuardados;
+  }
+
+  /**
+   * **Si la ruta de este puesto es la de salir empujado**: el que tiene la terminal a lo que alcanza una
+   * pasarela, y el que no la tiene y del que el tractor saca igual (H87, `saleConRemolque`): si el plan
+   * pone ahí al avión, la ruta empieza donde el tractor lo deja.
+   */
+  private seEmpujaDe(x: number, z: number, edificios: ReturnType<typeof edificiosDePasarela>): boolean {
+    const morro = morroDe(this.avion);
+    if (esPuestoDeContacto(x, z, edificios, morro)) return true;
+    return saleConRemolque(true, x, z, edificios, morro, delAipEn(this.aero, x, z), entradaDelPuesto(this.aero, x, z));
   }
 
   /**
@@ -2879,7 +2906,7 @@ export class PlanDeVuelo {
     const x = puesto[0];
     const z = -puesto[1];
     const edificios = edificiosDePasarela(this.aero);
-    if (!esPuestoDeContacto(x, z, edificios, morroDe(this.avion))) return null;
+    if (!this.seEmpujaDe(x, z, edificios)) return null;
     const pintada = rumboDeLaPintada(x, z, edificios, entradaDelPuesto(this.aero, x, z));
     if (pintada === null) return null;
     // La cola, hacia atrás por la raya: en el mundo (sen, −cos) del rumbo más media vuelta, y en el grafo la z cambia de signo.
@@ -2899,7 +2926,9 @@ export class PlanDeVuelo {
     const deEspaldas = desdeFuera ? null : this.deEspaldasDesde(puesto);
     if (deEspaldas) {
       const porLaPintada = rodajeEntre(this.grafoDeSalida(puesto), puesto, espera, 220, ocupados, { deEspaldas });
-      if (porLaPintada && this.saleBienDeEspaldas(puesto, porLaPintada))
+      // Sin la terminal a su alcance, sin sacar una rueda del pavimento, o no hay tractor (H87): ver `sacaBienPorSuRaya`.
+      const sobrePavimento = !esPuestoDeContacto(puesto[0], -puesto[1], edificiosDePasarela(this.aero), morroDe(this.avion));
+      if (porLaPintada && this.saleBienDeEspaldas(puesto, porLaPintada, null, sobrePavimento))
         return this.desdeDondeAcabaElEmpuje(puesto, [espera], [porLaPintada], deEspaldas, ocupados)[0] ?? porLaPintada;
     }
     return rodajeEntre(this.grafoDeSalida(puesto), puesto, espera, 220, ocupados, { desdeFuera, ...this.saleEn(puesto) });
@@ -3053,7 +3082,7 @@ export class PlanDeVuelo {
     const aip = delAipEn(this.aero, x, z);
     const aproar = aproarDe(aip, this.pista.heading);
     const edificios = edificiosDePasarela(this.aero);
-    if (!aproar || !esPuestoDeContacto(x, z, edificios, morroDe(this.avion))) return rutas;
+    if (!aproar || !this.seEmpujaDe(x, z, edificios)) return rutas;
     const sentido = aproar.map(enElGrafo);
     const alEdificio = rumboAlEdificio(x, z, edificios);
     const pared = alEdificio === null ? null : enElGrafo(alEdificio + Math.PI);
@@ -3147,7 +3176,7 @@ export class PlanDeVuelo {
   private readonly conAproar = new WeakSet<Ruta>();
 
   /** Ver `puestosDeContacto`. Se tira al mudarse de campo. */
-  private deContactoGuardados: { ref: string | null; xy: Punto }[] | null = null;
+  private deContactoGuardados: { ref: string | null; xy: Punto; aip?: DelAip }[] | null = null;
 
   /**
    * De dónde se puede salir: los de contacto con pasaje, si los hay; si no, los
@@ -3222,7 +3251,7 @@ export class PlanDeVuelo {
     const z = -py;
     const edificios = edificiosDePasarela(this.aero);
     const morro = morroDe(this.avion);
-    if (!esPuestoDeContacto(x, z, edificios, morro)) return false;
+    if (!this.seEmpujaDe(x, z, edificios)) return false;
     const ruta = this.salidaDesde(par.puesto.xy, par.espera);
     if (!ruta) return false;
     const { puntos } = this.comoSePinta(ruta);

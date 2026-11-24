@@ -5310,7 +5310,7 @@
       280.8
     ]
   ],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCRR, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCRR/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCRR PDC 1","wef":"01-OCT-26"}]},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCRR, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCRR/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCRR PDC 1","wef":"01-OCT-26"}],"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-04","leido":"2026-11-24"}},
   "parkingPositions": [
     {
       "ref": "24",
@@ -5360,7 +5360,8 @@
         "salida": "A",
         "max": "B753",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5388,6 +5389,7 @@
         "max": "B744",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": true,
         "aproar": "NE"
       }
     },
@@ -5411,7 +5413,8 @@
         "salida": "A",
         "max": "B752",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5439,6 +5442,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": true,
         "aproar": "NE"
       }
     },
@@ -5462,7 +5466,8 @@
         "salida": "A",
         "max": "A21N/B38M",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5490,6 +5495,7 @@
         "max": "B753",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": true,
         "aproar": "SW"
       }
     },
@@ -5523,6 +5529,7 @@
         "max": "A343",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": true,
         "aproar": "SW"
       }
     },
@@ -5546,7 +5553,8 @@
         "salida": "A",
         "max": "A21N/B3XM",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5574,6 +5582,7 @@
         "max": "B753",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": true,
         "aproar": "SW"
       }
     },
@@ -5597,7 +5606,8 @@
         "salida": "A",
         "max": "A21N/B3XM",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5625,6 +5635,7 @@
         "max": "A21N/B3XM",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": true,
         "aproar": "SW"
       }
     },
@@ -5653,6 +5664,7 @@
         "max": "A21N/B3XM",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": true,
         "aproar": "SW"
       }
     },
@@ -5681,6 +5693,7 @@
         "max": "B752",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false,
         "aproar": "SW",
         "lejos": 136
       }
@@ -5705,7 +5718,8 @@
         "salida": "A",
         "max": "A21N/B3XM",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5733,6 +5747,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false,
         "aproar": "SW"
       }
     },
@@ -5761,6 +5776,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false,
         "aproar": "SW"
       }
     },
@@ -5788,7 +5804,8 @@
         "salida": "A",
         "max": "A20N",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5816,6 +5833,7 @@
         "max": "A21N/B3XM",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false,
         "aproar": "SW"
       }
     },
@@ -5843,7 +5861,8 @@
         "salida": "A",
         "max": "A20N",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5870,7 +5889,8 @@
         "salida": "R",
         "max": "B753",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5893,7 +5913,8 @@
         "salida": "A",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5921,6 +5942,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false,
         "aproar": "NE"
       }
     },
@@ -5934,7 +5956,8 @@
         "salida": "AR",
         "max": "AT72",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5962,6 +5985,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false,
         "aproar": "NE"
       }
     },
@@ -5975,7 +5999,8 @@
         "salida": "AR",
         "max": "AT72",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -5998,7 +6023,8 @@
         "salida": "A",
         "max": "B752",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false
       }
     },
     {
@@ -6026,6 +6052,7 @@
         "max": "B744",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "pasarela": false,
         "aproar": "NE"
       }
     },
@@ -6044,7 +6071,14 @@
           112.9,
           1110.5
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG2",
@@ -6061,7 +6095,14 @@
           103.6,
           1092.5
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG1",
@@ -6078,7 +6119,14 @@
           95.1,
           1074.2
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG4",
@@ -6095,7 +6143,14 @@
           138.1,
           1097.8
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     }
   ],
   "holdingPositions": [

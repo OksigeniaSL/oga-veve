@@ -161,7 +161,8 @@ describe("el APROAR en los campos que lo publican", async () => {
           expect(cumpleElAproar(e.empuje.poses.at(-1)!.rumbo, e.aproar), `${avion.id} · ${rumbo.toFixed(0)}° · el ${e.ref}`).toBe(true);
           filas++;
         }
-    expect(filas).toBe(30);
+    // Once empujes por cabecera: los siete de pasarela con el JAZ 90, y el T1 y el T7 con los otros dos (H87).
+    expect(filas).toBe(22);
   });
 
   it("el T2 de Lanzarote por la 03, que se empujaba 268 m por la C: a la calle de la plataforma, con el morro al NE", () => {

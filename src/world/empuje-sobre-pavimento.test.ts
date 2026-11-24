@@ -51,7 +51,7 @@ function empujeDe(campo: Scenario, rumbo: number, avion: (typeof AIRCRAFT)[numbe
   const [x, z] = plan.arranque()!;
   const edificios = edificiosDePasarela(aero);
   const morro = morroDe(avion);
-  if (!saleConRemolque(vaALaPasarela(avion), x, z, edificios, morro, delAipEn(aero, x, z))) return null;
+  if (!saleConRemolque(vaALaPasarela(avion), x, z, edificios, morro, delAipEn(aero, x, z), entradaDelPuesto(aero, x, z))) return null;
   const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
   const enElSuyo = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), avion.batalla, (r) =>
     conLaRuedaEn({ x, z }, r, morro),

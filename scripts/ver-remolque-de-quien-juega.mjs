@@ -163,7 +163,13 @@ try {
     console.log(
       t(`en el puesto: morro a ${f(terminal?.delMorro)} m de la terminal, desviado ${f(terminal?.desviado, 0)}°, ${terminal?.deContacto ? "de contacto" : "no es de contacto"} (el edificio más cercano al centro, a ${f(alEdificio?.delMorro)} m del morro y ${f(alEdificio?.desviado, 0)}°) · tarjeta ${t0.dibujo} «${t0.texto}» tecla ${t0.tecla} tocable ${t0.tocable} · empuje ${f(r0.medida?.largo, 0)} m, giro ${f(r0.medida?.giro, 0)}°`),
     );
-    if (!terminal || !terminal.deContacto || Math.abs(terminal.desviado) > 50)
+    /*
+     * **Y la regla es la del juego** (H87, `comoMiraALaTerminal`): de contacto, si se sabe si tiene pasarela,
+     * es tenerla; y mirar, con el morro a menos de cincuenta grados de la terminal o, donde se sabe, sobre
+     * su raya publicada. De un puesto a mano (`OGA_PUESTO`) no se pide que sea de contacto: del H43 de
+     * Tenerife Sur empuja el tractor, y no tiene pasarela.
+     */
+    if (!terminal || (!PUESTO && !terminal.deContacto) || !terminal.mira)
       fallos.push(t(`no empieza en un puesto de contacto con el morro a la terminal (${JSON.stringify(alEdificio)})`));
     if (t0.dibujo !== "baliza" || !t0.tocable) fallos.push(t(`la tarjeta del puesto no es la de la baliza tocable (${t0.dibujo}, ${t0.tocable})`));
     if (r0.baliza) fallos.push(t("en el puesto ya está la baliza encendida"));

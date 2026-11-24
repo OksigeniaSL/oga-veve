@@ -1,0 +1,148 @@
+{
+  "queEs": "Qué puestos tienen pasarela en los cuatro campos cuyas cartas PDC no lo dicen (contacto: null), puesto a puesto, con de dónde sale cada uno (ADR 0025, H87). Lo usan `juntar` y `poner` de scripts/puestos-del-aip.mjs, que lo llevan a la ficha como `aip.pasarela`.",
+  "fuente": "Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)",
+  "url": "https://www.ign.es/wms-inspire/pnoa-ma",
+  "leido": "2026-11-24",
+  "campos": {
+    "GCTS": {
+      "foto": "2024-02",
+      "puestos": [
+        {
+          "refs": ["G2", "G4", "G6", "G9", "G10", "J1", "J3", "J5", "J7", "J8"],
+          "pasarela": true,
+          "como": "Una pasarela en cada uno, a la vista en la foto. Son, con el R5A, los once que la carta da con sistema de guía de atraque visual (AD 2-GCTS PDC 1.1, WEF 11-JUN-26) y con 400 Hz y aire de tierra (PDC 1.3 y 1.4; casilla 20.5 del AD 2), y la hoja de la guía dice «The pilot must not overshoot the boarding bridge» (PDC 1.5)."
+        },
+        {
+          "refs": ["R5A"],
+          "pasarela": true,
+          "como": "El mismo sitio que el J5, incompatibles (PDC 1.4): la misma pasarela. Y en las dos listas de arriba."
+        },
+        {
+          "refs": ["H37", "H38", "H39", "R40", "R42", "H43"],
+          "pasarela": false,
+          "como": "De morro delante del edificio oeste, sin pasarela en la foto: del edificio al avión va un camino pintado de azul, y las dos piezas en L de la fachada acaban en nada. Sin guía de atraque ni 400 Hz en la carta. El R40 está pintado y no está en la carta."
+        },
+        {
+          "refs": ["S41", "H44", "R45", "H46", "R47", "H47", "G48"],
+          "pasarela": false,
+          "como": "De morro, sin edificio delante: escaleras y guaguas en la foto. El H47 no está en la carta."
+        },
+        {
+          "refs": ["G20", "AG21", "R19", "J22", "G23", "J24", "G25"],
+          "pasarela": false,
+          "como": "De morro, al este de la terminal, delante de la torre y de los hangares: escaleras y guaguas en la foto."
+        },
+        {
+          "refs": [
+            "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60", "E61", "E62", "E63", "E64",
+            "E65", "E66", "E67", "E68", "E69", "E70"
+          ],
+          "pasarela": false,
+          "como": "La segunda línea, en mitad de la plataforma y de salida autónoma (PDC 1.3)."
+        },
+        {
+          "refs": [
+            "AG1", "AG2", "AG3", "AG4", "AG5", "AG1 (U1)", "AG1 (U2)", "AG2 (U1)", "AG2 (U2)", "AG3 (U2)", "AG4 (U2)", "AG5 (U2)"
+          ],
+          "pasarela": false,
+          "como": "La plataforma de aviación general (PDC 1.3, observación 3)."
+        }
+      ]
+    },
+    "GCLA": {
+      "foto": "2024-07",
+      "puestos": [
+        {
+          "refs": ["5", "9"],
+          "pasarela": true,
+          "como": "Las dos pasarelas del campo, en los extremos sur y norte de la terminal (Aena, nota de prensa del 26-07-2012), a la vista en la foto: cada una queda a la izquierda del avión parado, que mira al este, y a la puerta de delante."
+        },
+        {
+          "refs": ["4A"],
+          "pasarela": true,
+          "como": "La pasarela del 5, con el que es incompatible (AD 2-GCLA PDC 1.2): el rayado rojo por el que se mueve baja por delante del morro del 5 hasta el borde del 4A, en línea con la puerta de un avión parado en él, a 38 m de su giro. Es el puesto de A339 de los que tienen una al alcance."
+        },
+        {
+          "refs": ["3", "4", "6", "6A", "7", "8", "10", "11", "12", "13", "14", "15", "16", "H2"],
+          "pasarela": false,
+          "como": "Sin pasarela en la foto: los otros dos salientes de la terminal, entre el 9 y el 7, no la llevan. La guía de atraque y los 400 Hz de la carta son de ocho y de siete puestos, también de algunos de estos, y no distinguen."
+        }
+      ]
+    },
+    "GCRR": {
+      "foto": "2024-04",
+      "puestos": [
+        {
+          "refs": ["T1", "T2", "T3", "T4", "T5", "T6"],
+          "pasarela": true,
+          "como": "Una pasarela en cada uno, a la vista en la foto y cinco de ellas puestas al avión. Son, con el T7, los siete que la carta da con 400 Hz y aire de tierra (AD 2-GCRR PDC 1-2, WEF 01-OCT-26; casilla 20 del AD 2)."
+        },
+        {
+          "refs": ["T7"],
+          "pasarela": true,
+          "como": "El hueco del T3 y el T4, con los que es incompatible (PDC 1-2): la pasarela del T3 queda a la izquierda del avión parado en el T7, a 40 m de su puerta. Con 400 Hz y aire de tierra en la carta, como los otros seis."
+        },
+        {
+          "refs": ["7", "8", "9", "10"],
+          "pasarela": false,
+          "como": "Delante de la terminal 2, sin pasarela en la foto: se llega a pie, por un camino pintado de verde."
+        },
+        {
+          "refs": ["11", "12", "13A", "13B", "13C", "14"],
+          "pasarela": false,
+          "como": "Al norte de la terminal 2, sin pasarela en la foto: escaleras y guaguas."
+        },
+        {
+          "refs": ["15", "16", "17", "18", "19", "20", "21", "22", "23", "24"],
+          "pasarela": false,
+          "como": "La segunda línea, en mitad de la plataforma y de salida autónoma (PDC 1-2)."
+        },
+        {
+          "refs": ["AG1", "AG2", "AG3", "AG4"],
+          "pasarela": false,
+          "como": "La plataforma de aviación general (PDC 1-2, observación 2)."
+        }
+      ]
+    },
+    "GCFV": {
+      "foto": "2024-07",
+      "puestos": [
+        {
+          "refs": ["15", "18", "19", "20", "21", "22", "23", "25", "26"],
+          "pasarela": true,
+          "como": "Pasarela a la vista en la foto, en la torreta que queda a la izquierda del avión parado: dos en el 15, el 19, el 23 y el 26 y una en los demás, trece en total, las trece de OpenStreetMap. En la carta, 400 Hz en el 15 y 400 Hz y aire de tierra en los otros (AD 2-GCFV PDC 1.2)."
+        },
+        {
+          "refs": ["18B", "19B", "23B"],
+          "pasarela": true,
+          "como": "El hueco del 18, del 19 y del 23, con los que son incompatibles (PDC 1.2): las mismas pasarelas. Con 400 Hz y aire de tierra en la carta."
+        },
+        {
+          "refs": ["16", "17"],
+          "pasarela": false,
+          "como": "Su torreta está, y en la foto no tiene pasarela: de ella al avión va un camino pintado de azul. La carta les da 400 Hz, sin aire de tierra."
+        },
+        {
+          "refs": ["24"],
+          "pasarela": false,
+          "como": "Sin torreta a su izquierda: la que tiene a la derecha es la del 23, y de ella baja un camino pintado de azul hasta su puerta. Es el único de esa rampa de salida empujada y mayor avión de pasarela sin 400 Hz en la carta."
+        },
+        {
+          "refs": ["21B", "21C", "22B"],
+          "pasarela": false,
+          "como": "De ATR 72, entre los de pasarela: un camino pintado de azul hasta cada uno."
+        },
+        {
+          "refs": ["11", "12", "13", "14", "14B", "27", "28"],
+          "pasarela": false,
+          "como": "Al norte y al sur de la terminal, sin pasarela ni torreta en la foto."
+        },
+        {
+          "refs": ["31", "32", "33", "33B", "34", "34B", "35", "35B", "36", "36B", "41", "42", "43", "44", "45", "46", "47"],
+          "pasarela": false,
+          "como": "Las rampas de en medio de la plataforma, de salida autónoma; a ellas se va en vehículo (casilla 20.2 del AD 2)."
+        }
+      ]
+    }
+  }
+}

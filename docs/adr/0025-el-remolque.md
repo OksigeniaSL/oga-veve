@@ -2697,7 +2697,7 @@ las 22 de Fuerteventura: ninguna regla nueva se corre sin su dato en la ficha, y
 
 **Cuáles tienen pasarela**: la carta dibuja nueve, junto al 15, el 18, el 19, el 20, el 21, el 22, el 24, el 25 y el 26, y la ficha
 trae diez torretas de OpenStreetMap, una entre el 16 y el 17. La tabla no lo dice, y con la regla de la pared entran además el 16,
-el 17, el 23 y el 27, y el 21B, el 21C y el 22B, que son de ATR 72.
+el 17, el 23 y el 27, y el 21B, el 21C y el 22B, que son de ATR 72. Hecho en la H87.
 
 **El 23**, con el morro al 141 al acabar: para dejarlo recto antes de la L3 el tractor tendría que meterse por la A2 hacia el
 norte desde su nacimiento, y la ruta no tiene recta de la que tirar.
@@ -2707,6 +2707,166 @@ va al 35B, 989 m por la L1 y la A1, con el 36 a doscientos por la T3.
 
 **Los puestos de helicóptero**, del H1 al H8, no se leen: la carta no les da salida. Y las restricciones por tipo de la L5, la A5,
 la E3, la E4, la E7 y la E8.
+
+## Enmienda (24-11-2026, H87): los puestos con pasarela de verdad, donde el AIP no lo dice
+
+### El caso
+
+En Tenerife Sur el JAZ 90 empezaba por la 07 en el H43, que el juego daba por de contacto solo porque tiene la terminal a
+lo que alcanza una pasarela: le queda a 45 m y **a 55° del morro**, y el banco del remolque lo daba en rojo («no empieza en un
+puesto de contacto con el morro a la terminal»). En la ortofoto del H37 al H43 no hay pasarela: los aviones aparcan de morro y
+del edificio les llega un camino pintado de azul. La carta no dice cuáles la tienen, y tampoco en La Palma, Lanzarote ni
+Fuerteventura (`contacto: null` en 142 puestos). Que se salga empujado es otra cosa, y eso sí lo publica.
+
+### De dónde sale cada uno
+
+- **El AIP** (AD 2 y cartas PDC de los cuatro, leídos otra vez el 24-11-2026): ninguno lo dice de cada puesto. La casilla 9 del AD 2
+  da «visual guidance docking system» en Fuerteventura; la 20, en qué puestos hay que usar los 400 Hz y el aire de tierra. En
+  Tenerife Sur la guía de atraque es de once (PDC 1.1), que son los once de los 400 Hz (casilla 20.5), y la hoja de la guía manda no
+  pasar de la pasarela («The pilot must not overshoot the boarding bridge», PDC 1.5). En Lanzarote los 400 Hz con aire son del T1 al
+  T7; en Fuerteventura, de once. En La Palma no distinguen: la guía es de ocho puestos y los 400 Hz de siete, y pasarelas hay dos.
+- **La ortofoto** (PNOA de máxima actualidad del IGN, por su WMS, 20 cm por píxel; once recortes sueltos y nueve consultas de fecha):
+  Tenerife Sur, 2024-02; La Palma, 2024-07; Lanzarote, 2024-04; Fuerteventura, 2024-07, que es lo que da la capa de mosaico del
+  servicio. Dibujados encima los puestos y las líneas de la ficha.
+- **Donde las dos hablan, casan**: los once de Tenerife Sur y los siete de Lanzarote son los mismos en las dos, y en Fuerteventura
+  los once de «400 Hz - A/C» tienen pasarela en la foto, todos. Las trece que se ven allí son las trece `jet_bridge` de OpenStreetMap.
+
+| Campo | Con pasarela | Cómo se sabe | Sin ella |
+|---|---|---|---|
+| Tenerife Sur | **11**: G2, G4, G6, G9, G10, J1, J3, J5, J7, J8 y R5A | se ven diez; el R5A es el hueco del J5. Y la carta: guía de atraque, 400 Hz y aire | 54 |
+| La Palma | **3**: 5, 9 y 4A | se ven dos, la del 5 y la del 9, a la izquierda de cada uno; la del 5 sirve al 4A, que es incompatible con él: su rayado rojo baja por delante del morro del 5 hasta el borde del 4A, en línea con su puerta | 14 |
+| Lanzarote | **7**: T1 a T7 | se ven seis; la del T3 le queda al T7 a la izquierda, a 40 m de la puerta. Y la carta: 400 Hz y aire | 24 |
+| Fuerteventura | **12**: 15, 18, 18B, 19, 19B, 20, 21, 22, 23, 23B, 25 y 26 | se ven en nueve huecos; los «B» son los de su par. Y la carta: 400 Hz | 30, y los 14 de carga y aviación general, que ya lo decían |
+
+Puesto a puesto, con de dónde sale, en `data/aerodromes/aip/pasarelas.json`; en la ficha, `aip.pasarela`, aparte de `contacto`, que es
+lo que dice la carta, y en `aipPuestos.pasarelas` la fuente y el mes de la foto. **Ninguno se quedó sin distinguir.** El menos directo es
+el 4A de La Palma, que es por el rayado y no por haber visto la pasarela puesta en él; y en Fuerteventura el 16 y el 17 tienen torreta
+y 400 Hz en la carta, y en la foto, sin pasarela y con un camino pintado hasta el avión. La lectura de la carta que dejó la H85 daba la del
+24: es la torreta que hay entre el 23 y él, y sus dos pasarelas son del 23.
+
+### La nave que faltaba
+
+De las diez pasarelas de Tenerife Sur, ocho salen de una nave de 400 m, del G10 al J1, que **en la ficha no estaba**: la terminal eran las
+dos piezas del oeste, y el J5 tenía la pared más cercana a 198 m. En el juego ahí no había edificio. Las dos consultas a Overpass de
+hoy no contestaron (502), así que va trazada a mano sobre la ortofoto, en `buildings`, con `manual` y su fuente. Las avionetas siguen
+saliendo de donde salían.
+
+### Decisión
+
+1. **Con el dato, el dato** (`tienePasarela`, `esDeContacto`): lo que dice la carta y, si no lo dice, la foto. No se mira hacia dónde queda la
+   pared: en Gran Canaria los once de la T y el N01 tienen la más cercana de 65° a 73° del morro, que es la del dique del que sale la suya.
+2. **Y con la terminal dibujada a su alcance**, como desde la H60f: es la que tiene delante quien juega. En los otros campos quince puestos
+   de Barajas, dos de Los Rodeos —el 11 y el 25, a 81 y 82 m— y el T10 de Gran Canaria son de contacto en la carta y la regla de la
+   pared no los alcanza: se quedan como estaban, fuera de este encargo.
+3. **Sin el dato, la distancia, que le llegue una (H75) y que el morro mire a la terminal**: los cincuenta grados del banco, que ahora están
+   en un solo sitio (`MIRA_A_LA_TERMINAL`). Mirado en los nueve campos con pasarelas, no quita ni pone ninguno: ya no queda ninguno sin
+   dato que la distancia dé por bueno. Es para el campo que llegue sin él, y al H43 lo habría quitado.
+4. **Empujar no es ser de pasarela** (`saleConRemolque`, `sacaBienPorSuRaya`). Hasta aquí era lo mismo: con la terminal a su alcance, tractor;
+   lejos, por sus medios, aunque la carta lo diera «R»; y de un «A», nunca. Ahora, donde se sabe que no tiene pasarela y la carta lo da de
+   salida con tractor, empuja el tractor por su raya publicada, esté donde esté la terminal, si lo saca bien por ella y sin pisar fuera del
+   pavimento; si no, por sus medios, como antes. La ruta del plan empieza donde el tractor lo deja (`seEmpujaDe`). De ningún «A» sale uno.
+   Donde lo dice la carta —Los Rodeos, Gran Canaria, Barajas—, igual que hasta ahora.
+5. **El tráfico y las llegadas, la misma regla.** A los de contacto va el tráfico por `esDeContacto`, y de un «R» sin pasarela sale empujado. Y
+   al llegar cabe en el que tiene pasarela en la foto y publica un mayor avión que lo admite, como al salir (H60f): con las alas medidas
+   alrededor de la rueda de morro no cabía en ninguno de los tres de La Palma, y se llegaba al 6.
+6. **Y a uno que el tráfico no tenga ni le toque las alas** (`conTusAlasLibres`): con tres en La Palma, y dos de ellos el mismo hueco, ya no
+   vale el más cercano sin mirar. Si no queda ninguno, a un remoto libre, que es a donde se manda a un avión sin pasarela; y si tampoco, al suyo.
+7. **El banco pide lo que hace el juego** (`comoMiraALaTerminal`, `mira`): de contacto con el dato, y el morro a la terminal o, donde se
+   sabe, sobre su raya. Del puesto a mano (`OGA_PUESTO`) no pide que sea de contacto.
+
+### El barrido, el plan y los metros
+
+| Campo | Antes: bien de empujes · de lado | Ahora | APROAR | Fuera del pavimento · en un edificio |
+|---|---|---|---|---|
+| Tenerife Sur | 30 de 30 · 0 | **46 de 46** · 0 | no lo publica la tabla | 0 · 0 |
+| La Palma | 26 de 26 · 0 | **10 de 10** · 0 | no lo publica | 0 · 0 |
+| Lanzarote | 30 de 30 · 0 | **22 de 22** · 0 | 30 de 30 → 22 de 22 | 0 · 0 |
+| Fuerteventura | 58 de 58 · 0 | **40 de 40** · 0 | 58 de 58 → 40 de 40 | 0 · 0 |
+| Los Rodeos, Gran Canaria, Pettirossi | 18 de 18, 32 de 34 y 36 de 36 | iguales fila a fila | iguales | iguales |
+| Barajas | 836 de 842 | iguales fila a fila | iguales | iguales |
+
+En los cuatro, 170 filas en común, **ninguna de bien a mal** y ninguna que cambie de empuje ni de metros; salen 62, las de los 23 puestos
+sin pasarela, y entran 36, las de los ocho de la nave de Tenerife Sur, todas bien. Del puesto que elige el plan, 48 de 48, sobre su raya
+y sobre pavimento; desaparecen los 9,5 m que el JAZ 120 rodaba fuera saliendo del 6A de La Palma por la 36.
+
+**El puesto del que se sale** (`puesto-de-salida-de-cada-campo.json`: cambian 14 de sus 418 filas, las de aquí y ninguna más):
+
+| Campo, avión y pista | Antes | Ahora |
+|---|---|---|
+| Tenerife Sur, JAZ 90, 07 · 25 | H43, 999 m · J8, 2.367 | **G10**, 1.197 · **J1**, 1.965 |
+| Tenerife Sur, JAZ 110 y 120, 07 · 25 | R42, 1.225 · J8, 2.468 | **J8**, 1.527 · **J1**, 2.065 |
+| La Palma, JAZ 90, 36 · 18 | 8, 233 · 10, 444 | **9**, 287 · **9**, 498 |
+| La Palma, JAZ 110 y 120, 36 · 18 | 6A, 176 · 6A, 618 | **4A**, 165 · **4A**, 704 |
+| Lanzarote, JAZ 90, 21 | 9 (ATR 72, a pie), 842 | **T2**, 1.113 |
+| Fuerteventura, JAZ 90, 19 | 17, 1.521 | **18B**, 1.568 |
+
+Por la 07 de Tenerife Sur se ruedan 198 y 302 m más y por la 25, 402 y 403 menos: es donde están las pasarelas. En Lanzarote por la 03 y
+en Fuerteventura por la 01, y los dos grandes por las dos, igual que antes.
+
+**A dónde se llega**, de las salidas de pista y con las dos cabeceras:
+
+| Campo | Antes | Ahora |
+|---|---|---|
+| Tenerife Sur, JAZ 90 | G9 o H43 | **G10** o **J1** |
+| Tenerife Sur, JAZ 110 y 120 | J22 o R42, sin pasarela los dos | **J1** o **J8** |
+| La Palma, JAZ 90 | 6A u 8, sin pasarela los dos | **5** o **9** |
+| La Palma, JAZ 110 y 120 | 11, sin pasarela | **4A** |
+| Lanzarote, JAZ 90 | 10 (a pie) o T2 | **T6** o T2 |
+| Fuerteventura, JAZ 90, por la 19 | 17 o 27 | **18B** o **26** |
+| Fuerteventura, JAZ 110 y 120, por la 01 · por la 19 | 15 o 27 | 15, **23B** o 19B · 15 o **26** |
+
+**El reactor del tráfico**, sin nadie más en tierra —los demás tipos, iguales—:
+
+| Campo | Sale: antes → ahora | Llega: antes → ahora |
+|---|---|---|
+| Tenerife Sur, 07 · 25 | H43, 1.243 m → **G10**, 1.449 · G9, 2.409 → **J1**, 1.943 | J8, 1.744 → **J1**, 1.374 · lo mismo |
+| La Palma, 36 · 18 | 5 → 5 · 11, 444 → **9**, 524 | 11, 538 → **9**, 618 · 8, 211 → **9**, 216 |
+| Lanzarote, 03 · 21 | T2 → T2 · 10, 985 → **T6**, 1.470 | 10, 848 → **T6**, 995 · T2 → T2 |
+| Fuerteventura, 01 · 19 | 27, 2.150 → **25**, 2.278 · 15 → 15 | 19 → 19 · 27, 2.209 → **26**, 2.281 |
+
+**Los «R» sin pasarela**, con el JAZ 90 y por las dos cabeceras: salen empujados y bien por su raya los once de La Palma, los ocho de
+Lanzarote con raya —con los «A/R», que siguen saliendo con tractor—, los doce de Fuerteventura y diez de los dieciocho de Tenerife Sur.
+
+### Lo medido
+
+- **La mesa**: los barridos de los ocho campos con la medida de la prueba (`comoAcaba`), con los tres reactores y las dos cabeceras, antes
+  —main en 5803e971— y después, y las mesas de salidas, llegadas y tráfico. Las llegadas y el tráfico de Los Rodeos, Gran Canaria y
+  Pettirossi, iguales línea a línea; los de Barajas no se pasaron por esa mesa.
+- **Pruebas nuevas** (`puestos-con-pasarela.test.ts`, 33): cada puesto con su dato, su fuente y su fecha; los de contacto del plan, que son los
+  que la tienen y no otros; de dónde se sale, a dónde se llega y el tráfico, en los cuatro campos; los «R» con tractor y los «A» sin él; el
+  H43; la nave; y la regla con terminales de mentira. Cambian su cuenta `aproar`, `empieza-donde-acaba-el-empuje`, `puestos-del-aip` y
+  `fuerteventura-del-aip`, y `trafico-empujado` mira la raya: en el J1 la terminal queda a la izquierda.
+- **Vitest, por partes** y con el código terminado: `src/world` entero en tres, 196 ficheros, 4.325 en verde y 3 saltadas —tres pruebas
+  que contaban lo de antes se arreglaron y se pasaron otra vez—; de `src/flight`, los 35 que tocan el plan, el tráfico o los escenarios, 529 en
+  verde y 9 saltadas; y lo que no es de `src/world` ni de `src/flight`, 124 ficheros y 2.471 en verde. Ninguna en rojo. El resto de `src/flight`,
+  no.
+- **El remolque de quien juega**, con el JAZ 90 y la tarjeta Intel (Iris Xe), **todo en orden**:
+  - Tenerife Sur por la 07, en los dos peldaños, desde el **G10**: morro a 38 m de la terminal y a 8° de mirarla, de contacto; 99 de 99 m
+    empujado, giro de 99° con radio 11,5 m, rumbo al acabar 248°, y 1° y 0° en los primeros treinta metros. En las capturas, la terminal de
+    frente con las dos torretas a los lados del morro; al acabar, en la calle mirando al umbral de la 07, con el tractor y el señalero apartados.
+  - La Palma por la 36, en Guyrami, desde el **9**: morro a 12 m de la torreta, a 55° de ella y sobre su raya, de contacto; 100 de 100 m,
+    giro de 92°, rumbo al acabar 180°. En la captura mira a la terminal entre las dos torretas.
+  - El **H43** de Tenerife Sur a mano (`OGA_PUESTO=H43`), en Guyrami: no es de contacto, la terminal a 55° del morro y sobre su raya, y sale
+    empujado, 113 de 113 m, giro de 91°, rumbo al acabar 248°. En la captura, delante del morro no hay terminal: queda a la derecha.
+  - Lanzarote por la 21 (`210/10`), en Guyrami, desde el **T2**: morro a 47 m de la terminal y a 0° de mirarla, de contacto; 113 de 113 m,
+    giro de 91°, rumbo al acabar 28°, el NE que publica la carta.
+  - En todas, ni una rueda fuera del pavimento, empujando ni al acabar, y nada dentro de un edificio.
+  - **No se volaron** Fuerteventura por la 19 (18B), Tenerife Sur por la 25 (J1) ni los dos grandes: no cabían en el tiempo del encargo.
+
+### Lo que queda
+
+**Las dos puntas de la plataforma de Tenerife Sur**: del S41 al G48 y el R19 y el G20, «R» sin pasarela, de los que el tractor no saca bien a
+nadie —la ficha no tiene pavimento detrás, o la ruta sale de lado—. El plan no pone a nadie ahí, y si alguien llega sale por sus medios,
+como antes. La plataforma cosida de la H81 va del G9 al H43.
+
+**El APROAR de Tenerife Sur**: la casilla 20.3 manda empujar «nosing to the threshold in use» y, del R19, G20, AG21 y J22, al umbral de la 25. La
+tabla no lo da por puestos y el plan no lo usa.
+
+**Las pasarelas no se dibujan**, ni las torretas de la nave de Tenerife Sur. Y en los demás campos, los puestos que la carta da de contacto y la
+pared no alcanza (punto 2) y las llegadas, que siguen midiendo las alas alrededor de la rueda de morro.
+
+**La avioneta y el bimotor del tráfico en La Palma** salen del 5 y llegan a él por la 36, que es de pasarela: no tienen plataforma de
+aviación general en la carta. Era así.
 
 ## Lo que queda
 
@@ -2721,6 +2881,9 @@ queda» de la H83.
 La Palma y Lanzarote están en su punto desde la H75. El APROAR del AIP lo usa el empuje desde la H76. De
 Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen línea en OpenStreetMap; el plan no los elige. El
 538, el 539 y del 583 al 586 salen desde la H81.
+
+**Qué puestos tienen pasarela**, en los cuatro campos cuyo AIP no lo dice, desde la H87. De Tenerife Sur quedan las dos puntas de la
+plataforma y su APROAR: ver su «Lo que queda».
 
 **Fuerteventura**, con los puestos del AIP desde la H85: ver su «Lo que queda». El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
 tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H81.
