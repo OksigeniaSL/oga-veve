@@ -17390,6 +17390,8 @@ export class Game {
     if (!this.gafasPorCelebrar || this.inicio) return;
     const s = this.flight.state;
     if (s.onGround && s.groundSpeed >= SE_CELEBRAN_LAS_GAFAS) return;
+    // Ni encima del «pará acá» del reventón al tomar: con el ejercicio cerrado, detrás de su cierre. Ver `paraEnLaPista`.
+    if (this.paraEnLaPista && this.practica?.fase !== "cerrada") return;
     this.gafasPorCelebrar = false;
     this.hud.senal.mostrar("gafas", t("gafas.ganadas"), null, {
       segundos: SE_QUEDA_EL_ARO * 2,

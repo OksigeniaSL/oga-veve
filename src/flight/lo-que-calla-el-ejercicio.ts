@@ -78,8 +78,10 @@
  * **Y el que para en la pista** (H84): el reventón al tomar enseña a parar
  * ahí, sin prisa por dejarla, y la fase del plan pedía lo contrario desde que
  * se toca —«frená» para la salida, «salí de la pista, que viene otro»—. Desde
- * la toma se calla la fase y nada más, y sigue callada después del cierre: con
- * la rueda rota no se rueda. Ver `seParaEnLaPista` en `practica.ts`.
+ * la toma se calla la fase, y con ella la megafonía: «bienvenidos a Gran
+ * Canaria» salió a treinta nudos, con la rueda reventada y encima del «pará
+ * acá». Y sigue callado después del cierre: con la rueda rota no se rueda. Ver
+ * `seParaEnLaPista` en `practica.ts`.
  *
  * **Lo que no se calla nunca** es la seguridad: la máquina del avión
  * (*traffic*, *terrain*, la pérdida), los avisos del cuadro y la información
@@ -157,7 +159,7 @@ export function loQueCallaElEjercicio(
   paraEnLaPista = false,
 ): LoQueCalla {
   if (!ejercicio || cerrado) return NO_CALLA_NADA;
-  if (paraEnLaPista) return SOLO_LA_FASE;
+  if (paraEnLaPista) return { ...SOLO_LA_FASE, laMegafonia: true };
   if (sinRadio) return { ...NO_CALLA_NADA, laFrecuencia: true };
   if (ejercicio.acabaEnElAire)
     return {

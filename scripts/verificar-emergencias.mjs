@@ -453,7 +453,7 @@ try {
         fuera: false,
         deprisa: 0,
         parado: null,
-        camionesA: null,
+        megafonia: null,
       };
       // Con el ave en un motor: los estallidos, las agujas, la palanca, el pie y la tarjeta.
       const av = {
@@ -537,6 +537,7 @@ try {
             rev.lado = ej?.reventon?.lado ?? null;
             rev.rumbo = s.heading;
             tm.alReventar = { c: p.c, a: p.a, v: s.groundSpeed };
+            tm.megafonia = { comandante: o.dichoTodo().comandante.length, tripulacion: o.dichoTodo().tripulacion.length };
             globalThis.setTimeout(() => globalThis.__foto?.("golpe"), 500);
             globalThis.setTimeout(() => globalThis.__foto?.("pie"), 2600);
             globalThis.setTimeout(() => globalThis.__foto?.("freno"), 6000);
@@ -1285,6 +1286,10 @@ try {
         todoCantado: o.cantados(),
         cuadrosConLlama: globalThis.__cuadrosConLlama ?? 0,
         torre: todo.torre.slice(antes.torre),
+        // Y lo que dijo la megafonía desde que reventó la rueda al tomar.
+        megafonia: tm.megafonia
+          ? [...todo.comandante.slice(tm.megafonia.comandante), ...todo.tripulacion.slice(tm.megafonia.tripulacion)]
+          : [],
         cantados: o.cantados().slice(antes.cantados),
         descartadas: o.descartadas(),
       };
@@ -1794,11 +1799,13 @@ try {
       ...r.instructor,
       ...r.torre,
     ].filter((k) => /vacat|abandon|salidaSiguiente|tutor\.salir|vuelo\.aterrizado$/i.test(String(k)));
+    // Lo que dijo la megafonía desde el golpe: nada, que hay otra cosa entre manos.
+    const bienvenida = r.megafonia.map((k) => `megafonía ${k}`);
     const tarjetasDeSalir = tm.tarjetas.filter((x) => x === "salida" || x === "freno");
     comprobar(
-      "y nadie pide dejar la pista ni frenar para la salida",
-      pideSalir.length === 0 && tarjetasDeSalir.length === 0,
-      [...pideSalir, ...tarjetasDeSalir.map((x) => `tarjeta ${x}`)].join(" · ") || "nadie",
+      "y nadie pide dejar la pista ni frenar para la salida, ni la megafonía da la bienvenida",
+      pideSalir.length === 0 && tarjetasDeSalir.length === 0 && bienvenida.length === 0,
+      [...pideSalir, ...tarjetasDeSalir.map((x) => `tarjeta ${x}`), ...bienvenida].join(" · ") || "nadie",
     );
     if (DEJA) {
       comprobar(

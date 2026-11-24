@@ -105,10 +105,14 @@ describe("lo que calla un ejercicio que no acaba en la pista", () => {
  * juego pedía frenar para la salida y dejarla, «que viene otro».
  */
 describe("el reventón al tomar", () => {
-  it("desde que se toca, la fase y nada más; y en el aire, nada", () => {
+  it("desde que se toca, la fase y la megafonía; y en el aire, nada", () => {
     const e = ejercicioPorId("reventon-al-tomar");
     expect(loQueCallaElEjercicio(e, false)).toEqual(NO_CALLA_NADA);
-    expect(loQueCallaElEjercicio(e, false, false, false, false, true)).toEqual({ ...NO_CALLA_NADA, laFase: true });
+    expect(loQueCallaElEjercicio(e, false, false, false, false, true)).toEqual({
+      ...NO_CALLA_NADA,
+      laFase: true,
+      laMegafonia: true,
+    });
   });
 
   it("y el juego lo mira donde nace cada cosa que pide dejar la pista", () => {
