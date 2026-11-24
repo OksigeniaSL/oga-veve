@@ -91,6 +91,13 @@ try {
             const p = o.puntoDeFinal(160000);
             o.colocar(p.x, alto, p.z, tas, p.h);
             const c = o.controles();
+            /*
+             * En marcha, a mano: en un puesto de pasarela la llave no arranca
+             * hasta que la baliza y el tractor, y el «i» de arriba no hace nada.
+             * El banco estuvo midiendo un planeo con el N1 a cero, que está
+             * quieto, y salía en verde (24-11).
+             */
+            c.engineOn = true;
             c.throttle = j.flight.gasPara(tas);
             c.trim = 0;
             /*
@@ -164,7 +171,10 @@ try {
         const n1Max = Math.max(...n1s);
         const ias = m.map((x) => x.ias ?? NaN).filter(Number.isFinite);
         const pies = m.map((x) => x.pies);
-        const ok = n1Max - media <= 1 && media - n1Min <= 1;
+        // Quieto, y volando: con los motores dando y sin perder el nivel.
+        const enMarcha = n1Min > 20;
+        const nivelado = Math.max(...pies) - Math.min(...pies) < 300;
+        const ok = enMarcha && nivelado && n1Max - media <= 1 && media - n1Min <= 1;
         // Y cuándo se apartó más, para saber si es un bache o el gas.
         let peor = 0;
         for (let i = 0; i < m.length; i++)
@@ -182,7 +192,7 @@ try {
         };
         filas.push(fila);
         console.log(
-          `${ok ? "✓" : "✗"} ${avion} ${tramo}: N1 ${fila.n1} · ${fila.kt} kt · ${fila.pies} ft · automático ${r.puesto ? "puesto" : "NO"} · ${m.length} muestras${r.plan ? " · CON PLAN" : ""}${r.tren > 0.01 ? " · TREN FUERA" : ""}`,
+          `${ok ? "✓" : "✗"} ${avion} ${tramo}: N1 ${fila.n1} · ${fila.kt} kt · ${fila.pies} ft · automático ${r.puesto ? "puesto" : "NO"} · ${m.length} muestras${r.plan ? " · CON PLAN" : ""}${r.tren > 0.01 ? " · TREN FUERA" : ""}${enMarcha ? "" : " · MOTOR PARADO"}${nivelado ? "" : " · PIERDE EL NIVEL"}`,
         );
         if (process.env.OGA_DETALLE) {
           const t0 = m[0]?.t ?? 0;
