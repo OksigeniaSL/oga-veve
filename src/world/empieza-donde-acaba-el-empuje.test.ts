@@ -10,6 +10,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
+import juego from "../game.ts?raw";
 import { aproarDe, cumpleElAproar, delAipEn, puestoEn } from "./puestos-del-aip";
 import {
   acabaEnLaCalle,
@@ -355,6 +356,18 @@ describe("en Lanzarote", async () => {
           expect(r.letras, ref).not.toContain("B");
         }
     });
+  });
+});
+
+// `game.ts` no se puede montar sin el navegador, así que se mira su texto, como en `torre-de-cada-vuelo.test.ts`.
+describe("en el juego", () => {
+  it("el segundo tramo se abre con el puesto al que se llegó, y el plan traza desde él antes que desde el avión", () => {
+    expect(juego).toMatch(/this\.empezarOtroTramo\(puestoEn\(this\.plan\?\.aerodromoActual, aqui\[0\], aqui\[1\]\)\?\.xy \?\? null\);/);
+    expect(juego).toMatch(/if \(!puesto \|\| !this\.plan\?\.reiniciarDesde\(puesto\)\)\s*this\.plan\?\.otroTramoDesde\(/);
+  });
+
+  it("y al acabar de empujar, la raya empieza donde está el avión", () => {
+    expect(juego).toMatch(/if \(antes === "empujando" && r\.fase !== "empujando"\) this\.plan\?\.acabaElEmpuje\(p\);/);
   });
 });
 

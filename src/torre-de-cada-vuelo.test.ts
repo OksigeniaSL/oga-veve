@@ -42,7 +42,7 @@ function cuerpoDe(firma: RegExp): string {
 describe("la torre, limpia en cada vuelo", () => {
   for (const [nombre, firma] of [
     ["resetFlight", /\n {2}resetFlight\(\): void \{/],
-    ["empezarOtroTramo", /\n {2}private empezarOtroTramo\(\): void \{/],
+    ["empezarOtroTramo", /\n {2}private empezarOtroTramo\([^)]*\): void \{/],
   ] as const)
     it(`${nombre} reinicia el turno de pista entero y vacía su tráfico, no solo la frecuencia`, () => {
       const cuerpo = cuerpoDe(firma);
