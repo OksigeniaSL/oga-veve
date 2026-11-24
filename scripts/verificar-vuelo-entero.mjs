@@ -66,6 +66,11 @@ import {
 import { fasesATiempoReal } from "./reloj-del-banco.mjs";
 import { gasDelBimotorEnLaRecogida } from "./gas-de-la-recogida.mjs";
 import {
+  gasDelTurboheliceEnLaRecogida,
+  palancaDeLaActitudDelTurbohelice,
+  porLoQueAceleraElTurbohelice,
+} from "./recogida-del-turbohelice.mjs";
+import {
   flotaElReactor,
   gasDelReactorEnLaRecogida,
   morroQueFaltaAlPunto,
@@ -749,6 +754,16 @@ const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
  */
 await page.addScriptTag({
   content: `globalThis.__gasDelBimotorEnLaRecogida = ${gasDelBimotorEnLaRecogida.toString()};`,
+});
+/*
+ * **Y la del bimotor de turbina libre, cuyo empuje tarda** (H72), por lo mismo:
+ * la vuela `recogida-del-turbohelice.test.mjs`.
+ */
+await page.addScriptTag({
+  content:
+    `globalThis.__porLoQueAceleraElTurbohelice = ${porLoQueAceleraElTurbohelice.toString()};` +
+    `globalThis.__palancaDeLaActitudDelTurbohelice = ${palancaDeLaActitudDelTurbohelice.toString()};` +
+    `globalThis.__gasDelTurboheliceEnLaRecogida = ${gasDelTurboheliceEnLaRecogida.toString()};`,
 });
 /*
  * **Y lo que nota en el asiento un reactor en la recogida, desde su módulo**
@@ -1570,7 +1585,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             acelera,
             carga: s.loadFactor ?? 1,
           })
-        : 0;
+        : TURBOHELICE_EN_LA_RECOGIDA && recogida.porAngulo
+          ? globalThis.__porLoQueAceleraElTurbohelice({
+              porAngulo: recogida.porAngulo,
+              acelera,
+              carga: s.loadFactor ?? 1,
+            })
+          : 0;
     /*
      * **Y un bimotor de hélice que se hunde, con el doble de mano** (H34d).
      * Ver `BIMOTOR_EN_LA_RECOGIDA`.
@@ -1718,19 +1739,39 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * sostenerla dos segundos le bajó el morro de 2,7° a −0,9° y lo tiró al
      * suelo a 3,36 m/s. Mientras se sostiene, el morro no baja del que llevaba
      * al empezar a sostener. Ver `palancaDelReactorEnLaRecogida`.
+     *
+     * **Y en el de turbina libre, ni baja ni sube** (H72): con la palanca
+     * notando la racha, la de ese instante es aún más la de una corrección. En
+     * la mesa, el JAZ 50 sostuvo −0,25 y bajó el morro de 0 a −6°; y el JAZ 60,
+     * +0,10, y lo subió de 3 a 10° hasta los dieciséis metros. «The pitch
+     * attitude is held constant» (FAA-H-8083-3C, p. 9-31). Ver
+     * `palancaDeLaActitudDelTurbohelice` en `recogida-del-turbohelice.mjs`.
      */
     let sostenidaDelReactor = sostenida;
-    if (sostiene && RECOGIDA_DE_REACTOR && typeof morro === "number") {
+    if (
+      sostiene &&
+      (RECOGIDA_DE_REACTOR || TURBOHELICE_EN_LA_RECOGIDA) &&
+      typeof morro === "number"
+    ) {
       if (recogida.sostenMorro === undefined) {
         recogida.sostenMorro = morro;
         recogida.sostenBase = sostenida;
       } else {
         recogida.sostenBase = Math.max(-0.6, Math.min(0.8, recogida.sostenBase + picado - picadoAntes));
       }
-      sostenidaDelReactor = Math.min(
-        0.8,
-        recogida.sostenBase + (recogida.porAngulo ?? 0) * Math.max(0, recogida.sostenMorro - morro),
-      );
+      sostenidaDelReactor = TURBOHELICE_EN_LA_RECOGIDA
+        ? globalThis.__palancaDeLaActitudDelTurbohelice({
+            base: recogida.sostenBase,
+            porAngulo: recogida.porAngulo ?? 0,
+            alSostener: recogida.sostenMorro,
+            cabeceo: morro,
+            ritmoDeCabeceo: s.pitchRate ?? 0,
+          })
+        : Math.min(
+            0.8,
+            recogida.sostenBase +
+              (recogida.porAngulo ?? 0) * Math.max(0, recogida.sostenMorro - morro),
+          );
     } else {
       recogida.sostenMorro = undefined;
       recogida.sostenBase = undefined;
@@ -1781,6 +1822,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * `scripts/gas-de-la-recogida.mjs`.
      */
     if (falta < -0.6) recogida.floto = true;
+    /*
+     * **Y en el de turbina libre, el gas sostiene la velocidad** (H72), que su
+     * empuje llega segundo y medio después de pedirlo: ni caza la racha ni se
+     * va a cero porque flote. La tendencia, suavizada en medio segundo. Ver
+     * `scripts/recogida-del-turbohelice.mjs`.
+     */
+    recogida.tendencia ??= 0;
+    if (recogida.velocidadAntes !== undefined)
+      recogida.tendencia +=
+        ((s.airspeed - recogida.velocidadAntes) / dt - recogida.tendencia) * Math.min(1, dt / 0.5);
+    recogida.velocidadAntes = s.airspeed;
     if (
       RECOGIDA_DE_REACTOR &&
       globalThis.__flotaElReactor({
@@ -1791,7 +1843,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       })
     )
       recogida.flotoElReactor = true;
-    if (!SENCILLO)
+    if (!SENCILLO && TURBOHELICE_EN_LA_RECOGIDA)
+      mandos.throttle = globalThis.__gasDelTurboheliceEnLaRecogida({
+        gas: recogida.gas ?? 0,
+        quedaMasBaja: recogida.quedaMasBaja,
+        ruedas,
+        segundos: ahora - recogida.empezo,
+        altura: recogida.altura,
+        caida: recogida.caida,
+        alTocar: ritmoAlTocar,
+        verdadera: s.airspeed,
+        alEmpezar: recogida.velocidad,
+        tendencia: recogida.tendencia,
+        tarda: LO_QUE_TARDA_EL_MOTOR,
+      });
+    else if (!SENCILLO)
       mandos.throttle = BIMOTOR_EN_LA_RECOGIDA
         ? globalThis.__gasDelBimotorEnLaRecogida({
             gas: recogida.gas ?? 0,
@@ -2701,6 +2767,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const BIMOTOR_EN_LA_RECOGIDA =
     !SENCILLO && suyas.propulsion === "helice" && (suyas.motores ?? 1) >= 2;
+  /**
+   * **Y si ese bimotor es de turbina libre** (H72): lo que tarda su motor en
+   * dar lo que se le pide, s (`respuestaDelMotor` de la ficha, ADR 0034), y su
+   * recogida, la de un empuje que llega tarde. Ver
+   * `scripts/recogida-del-turbohelice.mjs`.
+   */
+  const LO_QUE_TARDA_EL_MOTOR = avionPorId(suyas.id)?.respuestaDelMotor?.subida ?? 0;
+  const TURBOHELICE_EN_LA_RECOGIDA = BIMOTOR_EN_LA_RECOGIDA && LO_QUE_TARDA_EL_MOTOR > 0;
   /** El ritmo al que se busca tocar, m/s: el del perfil de `recoger`. */
   const ritmoAlTocar = RECOGIDA_DE_REACTOR ? 2 * 0.3048 : RITMO_AL_TOCAR;
   /*
@@ -8033,8 +8107,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * power settings» (FAA-H-8083-3C, 16-3). Con éstas, por debajo otra
          * vez: `arco-a-la-final.test.ts` y `ascendente-en-la-final.test.ts`.
          */
-        const kp = 0.08;
-        const ki = deHelice ? 0.03 : 0.005;
+        /*
+         * **Y en la hélice de turbina libre, la de un motor que tarda** (H72):
+         * la mitad más a la tendencia y un tercio de lo acumulado. Con las del
+         * pistón, en un vuelo del JAZ 50 el gas fue de 0,13 a 1 y la velocidad
+         * de 81 a 68 nudos en la final, con el empuje siempre detrás; a 69 y
+         * subiendo el morro a la senda, una racha hizo sonar el avisador. Es
+         * lo que H64 cambió en los reactores y aquí se quedó.
+         */
+        const tarda = deHelice && LO_QUE_TARDA_EL_MOTOR > 0;
+        const kp = tarda ? 0.12 : 0.08;
+        const ki = deHelice ? (tarda ? 0.01 : 0.03) : 0.005;
         c.throttle = Math.max(
           0,
           Math.min(1, c.throttle + (err - (errorDeGasAntes ?? err)) * kp + err * ki * paso),

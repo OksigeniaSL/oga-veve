@@ -10346,3 +10346,190 @@ que es el JAZ 90, y solo mientras dura: sin reventada, `null`, y la carrera, la
 frenada, el autofreno y la toma de los ocho aviones son los de 7b60ea6d bit a
 bit, comprobado con 480 finales y 960 carreras con rachas. Las distancias de este
 ADR no cambian. Lo medido y las fuentes, en el 0014.
+
+## Enmienda H72 (24-11-2026): el JAZ 50 que tocaba duro, y el empuje que llega tarde
+
+El JAZ 50 del vuelo entero de Los Rodeos (`tenerife-norte taguato 1 jaz-50`)
+tocó a 2,37, 3,34 y 2,47 m/s con el código de la tanda 24, tres de tres, y a
+2,40, 1,00, 1,63 y 1,40 con el de la 23. La comprobación pide de uno a dos. El
+modelo de vuelo de las dos tandas da lo mismo al bit, así que no lo metió la 24:
+es la misma lotería, y con ella fallan cuatro de siete.
+
+### La mesa
+
+`scripts/mesa-de-la-recogida.mjs` vuela la final de la 12 de Los Rodeos con el
+modelo, el automático, las rachas y el suelo del juego, el alisio de casa
+(040/12, once nudos de costado), la pista cayendo medio metro en cien y el
+compensador en 0,10, que es lo que dicen las trazas; y con **el mismo texto** de
+la recogida del banco, leído del fichero: `recoger`, `limitarElAngulo`, el trozo
+que la empieza y sus constantes. Lo de antes de la recogida va copiado con sus
+números. Doscientas finales por caso, semillas fijas, σ_w 1,05 m/s, que es la
+mecánica de doce nudos en ese relieve.
+
+Se parece a lo volado: empieza a recoger de 6 a 10 m, de 5 a 166 m del umbral,
+a 69–76 nudos, y toca a 334 m de mediana y a más de 2 m/s en 68 de 200 (34 %).
+Las tiradas, de 6 a 12 m, de −23 a 154 m, a 67–74 nudos, y tocan de 292 a 508.
+En el navegador la recogida dura algo más —de ocho a once segundos, donde la
+mesa da siete de mediana—, y eso la mesa no lo reproduce entero.
+
+### Cuánto pone cada cosa
+
+| Mesa, 200 finales | Más de 2 m/s | La peor | Pasadas de 600 m |
+|---|---|---|---|
+| JAZ 50, como estaba | **68 (34 %)** | 4,72 | 0 |
+| con el motor al instante (subida y bajada a 0) | 21 (11 %) | 3,38 | 0 |
+| tarda solo al subir (4/0) | 56 (28 %) | 3,47 | 0 |
+| tarda solo al bajar (0/4) | 29 (15 %) | 3,00 | 33 |
+| tarda la mitad (2/2) | 42 (21 %) | 4,79 | 0 |
+| tarda lo suyo, sin racha en la recogida | 15 (8 %) | 2,42 | 0 |
+| al instante y sin racha en la recogida | 0 | 1,77 | 0 |
+| tarda lo suyo, aire quieto | 0 de 1 | 1,03 | 0 |
+| JAZ 60, como estaba | **73 (37 %)** | 7,10 | 72 |
+| JAZ 60, al instante | 17 (9 %) | 4,09 | 20 |
+| JAZ 60, sin racha en la recogida | 29 (15 %) | 3,41 | 25 |
+| JAZ 60, al instante y sin racha | 0 | 1,89 | 0 |
+| JAZ 40, de pistón | 4 (2 %) | 2,27 | 3 |
+
+- **El motor que tarda (H64) triplica las tomas duras**: del 11 al 34 %. El 11 %
+  es lo de H45b antes de H64, 40 de 300. Pesa sobre todo lo que tarda al subir;
+  lo que tarda al bajar alarga.
+- **La racha sola pone ese 11 %, y el motor solo, sin racha en la recogida, un
+  8 %.** Juntos, 34: más que la suma, que es lo que hace una mano que persigue con
+  un empuje que llega tarde.
+- **No es el avión.** En aire quieto toca a 1,03 m/s; con 4.700, 4.950 y
+  5.182 kg falla lo mismo (30, 34 y 33 %); y el JAZ 60, con el mismo motor, igual.
+  El JAZ 40, con la misma mano y sin retraso, un 2 %.
+- **Ni el tope de ángulo** (`limitarElAngulo`): subirlo lo que pica el suelo no
+  cambia ni una toma. **El gas de la final**, poco: con un tercio de lo que acumula,
+  el gas baila la mitad (0,079 de desviación y no 0,146) y la velocidad algo
+  menos (1,97 nudos y no 2,38), pero las tomas duras solo bajan del 34 al 28 %
+  con la mano de antes. Se cambia por otra cosa: ver abajo.
+
+**Lo que pasa**, en la traza de las peores de la mesa: la racha hunde el
+avión a seis metros y el gas se va a uno (H34d); el empuje llega a ocho décimas
+segundo y medio después, cuando la palanca ya la había parado, y el avión sube.
+Eso es flotar, y desde que flota el gas es cero y el de la senda no vuelve
+(H45b). El empuje se va mientras el avión va a cinco u ocho metros con la palanca
+sostenida, y pierde de 73 a 57 nudos en seis segundos. Cuando se hunde, el gas
+vuelve a uno y el motor lo da a medias cuando ya está en el suelo: 4 m/s. Quitar
+solo lo de la racha no arregla nada (34 %), y quitar lo de flotar y dejar el gas
+de la altura lo baja al 19.
+
+### Lo que se cambia, en el banco
+
+**Una mano para el bimotor cuyo motor tarda** —`respuestaDelMotor.subida` de su
+ficha mayor que cero, hoy el JAZ 50 y el JAZ 60—, en
+`scripts/recogida-del-turbohelice.mjs`:
+
+- **La racha se para con la palanca, notándola en el asiento.** El término de la
+  carga del reactor (H46), con tres centésimas de radián por m/s² donde aquél
+  lleva cuatro. Es lo que más arregla: con él solo (dos centésimas) y el gas de
+  antes, del 34 al 9 % y del 37 al 7.
+- **El gas sostiene la velocidad y no caza la racha.** El de la senda por la
+  altura que queda, y lo que haga falta para no bajar de la velocidad de empezar
+  menos una décima repartida en la altura, mirando la que se va a llevar cuando
+  el empuje llegue (cuatro décimas de lo que tarda el motor). Mirando la de
+  ahora no servía de nada. Y no se va a cero porque el avión flote. Es el
+  manual de la FAA para quien recoge alto o se le va hacia arriba: «the pitch
+  attitude is held constant until the airplane decelerates enough to again
+  start descending […] It may be necessary to add a slight amount of power to
+  keep the airspeed from decreasing excessively and to avoid losing lift too
+  rapidly» (FAA-H-8083-3C, p. 9-31), y «by adding power, thrust is increased to
+  keep the airspeed from decelerating too rapidly and the wings from suddenly
+  losing lift» (p. 9-33).
+- **Si flota, se sostiene la actitud, de los dos lados**, y no la palanca. Con la
+  palanca notando la racha, la del instante en que empieza a flotar es la de una
+  corrección a medias: en la mesa, el JAZ 50 sostuvo −0,25 y bajó el morro de 0 a
+  −6° (2,77 m/s), y el JAZ 60, +0,10, y lo subió de 3 a 10° (un globo de
+  dieciséis metros, 6,65 m/s). Es lo de H64 en el reactor, que no lo dejaba bajar;
+  aquí tampoco sube. De 11 y 13 tomas duras de 300 a 6 y 6, y las peores de 2,77 y
+  6,65 a 2,97 y 2,30.
+- **Pero el gas no es para siempre**: pasado el tiempo del perfil se va quitando, y al
+  doble está al ralentí, que es lo que hacía el reloj de H45. «Since prolonged
+  floating utilizes considerable runway length, it should be avoided» (p. 9-32).
+
+**Y el gas de la final de esos dos, el de un motor que tarda**
+(`CON_EL_AUTOMATICO`): 0,12 a la tendencia y 0,01 a lo acumulado, donde llevaban
+los de la hélice que da el empuje al momento, 0,08 y 0,03 (H34a). Salió volando: en
+la segunda tirada de abajo el gas fue de 0,13 a 1 y la velocidad de 81 a 68 nudos
+en diez segundos de final, con el empuje siempre detrás, y a 69 nudos, subiendo el
+morro a la senda, una racha hizo sonar el avisador a 203 m. Es lo que el ADR 0034
+cambió en los reactores y en estos se quedó. En la mesa, 150 finales: la
+desviación de la velocidad del JAZ 50, de 2,27 a 1,88 nudos y la del gas de 0,132 a
+0,104; las del JAZ 60, de 2,60 a 2,16 y de 0,155 a 0,120. La mesa no da ningún aviso
+en la final, ni antes ni ahora: la racha de aquel vuelo no la tiene.
+
+El JAZ 40, la avioneta, el fumigador y los reactores no pasan por ahí: su
+recogida es la misma, y la prueba lo comprueba toma a toma con el JAZ 40. **El
+juego no cambia**, y el listón de 2 m/s tampoco.
+
+**Lo que no tiene fuente**: del manual del Twin Otter (PSM 1-64-1A) no se ha
+podido leer la recogida —las tablas que reproduce Horlings no la traen—, así que
+la mano sale del de la FAA, que es general, y los números, de la mesa.
+
+| Mesa, 300 finales | Más de 2 m/s, antes | ahora | La peor, antes | ahora | Mediana de la toma | Pasadas de 600 m, antes | ahora |
+|---|---|---|---|---|---|---|---|
+| JAZ 50, 4.950 kg | 103 (34 %) | **8 (3 %)** | 4,72 | 2,37 | 334 → 298 m | 1 | 0 |
+| JAZ 50, 5.182 kg (la ficha) | 100 (33 %) | 13 (4 %) | 5,59 | 2,47 | 325 → 297 m | 2 | 0 |
+| JAZ 50, 4.700 kg | 87 (29 %) | 2 (1 %) | 5,07 | 2,10 | 338 → 295 m | 2 | 0 |
+| JAZ 50, σ_w 0,6 | 31 (10 %) | 0 | 4,28 | 1,96 | 291 → 280 m | 0 | 0 |
+| JAZ 50, σ_w 1,5 | 158 (53 %) | 39 (13 %) | 7,60 | 5,30 | 345 → 313 m | 6 | 6 |
+| JAZ 60 | 100 (33 %) | **2 (1 %)** | 7,10 | 2,07 | 511 → 379 m | 100 | 14 |
+| JAZ 60, σ_w 1,5 | 158 (53 %) | 23 (8 %) | 7,58 | 6,22 | 610 → 428 m | 155 | 62 |
+| JAZ 40 (no cambia) | 6 (2 %) | 6 (2 %) | 2,70 | 2,70 | 335 m | 3 | 3 |
+
+En aire quieto, el JAZ 50 de 1,03 a 1,19 m/s y el JAZ 60 de 1,07 a 0,99. Con el
+gas de la final de antes y la mano nueva, 6 de 300 los dos (2 %). Y con él, la
+mano a quince fotogramas por segundo en vez de sesenta, igual (1 y 2 de 120), y con
+el viento en calma y con veinte nudos, de 1 a 4 de 120.
+
+### Lo que se probó y no se pone
+
+En ciento veinte, ciento cincuenta o doscientas finales por caso. Sostener la
+actitud con la mano de antes no baja las del JAZ 50 y alarga el JAZ 60: hace
+falta con la palanca notando la racha. Sostenerla desde la palanca de la senda en
+vez de la de ese instante da de dos a cuatro veces más duras.
+Aflojar un poco la palanca al flotar, que el manual de la FAA deja, baja
+las de la mano de antes (del 28 al 20 %) y no cambia las de la de ahora. El gas
+entero de la senda hasta tocar deja un 4 % de duras y 84 de 200 pasadas de 600 m.
+El doble de mano al hundirse (H34d) sigue haciendo falta: sin él, del 0 al 9 % en
+la misma prueba. Y un pelo de gas por la racha encima de lo de ahora, quince
+centésimas por m/s y por g, no se distingue del ruido de la mesa (5 y 10 de 200
+frente a 9 y 8).
+
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-50`, reloj por uno,
+viento 040/12, sobre una copia fija y con la traza del ala:
+
+| | Recogida | Toca | Comprobaciones |
+|---|---|---|---|
+| Con main (tanda 24), tres | de 6,4 a 11,7 m, de −5 a 154 m, 70–74 kt | **2,37, 3,34 y 2,47 m/s**, a 459, 508 y 292 m | ✗ la toma las tres; ✗ las gafas, una |
+| La mano nueva, 1 | 8,9 m, 108 m, 2,8 m/s, 70 kt | **1,27 m/s**, 338 m | **57 de 57** |
+| La mano nueva, 2 | 14,4 m, −8 m, 4,6 m/s, 70 kt | **1,31 m/s**, 298 m | 56 de 57: ✗ el avisador, en la final a 203 m |
+| La mano nueva y el gas de la final, 3 | 9,4 m, 48 m, 3,0 m/s, 73 kt | **0,87 m/s**, 253 m | **57 de 57** |
+
+En la traza de la primera, una racha lo hunde a 2,58 m/s a 3,6 m de ruedas y la
+carga baja a 0,84 g: la palanca va de −0,08 a +0,08 en siete décimas, el avión tira
+1,29 g y toca a 1,27, con el empuje cayendo despacio de 0,57 a 0,22 y la velocidad
+entre 71 y 63 nudos. Flotó casi dos segundos a dos metros sin que el gas se fuera.
+En la final, del umbral a tres kilómetros, la velocidad se apartó 1,95 y 2,78 nudos
+de su media en las dos primeras, con mínimas de 70 y 65, y 2,14 en la tercera, con
+mínima de 69; el gas, 0,138, 0,139 y 0,149: en una sola tirada el gas nuevo de la
+final no baila menos, y lo que dice que sí es la mesa.
+
+El gas que pide el banco baila con el anemómetro —de 0,1 a 0,7 en una décima—, y el
+motor lo filtra. Suavizando la tendencia en uno o dos segundos en vez de en medio,
+baila la mitad y la mesa da lo mismo (4 y 6 de 200 en el JAZ 50). No se ha tocado.
+
+### Lo que queda
+
+- **El JAZ 60 y el JAZ 40 en el navegador, sin volar**: no cupieron (la memoria del
+  portátil tuvo la tercera tirada quince minutos en cola). El JAZ 40 no pasa por
+  nada de esto —la prueba compara sus tomas una a una—; el JAZ 60, solo en la mesa.
+- **El gas de la final, volado una sola vez**, con el JAZ 50, y sin que se note en
+  la traza. Si hay que elegir, es lo prescindible: las tomas no lo necesitan.
+- **La racha fuerte**: con σ_w 1,5, el 13 % del JAZ 50 y el 8 % del JAZ 60 siguen
+  pasando de 2 m/s, y 62 de 300 del JAZ 60 tocan pasados los 600 m.
+- **La recogida del navegador era más larga que la de la mesa** con la mano de
+  antes, y no se sabe por qué.
