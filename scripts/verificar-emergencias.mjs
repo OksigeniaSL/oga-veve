@@ -618,9 +618,9 @@ try {
           if (deLineaAzul ? s.verticalSpeed > 0.3 && sobre > 8 : s.verticalSpeed > 1 && sobre > 12)
             o.pedirTren(false);
         }
-        // Y si se metió, se saca cuando se cuenta por qué.
+        // Y si se metió, se saca cuando se cuenta por qué: con la voz grabada, lo dicho; sin ella, lo cantado.
         if (modo === "reventon" && rev.trenMetido && rev.sacadoEn === null &&
-            o.cantados().some((k) => String(k).includes("ejercicio.reventon.sacalo"))) {
+            [...o.dichoTodo().instructor, ...o.cantados()].some((k) => String(k).includes("ejercicio.reventon.sacalo"))) {
           rev.sacadoEn = ahora;
           o.pedirTren(true);
         }
