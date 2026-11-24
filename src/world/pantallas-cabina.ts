@@ -2572,7 +2572,7 @@ function pintarFranja(
     // El último cinco por ciento, en ámbar: la escala de `cuadro.ts`.
     g.fillStyle = PALETA.precaucion;
     g.fillRect(bx, arriba, anchoBarra, altoBarra * 0.05);
-    marcaDeReversa(g, d.reversas?.[i], bx + anchoBarra / 2, arriba + altoBarra * 0.05 + 11 * k, 12 * k);
+    marcaDeReversa(g, d.reversas?.[i], bx + anchoBarra / 2, arriba + altoBarra * 0.05 + 9, 15);
     escribir(
       g,
       String(Math.round(f * 100)),
@@ -2609,6 +2609,9 @@ function marcaDeReversa(
     y,
     `600 ${Math.round(cuerpo)}px ${FUENTE}`,
     estado === "fuera" ? PALETA.normal : PALETA.precaucion,
+    "center",
+    // Con un filo del fondo: en la barra de par va encima de lo que se llena.
+    FONDO,
   );
 }
 

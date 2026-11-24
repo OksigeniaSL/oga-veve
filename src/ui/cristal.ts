@@ -1808,7 +1808,7 @@ export function franjaDeMotor(
               data-motor-barra="${i}" data-suelo="${24 + altoBarra}" data-alto="${altoBarra}"
               class="cr__barra" />
         <rect x="${bx}" y="24" width="${anchoBarra}" height="${altoBarra * 0.05}" class="cr__arco--ambar" />
-        ${marcaDeReversa(i, bx + anchoBarra / 2, 24 + altoBarra * 0.05 + 15, 12, MARCA_CIFRA)}
+        ${marcaDeReversa(i, bx + anchoBarra / 2, 24 + altoBarra * 0.05 + 15, 15, MARCA_CIFRA)}
         <text data-motor-cifra="${i}" x="${bx + anchoBarra / 2}" y="${24 + altoBarra + 18}"
               ${MARCA_CIFRA} class="cr__valor" text-anchor="middle"></text>
       </g>`;
