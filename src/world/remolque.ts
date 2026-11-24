@@ -376,7 +376,7 @@ const A_LA_IZQUIERDA = 110 * GRADO;
  * **Si a un avión aparcado sobre una línea publicada le llega una pasarela** (H75): la pared de
  * la terminal, a lo que alcanza desde su puerta, delante de él o a su izquierda. Con el rumbo
  * del puesto sabido, la distancia sola no basta: el 11 de La Palma, en su punto, está a 78 m de
- * la esquina norte de la terminal, que le queda detrás del ala derecha, y la carta dibuja las
+ * la esquina norte de la terminal, que le queda a la derecha, al través, y la carta dibuja las
  * pasarelas delante de ella, entre el 10 y el 4. Si la línea no es publicada no se sabe el
  * rumbo, y manda la distancia, como siempre; y si la carta dice si es de contacto, la carta.
  */

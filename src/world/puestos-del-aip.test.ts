@@ -192,7 +192,7 @@ describe("las fichas, con lo del AIP", async () => {
     expect(admite(gcla.parkingPositions!.find((p) => p.ref === "H2")!.aip, avion("jaz-20").wingSpan)).toBe(false);
   });
 
-  it("el 11 de La Palma no es de contacto: la terminal le queda detrás del ala derecha", () => {
+  it("el 11 de La Palma no es de contacto: la terminal le queda a la derecha, al través", () => {
     const campo = campos.find((c) => c.aerodrome!.id === "GCLA")!;
     const plan = new PlanDeVuelo(campo.aerodrome!, campo.runway, () => 600, avion("jaz-90"));
     const refs = (plan as unknown as { puestosDeContacto(): { ref: string | null }[] }).puestosDeContacto().map((p) => p.ref);
