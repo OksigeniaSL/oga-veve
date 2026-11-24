@@ -123,6 +123,10 @@ export interface LoQuePasa {
   readonly reversa: number;
   /** Cuánto está abierta la reversa, de 0 a 1. Sin ella, lo que diga su empuje. */
   readonly reversaAbierta?: number;
+  /** Qué parte de ella dan los motores que van, de 0 a 1. Sin ella, todos. */
+  readonly reversaDeLosQueVan?: number;
+  /** Y qué parte de las piezas se abre, de 0 a 1. Sin ella, todas. */
+  readonly reversaQueSeAbre?: number;
   /** Los paneles de arriba del ala, los de vuelo o los de tierra: el que más. */
   readonly aerofrenos: number;
   readonly lluvia: {
@@ -447,9 +451,13 @@ export class OidoDelVuelo {
      * El golpe de las compuertas **al empezar a abrirse** es de reactor: un
      * turbohélice no tiene compuertas, gira las palas de su hélice y eso no da
      * golpe. El rugido viene detrás, cuando empuja, y eso va en `niveles`.
+     * Y golpean **las que se abren**: con un motor de dos parado, la mitad.
      */
     if (antes && reversaMoviendose && !antes.reversaMoviendose && a.motor === "turbofan")
-      sucesos.push({ que: "reversa", fuerza: porVista(p.oido, 0.4, 0.3, 0.5) });
+      sucesos.push({
+        que: "reversa",
+        fuerza: porVista(p.oido, 0.4, 0.3, 0.5) * entre0y1(p.reversaQueSeAbre ?? 1),
+      });
 
     // ── Los flaps ──────────────────────────────────────────────────────
     const flapsMoviendose = !!antes && Math.abs(p.flaps - antes.flaps) > 1e-5;
@@ -652,11 +660,16 @@ export class OidoDelVuelo {
 
     // ── La reversa y los aerofrenos ────────────────────────────────────
     const empujaAlReves = reversaPuesta ? entre0y1(p.reversa) : 0;
+    /*
+     * Y ruge **la de los que van**: con uno de dos parado, la mitad, que es lo
+     * que se oye también del motor. Ver `enMarcha` en `audio.ts`.
+     */
     const reversa =
       (a.motor === "turboprop" ? 0.85 : 1) *
       empujaAlReves *
       Math.min(1, gs / 25) *
-      porVista(o, 1, 0.45, 0.7);
+      porVista(o, 1, 0.45, 0.7) *
+      entre0y1(p.reversaDeLosQueVan ?? 1);
     // La reversa no es un gas negativo: se deja el gas al ralentí y los
     // motores suben de vueltas para empujar al revés. Eso es lo que ruge, y
     // crece con ellos: ver `GAS_DE_REVERSA`.

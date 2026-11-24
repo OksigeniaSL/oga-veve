@@ -61,10 +61,10 @@ export interface AircraftMesh {
   /**
    * Cuánto se ve cada hélice como disco en vez de como palas, de 0 a 1.
    *
-   * Solo en los modelos que traen palas con nombre. Ver `discoDeHelice` en
-   * `aeronave-modelo.ts`.
+   * Solo en los modelos que traen palas con nombre. Con una lista, lo de cada
+   * una, en el orden de `helices`. Ver `discoDeHelice` en `aeronave-modelo.ts`.
    */
-  borrarHelices?: (cuanto: number) => void;
+  borrarHelices?: (cuanto: number | readonly number[]) => void;
   /**
    * Dónde están los ojos del piloto, en coordenadas de la aeronave.
    *

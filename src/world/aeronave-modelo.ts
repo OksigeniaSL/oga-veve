@@ -95,6 +95,19 @@ const NOMBRES_DE_HELICE = [
 ];
 
 /**
+ * **Y los mandos de la hélice no son la hélice.** El JAZ 50 lleva en el techo de
+ * la cabina las dos palancas del paso, `palanca-de-helice-…`, con sus pomos: por
+ * el nombre entraban, quedaban entre las dos hélices y las juntaban en un solo
+ * eje, con las dos dando vueltas alrededor de la cabina.
+ */
+const MANDO_DE_HELICE = /^(palanca|pomo)/;
+
+function esDeHelice(nombre: string): boolean {
+  const n = nombre.toLowerCase();
+  return !MANDO_DE_HELICE.test(n) && NOMBRES_DE_HELICE.some((h) => n.includes(h));
+}
+
+/**
  * Junta las piezas de la hélice en un eje que gira sobre su propio centro.
  *
  * Hacía falta al enchufar el primer modelo de verdad: buscaba **un** nodo y en
@@ -200,8 +213,7 @@ function bujeDe(piezas: Object3D[]): Vector3 {
 export function ejesDeHelice(raiz: Object3D): Object3D[] {
   const piezas: Object3D[] = [];
   raiz.traverse((o) => {
-    const nombre = o.name.toLowerCase();
-    if (!NOMBRES_DE_HELICE.some((n) => nombre.includes(n))) return;
+    if (!esDeHelice(o.name)) return;
     // Solo la de más arriba de cada rama: si se cogen padre e hijo, el hijo
     // acaba girando dos veces.
     if (piezas.some((p) => esAncestro(p, o))) return;
@@ -607,10 +619,12 @@ function conSuEncuadre(
  * giran; las palas se quedan con una copia de su material para poder
  * desvanecerse sin desvanecer el tren, que lleva el mismo.
  */
-export function discoDeHelice(ejes: readonly Object3D[]): ((cuanto: number) => void) | undefined {
-  const partes: { palas: Material[]; disco: MeshBasicMaterial }[] = [];
+export function discoDeHelice(
+  ejes: readonly Object3D[],
+): ((cuanto: number | readonly number[]) => void) | undefined {
+  const partes: { de: number; palas: Material[]; disco: MeshBasicMaterial }[] = [];
   const v = new Vector3();
-  for (const eje of ejes) {
+  for (const [de, eje] of ejes.entries()) {
     eje.updateWorldMatrix(true, true);
     const palas: Material[] = [];
     let radio = 0;
@@ -645,19 +659,21 @@ export function discoDeHelice(ejes: readonly Object3D[]): ((cuanto: number) => v
     malla.name = "disco-de-helice";
     malla.visible = false;
     eje.add(malla);
-    partes.push({ palas, disco });
+    partes.push({ de, palas, disco });
   }
   if (!partes.length) return undefined;
+  const entero = (cuanto: number | readonly number[], i: number): number =>
+    Math.max(0, Math.min(1, typeof cuanto === "number" ? cuanto : (cuanto[i] ?? 0)));
   return (cuanto) => {
-    const k = Math.max(0, Math.min(1, cuanto));
     for (const p of partes) {
+      const k = entero(cuanto, p.de);
       for (const m of p.palas) m.opacity = 1 - k * 0.92;
       p.disco.opacity = k * 0.32;
       (p.disco as { visible?: boolean }).visible = k > 0.01;
     }
-    for (const eje of ejes)
-      for (const h of eje.children)
-        if (h.name === "disco-de-helice") h.visible = k > 0.01;
+    for (let i = 0; i < ejes.length; i++)
+      for (const h of ejes[i]!.children)
+        if (h.name === "disco-de-helice") h.visible = entero(cuanto, i) > 0.01;
   };
 }
 
@@ -765,8 +781,7 @@ export function colocarModelo(raiz: Object3D, aircraft: AircraftConfig): Group {
   const morro = new Box3();
   let hayHelice = false;
   raiz.traverse((o) => {
-    if (!NOMBRES_DE_HELICE.some((n) => o.name.toLowerCase().includes(n)))
-      return;
+    if (!esDeHelice(o.name)) return;
     morro.expandByObject(o);
     hayHelice = true;
   });
@@ -994,8 +1009,8 @@ export async function cargarModelo(
     // verdad. Ver `mandos-de-cabina.ts`.
     mandosDeCabina: prepararMandosDeCabina(raiz),
     // Y las reversas, en los turbofanes: el manguito que se va hacia la cola.
-    // Ver `reversas.ts`.
-    reversas: prepararReversas(raiz),
+    // Y el de cada motor, por su sitio: el del parado no se abre. Ver `reversas.ts`.
+    reversas: prepararReversas(raiz, aircraft.motoresA),
     // Y la corredera del helicóptero, que se abre cuando sube o baja la gente.
     puertaCorredera: prepararDeslizantes(raiz, PUERTA_CORREDERA),
     // Y los alerones, la profundidad y el timón, con los grados de su ficha.

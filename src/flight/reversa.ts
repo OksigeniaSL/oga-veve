@@ -72,6 +72,8 @@
  */
 
 import { tieneReversa, type AircraftConfig } from "./aircraft";
+import type { MotorTocado } from "./model";
+import { enMarcha, type EstadoDelMotor } from "./motores";
 import { avanzarGiro, gasQueDa, giroAsentado, type GiroDelMotor } from "./respuesta-del-motor";
 
 /** Segundos en abrirse del todo, y en cerrarse, por motor. */
@@ -101,12 +103,55 @@ export function tiempoDeReversa(a: AircraftConfig): number | null {
  */
 export type EstadoDeReversa = "recogida" | "moviendose" | "fuera";
 
+function estadoDe(abierta: number): EstadoDeReversa {
+  if (abierta <= 0) return "recogida";
+  return abierta >= 1 ? "fuera" : "moviendose";
+}
+
+/**
+ * **Qué parte de la reversa dan los motores**, de 0 a 1, que es lo que se oye: la
+ * de los que van, y la del ave, lo que le deja su palanca. Con todos, 1. Es el
+ * reparto de `reversaDeLosMotores` en `fdm.ts`, que es lo que frena; `empuje`, lo
+ * que empuja la reversa, de 0 a 1.
+ */
+export function parteDeLaReversa(
+  motores: readonly EstadoDelMotor[] | undefined,
+  tocado: Pick<MotorTocado, "motor" | "enReversa" | "empuje"> | null,
+  empuje: number,
+): number {
+  if (!motores || motores.length === 0) return 1;
+  const gas = empuje * GAS_DE_REVERSA;
+  let parte = 0;
+  for (let i = 0; i < motores.length; i++) {
+    if (motores[i] !== "marcha") continue;
+    parte +=
+      tocado !== null && i === tocado.motor && gas > 0
+        ? Math.min(1, tocado.enReversa / gas) * tocado.empuje
+        : 1;
+  }
+  return parte / motores.length;
+}
+
+/** **Y qué parte de las piezas se abre**: la del parado, no. Con todas, 1. */
+export function parteDeLasPiezas(motores: readonly EstadoDelMotor[] | undefined): number {
+  return motores && motores.length > 0 ? enMarcha(motores) / motores.length : 1;
+}
+
 /** Por debajo de esto, el motor de la reversa ya es el de siempre al ralentí. */
 const YA_NO_DA = 1e-4;
 
 export class Reversa {
-  /** Cuánto está abierta, de 0 —recogida— a 1 —abierta del todo—. */
+  /** Cuánto está abierta, de 0 —recogida— a 1 —abierta del todo—: la de los motores que van. */
   abierta = 0;
+  /**
+   * **Y la pieza de cada motor**, en el orden de `motoresA`: la del parado no se
+   * abre (H82). Es lo que se ve —el manguito, la marca REV— y lo que golpea; lo
+   * que empuja lo reparte el modelo de vuelo, motor a motor. Con todos en marcha
+   * son todas `abierta`. Siempre las dos mismas listas: se miran en cada imagen.
+   */
+  readonly piezas: number[];
+  /** Y lo que dice la marca de cada una. */
+  readonly estados: EstadoDeReversa[];
   private empujando = 0;
   /** Los motores, desde que se abre hasta que vuelven al ralentí; `null`, los de siempre. */
   private giro: GiroDelMotor | null = null;
@@ -115,6 +160,9 @@ export class Reversa {
 
   constructor(private readonly avion: AircraftConfig) {
     this.tiempo = tiempoDeReversa(avion);
+    const n = Math.max(1, avion.motoresA.length);
+    this.piezas = Array.from({ length: n }, () => 0);
+    this.estados = Array.from({ length: n }, () => "recogida" as const);
   }
 
   /**
@@ -122,14 +170,22 @@ export class Reversa {
    * están en el suelo —en el aire no se abre, «even if commanded by the
    * flightcrew» (AC 25.933-1, 4.2.9.2.2), y lo que ya está abierto al botar se
    * queda—; y `daElMotor`, lo que da el motor ahora hacia
-   * delante, de 0 a 1, que es de donde arranca al abrirse. Devuelve **lo que
-   * empuja al revés**, también de 0 a 1: nada hasta que está abierta del todo.
+   * delante, de 0 a 1, que es de donde arranca al abrirse. `motores`, cómo va
+   * cada uno; sin ellos, van todos. Devuelve **lo que empuja al revés**, también
+   * de 0 a 1: nada hasta que está abierta del todo.
    */
-  paso(dt: number, palanca: number, enTierra = true, daElMotor = 0): number {
+  paso(
+    dt: number,
+    palanca: number,
+    enTierra = true,
+    daElMotor = 0,
+    motores?: readonly EstadoDelMotor[],
+  ): number {
     const t = this.tiempo;
     if (t === null || !(t > 0)) {
       this.abierta = 0;
       this.empujando = 0;
+      this.recogerLasPiezas();
       return 0;
     }
     const tramo = Math.max(0, dt);
@@ -138,6 +194,7 @@ export class Reversa {
     const paso = tramo / t;
     this.abierta =
       pide > 0 ? Math.min(1, this.abierta + paso) : Math.max(0, this.abierta - paso);
+    this.moverLasPiezas(pide > 0, paso, motores);
     if (this.abierta >= 1 && this.giro === null) this.giro = giroAsentado(this.avion, daElMotor);
     if (this.giro !== null) {
       // Con la pieza a medias, la palanca está en su cerrojo: ralentí de reversa.
@@ -153,6 +210,26 @@ export class Reversa {
     return this.empujando;
   }
 
+  /**
+   * **La pieza de cada motor**, con la palanca de todos. La del que va hace lo que
+   * `abierta`; la del parado no se abre, y si se paró con ella fuera se queda
+   * donde está hasta que la palanca la recoge. Esto último no tiene fuente leída.
+   */
+  private moverLasPiezas(
+    abriendo: boolean,
+    paso: number,
+    motores: readonly EstadoDelMotor[] | undefined,
+  ): void {
+    for (let i = 0; i < this.piezas.length; i++) {
+      const va = motores?.[i] === undefined || motores[i] === "marcha";
+      let p = this.piezas[i]!;
+      if (!abriendo) p = Math.max(0, p - paso);
+      else if (va) p = Math.min(1, p + paso);
+      this.piezas[i] = p;
+      this.estados[i] = estadoDe(p);
+    }
+  }
+
   /** Lo que empuja ahora, de 0 a 1. */
   get empuje(): number {
     return this.empujando;
@@ -166,10 +243,22 @@ export class Reversa {
     return this.giro === null ? 0 : gasQueDa(this.giro, this.avion);
   }
 
-  /** Lo que dice su marca del cuadro. */
+  /** **La pieza que más abierta está**: lo que se oye moverse y lo que dice el avión entero. */
+  get laMasAbierta(): number {
+    let m = 0;
+    for (const p of this.piezas) if (p > m) m = p;
+    return m;
+  }
+
+  /** Si están fuera las de todos los motores. */
+  get todasFuera(): boolean {
+    for (const p of this.piezas) if (p < 0.99) return false;
+    return true;
+  }
+
+  /** Lo que dice la marca del avión entero, que es la de la palanca: una para todos. */
   get estado(): EstadoDeReversa {
-    if (this.abierta <= 0) return "recogida";
-    return this.abierta >= 1 ? "fuera" : "moviendose";
+    return estadoDe(this.laMasAbierta);
   }
 
   /** Otro vuelo: recogida, y los motores los de siempre. */
@@ -177,5 +266,11 @@ export class Reversa {
     this.abierta = 0;
     this.empujando = 0;
     this.giro = null;
+    this.recogerLasPiezas();
+  }
+
+  private recogerLasPiezas(): void {
+    this.piezas.fill(0);
+    this.estados.fill("recogida");
   }
 }

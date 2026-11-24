@@ -431,6 +431,31 @@ describe("la reversa y los aerofrenos", () => {
     expect(aFondo!.gasDelMotor).toBeCloseTo(0.75, 9);
   });
 
+  it("y ruge y golpea la de los que van: con uno de dos parado, la mitad", () => {
+    const abriendose = (parte?: number) => {
+      const p = parte === undefined ? {} : { reversaDeLosQueVan: parte, reversaQueSeAbre: parte };
+      return seguidos(ARAI, [
+        { ...frenando, reversa: 0, reversaAbierta: 0, ...p },
+        { ...frenando, reversa: 0, reversaAbierta: 0.3, ...p },
+        { ...frenando, reversaAbierta: 1, ...p },
+      ]);
+    };
+    const golpe = (p: ReturnType<typeof abriendose>) => {
+      const s = p.sucesos.find((x) => x.que === "reversa");
+      return s?.que === "reversa" ? s.fuerza : NaN;
+    };
+    const todos = abriendose();
+    const unos = abriendose(1);
+    const mitad = abriendose(0.5);
+    // Con todos, lo de siempre, bit a bit.
+    expect(unos.niveles).toEqual(todos.niveles);
+    expect(golpe(unos)).toBe(golpe(todos));
+    expect(mitad.niveles[2]!.reversa).toBeCloseTo(todos.niveles[2]!.reversa / 2, 12);
+    expect(golpe(mitad)).toBeCloseTo(golpe(todos) / 2, 12);
+    // Y lo que suben de vueltas los que van, igual: es su motor.
+    expect(mitad.niveles[2]!.gasDelMotor).toBe(todos.niveles[2]!.gasDelMotor);
+  });
+
   it("las avionetas no tienen reversa", () => {
     expect(uno(PYKASU, frenando).reversa).toBe(0);
     expect(uno(PANAMBI, frenando).gasDelMotor).toBe(0);

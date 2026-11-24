@@ -1497,8 +1497,6 @@ export function pantallaDeMotores(
     ${reglaDeCombustible(40, alto - 156, ancho - 80, 16)}
     ${c.flaps.length > 1 ? reglaDeFlaps(40, alto - 96, ancho - 80, 26, c.flaps) : ""}
     ${lucesDeTren(14, yTren, patas)}
-    <text data-cristal="reversa" x="${ancho - 14}" y="${yTren + 13}"
-          ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
   `;
 }
 
@@ -1591,8 +1589,28 @@ function dialDeMotor(cx: number, cy: number, r: number, i: number): string {
       <circle cx="${cx}" cy="${cy}" r="3" class="cr__buje" />
       <text data-motor-cifra="${i}" x="${cx}" y="${cy + r + 18}" ${MARCA_CIFRA} class="cr__valor" text-anchor="middle"></text>
       <text x="${cx}" y="${cy + 4}" ${MARCA_CIFRA} class="cr__rotulo" text-anchor="middle">${i + 1}</text>
+      ${marcaDeReversa(i, cx, cy + r * 0.84, Math.min(CUERPO_DE_REV, r * 0.3), MARCA_CON_SU_APARATO)}
     </g>
   `;
+}
+
+/** El cuerpo de la marca REV donde cabe entero. */
+const CUERPO_DE_REV = 18;
+
+/**
+ * **La marca REV de un motor**, en su instrumento: apagada, ámbar mientras su
+ * pieza se mueve y verde fuera del todo. Es por motor porque lo es en un avión
+ * de verdad: con uno parado, la suya no se abre y se ve en cuál.
+ */
+function marcaDeReversa(
+  i: number,
+  x: number,
+  y: number,
+  cuerpo: number,
+  desde: string,
+): string {
+  return `<text data-motor-reversa="${i}" x="${x}" y="${y}" style="font-size:${cuerpo}px"
+          ${desde} class="cr__reversa" text-anchor="middle" visibility="hidden">REV</text>`;
 }
 
 /**
@@ -1760,8 +1778,6 @@ export function columnaDeMotor(ancho: number, alto: number, c: Cuadro): string {
     ${diales}
     ${mandoDeMotor(16, yMando, ancho - 32, n)}
     ${relojes}
-    <text data-cristal="reversa" x="${ancho - 12}" y="${alto - 14}"
-          ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
   `;
 }
 
@@ -1792,6 +1808,7 @@ export function franjaDeMotor(
               data-motor-barra="${i}" data-suelo="${24 + altoBarra}" data-alto="${altoBarra}"
               class="cr__barra" />
         <rect x="${bx}" y="24" width="${anchoBarra}" height="${altoBarra * 0.05}" class="cr__arco--ambar" />
+        ${marcaDeReversa(i, bx + anchoBarra / 2, 24 + altoBarra * 0.05 + 15, 12, MARCA_CIFRA)}
         <text data-motor-cifra="${i}" x="${bx + anchoBarra / 2}" y="${24 + altoBarra + 18}"
               ${MARCA_CIFRA} class="cr__valor" text-anchor="middle"></text>
       </g>`;
@@ -1803,8 +1820,6 @@ export function franjaDeMotor(
     ${c.flaps.length > 1 ? reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34, c.flaps) : ""}
     ${reglaDeCombustible(78, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 56)}
     ${lucesDeTren(12, alto - 24, patasDe(a))}
-    <text data-cristal="reversa" x="${ancho / 2}" y="${alto - 8}"
-          ${MARCA_CIFRA} class="cr__reversa" text-anchor="middle" visibility="hidden">REV</text>
   `;
 }
 

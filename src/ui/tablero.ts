@@ -165,8 +165,11 @@ export interface DatosDelTablero {
    * `lucesDeLasPatas`.
    */
   readonly trenDeMorro?: number;
-  /** Dónde está la reversa: la marca REV sale ámbar moviéndose y verde fuera. */
-  readonly reversa: EstadoDeReversa;
+  /**
+   * Dónde está la reversa **de cada motor**, en su orden: la marca REV de su
+   * instrumento sale ámbar moviéndose y verde fuera, y no sale en el recogido.
+   */
+  readonly reversas: readonly EstadoDeReversa[];
   /** Las velocidades que se cantan, en nudos. `Infinity` si no aplican. */
   readonly v1: number;
   readonly vr: number;
@@ -1935,16 +1938,16 @@ export class Tablero {
       escribir(this.pieza("[data-flaps-cifra]"), `${Math.round(grados)}°`);
     }
     this.deposito(d, cifras);
-    poner(
-      this.pieza('[data-cristal="reversa"]'),
-      "visibility",
-      d.reversa === "recogida" ? "hidden" : "visible",
-    );
-    poner(
-      this.pieza('[data-cristal="reversa"]'),
-      "data-estado",
-      d.reversa,
-    );
+    /*
+     * **REV, en el instrumento de cada motor** y solo en el que se mueve o está
+     * fuera: con uno parado, la suya no se abre y la suya no sale. Ver `Reversa`.
+     */
+    const marcas = this.todas("[data-motor-reversa]");
+    for (let i = 0; i < marcas.length; i++) {
+      const estado = d.reversas[i] ?? "recogida";
+      poner(marcas[i]!, "visibility", estado === "recogida" ? "hidden" : "visible");
+      poner(marcas[i]!, "data-estado", estado);
+    }
 
     /*
      * Y las luces del tren, con sus tres estados. Verde solo cuando está fuera

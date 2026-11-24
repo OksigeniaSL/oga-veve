@@ -3298,6 +3298,11 @@ export class Hud {
        */
       readonly motores?: readonly number[];
       /**
+       * Y dónde está la reversa de cada motor, para la marca REV de su
+       * instrumento. Sin esto, todas lo que diga `reversa`.
+       */
+      readonly reversas?: readonly EstadoDeReversa[];
+      /**
        * **Quién sostiene la altura**, si no la sostiene quien vuela: la
        * nivelada de los peldaños de abajo, que es una ayuda, o el piloto
        * automático. Se ve en la tarjeta de la altura de los pictogramas. Ver
@@ -3845,7 +3850,7 @@ export class Hud {
         }),
         tren: mandos?.tren ?? 1,
         trenDeMorro: mandos?.trenDeMorro,
-        reversa,
+        reversas: mandos?.reversas ?? Array.from({ length: this.ficha.motores }, () => reversa),
         v1: decisionSpeed * 1.94384,
         vr: this.vr * 1.94384,
         vref: this.vref * 1.94384,
