@@ -2244,6 +2244,11 @@ export class PlanDeVuelo {
     return this.vuelo.enLaFrustrada;
   }
 
+  /** Si se acaba de despegar y no se ha dado la vuelta. Ver `Vuelo.recienDespegado`. */
+  get acabaDeDespegar(): boolean {
+    return this.vuelo.acabaDeDespegar;
+  }
+
   /** Por qué la torre no te mira ahora. Ver `Vuelo.noTeMiraPor` (H48). */
   get noTeMiraPor(): string | null {
     return this.vuelo.noTeMiraPor;

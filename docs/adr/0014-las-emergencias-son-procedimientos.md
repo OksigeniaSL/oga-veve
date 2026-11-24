@@ -1573,3 +1573,27 @@ nuevo de la torre solo sale en la traza de un banco que falla o con
   «final» del plan sin la de la torre, pero si apareciera, la verde duraría
   el circuito entero, como en el banco de arriba. Ver la enmienda H71c del
   ADR 0029.
+
+## Enmienda H73 (24-11-2026): sin radio, la verde fija dura su aproximación y no el circuito
+
+Lo que dejó la H71c: un permiso dado con una «final» que solo era la del plan
+no se retiraba al salir de ella, y con la radio callada la verde fija habría
+durado el circuito entero. No hacía falta tanto: en la mesa se quedaba verde
+también quien **pasaba la pista de largo sin subir**, quien **rompía la final
+a un lado** y quien **cruzaba el eje bajo en un viraje**. La regla y los
+casos, en el ADR 0029, enmienda H73; aquí, lo que toca al fallo de radio:
+
+- La lámpara no cambia: enciende el permiso que haya (`LamparaSinRadio`). Lo
+  que cambia es que el permiso se retira al dejar su aproximación, y entonces
+  vuelven los destellos —«regrese para aterrizar»—, que es lo que la torre
+  está diciendo, hasta la verde de la final siguiente.
+- **Por un bache no se apaga ni cambia**: veinticinco metros corrigiendo la
+  senda son la misma aproximación, y la mesa lo mira paso a paso.
+- Un permiso que se retira ya no apaga la lámpara por su cuenta sin radio
+  (`retirarElPermisoSinOir`): la lleva `encenderSinRadio`, y apagarla desde
+  ahí era un parpadeo.
+- **Al levantarse una orden de irse sin volver a darte la pista, no vuelve la
+  verde**: la orden anuló el permiso. Quien no había subido los quince metros
+  que son irse la veía pasar de roja a verde.
+
+Sin frases nuevas. La prueba, `flight/permiso-de-una-aproximacion.test.ts`.
