@@ -2857,16 +2857,155 @@ Lanzarote con raya —con los «A/R», que siguen saliendo con tractor—, los d
 
 **Las dos puntas de la plataforma de Tenerife Sur**: del S41 al G48 y el R19 y el G20, «R» sin pasarela, de los que el tractor no saca bien a
 nadie —la ficha no tiene pavimento detrás, o la ruta sale de lado—. El plan no pone a nadie ahí, y si alguien llega sale por sus medios,
-como antes. La plataforma cosida de la H81 va del G9 al H43.
+como antes. La plataforma cosida de la H81 va del G9 al H43. Hecho en la H88.
 
 **El APROAR de Tenerife Sur**: la casilla 20.3 manda empujar «nosing to the threshold in use» y, del R19, G20, AG21 y J22, al umbral de la 25. La
-tabla no lo da por puestos y el plan no lo usa.
+tabla no lo da por puestos y el plan no lo usa. Hecho en la H88.
 
 **Las pasarelas no se dibujan**, ni las torretas de la nave de Tenerife Sur. Y en los demás campos, los puestos que la carta da de contacto y la
 pared no alcanza (punto 2) y las llegadas, que siguen midiendo las alas alrededor de la rueda de morro.
 
 **La avioneta y el bimotor del tráfico en La Palma** salen del 5 y llegan a él por la 36, que es de pasarela: no tienen plataforma de
 aviación general en la carta. Era así.
+
+## Enmienda (24-11-2026, H88): Tenerife Sur, la plataforma entera y el APROAR que publica
+
+### El caso
+
+Lo que dejó la H87. Con el JAZ 90 en el G10, delante del morro había treinta metros de foto de satélite entre la losa y la
+terminal, y a la izquierda la losa acababa en diagonal: en la realidad es hormigón y vía de servicio. En las dos puntas —del S41
+al G48, y el R19 y el G20— faltaba pavimento en la ficha y de ellas el tractor no sacaba bien a nadie: 32 de los 64 empujes
+de los puestos de retroceso sin pasarela. Y el APROAR de la casilla 20.3 del AD 2-GCTS no se usaba.
+
+### De dónde sale cada trozo
+
+OpenStreetMap dibuja la plataforma en quince islas, una por fila de puestos, con huecos entre ellas y hasta la calle; lo que el
+juego veía entre medias lo ponían la envolvente de `plataformas-cosidas.ts` y la deducida de la H81, del G9 al H43. Si hoy trae
+una relación entera no se sabe: la consulta única a Overpass contestó un 502 —«at capacity»— y no se repitió. Es **una pieza de
+52 vértices y 42,3 ha** en `plataformasDeducidas`, que sustituye a la de la H81 y dice de dónde sale cada lado:
+
+| Lado | De dónde |
+|---|---|
+| Que es una sola, y de hormigón | La carta AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): el límite de plataforma, seguido de la R19 al D1; PCN 85/R/A/W/T, 76 en la punta este y 72 en la oeste |
+| El borde del hormigón, al oeste y al este | Ortofoto PNOA de máxima actualidad (Instituto Geográfico Nacional, CC BY 4.0; foto de 2024-02), por su WMS, a 15, 20, 25 y 50 cm por píxel |
+| Al norte, la vía de servicio, de los hangares del oeste a la terminal de carga | La misma foto. Es asfalto y está entre la plataforma y los edificios; donde hay edificio, hasta su pared en la ficha, que es la que se ve |
+| La fachada | Los tres polígonos de la terminal de la ficha, los dos de OpenStreetMap y la nave de la H87 |
+| Al sur, el asfalto por el que se entra a la segunda línea y las seis puertas D | La misma foto, hasta el eje de la T, que es de OpenStreetMap |
+
+Quedan fuera el seto del pie de la torre, el aparcamiento de empleados, el margen asfaltado de la esquina oeste y las isletas de
+tierra de la D1 y de la D6. De los edificios, dentro solo caen los que están sobre la plataforma: los postes de los focos y los
+núcleos de las pasarelas y las escaleras. Las islas de OpenStreetMap siguen en la ficha, dentro, y ya no hay ninguna que coser.
+
+### Lo que publica la casilla 20.3
+
+AD 2-GCTS (AIRAC AMDT 10/26, WEF 29-OCT-26), leída entera:
+
+- **20.3.2.1, salidas, A**: «Pushback is obligatory in front stands and shall be performed such that the aircraft remains nosing to
+  the threshold in use and leaving apron gates "D" free», salvo por operación o seguridad o con límites al arranque de motores; y
+  «**Pushbacks on parking stands R19, G20, AG21, and J22 shall be performed nosing to THR 25**», los cuatro que la tabla da al E.
+- **Por pista**: es eso, el umbral en uso. **Por puesto**: los cuatro; y los pares incompatibles a la vez —J1 y G2, G9 y G10, G10 y
+  H37—, que son de dos aviones maniobrando. **Por envergadura** no hay ninguna del APROAR; de rodaje, la U1, la U2 y la
+  U3 de la aviación general, 22 m, que en la ficha no son calles.
+- **20.3.3, rodaje**: la D1 —al entrar dejando la 25 por la B1 o la B2, y al salir a la 07—, la B1 y la B6, hasta la letra D, que son 52 m: el
+  JAZ 110 y el JAZ 120 no caben. La B2, al entrar en pista, 51 m de envergadura y 50 de largo, y «runway exit without restrictions»; y la
+  B5, por tipo, A340-600 y B777-300.
+- **20.3.2.1, B**: los de salida autónoma salen también hacia el umbral en uso, y «through the first available apron gate».
+
+### Decisión
+
+1. **La ficha lleva el APROAR de los veintinueve de retroceso** (`APROAR_DE_LA_CASILLA` en `puestos-del-aip.mjs`): `E/W`, y según la
+   pista, W por la 07 y E por la 25 —los umbrales quedan a 248,6 y 68,6—; los cuatro de la tabla, E siempre. Con eso lo toman sin regla
+   nueva el plan de quien juega, la llegada y el segundo tramo y el tráfico. Y en `aipPuestos`, la cita y **las puertas que hay que
+   dejar libres** (`puertasLibres`, de la D1 a la D6).
+2. **Un empuje que pasa una rueda por una puerta de esas no es bueno** (`seMetePorUnaPuerta`). Solo donde la ficha lo dice.
+3. **El R19 y el G20, a la recta de la calle** (`porLaRectaDeSuCalle` en `rodaje.ts`). Su línea baja a la curva por la que la calle de
+   plataforma se va a la D6, casi por la tangente; con el pavimento entero, el tractor la seguía de espaldas por la puerta hasta la
+   T —243 y 202 m—, y por la 07 la ruta que quedaba iba por la pista. Ahora tuerce antes, sobre la losa, donde la línea cruza la
+   prolongación de la recta de la calle, y la ruta empieza ahí (`vuelveEn`, H79): **167 y 138 m, al 069, en la calle y por delante de
+   la D6**, y a la cabecera en uso por la T. Solo con `puertasLibres` y donde ninguna otra manera vale.
+4. **La D1, la B1 y la B6, hasta 52 m** (`restriccionesDeRodaje`, H79): los dos grandes salían por la 07 por la D1, y ahora por la D2, o la D4
+   desde el J1 y el J3, de dieciséis a diecinueve metros más. La B2 no va: la ficha no sabe de sentidos y encarecería también salir
+   por ella, y ellos entran por la B0 y la B7.
+
+### El barrido, el plan y los metros
+
+Los tres reactores y las dos cabeceras, antes —main en a78e8c56— y ahora. «Bien» es por su raya, sobre la del plan y mirando por ella:
+
+| Tenerife Sur | | Empujes | Bien | De lado | APROAR | Pisan fuera | Al acabar | En un edificio | Por una puerta D |
+|---|---|---|---|---|---|---|---|---|---|
+| Con pasarela | antes | 46 | 46 | 0 | 46, de casualidad | 0 | 0 | 0 | 0 |
+| | **ahora** | 46 | 46 | 0 | **46** | 0 | 0 | 0 | 0 |
+| De retroceso, sin ella | antes | 64 | 46 | 18 | 55 | 30, 779 m, el peor 54 | 15 | 2 | — |
+| | **ahora** | 64 | **64** | **0** | **64** | **0** | **0** | **0** | **0** |
+
+Bien en todo, **78 de 110 antes y 110 de 110 ahora**. Los dos que se metían en un poste eran los dos grandes en el R47. De las 46 con
+pasarela ninguna cambia de empuje, y de metros, las doce de los dos grandes por la 07. Los empujes sin pasarela van de 89 a 168 m.
+
+| Rodaje hasta la doble raya | 07, antes → ahora | 25, antes → ahora |
+|---|---|---|
+| JAZ 90 | G10, 1.197 m → igual | J1, 1.965 → igual |
+| JAZ 110 y 120 | J8, 1.527, por la D1 → **1.546, por la D2** | J1, 2.065 → igual |
+| JAZ 20, 25, 40 y 50 | **E63, 165 → E62, 186** | E49, 270 → igual |
+| JAZ 60 | E68, 561 → igual | E49, 671 → igual |
+| Reactor del tráfico | G10, 1.449 → igual | J1, 1.943 → igual |
+| Los demás del tráfico, y las llegadas | iguales, menos la más larga de los dos grandes al J8: 1.516 → 1.535 | lo mismo |
+| Del R19, el JAZ 90 | sin tractor, 2.030 → **2.208**, empujado 167 | sin tractor, 1.635 → **1.734**, empujado 168 |
+| Del G20 | sin tractor, 2.016 → **2.177**, empujado 138 | sin tractor, 1.597 → **1.703**, empujado 139 |
+| Del G48 | sin tractor, 1.101 → **818**, empujado 95 | sin tractor, 2.727 → **2.796**, empujado 95 |
+
+Las avionetas se enganchan a la calle por la recta más corta, y con el asfalto de delante de la T hay otras seis más a mano en el
+E63: son las cuatro filas que cambian de las 418 de `puesto-de-salida-de-cada-campo.json`.
+
+**Los demás campos**, iguales: las 160 filas de los otros seis y las 842 de Barajas, una a una; las llegadas y el tráfico, línea a línea
+—los de Barajas no se pasaron por esa mesa—; y sus claves del puesto de salida.
+
+**El peso**: la ficha, de 165.468 a 171.511 bytes, y en gzip, de 17.850 a 19.061.
+
+### Lo medido
+
+- **La mesa**: los barridos de los ocho campos con la medida de la prueba (`comoAcaba`) y la de los puestos sin pasarela de la H87, con
+  los tres reactores y las dos cabeceras, y las de salidas, llegadas y tráfico, antes y después. De los de sin pasarela, además, los
+  metros fuera, lo que queda fuera al acabar y el cuerpo del avión contra los edificios en cada pose.
+- **En planta**, sobre la ortofoto: el contorno entero con los edificios, las calles y las rayas de la ficha, y los empujes del R19, el G20,
+  el S41, el G48 y, con el JAZ 120, el R47.
+- **La rejilla**, horneada otra vez: de 12.960 a 11.280 bytes, y en gzip, de 7.048 a 5.804; `npm run pavimento -- --comprobar`, con los
+  diecinueve campos iguales byte a byte.
+- **Pruebas nuevas** (`tenerife-sur-entera.test.ts`, 34): la pieza única, sus fuentes y las islas dentro; catorce sitios que son pavimento
+  y siete que no; que no tapa edificios; que del morro de cada puesto de delante de la terminal a su pared es todo losa; el APROAR
+  de los veintinueve, con las dos pistas; los 110 empujes; el R19 y el G20; las calles de letra D; el reactor del tráfico; y la recta de la
+  calle en un campo de mentira. Cambian lo que contaban `aproar`, `puestos-con-pasarela`, `empuje-sobre-pavimento` y el puesto de salida de cada campo.
+- **Vitest, en partes y no entero**: `src/world` en ocho, de las que pasaron cinco, 125 ficheros y 2.686 pruebas en verde, 3 saltadas y
+  una en rojo, `puestos-en-el-pavimento` en Tenerife Sur, que leía la rejilla de antes de hornear; con la nueva, los 65 puestos
+  elegibles tienen asfalto, mirado con la misma cuenta fuera de vitest. Las tres primeras partes son de antes del punto 4, y los cinco
+  ficheros de este cambio pasaron enteros también antes de él; lo del punto 4 está mirado en la mesa. Las otras tres partes de `src/world`
+  y los 35 ficheros de `src/flight` que tocan el plan, el tráfico o los escenarios no tuvieron sitio en la máquina: hay que pasarlos
+  antes de publicar, y con ellos `tenerife-sur-entera`.
+- **El remolque de quien juega**, con el JAZ 90, la tarjeta Intel (Iris Xe) y el peldaño de Guyrami:
+  - Por la 07, desde el **G10**: todo en orden. Morro a 38 m de la terminal y a 8° de mirarla; 99 de 99 m, rumbo al acabar 248°. En las
+    capturas la losa llega a la fachada, por debajo de las dos torretas, y a la izquierda ya no acaba en diagonal.
+  - Por la 25 (`250/10`), desde el **J1**: todo en orden. 132 de 132 m, rumbo al acabar 65°. Delante del morro, el patio entre la terminal y
+    la torre es de la foto: está al otro lado de la vía de servicio y no es plataforma.
+  - El **G48** a mano por la 07: todo en orden, empujado 95 de 95 m, 248°; en el puesto, al acabar y rodando, todo losa.
+  - El **R19** a mano por la 25: empujado 168 de 168 m, 70°, en la recta de la calle de plataforma con la D6 delante. El banco daba un
+    fallo, «la terminal no se aleja»: queda a 307 m al oeste, y el empuje va hacia allí. Es del banco, que lo pedía de todos: ahora, solo
+    del de contacto. No se volvió a volar con eso.
+  - En los cuatro, ni una rueda fuera del pavimento, empujando ni al acabar, y nada dentro de un edificio. No se voló el peldaño de cabina.
+
+### Lo que queda
+
+**«Through the first available apron gate»**: el plan rueda por la calle de plataforma hasta la D1 o la D6 y baja ahí, y el AIP manda
+bajar por la primera puerta que se encuentra. Miden casi lo mismo, que la T va en paralelo; pide que la ruta de salida sepa de puertas.
+
+**«Leaving apron gates D free» es aquí no pasar por ellas**. Un avión parado en la calle de plataforma delante de la boca de una, como
+el J1 por la 07 ante la D5, sigue pareciendo bien: el tractor no sabe de cuánto más empujar para no taparla.
+
+**Los de salida autónoma**, la segunda línea, del E49 al E70: en el AIP entran de la T de frente y salen hacia delante, por la calle de
+plataforma y hacia el umbral en uso; las avionetas del juego salen de ellos a la T, como antes.
+
+**La B2 de entrada y la B5**, ver «Lo que publica la casilla 20.3». **Dos maniobras a la vez** en el J1 y el G2, el
+G9 y el G10, y el G10 y el H37: el tráfico y quien juega no se esperan por eso.
+
+**El R40 y el H47** están pintados y no están en la carta: sin salida publicada no llevan APROAR ni tractor.
 
 ## Lo que queda
 
@@ -2882,8 +3021,8 @@ La Palma y Lanzarote están en su punto desde la H75. El APROAR del AIP lo usa e
 Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen línea en OpenStreetMap; el plan no los elige. El
 538, el 539 y del 583 al 586 salen desde la H81.
 
-**Qué puestos tienen pasarela**, en los cuatro campos cuyo AIP no lo dice, desde la H87. De Tenerife Sur quedan las dos puntas de la
-plataforma y su APROAR: ver su «Lo que queda».
+**Qué puestos tienen pasarela**, en los cuatro campos cuyo AIP no lo dice, desde la H87. Las dos puntas de la plataforma de
+Tenerife Sur y su APROAR, desde la H88: ver su «Lo que queda».
 
 **Fuerteventura**, con los puestos del AIP desde la H85: ver su «Lo que queda». El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
 tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H81.
