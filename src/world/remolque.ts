@@ -39,7 +39,7 @@
  * al norte: se le da la vuelta aquí.
  */
 
-import { seSaleEmpujado, type DelAip } from "./puestos-del-aip";
+import { seEntraPorSuRaya, seSaleEmpujado, type DelAip } from "./puestos-del-aip";
 import type { Aerodrome, Punto } from "./aerodrome";
 import type { MorroDelAvion } from "./rueda-de-morro";
 
@@ -261,7 +261,7 @@ export function rumboEnElPuesto(
    * parada, acabando en el puesto. Manda sobre la raya del plan, que va hacia donde va
    * la calle y no hacia donde está pintado el puesto. Ver `entradaDelPuesto`.
    */
-  entrada?: readonly PuntoXZ[] | null,
+  entrada?: LineaDeEntrada | null,
 ): number | null {
   const alEdificio = rumboAlEdificio(x, z, edificios);
   if (alEdificio === null) return null;
@@ -279,6 +279,15 @@ export function rumboEnElPuesto(
   return Math.abs(diferencia(alEdificio, porLaRaya)) < 50 * GRADO ? normalizar(porLaRaya) : alEdificio;
 }
 
+/** **La línea de entrada de un puesto**, de fuera hacia la parada. Ver `entradaDelPuesto`. */
+export interface LineaDeEntrada extends ReadonlyArray<PuntoXZ> {
+  /**
+   * Si es la de un puesto que la carta del AIP publica en su punta y de salida con tractor
+   * (H75, `seEntraPorSuRaya`): entonces se aparca sobre ella, dé donde dé la pared.
+   */
+  readonly publicada?: boolean;
+}
+
 /**
  * **La línea de entrada pintada del puesto que hay en `x`, `z`**, en los ejes del mundo y
  * de fuera hacia la parada, o `null` si no la tiene (H60, H60b). El puesto, el de la
@@ -289,8 +298,8 @@ export function entradaDelPuesto(
   aero: Pick<Aerodrome, "parkingPositions"> | null | undefined,
   x: number,
   z: number,
-): readonly PuntoXZ[] | null {
-  let mejor: { readonly entrada?: readonly Punto[] } | null = null;
+): LineaDeEntrada | null {
+  let mejor: { readonly entrada?: readonly Punto[]; readonly aip?: DelAip } | null = null;
   let cerca = 5;
   for (const p of aero?.parkingPositions ?? []) {
     const d = Math.hypot(p.xy[0] - x, -p.xy[1] - z);
@@ -300,7 +309,9 @@ export function entradaDelPuesto(
     }
   }
   const e = mejor?.entrada;
-  return e && e.length >= 2 ? e.map(([a, b]) => ({ x: a, z: -b })) : null;
+  if (!e || e.length < 2) return null;
+  const linea: PuntoXZ[] = e.map(([a, b]) => ({ x: a, z: -b }));
+  return Object.assign(linea, { publicada: seEntraPorSuRaya(mejor?.aip) });
 }
 
 /**
@@ -324,20 +335,78 @@ export function entradaDelPuesto(
  * metros que le queda a sesenta grados; en el T7 de Barajas pasa rozando la esquina de la
  * pared más cercana y corta de lado la de detrás. Con una sola de las dos, esos dos se
  * quedaban sin su raya.
+ *
+ * **Y si el AIP publica el puesto en la punta de la raya y de salida con tractor, sin mirar
+ * la pared** (H75, `LineaDeEntrada.publicada`). Las paredes son la manera de saber, sin otro
+ * dato, si una raya dibujada es la de entrar de frente; la carta lo dice: en un puesto «R» se
+ * entra de frente por su línea —«the entry line into the parking stand will be followed», AD 2-GCLA,
+ * casilla 20— y el tractor lo saca por ella. En La Palma las líneas van todas paralelas, de la
+ * calle al este, pasada la terminal por los dos lados: el 10, el 11, el 4 y el 4A, en su punto,
+ * tienen la pared más cercana a su costado, y con la regla de la pared el avión se ponía
+ * mirando de lado a la esquina de la terminal, atravesado a su línea, y la ruta, que sale por
+ * la línea, le quedaba de lado.
  */
 export function rumboDeLaPintada(
   x: number,
   z: number,
   edificios: Edificios,
-  entrada: readonly PuntoXZ[] | null | undefined,
+  entrada: LineaDeEntrada | null | undefined,
 ): number | null {
   const deLaEntrada = entrada ? rumboDeLaEntrada(x, z, entrada) : null;
   if (deLaEntrada === null) return null;
+  if (entrada?.publicada) return deLaEntrada;
   const deFrente = (pared: { readonly rumbo: number } | null): boolean =>
     pared !== null && Math.abs(diferencia(pared.rumbo, deLaEntrada)) < SALE_DE_LADO;
   return deFrente(paredMasCercana(x, z, edificios)) || deFrente(paredDeDelante(x, z, deLaEntrada, edificios))
     ? deLaEntrada
     : null;
+}
+
+/**
+ * **Hasta dónde puede quedar la terminal a la derecha y a la izquierda del morro para que una
+ * pasarela llegue al avión**: se embarca por la puerta delantera izquierda, así que la pasarela
+ * sale de una fachada que está delante o a la izquierda. Por la derecha, los cincuenta grados de
+ * siempre de mirar de frente; por la izquierda, hasta un poco por detrás del través, que es donde
+ * queda un ala de la terminal a la que el avión va de costado.
+ */
+const A_LA_DERECHA = 50 * GRADO;
+const A_LA_IZQUIERDA = 110 * GRADO;
+
+/**
+ * **Si a un avión aparcado sobre una línea publicada le llega una pasarela** (H75): la pared de
+ * la terminal, a lo que alcanza desde su puerta, delante de él o a su izquierda. Con el rumbo
+ * del puesto sabido, la distancia sola no basta: el 11 de La Palma, en su punto, está a 78 m de
+ * la esquina norte de la terminal, que le queda a la derecha, al través, y la carta dibuja las
+ * pasarelas delante de ella, entre el 10 y el 4. Si la línea no es publicada no se sabe el
+ * rumbo, y manda la distancia, como siempre; y si la carta dice si es de contacto, la carta.
+ */
+export function leLlegaLaPasarela(
+  x: number,
+  z: number,
+  edificios: Edificios,
+  entrada: LineaDeEntrada | null | undefined,
+  morro: Pick<MorroDelAvion, "puerta">,
+): boolean {
+  const rumbo = entrada?.publicada ? rumboDeLaEntrada(x, z, entrada) : null;
+  if (rumbo === null) return true;
+  const alcance = ALCANCE_DE_LA_PASARELA + morro.puerta;
+  for (const e of edificios) {
+    const n = e.polygon.length;
+    if (n < 2) continue;
+    for (let i = 0; i < n; i++) {
+      const a = e.polygon[i]!;
+      const b = e.polygon[(i + 1) % n]!;
+      // Punto a punto de la pared, cada dos metros: del aeródromo al mundo, como en `paredMasCercana`.
+      const pasos = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 2));
+      for (let k = 0; k <= pasos; k++) {
+        const q = { x: a[0] + ((b[0] - a[0]) * k) / pasos, z: -(a[1] + ((b[1] - a[1]) * k) / pasos) };
+        if (Math.hypot(q.x - x, q.z - z) > alcance) continue;
+        const aUnLado = diferencia(rumbo, rumboEntre({ x, z }, q));
+        if (aUnLado <= A_LA_DERECHA && aUnLado >= -A_LA_IZQUIERDA) return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
@@ -581,7 +650,7 @@ export function empujeDesdeElPuesto(
   puesto: PuntoXZ,
   edificios: Edificios,
   raya: readonly PuntoXZ[],
-  entrada: readonly PuntoXZ[] | null | undefined,
+  entrada: LineaDeEntrada | null | undefined,
   batalla: number,
   centroCon: (rumbo: number) => PuntoXZ,
   {

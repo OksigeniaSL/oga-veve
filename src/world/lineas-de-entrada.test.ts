@@ -21,6 +21,7 @@ import {
   edificiosDePasarela,
   empujeDesdeElPuesto,
   entradaDelPuesto,
+  leLlegaLaPasarela,
   quedaSobreLaRaya,
   rumboDeLaPintada,
   vector,
@@ -112,6 +113,34 @@ describe("la raya pintada que llega a una esquina de la terminal", async () => {
 
   it("y la que va de espaldas a las dos, no", () => {
     expect(rumboDeLaPintada(0, 0, enL, raya([-60, 0]))).toBeNull();
+  });
+
+  /*
+   * **La publicada, sin mirar la pared** (H75): la carta dice que en ese puesto se entra de
+   * frente por su línea y se sale de espaldas por ella. En La Palma las líneas pasan por los dos
+   * lados de la terminal, y en el 10, el 4 y el 4A la pared más cercana queda al costado.
+   */
+  it("y si el AIP publica el puesto en su punta y de salida con tractor, vale sin mirar la pared", () => {
+    const publicada = Object.assign(raya([-60, 0]), { publicada: true });
+    const r = rumboDeLaPintada(0, 0, enL, publicada);
+    expect(r).not.toBeNull();
+    expect(Math.abs(diferencia(r!, 90 * GRADO)) / GRADO).toBeLessThan(0.5);
+    expect(rumboDeLaPintada(0, 0, enL, Object.assign(raya([-60, 0]), { publicada: false }))).toBeNull();
+  });
+
+  it("y la pasarela le llega por delante o por la izquierda, que es por donde se embarca", () => {
+    const morro = morroDe(AIRCRAFT.find((a) => a.id === "jaz-90")!);
+    // Un bloque de cuarenta metros, al sur del puesto, entre los treinta y los sesenta.
+    const alSur = [{ polygon: [[-20, -30], [20, -30], [20, -60], [-20, -60]] as [number, number][] }];
+    const haciaEl = (desde: [number, number]) => Object.assign(raya(desde), { publicada: true });
+    // Mirando al oeste la tiene a la izquierda; al sur, delante; al este, a la derecha; al norte, detrás.
+    expect(leLlegaLaPasarela(0, 0, alSur, haciaEl([60, 0]), morro), "a la izquierda").toBe(true);
+    expect(leLlegaLaPasarela(0, 0, alSur, haciaEl([0, 60]), morro), "delante").toBe(true);
+    expect(leLlegaLaPasarela(0, 0, alSur, haciaEl([-60, 0]), morro), "a la derecha").toBe(false);
+    expect(leLlegaLaPasarela(0, 0, alSur, haciaEl([0, -60]), morro), "detrás").toBe(false);
+    // Sin la línea publicada no se sabe hacia dónde mira, y manda la distancia.
+    expect(leLlegaLaPasarela(0, 0, alSur, raya([-60, 0]), morro)).toBe(true);
+    expect(leLlegaLaPasarela(0, 0, alSur, null, morro)).toBe(true);
   });
 
   it("en Barajas, el 312, el 560 y el 562 en su sitio del AIP se aparcan sobre la suya; y el 23 de Los Rodeos sigue", async () => {

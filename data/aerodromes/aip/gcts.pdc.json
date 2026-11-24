@@ -2,7 +2,7 @@
  "id": "GCTS",
  "fuente": "AIP España (ENAIRE), AD 2-GCTS, cartas PDC: características de los puestos de estacionamiento",
  "url": "https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCTS/",
- "leido": "2026-11-22",
+ "leido": "2026-11-24",
  "cartas": [
   {
    "carta": "AD 2-GCTS PDC 1.3",
@@ -272,9 +272,9 @@
    "lat": 28.043647222222223,
    "lon": -16.582722222222223,
    "salida": "A",
-   "max": null,
+   "max": "B738",
    "aproar": null,
-   "obs": "B738 (2) –",
+   "obs": "(2)",
    "carta": "AD 2-GCTS PDC 1.3",
    "wef": "16-APR-26",
    "contacto": null
@@ -344,9 +344,9 @@
    "lat": 28.04285555555556,
    "lon": -16.58499722222222,
    "salida": "A",
-   "max": null,
+   "max": "B738",
    "aproar": null,
-   "obs": "B738 (2) –",
+   "obs": "(2)",
    "carta": "AD 2-GCTS PDC 1.3",
    "wef": "16-APR-26",
    "contacto": null

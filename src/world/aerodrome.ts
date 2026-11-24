@@ -296,6 +296,12 @@ export interface Aerodrome {
      */
     readonly entrada?: readonly Punto[];
     /**
+     * Si esa línea no está en OpenStreetMap y es la paralela a las de los dos puestos con los
+     * que la carta lo da por incompatible: el T7 de Lanzarote (H75, `lineaEntreIncompatibles`
+     * en `scripts/puestos-del-aip.mjs`).
+     */
+    readonly entradaDeducida?: boolean;
+    /**
      * **Lo que publica el AIP del puesto**: cómo se sale, el mayor avión que admite y si
      * es de contacto (H60f). Solo en los campos españoles con cartas PDC. Ver
      * `world/puestos-del-aip.ts` y `scripts/puestos-del-aip.mjs`.

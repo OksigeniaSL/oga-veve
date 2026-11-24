@@ -20,12 +20,32 @@ export interface DelAip {
    * puesto de OpenStreetMap que no está en su lista no lo es (`contacto: false`)—.
    */
   readonly salida: "R" | "A" | "AR" | null;
-  /** El mayor avión que admite, por su designador de tipo de la OACI (Doc 8643); `null` si no lo publica. */
+  /**
+   * El mayor avión que admite, por su designador de tipo de la OACI (Doc 8643); con varios,
+   * separados por barra: «A21N/B3XM», o «A333/AS32», el mayor avión y el mayor helicóptero
+   * (H75). `null` si no lo publica.
+   */
   readonly max: string | null;
   /** Si la carta lo da por de contacto (con pasarela); `null` si no lo dice. */
   readonly contacto: boolean | null;
   /** La hoja de la que sale, para buscar su fecha (WEF) en `Aerodrome.aipPuestos`. */
   readonly carta: string | null;
+  /**
+   * **A cuántos metros de su punto publicado está el puesto de la ficha**, si no se pudo llevar
+   * a él porque no cae en su raya (H75): la ficha y la carta no dicen el mismo sitio, y de su
+   * raya no se sabe de qué puesto es. Sin él, el puesto está en su punto.
+   */
+  readonly lejos?: number;
+}
+
+/**
+ * **Si la raya pintada de este puesto es la que publica el AIP para entrar en él y salir
+ * empujado** (H75): la carta lo da de salida con tractor, y el puesto está en su punto
+ * publicado, que es donde acaba la raya. A un puesto así se entra de frente por su línea y se
+ * sale de espaldas por ella. Ver `rumboDeLaPintada`.
+ */
+export function seEntraPorSuRaya(aip: DelAip | null | undefined): boolean {
+  return !!aip && aip.lejos === undefined && (aip.salida === "R" || aip.salida === "AR");
 }
 
 /**
@@ -62,6 +82,7 @@ const ENVERGADURA: Readonly<Record<string, number>> = {
   B757: 38.05,
   B762: 47.57,
   B763: 47.57,
+  B764: 51.92,
   B767: 47.57,
   B77W: 64.8,
   C17: 51.75,
@@ -74,18 +95,21 @@ const ENVERGADURA: Readonly<Record<string, number>> = {
 };
 
 /** Los que son helicópteros: su puesto es de helicóptero, y ningún avión va a él. */
-const HELICOPTEROS = new Set(["A139", "AS50", "B412", "EC35", "S61"]);
+const HELICOPTEROS = new Set(["A139", "AS32", "AS50", "B412", "EC35", "S61"]);
 
 /**
  * **Si el puesto admite un avión de esta envergadura**: no si el mayor que publica es más
  * pequeño o es un helicóptero. Si no publica mayor avión, o es un tipo que no está en la
- * tabla, sí: sin el dato no se quita nada.
+ * tabla, sí: sin el dato no se quita nada. Con varios tipos, el que más admite (H75): hasta
+ * aquí «A21N/B3XM» y «A333/AS32» se leían como sin mayor avión, y el T6 de Lanzarote, que es
+ * de A21N, admitía al JAZ 110 y al JAZ 120.
  */
 export function admite(aip: DelAip | null | undefined, envergadura: number): boolean {
   if (!aip?.max) return true;
-  if (HELICOPTEROS.has(aip.max)) return false;
-  const suya = ENVERGADURA[aip.max];
-  return suya === undefined || envergadura <= suya + 0.05;
+  const aviones = aip.max.split("/").filter((tipo) => !HELICOPTEROS.has(tipo));
+  if (!aviones.length) return false;
+  const suya = Math.max(...aviones.map((tipo) => ENVERGADURA[tipo] ?? Infinity));
+  return envergadura <= suya + 0.05;
 }
 
 /** **Si de este puesto se sale empujado**: «R», o «AR», que deja las dos. Sin el dato, sí. */
