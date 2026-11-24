@@ -20,6 +20,8 @@ const banco = textoDelBanco();
 const ahora = laRecogidaDelBanco(banco);
 const antes = laRecogidaDelBanco(banco, { antesDeH72: true });
 const FINALES = 60;
+/** El gas de la final de antes, el del pistón. */
+const DE_ANTES = { recogida: antes, gasDeLaFinal: { kp: 0.08, ki: 0.03 } };
 
 /** La recogida del JAZ 50 en el vuelo entero: a 8 m, bajando 2,2. */
 const RECOGIDA = {
@@ -94,7 +96,7 @@ describe("y si flota, sostiene la actitud", () => {
 
 describe("y en la mesa, con el modelo y las rachas del juego", () => {
   it("el JAZ 50 toca recogido, y la mesa ve el fallo con la mano de antes", () => {
-    const era = mesa({ avion: "jaz-50", masa: 4950, recogida: antes }, FINALES);
+    const era = mesa({ avion: "jaz-50", masa: 4950, ...DE_ANTES }, FINALES);
     const es = mesa({ avion: "jaz-50", masa: 4950, recogida: ahora }, FINALES);
     // Con la de antes, 20 de 60 a más de 2 m/s y la peor a 4,7: lo que se vio volando.
     expect(era.duras).toBeGreaterThan(12);
@@ -108,7 +110,7 @@ describe("y en la mesa, con el modelo y las rachas del juego", () => {
   }, 60_000);
 
   it("y el JAZ 60, que lleva el mismo motor, también, y flota la cuarta parte", () => {
-    const era = mesa({ avion: "jaz-60", recogida: antes }, FINALES);
+    const era = mesa({ avion: "jaz-60", ...DE_ANTES }, FINALES);
     const es = mesa({ avion: "jaz-60", recogida: ahora }, FINALES);
     expect(era.duras).toBeGreaterThan(15);
     expect(era.largas).toBeGreaterThan(15);
@@ -118,7 +120,7 @@ describe("y en la mesa, con el modelo y las rachas del juego", () => {
   }, 60_000);
 
   it("y el JAZ 40, de pistón, no cambia: su recogida es la misma", () => {
-    const era = mesa({ avion: "jaz-40", recogida: antes }, 10);
+    const era = mesa({ avion: "jaz-40", ...DE_ANTES }, 10);
     const es = mesa({ avion: "jaz-40", recogida: ahora }, 10);
     expect(es.r.map((x) => [x.metros, x.caida])).toEqual(era.r.map((x) => [x.metros, x.caida]));
     expect(es.duras).toBeLessThanOrEqual(1);

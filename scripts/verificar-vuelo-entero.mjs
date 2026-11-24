@@ -8107,8 +8107,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * power settings» (FAA-H-8083-3C, 16-3). Con éstas, por debajo otra
          * vez: `arco-a-la-final.test.ts` y `ascendente-en-la-final.test.ts`.
          */
-        const kp = 0.08;
-        const ki = deHelice ? 0.03 : 0.005;
+        /*
+         * **Y en la hélice de turbina libre, la de un motor que tarda** (H72):
+         * la mitad más a la tendencia y un tercio de lo acumulado. Con las del
+         * pistón, en un vuelo del JAZ 50 el gas fue de 0,13 a 1 y la velocidad
+         * de 81 a 68 nudos en la final, con el empuje siempre detrás; a 69 y
+         * subiendo el morro a la senda, una racha hizo sonar el avisador. Es
+         * lo que H64 cambió en los reactores y aquí se quedó.
+         */
+        const tarda = deHelice && LO_QUE_TARDA_EL_MOTOR > 0;
+        const kp = tarda ? 0.12 : 0.08;
+        const ki = deHelice ? (tarda ? 0.01 : 0.03) : 0.005;
         c.throttle = Math.max(
           0,
           Math.min(1, c.throttle + (err - (errorDeGasAntes ?? err)) * kp + err * ki * paso),

@@ -100,7 +100,8 @@ const DT = 1 / 60;
  *   rachas. Y lo que se quiera cambiar: `masa`, kg; `ficha`, lo que se le pone
  *   encima a la del avión (el motor, para separar causas); `sigma`, σ_w en m/s;
  *   `viento`, nudos; `sinRacha(recogiendo)`, si se le quita; `llana`, la pista
- *   sin cuesta; `gas`, otro del turbohélice; `conTraza`, fotograma a fotograma.
+ *   sin cuesta; `gas`, otro del turbohélice; `gasDeLaFinal`, su `kp` y su
+ *   `ki`; `conTraza`, fotograma a fotograma.
  */
 export function vuelaLaFinal(p) {
   const ficha = aircraftById(p.avion);
@@ -234,10 +235,15 @@ export function vuelaLaFinal(p) {
       const queda = Math.max(0, Math.min(1, falta / 1500));
       const quiere = enVerdadera(s, a.approachSpeed + enElUmbral + (margen - enElUmbral) * queda);
       const err = quiere - s.airspeed;
-      const ki = suyas.propulsion === "helice" ? 0.03 : 0.005;
+      const deHelice = suyas.propulsion === "helice";
+      const tarda = deHelice && a.respuestaDelMotor.subida > 0;
+      const { kp, ki } = p.gasDeLaFinal ?? {
+        kp: tarda ? 0.12 : 0.08,
+        ki: deHelice ? (tarda ? 0.01 : 0.03) : 0.005,
+      };
       c.throttle = Math.max(
         0,
-        Math.min(1, c.throttle + (err - (errorAntes ?? err)) * 0.08 + err * ki * 0.1),
+        Math.min(1, c.throttle + (err - (errorAntes ?? err)) * kp + err * ki * 0.1),
       );
       errorAntes = err;
       mano.media(palancaMedia);
