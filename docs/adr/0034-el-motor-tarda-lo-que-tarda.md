@@ -558,6 +558,20 @@ carreras, y no las seis de pistón, que no tienen inercia. Sin reversa en ellas,
 lo que cambia. El modelo con la reversa puesta tampoco: lo que cambia es lo que le
 llega.
 
+### Las pruebas
+
+`respuesta-del-motor.test.ts`: con densidad de sobra, bit a bit la ficha; la ley, a
+menos de un octavo de las seis filas de la tabla y clavada arriba; contra el J47; y lo
+que tarda cada motor en su crucero, en la cuenta y en el modelo. `reversa-que-se-abre.test.ts`:
+el cerrojo, el aire, el 95 % de la reversa a fondo en lo que dice la ficha, el
+arranque desde las vueltas que lleve, el soltarla sin corte y la aguja sin salto; y en
+la pista, que acorta y menos que en el acto, que con MED no cambia y que los dos
+modelos paran igual. `ruidos.test.ts`: con la pieza a medias golpea y calla, y el
+rugido crece con los motores. El banco de los sonidos (`verificar-sonidos.mjs`) espera
+a que la reversa empuje antes de oírla; no se ha corrido. El vitest entero, una vez y
+al final: 588 ficheros, 11.748 pruebas en verde, 32 saltadas. Las mesas de la recogida
+van dentro, y con las huellas de arriba no pueden haber cambiado.
+
 ### Lo que queda
 
 - **Con un motor parado, la reversa empuja como con todos**, y sin guiñar: ni la pieza
