@@ -640,6 +640,37 @@ export function construirGrafo(
 }
 
 /**
+ * **Las calles de plataforma que publica el AIP para un puesto, y las demás encarecidas** (H85):
+ * la casilla 20 de Fuerteventura dice por qué A y por qué L se sale de cada puesto y se llega a él
+ * —«PRKG from 11 to 18: assigned stand - TWY A1 - L2»—, y que se sigue siempre salvo que esté
+ * cerrada. `todas` son las letras de plataforma del campo, las que nombra alguna de esas rutas; un
+ * tramo de una que no es de `suyas` pesa como uno en el que no cabe el ala. Encarecido y no
+ * prohibido, como aquel: si no hay otra, se pasa. Las que no nombra ninguna —la paralela, las de
+ * la pista— no cambian.
+ */
+export function grafoPorSusCalles(grafo: Grafo, suyas: readonly string[], todas: ReadonlySet<string>): Grafo {
+  let delGrafo = POR_SUS_CALLES.get(grafo);
+  if (!delGrafo) POR_SUS_CALLES.set(grafo, (delGrafo = new Map()));
+  const clave = suyas.join("-");
+  let hecho = delGrafo.get(clave);
+  if (!hecho) {
+    hecho = {
+      ...grafo,
+      tramos: grafo.tramos.map((t) =>
+        t.ref !== null && todas.has(t.ref) && !suyas.includes(t.ref) && !t.estrecho
+          ? { ...t, estrecho: true, coste: (t.coste ?? t.largo) * PENALIZACION_ESTRECHO }
+          : t,
+      ),
+    };
+    delGrafo.set(clave, hecho);
+  }
+  return hecho;
+}
+
+/** Ver `grafoPorSusCalles`: un campo tiene tres o cuatro rutas de plataforma distintas. */
+const POR_SUS_CALLES = new WeakMap<Grafo, Map<string, Grafo>>();
+
+/**
  * **Si un tramo es de los que el AIP prohíbe a esa envergadura** (H79): los de esa letra, o los que
  * van por esa línea, con sus dos puntas y su mitad en ella. El que la cruza no lo es.
  */
@@ -1096,10 +1127,13 @@ function buscarEnganches(
   p: Punto,
   maxSalto: number,
   desdeFuera: boolean,
+  /** Solo en estos tramos (H85, `saleEn`); sin ella, en cualquiera. */
+  solo?: (t: Tramo) => boolean,
 ): Enganche[] {
   const todos: Enganche[] = [];
   const cajas = cajasDeLosTramos(grafo.tramos);
   grafo.tramos.forEach((t, k) => {
+    if (solo && !solo(t)) return;
     // Un tramo que sus nudos ya no nombran no es parte de la red: quien quita
     // una calle del grafo la quita de `desde`, y ahí no se engancha nadie.
     if (!grafo.desde[t.a]?.includes(k)) return;
@@ -1239,6 +1273,9 @@ const EN_LA_RECTA = 0.5;
 
 /** Cuántos tramos, de los más cercanos, se miran para enganchar. */
 const TRAMOS_QUE_SE_MIRAN = 40;
+
+/** Lo que le falta a una raya pintada para llegar al eje de su calle, m. Ver `llegaPorSuRaya`. */
+const JUNTO_A_SU_CALLE = 2;
 
 /** Cada cuánto se prueba a lo largo de un tramo, m. Ver `porOtroSitio`. */
 const PASO_POR_EL_TRAMO = 8;
@@ -1739,13 +1776,31 @@ export function rodajesDesde(
      * calle más allá del primer sitio al que se llega así. Ver `enganchesAtravesados`.
      */
     readonly atravesada?: number;
+    /**
+     * A qué calles se engancha el origen, por su letra, y a cuáles cada destino (H85): si el AIP dice
+     * por dónde se sale de un puesto y por dónde se llega a él, en la que toca y no en la de enfrente.
+     * Del 42 de Fuerteventura se sale de frente a la A2, y se entra por detrás, de la T4. Si de ahí no
+     * hay ninguna por pavimento, a la más cercana, como siempre.
+     */
+    readonly saleEn?: (t: Tramo) => boolean;
+    readonly llegaEn?: (t: Tramo) => boolean;
+    /**
+     * Y si a ese puesto se llega **por su raya pintada** (H85): hacia dónde queda su principio, y lo que
+     * mide. La ruta deja la calle donde la raya sale de ella, y no por lo más corto: a los de
+     * Fuerteventura, con noventa metros de plataforma por delante, se entraba en diagonal.
+     */
+    readonly llegaPorSuRaya?: { readonly haciaAtras: Punto; readonly mide: number };
   } = {},
 ): (Ruta | null)[] {
   if (opciones.sentido) return rodajesConSentido(grafo, origen, destinos, maxSalto, ocupados, opciones.sentido, opciones);
   const porDetras = opciones.deEspaldas ? enganchePorDetras(grafo, origen, opciones.deEspaldas, maxSalto) : null;
+  const enLasSuyas = (p: Punto, desdeFuera: boolean, suyas: ((t: Tramo) => boolean) | undefined): Enganche[] => {
+    const buenos = suyas ? buscarEnganches(grafo, p, maxSalto, desdeFuera, suyas) : [];
+    return buenos.length ? buenos : enganches(grafo, p, maxSalto, desdeFuera);
+  };
   const salidas = porDetras
     ? [porDetras]
-    : enganches(grafo, origen, maxSalto, !!opciones.desdeFuera).filter(
+    : enLasSuyas(origen, !!opciones.desdeFuera, opciones.saleEn).filter(
         (e) => !opciones.desdeLaCalle || !grafo.tramos[e.tramo]!.pista,
       );
   if (!salidas.length) return destinos.map(() => null);
@@ -1792,7 +1847,9 @@ export function rodajesDesde(
    * cuestan unos pocos Dijkstra.
    */
   const alDestino = (destino: Punto): Ruta | null => {
-    const llegadas = enganches(grafo, destino, maxSalto, false).filter(
+    const raya = opciones.llegaPorSuRaya;
+    const porSuRaya = raya ? enganchePorDetras(grafo, destino, raya.haciaAtras, maxSalto, raya.mide + JUNTO_A_SU_CALLE) : null;
+    const llegadas = (porSuRaya ? [porSuRaya] : enLasSuyas(destino, false, opciones.llegaEn)).filter(
       (e) => !opciones.alEje || grafo.tramos[e.tramo]!.pista,
     );
     if (!llegadas.length) return null;
@@ -2274,6 +2331,11 @@ const EN_LA_MISMA_CALLE = 2.5;
  * La calle tiene que ir en la misma recta por detrás del cruce, hasta donde se empuja
  * (`MAS_ALLA_DEL_CRUCE`), y no se tuerce en el ramal más de lo que se tuerce en ninguno
  * (`NO_SE_VUELVE`).
+ *
+ * Y si el AIP manda salir por unas calles (`porLasSuyas`, H85), la que pasa el cruce para tomarlas
+ * vale aunque no ahorre: el 18 de Fuerteventura sale por la L2, que queda por detrás de su línea. Y si
+ * la que toma está delante, pero a menos de `RECTO_HASTA_EL_RAMAL`, se empuja lo que falta: el 17 tiene
+ * la L2 a veintidós metros, y el avión acababa con el morro a medio torcer hacia ella.
  */
 export function pasandoElCruce(
   grafo: Grafo,
@@ -2281,6 +2343,7 @@ export function pasandoElCruce(
   rutas: readonly (Ruta | null)[],
   deEspaldas: Punto,
   ocupados?: Ocupados,
+  porLasSuyas?: (ruta: Ruta) => boolean,
 ): (Ruta | null)[] {
   const salida: (Ruta | null)[] = rutas.map(() => null);
   const u = unitario([0, 0], deEspaldas);
@@ -2317,6 +2380,23 @@ export function pasandoElCruce(
       cerca.some((t) => aLaLinea(enElEje(llega + PASO_DEL_CRUCE), t.puntos) <= EN_LA_MISMA_CALLE)
     )
       llega += PASO_DEL_CRUCE;
+    // Por las que manda el AIP, y con el ramal delante pero cerca: lo que falta para quedar recto hasta él.
+    if (porLasSuyas)
+      for (const k of ks) {
+        const r = rutas[k]!;
+        if (!porLasSuyas(r)) continue;
+        let j = en;
+        while (j + 1 < r.puntos.length && deLado(r.puntos[j + 1]!) <= EN_LA_MISMA_CALLE && porDetras(r.puntos[j + 1]!) <= 0) j++;
+        const falta = RECTO_HASTA_EL_RAMAL + porDetras(r.puntos[j]!);
+        if (falta < 1 || falta > llega) continue;
+        salida[k] = {
+          ...r,
+          puntos: [...r.puntos.slice(0, en + 1), enElEje(falta), ...r.puntos.slice(en)],
+          largo: r.largo + 2 * falta,
+          coste: r.coste + 2 * falta,
+          vuelveEn: en + 1,
+        };
+      }
     // Y si en ese trozo hay algún cruce: sin él no hay ramal que tomar.
     const hayRamal = grafo.nudos.some((n, k) => {
       const d = porDetras(n);
@@ -2336,7 +2416,7 @@ export function pasandoElCruce(
     ks.forEach((k, n) => {
       const r = rutas[k]!;
       const otra = otras[n];
-      if (!otra) return;
+      if (!otra || salida[k]) return;
       // Donde deja la calle: el último punto que todavía va por ella, antes del cruce.
       let j = 0;
       while (j + 1 < otra.puntos.length && deLado(otra.puntos[j + 1]!) <= EN_LA_MISMA_CALLE && porDetras(otra.puntos[j + 1]!) > 1) j++;
@@ -2349,7 +2429,8 @@ export function pasandoElCruce(
       const hastaElCruce = Math.hypot(x[0] - r.puntos[0]![0], x[1] - r.puntos[0]![1]);
       const metros = hastaElCruce + hasta;
       const rodando = otra.largo - (llega - hasta);
-      if (r.largo - hastaElCruce - rodando < RODANDO_VA * (hasta - YA_SE_EMPUJA)) return;
+      const manda = !!porLasSuyas && !porLasSuyas(r) && porLasSuyas(otra);
+      if (!manda && r.largo - hastaElCruce - rodando < RODANDO_VA * (hasta - YA_SE_EMPUJA)) return;
       const ida = [...r.puntos.slice(0, en + 1), vuelta];
       salida[k] = {
         tramos: otra.tramos,

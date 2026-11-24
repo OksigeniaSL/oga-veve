@@ -3,11 +3,12 @@
   "name": "Fuerteventura Airport",
   "pasarelas": {"hay": true, "fuente": "OpenStreetMap: trece pasarelas (aeroway=jet_bridge) junto a la terminal, consulta del 10-11-2026."},
   "salidasPorInterseccion": {"permitidas": false, "fuente": "AIP España AD 2-GCFV, 2.20, «Runway entry operations» (AMDT 408/26, 09-JUL-26): «Aircraft are not authorized to access runway via TWY E3, E4 nor E6 to E8. Aircraft, except helicopters with prior ATC authorization, are not authorized to access runway via TWY E5.» Se entra solo por los apartaderos de las cabeceras: E1 y E2 para la 19, E9 y E10 para la 01. Y: «Back track manoeuvres in runway are not authorized for any type of aricraft.» [sic]"},
+  "restriccionesDeRodaje": [{"masDeM": 36, "calle": "A4", "fuente": "AIP España AD 2-GCFV, casilla 20.4, «Standard taxiing procedures» (AMDT 408/26, 09-JUL-26): «TWY A4: restricted to code letter C or lower aircraft.» La letra C llega hasta los 36 m de envergadura (Anexo 14, tabla 1-1)."}, {"masDeM": 52, "calle": "E2", "fuente": "Ídem: «TWY E2 and E9: restricted to code letter D or lower aircraft.» La letra D llega hasta los 52 m."}, {"masDeM": 52, "calle": "E9", "fuente": "Ídem: «TWY E2 and E9: restricted to code letter D or lower aircraft.»"}],
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",
     "ourairports": "3077",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los cuatro puestos de estacionamiento están puestos a mano sobre la plataforma grande, en las cabeceras de las calles L1, L3 y L4: OpenStreetMap no trae ninguno para este aeropuerto —cero `parking_position`— y sin puestos no hay de dónde salir ni a dónde volver, así que el juego no encontraba ninguna ruta de rodaje y el campo no se podía jugar. Van marcados «manual» para que la próxima extracción no se los lleve por delante. · Los umbrales desplazados, del AIP de España (AD 2-GCFV, enmienda 408/26 del 9-JUL-26, 2.12): 1000 m el 01 y 466 m el 19, donde OurAirports traía 1001,3 y 460,2. Van marcados «manual»; los vigila src/world/umbrales-publicados.test.ts."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los puestos de estacionamiento no son de OpenStreetMap, que no trae ninguno para este aeropuerto —cero `parking_position` el 24-09-2026—: son los que publica el AIP de España, en su punto (AD 2-GCFV PDC 1.2 y 1.3, WEF 07-AUG-25), con la línea que dibuja la carta (PDC 1.1, WEF 11-JUN-26) llevada hasta el eje de su calle, que sí es de OpenStreetMap, y por donde la casilla 20.5 dice que se sale y se llega (AMDT 408/26, 09-JUL-26). Los pone `scripts/puestos-del-aip.mjs poner GCFV` (ADR 0025, enmienda H85). Van marcados «manual» para que la próxima extracción no se los lleve por delante. · Los umbrales desplazados, del AIP de España (AD 2-GCFV, enmienda 408/26 del 9-JUL-26, 2.12): 1000 m el 01 y 466 m el 19, donde OurAirports traía 1001,3 y 460,2. Van marcados «manual»; los vigila src/world/umbrales-publicados.test.ts."
   },
   "origin": {
     "lat": 28.4527,
@@ -4338,39 +4339,2171 @@
     }
   ],
   "helipads": [],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCFV, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCFV/","leido":"2026-11-22","cartas":[{"carta":"AD 2-GCFV PDC 1.2","wef":"07-AUG-25"},{"carta":"AD 2-GCFV PDC 1.3","wef":"07-AUG-25"}]},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCFV, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCFV/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCFV PDC 1.2","wef":"07-AUG-25"},{"carta":"AD 2-GCFV PDC 1.3","wef":"07-AUG-25"},{"carta":"AD 2-GCFV PDC 1.1","wef":"11-JUN-26"}],"rodaje":"AD 2-GCFV, casilla 20.5, «Apron taxiing routes» (AMDT 408/26, 09-JUL-26)","callesDePlataforma":["A1","A2","A3","A4","A5","B1","B2","L1","L2","L3","L4","L5"]},
   "parkingPositions": [
     {
-      "ref": "1",
+      "ref": "11",
       "xy": [
-        -248,
-        -462
+        -429.6,
+        515.8
       ],
-      "manual": true
+      "entrada": [
+        [
+          -336,
+          513.1
+        ],
+        [
+          -429.6,
+          515.8
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L1",
+            "A1"
+          ]
+        }
+      }
     },
     {
-      "ref": "2",
+      "ref": "12",
       "xy": [
-        -210,
-        -206
+        -430.7,
+        471.7
       ],
-      "manual": true
+      "entrada": [
+        [
+          -337.3,
+          469
+        ],
+        [
+          -430.7,
+          471.7
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L1",
+            "A1"
+          ]
+        }
+      }
     },
     {
-      "ref": "3",
+      "ref": "13",
       "xy": [
-        -222,
-        492
+        -432.1,
+        425.9
       ],
-      "manual": true
+      "entrada": [
+        [
+          -338.6,
+          423.2
+        ],
+        [
+          -432.1,
+          425.9
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2"
+          ]
+        }
+      }
     },
     {
-      "ref": "4",
+      "ref": "14",
       "xy": [
-        -240,
-        480
+        -433.7,
+        373.4
       ],
-      "manual": true
+      "entrada": [
+        [
+          -340.1,
+          370.7
+        ],
+        [
+          -433.7,
+          373.4
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B767",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "14B",
+      "xy": [
+        -412.5,
+        379
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "CL60",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "N",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "15",
+      "xy": [
+        -435.6,
+        307
+      ],
+      "entrada": [
+        [
+          -342,
+          304.3
+        ],
+        [
+          -435.6,
+          307
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B747",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "16",
+      "xy": [
+        -440.2,
+        240.9
+      ],
+      "entrada": [
+        [
+          -344,
+          238.1
+        ],
+        [
+          -440.2,
+          240.9
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B767",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "17",
+      "xy": [
+        -441.8,
+        183.2
+      ],
+      "entrada": [
+        [
+          -345.6,
+          180.4
+        ],
+        [
+          -441.8,
+          183.2
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "18",
+      "xy": [
+        -445.1,
+        126.3
+      ],
+      "entrada": [
+        [
+          -347.3,
+          123.5
+        ],
+        [
+          -445.1,
+          126.3
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B767",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "18B",
+      "xy": [
+        -442.4,
+        128.8
+      ],
+      "entrada": [
+        [
+          -347,
+          132.8
+        ],
+        [
+          -442.4,
+          128.8
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "19",
+      "xy": [
+        -442.1,
+        66.4
+      ],
+      "entrada": [
+        [
+          -349,
+          63.7
+        ],
+        [
+          -442.1,
+          66.4
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B767",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "19B",
+      "xy": [
+        -459.5,
+        69.2
+      ],
+      "entrada": [
+        [
+          -348.7,
+          73.7
+        ],
+        [
+          -459.5,
+          69.2
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B747",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "20",
+      "xy": [
+        -444,
+        -0.9
+      ],
+      "entrada": [
+        [
+          -350.9,
+          -3.6
+        ],
+        [
+          -444,
+          -0.9
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "A320",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "21",
+      "xy": [
+        -445.6,
+        -52.5
+      ],
+      "entrada": [
+        [
+          -352.4,
+          -55.2
+        ],
+        [
+          -445.6,
+          -52.5
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "21B",
+      "xy": [
+        -428.5,
+        -41.1
+      ],
+      "entrada": [
+        [
+          -352.1,
+          -43.3
+        ],
+        [
+          -428.5,
+          -41.1
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "AT72",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "21C",
+      "xy": [
+        -429.6,
+        -75.1
+      ],
+      "entrada": [
+        [
+          -353.1,
+          -77.3
+        ],
+        [
+          -429.6,
+          -75.1
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "AT72",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "22",
+      "xy": [
+        -447,
+        -105.3
+      ],
+      "entrada": [
+        [
+          -354,
+          -108
+        ],
+        [
+          -447,
+          -105.3
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "22B",
+      "xy": [
+        -430.4,
+        -109.7
+      ],
+      "entrada": [
+        [
+          -354.1,
+          -111.9
+        ],
+        [
+          -430.4,
+          -109.7
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "AT72",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L2",
+            "A2"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "23",
+      "xy": [
+        -458.4,
+        -161.5
+      ],
+      "entrada": [
+        [
+          -355.8,
+          -156.2
+        ],
+        [
+          -458.4,
+          -161.5
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L3",
+            "A3"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "23B",
+      "xy": [
+        -467.4,
+        -164
+      ],
+      "entrada": [
+        [
+          -355.7,
+          -167.1
+        ],
+        [
+          -467.4,
+          -164
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B747",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L3",
+            "A3"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "24",
+      "xy": [
+        -444,
+        -202
+      ],
+      "entrada": [
+        [
+          -356.7,
+          -204.4
+        ],
+        [
+          -444,
+          -202
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L3",
+            "A3"
+          ],
+          "sur": [
+            "L3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "25",
+      "xy": [
+        -450.8,
+        -245.6
+      ],
+      "entrada": [
+        [
+          -357.9,
+          -248.1
+        ],
+        [
+          -450.8,
+          -245.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A3",
+          "L4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L3",
+            "A3"
+          ],
+          "sur": [
+            "L4",
+            "A3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "26",
+      "xy": [
+        -453.8,
+        -304.2
+      ],
+      "entrada": [
+        [
+          -359.5,
+          -306.8
+        ],
+        [
+          -453.8,
+          -304.2
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B747",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A3",
+          "L4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L3",
+            "A3"
+          ],
+          "sur": [
+            "L4",
+            "A3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "27",
+      "xy": [
+        -457.6,
+        -377.1
+      ],
+      "entrada": [
+        [
+          -361.5,
+          -379.7
+        ],
+        [
+          -457.6,
+          -377.1
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B747",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A3",
+          "L4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L3",
+            "A3"
+          ],
+          "sur": [
+            "L4",
+            "A3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "28",
+      "xy": [
+        -457,
+        -443.5
+      ],
+      "entrada": [
+        [
+          -363.3,
+          -446
+        ],
+        [
+          -457,
+          -443.5
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "aproar": "S",
+        "salePor": [
+          "A3",
+          "L4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L4"
+          ],
+          "sur": [
+            "L4",
+            "A3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "31",
+      "xy": [
+        -272.9,
+        427.8
+      ],
+      "entrada": [
+        [
+          -174.2,
+          425.1
+        ],
+        [
+          -272.9,
+          427.8
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "AT72",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T3"
+          ],
+          "sur": [
+            "T3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "32",
+      "xy": [
+        -275.9,
+        383.6
+      ],
+      "entrada": [
+        [
+          -175.4,
+          380.8
+        ],
+        [
+          -275.9,
+          383.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T3"
+          ],
+          "sur": [
+            "T3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "33",
+      "xy": [
+        -276.7,
+        338.2
+      ],
+      "entrada": [
+        [
+          -176.6,
+          335.4
+        ],
+        [
+          -276.7,
+          338.2
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "A321",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T3"
+          ],
+          "sur": [
+            "T3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "33B",
+      "xy": [
+        -255,
+        337.6
+      ],
+      "entrada": [
+        [
+          -341,
+          340.1
+        ],
+        [
+          -255,
+          337.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "AT72",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "E",
+        "salePor": [
+          "T3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2",
+            "A1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "34",
+      "xy": [
+        -277.8,
+        292.5
+      ],
+      "entrada": [
+        [
+          -177.9,
+          289.7
+        ],
+        [
+          -277.8,
+          292.5
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T3"
+          ],
+          "sur": [
+            "T3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "34B",
+      "xy": [
+        -256.4,
+        291.9
+      ],
+      "entrada": [
+        [
+          -342.3,
+          294.4
+        ],
+        [
+          -256.4,
+          291.9
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "AT72",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "E",
+        "salePor": [
+          "T3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2",
+            "A1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "35",
+      "xy": [
+        -279.2,
+        241.8
+      ],
+      "entrada": [
+        [
+          -179.3,
+          239
+        ],
+        [
+          -279.2,
+          241.8
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T3"
+          ],
+          "sur": [
+            "T3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "35B",
+      "xy": [
+        -258,
+        241.2
+      ],
+      "entrada": [
+        [
+          -343.8,
+          243.7
+        ],
+        [
+          -258,
+          241.2
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "AT72",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "E",
+        "salePor": [
+          "T3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2",
+            "A1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "36",
+      "xy": [
+        -280.5,
+        186.3
+      ],
+      "entrada": [
+        [
+          -180.8,
+          183.7
+        ],
+        [
+          -280.5,
+          186.3
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A1",
+          "L2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T3"
+          ],
+          "sur": [
+            "T3"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "36B",
+      "xy": [
+        -259.3,
+        185.6
+      ],
+      "entrada": [
+        [
+          -345.4,
+          188.1
+        ],
+        [
+          -259.3,
+          185.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "AT72",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "E",
+        "salePor": [
+          "T3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "L1",
+            "A1"
+          ],
+          "sur": [
+            "L2",
+            "A1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "41",
+      "xy": [
+        -285.7,
+        39.8
+      ],
+      "entrada": [
+        [
+          -184.5,
+          37.3
+        ],
+        [
+          -285.7,
+          39.8
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T4"
+          ],
+          "sur": [
+            "T4"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "42",
+      "xy": [
+        -287,
+        -10.5
+      ],
+      "entrada": [
+        [
+          -185.8,
+          -13
+        ],
+        [
+          -287,
+          -10.5
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T4"
+          ],
+          "sur": [
+            "T4"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "43",
+      "xy": [
+        -288.4,
+        -63.6
+      ],
+      "entrada": [
+        [
+          -187.1,
+          -66.1
+        ],
+        [
+          -288.4,
+          -63.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B757",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T4"
+          ],
+          "sur": [
+            "T4"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "44",
+      "xy": [
+        -290,
+        -116.4
+      ],
+      "entrada": [
+        [
+          -188.4,
+          -118.9
+        ],
+        [
+          -290,
+          -116.4
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A2",
+          "L3"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T4"
+          ],
+          "sur": [
+            "T4"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "45",
+      "xy": [
+        -294.1,
+        -265.6
+      ],
+      "entrada": [
+        [
+          -193.2,
+          -268.5
+        ],
+        [
+          -294.1,
+          -265.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A3",
+          "L4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T5"
+          ],
+          "sur": [
+            "T5"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "46",
+      "xy": [
+        -295.7,
+        -324.9
+      ],
+      "entrada": [
+        [
+          -194.9,
+          -327.8
+        ],
+        [
+          -295.7,
+          -324.9
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A3",
+          "L4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T5"
+          ],
+          "sur": [
+            "T5"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "47",
+      "xy": [
+        -297.4,
+        -383.9
+      ],
+      "entrada": [
+        [
+          -196.6,
+          -386.8
+        ],
+        [
+          -297.4,
+          -383.9
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "B763",
+        "contacto": null,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "salePor": [
+          "A3",
+          "L4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T5"
+          ],
+          "sur": [
+            "T5"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "51",
+      "xy": [
+        -468.2,
+        -935.3
+      ],
+      "entrada": [
+        [
+          -377.7,
+          -938
+        ],
+        [
+          -468.2,
+          -935.3
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "B767",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.2",
+        "morro": "W",
+        "uso": "carga",
+        "salePor": [
+          "A4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "A4"
+          ],
+          "sur": [
+            "A4"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "51B",
+      "xy": [
+        -449.2,
+        -929.1
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "CL60",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "carga",
+        "salePor": [
+          "A4"
+        ],
+        "llegaPor": {
+          "norte": [
+            "A4"
+          ],
+          "sur": [
+            "A4"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "52",
+      "xy": [
+        -482.8,
+        -981.6
+      ],
+      "entrada": [
+        [
+          -484.2,
+          -1040
+        ],
+        [
+          -482.8,
+          -981.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "AR",
+        "max": "A321",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "carga",
+        "salePor": [
+          "B1"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B1"
+          ],
+          "sur": [
+            "B1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "52B",
+      "xy": [
+        -490.4,
+        -997
+      ],
+      "entrada": [
+        [
+          -491.4,
+          -1039.8
+        ],
+        [
+          -490.4,
+          -997
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "24 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "general",
+        "salePor": [
+          "B1"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B1"
+          ],
+          "sur": [
+            "B1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "52C",
+      "xy": [
+        -463.6,
+        -998
+      ],
+      "entrada": [
+        [
+          -464.6,
+          -1040.4
+        ],
+        [
+          -463.6,
+          -998
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "24 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "general",
+        "salePor": [
+          "B1"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B1"
+          ],
+          "sur": [
+            "B1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "53",
+      "xy": [
+        -443.5,
+        -982.8
+      ],
+      "entrada": [
+        [
+          -444.9,
+          -1040.9
+        ],
+        [
+          -443.5,
+          -982.8
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "AR",
+        "max": "A320",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "carga",
+        "salePor": [
+          "B1"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B1"
+          ],
+          "sur": [
+            "B1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "53B",
+      "xy": [
+        -436.7,
+        -998.6
+      ],
+      "entrada": [
+        [
+          -437.7,
+          -1041.1
+        ],
+        [
+          -436.7,
+          -998.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "24 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "general",
+        "salePor": [
+          "B1"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B1"
+          ],
+          "sur": [
+            "B1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "54",
+      "xy": [
+        -492.9,
+        -1081.1
+      ],
+      "entrada": [
+        [
+          -491.9,
+          -1039.8
+        ],
+        [
+          -492.9,
+          -1081.1
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "24 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "S",
+        "uso": "general",
+        "salePor": [
+          "B1"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B1"
+          ],
+          "sur": [
+            "B1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "55",
+      "xy": [
+        -466,
+        -1081.7
+      ],
+      "entrada": [
+        [
+          -465,
+          -1040.4
+        ],
+        [
+          -466,
+          -1081.7
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "24 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "S",
+        "uso": "general",
+        "salePor": [
+          "B1"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B1"
+          ],
+          "sur": [
+            "B1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "56",
+      "xy": [
+        -439.1,
+        -1082.6
+      ],
+      "entrada": [
+        [
+          -438.1,
+          -1041.1
+        ],
+        [
+          -439.1,
+          -1082.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "24 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "S",
+        "uso": "general",
+        "salePor": [
+          "B1"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B1"
+          ],
+          "sur": [
+            "B1"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "57",
+      "xy": [
+        -498.1,
+        -1106.7
+      ],
+      "entrada": [
+        [
+          -498.7,
+          -1128
+        ],
+        [
+          -498.1,
+          -1106.7
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "15 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "general",
+        "salePor": [
+          "B2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B2"
+          ],
+          "sur": [
+            "B2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "58",
+      "xy": [
+        -477.1,
+        -1107.3
+      ],
+      "entrada": [
+        [
+          -477.7,
+          -1128.6
+        ],
+        [
+          -477.1,
+          -1107.3
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "15 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "general",
+        "salePor": [
+          "B2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B2"
+          ],
+          "sur": [
+            "B2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "59",
+      "xy": [
+        -456.2,
+        -1107.9
+      ],
+      "entrada": [
+        [
+          -456.8,
+          -1129.2
+        ],
+        [
+          -456.2,
+          -1107.9
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "15 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "general",
+        "salePor": [
+          "B2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B2"
+          ],
+          "sur": [
+            "B2"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "60",
+      "xy": [
+        -435.6,
+        -1108.6
+      ],
+      "entrada": [
+        [
+          -436.2,
+          -1129.7
+        ],
+        [
+          -435.6,
+          -1108.6
+        ]
+      ],
+      "entradaDeducida": true,
+      "manual": true,
+      "aip": {
+        "salida": "R",
+        "max": "15 m",
+        "contacto": false,
+        "carta": "AD 2-GCFV PDC 1.3",
+        "morro": "N",
+        "uso": "general",
+        "salePor": [
+          "B2"
+        ],
+        "llegaPor": {
+          "norte": [
+            "B2"
+          ],
+          "sur": [
+            "B2"
+          ]
+        }
+      }
     }
   ],
   "holdingPositions": [

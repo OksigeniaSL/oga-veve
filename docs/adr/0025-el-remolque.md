@@ -2553,6 +2553,161 @@ las manda a una puerta con pasarela, y quitándoles las puertas, a la zona milit
 Probado y no metido. El AIP (AD 2.1-20) las manda a la «zona de estacionamiento temporal» con señalero, a los hangares y, si no
 caben, a la plataforma norte, sin coordenadas: falta ese sitio.
 
+## Enmienda (24-11-2026, H85): Fuerteventura, con los puestos que publica el AIP
+
+### El caso
+
+Lo que dejaron la H76 y la H79: el AIP publica los puestos de Fuerteventura y la ficha llevaba cuatro a mano, en las
+cabeceras de la L1, la L3 y la L4. De ahí salían y ahí llegaban todos —la avioneta y el JAZ 120, el mismo «2», en
+mitad de la L3—, y no había un solo puesto de pasarela: en Fuerteventura los reactores no salían empujados y el campo no
+tenía ni una fila en el barrido.
+
+### De dónde sale cada puesto
+
+- **El punto**, la salida y el mayor avión: las cartas AD 2-GCFV PDC 1.2 y 1.3 (WEF 07-AUG-25), 56 puestos, en
+  `data/aerodromes/aip/gcfv.pdc.json`. Vueltas a leer el 24-11-2026, con lo que el guion no entendía: «R (1)», «ATR72»,
+  «CL-600», el mayor avión por envergadura («24 m», «15 m»), la salida partida en dos renglones («Push-Back R /» y «A (4)»
+  debajo: el 52 y el 53 son «AR»), y la fila sin rampa, la del 51B. Barajas y Lanzarote, leídas otra vez con el guion de
+  ahora, salen iguales byte a byte.
+- **La línea**: la que dibuja AD 2-GCFV PDC 1.1 (WEF 11-JUN-26), recta y perpendicular a la calle de enfrente, con el morro
+  hacia donde dice la tabla; del eje de esa calle, que es de OpenStreetMap, a la parada. La carta casa con las coordenadas de
+  la tabla: ajustada a las 33 líneas rectas, 2,65 m por punto de página —es 1:7.500—, a menos de 1,5 m, salvo el 21C (2,7 m)
+  y el 22B, que está dibujado 8,6 m más al sur de lo que dice la tabla; manda la tabla. El 18B, el 19B y el 23 van sesgados 4,0°, 4,0° y
+  4,6°, medidos en la carta. El 14B y el 51B no son rectos, y van sin línea. Van marcadas `entradaDeducida`.
+- **OpenStreetMap, no.** La consulta única a Overpass de hoy contestó un 502 —«at capacity»— y no se repitió. La ficha es
+  del 24-09-2026, con cero `parking_position` en este campo. Si un día los trae, `poner` sobra.
+- **Por dónde se sale y se llega**: la casilla 20.5 del AD 2, «Apron taxiing routes» (AMDT 408/26, 09-JUL-26): «PRKG from 11
+  to 18: assigned stand - TWY A1 - L2», y así cada uno, según la pista para llegar.
+- **De contacto**: la carta no lo dice (`contacto: null`) y manda la regla de la pared; los de la plataforma de carga y
+  aviación general, no, que la carta dibuja las pasarelas en la terminal.
+
+### El APROAR de Fuerteventura no es el de los demás
+
+Lo publica en los 56, y no es hacia dónde queda el morro al acabar el empuje. Lo llevan también los de salida
+autónoma, del 31 al 47, al W, y del 33B al 36B, al E: los primeros entran de la T y siguen de frente a la A1 o la A2, los segundos entran de la A1
+y salen «direct TWY T3» (casilla 20.5). Y en los de retroceso da al W, la terminal, con la calle de detrás de norte a sur: ahí
+no puede acabar ningún empuje. Es **hacia dónde mira el avión en el puesto**, y así va en la ficha (`aip.morro`). Puesto en
+`aip.aproar` como en Lanzarote, no lo cumplía nadie y mandaba a todos al sur de casualidad: la A1 va al 181,7° y el W queda
+a 88,3° de ahí, dos menos de los noventa con los que se elige el sentido.
+
+Hacia dónde acaba el empuje sale de la ruta publicada: por la A que nombra, hacia su L. Los veinticuatro de retroceso de la plataforma
+comercial, al S (`aip.aproar`).
+
+### Decisión
+
+1. **Los puestos de la ficha, los de la carta** (`puestos-del-aip.mjs poner GCFV`, `DE_LA_CARTA`), marcados `manual`: los
+   cuatro de antes se van. Es una manera de poner un campo que OpenStreetMap no trae; la regla de los demás, `juntar`, no cambia.
+2. **Se sale y se llega por las calles que publica** (`aip.salePor`, `aip.llegaPor`, `aipPuestos.callesDePlataforma`;
+   `grafoPorSusCalles` en `rodaje.ts`): las de la plataforma que no nombra su ruta pesan como un paso en el que no cabe el
+   ala, encarecido y no prohibido, que es como trata el juego todo lo del AIP. La paralela y las de la pista no cambian.
+3. **Del puesto, a la calle que toca** (`saleEn`, `llegaEn`): del 45 se sale de frente a la A3, con el morro al W, y a él se
+   llega por detrás, de la T5. Y se entra **por la raya pintada** (`llegaPorSuRaya`), dejando la calle donde la raya sale de
+   ella: con noventa metros de plataforma por delante, se entraba en diagonal.
+4. **Si la L que manda queda detrás de la línea, se empuja más allá** aunque no ahorre (`pasandoElCruce`, H79): el 18, el 18B,
+   el 23B y el 24, de 141 a 156 m. Y si queda delante, pero a menos de treinta y dos metros, lo que falta: el 17 tiene la L2 a
+   veintidós, y el avión acababa con el morro al 172, a medio torcer.
+5. **Cada avión a su plataforma** (`aip.uso`): las avionetas, a los diez de la de carga y aviación general que dan su mayor avión
+   por envergadura; el 51, el 51B, el 52 y el 53, que lo dan por tipo, son de carga y ambulancia, y el pasaje no va a ninguno. El
+   tráfico, igual, y a un puesto que lo admite: sin eso, el turbohélice, de veintisiete metros de ala, salía del 60, que es de quince.
+6. **«B747» es el 747-400**, 64,44 m: es la familia, y el -8, de letra F, «can only be parked on TWY T4, never on the apron»
+   (casilla 20.7). Solo lo escribe así Fuerteventura; con los 59,64 m del clásico el JAZ 110 no cabía en ninguno por medio metro.
+7. **Las restricciones de rodaje** (casilla 20.4): la A4, hasta la letra C; la E2 y la E9, hasta la D. Las que van por tipo
+   («A330, A343… not authorized to taxi by TWY L5 and A5») no caben en una envergadura, y no van.
+
+### El barrido, el plan y los metros
+
+| | Antes | Ahora |
+|---|---|---|
+| Empujes | 0 | **58** —38 del JAZ 90, 10 del JAZ 110 y 10 del JAZ 120— |
+| Sobre la raya y mirando por ella | — | **58** |
+| De lado · en un edificio | — | 0 · 0 |
+| Pisan fuera del pavimento · al acabar · rodando | — | 0 · 0 · 0 |
+| Sobre su raya | — | 58 |
+| El morro hacia su salida · por sus calles | — | 58 · 58 |
+| Del puesto que elige el plan | — | **6 de 6** |
+
+Son 19 puestos: del 15 al 27, con sus B y sus C. Los empujes, de 80 a 156 m; el morro acaba entre el 177 y el 182, menos en
+el 23, al 141: su raya llega a la A2 justo donde nace la L3, y acaba mirando por ella. La plataforma es una pieza y no hace falta
+ninguna deducida. Las rejillas, iguales byte a byte: los puestos no son pavimento.
+
+**De dónde se sale**, y lo que se rueda hasta la doble raya:
+
+| Quien juega | Pista | Antes | Ahora |
+|---|---|---|---|
+| JAZ 20, 25 y 40 | 01 | 2, 2.133 m | **53B**, 1.484 |
+| | 19 | 2, 1.547 | **56**, 3.169 |
+| JAZ 50 y 60 | 01 | 2, 2.133 | **45**, 2.245, por la A3 y la L4 |
+| | 19 | 2, 1.547 | **34B**, 1.121, directo a la T3 |
+| JAZ 90 | 01 | 2, 2.133, sin tractor | **26**, 2.232, empujado 98 m |
+| | 19 | 2, 1.547, sin tractor | **17**, 1.521, empujado 101 m |
+| JAZ 110 y 120 | 01 | 2, 2.133, sin tractor | **26**, 2.232, empujados 92 y 93 m |
+| | 19 | 2, 1.547, sin tractor | **15**, 1.624, empujados 92 m |
+
+**Y a dónde se llega**, desde la salida de pista por la que se la deja:
+
+| Quien juega | Por dónde deja la pista | Antes | Ahora |
+|---|---|---|---|
+| JAZ 20, 25 y 40 | la 01 por la E6 · la 19 por la E7 | 2, 417 m · 1, 1.548 | **56**, 2.075 · **56**, 1.164 |
+| JAZ 50 y 60 | la 01 por la E6 · la 19 por la E7 | 2, 417 · 1, 1.548 | **36**, 187 · **47**, 1.699 |
+| JAZ 90 | la 01 por la E5 · la 19 por la E7 | 2, 694 · 1, 1.548 | **15**, 489 · **27**, 1.818 |
+| JAZ 110 y 120 | la 01 por la E4 · la 19 por la E7 | 2, 1.199 · 1, 1.548 | **15**, 895 · **27**, 1.818 |
+
+**El tráfico**, sin nadie más en tierra:
+
+| | Sale por la 01 · por la 19 | Llega por la 01 · por la 19 |
+|---|---|---|
+| Avioneta y bimotor, antes | 1, 1.861 m · 3, 849 | 3, 565 · 3, 564 |
+| ahora | **60**, 1.347 · **53B**, 3.164 | **53B**, 2.230 · 53B, 2.230 |
+| Turbohélice, antes | 1, 1.854 · 3, 842 | 3, 557 · 1, 1.943 |
+| ahora | **47**, 2.089 · **31**, 1.700 | **35B**, 989 · **47**, 2.067 |
+| Reactor, antes | 1, 1.851 · 3, 839, sin tractor | 3, 554 · 1, 1.940 |
+| ahora | **27**, 2.150 · **15**, 1.630, empujado 37 m con el morro al 182 | **19**, 505 · **27**, 2.209 |
+
+Las avionetas ruedan más por la 19: la aviación general está en el extremo sur y la 19 empieza en el norte. Es donde está.
+
+### Los demás campos
+
+Las 1.038 filas de los otros siete, 842 de ellas de Barajas, iguales una a una contra main (2e8cbfe7) —medidas antes de las reglas
+del tráfico y de la llegada, que no tocan el empuje—, y de las 418 claves de `puesto-de-salida-de-cada-campo.json` solo cambian
+las 22 de Fuerteventura: ninguna regla nueva se corre sin su dato en la ficha, y solo la de Fuerteventura lo lleva.
+
+### Lo medido
+
+- **La mesa**: los barridos con la medida de la prueba (`comoAcaba`), fuera de vitest, y las mesas de salidas, llegadas y tráfico.
+- **Elegir la salida** en Fuerteventura, en esta máquina: el JAZ 90, de 22–40 ms a 53–138; las avionetas, lo mismo.
+- **En planta**: el campo entero contra la carta, y los empujes del 15, el 17, el 18, el 23, el 24 y el 26.
+- **Pruebas nuevas** (`fuerteventura-del-aip.test.ts`, 25): los 56 puestos, su línea y su morro contra la carta; el APROAR que no lo
+  es; por dónde se sale y se llega; cada puesto de contacto con los tres reactores por las dos cabeceras; el 18; las avionetas, el
+  tráfico y los autónomos; las llegadas por su raya; las restricciones, y las reglas en un campo de mentira. Y
+  `puestos-del-aip.test.ts` mira también este campo.
+- **Vitest, por partes** y con el código terminado: `src/world` entero en tres, 195 ficheros, 4.286 en verde y 3 saltadas, y lo
+  que no es de `src/world` ni de `src/flight`, 124 ficheros y 2.468 en verde. De `src/flight`, no
+  entero: la primera de cuatro partes, 69 ficheros y 1.329 en verde, 14 saltadas y una pendiente, y los 72 que tocan el plan, el
+  tráfico, los escenarios o `game.ts`, 1.626 en verde y 9 saltadas. Ninguna en rojo.
+- **El remolque de quien juega en Fuerteventura**, con el JAZ 90, la tarjeta Intel y el peldaño de Guyrami: **todo en orden por las dos
+  cabeceras**. Por la 01 (`OGA_VIENTO=020/10`) desde el 26, 98 de 98 m, giro de 91°, rumbo al acabar 181° y 1° en los primeros
+  treinta metros rodando; por la 19 (`190/10`) desde el 17, 101 de 101 m, 90°, 181° y −4°. Las ruedas, 0,0 m fuera del pavimento
+  empujando y ninguna al acabar, y nada dentro de un edificio. En las capturas el avión está con el morro a la terminal, con la
+  persona de tierra en el morro; al acabar, en el eje de la A3 —o de la A1— mirando al sur, con el tractor y el señalero
+  apartados y la raya por delante; y rodando, detrás del sígame, toma la L4 y la L2.
+- **La rejilla** (`npm run pavimento -- --comprobar`): Fuerteventura, igual byte a byte, con el código terminado; las de los demás
+  campos, también, en una pasada de antes del último arreglo, que no toca el pavimento.
+
+### Lo que queda
+
+**Cuáles tienen pasarela**: la carta dibuja nueve, junto al 15, el 18, el 19, el 20, el 21, el 22, el 24, el 25 y el 26, y la ficha
+trae diez torretas de OpenStreetMap, una entre el 16 y el 17. La tabla no lo dice, y con la regla de la pared entran además el 16,
+el 17, el 23 y el 27, y el 21B, el 21C y el 22B, que son de ATR 72.
+
+**El 23**, con el morro al 141 al acabar: para dejarlo recto antes de la L3 el tractor tendría que meterse por la A2 hacia el
+norte desde su nacimiento, y la ruta no tiene recta de la que tirar.
+
+**Las llegadas del tráfico** eligen el puesto por cercanía y después van por sus calles: el turbohélice que deja la 01 por la E6
+va al 35B, 989 m por la L1 y la A1, con el 36 a doscientos por la T3.
+
+**Los puestos de helicóptero**, del H1 al H8, no se leen: la carta no les da salida. Y las restricciones por tipo de la L5, la A5,
+la E3, la E4, la E7 y la E8.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
@@ -2567,7 +2722,7 @@ La Palma y Lanzarote están en su punto desde la H75. El APROAR del AIP lo usa e
 Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen línea en OpenStreetMap; el plan no los elige. El
 538, el 539 y del 583 al 586 salen desde la H81.
 
-**Fuerteventura** (H79): ver «Lo que queda» de la H79. El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
+**Fuerteventura**, con los puestos del AIP desde la H85: ver su «Lo que queda». El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
 tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H81.
 
 **Barajas, sobre pavimento** (H81): el 501 por la 18 y el 537 con los dos grandes, que pisan fuera y el plan no elige. Ver «Lo

@@ -172,7 +172,7 @@ de él empujado por un tractor («R») o por sus propios medios («A»), el mayo
 avión que admite y, donde la carta lo dice, si tiene pasarela— sale de la tabla
 de características de los puestos de las cartas PDC de la parte AD 2, leídas el
 22 de noviembre de 2026 (las de GCTS, GCRR y GCLA, otra vez el 24, por el mayor
-avión escrito con varios tipos): AD 2-GCXO PDC 1.2 (WEF 06-AUG-26), AD 2-LEMD PDC 1.3 a
+avión escrito con varios tipos, y la de GCFV, por el que da en metros): AD 2-GCXO PDC 1.2 (WEF 06-AUG-26), AD 2-LEMD PDC 1.3 a
 1.7 (WEF 29-OCT-26) y PDC 2.3 a 2.6 (WEF 25-DEC-25 y 01-OCT-26), AD 2-GCLP PDC
 1.3 a 1.5 (WEF 09-JUL-26), AD 2-GCTS PDC 1.3 y 1.4 (WEF 16-APR-26 y 05-SEP-24), AD 2-GCRR
 PDC 1 (WEF 01-OCT-26), AD 2-GCLA PDC 1.2 (WEF 15-MAY-25), AD 2-GCFV PDC 1.2 y
@@ -188,6 +188,12 @@ aeronaves» (01 OCT 2026, AMDT AIRAC 02/2026), leída el 24 de noviembre de 2026
 `AMDT_AIRAC_02_2026.rar` de dinac.gov.py. No publica la salida, el mayor avión ni el APROAR. Va en
 `data/aerodromes/aip/sgas.pdc.json` (ADR 0025, enmienda H83). Los puestos y sus líneas siguen siendo
 de OpenStreetMap (ODbL), leídos otra vez ese día.
+
+**Los 56 puestos de Fuerteventura** salen enteros de ahí, que OpenStreetMap no trae ninguno: su
+punto, su salida y su mayor avión, de AD 2-GCFV PDC 1.2 y 1.3; hacia dónde va su línea, de la PDC
+1.1 (WEF 11-JUN-26), llevada al eje de su calle, que es de OpenStreetMap (ODbL); y por qué calles se
+sale y se llega, y qué calles no toman los grandes, de la casilla 20 de su AD 2 (20.4 y 20.5, AMDT
+408/26, 09-JUL-26), todo leído el 24 de noviembre de 2026. Ver ADR 0025, enmienda H85.
 
 El contorno de las cinco plataformas de Barajas que van en `plataformasDeducidas` de
 `data/aerodromes/lemd.aero.json` —la de la T4, la de sus puestos PE, la de la T4S, la de

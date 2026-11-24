@@ -71,6 +71,7 @@ OpenStreetMap: son hechos de una publicación oficial (ver `CREDITOS.md`).
 pdftotext -layout LE_AD_2_GCXO_PDC_1_en.pdf gcxo.txt
 node scripts/puestos-del-aip.mjs extraer GCXO gcxo.txt     # la tabla, a aip/gcxo.pdc.json
 node scripts/puestos-del-aip.mjs juntar GCXO LEMD GCLP     # a la ficha, y cada puesto a su punto publicado
+node scripts/puestos-del-aip.mjs poner GCFV                # los de la carta, en un campo sin ninguno en OpenStreetMap
 ```
 
 `juntar` lleva al punto publicado el puesto que está a más de diez metros de
@@ -86,14 +87,21 @@ Silvio Pettirossi lleva lo de la DINAC (AIP Paraguay, AD 2.1-14.2, 01 OCT
 más. La hoja es un dibujo sin texto, y `aip/sgas.pdc.json` está pasado a mano;
 se junta igual, `node scripts/puestos-del-aip.mjs juntar SGAS` (H83).
 
+**Fuerteventura** no tiene ninguno en OpenStreetMap, y los suyos son los de la carta (`poner`,
+`DE_LA_CARTA` en el guion): en su punto, con la línea que dibuja la PDC 1.1 del eje de su calle a la
+parada, y marcados `manual` para que la extracción no se los lleve. Su columna APROAR es hacia dónde
+mira el avión en el puesto (`aip.morro`); por dónde se sale y se llega, `aip.salePor` y `aip.llegaPor`,
+lo dice la casilla 20.5 del AD 2, y `aipPuestos.callesDePlataforma` son las calles que solo se toman
+si la ruta las nombra (ADR 0025, enmienda H85).
+
 ### Por dónde no se rueda con más de una envergadura
 
 `restriccionesDeRodaje` es lo que dice la casilla 20 del AD 2 («Taxiing
 restrictions»), con la frase y la enmienda: a partir de cuántos metros de
 envergadura no se rueda por una calle (`calle`, su letra) o por una línea
 (`por`, en los metros de la ficha). Va escrito a mano, como
-`salidasPorInterseccion`, y se conserva al volver a extraer. Lo lleva
-Lanzarote (ADR 0025, enmienda H79).
+`salidasPorInterseccion`, y se conserva al volver a extraer. Lo llevan
+Lanzarote (ADR 0025, enmienda H79) y Fuerteventura (H85).
 
 ### Las plataformas que OpenStreetMap dibuja a medias
 
