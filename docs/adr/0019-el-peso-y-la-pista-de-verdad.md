@@ -1233,3 +1233,8 @@ En Lanzarote, en su puesto, con 030/18: el JAZ 90 con el morro al 297 y quince n
 aire a 92°, la lectura en cero y la cinta en su 30, sin marcas por debajo, en el cuadro y
 en la cabina. El JAZ 60, con el aire a 26° del morro, 14 nudos leídos y la cinta en su 20;
 el JAZ 20, 13.
+
+**Y el rearme de V1, por el suelo.** El HUD daba por parado al avión con la
+velocidad del aire por debajo de 5 m/s: con diez nudos de viento o más no lo
+estaba nunca, y tras un despegue abortado la carrera siguiente se quedaba sin
+V1 ni Vr. Se mira la del suelo; en calma son la misma.

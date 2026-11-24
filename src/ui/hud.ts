@@ -3532,8 +3532,13 @@ export class Hud {
     // Empezar la carrera sí pide las cuatro cosas a la vez; seguir en ella, no.
     if (enDespegue && state.onRunway && throttle > GAS_DE_DESPEGUE)
       this.enLaCarrera = true;
-    if (!enDespegue || (enSuelo && state.airspeed < 5))
-      this.enLaCarrera = false;
+    /*
+     * Parado es **por el suelo**, no por el aire: con diez nudos de viento o más
+     * la del aire no baja nunca de ahí, y tras un despegue abortado la carrera
+     * siguiente se quedaba sin V1 (H80).
+     */
+    const parado = enSuelo && state.groundSpeed < 5;
+    if (!enDespegue || parado) this.enLaCarrera = false;
     /*
      * Con la funda del pitot puesta no hay V1: es una velocidad que se lee en
      * el anemómetro, y el anemómetro marca cero. Y sin V1 el freno sigue a
@@ -3649,7 +3654,7 @@ export class Hud {
        * hay uno por despegue — esa es toda su gracia.
        */
       (!enSuelo && state.heightAboveGround > 40) ||
-      (enSuelo && state.airspeed < 5)
+      parado
     ) {
       this.dijoV1 = false;
       this.dijoVr = false;
