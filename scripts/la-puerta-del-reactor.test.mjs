@@ -35,7 +35,7 @@ function enCalma(piloto) {
 describe("el arco a final del JAZ 90 en el banco", () => {
   it("en aire quieto coge la senda sin pasarla de largo ni bajar a mil pies por minuto", () => {
     const r = enCalma(ahora);
-    // Medido: 12 m por encima como mucho y 4,6 m/s en el peor instante.
+    // Medido: 10 m por encima como mucho y 4,6 m/s en el peor instante.
     expect(r.alto, `${r.alto.toFixed(1)} m por encima`).toBeLessThan(14);
     expect(r.pico, `${r.pico.toFixed(2)} m/s`).toBeLessThan(0.93 * MIL_PIES_POR_MINUTO);
     expect(r.puerta.baja, `${r.puerta.baja} m/s`).toBeLessThan(3.8);
@@ -52,7 +52,7 @@ describe("el arco a final del JAZ 90 en el banco", () => {
     const r = mesaDelArco({ avion: "jaz-90", piloto: ahora }, FINALES).map((x) => x.puerta);
     expect(r.every(Boolean)).toBe(true);
     const deMas = r.filter((p) => p.baja > MIL_PIES_POR_MINUTO).length;
-    // Medido: 1 de 60 (4 de 200). Antes de H89, 8 de 60 (31 de 200).
+    // Medido: 2 de 60 (5 de 200). Antes de H89, 8 de 60 (31 de 200).
     expect(deMas, `${deMas} de ${FINALES} por encima de mil pies por minuto`).toBeLessThanOrEqual(3);
     const lejos = r.filter((p) => Math.abs(p.senda) > p.tolSenda || Math.abs(p.eje) > p.tolEje);
     expect(lejos.length, `${lejos.length} fuera de la senda o del eje`).toBe(0);

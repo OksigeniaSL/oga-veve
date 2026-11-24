@@ -221,14 +221,21 @@ const POR_MORRO = 0.8;
 /**
  * Y cuánto giro pide cada radián de trayectoria **cuando se sabe lo que tarda
  * el camino**, 1/s: un tercio. Ver `loQueTardaElCamino`.
- *
- * Contando con ese retraso, entre lo que se pide y el camino ya solo queda el
- * lazo del morro (`POR_MORRO`), y con los dos en fila a un tercio y ocho décimas
- * se coge lo pedido sin pasarse: ocho décimas de amortiguamiento. Con cuatro
- * décimas, la ascendente de `ascendente-en-la-final.test.ts` dejaba la peor media
- * en 5,12 m/s, por encima de mil pies por minuto; con un tercio, por debajo.
  */
 const POR_TRAYECTORIA_ANTICIPADA = 1 / 3;
+
+/**
+ * Y cuánto de ese retraso se cuenta: siete décimas.
+ *
+ * Contándolo entero, el lazo lleva el morro y no el camino: no se pasa, pero
+ * llega detrás, y la altura, que se corrige por fuera, se columpia un poco más.
+ * Medido con el JAZ 90 con todo fuera, capturando trescientos metros: 8 m de más
+ * contándolo entero, 5 con siete décimas y 4 sin contarlo. Y con cuatro décimas
+ * de ganancia en vez de un tercio, la ascendente de
+ * `ascendente-en-la-final.test.ts` deja la peor media en 5,12 m/s, por encima de
+ * mil pies por minuto; con éstas, por debajo.
+ */
+const CUENTA_DE_LO_QUE_TARDA = 0.7;
 
 /** Lo que se suaviza la carga medida, s: lo que tarda en notarse desde el asiento. */
 const PARA_MEDIR_LA_CARGA = 0.3;
@@ -971,7 +978,7 @@ export function mandosPara(
         m.tarda === null ? 0 : cuantoSeAnticipa(e) * Math.min(1, m.enganchado / EMBRAGUE);
       const giro = acotar(
         (POR_TRAYECTORIA + (POR_TRAYECTORIA_ANTICIPADA - POR_TRAYECTORIA) * cuanto) *
-          (trayectoriaPedida - trayectoria - (cuanto * (m.tarda ?? 0) * m.acelera) / v),
+          (trayectoriaPedida - trayectoria - (cuanto * CUENTA_DE_LO_QUE_TARDA * (m.tarda ?? 0) * m.acelera) / v),
         tope,
       );
       /*

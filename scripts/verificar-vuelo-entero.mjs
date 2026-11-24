@@ -5038,7 +5038,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * Quien vuela no espera a cruzarla: ve venir la aguja y empieza a bajar
      * antes. A seis segundos de que llegue se empieza, y el ritmo crece según
      * se acerca, así que se llega a ella por debajo y bajando ya a lo que pide.
-     * En la misma mesa, 12 m por encima como mucho y sin pasar de 4,6 m/s.
+     * En la misma mesa, 10 m por encima como mucho y sin pasar de 4,6 m/s.
      */
     const aSeisSegundos = deSenda * SEGUNDOS_PARA_COGER_LA_SENDA;
     const laSenda =
