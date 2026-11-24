@@ -572,6 +572,16 @@ a que la reversa empuje antes de oírla; no se ha corrido. El vitest entero, una
 al final: 588 ficheros, 11.748 pruebas en verde, 32 saltadas. Las mesas de la recogida
 van dentro, y con las huellas de arriba no pueden haber cambiado.
 
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`, reloj por uno: **63 de
+63**, dos sin medir. Recogió a 11,4 m de ruedas, 18 m antes del umbral, a 118 nudos y
+bajando 3,6 m/s; tocó a 1,04 m/s, a 556 m del umbral y a 5,4 m del eje, y frenó de
+58,6 a 25,4 m/s en 297 m. Su piloto no usa la reversa y no pasa de la altura en que el
+motor cambia: dice que lo demás sigue en pie, no que la reversa frene. **Sin volar**:
+el JAZ 60 (no cupo en la cola), y con la reversa puesta, ninguno; la marca REV ámbar y
+verde no se ha mirado en pantalla.
+
 ### Lo que queda
 
 - **Con un motor parado, la reversa empuja como con todos**, y sin guiñar: ni la pieza
