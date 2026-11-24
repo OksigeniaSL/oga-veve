@@ -12,7 +12,7 @@
  * Tres cosas: que en el arco ya no se pasa de mil pies por minuto; que un
  * viraje de treinta grados sosteniendo la altura no se aparta más de lo que se
  * le pide a un automático de verdad, en los ocho aviones de ala fija; y que
- * con las alas a nivel no cambia nada, ni un bit.
+ * con las alas a nivel no pide nada, ni un bit.
  */
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
@@ -203,13 +203,14 @@ describe("la compensación del viraje del automático", () => {
     },
   );
 
-  it("y con las alas a nivel no cambia nada, bit a bit", () => {
+  it("y con las alas a nivel no pide morro ninguno, ni un bit", () => {
     /*
      * Sostener, bajar por una senda con flaps, cambiar de nivel en FLCH SPD y
-     * en V/S con la mínima, sin rumbo: el automático que recibe el ángulo de
-     * sustentación nula da los mismos mandos, ni un bit distinto, que el que
-     * no lo recibe, que es el de antes. Comprobado también contra el de antes
-     * en la mesa (H29h): 115.200 pasos, ninguno distinto.
+     * en V/S con la mínima, sin rumbo: lo que pide el ala inclinada es cero
+     * exacto. Hasta H89 se comparaban los mandos del automático que recibe el
+     * ángulo de sustentación nula con los del que no; desde entonces el que lo
+     * recibe cuenta además con lo que tarda el camino (`loQueTardaElCamino`) y
+     * vuela distinto, así que aquí se mira lo que pone el viraje y nada más.
      */
     for (const a of ALA_FIJA) {
       const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: TAGUATO.assists });
@@ -218,7 +219,6 @@ describe("la compensación del viraje del automático", () => {
       c.throttle = 0.5;
       c.automatico = true;
       const con = memoriaNueva();
-      const sin = memoriaNueva();
       let distintos = 0;
       for (let i = 0, t = 0; i < 60 * 120; i++, t += DT) {
         const s = m.state;
@@ -246,8 +246,7 @@ describe("la compensación del viraje del automático", () => {
           ...(i === 0 ? { timon: 0 } : {}),
         };
         const rc = mandosPara({ ...e, anguloSinSustentacion: m.anguloSinSustentacion() }, o, DT, con);
-        const rs = mandosPara(e, o, DT, sin);
-        if (rc.elevator !== rs.elevator || rc.aileron !== rs.aileron || rc.throttle !== rs.throttle) distintos++;
+        if (con.viraje !== 0) distintos++;
         c.elevator = rc.elevator;
         c.aileron = rc.aileron;
         if (rc.throttle !== null) c.throttle = rc.throttle;
