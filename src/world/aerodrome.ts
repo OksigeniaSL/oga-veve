@@ -329,8 +329,8 @@ export interface Aerodrome {
     readonly entradaDeducida?: boolean;
     /**
      * **Lo que publica el AIP del puesto**: cómo se sale, el mayor avión que admite y si
-     * es de contacto (H60f). Solo en los campos españoles con cartas PDC. Ver
-     * `world/puestos-del-aip.ts` y `scripts/puestos-del-aip.mjs`.
+     * es de contacto (H60f). En los campos españoles con cartas PDC y en Silvio Pettirossi
+     * (H83). Ver `world/puestos-del-aip.ts` y `scripts/puestos-del-aip.mjs`.
      */
     readonly aip?: DelAip;
   }[];

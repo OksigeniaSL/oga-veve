@@ -8083,6 +8083,7 @@
       -715.3
     ]
   ],
+  "aipPuestos": {"fuente":"AIP Paraguay (DINAC), AD 2.1-14.2, plano de estacionamiento y atraque de aeronaves: las puertas de la plataforma 1 y sus coordenadas; AMDT AIRAC 02/2026","url":"https://www.dinac.gov.py/v3/index.php/ais/aip-paraguay","leido":"2026-11-24","cartas":[{"carta":"AD 2.1-14.2","wef":"01-OCT-26"}]},
   "parkingPositions": [
     {
       "ref": "1",
@@ -8123,7 +8124,13 @@
           497.9,
           -286.3
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": true,
+        "carta": "AD 2.1-14.2"
+      }
     },
     {
       "ref": "2",
@@ -8148,7 +8155,13 @@
           438.4,
           -311
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": true,
+        "carta": "AD 2.1-14.2"
+      }
     },
     {
       "ref": "3",
@@ -8165,7 +8178,13 @@
           388.3,
           -240.6
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": true,
+        "carta": "AD 2.1-14.2"
+      }
     },
     {
       "ref": "4",
@@ -8202,7 +8221,13 @@
           414.6,
           -187
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": true,
+        "carta": "AD 2.1-14.2"
+      }
     },
     {
       "ref": "5",
@@ -8223,7 +8248,14 @@
           446.5,
           -124.7
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": true,
+        "carta": "AD 2.1-14.2",
+        "lejos": 23
+      }
     },
     {
       "ref": "6",
@@ -8256,234 +8288,261 @@
           417.1,
           -76.1
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": true,
+        "carta": "AD 2.1-14.2",
+        "lejos": 25
+      }
     },
     {
       "ref": null,
       "xy": [
         13.3,
         -1844.8
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         14,
         -1871.5
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         15.3,
         -1899.8
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         26.1,
         -1940.3
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         80.7,
         -1588.4
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         77.3,
         -1603.8
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         73.7,
         -1618.6
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         71,
         -1633.1
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         68.4,
         -1647.8
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         65.6,
         -1662.9
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         56.9,
         -1677.9
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         60,
         -1693
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         310.9,
         -311.1
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         326.8,
         -315.8
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         306.6,
         -277.6
-      ]
-    },
-    {
-      "ref": null,
-      "xy": [
-        368.8,
-        -55
       ],
-      "entrada": [
-        [
-          308.1,
-          -28.4
-        ],
-        [
-          313.9,
-          -30.7
-        ],
-        [
-          368.8,
-          -55
-        ]
-      ]
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         360.2,
         -90
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         343.9,
         -128.7
-      ]
-    },
-    {
-      "ref": null,
-      "xy": [
-        424.1,
-        -119.1
       ],
-      "entrada": [
-        [
-          384.9,
-          -109.2
-        ],
-        [
-          424.1,
-          -119.1
-        ]
-      ]
-    },
-    {
-      "ref": null,
-      "xy": [
-        342.6,
-        -134.2
-      ]
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         311.9,
         -205.5
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         304,
         -238.1
-      ]
-    },
-    {
-      "ref": null,
-      "xy": [
-        358.7,
-        -233.7
       ],
-      "entrada": [
-        [
-          329,
-          -226.7
-        ],
-        [
-          358.7,
-          -233.7
-        ]
-      ]
-    },
-    {
-      "ref": null,
-      "xy": [
-        391.3,
-        -302.4
-      ],
-      "entrada": [
-        [
-          360.2,
-          -297
-        ],
-        [
-          376.2,
-          -299.2
-        ],
-        [
-          390.4,
-          -302.4
-        ],
-        [
-          391.3,
-          -302.4
-        ]
-      ]
-    },
-    {
-      "ref": null,
-      "xy": [
-        477.6,
-        -345.6
-      ]
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
@@ -8500,56 +8559,104 @@
           175,
           -1349.6
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         103.7,
         -1517.5
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         109.2,
         -1502.3
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         116.3,
         -1485.6
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         121.5,
         -1469.5
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         153.7,
         -1499.7
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         144.8,
         -1494.7
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         164.1,
         -1504.1
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
@@ -8586,28 +8693,52 @@
           68.5,
           -1494.9
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         81.7,
         -1473
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         75.8,
         -1488.3
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         69.7,
         -1504.6
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
@@ -8624,7 +8755,13 @@
           376.7,
           -1580.1
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
@@ -8653,7 +8790,13 @@
           353.2,
           -1582.2
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
@@ -8682,63 +8825,117 @@
           383.6,
           -1586.5
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         292.2,
         -1403.3
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         301.5,
         -1384.2
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         464.4,
         -1424.7
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         410.2,
         -1409.9
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         443.9,
         -1420.6
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         528.2,
         -1213.4
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         575.4,
         -1208
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         569.5,
         -1225
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
@@ -8759,56 +8956,104 @@
           550.6,
           -1021.3
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         533.3,
         -1067.5
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         533.7,
         -1086.5
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         542.8,
         -1063.7
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         543.7,
         -1011.3
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         533.8,
         -1209.1
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         164.9,
         -1440.2
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     },
     {
       "ref": null,
       "xy": [
         162,
         -1440.4
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": false,
+        "carta": null
+      }
     }
   ],
   "holdingPositions": [
