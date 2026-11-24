@@ -5,7 +5,6 @@
  *
  *     node scripts/puestos-del-aip.mjs extraer GCXO carta.txt [otra.txt …]
  *     node scripts/puestos-del-aip.mjs juntar GCXO [GCLP …]
- *     node scripts/puestos-del-aip.mjs juntar GCLA GCRR --sin-mover   # solo `aip`, sin llevar puestos a su punto
  *
  * `extraer` lee el texto de las cartas PDC de la parte AD 2 del AIP de ENAIRE
  * (aip.enaire.es), pasado por `pdftotext -layout`, y guarda la tabla
@@ -112,7 +111,12 @@ function salidaDe(s) {
   return null;
 }
 
-const ES_TIPO = /^[A-Z][A-Z0-9]{1,3}$/;
+/** Un designador de tipo, o varios separados por barra: «A333/AS32», el mayor avión y el mayor helicóptero. */
+const ES_TIPO = /^[A-Z][A-Z0-9]{1,3}(\/[A-Z][A-Z0-9]{1,3})*$/;
+/** La marca de cambio de la enmienda, que sale en medio del texto: «A21N/_<-_B3XM» es «A21N/B3XM». */
+const MARCA_DE_CAMBIO = /_<-_/g;
+/** La llamada a una observación pegada al tipo: «B738 (2)». */
+const LLAMADA = /\s*\(\d+\)$/;
 const ES_APROAR = /^([NSEW]{1,2}(\/[NSEW]{1,2})?)$/;
 const NADA = /^[–—-]$/;
 
@@ -138,18 +142,20 @@ function filasDe(texto) {
       if (!m) continue;
       const salida = salidaDe(m[5]);
       if (!salida) continue;
-      const resto = m[6].trim().split(/\s{2,}/).filter(Boolean);
+      const resto = m[6].replace(MARCA_DE_CAMBIO, "").trim().split(/\s{2,}/).filter(Boolean);
       let max = null;
       let aproar = null;
-      if (resto.length && (NADA.test(resto[0]) || ES_TIPO.test(resto[0])) && !ES_APROAR.test(resto[0])) {
+      let llamada = "";
+      if (resto.length && (NADA.test(resto[0]) || ES_TIPO.test(resto[0].replace(LLAMADA, ""))) && !ES_APROAR.test(resto[0])) {
         const t = resto.shift();
-        max = NADA.test(t) ? null : t;
+        llamada = LLAMADA.exec(t)?.[0].trim() ?? "";
+        max = NADA.test(t) ? null : t.replace(LLAMADA, "");
       }
       if (resto.length && (NADA.test(resto[0]) || ES_APROAR.test(resto[0]))) {
         const t = resto.shift();
         aproar = NADA.test(t) ? null : t;
       }
-      const obs = resto.join(" ").replace(/^[–—-]$/, "").trim();
+      const obs = [llamada, resto.join(" ").replace(/^[–—-]$/, "").trim()].filter(Boolean).join(" ");
       filas.push({
         ref: m[1],
         lat: grados(m[3]),
@@ -235,24 +241,191 @@ function lineaHasta(linea, p) {
   return null;
 }
 
-async function juntar(id, sinMover = false) {
+/** Lo que mide la línea de entrada, m. */
+function largo(linea) {
+  let l = 0;
+  for (let i = 1; i < linea.length; i++) l += Math.hypot(linea[i][0] - linea[i - 1][0], linea[i][1] - linea[i - 1][1]);
+  return l;
+}
+
+/**
+ * **Si el punto está en la otra mitad de la línea**: pasada la punta, por su prolongación y
+ * a no más de lo que mide lo que hay, con `LEJOS` de margen. Un puesto de antes de #191 está
+ * en el centro de su línea, así que la mitad que falta mide lo mismo que la que hay (H60):
+ * la parada de ese puesto está ahí. Devuelve lo que se queda del final, m, o `null`.
+ */
+function enLaOtraMitad(linea, p) {
+  if (!lineaHasta(linea, p)) return null;
+  const [ax, ay] = linea.at(-2);
+  const [bx, by] = linea.at(-1);
+  const pasada = ((p[0] - bx) * (bx - ax) + (p[1] - by) * (by - ay)) / (Math.hypot(bx - ax, by - ay) || 1);
+  const l = largo(linea);
+  return pasada > 0 && pasada <= l + LEJOS ? Math.abs(l - pasada) : null;
+}
+
+/** Lo que puede quedar un punto sin nombre del puesto del que es un tramo, m: dos aviones no caben tan cerca. */
+const REPETIDO = 20;
+
+/** Si el punto cae dentro de una plataforma de la ficha. */
+function enLaPlataforma(ficha, [x, y]) {
+  return (ficha.aprons ?? []).some((a) => {
+    let dentro = false;
+    const g = a.polygon;
+    for (let i = 0, j = g.length - 1; i < g.length; j = i++)
+      if (g[i][1] > y !== g[j][1] > y && x < ((g[j][0] - g[i][0]) * (y - g[i][1])) / (g[j][1] - g[i][1]) + g[i][0]) dentro = !dentro;
+    return dentro;
+  });
+}
+
+/**
+ * **Cada puesto de la ficha, casado con el de la carta** (H75). Por su `ref`; y lo que no
+ * casa así, por el sitio, que es lo único que dice una ficha de antes de #191 de una línea
+ * sin nombre:
+ *
+ * - El que tiene otro `ref` que el de la carta y está donde la carta pone uno que la ficha
+ *   no tiene, o en el centro de una línea cuya otra mitad llega a él, es ese: en Lanzarote el
+ *   segundo «23» está en el 22, y en La Palma la línea del «2» acaba en el H2.
+ * - El que no tiene `ref`, o su `ref` no está en la carta, y está en el centro de una línea
+ *   cuya otra mitad llega al punto publicado de un puesto que la ficha trae como nodo y sin
+ *   línea, es la línea de ese puesto, repetido: se le da y la copia se quita. Si a donde llega
+ *   es al nodo, con el publicado en otra parte, también: el 7 de Lanzarote, publicado cinco
+ *   segundos de longitud al oeste de la fila, detrás de la terminal.
+ */
+function casar(puestos, aip, proyectar) {
+  const porRef = new Map();
+  for (const p of aip.puestos) {
+    const k = refNormalizado(p.ref);
+    if (!porRef.has(k)) porRef.set(k, { ...p, xy: proyectar(p.lat, p.lon) });
+  }
+  const todos = [...porRef.values()];
+  const lista = puestos.map((p) => ({ p, a: porRef.get(refNormalizado(p.ref)) ?? null, linea: null, copia: false }));
+  const lejosDe = (x) => Math.hypot(x.p.xy[0] - x.a.xy[0], x.p.xy[1] - x.a.xy[1]);
+  const enLaFicha = (a, menos) => lista.filter((x) => x !== menos && x.a === a);
+  const cambiados = [];
+  // El que se llama de otra manera y está donde la carta pone uno que la ficha no tiene.
+  for (const x of lista) {
+    if (!x.p.ref) continue;
+    if (x.a && (lejosDe(x) <= LEJOS || !x.p.entrada || lineaHasta(x.p.entrada, x.a.xy) !== null)) continue;
+    if (x.a && !enLaFicha(x.a, x).length) continue;
+    const otro = todos
+      .filter((a) => a !== x.a && !enLaFicha(a, x).length)
+      .find(
+        (a) =>
+          Math.hypot(x.p.xy[0] - a.xy[0], x.p.xy[1] - a.xy[1]) <= LEJOS ||
+          (x.p.entrada && enLaOtraMitad(x.p.entrada, a.xy) !== null),
+      );
+    if (!otro) continue;
+    cambiados.push(`${x.p.ref} → ${otro.ref}`);
+    x.a = otro;
+    x.p = { ...x.p, ref: otro.ref };
+  }
+  // La línea sin nombre que llega a un puesto que la ficha trae como nodo y sin línea.
+  const repetidos = [];
+  for (const x of lista) {
+    if (x.a || x.p.ref || !x.p.entrada) continue;
+    const sinLinea = lista.filter((n) => n.a && !n.p.entrada && !n.linea && !n.copia);
+    const candidatos = [];
+    for (const n of sinLinea) {
+      const enLaPunta = Math.hypot(x.p.xy[0] - n.a.xy[0], x.p.xy[1] - n.a.xy[1]) <= EN_LA_LINEA;
+      const alPublicado = enLaPunta ? 0 : enLaOtraMitad(x.p.entrada, n.a.xy);
+      if (alPublicado !== null) candidatos.push({ n, queda: alPublicado });
+      else if (lejosDe(n) > LEJOS) {
+        const alNodo = enLaOtraMitad(x.p.entrada, n.p.xy);
+        if (alNodo !== null) candidatos.push({ n, queda: alNodo });
+      }
+    }
+    candidatos.sort((a, b) => a.queda - b.queda);
+    const n = candidatos[0]?.n;
+    if (!n) continue;
+    n.linea = x.p.entrada;
+    x.copia = true;
+    repetidos.push(n.p.ref);
+  }
+  return { lista, cambiados, repetidos };
+}
+
+/**
+ * **La línea de entrada de un puesto al que se le lleva a su punto publicado**: la suya,
+ * cortada o alargada hasta él (`lineaHasta`), y si ya acaba a menos de `EN_LA_LINEA`, con la
+ * punta en él. `undefined` si no tiene línea, y `null` si el punto no cae en ella.
+ */
+function lineaAlPublicado(entrada, p) {
+  if (!entrada || entrada.length < 2) return undefined;
+  const [bx, by] = entrada.at(-1);
+  if (Math.hypot(bx - p[0], by - p[1]) <= EN_LA_LINEA) return [...entrada.slice(0, -1), p];
+  return lineaHasta(entrada, p);
+}
+
+/** Lo que pueden no ser paralelas dos líneas de puestos vecinos, en grados. */
+const PARALELAS = 5;
+
+/**
+ * **La línea de un puesto ancho entre dos estrechos** (H75): el que la carta da por incompatible
+ * con los dos de al lado es el mismo hueco con otra línea en medio, y la carta la dibuja paralela
+ * a las de ellos —el T7 de Lanzarote, entre el T3 y el T4 (AD 2-GCRR PDC 1-1)—. OpenStreetMap no
+ * la trae. Solo si los incompatibles con línea quedan a los dos lados y sus líneas son paralelas:
+ * es la del más cercano, llevada de lado hasta el punto publicado. `null` si no.
+ */
+function lineaEntreIncompatibles(xy, obs, conLinea) {
+  const refs = /INCOMP\.?\s*(.*)$/.exec(obs ?? "")?.[1]?.split(/[,\s]+/) ?? [];
+  const vecinos = refs
+    .map((r) => conLinea.get(refNormalizado(r)))
+    .filter(Boolean)
+    .map((p) => {
+      const [ax, ay] = p.entrada.at(-2);
+      const [bx, by] = p.entrada.at(-1);
+      const l = Math.hypot(bx - ax, by - ay) || 1;
+      const u = [(bx - ax) / l, (by - ay) / l];
+      const lado = (xy[0] - bx) * -u[1] + (xy[1] - by) * u[0];
+      return { p, u, lado };
+    });
+  if (vecinos.length < 2) return null;
+  const [a] = vecinos;
+  const paralelas = vecinos.every((v) => a.u[0] * v.u[0] + a.u[1] * v.u[1] >= Math.cos((PARALELAS * Math.PI) / 180));
+  if (!paralelas || !vecinos.some((v) => v.lado > 0) || !vecinos.some((v) => v.lado < 0)) return null;
+  const n = vecinos.reduce((m, v) => (Math.abs(v.lado) < Math.abs(m.lado) ? v : m));
+  const w = [-n.u[1] * n.lado, n.u[0] * n.lado];
+  const antes = n.p.entrada
+    .map(([x, y]) => [redondear(x + w[0]), redondear(y + w[1])])
+    .filter(([x, y]) => (xy[0] - x) * n.u[0] + (xy[1] - y) * n.u[1] >= 3);
+  return antes.length ? [...antes, xy] : null;
+}
+
+async function juntar(id) {
   const ruta = join(SALIDA, `${id.toLowerCase()}.aero.json`);
   const texto = await readFile(ruta, "utf8");
   const ficha = JSON.parse(texto);
   const aip = JSON.parse(await readFile(join(AIP, `${id.toLowerCase()}.pdc.json`), "utf8"));
   const proyectar = proyector(ficha.origin.lat, ficha.origin.lon);
-  const porRef = new Map();
-  for (const p of aip.puestos) {
-    const k = refNormalizado(p.ref);
-    if (!porRef.has(k)) porRef.set(k, p);
-  }
-  const cuenta = { puestos: ficha.parkingPositions.length, casan: 0, movidos: 0, sinLinea: 0, copias: 0, sinAip: [], lejos: [] };
+  const cuenta = { puestos: ficha.parkingPositions.length, casan: 0, movidos: 0, sinLinea: 0, copias: 0, sinAip: [] };
   const movidos = [];
-  const fuera = new Set();
+  const sueltos = [];
   const puestos = [];
-  for (const p of ficha.parkingPositions) {
-    const { aip: _viejo, ...limpio } = p;
-    const a = porRef.get(refNormalizado(p.ref));
+  const { lista, cambiados, repetidos } = casar(ficha.parkingPositions, aip, proyectar);
+  for (const { p, a, linea: suLinea, copia } of lista) {
+    if (copia) {
+      cuenta.copias++;
+      continue;
+    }
+    /*
+     * El que no tiene nombre ni línea, no está en la carta y la ficha lo trae a un paso de uno que
+     * sí está, no es otro puesto: es el centro de un tramo de la raya de ese, que la ficha de antes
+     * de #191 apuntaba aparte. En La Palma, el de la entrada del 14 quedaba a seis metros del eje
+     * de la R, y con el 14 en su punto las avionetas salían de ahí; en Lanzarote, diez sobre las
+     * líneas de los de salida autónoma.
+     */
+    if (
+      !a &&
+      !p.ref &&
+      !p.entrada &&
+      ficha.parkingPositions.some((q) => q.ref && q.aip?.carta && Math.hypot(q.xy[0] - p.xy[0], q.xy[1] - p.xy[1]) <= REPETIDO)
+    ) {
+      sueltos.push(`${p.xy}`);
+      continue;
+    }
+    const { aip: _viejo, entradaDeducida, ...limpio } = p;
+    // La que se dedujo en otra tirada se vuelve a deducir, abajo.
+    if (entradaDeducida) delete limpio.entrada;
     if (!a) {
       cuenta.sinAip.push(p.ref ?? "—");
       /*
@@ -264,21 +437,26 @@ async function juntar(id, sinMover = false) {
       continue;
     }
     cuenta.casan++;
-    const publicado = proyectar(a.lat, a.lon);
+    const publicado = a.xy;
     const lejos = Math.hypot(p.xy[0] - publicado[0], p.xy[1] - publicado[1]);
     const nuevo = { ...limpio, aip: { salida: a.salida, max: a.max, contacto: a.contacto, carta: a.carta } };
-    if (lejos > LEJOS) cuenta.lejos.push(`${p.ref} ${lejos.toFixed(0)} m`);
     /*
      * Al punto publicado, por su raya: cortada o alargada hasta él. Si el puesto tiene raya y
      * el punto publicado no cae en ella ni en su prolongación, la ficha y el AIP no dicen el
      * mismo puesto —una raya de OpenStreetMap que es de otro, o un `ref` cambiado—, y no se
-     * mueve: se cuenta.
+     * mueve: se cuenta, y lleva lo lejos que queda (`lejos`). El que no tiene raya, al punto
+     * publicado si cae en la plataforma de la ficha; si no, tampoco. Y el que acaba de recibir
+     * la suya, a donde ella acaba, aunque esté cerca: la raya acaba en el puesto.
      */
-    const linea = lejos > LEJOS && !sinMover ? lineaHasta(p.entrada, publicado) : undefined;
-    if (lejos > LEJOS && !sinMover && linea === null) {
+    const entrada = suLinea ?? limpio.entrada;
+    const mover = lejos > LEJOS || suLinea !== null;
+    const linea = mover ? lineaAlPublicado(entrada, publicado) : undefined;
+    if (mover && (linea === null || (!entrada && !enLaPlataforma(ficha, publicado)))) {
       cuenta.sinLinea++;
       movidos.push(`${p.ref} ${lejos.toFixed(0)} m (fuera de su raya, sin mover)`);
-    } else if (lejos > LEJOS && !sinMover) {
+      nuevo.aip.lejos = Math.round(lejos);
+      if (suLinea) nuevo.entrada = lineaHasta(suLinea, p.xy) ?? suLinea;
+    } else if (mover) {
       nuevo.xy = publicado;
       // La raya acaba en el punto del puesto; si de ella no quedan tres metros, sin raya.
       if (linea) nuevo.entrada = linea;
@@ -297,20 +475,36 @@ async function juntar(id, sinMover = false) {
     const otro = p.ref ? vistos.get(k) : null;
     if (otro && Math.hypot(otro.xy[0] - p.xy[0], otro.xy[1] - p.xy[1]) < 1) {
       cuenta.copias++;
-      fuera.add(p.ref);
       continue;
     }
     if (p.ref && p.aip) vistos.set(k, p);
     finales.push(p);
   }
+  // Y el ancho entre dos incompatibles, sin línea en OpenStreetMap, con una paralela a las suyas.
+  const conLinea = new Map(finales.filter((p) => p.ref && p.entrada && p.aip && !p.aip.lejos).map((p) => [refNormalizado(p.ref), p]));
+  const deducidas = [];
+  for (const { p: deAntes, a } of lista) {
+    const p = a && finales.find((q) => q.ref === deAntes.ref && !q.entrada && q.aip?.carta === a.carta && q.aip.lejos === undefined);
+    if (!p || a.salida === "A") continue;
+    const linea = lineaEntreIncompatibles(p.xy, a.obs, conLinea);
+    if (!linea) continue;
+    p.entrada = linea;
+    p.entradaDeducida = true;
+    deducidas.push(p.ref);
+  }
   const meta = { fuente: aip.fuente, url: aip.url, leido: aip.leido, cartas: aip.cartas };
-  await writeFile(ruta, conLosPuestos(texto, finales, meta));
+  // Lo del AIP, al final de cada puesto: la ficha sale igual se junte las veces que se junte.
+  const ordenados = finales.map(({ aip: suyo, ...p }) => (suyo ? { ...p, aip: suyo } : p));
+  await writeFile(ruta, conLosPuestos(texto, ordenados, meta));
   console.log(
     `${id}: ${cuenta.casan} de ${cuenta.puestos} casan con el AIP; ${cuenta.movidos} a su punto publicado` +
       ` (${cuenta.sinLinea} lejos y fuera de su raya, sin mover), ${cuenta.copias} copias quitadas; sin AIP: ${cuenta.sinAip.join(" ") || "ninguno"}${CONTACTO[id] && cuenta.sinAip.length ? " (no son de contacto)" : ""}`,
   );
+  if (cambiados.length) console.log(`  con otro nombre en la carta: ${cambiados.join(", ")}`);
+  if (repetidos.length) console.log(`  con la línea de su copia sin nombre: ${repetidos.join(", ")}`);
+  if (sueltos.length) console.log(`  sin nombre y sin línea, junto a uno de la carta, quitados: ${sueltos.join(" · ")}`);
+  if (deducidas.length) console.log(`  con la línea deducida de sus incompatibles: ${deducidas.join(", ")}`);
   if (movidos.length) console.log(`  movidos: ${movidos.join(", ")}`);
-  else if (cuenta.lejos.length) console.log(`  lejos del publicado, sin mover (--sin-mover): ${cuenta.lejos.join(", ")}`);
 }
 
 /**
@@ -346,8 +540,7 @@ function conLosPuestos(texto, puestos, meta) {
 const [modo, id, ...resto] = process.argv.slice(2);
 if (modo === "extraer" && id && resto.length) await extraer(id.toUpperCase(), resto);
 else if (modo === "juntar" && id) {
-  const sinMover = [id, ...resto].includes("--sin-mover");
-  for (const i of [id, ...resto].filter((a) => !a.startsWith("--"))) await juntar(i.toUpperCase(), sinMover);
+  for (const i of [id, ...resto]) await juntar(i.toUpperCase());
 }
 else {
   console.error("uso: puestos-del-aip.mjs extraer ICAO carta.txt […] | juntar ICAO […]");

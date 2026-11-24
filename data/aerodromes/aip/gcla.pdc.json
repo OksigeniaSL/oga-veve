@@ -2,7 +2,7 @@
  "id": "GCLA",
  "fuente": "AIP España (ENAIRE), AD 2-GCLA, cartas PDC: características de los puestos de estacionamiento",
  "url": "https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCLA/",
- "leido": "2026-11-22",
+ "leido": "2026-11-24",
  "cartas": [
   {
    "carta": "AD 2-GCLA PDC 1.2",
@@ -112,9 +112,9 @@
    "lat": 28.62344166666667,
    "lon": -17.75340277777778,
    "salida": "R",
-   "max": null,
+   "max": "A333/AS32",
    "aproar": null,
-   "obs": "A333/AS32 - INCOMP. 12",
+   "obs": "INCOMP. 12",
    "carta": "AD 2-GCLA PDC 1.2",
    "wef": "15-MAY-25",
    "contacto": null
@@ -136,9 +136,9 @@
    "lat": 28.62398888888889,
    "lon": -17.75340277777778,
    "salida": "R",
-   "max": null,
+   "max": "A321/AS32",
    "aproar": null,
-   "obs": "A321/AS32 - INCOMP. 12 (4)",
+   "obs": "INCOMP. 12 (4)",
    "carta": "AD 2-GCLA PDC 1.2",
    "wef": "15-MAY-25",
    "contacto": null
@@ -160,9 +160,9 @@
    "lat": 28.624444444444446,
    "lon": -17.753591666666665,
    "salida": "R",
-   "max": null,
+   "max": "B753/AS32",
    "aproar": null,
-   "obs": "B753/AS32 - INCOMP. 12 (3), 14 (4)",
+   "obs": "INCOMP. 12 (3), 14 (4)",
    "carta": "AD 2-GCLA PDC 1.2",
    "wef": "15-MAY-25",
    "contacto": null
@@ -172,9 +172,9 @@
    "lat": 28.624997222222223,
    "lon": -17.753469444444445,
    "salida": "R",
-   "max": null,
+   "max": "B764/AS32",
    "aproar": null,
-   "obs": "B764/AS32 - INCOMP. 14",
+   "obs": "INCOMP. 14",
    "carta": "AD 2-GCLA PDC 1.2",
    "wef": "15-MAY-25",
    "contacto": null

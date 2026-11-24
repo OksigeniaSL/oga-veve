@@ -67,6 +67,7 @@ import {
   empujeDesdeElPuesto,
   entradaDelPuesto,
   esPuestoDeContacto,
+  leLlegaLaPasarela,
   rayaDeLado,
   rumboDeLaPintada,
 } from "./remolque";
@@ -2769,6 +2770,10 @@ export class PlanDeVuelo {
    * lo dice, de salida con tractor y que admita el avión. Por la 18 de Barajas el plan
    * sacaba a los reactores empujados del 329, que la regla de la pared daba por de
    * contacto y el AIP publica de salida autónoma y sin pasarela.
+   *
+   * **Y si la carta no dice cuáles tienen pasarela, que le llegue una** (H75,
+   * `leLlegaLaPasarela`): con el avión sobre su línea publicada, la terminal delante o a su
+   * izquierda, que es por donde se embarca.
    */
   private puestosDeContacto(): { ref: string | null; xy: Punto }[] {
     if (this.deContactoGuardados) return this.deContactoGuardados;
@@ -2776,7 +2781,11 @@ export class PlanDeVuelo {
     const edificios = edificiosDePasarela(this.aero);
     this.deContactoGuardados = vaALaPasarela(this.avion)
       ? this.puestosEnElAsfalto().filter(
-          (p) => esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, morro) && valeParaElEmpuje(p.aip, this.avion.wingSpan),
+          (p) =>
+            esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, morro) &&
+            valeParaElEmpuje(p.aip, this.avion.wingSpan) &&
+            (p.aip?.contacto === true ||
+              leLlegaLaPasarela(p.xy[0], -p.xy[1], edificios, entradaDelPuesto(this.aero, p.xy[0], -p.xy[1]), morro)),
         )
       : [];
     return this.deContactoGuardados;
