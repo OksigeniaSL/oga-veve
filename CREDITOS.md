@@ -182,6 +182,13 @@ cada puesto de la ficha (`scripts/puestos-del-aip.mjs`, ADR 0025, enmiendas
 H60f y H75). La línea del T7 de Lanzarote, en medio de las del T3 y el T4, es
 la que dibuja la carta GCRR PDC 1 (WEF 01-OCT-26). Son hechos de cada puesto, como los de arriba: no se reproduce la carta.
 
+Las **seis puertas de Silvio Pettirossi** —cuáles son, sus coordenadas y que tienen pasarela—
+salen de la hoja AD 2.1-14.2 del AIP Paraguay de la DINAC, «Plano de estacionamiento y atraque de
+aeronaves» (01 OCT 2026, AMDT AIRAC 02/2026), leída el 24 de noviembre de 2026 en el paquete
+`AMDT_AIRAC_02_2026.rar` de dinac.gov.py. No publica la salida, el mayor avión ni el APROAR. Va en
+`data/aerodromes/aip/sgas.pdc.json` (ADR 0025, enmienda H83). Los puestos y sus líneas siguen siendo
+de OpenStreetMap (ODbL), leídos otra vez ese día.
+
 El contorno de las cinco plataformas de Barajas que van en `plataformasDeducidas` de
 `data/aerodromes/lemd.aero.json` —la de la T4, la de sus puestos PE, la de la T4S, la de
 la T1–T3 y la de su dique sur— es **deducido**: los ejes de las calles de plataforma y los

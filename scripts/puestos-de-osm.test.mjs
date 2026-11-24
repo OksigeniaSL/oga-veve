@@ -85,6 +85,28 @@ describe("los puestos de OpenStreetMap", () => {
     expect(salen).toEqual([{ ref: "25", xy: [41.6, 16.3] }]);
   });
 
+  it("y la línea sin nombre que acaba en un nodo con nombre es la suya, no otro puesto (H83)", () => {
+    // La puerta 2 de Silvio Pettirossi: el número está en el nodo y las líneas no llevan ninguno. La que
+    // acaba en él es la suya; las que llegan a ella de las calles no son puesto de nadie.
+    const elementos = [
+      nodo("2", [438, -311]),
+      puesto(null, [[360, -297], [390, -302], [438, -311]]),
+      puesto(null, [[246, -330], [324, -307], [360, -297]]),
+      puesto(null, [[360, -297], [310, -326], [290, -340]]),
+      calle([[246, -300], [246, -360]]),
+      calle([[290, -340], [250, -366]]),
+    ];
+    expect(puestosDeOsm(elementos, proj)).toEqual([{ ref: "2", xy: [438, -311] }]);
+    expect(entradasDeOsm(elementos, proj, puestosDeOsm(elementos, proj))).toEqual([
+      { ref: "2", xy: [438, -311], entrada: [[360, -297], [390, -302], [438, -311]] },
+    ]);
+    // La que lleva otro nombre no es la del nodo: sigue siendo la de su puesto.
+    expect(puestosDeOsm([nodo("2", [0, 50]), puesto("3", [[0, 0], [0, 50], [0, 90]]), calle([[-9, 0], [9, 0]])], proj)).toEqual([
+      { ref: "2", xy: [0, 50] },
+      { ref: "3", xy: [0, 90] },
+    ]);
+  });
+
   it("y sin nodo, de los dos tramos sale el puesto de la punta suelta del de dentro", () => {
     const salen = puestosDeOsm(
       [calle([[-200, 0], [200, 0]]), puesto("D", [[0, 0], [0, 40]]), puesto("D", [[0, 40], [0, 90]])],

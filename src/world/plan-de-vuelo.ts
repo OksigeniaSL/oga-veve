@@ -2681,9 +2681,18 @@ export class PlanDeVuelo {
        * ese número ya cuenta las paredes, las pasarelas y el puesto de al lado. El 24 de Los
        * Rodeos es de B744 y tiene el tejado del pasillo de las pasarelas a un ala (H59).
        */
-      const sinPared = this.puestosEnElAsfalto().filter(
+      const caben = this.puestosEnElAsfalto().filter(
         (p) => (p.aip?.max != null && admite(p.aip, this.avion.wingSpan)) || this.cabeDeLinea(p.xy),
       );
+      /*
+       * **Y de esos, si es de pasarela, los que publica el AIP** (H83): a un reactor de línea se le
+       * da un puesto de la carta, y lo que no está en ella puede no ser ningún puesto. En Pettirossi
+       * los reactores salían, sin pasaje, del centro de la línea de una puerta, del de un ramal que
+       * lleva a otra y de la plataforma militar. Si la carta no publica ninguno en el que quepa, o
+       * no hay carta, como siempre; y el turbohélice también, que a la puerta no va.
+       */
+      const publicados = vaALaPasarela(this.avion) ? caben.filter((p) => p.aip?.carta != null) : [];
+      const sinPared = publicados.length ? publicados : caben;
       const conSitio = sinPared.filter((p) => conSitioParaElAla(p, todos, hueco));
       /*
        * **Y en una plataforma pequeña, uno sí y otro no.** En Encarnación los

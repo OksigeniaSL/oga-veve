@@ -11,8 +11,9 @@
  * `entradasDeOsm` les pone su línea. Cada puesto de la ficha se casa con el suyo
  * por el `ref` y el punto —a menos de medio metro—, y solo se le añade `entrada`.
  * El que está en mitad de su línea con otra calle cruzándola por detrás de él se
- * lleva a su parada (H60d, abajo); los demás no se mueven, ni se quitan, ni se añaden.
- * Lo que no casa se cuenta.
+ * lleva a su parada (H60d, abajo), y el que es el centro de la línea de un nodo que la
+ * ficha ya trae se quita (H83, `copiasDeUnNodo`); los demás no se mueven, ni se quitan,
+ * ni se añaden. Lo que no casa se cuenta.
  *
  * La extracción entera (`osm-a-aerodromo.mjs`) ya guarda las líneas por su cuenta;
  * esto es para no rehacer la geometría de nueve campos por una sola cosa.
@@ -88,6 +89,36 @@ function laCruzaUnaCalle(linea, calles) {
     andado += l;
   }
   return false;
+}
+
+/** Lo que se da por el mismo punto, m: el redondeo de la ficha. */
+const EL_MISMO_PUNTO = 0.5;
+
+/**
+ * **Los puestos sin nombre que son el centro de la línea de un nodo con nombre** (H83). El
+ * extractor de antes de #191 apuntaba la media de los vértices de cada vía de puesto como un
+ * puesto más, y en Silvio Pettirossi las vías no llevan `ref` y los nodos en que acaban, sí:
+ * cada puerta salía dos veces, una en su nodo y otra, sin nombre, en mitad de su raya. Solo si
+ * la ficha trae el puesto del nodo: si no, ese centro es lo único que hay de él.
+ */
+function copiasDeUnNodo(puestos, elementos, proj) {
+  const esPuesto = (e) => e.tags?.aeroway === "parking_position";
+  const nodos = elementos.filter((e) => esPuesto(e) && e.type === "node" && e.tags?.ref);
+  const copias = new Set();
+  for (const w of elementos) {
+    if (!esPuesto(w) || w.type !== "way" || w.tags?.ref || (w.geometry?.length ?? 0) < 2) continue;
+    const suyo = nodos.find((n) => w.geometry.some((q) => q.lat === n.lat && q.lon === n.lon));
+    if (!suyo) continue;
+    const enLaFicha = puestos.some(
+      (p) => p.ref === suyo.tags.ref && Math.hypot(...proj(suyo.lat, suyo.lon).map((v, k) => v - p.xy[k])) <= EL_MISMO_PUNTO,
+    );
+    if (!enLaFicha) continue;
+    const media = (k) => w.geometry.reduce((s, q) => s + q[k], 0) / w.geometry.length;
+    const centro = proj(media("lat"), media("lon"));
+    for (const p of puestos)
+      if (!p.ref && Math.hypot(p.xy[0] - centro[0], p.xy[1] - centro[1]) <= EL_MISMO_PUNTO) copias.add(p);
+  }
+  return copias;
 }
 
 /**
@@ -178,7 +209,9 @@ for (const icao of icaos.map((s) => s.toUpperCase())) {
     )
     .map((w) => w.geometry.map((q) => proj(q.lat, q.lon)));
   const enSuSitio = (p, q) => q.ref === p.ref && Math.hypot(q.xy[0] - p.xy[0], q.xy[1] - p.xy[1]) <= 0.5;
+  const deUnNodo = copiasDeUnNodo(puestos, elementos, proj);
   const nuevos = puestos.flatMap((p) => {
+    if (deUnNodo.has(p)) return [];
     const suyo = deHoy.find((q) => enSuSitio(p, q));
     const { entrada: _vieja, ...sinLinea } = p;
     if (!suyo) {
@@ -228,6 +261,7 @@ for (const icao of icaos.map((s) => s.toUpperCase())) {
     `  ${conLinea} con línea de entrada · ${enSuLinea} en mitad de la suya` +
       ` (${aSuParada} con una calle cruzándola por detrás, llevados a su parada;` +
       ` ${copias} de ellos, copias de uno que ya estaba allí, quitados) · ` +
+      `${deUnNodo.size} que eran el centro de la línea de un nodo de la ficha, quitados · ` +
       `${sinCasar} de la ficha sin su par en lo de hoy · ` +
       `${sobran} de hoy que no están en la ficha → ${destino}\n`,
   );

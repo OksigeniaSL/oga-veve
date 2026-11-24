@@ -15,6 +15,10 @@
  * él (`LEJOS`): la regla de la H60e —el puesto va a su parada— con el AIP como
  * fuente de la parada.
  *
+ * La de Silvio Pettirossi no se extrae: la hoja AD 2.1-14.2 de la DINAC es un dibujo sin
+ * texto, y su tabla —seis puertas y sus coordenadas, nada más— está pasada a mano en
+ * `aip/sgas.pdc.json` (H83).
+ *
  * El AIP es una publicación oficial: de él se toman los hechos de cada puesto, no
  * se reproduce la carta.
  */
@@ -70,6 +74,9 @@ const CONTACTO = {
       ["500", "586"],
     ],
   },
+  // AIP Paraguay, AD 2.1-14.2: la hoja dibuja una pasarela en cada una de las seis puertas,
+  // y ninguna en lo demás de la plataforma.
+  SGAS: { rangos: [["1", "6"]] },
 };
 
 /**
