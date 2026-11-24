@@ -3088,7 +3088,8 @@ export class PlanDeVuelo {
    * empuja de un puesto del que no se tiene la raya; y si tampoco, por la calle más cercana, y por
    * la que se llega atravesado a ella (`enganchesAtravesados`, H81). De espaldas, primero por la primera calle que encuentra, que es la de su plataforma. Y antes que
    * ninguna, la que va entera sobre pavimento (H81); la que saca una rueda por el borde, solo si
-   * no hay otra (`saleBienDeEspaldas`).
+   * no hay otra (`saleBienDeEspaldas`). Y donde el AIP manda dejar libres las puertas de la plataforma,
+   * la que se mete de espaldas por una no vale, y se prueba la que tuerce antes (`porLaRectaDeSuCalle`, H88).
    */
   private rutasHaciaElAproar(puesto: Punto, esperas: readonly Punto[], ocupados?: Ocupados): (Ruta | null)[] {
     const rutas: (Ruta | null)[] = esperas.map(() => null);
