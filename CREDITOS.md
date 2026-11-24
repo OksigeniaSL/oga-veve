@@ -195,6 +195,15 @@ punto, su salida y su mayor avión, de AD 2-GCFV PDC 1.2 y 1.3; hacia dónde va 
 sale y se llega, y qué calles no toman los grandes, de la casilla 20 de su AD 2 (20.4 y 20.5, AMDT
 408/26, 09-JUL-26), todo leído el 24 de noviembre de 2026. Ver ADR 0025, enmienda H85.
 
+**Qué puestos tienen pasarela en Tenerife Sur, La Palma, Lanzarote y Fuerteventura**, que sus cartas no
+lo dicen, se leyó el 24 de noviembre de 2026 de la ortofoto PNOA de máxima actualidad del Instituto
+Geográfico Nacional (CC BY 4.0; fotos de 2024-02, 2024-07, 2024-04 y 2024-07, según la capa de mosaico de
+su WMS), y de lo que el AIP da solo en los de pasarela: la guía de atraque y los 400 Hz con aire de tierra de
+AD 2-GCTS (PDC 1.1 y 1.3 a 1.5, y casilla 20.5), AD 2-GCRR (PDC 1-2 y casilla 20) y AD 2-GCFV (PDC 1.2).
+Va puesto a puesto en `data/aerodromes/aip/pasarelas.json`. De la misma foto se trazó la planta de la
+nave grande de la terminal de Tenerife Sur, que en OpenStreetMap no estaba
+(`data/aerodromes/gcts.aero.json`, `buildings`). Ver ADR 0025, enmienda H87.
+
 El contorno de las cinco plataformas de Barajas que van en `plataformasDeducidas` de
 `data/aerodromes/lemd.aero.json` —la de la T4, la de sus puestos PE, la de la T4S, la de
 la T1–T3 y la de su dique sur— es **deducido**: los ejes de las calles de plataforma y los

@@ -253,6 +253,11 @@ export interface Aerodrome {
      * que rodar. Ver dónde se apuntan los bultos, en `game.ts`.
      */
     readonly kind?: string | null;
+    /**
+     * De dónde sale, si no es de la extracción: la nave grande de la terminal de Tenerife Sur, que en
+     * OpenStreetMap no está y se trazó sobre la ortofoto del PNOA (H87). Con `manual`, la extracción la conserva.
+     */
+    readonly fuente?: string;
   }[];
   readonly windsocks: readonly Punto[];
   /**
@@ -341,6 +346,11 @@ export interface Aerodrome {
     readonly url: string;
     readonly leido: string;
     readonly cartas: readonly { readonly carta: string | null; readonly wef: string | null }[];
+    /**
+     * De dónde sale qué puestos tienen pasarela (`aip.pasarela`), donde la carta no lo dice (H87): la
+     * ortofoto, el mes de la foto y cuándo se leyó. Puesto a puesto, en `data/aerodromes/aip/pasarelas.json`.
+     */
+    readonly pasarelas?: { readonly fuente: string; readonly url: string; readonly foto: string; readonly leido: string };
     /** De dónde salen `salePor` y `llegaPor` de los puestos, si los llevan (H85). */
     readonly rodaje?: string;
     /** Y las calles de la plataforma, por su letra: las que se toman solo si la ruta las nombra. Ver `grafoPorSusCalles`. */

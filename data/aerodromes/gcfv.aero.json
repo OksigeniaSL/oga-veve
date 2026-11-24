@@ -4339,7 +4339,7 @@
     }
   ],
   "helipads": [],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCFV, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCFV/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCFV PDC 1.2","wef":"07-AUG-25"},{"carta":"AD 2-GCFV PDC 1.3","wef":"07-AUG-25"},{"carta":"AD 2-GCFV PDC 1.1","wef":"11-JUN-26"}],"rodaje":"AD 2-GCFV, casilla 20.5, «Apron taxiing routes» (AMDT 408/26, 09-JUL-26)","callesDePlataforma":["A1","A2","A3","A4","A5","B1","B2","L1","L2","L3","L4","L5"]},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCFV, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCFV/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCFV PDC 1.2","wef":"07-AUG-25"},{"carta":"AD 2-GCFV PDC 1.3","wef":"07-AUG-25"},{"carta":"AD 2-GCFV PDC 1.1","wef":"11-JUN-26"}],"rodaje":"AD 2-GCFV, casilla 20.5, «Apron taxiing routes» (AMDT 408/26, 09-JUL-26)","callesDePlataforma":["A1","A2","A3","A4","A5","B1","B2","L1","L2","L3","L4","L5"],"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-07","leido":"2026-11-24"}},
   "parkingPositions": [
     {
       "ref": "11",
@@ -4364,6 +4364,7 @@
         "max": "A321",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4405,6 +4406,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4446,6 +4448,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4486,6 +4489,7 @@
         "max": "B767",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4515,6 +4519,7 @@
         "max": "CL60",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "N",
         "salePor": [
           "A1",
@@ -4554,6 +4559,7 @@
         "max": "B747",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4594,6 +4600,7 @@
         "max": "B767",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4634,6 +4641,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4674,6 +4682,7 @@
         "max": "B767",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4714,6 +4723,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4754,6 +4764,7 @@
         "max": "B767",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4794,6 +4805,7 @@
         "max": "B747",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4834,6 +4846,7 @@
         "max": "A320",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4874,6 +4887,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4914,6 +4928,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4954,6 +4969,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -4994,6 +5010,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5034,6 +5051,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5074,6 +5092,7 @@
         "max": "A321",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5114,6 +5133,7 @@
         "max": "B747",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5154,6 +5174,7 @@
         "max": "A321",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5194,6 +5215,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5235,6 +5257,7 @@
         "max": "B747",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": true,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5276,6 +5299,7 @@
         "max": "B747",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5317,6 +5341,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "aproar": "S",
         "salePor": [
@@ -5357,6 +5382,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A1",
@@ -5395,6 +5421,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A1",
@@ -5433,6 +5460,7 @@
         "max": "A321",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A1",
@@ -5471,6 +5499,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "E",
         "salePor": [
           "T3"
@@ -5510,6 +5539,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A1",
@@ -5548,6 +5578,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "E",
         "salePor": [
           "T3"
@@ -5587,6 +5618,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A1",
@@ -5625,6 +5657,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "E",
         "salePor": [
           "T3"
@@ -5664,6 +5697,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A1",
@@ -5702,6 +5736,7 @@
         "max": "AT72",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "E",
         "salePor": [
           "T3"
@@ -5741,6 +5776,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A2",
@@ -5779,6 +5815,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A2",
@@ -5817,6 +5854,7 @@
         "max": "B757",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A2",
@@ -5855,6 +5893,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A2",
@@ -5893,6 +5932,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A3",
@@ -5931,6 +5971,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A3",
@@ -5969,6 +6010,7 @@
         "max": "B763",
         "contacto": null,
         "carta": "AD 2-GCFV PDC 1.2",
+        "pasarela": false,
         "morro": "W",
         "salePor": [
           "A3",

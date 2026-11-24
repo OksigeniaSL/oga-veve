@@ -252,12 +252,13 @@ describe("las fichas, con lo del AIP", async () => {
     }
   });
 
-  it("el 11 de La Palma no es de contacto: la terminal le queda a la derecha, al través", () => {
+  it("el 11 de La Palma no es de contacto: la terminal le queda a la derecha, al través, y no tiene pasarela", () => {
     const campo = campos.find((c) => c.aerodrome!.id === "GCLA")!;
     const plan = new PlanDeVuelo(campo.aerodrome!, campo.runway, () => 600, avion("jaz-90"));
     const refs = (plan as unknown as { puestosDeContacto(): { ref: string | null }[] }).puestosDeContacto().map((p) => p.ref);
     expect(refs).not.toContain("11");
-    for (const ref of ["4", "4A", "5", "6", "6A", "7", "8", "9"]) expect(refs, ref).toContain(ref);
+    // Con los que la tienen, que son los tres que se ven (H87): ver `puestos-con-pasarela.test.ts`.
+    expect([...refs].sort()).toEqual(["4A", "5", "9"]);
   });
 
   /*
@@ -292,7 +293,7 @@ describe("las fichas, con lo del AIP", async () => {
           mirados++;
         }
       }
-    expect(mirados).toBeGreaterThan(20);
+    expect(mirados).toBeGreaterThanOrEqual(10);
   });
 
   it.each(["GCXO", "LEMD", "GCLP", "GCLA", "GCRR", "GCTS", "SGAS", "GCFV"])(

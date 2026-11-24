@@ -7479,6 +7479,66 @@
           120
         ]
       ]
+    },
+    {
+      "kind": "terminal",
+      "heightM": null,
+      "polygon": [
+        [
+          -706.4,
+          314.4
+        ],
+        [
+          -675.6,
+          232.4
+        ],
+        [
+          -532.0,
+          288.4
+        ],
+        [
+          -392.0,
+          343.6
+        ],
+        [
+          -310.4,
+          375.6
+        ],
+        [
+          -279.0,
+          387.6
+        ],
+        [
+          -282.8,
+          399.0
+        ],
+        [
+          -309.2,
+          390.0
+        ],
+        [
+          -322.0,
+          426.0
+        ],
+        [
+          -303.0,
+          436.0
+        ],
+        [
+          -316.4,
+          472.0
+        ],
+        [
+          -450.0,
+          415.0
+        ],
+        [
+          -706.4,
+          314.4
+        ]
+      ],
+      "manual": true,
+      "fuente": "A mano, sobre la ortofoto del PNOA (Instituto Geográfico Nacional, CC BY 4.0; foto de 2024-02, vista el 24-11-2026): la nave grande de la terminal, del G10 al J1, de la que salen ocho de las diez pasarelas del campo. En la extracción de OpenStreetMap no está. Sin los pasillos que cruzan la vía de servicio hasta cada pasarela (H87)."
     }
   ],
   "helipads": [
@@ -7495,7 +7555,7 @@
       700.4
     ]
   ],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCTS, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCTS/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCTS PDC 1.3","wef":"16-APR-26"},{"carta":"AD 2-GCTS PDC 1.4","wef":"05-SEP-24"}]},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCTS, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCTS/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCTS PDC 1.3","wef":"16-APR-26"},{"carta":"AD 2-GCTS PDC 1.4","wef":"05-SEP-24"}],"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-02","leido":"2026-11-24"}},
   "parkingPositions": [
     {
       "ref": "G23",
@@ -7517,7 +7577,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7544,7 +7605,8 @@
         "salida": "R",
         "max": "A333",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": true
       }
     },
     {
@@ -7567,7 +7629,8 @@
         "salida": "R",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": true
       }
     },
     {
@@ -7590,7 +7653,8 @@
         "salida": "R",
         "max": "A21N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": true
       }
     },
     {
@@ -7613,7 +7677,8 @@
         "salida": "R",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": true
       }
     },
     {
@@ -7636,7 +7701,8 @@
         "salida": "R",
         "max": "A333",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": true
       }
     },
     {
@@ -7659,7 +7725,8 @@
         "salida": "R",
         "max": "A333",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": true
       }
     },
     {
@@ -7682,7 +7749,8 @@
         "salida": "R",
         "max": "A333",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": true
       }
     },
     {
@@ -7705,7 +7773,8 @@
         "salida": "R",
         "max": "A333",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": true
       }
     },
     {
@@ -7728,7 +7797,8 @@
         "salida": "A",
         "max": "B738",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7751,7 +7821,8 @@
         "salida": "A",
         "max": "A21N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7774,7 +7845,8 @@
         "salida": "A",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7797,7 +7869,8 @@
         "salida": "A",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7820,7 +7893,8 @@
         "salida": "A",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7843,7 +7917,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7866,7 +7941,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7889,7 +7965,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7912,7 +7989,8 @@
         "salida": "R",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": true
       }
     },
     {
@@ -7935,7 +8013,8 @@
         "salida": "R",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": true
       }
     },
     {
@@ -7958,7 +8037,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -7981,7 +8061,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8004,7 +8085,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8027,7 +8109,8 @@
         "salida": "R",
         "max": "B77W",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": false
       }
     },
     {
@@ -8050,7 +8133,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8073,7 +8157,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8096,7 +8181,8 @@
         "salida": "R",
         "max": "B77W",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": false
       }
     },
     {
@@ -8123,7 +8209,8 @@
         "salida": "R",
         "max": "B77W",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": false
       }
     },
     {
@@ -8146,7 +8233,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8154,7 +8242,14 @@
       "xy": [
         -1093.3,
         48.2
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "G48",
@@ -8176,7 +8271,8 @@
         "salida": "R",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8215,7 +8311,8 @@
         "salida": "A",
         "max": null,
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8238,7 +8335,8 @@
         "salida": "A",
         "max": null,
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8261,7 +8359,8 @@
         "salida": "A",
         "max": null,
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8274,7 +8373,8 @@
         "salida": "A",
         "max": null,
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8287,7 +8387,8 @@
         "salida": "A",
         "max": null,
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8310,7 +8411,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8333,7 +8435,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8356,7 +8459,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8379,7 +8483,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8402,7 +8507,8 @@
         "salida": "A",
         "max": "B738",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8425,7 +8531,8 @@
         "salida": "A",
         "max": "A21N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8448,7 +8555,8 @@
         "salida": "A",
         "max": "A21N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8471,7 +8579,8 @@
         "salida": "A",
         "max": "A21N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8494,7 +8603,8 @@
         "salida": "A",
         "max": "A21N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8517,7 +8627,8 @@
         "salida": "A",
         "max": "A21N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8540,7 +8651,8 @@
         "salida": "A",
         "max": "B738",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8563,7 +8675,8 @@
         "salida": "R",
         "max": "B77W",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": true
       }
     },
     {
@@ -8586,7 +8699,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8609,7 +8723,8 @@
         "salida": "A",
         "max": "B38M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8632,7 +8747,8 @@
         "salida": "A",
         "max": "A20N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8655,7 +8771,8 @@
         "salida": "R",
         "max": "A333",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": false
       }
     },
     {
@@ -8678,7 +8795,8 @@
         "salida": "R",
         "max": "B39M",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false
       }
     },
     {
@@ -8696,7 +8814,14 @@
           -862.9,
           135.1
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "J22",
@@ -8719,6 +8844,7 @@
         "max": "A333",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": false,
         "aproar": "E"
       }
     },
@@ -8743,6 +8869,7 @@
         "max": "B734",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false,
         "aproar": "E"
       }
     },
@@ -8771,6 +8898,7 @@
         "max": "B744",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": false,
         "aproar": "E"
       }
     },
@@ -8795,6 +8923,7 @@
         "max": "A21N",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
+        "pasarela": false,
         "aproar": "E"
       }
     },
@@ -8822,7 +8951,8 @@
         "salida": "R",
         "max": "B77W",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "pasarela": false
       }
     },
     {
@@ -8852,7 +8982,14 @@
           -1231.9,
           -28.1
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG1 (U2)",
@@ -8869,7 +9006,14 @@
           -1209,
           -46.4
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG2 (U2)",
@@ -8926,7 +9070,14 @@
           -1224.5,
           -11.1
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG1 (U1)",
@@ -8943,7 +9094,14 @@
           -1220.7,
           -51.3
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG3 (U2)",
@@ -8960,7 +9118,14 @@
           -1175.7,
           -30.4
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG4 (U2)",
@@ -8977,7 +9142,14 @@
           -1185.8,
           -8.2
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     },
     {
       "ref": "AG5 (U2)",
@@ -9030,7 +9202,14 @@
           -1192.3,
           12.8
         ]
-      ]
+      ],
+      "aip": {
+        "salida": null,
+        "max": null,
+        "contacto": null,
+        "pasarela": false,
+        "carta": null
+      }
     }
   ],
   "holdingPositions": [

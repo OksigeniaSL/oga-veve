@@ -10,7 +10,8 @@
  * alcanza una pasarela de la terminal (`esPuestoDeContacto`), y por la 18 de Barajas
  * sacaba a los reactores empujados del 329, que en el AIP es de salida autónoma y no es
  * de contacto. La regla de la pared se queda —es la que sabe dónde está la pasarela en
- * el dibujo—, y el AIP quita lo que la regla deja pasar y no es así.
+ * el dibujo—, y el AIP quita lo que la regla deja pasar y no es así. Donde el AIP no dice
+ * cuáles tienen pasarela, lo quita la foto (H87, `tienePasarela`).
  */
 import type { Aerodrome, Punto } from "./aerodrome";
 
@@ -31,6 +32,13 @@ export interface DelAip {
   readonly max: string | null;
   /** Si la carta lo da por de contacto (con pasarela); `null` si no lo dice. */
   readonly contacto: boolean | null;
+  /**
+   * **Y si la carta no lo dice, si tiene pasarela en la foto** (H87): en Tenerife Sur, La Palma, Lanzarote y
+   * Fuerteventura, leído puesto a puesto de la ortofoto del PNOA y de lo que las cartas dan solo en los de
+   * pasarela (`data/aerodromes/aip/pasarelas.json`; la fecha de la foto, en `Aerodrome.aipPuestos`). Sin él,
+   * no se sabe. Ver `tienePasarela`.
+   */
+  readonly pasarela?: boolean;
   /** La hoja de la que sale, para buscar su fecha (WEF) en `Aerodrome.aipPuestos`. */
   readonly carta: string | null;
   /**
@@ -191,6 +199,14 @@ export function admite(aip: DelAip | null | undefined, envergadura: number): boo
   return envergadura <= suya + 0.05;
 }
 
+/**
+ * **Si el puesto tiene pasarela** (H87): lo que dice la carta y, si no lo dice, lo que se ve en la foto;
+ * `null` si no se sabe, y entonces manda el dibujo (`esDeContacto` en `remolque.ts`).
+ */
+export function tienePasarela(aip: DelAip | null | undefined): boolean | null {
+  return aip?.contacto ?? aip?.pasarela ?? null;
+}
+
 /** **Si de este puesto se sale empujado**: «R», o «AR», que deja las dos. Sin el dato, sí. */
 export function seSaleEmpujado(aip: DelAip | null | undefined): boolean {
   return !aip || aip.salida !== "A";
@@ -198,11 +214,11 @@ export function seSaleEmpujado(aip: DelAip | null | undefined): boolean {
 
 /**
  * **Si un avión de línea con pasaje puede salir empujado de este puesto de contacto**,
- * según el AIP: que no diga que no es de contacto, que se salga de él con tractor y que
- * admita el avión. Sin el dato, sí: manda la regla de la pared.
+ * según el AIP: que no diga que no es de contacto —ni se vea en la foto que no lo es (H87)—, que
+ * se salga de él con tractor y que admita el avión. Sin el dato, sí: manda la regla de la pared.
  */
 export function valeParaElEmpuje(aip: DelAip | null | undefined, envergadura: number): boolean {
-  return !aip || (aip.contacto !== false && seSaleEmpujado(aip) && admite(aip, envergadura));
+  return !aip || (tienePasarela(aip) !== false && seSaleEmpujado(aip) && admite(aip, envergadura));
 }
 
 /**

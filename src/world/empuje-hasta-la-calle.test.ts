@@ -143,7 +143,7 @@ function medir(c: Caso): { readonly tuerce: boolean; readonly torcido: number; r
   const [x, z] = arranque;
   const edificios = edificiosDePasarela(aero);
   const morro = morroDe(c.avion);
-  if (!saleConRemolque(vaALaPasarela(c.avion), x, z, edificios, morro, delAipEn(aero, x, z))) return null;
+  if (!saleConRemolque(vaALaPasarela(c.avion), x, z, edificios, morro, delAipEn(aero, x, z), entradaDelPuesto(aero, x, z))) return null;
   const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
   // Sobre su raya pintada si sale bien por ella, y con la rueda de morro en el punto del puesto, como lo pone el juego.
   const enElSuyo = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), c.avion.batalla, (r) => conLaRuedaEn({ x, z }, r, morro));
@@ -208,7 +208,7 @@ function comoAcaba(c: Caso): ComoAcaba | null {
   const [x, z] = arranque;
   const edificios = edificiosDePasarela(aero);
   const morro = morroDe(c.avion);
-  if (!saleConRemolque(vaALaPasarela(c.avion), x, z, edificios, morro, delAipEn(aero, x, z))) return null;
+  if (!saleConRemolque(vaALaPasarela(c.avion), x, z, edificios, morro, delAipEn(aero, x, z), entradaDelPuesto(aero, x, z))) return null;
   const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
   // Sobre su raya pintada si sale bien por ella, y con la rueda de morro en el punto del puesto, como lo pone el juego.
   const enElSuyo = empujeDesdeElPuesto({ x, z }, edificios, raya, entradaDelPuesto(aero, x, z), c.avion.batalla, (r) => conLaRuedaEn({ x, z }, r, morro));
