@@ -52,7 +52,8 @@ const CON_PASARELA: Readonly<Record<(typeof CAMPOS)[number], readonly string[]>>
 
 /** Los «R» sin pasarela de los que el tractor saca bien al JAZ 90 por la primera de las dos cabeceras. */
 const REMOTOS_CON_TRACTOR: Readonly<Record<(typeof CAMPOS)[number], readonly string[]>> = {
-  GCTS: ["AG21", "G23", "G25", "H37", "H38", "H39", "H43", "J22", "J24", "R42"],
+  // Los dieciocho que admiten al JAZ 90, las dos puntas con los demás (H88).
+  GCTS: ["AG21", "G20", "G23", "G25", "G48", "H37", "H38", "H39", "H43", "H44", "H46", "J22", "J24", "R19", "R42", "R45", "R47", "S41"],
   GCLA: ["10", "11", "13", "15", "16", "3", "4", "6", "6A", "7", "8"],
   GCRR: ["10", "11", "12", "13A", "14"],
   GCFV: ["11", "12", "13", "14", "16", "17", "21B", "21C", "22B", "24", "27", "28"],
@@ -218,7 +219,6 @@ describe("los puestos con pasarela de los cuatro campos cuyo AIP no los dice", a
       }
     }
     expect(autonomos, "autónomos").toBeGreaterThan(0);
-    // En Tenerife Sur, los de las dos puntas de la plataforma no: la ficha no tiene pavimento por donde empujar (`prepararElRemolque`).
     expect([...remotos].sort()).toEqual([...REMOTOS_CON_TRACTOR[id]].sort());
   });
 

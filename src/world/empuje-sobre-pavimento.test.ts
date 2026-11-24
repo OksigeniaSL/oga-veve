@@ -187,7 +187,7 @@ describe("la plataforma de la T4 de Barajas", () => {
     ["entre la I-8 y la M-8", [500, -3150]],
   ] as [string, Punto][])("y sigue siendo hierba la que la carta dibuja %s", (_donde, p) => expect(pavimento(p)).toBe(false));
 
-  it("y la de Los Rodeos llega a la R, y la de Tenerife Sur va seguida del H37 al H43", async () => {
+  it("y la de Los Rodeos llega a la R", async () => {
     const de = async (id: string) =>
       enElPavimentoDe((await conSuAerodromo(SCENARIOS.find((e) => e.aerodrome?.id === id)!)).aerodrome!);
     const gcxo = await de("GCXO");
@@ -195,9 +195,7 @@ describe("la plataforma de la T4 de Barajas", () => {
     for (const p of [[-318, 276], [-575, 372], [-728, 426]] as Punto[]) expect(gcxo(p), p.join()).toBe(true);
     // Y al otro lado de la R, hacia la pista, sigue la hierba.
     expect(gcxo([-400, 250])).toBe(false);
-    const gcts = await de("GCTS");
-    expect(gcts([-875, 110])).toBe(true);
-    expect(gcts([-910, -60])).toBe(false);
+    // La de Tenerife Sur, entera desde la H88: ver `tenerife-sur-entera.test.ts`.
   });
 
   it("cada plataforma deducida dice de qué carta, toca una calle y está entre las del campo", async () => {
