@@ -2503,13 +2503,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     indicada: () => juego.indicadaAhora(),
     /** La velocidad que recibe la pantalla de la cabina, en nudos. */
     velocidadDeCabina: () =>
-      Math.round(
-        indicatedAirspeed(
-          juego.flight.state.airspeed,
-          juego.flight.state.position.y,
-          juego.flight.aireDelDia(),
-        ) * 1.94384,
-      ),
+      Math.round(juego.indicadaAhora() * 1.94384),
     /**
      * **Lo que el juego le suma a la Vref en la final**, nudos: la regla del
      * reactor o la de la FAA según el avión, con el viento del parte. El banco

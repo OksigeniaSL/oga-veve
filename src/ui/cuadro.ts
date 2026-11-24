@@ -277,6 +277,8 @@ export interface Cuadro {
   readonly familia: Familia;
   /** Fondo de escala del anemómetro, en nudos. */
   readonly asiMax: number;
+  /** Dónde empieza a marcar la cinta de velocidad, en nudos. Ver `CINTA_DESDE`. */
+  readonly asiMin: number;
   /** Fondo de escala del variómetro, en pies por minuto. */
   readonly vsiMax: number;
   /** Las velocidades de la ficha que lleva pintadas. */
@@ -474,6 +476,34 @@ function anemometroDe(v: Velocidades): Escala {
     arcos,
     raya: f(v.vne),
   };
+}
+
+/**
+ * **Desde qué velocidad marca una cinta**, en nudos: por debajo se queda en su
+ * tope y no baja a cero.
+ *
+ * - **De línea, treinta**: «the minimum airspeed indication is 30 knots»
+ *   (FlyByWire, *A32NX Pilot Briefing*, PFD, *Speed Tape*, que cuenta el
+ *   A320). Del 747 y del E170 no se ha leído el suyo.
+ * - **De dos pantallas, veinte**: «speed indication starts at 20 knots»
+ *   (Garmin, *G1000 Pilot's Guide for Cessna Nav III*, 190-00498-07, p. 50).
+ * - **Las esferas, cero**: la aguja de un anemómetro descansa en su tope, y de
+ *   dónde empieza a moverse no dice nada el manual leído, el del 172R, que
+ *   pinta el arco blanco desde 33 (fig. 2-2).
+ * - **El helicóptero, cero**: ver `derivados` en `flight/helicoptero.ts`.
+ *
+ * ADR 0019, enmienda H80.
+ */
+const CINTA_DESDE: Readonly<Record<Familia, number>> = {
+  esferas: 0,
+  cristal: 20,
+  linea: 30,
+  helicoptero: 0,
+};
+
+/** Lo que enseña la cinta de este avión con esa indicada, en nudos. */
+export function enLaCinta(c: Pick<Cuadro, "asiMin">, nudos: number): number {
+  return Math.max(c.asiMin, nudos);
 }
 
 /**
@@ -720,6 +750,7 @@ function calcularCuadro(a: AircraftConfig): Cuadro {
   return {
     familia: familiaDe(a),
     asiMax: anemometro.max,
+    asiMin: CINTA_DESDE[familiaDe(a)],
     vsiMax,
     velocidades,
     anemometro,

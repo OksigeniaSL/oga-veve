@@ -379,6 +379,9 @@ try {
       let alFallar = null;
       let aseguradoEn = null;
       let recorridoAlParar = null;
+      // En `despues`, de la toma a parar: lo que se aparta del eje y el pie que pisa.
+      let enTierraDesvio = 0;
+      let enTierraPedal = 0;
       // En la carga suelta: el centro con que vuela el modelo al soltarse, y lo más atrás que llega.
       let centradoAlFallar = null;
       let centradoMaximo = -Infinity;
@@ -948,6 +951,12 @@ try {
               };
               return;
             }
+            if (modo === "despues") {
+              // El eje con el pie: la reversa del motor que queda tira hacia su lado (H80).
+              c.rudder = acota(error(h - Math.atan(p.c * 0.008), s.heading) * 4 + 3 * s.beta, -1, 1);
+              enTierraDesvio = Math.max(enTierraDesvio, Math.abs(p.c));
+              enTierraPedal = Math.max(enTierraPedal, Math.abs(c.rudder));
+            }
             c.brakes = 1;
             c.reversa = 1;
             c.elevator = 0;
@@ -1134,6 +1143,7 @@ try {
         av,
         caida: o.caida?.() ?? null,
         recorridoAlParar,
+        enTierra: { desvio: enTierraDesvio, pedal: enTierraPedal },
         largo: pista.length,
         percance: o.percance(),
         reloj: o.reloj() - t0,
@@ -1309,6 +1319,16 @@ try {
         ? `tocó ${r.tocoEn.enPista ? "en la pista" : "fuera"} a ${Math.round(r.tocoEn.a)} m del umbral · cierre ${ej?.cierre}`
         : `no llegó · lo más bajo ${Math.round(r.bajo)} m`,
     );
+    /*
+     * Y hasta que para, por el eje con el pie: la reversa del motor que queda
+     * tira hacia su lado (H80). Media pista y sobra pie.
+     */
+    if (MODO === "despues")
+      comprobar(
+        "se para por el eje, con el pie",
+        r.enTierra.desvio < 20 && r.enTierra.pedal < 1,
+        `lo más lejos, a ${r.enTierra.desvio.toFixed(1)} m del eje · pie ${r.enTierra.pedal.toFixed(2)}`,
+      );
     comprobar(
       "con los bomberos del aeródromo esperando junto a la pista",
       ej?.bomberos,

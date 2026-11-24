@@ -45,7 +45,7 @@ import type { Mapa as MapaDeLaCarta } from "./carta";
 import { Tablero, type DatosDelTablero } from "./tablero";
 import type { Estado as EstadoDeAvisos } from "../flight/avisos-de-cabina";
 import type { AnuncioDelGps } from "../flight/gps-con-apagones";
-import { regimen } from "./cuadro";
+import { cuadroDe, enLaCinta, regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
 import { PYKASU, propulsionDe, esDeChorro, type AircraftConfig } from "../flight/aircraft";
 import { GAS_DE_DESPEGUE, pasadaLaV1 } from "../flight/decide-con-v1";
@@ -3798,7 +3798,7 @@ export class Hud {
        * anemómetro de verdad marca nudos aunque el resto de la pantalla esté
        * en kilómetros por hora. El instrumento no negocia.
        */
-      const nudos = ias * 1.94384;
+      const nudos = enLaCinta(cuadroDe(this.ficha), ias * 1.94384);
       this.tablero.medirAceleracion(nudos, dt);
       const datos: DatosDelTablero = {
         estado: state,

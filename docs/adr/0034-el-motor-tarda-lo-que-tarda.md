@@ -584,10 +584,100 @@ verde no se ha mirado en pantalla.
 
 ### Lo que queda
 
-- **Con un motor parado, la reversa empuja como con todos**, y sin guiñar: ni la pieza
+- **Con un motor parado, la reversa empuja como con todos** (ya no: enmienda H80), y sin guiñar: ni la pieza
   ni el modelo miran qué motores van.
 - **Lo que empuja el motor hacia delante mientras se abre** es lo que le quede al
   bajar del gas, como estaba: en un despegue abortado, uno o dos segundos.
 - **El combustible de la reversa**: no se quema más con ella puesta.
 - **La reversa de ralentí**, que se usa de noche y en pista larga, no está: es a fondo
   o nada.
+
+## Enmienda H80 (24-11-2026): la reversa, motor a motor
+
+Lo que H78 dejó en «lo que queda»: con un motor parado, la reversa empujaba con el
+empuje del avión entero y sin guiñar.
+
+### Las fuentes
+
+- **AC 25-7D, 4.3.7.10.9** (p. 4-44): «for the engine failure case, it should be
+  assumed that the thrust reverser does not deploy (i.e., no reverse thrust or drag
+  credit for deployed thrust reverser buckets on the failed engine)».
+- **4.3.7.10.12** (p. 4-44), el turbohélice: la hélice del parado, donde se quede al
+  cerrar la palanca, y «reverse thrust may be selected on the remaining engine(s)».
+- **4.3.7.10.6** (p. 4-43): hay que enseñar que en pista mojada y con diez nudos
+  cruzados, con el motor crítico parado, sostener el eje no pide «exceptional skill»;
+  y el procedimiento puede dar una velocidad a la que se pasa a ralentí «in order to
+  maintain directional controllability».
+- **4.3.7.10.3** (p. 4-43): en algunos tipos, si falla uno de fuera se bloquean las
+  reversas de fuera. Aquí no: no se ha leído que lo lleve ninguno de los de la flota.
+- **AC 25-7D, p. 23-10**: «the stabilizing effect of the nose gear should also be
+  investigated, particularly for the one-engine-inoperative use of reverse thrust on
+  wet runway surfaces».
+- **NTSB AAR-16/02**, el MD-88 de LaGuardia: entre lo que lo sacó del rumbo, «a yawing
+  moment resulting from asymmetric reverse thrust» (p. 30); y el manual de Delta, «do
+  not attempt to maintain directional control by using asymmetric reverse thrust»
+  (p. 34).
+
+**Sin leer**: el AFM y el FCOM del E170, del 747 y de los turbohélices de la flota en
+esto.
+
+### Qué se hizo
+
+- **Cada motor en marcha da la suya**, la n-ésima parte, y tira del morro por su
+  distancia al eje: hacia el lado de los que van. `reversaDeLosMotores` en `fdm.ts`.
+- **El del ave (H77), la de su palanca**: con los motores a tres cuartos en reversa,
+  el que se queda en seis décimas da ocho de cada diez; al ralentí, nada. Y petardea
+  si pasa de lo que aguanta. Su aguja dice lo que da al revés.
+- **Con todos en marcha no se toca nada**: ni la cuenta ni un redondeo.
+
+### Las paradas, con uno de fuera parado
+
+Desde la Vref, freno a fondo y reversa al segundo hasta quince metros por segundo, sin
+ayudas y en calma. Metros; a la derecha, lo que se aparta del eje con un pie que lo
+lleva, cuánto pie pide y lo que se aparta si no se pisa:
+
+| | todos | uno parado, sin reversa | antes | ahora | con pie | pie | sin pie |
+|---|---|---|---|---|---|---|---|
+| JAZ 50, seca | 184 | 205 | 182 | **191** | 0,5 m | 0,21 | 2,4 m |
+| JAZ 50, mojada | 214 | 260 | 212 | **230** | 0,8 m | 0,23 | 5,5 m |
+| JAZ 60, seca | 491 | 638 | 483 | **542** | 2,2 m | 0,31 | 32 m |
+| JAZ 60, mojada | 563 | 823 | 555 | **648** | 2,3 m | 0,30 | 54 m |
+| JAZ 90, seca | 393 | 424 | 392 | **406** | 1,1 m | 0,27 | 5,7 m |
+| JAZ 90, mojada | 548 | 667 | 546 | **593** | 2,3 m | 0,34 | 24 m |
+| JAZ 110, seca | 683 | 785 | 681 | **725** | 0,5 m | 0,08 | 4,9 m |
+| JAZ 110, mojada | 883 | 1.121 | 880 | **976** | 0,7 m | 0,09 | 12 m |
+| JAZ 120, seca | 685 | 780 | 684 | **703** | 0,4 m | 0,07 | 3,4 m |
+| JAZ 120, mojada | 866 | 1.067 | 864 | **901** | 0,6 m | 0,08 | 7,2 m |
+
+«Antes» paraba hasta antes que con todos, porque el parado frena y la reversa iba
+entera. Con diez nudos cruzados, del peor lado, el pie pasa de 0,34 a 0,39 en el JAZ 90
+mojado y el avión sigue a menos de tres metros del eje. Con las ayudas de Taguató y
+sin tocar el pedal, la ayuda lo sostiene a treinta centímetros. Ninguna pista ofrecida
+cuenta la reversa, así que ninguna deja de caber.
+
+### Al bit
+
+Las mismas huellas que la enmienda H80 del ADR 0019: con todos en marcha y reversa, y
+con uno parado o con el ave y sin ella, iguales a 87bbe061.
+
+### Las pruebas
+
+`reversa-con-un-motor.test.ts`: lo que da cada uno y hacia dónde tira en los cinco que
+la llevan, el ave al ralentí, a seis décimas y petardeando, y la parada seca y mojada:
+más que con todos, menos que sin ella, en el eje con pie y fuera de él sin pisar.
+
+El vitest entero: 591 ficheros, 11.835 pruebas en verde, 32 saltadas.
+
+### Volado
+
+`verificar-emergencias.mjs`, JAZ 90 en Gran Canaria, Taguató: `despues`, **12 de 12**,
+del toque a parado con la reversa del motor que queda, a un metro del eje como mucho y
+con el pie a 0,86 —el del viento de allí y el de la reversa, sin separar—; y `ave` con
+`OGA_NO_AGUANTA=1`, **16 de 16**. El piloto de `despues` no tocaba el pedal después de
+tocar; ahora lleva el eje con él, como en los otros, y mira lo que se aparta.
+
+### Lo que no
+
+- **La pieza del parado se abre en el dibujo** y REV se enciende una sola vez para
+  todos: la marca del cuadro no va por motor, y el rugido suena como con todos.
+- **El modelo sencillo** de Guyrami no lleva motores sueltos: allí es la de siempre.

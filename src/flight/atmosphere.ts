@@ -44,6 +44,8 @@
  * para despegar.
  */
 
+import { loQueMarcaElPitot } from "./pitot";
+
 export const SEA_LEVEL_DENSITY = 1.225; // kg/m³
 export const GRAVITY = 9.80665; // m/s²
 
@@ -222,12 +224,24 @@ export function indicatedAirspeed(
  *
  * Una sola cuenta para todos, para que el destello, la voz, la ayuda y los
  * bancos digan la misma velocidad.
+ *
+ * **Y es lo que marca, no lo que hay**: con el aire de través al pitot le entra
+ * menos y por detrás nada, así que parado con viento de cola es cero. Con el
+ * aire a menos de quince grados del morro, que es volar, es la de siempre al
+ * bit (H80). Ver `pitot.ts`.
  */
 export function indicadaDe(
-  estado: { readonly airspeed: number; readonly position: { readonly y: number } },
+  estado: {
+    readonly airspeed: number;
+    readonly position: { readonly y: number };
+    readonly anguloDelAire?: number;
+  },
   aire: Aire = AIRE_ESTANDAR,
 ): number {
-  return indicatedAirspeed(estado.airspeed, estado.position.y, aire);
+  return loQueMarcaElPitot(
+    indicatedAirspeed(estado.airspeed, estado.position.y, aire),
+    estado.anguloDelAire ?? 0,
+  );
 }
 
 /** La velocidad real que corresponde a esa indicada a esa altura, m/s. */
