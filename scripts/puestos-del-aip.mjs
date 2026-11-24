@@ -627,7 +627,7 @@ async function juntar(id) {
 
 const CARDINALES = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
-/** Hacia dónde apunta un rumbo en puntos cardinales, y al revés: en grados, del norte a la derecha. */
+/** Hacia dónde apunta un rumbo, en grados del norte a la derecha, en puntos cardinales. */
 const enCardinales = (grados) => CARDINALES[Math.round((((grados % 360) + 360) % 360) / 45) % 8];
 const rumboEntre = ([ax, ay], [bx, by]) => (Math.atan2(bx - ax, by - ay) * 180) / Math.PI;
 const diferencia = (a, b) => ((a - b + 540) % 360) - 180;
