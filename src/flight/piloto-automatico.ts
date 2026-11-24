@@ -220,13 +220,15 @@ const POR_MORRO = 0.8;
 
 /**
  * Y cuánto giro pide cada radián de trayectoria **cuando se sabe lo que tarda
- * el camino**, 1/s: la mitad de `POR_MORRO`. Ver `loQueTardaElCamino`.
+ * el camino**, 1/s: un tercio. Ver `loQueTardaElCamino`.
  *
  * Contando con ese retraso, entre lo que se pide y el camino ya solo queda el
- * lazo del morro, y dos integradores en fila, uno a la mitad de ganancia que el
- * otro, quedan amortiguados en siete décimas: cogen lo pedido sin pasarse.
+ * lazo del morro (`POR_MORRO`), y con los dos en fila a un tercio y ocho décimas
+ * se coge lo pedido sin pasarse: ocho décimas de amortiguamiento. Con cuatro
+ * décimas, la ascendente de `ascendente-en-la-final.test.ts` dejaba la peor media
+ * en 5,12 m/s, por encima de mil pies por minuto; con un tercio, por debajo.
  */
-const POR_TRAYECTORIA_ANTICIPADA = POR_MORRO / 2;
+const POR_TRAYECTORIA_ANTICIPADA = 1 / 3;
 
 /** Lo que se suaviza la carga medida, s: lo que tarda en notarse desde el asiento. */
 const PARA_MEDIR_LA_CARGA = 0.3;
@@ -271,27 +273,21 @@ function loQueTardaElCamino(e: Estado, v: number, trayectoria: number): number |
 }
 
 /**
- * Desde cuándo se anticipa entero: con el doble del timón que el refuerzo llega
- * a suplir. Ver `cuantoSeAnticipa`.
- */
-const ANTICIPA_ENTERO_DESDE = 2;
-
-/**
- * **Cuánto se anticipa el camino**, de cero a uno: nada donde el refuerzo del
- * servo ya no llega a suplir lo que le falta al timón.
+ * **Cuánto se anticipa el camino**, de cero a uno: entero donde el timón basta
+ * sin refuerzo, y nada donde el refuerzo del servo ya no llega a suplir lo que
+ * le falta.
  *
  * Contar con lo que tarda el camino pide que el morro obedezca antes que él. El
  * del JAZ 120 con todo fuera no obedece: su timón mueve 0,14 rad/s² y el refuerzo
  * está en su tope (`REFUERZO_MAXIMO`), y anticipando entero se columpiaba a ±0,3
  * g en aire quieto. Ahí vuela con la ley de siempre, y según gana presión
- * dinámica —en el circuito, en crucero— entra la anticipación. El JAZ 110 en
- * final, con 0,23, lleva cuatro décimas: entera le da lo mismo de puerta y
- * aprieta un tercio más con las rachas flojas.
+ * dinámica entra la anticipación: en crucero, entera. El JAZ 110 en final, con
+ * 0,23, lleva dos décimas: entera apretaba un tercio más con las rachas flojas.
  */
 function cuantoSeAnticipa(e: Estado): number {
   if (!e.autoridadDelTimon) return 1;
   const llega = (e.autoridadDelTimon * REFUERZO_MAXIMO) / AUTORIDAD_SUFICIENTE;
-  return entre((llega - 1) / (ANTICIPA_ENTERO_DESDE - 1), 0, 1);
+  return entre((llega - 1) / (REFUERZO_MAXIMO - 1), 0, 1);
 }
 
 /**
@@ -967,7 +963,12 @@ export function mandosPara(
         recienCogido || m.tarda === null || tarda === null
           ? tarda
           : m.tarda + (tarda - m.tarda) * Math.min(1, dt / PARA_MEDIR_LO_QUE_TARDA);
-      const cuanto = m.tarda === null ? 0 : cuantoSeAnticipa(e);
+      /*
+       * Y mientras lo coge, con la ley de siempre: lo que mueve el avión en esos
+       * segundos es el morro que traía, y de eso va el embrague. Ver `EMBRAGUE`.
+       */
+      const cuanto =
+        m.tarda === null ? 0 : cuantoSeAnticipa(e) * Math.min(1, m.enganchado / EMBRAGUE);
       const giro = acotar(
         (POR_TRAYECTORIA + (POR_TRAYECTORIA_ANTICIPADA - POR_TRAYECTORIA) * cuanto) *
           (trayectoriaPedida - trayectoria - (cuanto * (m.tarda ?? 0) * m.acelera) / v),
