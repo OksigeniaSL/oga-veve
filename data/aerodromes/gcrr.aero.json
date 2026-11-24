@@ -5386,7 +5386,8 @@
         "salida": "R",
         "max": "B744",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "NE"
       }
     },
     {
@@ -5436,7 +5437,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "NE"
       }
     },
     {
@@ -5486,7 +5488,8 @@
         "salida": "R",
         "max": "B753",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW"
       }
     },
     {
@@ -5518,7 +5521,8 @@
         "salida": "R",
         "max": "A343",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW"
       }
     },
     {
@@ -5568,7 +5572,8 @@
         "salida": "R",
         "max": "B753",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW"
       }
     },
     {
@@ -5618,7 +5623,8 @@
         "salida": "R",
         "max": "A21N/B3XM",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW"
       }
     },
     {
@@ -5645,7 +5651,8 @@
         "salida": "R",
         "max": "A21N/B3XM",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW"
       }
     },
     {
@@ -5673,6 +5680,7 @@
         "max": "B752",
         "contacto": null,
         "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW",
         "lejos": 136
       }
     },
@@ -5723,7 +5731,8 @@
         "salida": "AR",
         "max": "AT72",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW"
       }
     },
     {
@@ -5750,7 +5759,8 @@
         "salida": "AR",
         "max": "AT72",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW"
       }
     },
     {
@@ -5804,7 +5814,8 @@
         "salida": "R",
         "max": "A21N/B3XM",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "SW"
       }
     },
     {
@@ -5908,7 +5919,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "NE"
       }
     },
     {
@@ -5948,7 +5960,8 @@
         "salida": "R",
         "max": "B763",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "NE"
       }
     },
     {
@@ -6011,7 +6024,8 @@
         "salida": "R",
         "max": "B744",
         "contacto": null,
-        "carta": "AD 2-GCRR PDC 1"
+        "carta": "AD 2-GCRR PDC 1",
+        "aproar": "NE"
       }
     },
     {

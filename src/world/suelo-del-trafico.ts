@@ -20,7 +20,7 @@
  * mundo y ya está. Quien los recorre es `trafico.ts`.
  */
 
-import { valeParaElEmpuje } from "./puestos-del-aip";
+import { aproarDe, cumpleElAproar, delAipEn, valeParaElEmpuje } from "./puestos-del-aip";
 import { enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
 import {
   edificiosDePasarela,
@@ -28,6 +28,7 @@ import {
   entradaDelPuesto,
   esPuestoDeContacto,
   rayaDeLado,
+  rumboDeLaPintada,
   rumboEnElPuesto,
   vector,
   type Empuje,
@@ -1117,6 +1118,34 @@ export function sueloDelTrafico(
             (deLadoTambien || !pasarela || !saleDeLado(h.hastaLaRaya, pasarela))
           );
         };
+      /**
+       * **Y empujado, hacia el APROAR de su puesto** (H76), la misma regla que el plan de quien
+       * juega (`rutasHaciaElAproar` en `plan-de-vuelo.ts`): si la carta lo publica, la ruta sale
+       * de espaldas por la raya pintada y por la calle hacia él, y el empuje, el corto del
+       * tráfico, acaba con el morro a ese lado. Si no hay ruta así, `null`: la de siempre.
+       */
+      const haciaSuAproar = (puntos: readonly Punto[], pasarela: PasarelaDelTrafico): Punto[] | null => {
+        const puesto = puntos[0]!;
+        const destino = puntos[puntos.length - 1]!;
+        const p0 = alMundo(puesto);
+        const aproar = aproarDe(delAipEn(aero, p0.x, p0.z), pista.heading);
+        if (!aproar || !enUnPuestoDeContacto(p0, pasarela)) return null;
+        const acabaHaciaEl = (linea: readonly Punto[]): boolean => {
+          const h = cortarEnLaRaya(linea.map(alMundo), ejes, ancho, mitad);
+          const fin = h && empujeDelTrafico(p0, h.hastaLaRaya, pasarela)?.empuje?.poses.at(-1);
+          return !!fin && cumpleElAproar(fin.rumbo, aproar);
+        };
+        if (acabaHaciaEl(puntos)) return null;
+        const pintada = rumboDeLaPintada(p0.x, p0.z, edificios, entradaDelPuesto(aero, p0.x, p0.z));
+        if (pintada === null) return null;
+        const sentido = aproar.map((r): Punto => [Math.sin(r), Math.cos(r)]);
+        const deEspaldas: Punto = [-Math.sin(pintada), -Math.cos(pintada)];
+        for (const enLaPrimera of [true, false]) {
+          const ruta = rodajeEntre(grafo, puesto, destino, 220, undefined, { deEspaldas, sentido, enLaPrimera });
+          if (ruta && valeParaSalir(false)(ruta.puntos) && acabaHaciaEl(ruta.puntos)) return [...ruta.puntos];
+        }
+        return null;
+      };
       /*
        * El radio de giro de este avión, para lo que se come alinearse: el de
        * su batalla si sale de pasarela, como `radioDeGiro` en `flight/cabe.ts`.
@@ -1150,7 +1179,7 @@ export function sueloDelTrafico(
            * turbohélice que esperaba para salir se quedaba sin camino —`despega: 0`— con
            * siete puestos más a mano. Ver `lejosDe`.
            */
-          const ruta = rutaConPuesto(
+          const masCorta = rutaConPuesto(
             nudo,
             "punto",
             evitar,
@@ -1159,7 +1188,9 @@ export function sueloDelTrafico(
             deOtros,
             valeParaSalir(deLadoTambien),
           )?.puntos;
-          if (!ruta) continue;
+          if (!masCorta) continue;
+          // Del puesto elegido, hacia su APROAR, si la carta lo da (H76).
+          const ruta = (pasarela && haciaSuAproar(masCorta, pasarela)) || masCorta;
           /*
            * Si da su pista se mira ya con la calle por la que se llega, que es la
            * que decide cuánto se come alinearse: ver `pistaDesde`.

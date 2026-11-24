@@ -36,6 +36,45 @@ export interface DelAip {
    * raya no se sabe de qué puesto es. Sin él, el puesto está en su punto.
    */
   readonly lejos?: number;
+  /**
+   * **El APROAR** (H76): hacia dónde queda el morro al acabar el empuje, en puntos cardinales
+   * —«NE»—, o varios si la carta deja elegir —«NE/SW», «E/W/S»—. Sin él, la carta no lo publica.
+   */
+  readonly aproar?: string;
+  /**
+   * El APROAR según la pista en uso, si la carta lo da así: la Configuración Norte de Barajas es
+   * despegar hacia el norte (AD 2-LEMD PDC 1.7, observaciones 5 y 6).
+   */
+  readonly aproarPorPista?: { readonly norte: string; readonly sur: string };
+}
+
+const CARDINAL: Readonly<Record<string, number>> = { N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315 };
+
+/**
+ * **Hacia dónde tiene que quedar el morro al acabar el empuje de este puesto** (H76), en rumbos
+ * —radianes, del norte a la derecha—: uno, o varios si la carta deja elegir; `null` si no lo
+ * publica o de él no se sale empujado. `rumboDePista`, el de despegue, en grados: manda en los
+ * puestos cuya carta lo da según la pista.
+ */
+export function aproarDe(aip: DelAip | null | undefined, rumboDePista: number): readonly number[] | null {
+  if (!aip?.aproar || !seSaleEmpujado(aip)) return null;
+  const alNorte = Math.cos((rumboDePista * Math.PI) / 180) >= 0;
+  const texto = aip.aproarPorPista ? (alNorte ? aip.aproarPorPista.norte : aip.aproarPorPista.sur) : aip.aproar;
+  const rumbos = texto.split("/").flatMap((c) => (CARDINAL[c] === undefined ? [] : [(CARDINAL[c] * Math.PI) / 180]));
+  return rumbos.length ? rumbos : null;
+}
+
+/**
+ * **Lo que puede apartarse el morro del APROAR y cumplirlo**: la carta lo da con ocho puntos
+ * cardinales y el morro acaba con el rumbo de la calle. La de Lanzarote va al 028 y al 208 con el
+ * NE y el SW publicados. Sesenta deja a un lado lo que no puede ser otra calle que esa y al otro
+ * la perpendicular.
+ */
+const CUMPLE_EL_APROAR = (60 * Math.PI) / 180;
+
+/** Si un avión con el morro a `rumbo` cumple el APROAR de su puesto. */
+export function cumpleElAproar(rumbo: number, aproar: readonly number[]): boolean {
+  return aproar.some((a) => Math.abs(Math.atan2(Math.sin(rumbo - a), Math.cos(rumbo - a))) <= CUMPLE_EL_APROAR);
 }
 
 /**

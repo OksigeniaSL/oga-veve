@@ -37413,7 +37413,7 @@
       857.4
     ]
   ],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-LEMD, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/LEMD/","leido":"2026-11-22","cartas":[{"carta":"AD 2-LEMD PDC 1.3","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 1.4","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 1.5","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 1.6","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 1.7","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 2.3","wef":"25-DEC-25"},{"carta":"AD 2-LEMD PDC 2.4","wef":"01-OCT-26"},{"carta":"AD 2-LEMD PDC 2.5","wef":"01-OCT-26"},{"carta":"AD 2-LEMD PDC 2.6","wef":"01-OCT-26"}]},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-LEMD, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/LEMD/","leido":"2026-11-24","cartas":[{"carta":"AD 2-LEMD PDC 1.3","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 1.4","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 1.5","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 1.6","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 1.7","wef":"29-OCT-26"},{"carta":"AD 2-LEMD PDC 2.3","wef":"25-DEC-25"},{"carta":"AD 2-LEMD PDC 2.4","wef":"01-OCT-26"},{"carta":"AD 2-LEMD PDC 2.5","wef":"01-OCT-26"},{"carta":"AD 2-LEMD PDC 2.6","wef":"01-OCT-26"}]},
   "parkingPositions": [
     {
       "ref": "171",
@@ -37514,7 +37514,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "W"
       }
     },
     {
@@ -37593,7 +37594,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "S"
       }
     },
     {
@@ -37620,7 +37622,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "SW"
       }
     },
     {
@@ -37647,7 +37650,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "SW"
       }
     },
     {
@@ -37674,7 +37678,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -37701,7 +37706,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "SE"
       }
     },
     {
@@ -37745,7 +37751,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -37776,7 +37783,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "S"
       }
     },
     {
@@ -37803,7 +37811,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "N"
       }
     },
     {
@@ -37830,7 +37839,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "SE"
       }
     },
     {
@@ -37857,7 +37867,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "SE"
       }
     },
     {
@@ -37901,7 +37912,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "SW"
       }
     },
     {
@@ -37928,7 +37940,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "SW"
       }
     },
     {
@@ -37955,7 +37968,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SW"
       }
     },
     {
@@ -37986,7 +38000,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "SE"
       }
     },
     {
@@ -38013,7 +38028,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -38044,7 +38060,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "S"
       }
     },
     {
@@ -38071,7 +38088,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "NE"
       }
     },
     {
@@ -38084,7 +38102,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "SW"
       }
     },
     {
@@ -38115,7 +38134,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "S"
       }
     },
     {
@@ -38142,7 +38162,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "SW"
       }
     },
     {
@@ -38173,7 +38194,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "SE"
       }
     },
     {
@@ -38200,7 +38222,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "SW"
       }
     },
     {
@@ -38227,7 +38250,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "NE"
       }
     },
     {
@@ -38258,7 +38282,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "NW"
       }
     },
     {
@@ -38285,7 +38310,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -38313,6 +38339,7 @@
         "max": null,
         "contacto": true,
         "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N",
         "lejos": 45
       }
     },
@@ -38326,7 +38353,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "S"
       }
     },
     {
@@ -38339,7 +38367,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "E"
       }
     },
     {
@@ -38387,6 +38416,7 @@
         "max": null,
         "contacto": true,
         "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N",
         "lejos": 69
       }
     },
@@ -38414,7 +38444,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "N"
       }
     },
     {
@@ -38441,7 +38472,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "N"
       }
     },
     {
@@ -38454,7 +38486,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "NW"
       }
     },
     {
@@ -38485,7 +38518,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -38498,7 +38532,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "SW"
       }
     },
     {
@@ -38529,7 +38564,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "SE"
       }
     },
     {
@@ -38560,7 +38596,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "S"
       }
     },
     {
@@ -38587,7 +38624,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "NE"
       }
     },
     {
@@ -38614,7 +38652,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "SW"
       }
     },
     {
@@ -38641,7 +38680,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -38668,7 +38708,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "SW"
       }
     },
     {
@@ -38699,7 +38740,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "NW"
       }
     },
     {
@@ -38739,7 +38781,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "SW"
       }
     },
     {
@@ -38766,7 +38809,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -38789,7 +38833,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "SE"
       }
     },
     {
@@ -38802,7 +38847,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -38833,7 +38879,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "N"
       }
     },
     {
@@ -38860,7 +38907,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "SW"
       }
     },
     {
@@ -38891,7 +38939,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "NW"
       }
     },
     {
@@ -38935,7 +38984,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "S"
       }
     },
     {
@@ -38962,7 +39012,8 @@
         "salida": "AR",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.3"
+        "carta": "AD 2-LEMD PDC 1.3",
+        "aproar": "SW"
       }
     },
     {
@@ -39056,7 +39107,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39083,7 +39135,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39136,7 +39189,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39221,7 +39275,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39248,7 +39303,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39328,7 +39384,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39355,7 +39412,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39382,7 +39440,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39436,7 +39495,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39463,7 +39523,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39503,7 +39564,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39543,7 +39605,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39610,7 +39673,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39650,7 +39714,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39677,7 +39742,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39704,7 +39770,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW/SE"
       }
     },
     {
@@ -39731,7 +39798,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39798,7 +39866,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39838,7 +39907,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39865,7 +39935,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -39892,7 +39963,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -39905,7 +39977,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -39945,7 +40018,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -39999,7 +40073,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40026,7 +40101,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40089,7 +40165,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40116,7 +40193,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40143,7 +40221,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "W"
       }
     },
     {
@@ -40197,7 +40276,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40224,7 +40304,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40251,7 +40332,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40278,7 +40360,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40305,7 +40388,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "W"
       }
     },
     {
@@ -40359,7 +40443,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40413,7 +40498,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40440,7 +40526,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40494,7 +40581,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40548,7 +40636,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40629,7 +40718,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40656,7 +40746,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40696,7 +40787,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40746,7 +40838,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40800,7 +40893,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40850,7 +40944,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "W"
       }
     },
     {
@@ -40873,7 +40968,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40900,7 +40996,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -40927,7 +41024,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -40981,7 +41079,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41035,7 +41134,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41102,7 +41202,8 @@
         "salida": "A",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "W"
       }
     },
     {
@@ -41129,7 +41230,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41156,7 +41258,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -41210,7 +41313,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41291,7 +41395,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "W"
       }
     },
     {
@@ -41318,7 +41423,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "E"
       }
     },
     {
@@ -41372,7 +41478,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -41395,7 +41502,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -41449,7 +41557,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41503,7 +41612,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41584,7 +41694,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41611,7 +41722,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41692,7 +41804,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41719,7 +41832,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41796,7 +41910,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "W"
       }
     },
     {
@@ -41823,7 +41938,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41873,7 +41989,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "N"
       }
     },
     {
@@ -41904,7 +42021,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41931,7 +42049,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -41985,7 +42104,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.3"
+        "carta": "AD 2-LEMD PDC 2.3",
+        "aproar": "S"
       }
     },
     {
@@ -42039,7 +42159,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42120,7 +42241,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42147,7 +42269,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -42160,7 +42283,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -42187,7 +42311,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42200,7 +42325,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -42281,7 +42407,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42335,7 +42462,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42362,7 +42490,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42440,7 +42569,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42467,7 +42597,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -42498,7 +42629,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -42538,7 +42670,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.6"
+        "carta": "AD 2-LEMD PDC 2.6",
+        "aproar": "N"
       }
     },
     {
@@ -42620,7 +42753,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42647,7 +42781,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -42674,7 +42809,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -42701,7 +42837,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42714,7 +42851,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -42745,7 +42883,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42772,7 +42911,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -42799,7 +42939,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42826,7 +42967,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -42853,7 +42995,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42880,7 +43023,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -42907,7 +43051,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -42934,7 +43079,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42961,7 +43107,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -42988,7 +43135,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -43015,7 +43163,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43028,7 +43177,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "W"
       }
     },
     {
@@ -43082,7 +43232,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43136,7 +43287,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -43163,7 +43315,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43176,7 +43329,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -43203,7 +43357,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43284,7 +43439,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43297,7 +43453,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43351,7 +43508,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43378,7 +43536,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43429,7 +43588,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43456,7 +43616,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -43483,7 +43644,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43510,7 +43672,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -43523,7 +43686,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43550,7 +43714,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -43563,7 +43728,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.6"
+        "carta": "AD 2-LEMD PDC 2.6",
+        "aproar": "N"
       }
     },
     {
@@ -43589,7 +43755,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43616,7 +43783,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43670,7 +43838,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43697,7 +43866,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -43724,7 +43894,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43751,7 +43922,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -43778,7 +43950,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "S"
       }
     },
     {
@@ -43805,7 +43978,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -43832,7 +44006,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43886,7 +44061,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -43913,7 +44089,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -43953,7 +44130,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -43992,7 +44170,8 @@
         "salida": "AR",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44057,7 +44236,8 @@
         "salida": "AR",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44162,7 +44342,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44189,7 +44370,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "W"
       }
     },
     {
@@ -44216,7 +44398,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "W"
       }
     },
     {
@@ -44243,7 +44426,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "W"
       }
     },
     {
@@ -44270,7 +44454,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "W"
       }
     },
     {
@@ -44297,7 +44482,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "W"
       }
     },
     {
@@ -44324,7 +44510,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "W"
       }
     },
     {
@@ -44351,7 +44538,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "W"
       }
     },
     {
@@ -44378,7 +44566,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44405,7 +44594,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44432,7 +44622,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44459,7 +44650,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44486,7 +44678,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44513,7 +44706,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -44540,7 +44734,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "W"
       }
     },
     {
@@ -44567,7 +44762,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "W"
       }
     },
     {
@@ -44658,7 +44854,12 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "S/E",
+        "aproarPorPista": {
+          "norte": "S",
+          "sur": "E"
+        }
       }
     },
     {
@@ -44671,7 +44872,12 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "S/E",
+        "aproarPorPista": {
+          "norte": "S",
+          "sur": "E"
+        }
       }
     },
     {
@@ -44698,7 +44904,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44725,7 +44932,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44752,7 +44960,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44779,7 +44988,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44806,7 +45016,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44833,7 +45044,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44860,7 +45072,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44887,7 +45100,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44914,7 +45128,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44941,7 +45156,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44968,7 +45184,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -44995,7 +45212,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45022,7 +45240,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45049,7 +45268,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "SE"
       }
     },
     {
@@ -45076,7 +45296,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "SE"
       }
     },
     {
@@ -45103,7 +45324,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45127,6 +45349,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE",
         "lejos": 16
       }
     },
@@ -45151,6 +45374,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE",
         "lejos": 35
       }
     },
@@ -45178,7 +45402,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45202,6 +45427,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE",
         "lejos": 22
       }
     },
@@ -45226,6 +45452,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE",
         "lejos": 38
       }
     },
@@ -45250,6 +45477,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE",
         "lejos": 16
       }
     },
@@ -45274,6 +45502,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE",
         "lejos": 34
       }
     },
@@ -45301,7 +45530,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45328,7 +45558,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45355,7 +45586,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45379,6 +45611,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE",
         "lejos": 16
       }
     },
@@ -45403,6 +45636,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE",
         "lejos": 35
       }
     },
@@ -45416,7 +45650,8 @@
         "salida": "A",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "SE"
       }
     },
     {
@@ -45429,7 +45664,8 @@
         "salida": "A",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE"
       }
     },
     {
@@ -45442,7 +45678,8 @@
         "salida": "A",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE"
       }
     },
     {
@@ -45469,7 +45706,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE"
       }
     },
     {
@@ -45496,7 +45734,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE"
       }
     },
     {
@@ -45523,7 +45762,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "SE"
       }
     },
     {
@@ -45550,7 +45790,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE"
       }
     },
     {
@@ -45577,7 +45818,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE"
       }
     },
     {
@@ -45604,7 +45846,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE"
       }
     },
     {
@@ -45631,7 +45874,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45658,7 +45902,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45685,7 +45930,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45712,7 +45958,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45739,7 +45986,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45766,7 +46014,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -45797,7 +46046,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "SW"
       }
     },
     {
@@ -45824,7 +46074,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "SW"
       }
     },
     {
@@ -45855,7 +46106,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "S"
       }
     },
     {
@@ -45886,7 +46138,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "S"
       }
     },
     {
@@ -45917,7 +46170,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "S"
       }
     },
     {
@@ -45948,7 +46202,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.6"
+        "carta": "AD 2-LEMD PDC 1.6",
+        "aproar": "S"
       }
     },
     {
@@ -45961,7 +46216,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "W"
       }
     },
     {
@@ -46000,7 +46256,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "W"
       }
     },
     {
@@ -46013,7 +46270,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "E/W/S"
       }
     },
     {
@@ -46040,7 +46298,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "E/W"
       }
     },
     {
@@ -46053,7 +46312,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "E/W/S"
       }
     },
     {
@@ -46241,7 +46501,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -46268,7 +46529,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -46295,7 +46557,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -46322,7 +46585,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -46349,7 +46613,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.4"
+        "carta": "AD 2-LEMD PDC 1.4",
+        "aproar": "SE"
       }
     },
     {
@@ -46376,7 +46641,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "SE"
       }
     },
     {
@@ -46416,7 +46682,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -46443,7 +46710,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -46470,7 +46738,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.4"
+        "carta": "AD 2-LEMD PDC 2.4",
+        "aproar": "S"
       }
     },
     {
@@ -46497,7 +46766,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 2.5"
+        "carta": "AD 2-LEMD PDC 2.5",
+        "aproar": "N"
       }
     },
     {
@@ -46537,7 +46807,8 @@
         "salida": "AR",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "E"
       }
     },
     {
@@ -46564,7 +46835,8 @@
         "salida": "R",
         "max": null,
         "contacto": true,
-        "carta": "AD 2-LEMD PDC 1.7"
+        "carta": "AD 2-LEMD PDC 1.7",
+        "aproar": "SE"
       }
     },
     {
@@ -46672,7 +46944,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -46699,7 +46972,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "NE/SW"
       }
     },
     {
@@ -47503,6 +47777,7 @@
         "max": null,
         "contacto": false,
         "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "S/E",
         "lejos": 54
       }
     },
@@ -47530,7 +47805,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "S/E"
       }
     },
     {
@@ -47628,7 +47904,8 @@
         "salida": "R",
         "max": null,
         "contacto": false,
-        "carta": "AD 2-LEMD PDC 1.5"
+        "carta": "AD 2-LEMD PDC 1.5",
+        "aproar": "W"
       }
     },
     {

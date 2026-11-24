@@ -586,6 +586,14 @@ function miraALaCalle(e: Empuje, raya: readonly PuntoXZ[]): boolean {
 }
 
 /**
+ * **Si el empuje saca el avión como se saca**: de culo en todo él, sobre la raya al acabar y con
+ * el morro hacia donde sigue. Las tres de la H60b, para quien las mira desde fuera (H76).
+ */
+export function acabaEnLaCalle(e: Empuje, raya: readonly PuntoXZ[], batalla: number): boolean {
+  return vaDeCulo(e, batalla) && quedaSobreLaRaya(e.poses.at(-1)!, raya) && miraALaCalle(e, raya);
+}
+
+/**
  * **Si el empuje deja el avión sobre la raya y mirando por ella**: de la raya por delante
  * del morro, hasta ciento cincuenta metros, algún sitio en su eje —a menos de tres metros—
  * desde el que la raya va a menos de cinco grados del morro en sus quince metros
@@ -738,7 +746,7 @@ export function empujeDesdeElPuesto(
     for (const [n, empuje] of porLaRecta(retroceso).entries())
       if (
         (siempreLaPintada && n === 0) ||
-        (retroceso && empuje && vaDeCulo(empuje, batalla) && quedaSobreLaRaya(empuje.poses.at(-1)!, raya) && miraALaCalle(empuje, raya))
+        (retroceso && empuje && acabaEnLaCalle(empuje, raya, batalla))
       )
         return { rumbo: pintada, centro, empuje, porLaPintada: true, porLaRuta, pintada, porQueNo };
     porQueNo = retroceso ? "no-acaba-en-ella" : "no-la-encuentra";

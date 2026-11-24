@@ -1154,13 +1154,15 @@ function buscarEnganches(
  * donde el tractor saca el avión de espaldas—, y el primer tramo que cruza, pasados
  * `EMPIEZA_EL_RETROCESO` y como mucho a `maxSalto`. Si la recta hasta él no va por
  * pavimento, o por la plataforma lejos de sus puntas, no hay enganche: por ahí no se
- * empuja, y la ruta sale como siempre.
+ * empuja, y la ruta sale como siempre. Salvo hasta donde llega la línea pintada
+ * (`pintadaHasta`, H76), que es pavimento aunque el dibujo no lo tenga: en Barajas, entre la
+ * línea del 518 y su calle, la ficha deja un hueco.
  *
  * Es el enganche del puesto en la calle a la que llega su línea de entrada, y no en la
  * más cercana: en un aeropuerto de verdad el avión sale del puesto de espaldas por esa
  * recta hasta la calle, y la ruta empieza ahí. Ver `deEspaldas` en `rodajesDesde`.
  */
-function enganchePorDetras(grafo: Grafo, p: Punto, hacia: Punto, maxSalto: number): Enganche | null {
+function enganchePorDetras(grafo: Grafo, p: Punto, hacia: Punto, maxSalto: number, pintadaHasta = 0): Enganche | null {
   const n = Math.hypot(hacia[0], hacia[1]);
   if (n < 1e-9) return null;
   const u: Punto = [hacia[0] / n, hacia[1] / n];
@@ -1198,7 +1200,7 @@ function enganchePorDetras(grafo: Grafo, p: Punto, hacia: Punto, maxSalto: numbe
   });
   if (!mejor) return null;
   const e: Enganche = mejor;
-  return porPavimento(grafo, p, e.punto, false, false) ? e : null;
+  return e.salto <= pintadaHasta || porPavimento(grafo, p, e.punto, false, false) ? e : null;
 }
 
 /**
@@ -1689,8 +1691,28 @@ export function rodajesDesde(
      * siempre. Ver `enganchePorDetras`.
      */
     readonly deEspaldas?: Punto | null;
+    /**
+     * **Hacia dónde tiene que ir la ruta en cuanto está en la calle** (H76): el APROAR del
+     * puesto, o el morro del avión que ya está en ella, en los ejes del grafo. Con varios,
+     * cualquiera de ellos. La ruta sale hacia ahí y no da la vuelta para ahorrar camino; si
+     * no la hay, `null`. Ver `rodajesConSentido`.
+     */
+    readonly sentido?: readonly Punto[] | null;
+    /**
+     * Y si esa calle es la primera que encuentra la recta del puesto: sin ello, la ruta puede
+     * cruzarla y seguir de espaldas por la que va en la misma recta, y tomar el sentido después.
+     */
+    readonly enLaPrimera?: boolean;
+    /**
+     * Hasta dónde se sabe que la recta de `deEspaldas` va por pavimento, m: lo que mide la línea
+     * de entrada pintada, que es por donde entra el avión. Ver `enganchePorDetras`.
+     */
+    readonly pintadaHasta?: number;
+    /** Si el origen es el avión, ya en la calle: de ahí se sale por la que pisa o por delante, sin volver atrás a otra. */
+    readonly enLaCalle?: boolean;
   } = {},
 ): (Ruta | null)[] {
+  if (opciones.sentido) return rodajesConSentido(grafo, origen, destinos, maxSalto, ocupados, opciones.sentido, opciones);
   const porDetras = opciones.deEspaldas ? enganchePorDetras(grafo, origen, opciones.deEspaldas, maxSalto) : null;
   const salidas = porDetras
     ? [porDetras]
@@ -1836,6 +1858,296 @@ export function rodajesDesde(
       ocupada: hecha.ocupada,
       letras: letrasDe(pasos),
       enganche: Math.max(hecha.desde.salto, hecha.hasta.salto),
+    };
+  };
+  return destinos.map(alDestino);
+}
+
+/**
+ * Lo que puede torcer la ruta de un tramo a otro sin ser una vuelta: ciento veinte grados. Una
+ * calle que sale en ángulo agudo se toma; girar hacia donde se venía, no. Ver `rodajesConSentido`.
+ */
+const NO_SE_VUELVE = Math.cos((120 * Math.PI) / 180);
+
+/** Lo que puede apartarse un tramo de la recta del retroceso y ser todavía ella: lo de `LA_CALLE_TUERCE`. */
+const SIGUE_DE_ESPALDAS = Math.cos((40 * Math.PI) / 180);
+
+/** A cuántos metros del principio de un tramo se mira hacia dónde va. */
+const HACIA_DONDE_VA = 30;
+
+/** Hasta dónde una calle está bajo el avión y no detrás de él, m. Ver `enLaCalle` en `rodajesDesde`. */
+const JUNTO_AL_AVION = 10;
+
+/** El producto escalar: más de cero, hacia el mismo lado. */
+const punto = (a: Punto, b: Punto): number => a[0] * b[0] + a[1] * b[1];
+
+/** Los metros de tramo con los que se mira cómo llega y cómo sale. */
+const COMO_LLEGA = 10;
+
+/** El vector de `a` a `b`, de un metro; `null` si son el mismo punto. */
+function unitario(a: Punto, b: Punto): Punto | null {
+  const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  return d < 0.1 ? null : [(b[0] - a[0]) / d, (b[1] - a[1]) / d];
+}
+
+/** Hacia dónde va una polilínea a `s` metros de su principio, en los `COMO_LLEGA` metros de antes. */
+function haciaDondeVa(puntos: readonly Punto[], s: number): Punto | null {
+  const en = (m: number): Punto => {
+    let quedan = Math.max(0, m);
+    for (let i = 1; i < puntos.length; i++) {
+      const a = puntos[i - 1]!;
+      const b = puntos[i]!;
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (quedan <= l) {
+        const t = l > 0 ? quedan / l : 0;
+        return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      }
+      quedan -= l;
+    }
+    return puntos[puntos.length - 1]!;
+  };
+  let largo = 0;
+  for (let i = 1; i < puntos.length; i++) largo += Math.hypot(puntos[i]![0] - puntos[i - 1]![0], puntos[i]![1] - puntos[i - 1]![1]);
+  const hasta = Math.min(s, largo);
+  return unitario(en(hasta - COMO_LLEGA), en(hasta));
+}
+
+/** Un tramo en un sentido: sus puntos, y hacia dónde va al empezar, al acabar y a `HACIA_DONDE_VA`. */
+interface TramoConSentido {
+  readonly puntos: readonly Punto[];
+  readonly sale: Punto | null;
+  readonly llega: Punto | null;
+  readonly va: Punto | null;
+}
+
+/**
+ * Los tramos de un grafo con su sentido —0, de `a` a `b`; 1, al revés—, cada uno mirado una vez:
+ * elegir la salida de Barajas corre el buscador por cien puestos. El grafo no cambia una vez hecho.
+ */
+function tramosConSentido(grafo: Grafo): (tramo: number, alReves: number) => TramoConSentido {
+  const suyos = TRAMOS_CON_SENTIDO.get(grafo) ?? new Map<number, TramoConSentido>();
+  TRAMOS_CON_SENTIDO.set(grafo, suyos);
+  return (tramo, alReves) => {
+    const clave = tramo * 2 + alReves;
+    let g = suyos.get(clave);
+    if (!g) {
+      const t = grafo.tramos[tramo]!;
+      const puntos = alReves ? [...t.puntos].reverse() : t.puntos;
+      g = { puntos, sale: haciaDondeVa(puntos, COMO_LLEGA), llega: haciaDondeVa(puntos, Infinity), va: haciaDondeVa(puntos, HACIA_DONDE_VA) };
+      suyos.set(clave, g);
+    }
+    return g;
+  };
+}
+
+const TRAMOS_CON_SENTIDO = new WeakMap<Grafo, Map<number, TramoConSentido>>();
+
+/** Un paso del buscador de `rodajesConSentido`: el tramo, o el trozo del enganche, y lo que cuesta hasta su final. */
+interface PasoConSentido {
+  readonly clave: number;
+  readonly coste: number;
+  readonly metros: number;
+  readonly ocupado: boolean;
+  /** El estado del que viene; `-1 - i`, de la semilla `i`. */
+  readonly antes: number;
+  /** El enganche del que sale, si es el primero. */
+  readonly enganche: Enganche | null;
+  readonly puntos: readonly Punto[];
+  readonly ref: string | null;
+  /** Hacia dónde va al acabar; `null` si es tan corto que no se sabe. */
+  readonly llega: Punto | null;
+}
+
+/**
+ * **La ruta que sale hacia donde tiene que salir** (H76): de espaldas por la recta del puesto
+ * hasta la calle, si sale empujado (`deEspaldas`, ver `enganchePorDetras`), y por ella hacia
+ * alguno de los sentidos de `sentido` —a menos de noventa grados, que de los dos que tiene la
+ * calle es el que le toca—; o, sin `deEspaldas`, desde la calle en la que está el avión, hacia su
+ * morro. Y sin dar la vuelta en ningún cruce (`NO_SE_VUELVE`): con el morro hacia allí se rueda
+ * hacia allí, aunque la pista en uso quede al otro lado, y la vuelta se da por las calles.
+ *
+ * El buscador de siempre anda por nudos, y un nudo no sabe por qué tramo se llegó a él: saliendo
+ * hacia un lado, daba media vuelta en el primer cruce y volvía por la misma calle. Este anda por
+ * tramos con su sentido. Se corre solo para los puestos con APROAR publicado.
+ */
+function rodajesConSentido(
+  grafo: Grafo,
+  origen: Punto,
+  destinos: readonly Punto[],
+  maxSalto: number,
+  ocupados: Ocupados | undefined,
+  sentido: readonly Punto[],
+  {
+    deEspaldas,
+    enLaPrimera = false,
+    pintadaHasta = 0,
+    enLaCalle = false,
+  }: {
+    readonly deEspaldas?: Punto | null;
+    readonly enLaPrimera?: boolean;
+    readonly pintadaHasta?: number;
+    readonly enLaCalle?: boolean;
+  },
+): (Ruta | null)[] {
+  const porDetras = deEspaldas ? enganchePorDetras(grafo, origen, deEspaldas, maxSalto, pintadaHasta) : null;
+  const salidas = porDetras
+    ? [porDetras]
+    : deEspaldas
+      ? []
+      : enganches(grafo, origen, maxSalto, true).filter(
+          (e) =>
+            !grafo.tramos[e.tramo]!.pista &&
+            (!enLaCalle || e.salto <= JUNTO_AL_AVION || sentido.some((h) => punto([e.punto[0] - origen[0], e.punto[1] - origen[1]], h) > 0)),
+        );
+  if (!salidas.length) return destinos.map(() => null);
+  const ocupadosAqui = tramosOcupados(grafo, ocupados);
+  const cola = deEspaldas && unitario([0, 0], deEspaldas);
+  /** Cómo se toma un tramo sin estar todavía en la calle: 2, ya es ella; 1, todavía es la recta del puesto; 0, no se toma. */
+  const entra = (va: Punto | null): 0 | 1 | 2 => {
+    if (!va) return 1;
+    if (cola && punto(va, cola) >= SIGUE_DE_ESPALDAS) return enLaPrimera ? 0 : 1;
+    return sentido.some((h) => punto(va, h) > 0) ? 2 : 0;
+  };
+  const delTramo = tramosConSentido(grafo);
+  // El estado es el tramo, su sentido, si se ha dejado la pista y si ya se está en la calle.
+  const elEstado = (tramo: number, alReves: number, fuera: boolean, ya: boolean): number =>
+    tramo * 8 + alReves * 4 + (fuera ? 2 : 0) + (ya ? 1 : 0);
+  const pasos = new Map<number, PasoConSentido>();
+  const cerrados = new Set<number>();
+  const monton = new Monton();
+  const semillas: { readonly nudo: number; readonly ya: boolean; readonly paso: PasoConSentido }[] = [];
+  for (const e of salidas) {
+    const t = grafo.tramos[e.tramo]!;
+    for (const [nudo, hasta] of [
+      [t.a, 0],
+      [t.b, t.largo],
+    ] as const) {
+      const puntos = trozo(t, e.desdeA, hasta);
+      const metros = Math.abs(hasta - e.desdeA);
+      // De un trozo de menos de un metro no se sabe hacia dónde va: lo dice el siguiente.
+      const como = entra(metros < 1 ? null : haciaDondeVa(puntos, HACIA_DONDE_VA));
+      if (como === 0) continue;
+      const ocupado = pasaPorUnOcupado(puntos, ocupados) || pasaPorUnOcupado([origen, e.punto], ocupados);
+      const p = precio(t, metros, ocupado, true);
+      semillas.push({
+        nudo,
+        ya: como === 2,
+        paso: {
+          clave: laRecta(grafo, origen, e.punto, true) + p.clave,
+          coste: e.salto + p.coste,
+          metros: e.salto + metros,
+          ocupado,
+          antes: 0,
+          enganche: e,
+          puntos,
+          ref: t.ref,
+          llega: metros < 1 ? null : haciaDondeVa(puntos, Infinity),
+        },
+      });
+    }
+  }
+  const seguir = (desde: PasoConSentido, id: number, nudo: number, fuera: boolean, ya: boolean): void => {
+    for (const iTramo of grafo.desde[nudo]!) {
+      const t = grafo.tramos[iTramo]!;
+      const alReves = t.a === nudo ? 0 : 1;
+      const g = delTramo(iTramo, alReves);
+      if (desde.llega && g.sale && punto(desde.llega, g.sale) < NO_SE_VUELVE) continue;
+      const como = ya ? 2 : entra(g.va);
+      if (como === 0) continue;
+      const ocupado = ocupadosAqui.has(iTramo);
+      const p = precio(t, t.largo, ocupado, fuera);
+      const estado = elEstado(iTramo, alReves, fuera || !t.pista, como === 2);
+      const clave = desde.clave + p.clave;
+      const hay = pasos.get(estado);
+      if (cerrados.has(estado) || (hay && hay.clave <= clave)) continue;
+      pasos.set(estado, { clave, coste: p.coste, metros: t.largo, ocupado, antes: id, enganche: null, puntos: g.puntos, ref: t.ref, llega: g.llega });
+      monton.meter(estado, clave);
+    }
+  };
+  semillas.forEach((s, i) => seguir(s.paso, -1 - i, s.nudo, true, s.ya));
+  while (!monton.vacio) {
+    const { estado, clave } = monton.sacar();
+    const paso = pasos.get(estado)!;
+    if (cerrados.has(estado) || clave > paso.clave) continue;
+    cerrados.add(estado);
+    const t = grafo.tramos[estado >> 3]!;
+    seguir(paso, estado, (estado & 4) === 0 ? t.b : t.a, (estado & 2) !== 0, (estado & 1) !== 0);
+  }
+  const alDestino = (destino: Punto): Ruta | null => {
+    const candidatos: {
+      readonly clave: number;
+      readonly ultimo: PasoConSentido;
+      readonly f: Enganche;
+      readonly fin: Punto[];
+      readonly metros: number;
+      readonly coste: number;
+      readonly ocupado: boolean;
+    }[] = [];
+    for (const f of enganches(grafo, destino, maxSalto, false)) {
+      const u = grafo.tramos[f.tramo]!;
+      const acabar = (desde: PasoConSentido, fin: Punto[], metros: number, fuera: boolean): void => {
+        const va = metros < 1 ? null : haciaDondeVa(fin, COMO_LLEGA);
+        if (desde.llega && va && punto(desde.llega, va) < NO_SE_VUELVE) return;
+        const ocupado = pasaPorUnOcupado(fin, ocupados) || pasaPorUnOcupado([f.punto, destino], ocupados);
+        const p = precio(u, metros, ocupado, fuera);
+        const clave = desde.clave + p.clave + laRecta(grafo, f.punto, destino, fuera);
+        candidatos.push({ clave, ultimo: desde, f, fin, metros, coste: p.coste, ocupado });
+      };
+      for (const [nudo, desde] of [
+        [u.a, 0],
+        [u.b, u.largo],
+      ] as const) {
+        const fin = trozo(u, desde, f.desdeA);
+        const metros = Math.abs(f.desdeA - desde);
+        for (const s of semillas) if (s.nudo === nudo && s.ya) acabar(s.paso, fin, metros, true);
+        for (const iTramo of grafo.desde[nudo]!) {
+          const t = grafo.tramos[iTramo]!;
+          for (const alReves of [0, 1]) {
+            if ((alReves ? t.a : t.b) !== nudo) continue;
+            for (const fuera of [false, true]) {
+              const paso = pasos.get(elEstado(iTramo, alReves, fuera, true));
+              if (paso) acabar(paso, fin, metros, fuera);
+            }
+          }
+        }
+      }
+      // Y si origen y destino caen en el mismo tramo, por él, si va hacia donde toca.
+      for (const e of salidas) {
+        if (e.tramo !== f.tramo) continue;
+        const fin = trozo(u, e.desdeA, f.desdeA);
+        const metros = Math.abs(f.desdeA - e.desdeA);
+        if (metros < 1 || entra(haciaDondeVa(fin, HACIA_DONDE_VA)) !== 2) continue;
+        const ocupado = pasaPorUnOcupado([origen, e.punto], ocupados);
+        const clave = laRecta(grafo, origen, e.punto, true);
+        acabar({ clave, coste: e.salto, metros: e.salto, ocupado, antes: 0, enganche: e, puntos: [], ref: null, llega: null }, fin, metros, true);
+      }
+    }
+    if (!candidatos.length) return null;
+    const mejor = candidatos.reduce((m, c) => (c.clave < m.clave ? c : m));
+    const ida: { ref: string | null; puntos: Punto[] }[] = [{ ref: grafo.tramos[mejor.f.tramo]!.ref, puntos: mejor.fin }];
+    let largo = mejor.metros + mejor.f.salto;
+    let coste = mejor.coste + mejor.f.salto;
+    let ocupada = mejor.ocupado;
+    let desde: Enganche | null = null;
+    for (let p: PasoConSentido | undefined = mejor.ultimo; p; ) {
+      ida.push({ ref: p.ref, puntos: [...p.puntos] });
+      largo += p.metros;
+      coste += p.coste;
+      ocupada ||= p.ocupado;
+      desde = p.enganche;
+      if (desde) break;
+      p = p.antes < 0 ? semillas[-1 - p.antes]!.paso : pasos.get(p.antes);
+    }
+    if (!desde) return null;
+    const tramos = ida.reverse().filter((paso) => paso.puntos.length > 1);
+    return {
+      tramos,
+      puntos: coser(tramos, [origen], [destino]),
+      largo,
+      coste,
+      ocupada,
+      letras: letrasDe(tramos),
+      enganche: Math.max(desde.salto, mejor.f.salto),
     };
   };
   return destinos.map(alDestino);

@@ -11,7 +11,7 @@
  * «Características de los puestos de estacionamiento» en
  * `data/aerodromes/aip/<id>.pdc.json`, cada puesto con la hoja y la fecha (WEF) de
  * la que sale. `juntar` pone a cada puesto de la ficha lo suyo —`aip`: salida,
- * mayor avión, si es de contacto— y lleva a su punto publicado el que está lejos de
+ * mayor avión, si es de contacto, hacia dónde queda el morro— y lleva a su punto publicado el que está lejos de
  * él (`LEJOS`): la regla de la H60e —el puesto va a su parada— con el AIP como
  * fuente de la parada.
  *
@@ -72,6 +72,24 @@ const CONTACTO = {
   },
 };
 
+/**
+ * **El APROAR que depende de la pista en uso** (H76), por la observación que lo dice. AD 2-LEMD
+ * PDC 1.7, (5): «En Configuración Norte, aproar al S sobre A6 y en Configuración Sur aproar al E
+ * sobre A5», y la (6), lo mismo para todo avión que no sea el A388 o el A124. Configuración Norte
+ * es despegar y aterrizar hacia el norte.
+ */
+const APROAR_POR_CONFIGURACION = {
+  LEMD: [{ carta: /PDC 1\./, observacion: /\([56]\)/, aproar: "S/E", norte: "S", sur: "E" }],
+};
+
+/** El APROAR de un puesto por la configuración de pistas, o `null` si no depende de ella. */
+function aproarPorConfiguracion(id, a) {
+  const r = (APROAR_POR_CONFIGURACION[id] ?? []).find(
+    (x) => x.aproar === a.aproar && x.carta.test(a.carta ?? "") && x.observacion.test(a.obs ?? ""),
+  );
+  return r ? { norte: r.norte, sur: r.sur } : null;
+}
+
 /** `282913.9N` → grados. */
 function grados(s) {
   const m = /^(\d{2,3})(\d{2})(\d{2}(?:\.\d+)?)([NSEW])$/.exec(s);
@@ -117,7 +135,8 @@ const ES_TIPO = /^[A-Z][A-Z0-9]{1,3}(\/[A-Z][A-Z0-9]{1,3})*$/;
 const MARCA_DE_CAMBIO = /_<-_/g;
 /** La llamada a una observación pegada al tipo: «B738 (2)». */
 const LLAMADA = /\s*\(\d+\)$/;
-const ES_APROAR = /^([NSEW]{1,2}(\/[NSEW]{1,2})?)$/;
+/** Hacia dónde queda el morro, o varios: «NE/SW», y «E/W/S» en el 580 y el 582 de Barajas (H76). */
+const ES_APROAR = /^([NSEW]{1,2}(\/[NSEW]{1,2})*)$/;
 const NADA = /^[–—-]$/;
 
 /**
@@ -440,6 +459,12 @@ async function juntar(id) {
     const publicado = a.xy;
     const lejos = Math.hypot(p.xy[0] - publicado[0], p.xy[1] - publicado[1]);
     const nuevo = { ...limpio, aip: { salida: a.salida, max: a.max, contacto: a.contacto, carta: a.carta } };
+    // Hacia dónde queda el morro al acabar el empuje, si la carta lo da (H76).
+    if (a.aproar) {
+      nuevo.aip.aproar = a.aproar;
+      const segun = aproarPorConfiguracion(id, a);
+      if (segun) nuevo.aip.aproarPorPista = segun;
+    }
     /*
      * Al punto publicado, por su raya: cortada o alargada hasta él. Si el puesto tiene raya y
      * el punto publicado no cae en ella ni en su prolongación, la ficha y el AIP no dicen el
