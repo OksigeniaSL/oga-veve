@@ -2294,6 +2294,73 @@ function rodajesConSentido(
   return destinos.map(alDestino);
 }
 
+/** Lo que tiene que medir un trozo recto de la calle para empujar por él, m. Ver `porLaRectaDeSuCalle`. */
+const RECTA_PARA_EMPUJAR = 25;
+/** Hasta dónde por delante de ese trozo puede caer la línea del puesto, m. */
+const HASTA_LA_RECTA = 60;
+
+/**
+ * **Empujar a la recta de la calle, si la línea del puesto llega a su curva** (H88). El R19 y el G20 de
+ * Tenerife Sur están en la esquina de la plataforma, y su línea baja a la curva por la que la calle de
+ * plataforma se va a la D6, casi por la tangente: siguiéndola de espaldas, el tractor metía el avión por
+ * la puerta hasta la paralela, doscientos cuarenta metros. Uno de verdad tuerce antes, sobre la losa, y
+ * lo deja en la recta de la calle con el morro hacia la curva.
+ *
+ * La ruta es esa: por la línea del puesto hasta donde cruza la prolongación de la recta; por ella hacia
+ * atrás, hasta `RECTO_HASTA_EL_RAMAL` dentro de la calle; ahí da la vuelta en seco (`Ruta.vuelveEn`, H79)
+ * y sigue hacia delante, hacia alguno de los sentidos de `sentido`. `null` si la línea llega atravesada
+ * a su calle, si no hay recta a la que torcer o si no es todo pavimento.
+ */
+export function porLaRectaDeSuCalle(
+  grafo: Grafo,
+  origen: Punto,
+  destinos: readonly Punto[],
+  deEspaldas: Punto,
+  sentido: readonly Punto[],
+  { maxSalto, pintadaHasta = 0, ocupados }: { readonly maxSalto: number; readonly pintadaHasta?: number; readonly ocupados?: Ocupados | undefined },
+): (Ruta | null)[] {
+  const nada = destinos.map(() => null);
+  const u = unitario([0, 0], deEspaldas);
+  const e = u && enganchePorDetras(grafo, origen, u, maxSalto, pintadaHasta);
+  if (!u || !e) return nada;
+  const t = grafo.tramos[e.tramo]!;
+  for (const hasta of [0, t.largo]) {
+    // La calle, de donde llega la línea hacia atrás, y hacia dónde va ahí.
+    const atras = trozo(t, e.desdeA, hasta);
+    const va = haciaDondeVa(atras, COMO_LLEGA);
+    if (!va || Math.abs(punto(va, u)) <= LLEGA_ATRAVESADO) continue;
+    for (let k = 1; k < atras.length; k++) {
+      const [q, p] = [atras[k - 1]!, atras[k]!];
+      const h = unitario(p, q);
+      if (!h || Math.hypot(q[0] - p[0], q[1] - p[1]) < RECTA_PARA_EMPUJAR) continue;
+      if (Math.abs(punto(h, u)) > LLEGA_ATRAVESADO || !sentido.some((x) => punto(h, x) > 0)) break;
+      // Donde la línea del puesto cruza la prolongación de la recta: `origen + u·d = q + h·s`.
+      const det = u[1] * h[0] - u[0] * h[1];
+      const w: Punto = [q[0] - origen[0], q[1] - origen[1]];
+      const d = (w[1] * h[0] - w[0] * h[1]) / det;
+      const s = (u[0] * w[1] - u[1] * w[0]) / det;
+      const c: Punto = [origen[0] + u[0] * d, origen[1] + u[1] * d];
+      const vuelta: Punto = [q[0] - h[0] * RECTO_HASTA_EL_RAMAL, q[1] - h[1] * RECTO_HASTA_EL_RAMAL];
+      if (d < EMPIEZA_EL_RETROCESO || d > maxSalto || s < 0 || s > HASTA_LA_RECTA) break;
+      if (!grafo.tramos.some((x) => !x.pista && aLaLinea(vuelta, x.puntos) <= EN_LA_MISMA_CALLE)) break;
+      if (!porPavimento(grafo, origen, c, true, false) || !porPavimento(grafo, c, q, false, false)) break;
+      const ida = d + s + RECTO_HASTA_EL_RAMAL;
+      return rodajesConSentido(grafo, vuelta, destinos, 2 * EN_LA_MISMA_CALLE, ocupados, [h], { enLaCalle: true }).map((r) =>
+        r && {
+          ...r,
+          puntos: [origen, c, vuelta, ...r.puntos.slice(1)],
+          largo: r.largo + ida,
+          coste: r.coste + ida,
+          ocupada: !!r.ocupada || pasaPorUnOcupado([origen, c, vuelta], ocupados),
+          enganche: Math.max(r.enganche, e.salto),
+          vuelveEn: 2,
+        },
+      );
+    }
+  }
+  return nada;
+}
+
 /** Lo más que se empuja más allá del cruce de la línea del puesto con la calle, m. Ver `pasandoElCruce`. */
 const MAS_ALLA_DEL_CRUCE = 100;
 

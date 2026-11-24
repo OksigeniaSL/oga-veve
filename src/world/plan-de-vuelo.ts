@@ -77,7 +77,7 @@ import {
 } from "./remolque";
 import { admite, aproarDe, cumpleElAproar, delAipEn, llegaPorDe, puestoEn, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
-import { empujaSobrePavimento, fueraDelPavimento } from "./ruedas-en-el-empuje";
+import { empujaSobrePavimento, fueraDelPavimento, ruedasEn } from "./ruedas-en-el-empuje";
 import { YA_EN_SU_SITIO } from "../flight/senalero";
 import {
   aLaCaja,
@@ -87,6 +87,7 @@ import {
   grafoPorSusCalles,
   pasandoElCruce,
   pavimentoDibujado,
+  porLaRectaDeSuCalle,
   puestosEnElPavimento,
   rectaPorPavimento,
   rodajeEntre,
@@ -3049,14 +3050,29 @@ export class PlanDeVuelo {
         cumpleElAproar(empuje.poses.at(-1)!.rumbo, aproar) &&
         (enElSuyo.porLaPintada || (!rayaDeLado(enElSuyo.rumbo, raya) && acabaEnLaCalle(empuje, raya, this.avion.batalla)))
       : enElSuyo?.porLaPintada === true;
-    // Y cuánto pisa fuera del pavimento, m (H81): el que no sale bien, infinito.
+    // Y cuánto pisa fuera del pavimento, m (H81): el que no sale bien, infinito; y el que se mete por una puerta que no debe (H88).
     let fuera = Infinity;
-    if (bien && empuje) {
+    if (bien && empuje && !this.seMetePorUnaPuerta(empuje.poses)) {
       const f = fueraDelPavimento(this.avion, empuje.poses, pavimentoDibujado(this.aero));
       fuera = f.alAcabar > 0 ? Math.max(f.metros, 1) : f.metros;
     }
     this.empujesMirados.set(clave, fuera);
     return fuera <= (sobrePavimento ? 0 : this.avion.batalla);
+  }
+
+  /**
+   * **Si el empuje se mete por una puerta de plataforma que el AIP manda dejar libre** (H88,
+   * `aipPuestos.puertasLibres`): si alguna rueda pasa por su calle. Sin el dato, ninguna.
+   */
+  private seMetePorUnaPuerta(poses: Parameters<typeof fueraDelPavimento>[1]): boolean {
+    const puertas = this.aero.aipPuestos?.puertasLibres;
+    if (!puertas?.length) return false;
+    const suyas = this.aero.taxiways.filter((t) => t.ref && puertas.includes(t.ref));
+    return poses.some((q) =>
+      ruedasEn(this.avion, q).some((r) =>
+        suyas.some((t) => aLaPolilinea([r.x, -r.z], t.path) < (t.widthM ?? ANCHO_RODADURA) / 2),
+      ),
+    );
   }
 
   /** Ver `saleBienDeEspaldas`. Se tira al mudarse de campo. */
@@ -3124,9 +3140,20 @@ export class PlanDeVuelo {
           const pasando = manera.deEspaldas
             ? this.desdeDondeAcabaElEmpuje(puesto, esperas, desde, manera.deEspaldas, ocupados, aproar, sobrePavimento, grafo, porLasSuyas)
             : [];
+          // Y torciendo antes de la curva de la calle, donde por ella se metería por una puerta (H88).
+          const porLaRecta =
+            manera.deEspaldas && this.aero.aipPuestos?.puertasLibres?.length && rutas.some((r, k) => !r && !buenas[k])
+              ? porLaRectaDeSuCalle(grafo, puesto, esperas, manera.deEspaldas, sentido, {
+                  maxSalto: 220,
+                  pintadaHasta: manera.pintadaHasta,
+                  ocupados,
+                }).map((r, k) =>
+                  r && !rutas[k] && !buenas[k] && vale(r) && this.saleBienDeEspaldas(puesto, r, aproar, sobrePavimento) ? r : null,
+                )
+              : [];
           buenas.forEach((r, k) => {
             const otra = pasando[k];
-            const ruta = otra && vale(otra) ? otra : r;
+            const ruta = (otra && vale(otra) ? otra : r) ?? porLaRecta[k];
             if (!ruta || rutas[k]) return;
             this.conAproar.add(ruta);
             rutas[k] = ruta;
