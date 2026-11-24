@@ -232,7 +232,8 @@ export interface FlightState {
   /**
    * Velocidad respecto al aire, m/s: **la que mide el anemómetro**, de la que
    * sale la indicada de todos los relojes. En un avión es la del aire sin más,
-   * que le viene casi siempre de frente; en el helicóptero, que baja en vertical
+   * que le viene casi siempre de frente —y cuando no, lo que marca el reloj sale
+   * además de `anguloDelAire`—; en el helicóptero, que baja en vertical
    * y va de lado, es la que va a lo largo del morro, que es lo que le entra al
    * tubo de pitot. Ver `derivados` en `flight/helicoptero.ts`.
    */
@@ -259,6 +260,13 @@ export interface FlightState {
   alpha: number;
   /** Ángulo de derrape, rad. Positivo = viento por la derecha. */
   beta: number;
+  /**
+   * **De dónde viene el aire, contado desde el morro**, rad: 0 de frente, un
+   * cuarto de vuelta de costado y media vuelta por detrás. Es lo que el pitot
+   * nota y `airspeed` no dice. Sin él, de frente: el modelo sencillo no tiene
+   * viento, y en el helicóptero `airspeed` ya es la del morro. Ver `pitot.ts`.
+   */
+  anguloDelAire?: number;
   /** Altura sobre el terreno, m. */
   heightAboveGround: number;
   /**

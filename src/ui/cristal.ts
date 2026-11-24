@@ -407,7 +407,7 @@ function cintaDeVelocidad(
     rotulaCada: 2,
     porUnidad: POR_NUDO,
     alto: tope * POR_NUDO * 2,
-    minimo: 0,
+    minimo: c.asiMin,
   });
   const tira = marcas
     .map((m) => {

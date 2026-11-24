@@ -325,6 +325,7 @@ import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import { DURO_DE_TRANSPORTE } from "./aterrizaje";
 import { perdidaCon, V2_SOBRE_LA_PERDIDA } from "./velocidades-de-despegue";
 import { avanzarGiro, gasQueDa, giroAsentado, type GiroDelMotor } from "./respuesta-del-motor";
+import { GAS_DE_REVERSA } from "./reversa";
 import { Petardeo } from "./ave-en-el-motor";
 
 /**
@@ -811,6 +812,7 @@ export class CoefficientFlightModel implements FlightModel {
         giro: this.giro ? { ...this.giro } : null,
         petardeo: new Petardeo(),
         da: this.gasDelMotor(),
+        enReversa: 0,
       };
     this.tocado.tope = m.tope;
     this.tocado.umbral = m.umbral;
@@ -822,7 +824,7 @@ export class CoefficientFlightModel implements FlightModel {
     if (t === null) return null;
     return {
       motor: t.motor,
-      da: t.da,
+      da: Math.max(t.da, t.enReversa),
       empuje: t.petardeo.empuje,
       vueltas: t.petardeo.vueltas,
       estallidos: t.petardeo.estallidos,
@@ -837,22 +839,62 @@ export class CoefficientFlightModel implements FlightModel {
     petardeo: Petardeo;
     /** Lo que da, sin lo que le quita el petardeo, de 0 a 1. */
     da: number;
+    /** Y lo que da por la reversa, que tampoco pasa de su palanca. */
+    enReversa: number;
   } | null = null;
 
   /**
    * **Lo que le falta al motor tocado** para dar lo que dan los demás, N, en
    * este paso: su palanca va por debajo, o petardea. Cero si está parado, que
-   * ya no da nada. Su giro tarda con este aire lo que el de los demás (`sigma`).
+   * ya no da nada. Su giro tarda con este aire lo que el de los demás (`sigma`),
+   * y `enReversa` es el gas que llevan por la reversa, de 0 a 1.
    */
-  private loQueLeFalta(pedido: number, cadaUno: number, cadaUnoLleno: number, dt: number, sigma: number): number {
+  private loQueLeFalta(
+    pedido: number,
+    cadaUno: number,
+    cadaUnoLleno: number,
+    dt: number,
+    sigma: number,
+    enReversa: number,
+  ): number {
     const t = this.tocado;
     if (t === null || this.motores[t.motor] !== "marcha") return 0;
     const suyo = Math.min(pedido, t.tope);
     if (t.giro === null) t.giro = giroAsentado(this.aircraft, suyo);
     else avanzarGiro(t.giro, this.aircraft, suyo, dt, sigma);
     t.da = gasQueDa(t.giro, this.aircraft);
-    t.petardeo.paso(dt, t.da, t.umbral);
+    // Y con la reversa fuera, el que sube para empujar al revés: hasta su palanca, y petardea igual.
+    t.enReversa = Math.min(enReversa, t.tope);
+    t.petardeo.paso(dt, Math.max(t.da, t.enReversa), t.umbral);
     return cadaUno - t.da * t.petardeo.empuje * cadaUnoLleno;
+  }
+
+  /**
+   * **La reversa que dan de verdad los motores**, N, y el par con el que tira
+   * del morro, N·m y positivo a la derecha: el de cada uno, de los que van, por
+   * su distancia al eje. `cadaUna`, N, es lo que da uno entero, con `gas`.
+   *
+   * Es como la cuenta la norma: «for the engine failure case, it should be
+   * assumed that the thrust reverser does not deploy (i.e., no reverse thrust
+   * or drag credit for deployed thrust reverser buckets on the failed engine)»
+   * (FAA, AC 25-7D, 4.3.7.10.9, p. 4-44). El del ave da la de su palanca, con
+   * lo que le quita cada estallido. ADR 0034, enmienda H80.
+   */
+  private reversaDeLosMotores(
+    cadaUna: number,
+    gas: number,
+  ): { readonly empuje: number; readonly par: number } {
+    const t = this.tocado;
+    let empuje = 0;
+    let par = 0;
+    for (let i = 0; i < this.motores.length; i++) {
+      if (this.motores[i] !== "marcha") continue;
+      let da = cadaUna;
+      if (t !== null && i === t.motor) da *= Math.min(1, t.enReversa / gas) * t.petardeo.empuje;
+      empuje += da;
+      par += da * (this.aircraft.motoresA[i] ?? 0);
+    }
+    return { empuje, par };
   }
 
   /** El último empuje calculado, para el combustible. Ver `empujeAhora`. */
@@ -1617,7 +1659,14 @@ export class CoefficientFlightModel implements FlightModel {
      */
     let leFalta = 0;
     if (this.tocado !== null && controls.engineOn && n > 1) {
-      leFalta = this.loQueLeFalta(pedido, cadaUno, empujeLleno(ac, density, speed) / n, dt, density / SEA_LEVEL_DENSITY);
+      leFalta = this.loQueLeFalta(
+        pedido,
+        cadaUno,
+        empujeLleno(ac, density, speed) / n,
+        dt,
+        density / SEA_LEVEL_DENSITY,
+        tieneReversa(ac) ? clamp(controls.reversa, 0, 1) * GAS_DE_REVERSA : 0,
+      );
       thrust -= leFalta;
     }
     // Se guarda para el combustible, que gasta por el empuje que se da y no
@@ -2298,10 +2347,24 @@ export class CoefficientFlightModel implements FlightModel {
      * más despacio deja de frenar y empieza a levantar del suelo lo que haya y
      * a metérselo al motor. Ver `REVERSA_HASTA` en `frenada.ts`.
      */
-    const reversa =
+    let reversa =
       tieneReversa(ac) && controls.reversa > 0 && rapidez > REVERSA_HASTA
         ? Math.min(1, controls.reversa) * ac.maxThrust * REVERSA_DA
         : 0;
+    /*
+     * **Y motor a motor, si no van todos**: el parado no da reversa, y la que da
+     * el otro tira del morro hacia su lado, porque empuja hacia atrás desde
+     * donde está. Con todos en marcha es la cuenta de arriba y los pares se
+     * anulan, así que no se toca nada. Ver `reversaDeLosMotores`.
+     */
+    if (reversa > 0 && (this.tocado !== null || enMarcha(this.motores) < this.motores.length)) {
+      const { empuje, par } = this.reversaDeLosMotores(
+        reversa / this.motores.length,
+        Math.min(1, controls.reversa) * GAS_DE_REVERSA,
+      );
+      reversa = empuje;
+      s.yawRate += (par / ac.inertia.zz) * dt;
+    }
     /*
      * **Y la rueda reventada, si la hay**: lo que roza y lo que deja de frenar
      * con el pie a fondo, N. Sin ella, `null`, y la cuenta de abajo es la de
@@ -3007,6 +3070,8 @@ export class CoefficientFlightModel implements FlightModel {
     // con la que ha arrancado, no un cero.
     const { u, v, w, speed } = this.respectoAlAire();
     s.airspeed = speed;
+    // Y de dónde le viene al pitot, que despacio y con viento no es de frente. Ver `pitot.ts`.
+    s.anguloDelAire = speed > 1e-6 ? Math.acos(clamp(u / speed, -1, 1)) : 0;
     // Y la del suelo, que es otra cosa desde que hay viento. Ver `groundSpeed`.
     s.groundSpeed = Math.hypot(s.velocity.x, s.velocity.z);
     if (s.airspeed > MIN_AIRSPEED) {

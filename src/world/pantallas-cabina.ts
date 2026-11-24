@@ -108,6 +108,7 @@ import {
   PIES_POR_MINUTO,
   bandasDeVelocidad,
   COLOR_DE_ARCO,
+  enLaCinta,
   type Cuadro,
 } from "../ui/cuadro";
 import {
@@ -1504,7 +1505,7 @@ function apuntarYSenalar(
     cajas.rombo = [x0 + anchoAct - 27, cy - 2.7 * paso - 16, 26, 5.4 * paso + 22];
   }
   if (d.spd) {
-    const ys = medio + (d.velocidad * NUDOS - d.spd.kt) * POR_NUDO;
+    const ys = medio + (enLaCinta(d.cuadro, d.velocidad * NUDOS) - d.spd.kt) * POR_NUDO;
     if (Math.abs(ys - medio) < medio - 8) {
       pintadas.add("marca");
       cajas.marca = [CINTA - 14, ys - 11, 16, 22];
@@ -1646,7 +1647,7 @@ function cintaDeVelocidad(
   h: number,
   d: DatosDeCabina,
 ): void {
-  const kt = d.velocidad * NUDOS;
+  const kt = enLaCinta(d.cuadro, d.velocidad * NUDOS);
   const c = d.cuadro;
   ventana(g, x, y, w, h);
   g.save();
@@ -1689,7 +1690,7 @@ function cintaDeVelocidad(
     rotulaCada: 2,
     porUnidad: POR_NUDO,
     alto: h,
-    minimo: 0,
+    minimo: c.asiMin,
   })) {
     const yy = medio + m.y;
     g.strokeStyle = TINTA;
@@ -2167,7 +2168,7 @@ let agujas: number[] = [];
 
 /** Lo llama el refresco, una vez por imagen y antes de pintar. */
 function medirLoQueTarda(d: DatosDeCabina, dt: number): void {
-  const kt = d.velocidad * NUDOS;
+  const kt = enLaCinta(d.cuadro, d.velocidad * NUDOS);
   if (dt > 0 && nudosAntes !== null) {
     aceleraActual = conRetardo(aceleraActual, (kt - nudosAntes) / dt, dt, 0.5);
   }

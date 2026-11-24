@@ -11279,8 +11279,7 @@ export class Game {
     if (abierta && !c.abierta) this.cantarLoGrabado("reversers normal");
     c.abierta = abierta;
     // Los sesenta nudos del anemómetro.
-    const kt =
-      indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) * NUDOS;
+    const kt = this.indicadaAhora() * NUDOS;
     if (!c.sesenta && c.ktAntes >= 60 && kt < 60) {
       c.sesenta = true;
       this.cantarLoGrabado("sixty knots");
@@ -33783,7 +33782,7 @@ export class Game {
     if (!this.pitotHelado || !this.pitotDelPanel.tapado) return null;
     const s = this.flight.state;
     const aire = this.flight.aireDelDia();
-    const v = deVerdad ?? indicatedAirspeed(s.airspeed, s.position.y, aire);
+    const v = deVerdad ?? this.indicadaAhora();
     return this.pitotDelPanel.marca(v, presionEstatica(s.position.y, aire));
   }
 
@@ -33858,7 +33857,7 @@ export class Game {
     const capa = this.capaDeNubes;
     return {
       marca: this.indicadaDelReloj(),
-      deVerdad: indicatedAirspeed(s.airspeed, s.position.y, aire),
+      deVerdad: this.indicadaAhora(),
       tapado: this.pitotDelPanel.tapado,
       hielo: this.pitotDelPanel.cuanto,
       calefaccion: this.calefaccionDelPitot,
@@ -33878,7 +33877,7 @@ export class Game {
     this.ponerLaNubeDelPitot();
     const s = this.flight.state;
     const aire = this.flight.aireDelDia();
-    const indicada = indicatedAirspeed(s.airspeed, s.position.y, aire);
+    const indicada = this.indicadaAhora();
     const estatica = presionEstatica(s.position.y, aire);
     const oat = temperaturaExterior(s.position.y, aire);
     const enNube = this.nubeDondeEsta();
@@ -42591,12 +42590,8 @@ export class Game {
    */
   private indicadaDelReloj(): number {
     if (this.pitotTapado) return 0;
-    const deVerdad = indicatedAirspeed(
-      this.flight.state.airspeed,
-      this.flight.state.position.y,
-      this.flight.aireDelDia(),
-    );
-    return this.pitotHeladoMarca(deVerdad) ?? deVerdad;
+    const limpio = this.indicadaAhora();
+    return this.pitotHeladoMarca(limpio) ?? limpio;
   }
 
   /**
