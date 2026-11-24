@@ -10542,3 +10542,148 @@ distancias de este ADR, que son sin reversa como las del manual, no cambian: ni
 `distanciaDeAterrizaje`, ni `rodaduraDeFrenada`, ni `pistaQueNecesita` la cuentan, y
 con el autofreno en MED la parada es la misma. Sin reversa, las finales y las carreras
 de los ocho aviones son las de 91a7b015 bit a bit.
+
+## Enmienda H89 (24-11-2026): la final del JAZ 90 en Los Rodeos, y de quién era
+
+`verificar-vuelo-entero.mjs tenerife-norte tuka 1 jaz-90` daba un rojo de cada dos,
+«la final llega estabilizada a su puerta», con el modelo idéntico al bit en dos
+versiones: bajando 3,0, 3,3, 3,6, 5,2, 5,3 y 5,3 m/s en seis vuelos, y 4,8 en
+Taguató, con el tope en mil pies por minuto, 5,08. Parecían dos maneras de llegar.
+
+### Qué los separa
+
+Con los registros de los siete, segundo a segundo: **no son dos maneras, es una con
+un vaivén encima, y cuenta dónde la pilla la puerta.** Todos entran en el arco a unos
+315 m de ruedas bajando 1,1–1,9 m/s, vuelven a subir a 1,5–1,7 durante diez segundos,
+empiezan a bajar catorce segundos tarde y salen del arco bajando 4,8–5,5. No los
+separa el viento, ni la torre (hay rojos y verdes con otro delante y sin él, y
+ninguno se fue al aire), ni los flaps, ni el tren, ni la velocidad del arco. El que
+voló con menos aire (3,6 m/s, −1,5 m, 11,3 m del eje) está en medio de los dos
+grupos. Los otros oscilan alrededor de él: de 1,5 a 6,3 m/s en diez segundos, ya
+alineados.
+
+Lo de los 7–9 m por debajo y los 13–15 del eje va junto y no es otra causa: quien
+pasa por debajo de la senda llega a los quinientos pies 150 m antes, y ahí el arco
+todavía está cogiendo el eje.
+
+### La mesa
+
+`scripts/mesa-del-arco.mjs` vuela desde el viento en cola con el modelo, el
+automático y las rachas del juego y **el mismo texto** de la final del banco, leído
+del fichero. En aire quieto da lo del vuelo tranquilo: entra en el arco a 316 m de
+ruedas, sube a 1,7, baja a 5,1 y pasa la puerta bajando 3,5 m/s, 1,6 m bajo la senda
+y a 10 m del eje. Las rachas van con σ_w 1,65 m/s, que es lo que iguala lo que cambian
+de un segundo al siguiente el variómetro y el anemómetro en los seis registros (0,67
+y 0,99 m/s; con 1,25, 0,42 y 0,67). Es moderada por doce nudos de alisio: sale de lo
+mecánico del relieve, 1,03, y de la térmica de las cuatro de la tarde, 0,7, o sea
+1,25, y los registros dicen algo más.
+
+Doscientas finales del JAZ 90 en Tukã, cuántas pasan la puerta por encima de 5,08:
+
+| | Automático de antes | Automático de ahora |
+|---|---|---|
+| Banco de antes | **31** (p90 5,5) | 8 (p90 4,7) |
+| Banco de ahora | 25 (p90 5,2) | **5** (p90 4,5) |
+
+En Taguató, de 19 a 6. Con σ_w 1,25, de 10 a 0 (y por encima de 4,5, de 28 a 4). El
+JAZ 60, de 12 a 8, y el JAZ 110, de 60 a 32: a 150 nudos la senda pide ya 4,1 m/s. El
+JAZ 120 no se juzga aquí, que su viraje no sale en la mesa como en el navegador.
+
+La mesa da un continuo y no dos grupos, antes y ahora, y en ella salen rojos una de
+cada seis, no una de cada dos: con siete vuelos no se distingue, pero
+puede quedar en el navegador algo que la mesa no pone.
+
+### De quién es: de los dos
+
+**Del banco, que cogía la senda cuando ya había pasado.** La altura planeada
+(`planearLaBajada`) se quedaba quieta hasta que la senda la cruzaba, y desde ahí la
+senda cae a cuatro metros por segundo en el arco: el avión, que tarda seis segundos
+en seguirla, se quedaba 28 m por encima y la recogía pidiendo el tope, 4,57–4,9, casi
+hasta alinearse. Ahora la altura planeada empieza a bajar seis segundos antes de que
+llegue, con el ritmo creciendo según se acerca (`SEGUNDOS_PARA_COGER_LA_SENDA`): 10 m
+por encima y 4,6 m/s como mucho. De seis a doce segundos da lo mismo; con tres, peor.
+
+**Y del automático del juego, que se pasaba de lo pedido.** Es lo que H29b dejó
+abierto: «el lazo del medio, lento, sobrepasándose». Semilla 64 de la mesa: alineado,
+12 m alto y con el aire quieto, pedía 4,6 m/s y bajó 6,1; a los diez segundos iba 5 m
+por debajo. El lazo del medio acumula morro mientras falte trayectoria, y la
+trayectoria llega `V·(α − α₀)/g` segundos detrás —2,45 en el JAZ 90 en final, 0,64 en la
+avioneta—. Quien enganche el automático en la senda lo ve igual. Ahora lo que falta
+se mide contra `γ + 0,7·T·γ̇`, hacia donde va el camino con el morro que lleva
+(`loQueTardaElCamino`), con un tercio de ganancia en vez de un cuarto. Sin el ángulo
+de sustentación nula —el modelo sencillo— vuela como volaba, bit a bit.
+
+**Donde el timón no llega, no.** El JAZ 120 con todo fuera mueve 0,14 rad/s² y tiene
+el refuerzo del servo en su tope; anticipando se columpiaba a ±0,3 g en aire quieto.
+La anticipación va de cero, ahí, a entera donde el timón basta sin refuerzo
+(`cuantoSeAnticipa`): el JAZ 120 en final vuela como volaba y el JAZ 110 con dos
+décimas. Y entra en los cinco segundos del embrague (H57): enganchado subiendo con la
+palanca movida, el JAZ 120 se columpiaba también.
+
+En la flota, nivelada con rachas de σ_w 1,65 y diez semillas: lo que se aparta de la
+altura baja de 4,1 a 3,0 m en el JAZ 90, de 4,0 a 3,0 en el 60, de 3,5 a 3,3 en el 50 y
+en el 110 y de 3,0 a 2,5 en el 40, con la misma carga (a menos de un 5 %). La avioneta con
+todo fuera y nivelada a su Vref más cinco, que ahí no tiene gas, se aparta más: de 10,7
+a 12,5 m con la mínima del automático puesta, como en el juego, y sin avisador en los
+dos. Cambiando
+de nivel trescientos metros, la carga es la misma o menos y el que más se pasa es el
+JAZ 90 a su Vref, 5,2 m donde eran 4,0.
+
+Las recogidas de la mesa de H72, 250 por caso, σ_w 1,05 y con el ángulo sabido: el JAZ
+90, 3 duras donde eran 4; el JAZ 60, 2 y 1, y largas 15 y 12; el JAZ 50, 9 y 10.
+
+### Lo probado y no puesto
+
+- **Cuatro décimas de ganancia**, la mitad de `POR_MORRO`: de 1 a 5 de 200 en la puerta,
+  pero la ascendente de H29b vuelve a pasar de mil pies por minuto (5,12 de media).
+- **Contar el retraso entero**: 4 de 200, pero el lazo lleva el morro y no el camino, y
+  el JAZ 90 se pasa 8 m al capturar una altura.
+- **Solo amortiguar, sin coger antes la senda**, con un cuarto: 38 de 200. Más lento,
+  recoge los 28 m más tarde y pasa la puerta todavía bajando.
+- **El tope y la comprobación**, como estaban.
+
+### Las pruebas
+
+`scripts/la-puerta-del-reactor.test.mjs` (la mesa) y `src/flight/camino-anticipado.test.ts`.
+`compensacion-del-viraje.test.ts` comparaba bit a bit los mandos del automático que
+recibe el ángulo de sustentación nula con los del que no; ahora mira lo que pide el
+viraje, que sigue siendo cero exacto con las alas a nivel. Y las del automático, que
+no le dan ese ángulo y por eso no ven el cambio, se corrieron además dándoselo como
+el juego, en una copia: los dos enganches, `piloto-automatico`, la mínima, los gases,
+`bajar-por-el-plan`, el avisador, el descenso y `ascendente-en-la-final`, 336 y todas
+en verde, con la ganancia y las siete décimas de ahora.
+
+La traza de la final (`OGA_TRAZA_FINAL`) dice además lo que queda de arco, los tres
+radios y lo que alarga la senda.
+
+### Volado
+
+`verificar-vuelo-entero.mjs tenerife-norte tuka 1 jaz-90`, reloj por uno, 040/12, sobre
+copias fijas, puerto 5687, con las dos trazas. La primera con el banco de ahora y
+cuatro décimas de ganancia; la segunda, con un tercio y el retraso contado entero. Con
+las siete décimas no ha volado nadie: es lo que dicen la mesa y las pruebas.
+
+| | Sobre la senda en el arco, como mucho | Baja en el arco, como mucho | La puerta | La toma | Comprobaciones |
+|---|---|---|---|---|---|
+| Antes, siete vuelos | 28 m (mesa) | 5,0–5,9 m/s | 3,0–5,3 m/s, de −9 a +4 m, 8–15 m del eje | | tres de siete en rojo |
+| Cuatro décimas | 10,4 m | 5,4, con racha | 124 kt, −2,7 m, 12,3 m del eje, **3,8 m/s** | 0,76 m/s a 391 m | 66 de 67: ✗ la consola, un módulo que no bajó al arrancar |
+| Un tercio | 11,6 m | 4,6 | 125 kt, +1,4 m, 11,8 m del eje, **3,6 m/s** | 1,47 m/s a 538 m | **66 de 66** |
+
+La mesa da la entrada en el arco a una veintena de metros (a 4.117 m del umbral, −2.165
+del eje y 319 de ruedas; la primera, 4.096, −2.147 y 313) y los 10 m. De la puerta al umbral, la primera va a
+menos de 3 m de la senda.
+
+### Lo que queda
+
+- **Volar las siete décimas**, en Tukã y en Taguató, y lo que no cupo: el JAZ 120 y el
+  JAZ 90 en Gran Canaria y el JAZ 60 en Los Rodeos. Solo se voló dos veces en Tukã.
+- **Una final mala seguida con la traza, la de antes**: no se voló. Lo que se dice de
+  ellas sale de sus registros y de la mesa.
+- **Por qué en el navegador salían más rojos que en la mesa** (tres de siete y una de
+  seis). Con siete vuelos puede ser azar.
+- **El JAZ 110 y el JAZ 120**, que siguen llegando a la puerta cerca de mil pies por
+  minuto: su senda pide 4,1–4,2 m/s y el automático del JAZ 120 no anticipa.
+- **La recogida de la mesa de H72** no le da al automático el ángulo de sustentación
+  nula. Dándoselo, la peor del JAZ 60 pasa de 2,5 a 2,64 m/s y la prueba la ve.
+- **El banco del ILS y el del automático en el navegador** no se han pasado con la ley
+  nueva.
