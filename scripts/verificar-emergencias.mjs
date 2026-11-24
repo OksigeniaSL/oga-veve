@@ -382,6 +382,7 @@ try {
       // En `despues`, de la toma a parar: lo que se aparta del eje y el pie que pisa.
       let enTierraDesvio = 0;
       let enTierraPedal = 0;
+      let enTierraDonde = "";
       // En la carga suelta: el centro con que vuela el modelo al soltarse, y lo más atrás que llega.
       let centradoAlFallar = null;
       let centradoMaximo = -Infinity;
@@ -954,8 +955,14 @@ try {
             if (modo === "despues") {
               // El eje con el pie: la reversa del motor que queda tira hacia su lado (H80).
               c.rudder = acota(error(h - Math.atan(p.c * 0.008), s.heading) * 4 + 3 * s.beta, -1, 1);
-              enTierraDesvio = Math.max(enTierraDesvio, Math.abs(p.c));
-              enTierraPedal = Math.max(enTierraPedal, Math.abs(c.rudder));
+              // Rodando: parado, el viento de lado da el derrape que quiera y el pie no dice nada.
+              if (s.groundSpeed > 3) {
+                enTierraDesvio = Math.max(enTierraDesvio, Math.abs(p.c));
+                if (Math.abs(c.rudder) > enTierraPedal) {
+                  enTierraPedal = Math.abs(c.rudder);
+                  enTierraDonde = `a ${Math.round(s.groundSpeed)} m/s, ${p.c.toFixed(1)} m del eje, β ${((s.beta * 180) / Math.PI).toFixed(1)}°`;
+                }
+              }
             }
             c.brakes = 1;
             c.reversa = 1;
@@ -1143,7 +1150,7 @@ try {
         av,
         caida: o.caida?.() ?? null,
         recorridoAlParar,
-        enTierra: { desvio: enTierraDesvio, pedal: enTierraPedal },
+        enTierra: { desvio: enTierraDesvio, pedal: enTierraPedal, donde: enTierraDonde },
         largo: pista.length,
         percance: o.percance(),
         reloj: o.reloj() - t0,
@@ -1327,7 +1334,7 @@ try {
       comprobar(
         "se para por el eje, con el pie",
         r.enTierra.desvio < 20 && r.enTierra.pedal < 1,
-        `lo más lejos, a ${r.enTierra.desvio.toFixed(1)} m del eje · pie ${r.enTierra.pedal.toFixed(2)}`,
+        `lo más lejos, a ${r.enTierra.desvio.toFixed(1)} m del eje · pie ${r.enTierra.pedal.toFixed(2)} (${r.enTierra.donde})`,
       );
     comprobar(
       "con los bomberos del aeródromo esperando junto a la pista",

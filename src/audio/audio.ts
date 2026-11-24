@@ -967,6 +967,12 @@ export class Audio {
       ...(controls.reversaAbierta === undefined
         ? {}
         : { reversaAbierta: controls.reversaAbierta }),
+      ...(controls.reversaDeLosQueVan === undefined
+        ? {}
+        : { reversaDeLosQueVan: controls.reversaDeLosQueVan }),
+      ...(controls.reversaQueSeAbre === undefined
+        ? {}
+        : { reversaQueSeAbre: controls.reversaQueSeAbre }),
       aerofrenos: Math.max(controls.aerofrenos ?? 0, controls.frenosDeTierra ?? 0),
       lluvia: this.lluviaAhora,
       granizo: this.granizoAqui,

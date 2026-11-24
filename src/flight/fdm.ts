@@ -825,6 +825,7 @@ export class CoefficientFlightModel implements FlightModel {
     return {
       motor: t.motor,
       da: Math.max(t.da, t.enReversa),
+      enReversa: t.enReversa,
       empuje: t.petardeo.empuje,
       vueltas: t.petardeo.vueltas,
       estallidos: t.petardeo.estallidos,

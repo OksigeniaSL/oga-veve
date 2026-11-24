@@ -7345,9 +7345,15 @@ button.motor__tecla::after {
 .cr__reversa {
   fill: var(--cabina-precaucion);
   font-family: var(--cabina-fuente);
+  /* El cuerpo lo pone cada instrumento, que los hay de varios tamaños. */
   font-size: 18px;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.04em;
+  /* Y un filo del fondo: en la barra de par va encima de lo que se llena. */
+  stroke: var(--cabina-pantalla);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
 }
 
 /* Ámbar moviéndose y verde fuera del todo, como `.motor__reversa`. */

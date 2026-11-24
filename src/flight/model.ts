@@ -113,6 +113,14 @@ export interface ControlInputs {
    */
   reversaAbierta?: number;
   /**
+   * **Qué parte de la reversa dan los motores que van**, de 0 a 1: el parado no
+   * ruge, y el del ave, lo que le deja su palanca. Solo en la copia que va al
+   * sonido. Sin poner, todos.
+   */
+  reversaDeLosQueVan?: number;
+  /** Y qué parte de las piezas se abre, que es lo que golpea. Igual. */
+  reversaQueSeAbre?: number;
+  /**
    * **Si quien lleva el cabeceo y el alabeo es el piloto automático.**
    *
    * El modelo de vuelo tiene dos ayudas que imitan a quien suelta la palanca
@@ -407,6 +415,8 @@ export interface MotorTocado {
   readonly motor: number;
   /** Lo que da, sin lo que le quita el petardeo, como gas de 0 a 1. */
   readonly da: number;
+  /** Y de eso, lo que da por la reversa, que no pasa de su palanca. */
+  readonly enReversa: number;
   /** Lo que le queda de empuje y de vueltas mientras petardea, de 0 a 1. */
   readonly empuje: number;
   readonly vueltas: number;

@@ -90,7 +90,7 @@ import {
   queSeDiceSinMotor,
 } from "./flight/sin-motor";
 import { alReves, LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
-import { Reversa } from "./flight/reversa";
+import { parteDeLaReversa, parteDeLasPiezas, Reversa } from "./flight/reversa";
 import {
   acercarLosMandos,
   MANDOS_AL_CENTRO,
@@ -1747,7 +1747,12 @@ import { Libreta } from "./flight/libreta";
 import { plano } from "./ui/hangar";
 import type { FijoEnElPlano } from "./ui/fijo-en-el-plano";
 import { pavimentoDe, sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
-import { signoDelGiro } from "./world/giro-de-las-helices";
+import {
+  acercarElRitmo,
+  GirosDeHelice,
+  ritmoDeLaHelice,
+  signoDelGiro,
+} from "./world/giro-de-las-helices";
 import { Llamarada } from "./world/llamarada";
 import { firmeDe } from "./world/firme";
 import { avionQueSuena, oidoDe } from "./audio/ruidos";
@@ -6959,6 +6964,8 @@ export class Game {
   private propellerAngle = 0;
   /** A qué ritmo gira ahora la hélice, rad/s. Ver `syncAircraftMesh`. */
   private giroDeHelice = 0;
+  /** Y el de cada una, si no van todas igual. */
+  private readonly girosDeHelice = new GirosDeHelice();
   /** Estado del avión en el fotograma anterior, para detectar los cambios. */
   private wasOnGround = true;
   /** Si ya se despegó en este vuelo. Ver `announce`. */
@@ -11219,7 +11226,7 @@ export class Game {
             deTierra: p.frenosDeTierraFuera,
             sinFrenosMirado: false,
             sinFrenosDicho: false,
-            abierta: this.reversa.abierta >= 0.99,
+            abierta: this.reversa.todasFuera,
             ktAntes: Infinity,
             sesenta: false,
             reversaDicha: false,
@@ -11290,7 +11297,7 @@ export class Game {
      * canta nadie de la flota —el 747-400 las mira sin cantarlas—, y se pide
      * por si lo lleva un avión que llegue. Ver `CANTOS_DE_LA_CARRERA`.
      */
-    const abierta = this.reversa.abierta >= 0.99;
+    const abierta = this.reversa.todasFuera;
     if (abierta && !c.abierta) this.cantarLoGrabado("reversers normal");
     c.abierta = abierta;
     // Los sesenta nudos del anemómetro.
@@ -21145,6 +21152,8 @@ export class Game {
           mandos.engineOn ? mandos.reversa : 0,
           this.flight.state.onGround,
           this.flight.gasDelMotor?.() ?? 0,
+          // Y cómo va cada motor: la pieza del parado no se abre.
+          this.flight.motoresAhora?.(),
         );
         if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
       }
@@ -22746,6 +22755,8 @@ export class Game {
          * un solo empuje, y el día que haya un motor parado esto ya lo enseña.
          */
         motores: this.agujasDeLosMotores(),
+        // Y la marca REV de cada uno, la misma que en el cuadro plano.
+        reversas: this.reversa.estados,
         rotuloDeMotor: cuadroDe(this.aircraft).rotulo,
         // Y lo que dice el EICAS de un motor parado. Ver `listaDelMotor`.
         mensajesDeMotor: this.mensajesDeMotor,
@@ -22889,9 +22900,10 @@ export class Game {
      */
     /*
      * Y las reversas, **donde están** y no donde está la palanca: el manguito
-     * tarda dos segundos en irse hacia la cola. Ver `world/reversas.ts`.
+     * tarda dos segundos en irse hacia la cola, y el del motor parado no se va.
+     * Ver `world/reversas.ts`.
      */
-    this.aircraftMesh.reversas?.poner(this.reversa.abierta);
+    this.aircraftMesh.reversas?.poner(this.reversa.piezas);
     // La prueba de mandos de la vuelta al avión, si se está haciendo: va por
     // `aMano`, que manda sobre lo que piden los mandos. Ver `moverLosMandos`.
     this.moverLosMandos();
@@ -23188,6 +23200,8 @@ export class Game {
          */
         ra: this.franjaDelRa(),
         motores: this.agujasDeLosMotores(),
+        // Y la marca REV de cada motor, en su instrumento. Ver `Reversa.estados`.
+        reversas: this.reversa.estados,
         // Y en el helicóptero, la VMS: el FLI, el rotor y sus turbinas. Ver `flight/vms.ts`.
         rotor: this.laVms,
       },
@@ -25582,7 +25596,8 @@ export class Game {
   private loQueCallaElDelAve(): number {
     const t = this.flight.motorTocado ?? null;
     if (t === null || this.flight.motoresAhora?.()[t.motor] !== "marcha") return 0;
-    const van = Math.max(0.05, this.flight.gasDelMotor?.() ?? 1);
+    // Lo que dan los demás, hacia delante o hacia atrás: con la reversa, la suya.
+    const van = Math.max(0.05, this.flight.gasDelMotor?.() ?? 1, this.reversa.gasDelMotor);
     return 0.5 * (1 - Math.min(1, (t.da * t.empuje) / van));
   }
 
@@ -32908,20 +32923,44 @@ export class Game {
       this.flight.gasDelMotor?.() ?? this.input.controls.throttle,
       this.reversa.gasDelMotor,
     );
-    const quiere = this.input.controls.engineOn ? 6 + daElMotor * 96 : 0;
-    const prisa = quiere > this.giroDeHelice ? 1.4 : 0.6;
-    this.giroDeHelice +=
-      (quiere - this.giroDeHelice) * (1 - Math.exp(-dt * prisa));
+    const quiere = ritmoDeLaHelice(this.input.controls.engineOn, daElMotor);
+    const antes = this.giroDeHelice;
+    const angulo = this.propellerAngle;
+    this.giroDeHelice = acercarElRitmo(this.giroDeHelice, quiere, dt);
     this.propellerAngle += dt * this.giroDeHelice;
+    /*
+     * **Y con un motor parado o tocado, cada hélice la suya**: la del parado ni
+     * se embala con la reversa ni sigue girando en bandera. Ver `GirosDeHelice`.
+     */
+    const helices = this.aircraftMesh.helices ?? [this.aircraftMesh.propeller];
+    const giros = this.girosDeHelice;
+    giros.paso(
+      dt,
+      this.giroDeHelice,
+      quiere,
+      antes,
+      angulo,
+      this.flight.motoresAhora?.(),
+      this.flight.motorTocado ?? null,
+      this.input.controls.engineOn,
+      this.flight.gasDelMotor?.() ?? this.input.controls.throttle,
+    );
+    const aparte = giros.porSeparado && helices.length === this.aircraft.motoresA.length;
     // Y deprisa, disco: ver `discoDeHelice`. Desde veinte radianes por
     // segundo empieza a verse borrosa y a cuarenta y cinco ya es un disco.
-    this.aircraftMesh.borrarHelices?.((this.giroDeHelice - 20) / 25);
+    this.aircraftMesh.borrarHelices?.(
+      aparte
+        ? helices.map((_, i) => (giros.giro(i) - 20) / 25)
+        : (this.giroDeHelice - 20) / 25,
+    );
     // Todas las que haya, cada una sobre su eje. Ver `AircraftMesh.helices`.
-    for (const h of this.aircraftMesh.helices ?? [
-      this.aircraftMesh.propeller,
-    ]) {
-      // Cada una hacia donde gira la suya: ver `signoDelGiro`.
-      h.rotation.z = signoDelGiro(this.aircraft, h.position.x) * this.propellerAngle;
+    for (let i = 0; i < helices.length; i++) {
+      const h = helices[i]!;
+      // Cada una hacia donde gira la suya: ver `signoDelGiro`. Y van de
+      // izquierda a derecha, como los motores: ver `ejesDeHelice`.
+      h.rotation.z =
+        signoDelGiro(this.aircraft, h.position.x) *
+        (aparte ? giros.angulo(i) : this.propellerAngle);
     }
     // Y los rotores del helicóptero, a las vueltas de su modelo y no con el gas:
     // si caen las vueltas, se ve. Ver `world/silueta-de-helicoptero.ts`.
@@ -38736,7 +38775,14 @@ export class Game {
       ...c,
       throttle: Math.max(da, this.reversa.gasDelMotor),
       reversa: this.reversa.empuje,
-      reversaAbierta: this.reversa.abierta,
+      reversaAbierta: this.reversa.laMasAbierta,
+      // Y la de los que van: el parado ni golpea ni ruge, y el del ave, lo suyo.
+      reversaDeLosQueVan: parteDeLaReversa(
+        this.flight.motoresAhora?.(),
+        this.flight.motorTocado ?? null,
+        this.reversa.empuje,
+      ),
+      reversaQueSeAbre: parteDeLasPiezas(this.flight.motoresAhora?.()),
     };
   }
 

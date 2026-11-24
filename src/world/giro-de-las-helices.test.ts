@@ -85,7 +85,7 @@ describe("hacia dónde gira cada hélice", () => {
    * el borde de salida delante se ve, al ralentí, girando al revés de lo que
    * dicen sus palas, y quien la mire de cerca aprende algo que no es.
    */
-  for (const id of ["jaz-20", "jaz-25", "jaz-40", "jaz-60"]) {
+  for (const id of ["jaz-20", "jaz-25", "jaz-40", "jaz-50", "jaz-60"]) {
     it(`${id}: sus palas, hechas para el giro con el que se mueven`, async () => {
       const a = AIRCRAFT.find((x) => x.id === id)!;
       const raiz = await modelo(id);

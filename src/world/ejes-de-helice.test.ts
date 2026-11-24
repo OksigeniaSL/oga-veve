@@ -48,6 +48,24 @@ describe("los ejes de hélice", () => {
     expect(ejes[0]!.position.x).toBeCloseTo(0, 2);
   });
 
+  it("y no se lleva las palancas del paso que hay en la cabina, que las juntaban", () => {
+    // El JAZ 50: sus dos palancas en el techo, entre las dos hélices.
+    const ejes = ejesDeHelice(
+      avion(
+        pieza("helice-izquierda", -2.4, 0, -2),
+        pieza("palanca-de-helice-0", -0.8, 0.4, -2),
+        pieza("pomo-de-helice-0", -0.8, 0.3, -2),
+        pieza("palanca-de-helice-1", 0.8, 0.4, -2),
+        pieza("helice-derecha", 2.4, 0, -2),
+      ),
+    );
+    expect(ejes).toHaveLength(2);
+    for (const e of ejes) {
+      expect(e.children).toHaveLength(1);
+      expect(Math.abs(e.position.x)).toBeCloseTo(2.4, 2);
+    }
+  });
+
   it("separa las dos de un bimotor, cada una sobre su motor", () => {
     const ejes = ejesDeHelice(
       avion(

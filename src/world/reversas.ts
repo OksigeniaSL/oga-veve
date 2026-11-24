@@ -19,9 +19,18 @@
  * Los dos motores de un lado y su gemelo del otro van en la misma malla, por
  * simetría, así que un vacío por estación de motor. Ver `reversa` en
  * `modelos/exterior.py`.
+ *
+ * ## Con un motor parado, vértices por lado
+ *
+ * La del parado no se abre (H82), y su manguito va en la malla del que sí. No se
+ * rehace el modelo: el vacío se desliza con la pieza que más abierta está y, **si
+ * las de su malla no van igual**, a los vértices del motor que se queda atrás se
+ * les quita lo que sobra. De quién es cada vértice lo dice su distancia al eje:
+ * la del motor más cercano. Con todos en marcha no se toca ni un vértice, y la
+ * malla es la misma de siempre y cuesta lo mismo.
  */
 
-import { Matrix3, Vector3, type Object3D } from "three";
+import { BufferAttribute, Matrix3, Matrix4, Vector3, type Mesh, type Object3D } from "three";
 
 /**
  * Cómo se llaman los vacíos de los manguitos. Es un contrato entre dos
@@ -43,6 +52,23 @@ interface Manguito {
   /** El desplazamiento abierto del todo, ya en el marco del padre. */
   readonly abierto: Vector3;
   cuanto: number;
+  /** Sus mallas, con los vértices de cada motor; `null` si no hay motores que repartir. */
+  readonly mallas: readonly MallaDeVarios[] | null;
+}
+
+/** Una malla con los manguitos de varios motores. Ver «vértices por lado». */
+interface MallaDeVarios {
+  readonly malla: Mesh;
+  /** De qué motor es cada vértice, como índice en `motoresA`. */
+  readonly de: Uint8Array;
+  /** De cuáles hay alguno. */
+  readonly motores: readonly number[];
+  /** El desplazamiento abierto del todo, en el marco de la malla. */
+  readonly abierto: Vector3;
+  /** Las posiciones del modelo y la copia que se mueve; `null` mientras no haga falta. */
+  suyas: { readonly deReposo: Float32Array; readonly ahora: BufferAttribute } | null;
+  /** Lo que se le ha quitado ya a cada motor, de 0 a 1. */
+  readonly quitado: number[];
 }
 
 export interface Reversas {
@@ -50,8 +76,8 @@ export interface Reversas {
   readonly cuantas: number;
   /** El recorrido de cada una abierta del todo, m. Para las pruebas. */
   readonly recorridos: readonly number[];
-  /** Las pone abiertas `cuanto`, de 0 a 1. */
-  poner(cuanto: number): void;
+  /** Las pone abiertas `cuanto`, de 0 a 1: todas lo mismo, o la de cada motor. */
+  poner(cuanto: number | readonly number[]): void;
 }
 
 function vector(v: unknown): Vector3 | null {
@@ -68,15 +94,105 @@ function vector(v: unknown): Vector3 | null {
  * los de hélice la llevan en las palas —ver `flight/reversa.ts`— y el
  * respaldo de cajas tampoco. Que falte un recurso no deja a nadie sin volar.
  */
-export function prepararReversas(raiz: Object3D): Reversas | null {
-  return prepararDeslizantes(raiz, REVERSA);
+export function prepararReversas(
+  raiz: Object3D,
+  motoresA: readonly number[] = [],
+): Reversas | null {
+  return prepararDeslizantes(raiz, REVERSA, motoresA);
+}
+
+/** Lo que se abre la pieza del motor `i`, de 0 a 1: todas lo mismo, o cada una lo suyo. */
+function deEseMotor(cuanto: number | readonly number[], i: number): number {
+  const v = typeof cuanto === "number" ? cuanto : (cuanto[i] ?? 0);
+  return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0;
+}
+
+/** Reparte los vértices de las mallas de un manguito entre los motores, por su x. */
+function repartir(
+  raiz: Object3D,
+  nodo: Object3D,
+  desplazamiento: Vector3,
+  motoresA: readonly number[],
+): MallaDeVarios[] {
+  const salen: MallaDeVarios[] = [];
+  const v = new Vector3();
+  nodo.traverse((o) => {
+    const malla = o as Mesh;
+    const pos = malla.isMesh ? malla.geometry.getAttribute("position") : null;
+    if (!pos) return;
+    const aRaiz = new Matrix4().copy(raiz.matrixWorld).invert().multiply(malla.matrixWorld);
+    const de = new Uint8Array(pos.count);
+    const hay = new Set<number>();
+    for (let i = 0; i < pos.count; i++) {
+      const x = v.fromBufferAttribute(pos, i).applyMatrix4(aRaiz).x;
+      let cerca = 0;
+      for (let m = 1; m < motoresA.length; m++)
+        if (Math.abs(x - motoresA[m]!) < Math.abs(x - motoresA[cerca]!)) cerca = m;
+      de[i] = cerca;
+      hay.add(cerca);
+    }
+    salen.push({
+      malla,
+      de,
+      motores: [...hay].sort((a, b) => a - b),
+      abierto: desplazamiento.clone().applyMatrix3(new Matrix3().setFromMatrix4(aRaiz.invert())),
+      suyas: null,
+      quitado: motoresA.map(() => 0),
+    });
+  });
+  return salen;
+}
+
+/** Le quita a cada motor de la malla lo que el vacío se desliza de más para él. */
+function dejarAtras(
+  m: MallaDeVarios,
+  vacio: number,
+  piezas: number | readonly number[],
+): void {
+  let cambia = false;
+  for (const i of m.motores) if (m.quitado[i] !== vacio - deEseMotor(piezas, i)) cambia = true;
+  if (!cambia) return;
+  if (m.suyas === null) {
+    /*
+     * La geometría entera se copia una vez, la primera que hace falta: la del
+     * fichero la puede compartir otro avión igual.
+     */
+    const g = m.malla.geometry.clone();
+    const pos = g.getAttribute("position");
+    const deReposo = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      deReposo[i * 3] = pos.getX(i);
+      deReposo[i * 3 + 1] = pos.getY(i);
+      deReposo[i * 3 + 2] = pos.getZ(i);
+    }
+    const ahora = new BufferAttribute(deReposo.slice(), 3);
+    g.setAttribute("position", ahora);
+    m.malla.geometry = g;
+    m.suyas = { deReposo, ahora };
+  }
+  const { deReposo, ahora } = m.suyas;
+  for (const i of m.motores) m.quitado[i] = vacio - deEseMotor(piezas, i);
+  for (let k = 0; k < m.de.length; k++) {
+    const q = m.quitado[m.de[k]!]!;
+    ahora.setXYZ(
+      k,
+      deReposo[k * 3]! - m.abierto.x * q,
+      deReposo[k * 3 + 1]! - m.abierto.y * q,
+      deReposo[k * 3 + 2]! - m.abierto.z * q,
+    );
+  }
+  ahora.needsUpdate = true;
 }
 
 /**
  * Lo mismo para cualquier pieza que se desliza por su `eje` y su `recorrido`:
  * las reversas y la puerta corredera. `null` si el modelo no trae ninguna.
  */
-export function prepararDeslizantes(raiz: Object3D, nombre: RegExp): Reversas | null {
+export function prepararDeslizantes(
+  raiz: Object3D,
+  nombre: RegExp,
+  motoresA: readonly number[] = [],
+): Reversas | null {
   raiz.updateWorldMatrix(true, true);
   const manguitos: Manguito[] = [];
   const recorridos: number[] = [];
@@ -92,20 +208,32 @@ export function prepararDeslizantes(raiz: Object3D, nombre: RegExp): Reversas | 
      * traslación y con la escala, si la hubiera.
      */
     const aPadre = o.parent.matrixWorld.clone().invert().multiply(raiz.matrixWorld);
-    const abierto = eje
-      .normalize()
-      .multiplyScalar(recorrido)
-      .applyMatrix3(new Matrix3().setFromMatrix4(aPadre));
-    manguitos.push({ nodo: o, reposo: o.position.clone(), abierto, cuanto: 0 });
+    const enElAvion = eje.normalize().multiplyScalar(recorrido);
+    const abierto = enElAvion.clone().applyMatrix3(new Matrix3().setFromMatrix4(aPadre));
+    manguitos.push({
+      nodo: o,
+      reposo: o.position.clone(),
+      abierto,
+      cuanto: 0,
+      mallas: motoresA.length > 1 ? repartir(raiz, o, enElAvion, motoresA) : null,
+    });
     recorridos.push(recorrido);
   });
   if (!manguitos.length) return null;
   return {
     cuantas: manguitos.length,
     recorridos,
-    poner(cuanto: number) {
-      const k = Number.isFinite(cuanto) ? Math.max(0, Math.min(1, cuanto)) : 0;
+    poner(cuanto) {
       for (const m of manguitos) {
+        let k = 0;
+        if (m.mallas === null) {
+          const n = typeof cuanto === "number" ? 1 : cuanto.length;
+          for (let i = 0; i < n; i++) k = Math.max(k, deEseMotor(cuanto, i));
+        } else {
+          for (const malla of m.mallas)
+            for (const i of malla.motores) k = Math.max(k, deEseMotor(cuanto, i));
+          for (const malla of m.mallas) dejarAtras(malla, k, cuanto);
+        }
         if (m.cuanto === k) continue;
         m.cuanto = k;
         m.nodo.position.copy(m.reposo).addScaledVector(m.abierto, k);

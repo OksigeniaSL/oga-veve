@@ -61,6 +61,7 @@ const COLOR_DEL_ECO: Record<Exclude<Eco, "nada">, string> = {
   rojo: PALETA.limite,
   magenta: PALETA.objetivo,
 };
+import type { EstadoDeReversa } from "../flight/reversa";
 import { lucesDeLasPatas, luzDeTren } from "../flight/tren";
 import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
 import {
@@ -262,6 +263,11 @@ export interface DatosDeCabina {
    * par y un turbofán el régimen del fan, que es con lo que se vuela de verdad.
    */
   readonly motores: readonly number[];
+  /**
+   * **Y dónde está la reversa de cada uno**, en el mismo orden: su marca REV,
+   * en su instrumento. Sin esto, ninguna. Ver `Reversa.estados`.
+   */
+  readonly reversas?: readonly EstadoDeReversa[];
   readonly rotuloDeMotor: string;
   /**
    * **Los mensajes del EICAS** de un motor parado, en su orden: el de
@@ -2566,6 +2572,7 @@ function pintarFranja(
     // El último cinco por ciento, en ámbar: la escala de `cuadro.ts`.
     g.fillStyle = PALETA.precaucion;
     g.fillRect(bx, arriba, anchoBarra, altoBarra * 0.05);
+    marcaDeReversa(g, d.reversas?.[i], bx + anchoBarra / 2, arriba + altoBarra * 0.05 + 9, 15);
     escribir(
       g,
       String(Math.round(f * 100)),
@@ -2580,6 +2587,32 @@ function pintarFranja(
     reglaDeFlapsDePie(g, 16 * k, y, 22 * k, alto - y - 34 * k, d.flaps, d.cuadro.flaps);
   reglaDeCombustibleDePie(g, 78 * k, y, 22 * k, alto - y - 56 * k, d.combustible);
   lucesDeTren(g, 12 * k, alto - 22, d.patas, d.tren, d.trenDeMorro);
+}
+
+/**
+ * **La marca REV de un motor**, en su instrumento: nada recogida, ámbar mientras
+ * su pieza se mueve y verde fuera del todo. La del cuadro plano, con pincel: ver
+ * `marcaDeReversa` en `ui/cristal.ts`. Es letra, y sale con las letras.
+ */
+function marcaDeReversa(
+  g: CanvasRenderingContext2D,
+  estado: EstadoDeReversa | undefined,
+  x: number,
+  y: number,
+  cuerpo: number,
+): void {
+  if (estado === undefined || estado === "recogida") return;
+  escribir(
+    g,
+    "REV",
+    x,
+    y,
+    `600 ${Math.round(cuerpo)}px ${FUENTE}`,
+    estado === "fuera" ? PALETA.normal : PALETA.precaucion,
+    "center",
+    // Con un filo del fondo: en la barra de par va encima de lo que se llena.
+    FONDO,
+  );
 }
 
 /** La regla de flaps de pie: la de `reglaDeFlaps` en `ui/cristal.ts` vertical. */
@@ -2682,6 +2715,7 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   for (let i = 0; i < n; i++) {
     const cx = 14 + paso * (i + 0.5);
     dialDeMotor(g, cx, cy, r, i + 1, agujas[i] ?? 0, d.motores[i] ?? 0);
+    marcaDeReversa(g, d.reversas?.[i], cx, cy + r * 0.74, Math.min(20, r * 0.3));
   }
 
   /*
