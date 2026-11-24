@@ -1226,3 +1226,10 @@ ella, más una con un motor parado y otra con el ave, sin reversa. Contra 87bbe0
 `pitot.test.ts`: los puntos de la figura, que no sube al girar, Lanzarote parado en
 toda la flota, los costados, la cara, que volando es la misma y los cantos en las
 cuatro carreras.
+
+### En pantalla
+
+En Lanzarote, en su puesto, con 030/18: el JAZ 90 con el morro al 297 y quince nudos de
+aire a 92°, la lectura en cero y la cinta en su 30, sin marcas por debajo, en el cuadro y
+en la cabina. El JAZ 60, con el aire a 26° del morro, 14 nudos leídos y la cinta en su 20;
+el JAZ 20, 13.

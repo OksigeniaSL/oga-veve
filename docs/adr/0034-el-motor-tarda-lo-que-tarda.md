@@ -666,6 +666,16 @@ con uno parado o con el ave y sin ella, iguales a 87bbe061.
 la llevan, el ave al ralentí, a seis décimas y petardeando, y la parada seca y mojada:
 más que con todos, menos que sin ella, en el eje con pie y fuera de él sin pisar.
 
+El vitest entero: 591 ficheros, 11.835 pruebas en verde, 32 saltadas.
+
+### Volado
+
+`verificar-emergencias.mjs`, JAZ 90 en Gran Canaria, Taguató: `despues`, **12 de 12**,
+del toque a parado con la reversa del motor que queda, a un metro del eje como mucho y
+con el pie a 0,86 —el del viento de allí y el de la reversa, sin separar—; y `ave` con
+`OGA_NO_AGUANTA=1`, **16 de 16**. El piloto de `despues` no tocaba el pedal después de
+tocar; ahora lleva el eje con él, como en los otros, y mira lo que se aparta.
+
 ### Lo que no
 
 - **La pieza del parado se abre en el dibujo** y REV se enciende una sola vez para
