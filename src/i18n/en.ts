@@ -1797,7 +1797,7 @@ export const EN: Dictionary = {
   "ejercicio.reventon.izquierda": "A left tire burst: right foot, and we go on",
   "ejercicio.reventon.derecha": "A right tire burst: left foot, and we go on",
   "ejercicio.reventon.tren":
-    "We leave the gear down: inside, the torn rubber could catch on something. With both engines, the airplane still climbs well",
+    "We leave the gear down: inside, the torn rubber could catch on something. With both engines, the airplane still climbs well. We tell the tower, and go back",
   "ejercicio.reventon.sacalo":
     "With a burst tire, the gear is better down: inside, the loose rubber could catch on something. Put it down, and we go back like that",
   "ejercicio.reventon.toma":
@@ -1805,7 +1805,7 @@ export const EN: Dictionary = {
   "ejercicio.reventon.bien":
     "Exercise done: with a burst tire, almost at takeoff speed, it's better to go on. You came back with the whole runway ahead, and that way calm braking is enough",
   "ejercicio.reventon.bienParado":
-    "You stopped on the runway, and stopping in time is winning too. With a burst tire the brakes do less: that's why, almost at takeoff speed, it's usually better to go on, and come back with the whole runway ahead",
+    "You stopped on the runway, and stopping is winning too. With a burst tire the brakes do less: that's why, almost at takeoff speed, it's usually better to go on, and come back with the whole runway ahead",
   "ejercicio.fallo-de-radio.antes":
     "Today we practise losing the radio. As we climb it will go quiet, on purpose. That's fine: we set a number on the transponder that tells the tower, we fly back into the circuit and watch the tower, which will talk to us with lights",
   "ejercicio.radio.callada":

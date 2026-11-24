@@ -3840,7 +3840,7 @@ export const ES_PY = {
   "ejercicio.reventon.izquierda": "Se reventó una rueda de la izquierda: pie derecho, y seguimos",
   "ejercicio.reventon.derecha": "Se reventó una rueda de la derecha: pie izquierdo, y seguimos",
   "ejercicio.reventon.tren":
-    "El tren lo dejamos afuera: adentro, la goma rota se puede enganchar. Con los dos motores, el avión sube bien igual",
+    "El tren lo dejamos afuera: adentro, la goma rota se puede enganchar. Con los dos motores, el avión sube bien igual. Avisamos a la torre, y volvemos",
   "ejercicio.reventon.sacalo":
     "Con una rueda rota, el tren va mejor afuera: adentro, la goma suelta se puede enganchar. Sacalo, y volvemos así",
   "ejercicio.reventon.toma":
@@ -3848,7 +3848,7 @@ export const ES_PY = {
   "ejercicio.reventon.bien":
     "Ejercicio hecho: con una rueda rota, casi a la velocidad de despegar, conviene seguir. Volviste con toda la pista por delante, y así alcanza con frenar con calma",
   "ejercicio.reventon.bienParado":
-    "Paraste dentro de la pista, y parar a tiempo también es ganar. Con una rueda rota se frena peor: por eso, casi a la velocidad de despegar, lo que suele convenir es seguir, y volver con toda la pista por delante",
+    "Paraste dentro de la pista, y parar también es ganar. Con una rueda rota se frena peor: por eso, casi a la velocidad de despegar, lo que suele convenir es seguir, y volver con toda la pista por delante",
   /*
    * **El fallo de radio** (H71): la presentación, la radio que se calla con
    * su 7600, lo que dice cada luz de la lámpara, las alas que contestan y los

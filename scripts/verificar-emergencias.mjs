@@ -342,6 +342,9 @@ try {
         tarjeta: false,
         pedales: 0,
         pasos: 0,
+        // El pie de antes, el que pide el viento, con el que se compara el de después.
+        pedalesAntes: 0,
+        pasosAntes: 0,
         desvio: 0,
         tirado: null,
         trenMetido: false,
@@ -459,7 +462,8 @@ try {
 
         if (modo === "reventon" && desdeElFallo !== null) {
           if (!rev.tarjeta) rev.tarjeta = !!document.querySelector(".senal:not([hidden]) .senal__tira");
-          if (s.onGround && tocoEn === null) rev.desvio = Math.max(rev.desvio, Math.abs(p.c));
+          if (s.onGround && (tramo === "carrera" || tramo === "rotar" || tramo === "parar"))
+            rev.desvio = Math.max(rev.desvio, Math.abs(p.c));
           // Lo que tira antes de que el pie haga nada: el rumbo a las ocho décimas.
           if (rev.tirado === null && ahora - desdeElFallo > 0.8) rev.tirado = error(s.heading, rev.rumbo);
           if (!s.onGround && !o.trenQueSePide()) rev.trenMetido = true;
@@ -524,6 +528,10 @@ try {
           c.aileron = acota(e * 3, -1, 1);
           c.rudder = acota(e * 4 + 3 * s.beta, -1, 1);
           c.elevator = 0;
+          if (modo === "reventon" && desdeElFallo === null && s.airspeed > 40) {
+            rev.pedalesAntes += c.rudder;
+            rev.pasosAntes++;
+          }
           if (modo === "reventon" && desdeElFallo !== null) {
             // Ocho décimas sin tocar nada, lo que se tarda en notarlo; y después, el eje con el pie.
             if (ahora - desdeElFallo < 0.8) {
@@ -764,13 +772,15 @@ try {
                * con la reversa, que no es de las ruedas: «gentle wheel
                * braking», «minimum braking» (AAIB, G-BZAY).
                */
-              const rumbo = error(h - Math.atan(p.c * 0.02), s.heading);
+              const rumbo = error(h - Math.atan(p.c * 0.008), s.heading);
               c.rudder = acota(rumbo * 4 + 3 * s.beta, -1, 1);
               c.aileron = 0;
               c.brakes = 0.4;
               c.reversa = 1;
               c.elevator = 0;
               rev.alVolver = {
+                alTocar: rev.alVolver?.alTocar ?? Math.abs(p.c),
+                c: Math.abs(p.c),
                 desvio: Math.max(rev.alVolver?.desvio ?? 0, Math.abs(p.c)),
                 pedal: Math.max(rev.alVolver?.pedal ?? 0, Math.abs(c.rudder)),
                 a: p.a,
@@ -847,7 +857,14 @@ try {
            * 3,2 m/s, con la instructora diciendo «lento».
            */
           const enLaFinal =
-            modo === "morro" && ej?.fase !== "armada" && !ej?.morro?.extension ? 80 * 0.514444 : vref * 1.1;
+            /*
+             * Y en `reventon`, con los flaps de despegue hasta los cuatro mil
+             * metros, a la del circuito: a 1,1 de la Vref con ellos el avisador
+             * de pérdida sonaba en la final larga.
+             */
+            modo === "reventon" && u > 4200
+              ? vref * 1.35
+            : modo === "morro" && ej?.fase !== "armada" && !ej?.morro?.extension ? 80 * 0.514444 : vref * 1.1;
           /*
            * Y sin radio, nunca a fondo en la final: a fondo y subiendo es
            * irse al aire para la torre (`seVaDeVerdad`), que retira el
@@ -1325,13 +1342,19 @@ try {
         `tarjeta ${r.rev.tarjeta} · ${pedido.filter((k) => /reventon\.(izquierda|derecha)/.test(k)).join(" · ") || "no dicho"}`,
     );
     const pieMedio = r.rev.pasos ? r.rev.pedales / r.rev.pasos : 0;
+    const pieDeAntes = r.rev.pasosAntes ? r.rev.pedalesAntes / r.rev.pasosAntes : 0;
     comprobar(
       "el avión tira hacia la reventada, y el eje se sostiene con el otro pie",
-      (izq ? r.rev.tirado < 0 : r.rev.tirado > 0) &&
-        (PARAR || (izq ? pieMedio > 0 : pieMedio < 0)) &&
+      /*
+       * El pie de después contra el de antes, que es el del viento: hacia el
+       * otro lado de la reventada. Parando a fondo no se mira, que la pata sana
+       * frena más y tira hacia el suyo. Lo que tira en ocho décimas se apunta
+       * y no se exige: con rachas es del mismo orden.
+       */
+      (PARAR || (izq ? pieMedio > pieDeAntes : pieMedio < pieDeAntes)) &&
         r.rev.desvio < 10 &&
         ej?.reventon?.enElModelo === (izq ? -1 : 1),
-      `tiró ${grados(r.rev.tirado ?? NaN)} en ocho décimas · pie medio ${pieMedio.toFixed(3)}, máximo ${r.pedalMaximo.toFixed(2)} · ` +
+      `tiró ${grados(r.rev.tirado ?? NaN)} en ocho décimas · pie medio ${pieMedio.toFixed(3)} (antes ${pieDeAntes.toFixed(3)}), máximo ${r.pedalMaximo.toFixed(2)} · ` +
         `lo más lejos del eje ${r.rev.desvio.toFixed(1)} m · en el modelo ${ej?.reventon?.enElModelo}`,
     );
     if (PARAR) {
@@ -1386,9 +1409,13 @@ try {
       );
       comprobar(
         "el eje sostenido con el pie y el freno suave hasta parar en la pista",
-        r.rev.alVolver && r.rev.alVolver.desvio < 15 && r.rev.alVolver.a < r.largo && ej?.cierre === "vuelta",
+        r.rev.alVolver &&
+          r.rev.alVolver.desvio < r.rev.alVolver.alTocar + 6 &&
+          r.rev.alVolver.c < 8 &&
+          r.rev.alVolver.a < r.largo &&
+          ej?.cierre === "vuelta",
         r.rev.alVolver
-          ? `lo más lejos del eje ${r.rev.alVolver.desvio.toFixed(1)} m · pie hasta ${r.rev.alVolver.pedal.toFixed(2)} · ` +
+          ? `tocó a ${r.rev.alVolver.alTocar.toFixed(1)} m del eje, lo más lejos ${r.rev.alVolver.desvio.toFixed(1)} y parado a ${r.rev.alVolver.c.toFixed(1)} · pie hasta ${r.rev.alVolver.pedal.toFixed(2)} · ` +
               `parado a ${Math.round(r.rev.alVolver.a)} m del umbral, de ${Math.round(r.largo)} · cierre ${ej?.cierre}`
           : "no llegó a la pista",
       );

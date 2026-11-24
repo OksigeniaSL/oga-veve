@@ -26361,12 +26361,12 @@ export class Game {
     /*
      * Y en el del tren de nariz, no: «avisamos a la torre» ya va en su
      * «tampoco», que se pide en el mismo instante, y un paso nuevo retiraría
-     * ese de la cola. Un suceso, una voz.
+     * ese de la cola. Un suceso, una voz. Y en el del reventón, tampoco: va en
+     * «el tren lo dejamos afuera», y pedida aparte esperaba detrás de la torre
+     * más de lo que aguanta y caducaba (H74).
      */
-    if (!laInstructoraLoExplica(this.tier.avisos) || averia === "morro") return;
-    // En el del reventón, detrás de lo del tren: un paso nuevo lo retiraría de la cola.
-    if (averia === "neumatico") this.frasesDelReventon.pedir("ejercicio.declarar");
-    else this.decirDelEjercicio("ejercicio.declarar", "normal");
+    if (laInstructoraLoExplica(this.tier.avisos) && averia !== "morro" && averia !== "neumatico")
+      this.decirDelEjercicio("ejercicio.declarar", "normal");
   }
 
   /**
