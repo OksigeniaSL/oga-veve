@@ -1,7 +1,7 @@
 /**
  * **Tenerife Sur: la plataforma entera y el APROAR que publica** (ADR 0025, enmienda H88).
  *
- * OpenStreetMap dibuja la plataforma en catorce islas, y la losa del juego se quedaba a treinta metros de
+ * OpenStreetMap dibuja la plataforma en quince islas, y la losa del juego se quedaba a treinta metros de
  * la fachada y sin pavimento en las dos puntas: del S41 al G48 y del R19 y el G20 el tractor no sacaba
  * bien a nadie. La ficha lleva la pieza entera, trazada sobre la ortofoto del PNOA, y la casilla 20.3 del
  * AIP dice hacia dónde queda el morro: «nosing to the threshold in use and leaving apron gates "D" free».
@@ -70,11 +70,11 @@ describe("la plataforma de Tenerife Sur, de una pieza", () => {
     const { fuente, polygon, surface } = aero.plataformasDeducidas![0]!;
     expect(surface).toBe("concrete");
     expect(fuente).toMatch(/^Deducida: .*AIP España AD 2-GCTS PDC 1\.1 \(WEF 11-JUN-26\).*ortofoto PNOA .*Instituto Geográfico Nacional \(CC BY 4\.0/);
-    // Las catorce islas de OpenStreetMap —y la quince, que es otra— están en la ficha y caen dentro, a menos del metro y medio del borde.
-    expect(aero.aprons.filter((a) => a.polygon !== polygon).length).toBeGreaterThanOrEqual(14);
+    // Las quince islas de OpenStreetMap siguen en la ficha, y caen dentro: la del R19, con dos metros por fuera del borde que se ve en la foto.
+    expect(aero.aprons.filter((a) => a.polygon !== polygon)).toHaveLength(15);
     for (const a of aero.aprons)
       for (const v of a.polygon)
-        expect(dentro(v, polygon) || aLaPolilinea(v, [...polygon, polygon[0]!]) < 1.5, `${v}`).toBe(true);
+        expect(dentro(v, polygon) || aLaPolilinea(v, [...polygon, polygon[0]!]) < 2.5, `${v}`).toBe(true);
     // Y con ella no hace falta coser ninguna isla a su calle.
     expect(aero.aprons).toHaveLength(16);
   });
@@ -235,33 +235,33 @@ describe("la línea que llega a la curva de su calle", () => {
     for (let i = 1; i < puntos.length; i++) largo += Math.hypot(puntos[i]![0] - puntos[i - 1]![0], puntos[i]![1] - puntos[i - 1]![1]);
     return { a, b, puntos, largo, coste: largo, ref: a === 0 ? "I" : "D", pista: false, estrecho: false };
   };
-  const tramos = [tramo(0, 1, [[-200, 0], [0, 0], [40, -10], [55, -30], [60, -60]]), tramo(1, 2, [[60, -60], [60, -260]])];
+  const tramos = [tramo(0, 1, [[-200, 0], [0, 0], [20, -3], [38, -12], [50, -26], [57, -42], [60, -60]]), tramo(1, 2, [[60, -60], [60, -260]])];
   const grafo: Grafo = { nudos, tramos, desde: nudos.map((_, n) => tramos.flatMap((t, k) => (t.a === n || t.b === n ? [k] : []))) };
   const alFinal: Punto = [60, -250];
   const al = (x: number) => porLaRectaDeSuCalle(grafo, [x, 100], [alFinal], [0, -1], [[1, 0]], { maxSalto: 300 })[0] ?? null;
 
   it("se empuja hasta la prolongación de la recta y, por ella, hasta dentro de la calle", () => {
-    const r = al(57)!;
+    const r = al(58)!;
     expect(r.vuelveEn).toBe(2);
-    expect(r.puntos.slice(0, 4)).toEqual([[57, 100], [57, 0], [-32, 0], [0, 0]]);
+    expect(r.puntos.slice(0, 4)).toEqual([[58, 100], [58, 0], [-32, 0], [0, 0]]);
     expect(r.letras).toEqual(["I", "D"]);
-    // Cien metros de espaldas por la línea, ochenta y nueve por la calle y vuelta hasta el final.
+    // Cien metros de espaldas por la línea, noventa por la calle y vuelta hasta el final.
     const vuelta = 32 + (tramos[0]!.largo - 200) + 190;
-    expect(r.largo).toBeCloseTo(100 + 57 + 32 + vuelta, 0);
+    expect(r.largo).toBeCloseTo(100 + 58 + 32 + vuelta, 0);
   });
 
   it("no si llega atravesada a la recta, si el sentido es el otro o si no hay recta a la que torcer", () => {
     expect(al(-60)).toBeNull();
-    expect(porLaRectaDeSuCalle(grafo, [57, 100], [alFinal], [0, -1], [[-1, 0]], { maxSalto: 300 })).toEqual([null]);
-    const corta = [tramo(0, 1, [[20, 0], [40, -10], [55, -30], [60, -60]]), tramos[1]!];
-    expect(porLaRectaDeSuCalle({ ...grafo, tramos: corta }, [57, 100], [alFinal], [0, -1], [[1, 0]], { maxSalto: 300 })).toEqual([null]);
+    expect(porLaRectaDeSuCalle(grafo, [58, 100], [alFinal], [0, -1], [[-1, 0]], { maxSalto: 300 })).toEqual([null]);
+    const corta = [tramo(0, 1, [[20, -3], [38, -12], [50, -26], [57, -42], [60, -60]]), tramos[1]!];
+    expect(porLaRectaDeSuCalle({ ...grafo, tramos: corta }, [58, 100], [alFinal], [0, -1], [[1, 0]], { maxSalto: 300 })).toEqual([null]);
     // Ni si la línea no encuentra calle.
     expect(al(400)).toBeNull();
   });
 
   it("ni cruzando lo que no es pavimento", () => {
     const conHueco: Grafo = { ...grafo, rodable: (p) => !(p[0] > 5 && p[0] < 50 && Math.abs(p[1]) < 4) };
-    expect(porLaRectaDeSuCalle(conHueco, [57, 100], [alFinal], [0, -1], [[1, 0]], { maxSalto: 300 })).toEqual([null]);
+    expect(porLaRectaDeSuCalle(conHueco, [58, 100], [alFinal], [0, -1], [[1, 0]], { maxSalto: 300 })).toEqual([null]);
   });
 
   it("y en los campos cuyo AIP no manda dejar libres las puertas, no se mira", async () => {

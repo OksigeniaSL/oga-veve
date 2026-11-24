@@ -2332,8 +2332,9 @@ export function porLaRectaDeSuCalle(
     for (let k = 1; k < atras.length; k++) {
       const [q, p] = [atras[k - 1]!, atras[k]!];
       const h = unitario(p, q);
-      if (!h || Math.hypot(q[0] - p[0], q[1] - p[1]) < RECTA_PARA_EMPUJAR) continue;
-      if (Math.abs(punto(h, u)) > LLEGA_ATRAVESADO || !sentido.some((x) => punto(h, x) > 0)) break;
+      // La curva todavía: la recta es la primera que la línea cruza atravesada.
+      if (!h || Math.hypot(q[0] - p[0], q[1] - p[1]) < RECTA_PARA_EMPUJAR || Math.abs(punto(h, u)) > LLEGA_ATRAVESADO) continue;
+      if (!sentido.some((x) => punto(h, x) > 0)) break;
       // Donde la línea del puesto cruza la prolongación de la recta: `origen + u·d = q + h·s`.
       const det = u[1] * h[0] - u[0] * h[1];
       const w: Punto = [q[0] - origen[0], q[1] - origen[1]];
