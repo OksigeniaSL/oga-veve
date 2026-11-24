@@ -2792,3 +2792,22 @@ saltadas y una pendiente. `tsc --noEmit -p .`, en verde.
 - **Lo que ya está sonando se acaba**: quien se va en mitad del «autorizado
   para aterrizar» oye el final de la frase con la lámpara ya apagada. Cortarla
   sería un sobresalto, y no hay orden que la contradiga.
+
+## Enmienda H81 (24-11-2026): al que ya está alineado no se le retiene por ti
+
+Con el pavimento nuevo de Los Rodeos (ADR 0025, H81) cambian los horarios del
+tráfico, y de las 48 llegadas de `circuito-con-plan-a-otra-isla.test.ts` una
+acababa al aire. Trazada segundo a segundo: EC-MLA se alinea a los 832 s, sin
+nadie a la vista; el JAZ 20 entra en el circuito a los 840, a doscientos cuarenta
+segundos del umbral; y desde los 845 la torre lo retiene en la cabecera, porque
+no se habría ido a tiempo para el permiso del JAZ 20 (`antesDeTuPermiso`, Doc
+4444, 8.9.6.1.7). Lo suelta a los 990, con el JAZ 20 ya en la final, y a los 1.050
+lo manda al aire con la pista ocupada.
+
+Ese margen es para no meter a nadie delante de ti. Con uno ya encima de la pista
+hace lo contrario: retenerlo te la tapa. Para el que está alineado, la salida se
+da si se habrá ido antes de que cruces el umbral, sin el margen del permiso. El
+alinearse sigue con él.
+
+Con la regla: 0 de 48 al aire y ninguna salida en la pista en el minuto de antes
+de la final; y las 35 pruebas de tráfico y turno de pista, 494 en verde.
