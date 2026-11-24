@@ -842,14 +842,14 @@ export class CoefficientFlightModel implements FlightModel {
   /**
    * **Lo que le falta al motor tocado** para dar lo que dan los demás, N, en
    * este paso: su palanca va por debajo, o petardea. Cero si está parado, que
-   * ya no da nada.
+   * ya no da nada. Su giro tarda con este aire lo que el de los demás (`sigma`).
    */
-  private loQueLeFalta(pedido: number, cadaUno: number, cadaUnoLleno: number, dt: number): number {
+  private loQueLeFalta(pedido: number, cadaUno: number, cadaUnoLleno: number, dt: number, sigma: number): number {
     const t = this.tocado;
     if (t === null || this.motores[t.motor] !== "marcha") return 0;
     const suyo = Math.min(pedido, t.tope);
     if (t.giro === null) t.giro = giroAsentado(this.aircraft, suyo);
-    else avanzarGiro(t.giro, this.aircraft, suyo, dt);
+    else avanzarGiro(t.giro, this.aircraft, suyo, dt, sigma);
     t.da = gasQueDa(t.giro, this.aircraft);
     t.petardeo.paso(dt, t.da, t.umbral);
     return cadaUno - t.da * t.petardeo.empuje * cadaUnoLleno;
@@ -1617,7 +1617,7 @@ export class CoefficientFlightModel implements FlightModel {
      */
     let leFalta = 0;
     if (this.tocado !== null && controls.engineOn && n > 1) {
-      leFalta = this.loQueLeFalta(pedido, cadaUno, empujeLleno(ac, density, speed) / n, dt);
+      leFalta = this.loQueLeFalta(pedido, cadaUno, empujeLleno(ac, density, speed) / n, dt, density / SEA_LEVEL_DENSITY);
       thrust -= leFalta;
     }
     // Se guarda para el combustible, que gasta por el empuje que se da y no
