@@ -64,7 +64,9 @@
  *   que la boca tire en la cola (ADR 0033, H67). Con `OGA_PARAR=1` para en la
  *   pista en vez de seguir, que también está bien hecho. Con `OGA_METE_TREN=1`
  *   mete el tren al volar y lo saca cuando se lo cuentan. Con `OGA_FOTOS=dir`
- *   deja ahí las tarjetas.
+ *   deja ahí las tarjetas. Vuela en calma (`OGA_VIENTO` para otro, «025/20»):
+ *   en Gando, con sus veinte nudos y sus rachas, el pie del viento es tan grande
+ *   como el de la rueda y no se sabe de quién es.
  *
  * **Las voces que no están grabadas no suenan** —ver `decirDelEjercicio` en
  * `game.ts`—, y el juego apunta cada una que se calla en `cantados`. Así que
@@ -132,6 +134,8 @@ const PISTA_OCUPADA = MODO === "radio" && process.env.OGA_PISTA_OCUPADA === "1";
 const PARAR = MODO === "reventon" && process.env.OGA_PARAR === "1";
 /** Con `OGA_METE_TREN=1`, en `reventon` se mete el tren al volar, y se saca cuando se cuenta por qué. */
 const METE_TREN = MODO === "reventon" && process.env.OGA_METE_TREN === "1";
+/** El viento del reventón, en calma si no se dice otro: lo que tira es la rueda y no la racha. */
+const VIENTO = MODO === "reventon" ? (process.env.OGA_VIENTO ?? "000/00") : null;
 /** Dónde dejar las fotos de las tarjetas, si se piden. */
 const FOTOS = MODO === "reventon" ? process.env.OGA_FOTOS : undefined;
 const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
@@ -201,6 +205,7 @@ try {
   await page.goto(
     `${BASE}/?escenario=${ESCENARIO}&hora=12&avion=${AVION}&tramo=${TRAMO}` +
       `&ejercicio=${EJERCICIO}&teselas=0&meteo=` +
+      (VIENTO ? `&viento=${VIENTO}` : "") +
       (AMARRADA ? "&pasajeros=1&filas=1,0&bodegas=44,0&amarradas=1,1" : ""),
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
@@ -1346,12 +1351,13 @@ try {
     comprobar(
       "el avión tira hacia la reventada, y el eje se sostiene con el otro pie",
       /*
-       * El pie de después contra el de antes, que es el del viento: hacia el
-       * otro lado de la reventada. Parando a fondo no se mira, que la pata sana
-       * frena más y tira hacia el suyo. Lo que tira en ocho décimas se apunta
-       * y no se exige: con rachas es del mismo orden.
+       * Lo que se va en ocho décimas sin tocar nada, y el pie de después contra
+       * el de antes: hacia el otro lado de la reventada. Con viento no se
+       * exige, que una racha es del mismo orden; ni el pie, parando a fondo,
+       * que la pata sana frena más y tira hacia el suyo.
        */
-      (PARAR || (izq ? pieMedio > pieDeAntes : pieMedio < pieDeAntes)) &&
+      (VIENTO !== "000/00" || (izq ? r.rev.tirado < 0 : r.rev.tirado > 0)) &&
+        (VIENTO !== "000/00" || PARAR || (izq ? pieMedio > pieDeAntes : pieMedio < pieDeAntes)) &&
         r.rev.desvio < 10 &&
         ej?.reventon?.enElModelo === (izq ? -1 : 1),
       `tiró ${grados(r.rev.tirado ?? NaN)} en ocho décimas · pie medio ${pieMedio.toFixed(3)} (antes ${pieDeAntes.toFixed(3)}), máximo ${r.pedalMaximo.toFixed(2)} · ` +

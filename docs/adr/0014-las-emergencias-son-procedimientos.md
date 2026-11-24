@@ -1597,3 +1597,277 @@ casos, en el ADR 0029, enmienda H73; aquí, lo que toca al fallo de radio:
   que son irse la veía pasar de roja a verde.
 
 Sin frases nuevas. La prueba, `flight/permiso-de-una-aproximacion.test.ts`.
+
+## Enmienda H74 (24-11-2026): el reventón en la carrera
+
+### El caso
+
+Del catálogo del #90 faltaba, del despegue, esto: «**Reventón de neumático.**
+Un golpe seco, el avión tira hacia un lado y hay que mantener el eje con el
+timón. Y complica la decisión de V1: con un neumático menos, frenar es mucho
+más largo».
+
+### De dónde sale el procedimiento
+
+Leídas, no de memoria:
+
+- **FAA y la industria, *Takeoff Safety Training Aid***, sección 2, *Pilot
+  Guide to Takeoff Safety* (la copia de `faa.gov`, de 2007), 2.3.5.3.4,
+  «Wheels, Tires, and Brakes», pp. 2.25 a 2.27. Es el documento que anuncia la
+  **AC 120-62** (12-9-1994), que en su apartado 8 b (3), p. 9, pide practicar en
+  el simulador «appropriate crew responses for engine failure, tire failure,
+  […] in both the high and low speed regimes».
+  - **Cómo se nota** (p. 2.26): «A tire burst may be loud enough to be confused
+    with an engine compressor stall, may just be a loud noise, or may not be
+    heard. A tire failure may not be felt at all, may cause the airplane to
+    pull to one side, or can cause the entire airplane to shake and shudder».
+  - **Despacio se para** (p. 2.26): «If a tire failure is suspected at fairly
+    low speeds, it should be treated the same as any other rejectable failure
+    and the takeoff should be rejected promptly». Y al parar, «directional
+    control may be difficult» y «the crew should not relax from a maximum
+    effort RTO until the airplane is stopped on the pavement».
+  - **Deprisa se sigue** (p. 2.26): «Rejecting a takeoff from high speeds with
+    a failed tire is a much riskier proposition, especially if the weight is
+    near the Field Limit Weight. The chances of an overrun are increased simply
+    due to the loss of braking force from one wheel. If additional tires should
+    fail during the stop attempt, the available braking force is even further
+    reduced. In this case, it is generally better to continue the takeoff». La
+    figura 17 (p. 2.27), con la pista justa y parando desde V1 con reversa: se
+    sale de 300 a 500 pies, a 40-60 nudos; siguiendo, pasa el final a unos 150
+    pies.
+  - **Hasta dónde** (p. 2.27): «it is not a straightforward issue to define
+    when a takeoff should be continued or rejected after a suspected tire
+    failure. It is fairly obvious however, that an RTO initiated at high speed
+    with a suspected tire failure is not a preferred situation», y la de
+    McDonnell Douglas: «a policy of not rejecting a takeoff for a suspected tire
+    failure at speeds above V1−20 knots».
+  - **Dirección** (p. 2.26): «Failed tires do not in themselves usually create
+    directional control problems»; la pierden los trozos que salen disparados.
+  - **El tren** (p. 2.26): «leaving the gear down after a suspected tire failure
+    will not jeopardize the aircraft if all engines are operating. […] The
+    decision to retract the gear with a suspected tire problem should be in
+    accordance with the airline's/manufacturer's recommendations».
+  - **La vuelta** (pp. 2.26 y 2.27): menos peso y menos velocidad, la
+    tripulación preparada, y «most important, […] the entire runway will be
+    available for the stop maneuver instead of perhaps, as little as 40% of it».
+- **NTSB, AAR-10/02** (Learjet 60, Columbia), p. 36, que cita lo mismo; y p. 69:
+  con dos ruedas por eje, perder una «can increase the load on the remaining
+  properly inflated tire on that axle to a factor of about 1.2».
+- **AAIB, *Bulletin* 1/2003, G-BZAY** (Avro 146-RJ100, Gatwick, 8-5-2002), un
+  reventón de verdad en la carrera: un ruido y una vibración que se oían atrás y
+  no en la cabina de mando, y un temblor al rotar (pp. 1 y 2). Metieron el tren y **los restos del
+  neumático no dejaron cerrar la compuerta y la dañaron** (p. 6); al volver,
+  «landing was to be made using minimum braking» y «gentle wheel braking»
+  (p. 3). Y aquí no coincide con lo de arriba: lo recogieron otra vez para que
+  la goma suelta no golpeara en el aire, y el informe lo da por entendido
+  (p. 7), con «normally […] having successfully lowered the landing gear, it
+  remains down».
+- **14 CFR 25.729 (f)**: lo que va en el hueco del tren y hace falta para seguir tiene que estar protegido de «a
+  bursting tire» y de «a loose tire tread»; y **25.733 (c)**, el neumático de
+  una pata de dos, para 1,07 veces su carga, menos que ese 1,2: es por lo que la
+  guía avisa de que pueden reventar más al parar.
+
+**Lo que no se ha leído:** el manual del E170, que no está en línea. La guía deja
+lo del tren en lo que diga el fabricante; se enseña **dejarlo fuera**, que es lo
+que la guía da por seguro con los dos motores, y lo que evita lo del G-BZAY. Y
+«no meter el tren» como lista de otro avión solo se ha visto citado en foros:
+no entra.
+
+### El avión, el peldaño y el momento
+
+- **El JAZ 90**, de la clase del E170: la guía es de reactores de transporte, y
+  en él una rueda principal es una de cuatro. En el JAZ 120, de dieciséis,
+  apenas se notaría; el JAZ 110 no tiene sus ruedas en la ficha. Los de pistón no
+  deciden con V1. La ficha lleva `ruedasPrincipales`, cuántas y a qué media vía,
+  las de su dibujo (`VIA` en `modelos/jaz-90-arai.py`); sin ella no se ofrece.
+- **Desde Taguató**, que es donde el #90 pone «V1, fallo asimétrico, regreso»: el
+  reventón es una pregunta sobre V1 y un regreso declarado. El texto del #90 no
+  lo nombra en un peldaño; el «catálogo entero» es el de Ruvichá, y ahí también
+  está.
+- **A dieciocho nudos de V1**: dentro de los veinte en que se recomienda seguir
+  y todavía antes de V1, que es donde está la pregunta. Con las V del JAZ 90,
+  cinco segundos antes de rotar.
+
+### El ejercicio
+
+`reventon`, en `flight/ejercicios.ts`: la lección de dar una vuelta y una avería
+nueva, `que: "neumatico"`, con su `Momento`: en la carrera, a `aFaltaDe` de V1.
+
+1. **La instructora lo presenta** antes de soltar frenos, con el dibujo.
+2. **El golpe**: seco, grave y corto (`golpeDeRueda`), por debajo de lo que suena
+   un calzo y por el bus que se agacha cuando alguien habla. Sin alarma: ese
+   avión no lleva ninguna. El traqueteo de la pista, al doble.
+3. **Sin leer**: la tarjeta del avión por detrás con la rueda de ese lado
+   aplastada y la flecha de hacia dónde tira, que se mueve; y al segundo y medio,
+   el pedal que se pisa, el del otro lado. La instructora: «se reventó una rueda
+   de la izquierda: pie derecho, y seguimos», una frase corta por lado.
+4. **Se decide.** Si para en la pista sin haber volado, se cierra ahí, felicitado
+   y con los bomberos a mirar los frenos; «parado» si no llegó a V1 —cuenta en el
+   cuaderno como parar a tiempo— y «paradoTrasV1» si llegó, con la misma frase.
+   Nadie le pide parar ni le dice que hizo mal.
+5. **Si sigue**, al volar de verdad, el tren se queda fuera y se cuenta por qué;
+   el juego no pide meterlo en ese vuelo (`trenSeQuedaFuera`). Si se mete igual,
+   se cuenta una vez y se invita a sacarlo.
+6. **PAN PAN** a los cuatrocientos pies, «burst tire, returning», con la torre
+   contestando, la prioridad y, en la final, los bomberos de ese aeródromo.
+7. **La toma se cuenta en la final**, y al tocar vuelve la tarjeta del pie.
+8. **El cierre**, parado en la pista: `ejercicio.reventon.bien`.
+
+Los pasos valen hasta el siguiente o el cierre (`valeHastaElPasoSiguiente`),
+menos la del golpe, que pide el pie en el instante, y van en fila
+(`FrasesEnFila`), como las de la H70b y la H71.
+
+### El modelo
+
+En `fdm.ts`, con `ponerNeumaticoReventado`, y solo en el avión con
+`ruedasPrincipales`:
+
+- **Roza**: un décimo de lo que carga su pata (`ROCE_DEL_REVENTADO`), cinco veces
+  lo que rueda una sana. **Sin fuente leída.** Queda entre las dos cosas que sí
+  dice la guía: se va a un lado si no se hace nada, y se sostiene con poco pie.
+  Y mucho más arriba no puede: con 0,245 el roce devolvería todo lo que se pierde
+  de freno y parar costaría lo mismo que con las cuatro, que es lo contrario de lo
+  que dice.
+- **Frena menos**: falta el freno de una rueda, un cuarto de lo que dan las
+  cuatro con el pie a fondo.
+- **Y tuerce**: las dos fuerzas van a 2,55 m del eje. Rodando y con poco freno
+  tira hacia la reventada; a fondo, la pata sana frena más y tira hacia la otra.
+  Por eso se frena suave y parejo.
+- **La ayuda del timón en tierra no sostiene el rumbo** con una rueda reventada
+  (`timonEnTierra`): en Taguató ponía el pie ella sola y el avión no se iba a
+  ningún lado, que era quitarle el ejercicio a quien vuela. El volante sigue
+  dando el timón, que es con lo que lo lleva quien no tiene pedales.
+- **El autofreno** cuenta con las dos cosas: pide su deceleración y la da.
+
+Medido en la mesa, en llano y a su masa:
+
+| | con las cuatro | con una reventada |
+|---|---|---|
+| De 122 a 152 nudos, a fondo | 4,7 s, 333 m | 5,0 s, 354 m |
+| Esos segundos sin tocar nada | en el eje | 2,9 m y 0,85° yéndose |
+| Y con el pie en el eje | — | 0,5 m, pedal hasta 0,05 |
+| Parar desde 140 nudos, frenos a fondo, sin reversa | 520 m | 597 m; pedal hasta 0,17 (sin pie, a 32 m del eje) |
+| Parar desde 140, a fondo y con reversa | 395 m | 438 m |
+| Parar desde 115, frenos a 0,4 | 766 m | 763 m, casi sin pie |
+| Rodar desde 115 sin frenos ni pie | en el eje | 313 m fuera |
+
+Lo de la figura 17 —salirse de 300 a 500 pies— no se reproduce: es de un avión
+con la pista justa y unos frenos que no son los de este, y el juego no baja la V1
+por la reventada, como no la baja ningún piloto en la carrera.
+
+**Neutral al bit sin el ejercicio**: `reventado` es `null` y cada cuenta nueva va
+detrás de ese `null`. Comprobado huella a huella contra 7b60ea6d, posición,
+velocidad, orientación, ritmos y velocidad del aire de **cada paso**: los ocho
+aviones, 60 finales con rachas hasta veinticinco segundos después de tocar
+—frenos a fondo, a medias y autofreno, con y sin reversa y con y sin pie— y 120
+carreras con rachas y viento cruzado, la mitad abortadas a fondo, en Tukã, Taguató
+y Taguató Ruvichá por turno. Las dieciséis huellas, iguales. **El control**: un
+empujón de 1e-15 rad/s en un paso de una carrera cambia las ocho de las carreras
+y ninguna de las finales.
+
+### El banco
+
+`verificar-emergencias.mjs reventon`, con el JAZ 90 en Taguató. El piloto del
+banco no toca nada ocho décimas, sostiene el eje con el pie, sigue, no mete el
+tren, da el circuito con él fuera, toma y frena a cuatro décimas, por el eje. A
+la velocidad de verdad lo que se dice —del golpe a la llamada, y la final—, y a
+cuatro por uno el circuito. Con `OGA_PARAR=1` para en la pista; con
+`OGA_METE_TREN=1` mete el tren al volar y lo saca cuando se lo cuentan;
+`OGA_MOTOR` elige el lado y `OGA_FOTOS` deja las tarjetas. Mira:
+
+- que se presente y que reviente rodando, dentro de los veinte nudos de V1;
+- el golpe, su tarjeta en pantalla y la frase del lado que toca;
+- hacia dónde se va en ocho décimas sin tocar nada, el pie del otro lado y el eje
+  a menos de diez metros hasta irse del suelo, con la rueda en el modelo. En
+  calma, que es como vuela (`OGA_VIENTO` para otro viento);
+- que el tren se quede fuera, se cuente y **nadie pida meterlo**;
+- PAN PAN con la torre contestando, la prioridad y los bomberos;
+- la toma contada en la final, en la pista, y el eje sostenido hasta parar sin
+  alejarse de donde se tocó;
+- sin percance, y el cierre con `ejercicio.reventon.bien` (o `bienParado`);
+- y **nada del ejercicio tirado por la boca** (ADR 0033, enmienda H67).
+
+### Comprobado
+
+- **La primera tirada**, en Gran Canaria con la rueda izquierda y las voces sin
+  grabar, **10 de 13**. Reventó a 101 nudos con V1 a 119; la tarjeta y la frase
+  de la izquierda; «V one» y «rotate» en su sitio; el tren fuera y nadie pidió
+  meterlo; PAN PAN contestado (`torre.canario.panpan`), tres camiones; tocó a
+  190 m del umbral cayendo 1,6 m/s; cierre «vuelta» con `ejercicio.reventon.bien`.
+  Los tres rojos:
+  - **`ejercicio.declarar` caducó una vez** esperando detrás de la torre —se
+    volvió a pedir y se dijo—: ahora «avisamos a la torre» va en la frase del
+    tren, como en el «tampoco» de la H70. Un suceso, una voz.
+  - **El eje en la carrera**, del banco: los doce metros eran los de la toma, que
+    se contaban como carrera; rodando, la traza no pasa de dos. Y lo que tira en
+    ocho décimas, tres centésimas de grado con rachas y viento cruzado, no se
+    puede exigir con ese viento.
+  - **El eje al tocar**, del banco: tocó a doce metros del eje en la racha y su
+    palanca pedía el pedal entero. Se sostiene con menos.
+
+  Y la final larga, a 1,1 de la Vref con los flaps de despegue, hacía sonar el
+  avisador de pérdida: va a la del circuito hasta los cuatro mil metros.
+- **Las tarjetas**, en las fotos de esa tirada: la del golpe, con la rueda
+  aplastada y la flecha a la izquierda, y la del pedal derecho, segundo y medio
+  después. La ficha del hangar se miró dibujada aparte, sin navegador.
+- `tsc --noEmit -p .`, en verde antes de cada commit, y **el vitest entero**, con
+  el código terminado: 586 de 586 ficheros y 11.685 pruebas en verde, 32
+  saltadas y una por hacer. Dentro, `neumatico-reventado.test.ts` —las ruedas del
+  dibujo, el lado al que tira, el poco pie, la ayuda que no lo sostiene y el
+  volante que sí, la parada más larga, el freno suave y el de a fondo, el
+  autofreno y el modelo de siempre al quitarla— y las nuevas de
+  `practica.test.ts` y `boca.test.ts`.
+- **La segunda, con los arreglos y la rueda derecha, 12 de 13**: reventó a 101
+  nudos; la tarjeta y la frase de la derecha, con el pie izquierdo; el tren fuera,
+  PAN PAN contestado y tres camiones; tocó a 302 m del umbral cayendo 2,1 m/s y a
+  15,7 m del eje —la final del banco, no la rueda—, volvió a él y paró a 717 m,
+  a medio metro; **nada tirado por la boca**; cierre «vuelta» con
+  `ejercicio.reventon.bien`, y el avisador de pérdida, callado. El rojo, del banco:
+  pedía que el pie medio de después fuera más a la izquierda que el de antes, y en
+  Gando, con sus veinte nudos y sus rachas, el pie del viento es tan grande como
+  el de la rueda. Las dos tiradas juntas sí lo enseñan: 0,144 de pie medio con la
+  izquierda y 0,018 con la derecha, o sea seis centésimas a cada lado de las ocho
+  del viento. Desde entonces **el banco vuela en calma** (`OGA_VIENTO` para otro)
+  y ahí pide las dos cosas: hacia dónde se va en ocho décimas sin tocar nada y el
+  pie del otro lado.
+- **Parando** (`OGA_PARAR=1`, la izquierda, con el viento de Gando), **9 de 9**: se
+  fue 0,39° a la izquierda en ocho décimas, el pie a la derecha, nunca a más de
+  2,4 m del eje; parado a 795 m del umbral, de 3.104; cierre «parado», con los
+  bomberos a mirar los frenos y `ejercicio.reventon.bienParado`.
+- **En calma no se ha volado todavía**: la tercera tirada se quedó en la cola del
+  navegador al acabarse el tiempo del encargo.
+
+### Lo que queda
+
+- **Las ocho frases, por grabar.** Hasta entonces se ven en la tarjeta y la voz
+  se calla; y con ellas sin grabar el banco no puede ver si la boca las tira.
+- **La frase del golpe es corta porque no cabe más**: en esos cinco segundos van
+  también «ya despegamos: seguí» y «tirá para arriba». Al grabarla hay que
+  volver a volar el banco.
+- **El neumático en el dibujo**: las dos ruedas de una pata son una sola malla, y
+  la reventada no se ve aplastada en el avión; se ve en la tarjeta.
+- **Los trozos que saltan** —lo que la guía dice que de verdad da problemas, en
+  flaps, hidráulica y motores— no están: es una avería cada vez.
+- **El roce, sin fuente, y el tirón, suave**: seis centésimas de pie, lo que pide
+  una racha de Gando. Es lo que dice la guía —no suele dar problemas de
+  dirección—, y en calma se ve: casi tres metros y un grado en cinco segundos.
+  Si se quiere más, es un solo número, `ROCE_DEL_REVENTADO`: con 0,15 se va 4,6 m
+  y 1,3° en esos segundos y parar desde 140 cuesta un 9 % más en vez de un 15; con
+  0,2, 6,6 m, 1,8° y un 4 %.
+- **El reventón al tomar**, el otro del #90, en el aterrizaje: la mitad está —la
+  toma con la rueda ya rota—; falta que reviente al tocar.
+
+### Las frases
+
+Ocho, de la instructora y en calma, en `es-PY` y en `en`; el guaraní no se toca.
+Van en `LOS_EJERCICIOS` de `sin-instructora.ts` y en `DEL_REVENTON`, al final de
+`frases-para-grabar.mjs`. **Sin grabar.**
+
+- `ejercicio.reventon.antes`
+- `ejercicio.reventon.izquierda` y `ejercicio.reventon.derecha`
+- `ejercicio.reventon.tren`
+- `ejercicio.reventon.sacalo`
+- `ejercicio.reventon.toma`
+- `ejercicio.reventon.bien` y `ejercicio.reventon.bienParado`
+
+Y en el hangar, que solo se lee: `hangar.ejercicio.reventon`.
