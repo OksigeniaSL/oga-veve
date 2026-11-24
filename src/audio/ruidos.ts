@@ -49,6 +49,7 @@ import {
   type AircraftSound,
   type RuidosDelAvion,
 } from "../flight/aircraft";
+import { GAS_DE_REVERSA } from "../flight/reversa";
 import type { CameraMode } from "../cameras";
 import type { Lluvia } from "../world/meteo";
 import { FIRME_LISO, type Firme } from "../world/firme";
@@ -118,7 +119,10 @@ export interface LoQuePasa {
   readonly tren: number;
   /** Y los flaps: 0 recogidos, 1 abajo del todo. */
   readonly flaps: number;
+  /** Lo que empuja al revés, de 0 a 1: con la pieza a medias, nada. Ver `flight/reversa.ts`. */
   readonly reversa: number;
+  /** Cuánto está abierta la reversa, de 0 a 1. Sin ella, lo que diga su empuje. */
+  readonly reversaAbierta?: number;
   /** Los paneles de arriba del ala, los de vuelo o los de tierra: el que más. */
   readonly aerofrenos: number;
   readonly lluvia: {
@@ -339,7 +343,7 @@ export class OidoDelVuelo {
     tren: number;
     flaps: number;
     enElSuelo: boolean;
-    reversa: boolean;
+    reversaMoviendose: boolean;
     vs: number;
   } | null = null;
   /**
@@ -435,13 +439,16 @@ export class OidoDelVuelo {
     }
 
     // ── La reversa ─────────────────────────────────────────────────────
-    const reversaPuesta =
-      a.reversa && p.motor && p.enElSuelo && p.reversa > 0 && p.gs > 12;
+    const sePuede = a.reversa && p.motor && p.enElSuelo && p.gs > 12;
+    const abierta = p.reversaAbierta ?? (p.reversa > 0 ? 1 : 0);
+    const reversaMoviendose = sePuede && abierta > 0;
+    const reversaPuesta = sePuede && p.reversa > 0;
     /*
-     * El golpe de las compuertas al abrirse es de reactor: un turbohélice no
-     * tiene compuertas, gira las palas de su hélice y eso no da golpe.
+     * El golpe de las compuertas **al empezar a abrirse** es de reactor: un
+     * turbohélice no tiene compuertas, gira las palas de su hélice y eso no da
+     * golpe. El rugido viene detrás, cuando empuja, y eso va en `niveles`.
      */
-    if (antes && reversaPuesta && !antes.reversa && a.motor === "turbofan")
+    if (antes && reversaMoviendose && !antes.reversaMoviendose && a.motor === "turbofan")
       sucesos.push({ que: "reversa", fuerza: porVista(p.oido, 0.4, 0.3, 0.5) });
 
     // ── Los flaps ──────────────────────────────────────────────────────
@@ -459,7 +466,7 @@ export class OidoDelVuelo {
       tren: p.tren,
       flaps: p.flaps,
       enElSuelo: p.enElSuelo,
-      reversa: reversaPuesta,
+      reversaMoviendose,
       vs: p.vs,
     };
 
@@ -644,12 +651,16 @@ export class OidoDelVuelo {
     };
 
     // ── La reversa y los aerofrenos ────────────────────────────────────
-    const reversa = reversaPuesta
-      ? (a.motor === "turboprop" ? 0.85 : 1) * Math.min(1, gs / 25) * porVista(o, 1, 0.45, 0.7)
-      : 0;
+    const empujaAlReves = reversaPuesta ? entre0y1(p.reversa) : 0;
+    const reversa =
+      (a.motor === "turboprop" ? 0.85 : 1) *
+      empujaAlReves *
+      Math.min(1, gs / 25) *
+      porVista(o, 1, 0.45, 0.7);
     // La reversa no es un gas negativo: se deja el gas al ralentí y los
-    // motores suben de vueltas para empujar al revés. Eso es lo que ruge.
-    const gasDelMotor = Math.max(p.motor ? p.gas : 0, reversaPuesta ? 0.75 : 0);
+    // motores suben de vueltas para empujar al revés. Eso es lo que ruge, y
+    // crece con ellos: ver `GAS_DE_REVERSA`.
+    const gasDelMotor = Math.max(p.motor ? p.gas : 0, empujaAlReves * GAS_DE_REVERSA);
     const q90 = Math.min(1.5, Math.pow(Math.max(0, p.ias) / 90, 2));
     const aerofrenos = a.aerofrenos
       ? entre0y1(p.aerofrenos) * q90 * porVista(o, 0.3, 0.6, 0.85)

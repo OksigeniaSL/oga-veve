@@ -3455,12 +3455,15 @@ button.motor__tecla::after {
 }
 
 /*
- * La reversa metida.
+ * La reversa, que no está recogida.
  *
- * Ámbar y no rojo: el rojo de este juego es de peligro —«¡al aire!», el
- * terreno— y la reversa no lo es; es un motor haciendo su trabajo al revés. En
- * una cabina de verdad el aviso de reversa desplegada también es ámbar, por lo
- * mismo: hay que enterarse, no hay que asustarse.
+ * Nunca roja: el rojo de este juego es de peligro —«¡al aire!», el terreno— y
+ * la reversa no lo es; es un motor haciendo su trabajo al revés. **Ámbar
+ * mientras la pieza se mueve**, abriéndose o cerrándose, y **verde fuera del
+ * todo**, que es cuando empuja: los colores del REV de una cabina de verdad. Es
+ * lo que espera ver quien vigila antes de que se pida la reversa a fondo —
+ * «reversers green, indicating that the four reversers have deployed» (TSB,
+ * A05H0002)—.
  */
 .motor__reversa {
   display: block;
@@ -3473,6 +3476,11 @@ button.motor__tecla::after {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-align: center;
+}
+
+.motor__reversa--fuera {
+  background: #17512d;
+  color: #a9f0c0;
 }
 
 .motor__pista {
@@ -7340,6 +7348,11 @@ button.motor__tecla::after {
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.16em;
+}
+
+/* Ámbar moviéndose y verde fuera del todo, como `.motor__reversa`. */
+.cr__reversa[data-estado="fuera"] {
+  fill: var(--cabina-normal);
 }
 
 /*

@@ -25,6 +25,7 @@
  */
 
 import type { FlightState } from "../flight/model";
+import type { EstadoDeReversa } from "../flight/reversa";
 import type { AudioLevel } from "../audio/audio";
 import {
   type Aire,
@@ -2040,7 +2041,7 @@ export class Hud {
           </span>
           ${gauges ? `<span class="medidor__glosa">${t(helicoptero ? "hud.colectivo" : "hud.throttle")}</span>` : ""}
           <!--
-            Y la reversa, encima del gas y solo cuando está metida.
+            Y la reversa, encima del gas y solo cuando no está recogida.
 
             Va aquí y no con el freno porque **no es un freno**: es el motor
             empujando al revés, y en la cabina se maneja con el mando de
@@ -3191,8 +3192,8 @@ export class Hud {
      * la velocidad: en pista, rápido y con gas. Ver `despegando`.
      */
     enDespegue = true,
-    /** Si la reversa está metida. Se enseña, porque es el motor al revés. */
-    reversa = false,
+    /** Dónde está la reversa. Se enseña, porque es el motor al revés. */
+    reversa: EstadoDeReversa = "recogida",
     /**
      * Lo que el cuadro de mandos necesita y el HUD no tenía de antes: los
      * flaps, adónde se va y de dónde sopla. Va en un solo objeto porque son
@@ -3480,8 +3481,10 @@ export class Hud {
     }
 
     this.throttleFill.style.width = `${Math.round(throttle * 100)}%`;
-    // Y la reversa, si está metida. Ver el marcado de `motor__reversa`.
-    esconder(this.reversaAviso, !reversa);
+    // Y la reversa, si no está recogida: ámbar mientras se mueve y verde fuera
+    // del todo, que es cuando empuja. Ver el marcado de `motor__reversa`.
+    esconder(this.reversaAviso, reversa === "recogida");
+    this.reversaAviso?.classList.toggle("motor__reversa--fuera", reversa === "fuera");
 
     // El freno aparece al tocar suelo y se enciende al pisarlo.
     // Sin cifras, botón; con cifras, tarjeta con su tecla. Nunca los dos.

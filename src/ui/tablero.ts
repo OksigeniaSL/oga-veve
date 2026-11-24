@@ -26,6 +26,7 @@
 
 import { esDeChorro, type AircraftConfig } from "../flight/aircraft";
 import type { FlightState } from "../flight/model";
+import type { EstadoDeReversa } from "../flight/reversa";
 import { SixPack } from "./six-pack";
 import {
   anguloEn,
@@ -164,7 +165,8 @@ export interface DatosDelTablero {
    * `lucesDeLasPatas`.
    */
   readonly trenDeMorro?: number;
-  readonly reversa: boolean;
+  /** Dónde está la reversa: la marca REV sale ámbar moviéndose y verde fuera. */
+  readonly reversa: EstadoDeReversa;
   /** Las velocidades que se cantan, en nudos. `Infinity` si no aplican. */
   readonly v1: number;
   readonly vr: number;
@@ -1936,7 +1938,12 @@ export class Tablero {
     poner(
       this.pieza('[data-cristal="reversa"]'),
       "visibility",
-      d.reversa ? "visible" : "hidden",
+      d.reversa === "recogida" ? "hidden" : "visible",
+    );
+    poner(
+      this.pieza('[data-cristal="reversa"]'),
+      "data-estado",
+      d.reversa,
     );
 
     /*

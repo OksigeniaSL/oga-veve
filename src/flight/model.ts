@@ -100,8 +100,18 @@ export interface ControlInputs {
    * mandos distintos: el gas se deja al ralentí **y entonces** se levantan los
    * gatillos de la reversa. Hacerlo con un solo número enseñaría un avión que
    * no existe.
+   *
+   * En los mandos es la palanca. Al modelo de vuelo y al sonido les llega **lo
+   * que empuja**, que tarda en abrirse y en subir de vueltas: lo cuenta
+   * `flight/reversa.ts` y lo pone `game.ts` en la copia que les da.
    */
   reversa: number;
+  /**
+   * **Cuánto está abierta la reversa**, de 0 a 1: las compuertas que se mueven
+   * y se oyen. Solo en la copia que va al sonido. Sin poner, lo que diga
+   * `reversa`.
+   */
+  reversaAbierta?: number;
   /**
    * **Si quien lleva el cabeceo y el alabeo es el piloto automático.**
    *

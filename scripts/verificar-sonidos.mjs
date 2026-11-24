@@ -431,6 +431,9 @@ try {
       velocidad: 50,
       mandos: { throttle: 0, reversa: 1, aerofrenos: 0, frenosDeTierra: 1, tren: 1, flaps: 0 },
     });
+    // La pieza tarda dos segundos en abrirse y los motores, cinco en subir: hasta
+    // entonces no hay nada que oír. Ver `flight/reversa.ts`.
+    await page.waitForTimeout(4000);
     const rev = await oir(page, "chase", 1.5);
     apuntar("reversa", rev);
     comprobar("la reversa ruge desde fuera", rev.media.reversa > -45, db(rev.media.reversa));
