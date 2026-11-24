@@ -1655,17 +1655,18 @@ Leídas, no de memoria:
   properly inflated tire on that axle to a factor of about 1.2».
 - **AAIB, *Bulletin* 1/2003, G-BZAY** (Avro 146-RJ100, Gatwick, 8-5-2002), un
   reventón de verdad en la carrera: un ruido y una vibración que se oían atrás y
-  no en la cabina de mando, y un temblor al rotar (pp. 1 y 2). Metieron el tren y **los restos del
-  neumático no dejaron cerrar la compuerta y la dañaron** (p. 6); al volver,
+  no en la cabina de mando, y un temblor al rotar (pp. 1 y 2). Metieron el tren
+  y **los restos del neumático, probablemente, no dejaron cerrar la compuerta y
+  la dañaron** (p. 6); al volver,
   «landing was to be made using minimum braking» y «gentle wheel braking»
   (p. 3). Y aquí no coincide con lo de arriba: lo recogieron otra vez para que
   la goma suelta no golpeara en el aire, y el informe lo da por entendido
   (p. 7), con «normally […] having successfully lowered the landing gear, it
   remains down».
-- **14 CFR 25.729 (f)**: lo que va en el hueco del tren y hace falta para seguir tiene que estar protegido de «a
-  bursting tire» y de «a loose tire tread»; y **25.733 (c)**, el neumático de
-  una pata de dos, para 1,07 veces su carga, menos que ese 1,2: es por lo que la
-  guía avisa de que pueden reventar más al parar.
+- **14 CFR 25.729 (f)**: lo que va en el hueco del tren y hace falta para seguir
+  tiene que estar protegido de «a bursting tire» y de «a loose tire tread»; y
+  **25.733 (c)**, el neumático de una pata de dos, para 1,07 veces su carga, menos
+  que ese 1,2 que recibe cuando se va el de al lado.
 
 **Lo que no se ha leído:** el manual del E170, que no está en línea. La guía deja
 lo del tren en lo que diga el fabricante; se enseña **dejarlo fuera**, que es lo
@@ -1695,8 +1696,8 @@ nueva, `que: "neumatico"`, con su `Momento`: en la carrera, a `aFaltaDe` de V1.
 
 1. **La instructora lo presenta** antes de soltar frenos, con el dibujo.
 2. **El golpe**: seco, grave y corto (`golpeDeRueda`), por debajo de lo que suena
-   un calzo y por el bus que se agacha cuando alguien habla. Sin alarma: ese
-   avión no lleva ninguna. El traqueteo de la pista, al doble.
+   un calzo y por el bus que se agacha cuando alguien habla. Sin alarma: en
+   ninguna fuente leída la lleva ese avión. El traqueteo de la pista, al doble.
 3. **Sin leer**: la tarjeta del avión por detrás con la rueda de ese lado
    aplastada y la flecha de hacia dónde tira, que se mueve; y al segundo y medio,
    el pedal que se pisa, el del otro lado. La instructora: «se reventó una rueda
