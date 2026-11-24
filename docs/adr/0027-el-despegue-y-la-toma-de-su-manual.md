@@ -10533,3 +10533,12 @@ baila la mitad y la mesa da lo mismo (4 y 6 de 200 en el JAZ 50). No se ha tocad
   pasando de 2 m/s, y 62 de 300 del JAZ 60 tocan pasados los 600 m.
 - **La recogida del navegador era más larga que la de la mesa** con la mano de
   antes, y no se sabe por qué.
+
+## Enmienda H78 (24-11-2026): la reversa que tarda en empujar
+
+La parada con reversa se alarga entre un 4 y un 15 %: el motor sube con la pieza ya
+fuera y no en el acto (ADR 0034, enmienda H78, con la tabla de cada avión). Las
+distancias de este ADR, que son sin reversa como las del manual, no cambian: ni
+`distanciaDeAterrizaje`, ni `rodaduraDeFrenada`, ni `pistaQueNecesita` la cuentan, y
+con el autofreno en MED la parada es la misma. Sin reversa, las finales y las carreras
+de los ocho aviones son las de 91a7b015 bit a bit.

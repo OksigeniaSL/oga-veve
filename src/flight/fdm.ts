@@ -1582,11 +1582,12 @@ export class CoefficientFlightModel implements FlightModel {
     /*
      * **Y lo que empuja es lo que da el motor, no lo que pide el gas**: un
      * reactor tarda segundos en pasar del ralentí al empuje de ida al aire, un
-     * turbohélice algo menos y un pistón nada. Ver `respuesta-del-motor.ts`.
+     * turbohélice algo menos y un pistón nada. Y arriba, con el aire fino,
+     * más. Ver `respuesta-del-motor.ts`.
      */
     const pedido = controls.engineOn ? assisted.throttle : 0;
     if (this.giro === null) this.giro = giroAsentado(ac, pedido);
-    else avanzarGiro(this.giro, ac, pedido, dt);
+    else avanzarGiro(this.giro, ac, pedido, dt, density / SEA_LEVEL_DENSITY);
     const n = this.motores.length;
     const cadaUno =
       ((controls.engineOn ? gasQueDa(this.giro, ac) : 0) *

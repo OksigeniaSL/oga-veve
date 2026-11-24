@@ -15,7 +15,15 @@ import {
 } from "./aircraft";
 import { NO_ASSISTS } from "./assists";
 import { neutralControls } from "./model";
-import { avanzarGiro, gasQueDa, giroAsentado } from "./respuesta-del-motor";
+import { airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
+import {
+  avanzarGiro,
+  constantesHasta,
+  DENSIDAD_QUE_BASTA,
+  gasQueDa,
+  giroAsentado,
+  masLentoArriba,
+} from "./respuesta-del-motor";
 
 const DT = 1 / 120;
 
@@ -112,6 +120,108 @@ describe("el motor tarda lo que tarda", () => {
     }
   });
 
+  describe("y arriba tarda más, con el aire fino (H78)", () => {
+    const PIE = 0.3048;
+    const sigma = (pies: number): number => airDensity(pies * PIE) / SEA_LEVEL_DENSITY;
+
+    /** Lo mismo que `tarda`, con el aire de esa altura. */
+    function tardaA(a: AircraftConfig, pies: number, desde: number, hacia: number, umbral: number): number {
+      const giro = giroAsentado(a, desde);
+      const cruza = (g: number): boolean => (hacia > desde ? g >= umbral : g <= umbral);
+      for (let t = 0; t < 60; t += DT) {
+        avanzarGiro(giro, a, hacia, DT, sigma(pies));
+        if (cruza(gasQueDa(giro, a))) return t + DT;
+      }
+      return Infinity;
+    }
+
+    it("donde hay densidad de sobra es la ficha, bit a bit: todas las finales y carreras del juego", () => {
+      // Hasta los seis mil pies de la estándar, que es el doble de alto que Los
+      // Rodeos más su final, y con una tarde de calor en el campo más alto.
+      for (const s of [1.1, 1, sigma(2000), sigma(5500), 0.85]) {
+        expect(masLentoArriba(s), `${s}`).toEqual({ sube: 1, baja: 1 });
+        for (const a of [...REACTORES, ...TURBOHELICES]) {
+          const con = giroAsentado(a, 0.1);
+          const sin = giroAsentado(a, 0.1);
+          for (let i = 0; i < 600; i++) {
+            const gas = i < 300 ? 0.9 : 0.05;
+            avanzarGiro(con, a, gas, DT, s);
+            avanzarGiro(sin, a, gas, DT);
+            expect(con.fan).toBe(sin.fan);
+            expect(con.nucleo).toBe(sin.nucleo);
+          }
+        }
+      }
+    });
+
+    it("sale de la tabla de la NASA: sus tres tiempos, pasados a las dos etapas, entre los del nivel del mar", () => {
+      /*
+       * TM-2009-215668, tabla 1: altura, hasta el 50 %, del 10 al 90 % y hasta
+       * asentarse en el 2 %, s. Acelerando y decelerando.
+       */
+      const TABLA = {
+        sube: [
+          [0, 0.72, 1.13, 2.02],
+          [10000, 0.78, 1.25, 2.41],
+          [25000, 0.94, 1.95, 2.51],
+          [42000, 1.63, 3.66, 6.27],
+        ],
+        baja: [
+          [0, 0.7, 0.68, 2.1],
+          [10000, 0.76, 0.93, 1.63],
+          [25000, 1.0, 1.83, 4.48],
+          [42000, 1.6, 4.52, 9.63],
+        ],
+      } as const;
+      const mitad = constantesHasta(0.5);
+      const subida = constantesHasta(0.1) - constantesHasta(0.9);
+      const asentado = constantesHasta(0.02);
+      const media = (f: readonly number[]): number =>
+        (f[1]! / mitad + f[2]! / subida + f[3]! / asentado) / 3;
+      for (const que of ["sube", "baja"] as const) {
+        const abajo = media(TABLA[que][0]!);
+        for (const fila of TABLA[que].slice(1)) {
+          const tabla = media(fila) / abajo;
+          const ley = masLentoArriba(sigma(fila[0]!))[que];
+          // Dentro de un octavo en las seis filas, y clavado arriba subiendo.
+          expect(Math.abs(Math.log(ley / tabla)), `${que} ${fila[0]}: ${ley} y ${tabla}`).toBeLessThan(0.125);
+        }
+      }
+      const arriba = masLentoArriba(sigma(42000)).sube;
+      expect(arriba).toBeGreaterThan(2.7);
+      expect(arriba).toBeLessThan(2.95);
+    });
+
+    it("y de 5.000 a 25.000 pies, lo que midió la NACA en el J47: de 5,5 a 8 segundos", () => {
+      const ley = masLentoArriba(sigma(25000)).sube / masLentoArriba(sigma(5000)).sube;
+      expect(ley / (8 / 5.5)).toBeGreaterThan(0.9);
+      expect(ley / (8 / 5.5)).toBeLessThan(1.1);
+    });
+
+    it("el reactor en su crucero tarda más del doble, el turbohélice en el suyo casi la mitad más, y el pistón nada", () => {
+      expect(tardaA(ARAI, 37000, 0, 1, 0.95)).toBeCloseTo(5 * masLentoArriba(sigma(37000)).sube, 1);
+      expect(tardaA(ARAI, 37000, 0, 1, 0.95)).toBeGreaterThan(10);
+      expect(tardaA(YVAGA, 35000, 0, 1, 0.95)).toBeGreaterThan(12);
+      expect(tardaA(ARASUNU, 25000, 0, 1, 0.95)).toBeCloseTo(4 * 1.41, 1);
+      expect(tardaA(ARAI, 37000, 1, 0, 0.05)).toBeGreaterThan(2.1 * 2.5);
+      for (const a of PISTONES) expect(tardaA(a, 12000, 0, 1, 0.95), a.id).toBeLessThanOrEqual(DT + 1e-9);
+    });
+
+    it("crece con la altura sin saltos y con un aire absurdo no se va a infinito", () => {
+      let antes = masLentoArriba(1);
+      for (let p = 0; p <= 45000; p += 250) {
+        const ahora = masLentoArriba(sigma(p));
+        expect(ahora.sube).toBeGreaterThanOrEqual(antes.sube);
+        expect(ahora.baja).toBeGreaterThanOrEqual(antes.baja);
+        expect(ahora.sube - antes.sube).toBeLessThan(0.05);
+        expect(ahora.baja).toBeGreaterThanOrEqual(ahora.sube);
+        antes = ahora;
+      }
+      for (const s of [0, -1, NaN]) expect(Number.isFinite(masLentoArriba(s).sube)).toBe(true);
+      expect(DENSIDAD_QUE_BASTA.baja).toBeLessThan(sigma(5500));
+    });
+  });
+
   describe("en el modelo de vuelo", () => {
     function enVuelo(a: AircraftConfig, gas: number): CoefficientFlightModel {
       const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: NO_ASSISTS });
@@ -135,6 +245,21 @@ describe("el motor tarda lo que tarda", () => {
       for (let t = 0; t < 5; t += DT) m.step(DT, { ...neutralControls(), throttle: 1 });
       // …y a los cinco segundos da el 95 % de lo que pide.
       expect(m.gasDelMotor()).toBeGreaterThan(0.94);
+    });
+
+    it("y el modelo le da su densidad: a once mil metros, a los cinco segundos el JAZ 90 aún va a medias", () => {
+      const m = new CoefficientFlightModel({ aircraft: ARAI, ground: () => 0, assist: NO_ASSISTS });
+      m.reset({
+        position: new Vector3(0, 11000, 0),
+        heading: 0,
+        airspeed: ARAI.cruiseSpeed,
+        equilibrado: true,
+      });
+      m.step(DT, { ...neutralControls(), throttle: 0 });
+      for (let t = 0; t < 5; t += DT) m.step(DT, { ...neutralControls(), throttle: 1 });
+      expect(m.gasDelMotor()).toBeLessThan(0.65);
+      for (let t = 0; t < 6; t += DT) m.step(DT, { ...neutralControls(), throttle: 1 });
+      expect(m.gasDelMotor()).toBeGreaterThan(0.9);
     });
 
     it("la avioneta empuja en el mismo paso, como antes", () => {

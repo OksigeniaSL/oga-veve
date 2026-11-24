@@ -964,6 +964,9 @@ export class Audio {
       tren: controls.tren,
       flaps: controls.flaps,
       reversa: controls.reversa,
+      ...(controls.reversaAbierta === undefined
+        ? {}
+        : { reversaAbierta: controls.reversaAbierta }),
       aerofrenos: Math.max(controls.aerofrenos ?? 0, controls.frenosDeTierra ?? 0),
       lluvia: this.lluviaAhora,
       granizo: this.granizoAqui,

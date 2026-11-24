@@ -413,6 +413,24 @@ describe("la reversa y los aerofrenos", () => {
     expect(n.gasDelMotor).toBeGreaterThan(0.5);
   });
 
+  it("ruge lo que empuja: con la pieza a medias golpea y calla, y crece con los motores", () => {
+    const pasos = seguidos(ARAI, [
+      { ...frenando, reversa: 0, reversaAbierta: 0 },
+      { ...frenando, reversa: 0, reversaAbierta: 0.3 },
+      { ...frenando, reversa: 0.2, reversaAbierta: 1, gas: 0.15 },
+      { ...frenando, reversa: 1, reversaAbierta: 1, gas: 0.75 },
+    ]);
+    const [quieta, abriendo, subiendo, aFondo] = pasos.niveles;
+    expect(pasos.sucesos.filter((s) => s.que === "reversa").length).toBe(1);
+    expect(quieta!.reversa).toBe(0);
+    expect(abriendo!.reversa).toBe(0);
+    expect(abriendo!.gasDelMotor).toBe(0);
+    expect(subiendo!.reversa).toBeGreaterThan(0);
+    expect(subiendo!.reversa).toBeLessThan(aFondo!.reversa * 0.5);
+    expect(subiendo!.gasDelMotor).toBeCloseTo(0.15, 9);
+    expect(aFondo!.gasDelMotor).toBeCloseTo(0.75, 9);
+  });
+
   it("las avionetas no tienen reversa", () => {
     expect(uno(PYKASU, frenando).reversa).toBe(0);
     expect(uno(PANAMBI, frenando).gasDelMotor).toBe(0);

@@ -90,7 +90,7 @@ import {
   queSeDiceSinMotor,
 } from "./flight/sin-motor";
 import { alReves, LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
-import { Reversa, tiempoDeReversa } from "./flight/reversa";
+import { Reversa } from "./flight/reversa";
 import {
   acercarLosMandos,
   MANDOS_AL_CENTRO,
@@ -7100,7 +7100,7 @@ export class Game {
     this.noCaben = options.noCaben ?? [];
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? PYKASU;
-    this.reversa = new Reversa(tiempoDeReversa(this.aircraft));
+    this.reversa = new Reversa(this.aircraft);
     /*
      * **El ejercicio, solo donde toca.** El hangar ya no lo ofrece fuera de
      * su peldaño ni con un avión que no tiene esa avería, y esto es el
@@ -21115,11 +21115,18 @@ export class Game {
         /*
          * **Y la reversa empuja cuando está abierta**, no al apretar: el chorro
          * se da la vuelta cuando el manguito ha dejado a la vista la cascada,
-         * un par de segundos después. Los mandos siguen diciendo lo que se pide
-         * —el REV del cuadro, la toma larga—; al modelo de vuelo le llega lo
-         * que empuja. Ver `flight/reversa.ts`.
+         * un par de segundos después, y entonces el motor tarda en subir lo que
+         * tarda con cualquier gas. Los mandos siguen diciendo lo que se pide —la
+         * toma larga, los frenos de tierra—; al modelo de vuelo le llega lo
+         * que empuja, y al cuadro, dónde está la pieza. Ver `flight/reversa.ts`.
          */
-        const reversa = this.reversa.paso(dt, mandos.reversa);
+        const reversa = this.reversa.paso(
+          dt,
+          // Sin motor en marcha no hay chorro que volver del revés ni quien mueva la pieza.
+          mandos.engineOn ? mandos.reversa : 0,
+          this.flight.state.onGround,
+          this.flight.gasDelMotor?.() ?? 0,
+        );
         if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
       }
       /*
@@ -23092,8 +23099,8 @@ export class Game {
        * y con gas describe igual de bien las dos carreras. Ver `hud.update`.
        */
       EN_DESPEGUE.has(this.vistaActual?.fase ?? "en-vuelo"),
-      // Y si la reversa está metida, que se vea: es el motor empujando al revés.
-      this.input.controls.reversa > 0 && this.flight.state.onGround,
+      // Y la reversa, donde está y no donde está la palanca: es el motor empujando al revés.
+      this.reversa.estado,
       /*
        * Y lo que el cuadro de mandos necesita y antes no le llegaba: los
        * flaps —que se movían en el ala y no en ningún instrumento—, adónde se
@@ -25509,9 +25516,13 @@ export class Game {
     }
     // Lo que da el motor y no lo que pide la palanca: la aguja sigue al
     // motor, igual que el sonido. Ver `FlightModel.gasDelMotor`.
+    // Con la reversa, los motores suben para empujar al revés y la aguja lo dice.
     const va = regimen(
       this.aircraft,
-      this.flight.gasDelMotor?.() ?? this.input.controls.throttle,
+      Math.max(
+        this.flight.gasDelMotor?.() ?? this.input.controls.throttle,
+        this.reversa.gasDelMotor,
+      ),
       this.input.controls.engineOn,
     );
     const estados = this.flight.motoresAhora?.();
@@ -32852,15 +32863,16 @@ export class Game {
      * **Y con la palanca en reversa, la hélice se embala.** En un turbohélice
      * la reversa es la propia hélice: las palas pasan de paso y el motor sube
      * de potencia para empujar al revés. El cambio de paso no se distingue con
-     * la hélice girando; lo que se ve —y se oye— es el disco. Tres cuartos de
-     * lo que da hacia delante, que es el orden de una reversa a fondo. Ver
+     * la hélice girando; lo que se ve —y se oye— es el disco. Ver
      * `flight/reversa.ts`.
      */
-    const haciaAtras =
-      this.aircraft.sound.engine === "turboprop" ? this.reversa.empuje * 0.75 : 0;
-    // Lo que da el motor, como lo que se oye: ver `FlightModel.gasDelMotor`.
-    const daElMotor = this.flight.gasDelMotor?.() ?? this.input.controls.throttle;
-    const quiere = this.input.controls.engineOn ? 6 + Math.max(daElMotor, haciaAtras) * 96 : 0;
+    // Lo que da el motor, hacia delante o hacia atrás, como lo que se oye: ver
+    // `FlightModel.gasDelMotor` y `Reversa.gasDelMotor`.
+    const daElMotor = Math.max(
+      this.flight.gasDelMotor?.() ?? this.input.controls.throttle,
+      this.reversa.gasDelMotor,
+    );
+    const quiere = this.input.controls.engineOn ? 6 + daElMotor * 96 : 0;
     const prisa = quiere > this.giroDeHelice ? 1.4 : 0.6;
     this.giroDeHelice +=
       (quiere - this.giroDeHelice) * (1 - Math.exp(-dt * prisa));
@@ -38675,13 +38687,21 @@ export class Game {
    */
   private get mandosQueSeOyen(): ControlInputs {
     const empuje = this.inicio instanceof MotorDelPasaje ? this.manosDeLinea?.empuje : undefined;
-    if (empuje !== undefined) return { ...this.input.controls, throttle: empuje };
     // Y lo que suena es el motor, no la palanca: un reactor tarda segundos en
     // dar lo que se le pide. Ver `FlightModel.gasDelMotor`.
-    const daElMotor = this.flight.gasDelMotor?.();
-    return daElMotor === undefined
-      ? this.input.controls
-      : { ...this.input.controls, throttle: daElMotor };
+    const c = this.input.controls;
+    const da = empuje ?? this.flight.gasDelMotor?.() ?? c.throttle;
+    /*
+     * **Y la reversa, lo mismo**: ruge lo que empuja y no lo que se aprieta, las
+     * compuertas golpean cuando se mueven y los motores suben de vueltas a su
+     * paso. Ver `flight/reversa.ts`.
+     */
+    return {
+      ...c,
+      throttle: Math.max(da, this.reversa.gasDelMotor),
+      reversa: this.reversa.empuje,
+      reversaAbierta: this.reversa.abierta,
+    };
   }
 
   /** La lista de después del aterrizaje leída en este vuelo, con su hora. Para el banco. */
@@ -38690,6 +38710,7 @@ export class Game {
   /** Vuelo nuevo: nada encendido, nada esperando, nada explicado. */
   private reiniciarLoQueSuena(): void {
     this.loQueCambia.reiniciar();
+    this.reversa.reiniciar();
     // Vuelo nuevo: vuelve a haber embarque, y la canción del kit de antes se va.
     this.hiloMusical.reiniciar();
     this.audio.ponerCancion(null);
