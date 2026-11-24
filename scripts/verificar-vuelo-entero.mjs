@@ -4978,6 +4978,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /** La senda de los últimos metros, ya sin perseguir. Ver `SIN_PERSEGUIR_LA_SENDA`. */
   let sendaSinPerseguir = null;
   /**
+   * **Cuánto antes de que llegue la senda se empieza a bajar en el arco a
+   * final**, s: lo que tarda el avión en ir de nivelado a bajar por ella, dos en
+   * pedirlo a una décima de g y cuatro en hacerlo. Ver `planearLaBajada`.
+   */
+  const SEGUNDOS_PARA_COGER_LA_SENDA = 6;
+  /**
    * **La altura de la aproximación, planeada: sin saltos y sin subir**, m
    * sobre la pista.
    *
@@ -5016,8 +5022,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     if (!(paso > 0) && alturaPlaneada !== null) return alturaPlaneada;
     const antes = alturaPlaneada ?? alto(s);
-    const tope = porElSuelo(s) * SENDA * 1.2 * Math.max(0, paso);
-    alturaPlaneada = Math.max(cruda, antes - tope);
+    const deSenda = porElSuelo(s) * SENDA;
+    const tope = deSenda * 1.2 * Math.max(0, paso);
+    /*
+     * **Y la senda se coge antes de que llegue, no cuando ya ha pasado** (#192,
+     * H89). Al entrar en el arco el reactor va por debajo de ella, nivelado, y
+     * la altura planeada se quedaba quieta hasta que la cruzaba; desde ahí la
+     * senda cae a cuatro metros por segundo, y el avión, que en ese momento
+     * todavía vuelve a subir a la altura que perdió entrando en la base, tarda
+     * seis en seguirla. Medido en la mesa del arco (`mesa-del-arco.mjs`) en
+     * aire quieto: 28 m por encima a mitad del arco, y de ahí bajando a 5,1 m/s
+     * veinte segundos, hasta casi alineado, para recogerla. Todos los vuelos de Los Rodeos llegaban así, y una racha
+     * entonces decidía.
+     *
+     * Quien vuela no espera a cruzarla: ve venir la aguja y empieza a bajar
+     * antes. A seis segundos de que llegue se empieza, y el ritmo crece según
+     * se acerca, así que se llega a ella por debajo y bajando ya a lo que pide.
+     * En la misma mesa, 10 m por encima como mucho y sin pasar de 4,5 m/s.
+     */
+    const aSeisSegundos = deSenda * SEGUNDOS_PARA_COGER_LA_SENDA;
+    const laSenda =
+      BAJA_POR_EL_ARCO && etapa === "final" && cruda > antes && aSeisSegundos > 0
+        ? antes - deSenda * Math.max(0, 1 - (cruda - antes) / aSeisSegundos) * Math.max(0, paso)
+        : cruda;
+    alturaPlaneada = Math.max(laSenda, antes - tope);
     // En el viento en cola sí puede subir: es la altura del circuito, que es
     // la que libra el terreno, y un avión que llega a él todavía subiendo
     // tiene que acabar de subir.
@@ -7865,6 +7893,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * al umbral. Ver `aLaVista`.
        */
       let queda = falta;
+      // Lo que pone el arco en la senda, para la traza de la final.
+      let arcoDeLaSenda = null;
       if (aLaVista?.length) {
         queda = Math.hypot(aLaVista[0].x - s.position.x, aLaVista[0].z - s.position.z);
         for (let k = 1; k < aLaVista.length; k++)
@@ -7906,12 +7936,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          */
         const v = porElSuelo(s);
         const alabeo = Math.abs(o.actitud?.().alabeo ?? 0);
-        const radio = Math.min(
+        const radios = [
           a.radio,
           a.falta / Math.max(1e-3, 1 - Math.cos(a.theta)),
           (v * v) / (9.81 * Math.tan(Math.max(alabeo, Math.PI / 180))),
-        );
-        queda += radio * (a.theta - Math.sin(a.theta));
+        ];
+        const radio = Math.min(...radios);
+        arcoDeLaSenda = { theta: a.theta, radios, demas: radio * (a.theta - Math.sin(a.theta)) };
+        queda += arcoDeLaSenda.demas;
       }
       const sendaDeVerdad = Math.max(0, (queda + puntoDeToma) * SENDA) + tren;
       /*
@@ -8585,6 +8617,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
              * no si era porque se pedía o porque el avión no obedecía.
              */
             ` · plan ${(objetivo - alto(s)).toFixed(1)} pide ${memoriaDeSenda ? memoriaDeSenda.ritmo.toFixed(1) : "-"} α ${((s.alpha * 180) / Math.PI).toFixed(1)}°` +
+            // Y el arco que queda: lo que falta por girar, los tres radios y lo que alarga.
+            (arcoDeLaSenda
+              ? ` · arco ${((arcoDeLaSenda.theta * 180) / Math.PI).toFixed(0)}° R ${arcoDeLaSenda.radios.map((x) => Math.round(x)).join("/")} +${Math.round(arcoDeLaSenda.demas)} m`
+              : "") +
             /*
              * Y la velocidad que busca el gas, en indicada, con lo que la hace:
              * el margen de la final que pide el juego, lo que sopla de cara, lo
