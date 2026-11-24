@@ -110,6 +110,27 @@ const APROAR_POR_CONFIGURACION = {
 };
 
 /**
+ * **El APROAR que no da la tabla, puesto a puesto, sino la casilla 20 para todos** (H88). En Tenerife
+ * Sur: «Pushback is obligatory in front stands and shall be performed such that the aircraft remains
+ * nosing to the threshold in use», y «pushbacks on parking stands R19, G20, AG21, and J22 shall be
+ * performed nosing to THR 25», que son los cuatro que la tabla da al E. Y «leaving apron gates "D" free»:
+ * las puertas de la plataforma a la paralela (`puertasLibres`). El umbral de la 07 queda al
+ * oeste de la plataforma y el de la 25 al este: en los ocho puntos con los que los da la tabla, W
+ * despegando por la 07 (`norte`, que es hacia el 069) y E por la 25 (`sur`). Vale en los de salida
+ * en retroceso; en los que la tabla lo da, manda la tabla.
+ */
+const APROAR_DE_LA_CASILLA = {
+  GCTS: {
+    aproar: "E/W",
+    norte: "W",
+    sur: "E",
+    puertasLibres: ["D1", "D2", "D3", "D4", "D5", "D6"],
+    fuente:
+      "AIP España AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26): «Pushback is obligatory in front stands and shall be performed such that the aircraft remains nosing to the threshold in use and leaving apron gates \"D\" free», y «Pushbacks on parking stands R19, G20, AG21, and J22 shall be performed nosing to THR 25», que son los que la tabla da al E.",
+  },
+};
+
+/**
  * **El campo cuyos puestos se ponen enteros de la carta** (H85), porque OpenStreetMap no trae
  * ninguno. En Fuerteventura, cero `parking_position`:
  *
@@ -591,6 +612,11 @@ async function juntar(id) {
       nuevo.aip.aproar = a.aproar;
       const segun = aproarPorConfiguracion(id, a);
       if (segun) nuevo.aip.aproarPorPista = segun;
+    } else if (APROAR_DE_LA_CASILLA[id] && a.salida !== "A") {
+      // Y si lo da la casilla 20 para todos los de retroceso, según la pista (H88).
+      const { aproar, norte, sur } = APROAR_DE_LA_CASILLA[id];
+      nuevo.aip.aproar = aproar;
+      nuevo.aip.aproarPorPista = { norte, sur };
     }
     /*
      * Al punto publicado, por su raya: cortada o alargada hasta él. Si el puesto tiene raya y
@@ -644,7 +670,14 @@ async function juntar(id) {
     p.entradaDeducida = true;
     deducidas.push(p.ref);
   }
-  const meta = { fuente: aip.fuente, url: aip.url, leido: aip.leido, cartas: aip.cartas, ...fuenteDeLasPasarelas(id) };
+  const meta = {
+    fuente: aip.fuente,
+    url: aip.url,
+    leido: aip.leido,
+    cartas: aip.cartas,
+    ...(APROAR_DE_LA_CASILLA[id] ? { aproar: APROAR_DE_LA_CASILLA[id].fuente, puertasLibres: APROAR_DE_LA_CASILLA[id].puertasLibres } : {}),
+    ...fuenteDeLasPasarelas(id),
+  };
   // Lo del AIP, al final de cada puesto: la ficha sale igual se junte las veces que se junte.
   const ordenados = finales.map(({ aip: suyo, ...p }) => (suyo ? { ...p, aip: suyo } : p));
   await writeFile(ruta, conLosPuestos(texto, ordenados, meta));

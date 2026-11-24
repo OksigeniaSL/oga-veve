@@ -210,8 +210,12 @@ la T1–T3 y la de su dique sur— es **deducido**: los ejes de las calles de pl
 puestos, que son de OpenStreetMap (ODbL), donde las cartas AD 2-LEMD PDC 2.1 (WEF 01-OCT-26)
 y PDC 1.1 (WEF 29-OCT-26) dibujan la plataforma seguida, sin borde de pavimento entre medias.
 Lo mismo la franja de Los Rodeos entre la plataforma comercial y la R (AD 2-GCXO PDC 1.1,
-WEF 29-OCT-26) y la de Tenerife Sur del G9 al H43 (AD 2-GCTS PDC 1.1, WEF 11-JUN-26). La
-carta no se reproduce: dice que ahí no hay hierba, y dónde la hay. El abocinado de la L de
+WEF 29-OCT-26). La carta no se reproduce: dice que ahí no hay hierba, y dónde la hay. La de **Tenerife
+Sur** es la plataforma entera (H88): la carta AD 2-GCTS PDC 1.1 (WEF 11-JUN-26) dibuja su límite seguido, y el
+contorno está trazado el 24-NOV-2026 sobre la ortofoto PNOA de máxima actualidad del Instituto
+Geográfico Nacional (CC BY 4.0; foto de 2024-02), hasta la fachada y con la vía de servicio; al sur,
+por el eje de la T, que es de OpenStreetMap (ODbL). Y el APROAR de sus puestos de retroceso es el de
+la casilla 20.3.2.1 de AD 2-GCTS (AIRAC AMDT 10/26, WEF 29-OCT-26), leída ese día. El abocinado de la L de
 Pettirossi no sale de ninguna carta, y su ficha lo dice. Las plataformas R-1, R-2
 y R-4 a R-7 de la T1–T3 de Barajas son de OpenStreetMap: las relaciones 18864812 a 18864817,
 leídas el 24-NOV-2026.
