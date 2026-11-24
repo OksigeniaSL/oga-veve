@@ -23744,5 +23744,155 @@
       "use_speaker_boost": false,
       "speed": 0.95
     }
+  },
+  {
+    "id": "ejercicio.ave.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos un ave que se mete en un motor, después de despegar. Vas a oír un golpe, y después unos estallidos con un fogonazo: es el aire del motor, que por un momento se da vuelta. Suena fuerte, y casi nunca es grave. Primero volamos: el pie del otro lado, y la velocidad. Después llevamos atrás la palanca de ese motor hasta que se calle, y volvemos",
+    "para": "el ave en el motor, antes de empezar: el golpe, los estallidos, volar primero, la palanca de ese motor y volver",
+    "dicho": "Hoy practicamos un ave que se mete en un motor, después de despegar. Vas a oír un golpe, y después unos estallidos con un fogonazo: es el aire del motor, que por un momento se da vuelta. Suena fuerte, y casi nunca es grave. Primero volamos: el pie del otro lado, y la velocidad. Después llevamos atrás la palanca de ese motor hasta que se calle, y volvemos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.izquierdo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Entró un ave en el motor izquierdo: pie derecho, y seguimos subiendo",
+    "para": "el ave: entra en el motor izquierdo, subiendo; pie derecho y se sigue (corta, el pie se pide en el instante)",
+    "dicho": "Entró un ave en el motor izquierdo: pie derecho, y seguimos subiendo.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.derecho",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Entró un ave en el motor derecho: pie izquierdo, y seguimos subiendo",
+    "para": "el ave: entra en el motor derecho, subiendo; pie izquierdo y se sigue (corta, el pie se pide en el instante)",
+    "dicho": "Entró un ave en el motor derecho: pie izquierdo, y seguimos subiendo.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.petardeo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esos estallidos son el aire del motor, que se da vuelta y sale por adelante con un fogonazo. El avión sigue subiendo: sostené el pie y la velocidad, con calma",
+    "para": "el ave: qué son los estallidos, mientras suenan, sin susto",
+    "dicho": "Esos estallidos son el aire del motor, que se da vuelta y sale por adelante con un fogonazo. El avión sigue subiendo: sostené el pie y la velocidad, con calma.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.palanca",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya tenemos altura. Llevo atrás la palanca de ese motor, sin apuro, hasta que se calle",
+    "para": "el ave: con altura, la compañera lleva atrás la palanca de ese motor",
+    "dicho": "Ya tenemos altura. Llevo atrás la palanca de ese motor, sin apuro, hasta que se calle.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.adelante",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se calló. Ahora la empujo de a poquito, a ver hasta dónde aguanta",
+    "para": "el ave: el motor se calló, y la palanca va adelante despacio",
+    "dicho": "Se calló. Ahora la empujo de a poquito, a ver hasta dónde aguanta.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.aguanta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Así aguanta, y ahí la dejamos, sin pasarnos. Avisamos a la torre, y volvemos con los dos motores andando",
+    "para": "el ave: el motor aguanta, se deja ahí, se avisa y se vuelve",
+    "dicho": "Así aguanta, y ahí la dejamos, sin pasarnos. Avisamos a la torre, y volvemos con los dos motores andando.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.noAguanta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Volvió a estallar: la llevo atrás del todo, y paro ese motor. El avión vuela bien con el otro. Avisamos a la torre, y volvemos",
+    "para": "el ave: vuelve a estallar, se para ese motor, se avisa y se vuelve",
+    "dicho": "Volvió a estallar: la llevo atrás del todo, y paro ese motor. El avión vuela bien con el otro. Avisamos a la torre, y volvemos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ejercicio hecho: primero volar, y después la palanca de ese motor. A los motores así los ensayan metiéndoles aves a toda potencia, y tienen que seguir andando veinte minutos. Por eso se vuela con calma",
+    "para": "el cierre del ave con los dos motores andando, parado en la pista",
+    "dicho": "Ejercicio hecho: primero volar, y después la palanca de ese motor. A los motores así los ensayan metiéndoles aves a toda potencia, y tienen que seguir andando veinte minutos. Por eso se vuela con calma.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ave.bienParado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ejercicio hecho: primero volar, después la palanca, y como no aguantaba, lo paramos. A los motores así los ensayan metiéndoles aves, y con la más grande lo que se les pide es que se puedan parar sin peligro. Y el avión vuela bien con el otro",
+    "para": "el cierre del ave con ese motor parado, parado en la pista",
+    "dicho": "Ejercicio hecho: primero volar, después la palanca, y como no aguantaba, lo paramos. A los motores así los ensayan metiéndoles aves, y con la más grande lo que se les pide es que se puedan parar sin peligro. Y el avión vuela bien con el otro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   }
 ]

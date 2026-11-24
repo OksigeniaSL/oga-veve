@@ -243,6 +243,46 @@
       "ms": 6407,
       "h": "b90bf6fa21"
     },
+    "ejercicio.ave.adelante": {
+      "ms": 3507,
+      "h": "3ebe9431cf"
+    },
+    "ejercicio.ave.aguanta": {
+      "ms": 6007,
+      "h": "0194e99326"
+    },
+    "ejercicio.ave.antes": {
+      "ms": 19907,
+      "h": "650b82195e"
+    },
+    "ejercicio.ave.bien": {
+      "ms": 11207,
+      "h": "d9c56fc5f9"
+    },
+    "ejercicio.ave.bienParado": {
+      "ms": 13807,
+      "h": "cd0f2283fe"
+    },
+    "ejercicio.ave.derecho": {
+      "ms": 3707,
+      "h": "747a347a7c"
+    },
+    "ejercicio.ave.izquierdo": {
+      "ms": 3907,
+      "h": "ebf4e35f59"
+    },
+    "ejercicio.ave.noAguanta": {
+      "ms": 6907,
+      "h": "517e57b0a6"
+    },
+    "ejercicio.ave.palanca": {
+      "ms": 4907,
+      "h": "3ebe88a16e"
+    },
+    "ejercicio.ave.petardeo": {
+      "ms": 8507,
+      "h": "033de84270"
+    },
     "ejercicio.bandera": {
       "ms": 8807,
       "h": "ca59d40224"
@@ -6607,6 +6647,36 @@
     ],
     "ejercicio.reventon.bienParado": [
       "ejercicio.reventon.bienParado"
+    ],
+    "ejercicio.ave.antes": [
+      "ejercicio.ave.antes"
+    ],
+    "ejercicio.ave.izquierdo": [
+      "ejercicio.ave.izquierdo"
+    ],
+    "ejercicio.ave.derecho": [
+      "ejercicio.ave.derecho"
+    ],
+    "ejercicio.ave.petardeo": [
+      "ejercicio.ave.petardeo"
+    ],
+    "ejercicio.ave.palanca": [
+      "ejercicio.ave.palanca"
+    ],
+    "ejercicio.ave.adelante": [
+      "ejercicio.ave.adelante"
+    ],
+    "ejercicio.ave.aguanta": [
+      "ejercicio.ave.aguanta"
+    ],
+    "ejercicio.ave.noAguanta": [
+      "ejercicio.ave.noAguanta"
+    ],
+    "ejercicio.ave.bien": [
+      "ejercicio.ave.bien"
+    ],
+    "ejercicio.ave.bienParado": [
+      "ejercicio.ave.bienParado"
     ]
   }
 }

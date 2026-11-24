@@ -924,3 +924,13 @@
 924	ejercicio.reventon.toma	Al tocar, el avión va a tirar otra vez para el lado de la rueda rota: sostené el eje con el otro pie, y frená suave y parejo, con calma
 925	ejercicio.reventon.bien	Ejercicio hecho: con una rueda rota, casi a la velocidad de despegar, conviene seguir. Volviste con toda la pista por delante, y así alcanza con frenar con calma
 926	ejercicio.reventon.bienParado	Paraste dentro de la pista, y parar también es ganar. Con una rueda rota se frena peor: por eso, casi a la velocidad de despegar, lo que suele convenir es seguir, y volver con toda la pista por delante
+927	ejercicio.ave.antes	Hoy practicamos un ave que se mete en un motor, después de despegar. Vas a oír un golpe, y después unos estallidos con un fogonazo: es el aire del motor, que por un momento se da vuelta. Suena fuerte, y casi nunca es grave. Primero volamos: el pie del otro lado, y la velocidad. Después llevamos atrás la palanca de ese motor hasta que se calle, y volvemos
+928	ejercicio.ave.izquierdo	Entró un ave en el motor izquierdo: pie derecho, y seguimos subiendo
+929	ejercicio.ave.derecho	Entró un ave en el motor derecho: pie izquierdo, y seguimos subiendo
+930	ejercicio.ave.petardeo	Esos estallidos son el aire del motor, que se da vuelta y sale por adelante con un fogonazo. El avión sigue subiendo: sostené el pie y la velocidad, con calma
+931	ejercicio.ave.palanca	Ya tenemos altura. Llevo atrás la palanca de ese motor, sin apuro, hasta que se calle
+932	ejercicio.ave.adelante	Se calló. Ahora la empujo de a poquito, a ver hasta dónde aguanta
+933	ejercicio.ave.aguanta	Así aguanta, y ahí la dejamos, sin pasarnos. Avisamos a la torre, y volvemos con los dos motores andando
+934	ejercicio.ave.noAguanta	Volvió a estallar: la llevo atrás del todo, y paro ese motor. El avión vuela bien con el otro. Avisamos a la torre, y volvemos
+935	ejercicio.ave.bien	Ejercicio hecho: primero volar, y después la palanca de ese motor. A los motores así los ensayan metiéndoles aves a toda potencia, y tienen que seguir andando veinte minutos. Por eso se vuela con calma
+936	ejercicio.ave.bienParado	Ejercicio hecho: primero volar, después la palanca, y como no aguantaba, lo paramos. A los motores así los ensayan metiéndoles aves, y con la más grande lo que se les pide es que se puedan parar sin peligro. Y el avión vuela bien con el otro

@@ -2885,5 +2885,35 @@
   ],
   "ejercicio.reventon.bienParado": [
     "ejercicio.reventon.bienParado"
+  ],
+  "ejercicio.ave.antes": [
+    "ejercicio.ave.antes"
+  ],
+  "ejercicio.ave.izquierdo": [
+    "ejercicio.ave.izquierdo"
+  ],
+  "ejercicio.ave.derecho": [
+    "ejercicio.ave.derecho"
+  ],
+  "ejercicio.ave.petardeo": [
+    "ejercicio.ave.petardeo"
+  ],
+  "ejercicio.ave.palanca": [
+    "ejercicio.ave.palanca"
+  ],
+  "ejercicio.ave.adelante": [
+    "ejercicio.ave.adelante"
+  ],
+  "ejercicio.ave.aguanta": [
+    "ejercicio.ave.aguanta"
+  ],
+  "ejercicio.ave.noAguanta": [
+    "ejercicio.ave.noAguanta"
+  ],
+  "ejercicio.ave.bien": [
+    "ejercicio.ave.bien"
+  ],
+  "ejercicio.ave.bienParado": [
+    "ejercicio.ave.bienParado"
   ]
 }
