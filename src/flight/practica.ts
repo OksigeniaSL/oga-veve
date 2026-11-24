@@ -64,6 +64,12 @@
  * hay tiempo—; en la final se cuenta la toma, y al tocar se enseña otra vez el
  * pie. Ver el ADR 0014, enmienda H74.
  *
+ * **Y la que revienta al tomar** es la misma rueda con otro orden: al poco de
+ * tocar, el pie; después el freno, suave y parejo; y ya despacio, parar en la
+ * pista. Ahí se acaba, con los bomberos al lado. Quien la deja rodando también
+ * acaba bien: se cuenta por qué es mejor parar. Y quien se va al aire con la
+ * rueda rota vuelve como en la de la carrera. Ver el ADR 0014, enmienda H84.
+ *
  * **El ave en el motor** es un motor que sigue en marcha y petardea. Primero se
  * vuela, y no se toca nada: «the first priority task of the flight crew is to
  * "fly the airplane"» (FAA, *Airplane Turbofan Engine Operation and
@@ -117,6 +123,8 @@ export interface Lectura {
   readonly enLaBaseOEnLaFinal?: boolean;
   /** Con un ave en un motor, cuántas veces ha estallado. Ver `motorTocado` en `model.ts`. */
   readonly estallidos?: number;
+  /** Lo que se avanza por el suelo, m/s: en la rodadura con la rueda reventada al tomar. */
+  readonly porElSuelo?: number;
 }
 
 /** Las tres velocidades del despegue de hoy, indicadas. */
@@ -195,6 +203,12 @@ export type Suceso =
   | { readonly que: "toma" }
   /** Y al tocar, otra vez qué pie. */
   | { readonly que: "alTocar" }
+  /** Reventada al tomar: después del pie, el freno suave y parejo, y la reversa. */
+  | { readonly que: "freno" }
+  /** Ya despacio: parar aquí, en la pista. */
+  | { readonly que: "paraAqui" }
+  /** Dejó la pista rodando con la rueda rota: por qué es mejor parar. */
+  | { readonly que: "rodando" }
   /** Con un ave en un motor: por dónde va su palanca. Ver `PalancaDelAve`. */
   | { readonly que: "palanca"; readonly motor: number; readonly paso: PasoDeLaPalanca }
   | { readonly que: "cerrar"; readonly como: Cierre };
@@ -251,6 +265,29 @@ export const ANTES_DE_LA_PALANCA = 14;
 /** Y lo más que se espera a que el avión vaya sujeto, s: pasado eso, se toca igual. */
 export const COMO_MUCHO_SIN_PALANCA = 30;
 
+/**
+ * **Lo que tarda en reventar la rueda desde que toca**, s: el golpe llega
+ * justo detrás del de la toma y no encima, que así son dos cosas. «Shortly
+ * after a normal touchdown» (AAIB, *Bulletin* 12/2008, VP-CRC, p. 21).
+ */
+export const REVIENTA_TRAS_TOCAR = 0.6;
+
+/**
+ * **Y del reventón al freno**, s: primero el pie, que es lo que el avión pide
+ * en el instante, y la frase del golpe acabada. **Sin fuente**: es lo que dura
+ * esa frase. La reversa y los aerofrenos frenan mientras tanto.
+ */
+export const ANTES_DEL_FRENO = 4.5;
+
+/** A qué velocidad por el suelo se cuenta que se para aquí, m/s: unos treinta nudos. */
+export const CASI_PARADO = 15;
+
+/** Lo que tiene que ir fuera de la pista para darla por dejada, s: una rueda que la pisa un momento no es irse. */
+const FUERA_DE_LA_PISTA = 1;
+
+/** Por encima de esto se ha dado la vuelta de verdad, m sobre el campo. */
+const DIO_LA_VUELTA = 60;
+
 /** El alabeo con el que el avión va sujeto, rad: un viraje suave. */
 const SUJETO = 0.44;
 
@@ -294,6 +331,14 @@ export class Practica {
   private avisadoDentro = false;
   private dichaLaToma = false;
   private tocada = false;
+  /** El reventón al tomar: si ya se dio la vuelta, cuánto lleva en la pista y por dónde va. */
+  private yaVolo = false;
+  private desdeQueToca = 0;
+  private dichoElFreno = false;
+  private dichoQuePare = false;
+  private fuera = 0;
+  private rodo = false;
+  private paroDentro: boolean | null = null;
   /** El motor en el que entró el ave, su palanca y cuánto hace que se sabe cómo queda. */
   private motorTocado: number | null = null;
   private palanca: PalancaDelAve | null = null;
@@ -378,6 +423,30 @@ export class Practica {
   }
 
   /**
+   * **Si lo que se practica es parar en la pista**: la rueda que revienta al
+   * tomar, dada ya la vuelta. Desde que se toca, el juego no pide frenar para
+   * la salida ni dejar la pista, que manda al sitio contrario; y se queda así
+   * después del cierre, que con la rueda rota no se rueda.
+   */
+  get seParaEnLaPista(): boolean {
+    return this.elegida.cuando.en === "toma" && (this.faseActual !== "armada" || this.yaVolo);
+  }
+
+  /**
+   * **Si el freno lo lleva quien vuela**, sin autofreno: en el reventón al
+   * tomar. «Do not use autobrakes» (*737 NG Flight Crew Training Manual*, p.
+   * 8.40), y lo que se practica es ese pie.
+   */
+  get sinAutofreno(): boolean {
+    return this.elegida.cuando.en === "toma" && this.faseActual !== "cerrada";
+  }
+
+  /** Reventada al tomar: si se paró dentro de la pista; `null` sin haberse parado. */
+  get paroEnLaPista(): boolean | null {
+    return this.paroDentro;
+  }
+
+  /**
    * **El motor con un ave dentro**: cuál, hasta dónde le deja ir su palanca y
    * desde qué empuje petardea. `null` antes del ave, y con el ejercicio
    * cerrado. Lo mira el juego para ponérselo al modelo de vuelo.
@@ -454,6 +523,13 @@ export class Practica {
     this.avisadoDentro = false;
     this.dichaLaToma = false;
     this.tocada = false;
+    this.yaVolo = false;
+    this.desdeQueToca = 0;
+    this.dichoElFreno = false;
+    this.dichoQuePare = false;
+    this.fuera = 0;
+    this.rodo = false;
+    this.paroDentro = null;
     this.motorTocado = null;
     this.palanca = null;
     this.desdeQueSeSabe = null;
@@ -475,6 +551,8 @@ export class Practica {
     }
     if (l.corriendo) this.yaCorrio = true;
     if (this.yaCorrio && l.tren === "dentro") this.trenMetido = true;
+    if (this.yaCorrio && !l.enElSuelo && l.sobreElCampo > DIO_LA_VUELTA) this.yaVolo = true;
+    this.desdeQueToca = this.yaVolo && l.enElSuelo && l.enPista ? this.desdeQueToca + dt : 0;
 
     if (this.faseActual === "armada") {
       if (this.tocaFallar(this.elegida.cuando, l)) {
@@ -512,6 +590,7 @@ export class Practica {
       return sucesos;
     }
     if (this.elegida.que === "neumatico") {
+      if (this.elegida.cuando.en === "toma") this.pasoDeLaRodadura(l, dt, sucesos);
       this.pasoDelReventon(l, sucesos);
       return sucesos;
     }
@@ -667,7 +746,17 @@ export class Practica {
    * tren fuera y PAN PAN al subir; la toma, en la final; y parado, la vuelta.
    */
   private pasoDelReventon(l: Lectura, sucesos: Suceso[]): void {
+    const alTomar = this.elegida.cuando.en === "toma";
     if (!this.volo) {
+      if (alTomar) {
+        if (l.enElSuelo && l.parado && this.desdeElFallo > 1) {
+          this.bomberos = true;
+          this.paroDentro = l.enPista;
+          sucesos.push({ que: "bomberos", donde: "avion" });
+          this.cerrar("vuelta", sucesos);
+        }
+        return;
+      }
       if (l.enElSuelo && l.indicada >= this.velocidades.v1) this.deprisa = true;
       if (l.enElSuelo && l.parado && this.desdeElFallo > 1) {
         this.bomberos = true;
@@ -707,7 +796,34 @@ export class Practica {
       this.tocada = true;
       sucesos.push({ que: "alTocar" });
     }
-    if (l.enElSuelo && l.parado) this.cerrar("vuelta", sucesos);
+    if (l.enElSuelo && l.parado) {
+      if (alTomar) this.paroDentro = l.enPista;
+      this.cerrar("vuelta", sucesos);
+    }
+  }
+
+  /**
+   * **La rodadura con la rueda reventada al tomar, en su orden**: el pie, que
+   * sale con el golpe; el freno, suave y parejo; y ya despacio, parar en la
+   * pista. Y si la deja rodando, por qué es mejor parar. Una vez cada cosa.
+   */
+  private pasoDeLaRodadura(l: Lectura, dt: number, sucesos: Suceso[]): void {
+    if (!l.enElSuelo || l.parado) return;
+    const va = l.porElSuelo ?? Infinity;
+    if (!this.dichoElFreno && this.desdeElFallo >= ANTES_DEL_FRENO && l.enPista) {
+      this.dichoElFreno = true;
+      // Quien llega ya despacio no necesita que le digan cómo se frena: lo que toca es parar.
+      if (va > CASI_PARADO) sucesos.push({ que: "freno" });
+    }
+    if (!this.dichoQuePare && this.dichoElFreno && l.enPista && va <= CASI_PARADO) {
+      this.dichoQuePare = true;
+      sucesos.push({ que: "paraAqui" });
+    }
+    this.fuera = l.enPista ? 0 : this.fuera + dt;
+    if (!this.rodo && this.fuera >= FUERA_DE_LA_PISTA) {
+      this.rodo = true;
+      sucesos.push({ que: "rodando" });
+    }
   }
 
   /**
@@ -799,6 +915,7 @@ export class Practica {
           (m.sinTrenA !== undefined && l.tren === "fuera" && l.sobreElCampo >= m.sinTrenA))
       );
     if (m.en === "tren") return this.trenMetido && !l.enElSuelo && l.tren === "fuera";
+    if (m.en === "toma") return this.desdeQueToca >= REVIENTA_TRAS_TOCAR;
     return !l.enElSuelo && this.segundos >= m.segundos;
   }
 
@@ -813,7 +930,8 @@ export class Practica {
    * Lo que no es un motor —todos, la cabina sin aire— nunca llega en la
    * carrera, y sigue la regla de siempre. **Menos la rueda que revienta**, que
    * llega casi a V1 y así de rápido no se pide parar (*Takeoff Safety Training
-   * Aid*, p. 2.27); quien para en la pista, para, y está bien.
+   * Aid*, p. 2.27); quien para en la pista, para, y está bien. Y la que
+   * revienta al tomar no tiene nada que decidir: se para siempre.
    */
   private seParaAqui(l: Lectura): boolean {
     if (this.elegida.que === "neumatico") return false;

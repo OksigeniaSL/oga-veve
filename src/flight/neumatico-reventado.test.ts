@@ -166,6 +166,77 @@ describe("parar con una rueda reventada", () => {
   });
 });
 
+/*
+ * **Al tomar** (H84): a la velocidad de la toma, con los aerofrenos fuera. «A
+ * yawing moment toward the flat tire with light or no braking and a yawing
+ * moment away from the flat tire if the brakes are applied harder» y «maximum
+ * use of reverse thrust is recommended» (*737 NG Flight Crew Training Manual*,
+ * rev. 20, p. 8.40).
+ */
+describe("al tomar con una rueda reventada", () => {
+  const TOMA = 125;
+
+  it("el eje con poco pie y el freno suave con la reversa: para en la pista y casi en el eje", () => {
+    const rota = parar(TOMA, -1, { brakes: 0.4, reversa: 1 });
+    expect(rota.parado).toBe(true);
+    expect(rota.lejos).toBeLessThan(2);
+    expect(rota.pie).toBeLessThan(0.2);
+    // Y frenar suave no cuesta la pista: ni mil metros.
+    expect(rota.metros).toBeLessThan(1000);
+  });
+
+  it("a fondo se va hacia el otro lado y pide más pie: por eso, suave", () => {
+    const suave = parar(TOMA, -1, { brakes: 0.4, reversa: 1 });
+    const fondo = parar(TOMA, -1, { brakes: 1, reversa: 1 });
+    expect(fondo.pie).toBeGreaterThan(suave.pie * 1.5);
+  });
+
+  it("la reversa no es de las ruedas: con una menos, quita lo mismo que con las cuatro", () => {
+    const quita = (lado: Lado): number =>
+      parar(TOMA, lado, { brakes: 0.4 }).metros - parar(TOMA, lado, { brakes: 0.4, reversa: 1 }).metros;
+    expect(quita(-1)).toBeGreaterThan(100);
+    expect(Math.abs(quita(-1) - quita(0))).toBeLessThan(0.1 * quita(0));
+  });
+
+  it("y corregir de más lo lleva más lejos: el pie a fondo y tarde, contra el suave y igual de tarde", () => {
+    // El pie llega ocho décimas tarde, que es lo que tarda en verse; el freno, a los cuatro segundos y medio.
+    const conPie = (pide: (m: CoefficientFlightModel) => number): number => {
+      const m = enLaPista(ARAI, TOMA * KT, -1);
+      const cola: number[] = [];
+      let lejos = 0;
+      for (let i = 0; i < 120 * 25; i++) {
+        cola.push(pide(m));
+        const rudder = cola.length > 0.8 * 120 ? cola.shift()! : 0;
+        const brakes = i < 4.5 * 120 ? 0 : 0.4;
+        m.step(DT, { ...neutralControls(), throttle: 0, flaps: 0.4, tren: 1, frenosDeTierra: 1, brakes, reversa: 1, rudder });
+        lejos = Math.max(lejos, Math.abs(m.state.position.x));
+        if (m.state.groundSpeed < 0.5) break;
+      }
+      return lejos;
+    };
+    const suave = conPie(pieAlEje);
+    const deMas = conPie((m) => (Math.abs(pieAlEje(m)) < 0.02 ? 0 : Math.sign(pieAlEje(m))));
+    expect(suave).toBeLessThan(3);
+    expect(deMas).toBeGreaterThan(2 * suave);
+  });
+
+  it("y sin pie ninguno se va de verdad: frenando suave desde el principio, casi nada", () => {
+    const sinPie = (desde: number): number => {
+      const m = enLaPista(ARAI, TOMA * KT, -1);
+      let lejos = 0;
+      for (let i = 0; i < 120 * 60; i++) {
+        const brakes = i < desde * 120 ? 0 : 0.4;
+        m.step(DT, { ...neutralControls(), throttle: 0, flaps: 0.4, tren: 1, frenosDeTierra: 1, brakes, reversa: 1 });
+        lejos = Math.max(lejos, Math.abs(m.state.position.x));
+        if (m.state.groundSpeed < 0.5) break;
+      }
+      return lejos;
+    };
+    expect(sinPie(4.5)).toBeGreaterThan(8);
+    expect(sinPie(0)).toBeLessThan(sinPie(4.5) / 4);
+  });
+});
+
 describe("sin reventada, el modelo de siempre", () => {
   it("ponerla y quitarla no deja nada: la misma carrera, bit a bit", () => {
     const vuela = (tocar: boolean): number[] => {

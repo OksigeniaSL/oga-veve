@@ -275,6 +275,15 @@ const LOS_EJERCICIOS = [
   "ejercicio.reventon.toma",
   "ejercicio.reventon.bien",
   "ejercicio.reventon.bienParado",
+  // El reventón al tomar (H84): presentación, los pasos y los dos cierres.
+  "ejercicio.reventon-al-tomar.antes",
+  "ejercicio.rueda.izquierda",
+  "ejercicio.rueda.derecha",
+  "ejercicio.rueda.freno",
+  "ejercicio.rueda.para",
+  "ejercicio.rueda.rodando",
+  "ejercicio.rueda.bien",
+  "ejercicio.rueda.bienFuera",
   // El ave en el motor (H77): presentación, los pasos y los dos cierres.
   "ejercicio.ave.antes",
   "ejercicio.ave.izquierdo",

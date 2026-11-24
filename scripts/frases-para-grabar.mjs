@@ -142,8 +142,8 @@ const HABLADOS = [
     // `DE_LA_TORMENTA`, `DE_LA_AUTORROTACION` y `DE_LAS_LECCIONES_DEL_ROTOR`. Y lo que
     // «Se apaga el GPS» escribe delante de su frase, que se lee: ver `atenderAlGps`.
     // Y la carga suelta, que es nueva: ver `DE_LA_CARGA_SUELTA`. Y el tren de nariz: `DEL_TREN_DE_NARIZ`.
-    // Y el fallo de radio: `DEL_FALLO_DE_RADIO`. Y el ave en el motor: `DEL_AVE`.
-    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro|radio|fallo-de-radio|reventon|ave)\.|^ejercicio\.gps\.integOk$/,
+    // Y el fallo de radio: `DEL_FALLO_DE_RADIO`. Y el ave en el motor: `DEL_AVE`. Y el reventón al tomar: `DE_LA_RUEDA`.
+    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro|radio|fallo-de-radio|reventon|reventon-al-tomar|rueda|ave)\.|^ejercicio\.gps\.integOk$/,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],
@@ -3528,6 +3528,38 @@ const DEL_AVE = [
   ["ejercicio.ave.bienParado", "el cierre del ave con ese motor parado, parado en la pista"],
 ];
 for (const [id, para] of DEL_AVE) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
+/**
+ * **El reventón al tomar** (#90, H84): la presentación, el golpe de cada lado
+ * con su pie, el freno con la reversa, parar en la pista, qué se dice si se
+ * deja rodando y los dos cierres. De la instructora y en calma, detrás de todo.
+ * Las del golpe, la del freno y la de parar, cortas: piden algo en el instante.
+ * Ver el ADR 0014, enmienda H84.
+ */
+const DE_LA_RUEDA = [
+  ["ejercicio.reventon-al-tomar.antes", "el reventón al tomar, antes de empezar: el golpe al tocar, el pie, el freno con la reversa y parar en la pista"],
+  ["ejercicio.rueda.izquierda", "el reventón al tomar: revienta una rueda de la izquierda al tocar; pie derecho (corta, el avión ya tira)"],
+  ["ejercicio.rueda.derecha", "el reventón al tomar: revienta una rueda de la derecha al tocar; pie izquierdo (corta, el avión ya tira)"],
+  ["ejercicio.rueda.freno", "el reventón al tomar: con el eje sujeto, el freno suave y parejo y la reversa (corta, se está rodando)"],
+  ["ejercicio.rueda.para", "el reventón al tomar: ya despacio, se para ahí, en la pista (corta)"],
+  ["ejercicio.rueda.rodando", "el reventón al tomar: si se deja la pista rodando, por qué es mejor parar, sin reproche"],
+  ["ejercicio.rueda.bien", "el cierre del reventón al tomar, parado en la pista"],
+  ["ejercicio.rueda.bienFuera", "el cierre del reventón al tomar, parado fuera de la pista, sin reproche"],
+];
+for (const [id, para] of DE_LA_RUEDA) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({

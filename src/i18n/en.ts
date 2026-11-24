@@ -1504,6 +1504,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.tren-de-morro": "Nose gear won't extend",
   "hangar.ejercicio.fallo-de-radio": "No radio",
   "hangar.ejercicio.reventon": "A tire bursts",
+  "hangar.ejercicio.reventon-al-tomar": "A tire bursts at touchdown",
   "hangar.ejercicio.ave": "A bird in the engine",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
@@ -1807,6 +1808,18 @@ export const EN: Dictionary = {
     "Exercise done: with a burst tire, almost at takeoff speed, it's better to go on. You came back with the whole runway ahead, and that way calm braking is enough",
   "ejercicio.reventon.bienParado":
     "You stopped on the runway, and stopping is winning too. With a burst tire the brakes do less: that's why, almost at takeoff speed, it's usually better to go on, and come back with the whole runway ahead",
+  "ejercicio.reventon-al-tomar.antes":
+    "Today we practise a tire that bursts when landing. We fly the circuit and, as we touch the runway, you'll hear a thump, and the airplane will pull to one side. Three things: you hold the centerline with the other foot, gently; you brake with your feet, evenly, and with reverse; and you stop right there, on the runway, in no hurry to leave it",
+  "ejercicio.rueda.izquierda": "A left tire burst: right foot, gently",
+  "ejercicio.rueda.derecha": "A right tire burst: left foot, gently",
+  "ejercicio.rueda.freno": "Now brake gently and evenly, and use full reverse: it doesn't depend on the wheels",
+  "ejercicio.rueda.para": "Stop here, on the runway. No hurry to leave it",
+  "ejercicio.rueda.rodando":
+    "With a burst tire it's better to stop on the runway: rolling, the loose rubber hits the airplane from below, and the other tire heats up. Stop when you can, calmly",
+  "ejercicio.rueda.bien":
+    "Exercise done: the centerline with your foot, without overcorrecting; the brakes, gentle and even; and stopping on the runway, in no hurry. Now they come to look at the tire, and the runway waits until the rubber is picked up",
+  "ejercicio.rueda.bienFuera":
+    "Exercise done: you held the centerline and braked calmly. Next time, stop on the runway: that way the torn rubber stops hitting, and they come to look at the tire right there",
   "ejercicio.ave.antes":
     "Today we practise a bird that goes into an engine after takeoff. You'll hear a thud, and then some bangs with a flash: it's the air in the engine, which turns around for a moment. It's loud, and it's almost never serious. First we fly: the other foot, and the speed. Then we pull that engine's lever back until it goes quiet, and we return",
   "ejercicio.ave.izquierdo": "A bird went into the left engine: right foot, and we keep climbing",

@@ -75,6 +75,12 @@
  * Y las dos cosas se callan también en los que acaban en el aire, que son de
  * la pista y no de su lección.
  *
+ * **Y el que para en la pista** (H84): el reventón al tomar enseña a parar
+ * ahí, sin prisa por dejarla, y la fase del plan pedía lo contrario desde que
+ * se toca —«frená» para la salida, «salí de la pista, que viene otro»—. Desde
+ * la toma se calla la fase y nada más, y sigue callada después del cierre: con
+ * la rueda rota no se rueda. Ver `seParaEnLaPista` en `practica.ts`.
+ *
  * **Lo que no se calla nunca** es la seguridad: la máquina del avión
  * (*traffic*, *terrain*, la pérdida), los avisos del cuadro y la información
  * de tráfico, que sin torre la da la instructora (`comoSeDiceElTrafico`). Y al
@@ -147,8 +153,11 @@ export function loQueCallaElEjercicio(
    * en `game.ts`.
    */
   sinRadio = false,
+  /** Con la rueda reventada al tomar y las ruedas en el suelo (H84): se para en la pista. */
+  paraEnLaPista = false,
 ): LoQueCalla {
   if (!ejercicio || cerrado) return NO_CALLA_NADA;
+  if (paraEnLaPista) return SOLO_LA_FASE;
   if (sinRadio) return { ...NO_CALLA_NADA, laFrecuencia: true };
   if (ejercicio.acabaEnElAire)
     return {

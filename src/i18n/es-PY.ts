@@ -3404,6 +3404,7 @@ export const ES_PY = {
   "hangar.ejercicio.tren-de-morro": "El tren de nariz no sale",
   "hangar.ejercicio.fallo-de-radio": "Sin radio",
   "hangar.ejercicio.reventon": "Se revienta una rueda",
+  "hangar.ejercicio.reventon-al-tomar": "Se revienta una rueda al tocar",
   "hangar.ejercicio.ave": "Un ave en el motor",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
@@ -3850,6 +3851,27 @@ export const ES_PY = {
     "Ejercicio hecho: con una rueda rota, casi a la velocidad de despegar, conviene seguir. Volviste con toda la pista por delante, y así alcanza con frenar con calma",
   "ejercicio.reventon.bienParado":
     "Paraste dentro de la pista, y parar también es ganar. Con una rueda rota se frena peor: por eso, casi a la velocidad de despegar, lo que suele convenir es seguir, y volver con toda la pista por delante",
+  /*
+   * **El reventón al tomar** (#90, H84): la presentación, el golpe de cada lado
+   * con su pie —corta, que el avión ya tira—, el freno con la reversa, parar en
+   * la pista, qué se dice si se deja rodando y los dos cierres. «Suavecito» es
+   * el «no corregir de más» del #90; lo de la reversa entera y el freno con el
+   * pie, del manual de Boeing (*737 NG FCTM*, p. 8.40); lo de la goma que
+   * golpea, del VP-CRC, y lo de la otra rueda, de ese manual. Ver el ADR 0014,
+   * enmienda H84.
+   */
+  "ejercicio.reventon-al-tomar.antes":
+    "Hoy practicamos una rueda que se revienta al aterrizar. Damos la vuelta y, al tocar la pista, vas a oír un golpe, y el avión va a tirar para un lado. Son tres cosas: lo sostenés en el eje con el otro pie, suavecito; frenás con el pie, parejo, y con la reversa; y parás ahí, en la pista, sin apuro por salir",
+  "ejercicio.rueda.izquierda": "Se reventó una rueda de la izquierda: pie derecho, suavecito",
+  "ejercicio.rueda.derecha": "Se reventó una rueda de la derecha: pie izquierdo, suavecito",
+  "ejercicio.rueda.freno": "Ahora frená suave y parejo, y sacá toda la reversa, que no es de las ruedas",
+  "ejercicio.rueda.para": "Pará acá, en la pista. No hay apuro por salir",
+  "ejercicio.rueda.rodando":
+    "Con la rueda rota es mejor parar en la pista: rodando, la goma suelta golpea el avión por abajo, y la otra rueda se calienta. Pará cuando puedas, con calma",
+  "ejercicio.rueda.bien":
+    "Ejercicio hecho: el eje con el pie, sin corregir de más; el freno, suave y parejo; y parar en la pista, sin apuro. Ahora vienen a mirar la rueda, y la pista espera a que junten la goma",
+  "ejercicio.rueda.bienFuera":
+    "Ejercicio hecho: sostuviste el eje y frenaste con calma. La próxima, pará en la pista: así la goma rota no golpea más, y vienen a mirar la rueda ahí mismo",
   /*
    * **El ave en el motor** (#90, H77): la presentación, el golpe de cada lado
    * con su pie, qué son los estallidos, la palanca de ese motor —atrás,

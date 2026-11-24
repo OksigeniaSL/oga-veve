@@ -101,6 +101,27 @@ describe("lo que calla un ejercicio que no acaba en la pista", () => {
 });
 
 /*
+ * H84: el reventón al tomar enseña a parar en la pista, y desde que se toca el
+ * juego pedía frenar para la salida y dejarla, «que viene otro».
+ */
+describe("el reventón al tomar", () => {
+  it("desde que se toca, la fase y nada más; y en el aire, nada", () => {
+    const e = ejercicioPorId("reventon-al-tomar");
+    expect(loQueCallaElEjercicio(e, false)).toEqual(NO_CALLA_NADA);
+    expect(loQueCallaElEjercicio(e, false, false, false, false, true)).toEqual({ ...NO_CALLA_NADA, laFase: true });
+  });
+
+  it("y el juego lo mira donde nace cada cosa que pide dejar la pista", () => {
+    expect(juego).toMatch(/loQueCallaElEjercicio\([^;]*this\.paraEnLaPista,?\s*\)/);
+    // «Frená», que es para la salida; y «salí por la siguiente».
+    expect(juego).toMatch(/!this\.paraEnLaPista &&[\s\S]{0,600}hayQueFrenarEnLaPista\(/);
+    expect(juego).toMatch(/!this\.salidasDichas\.dicha && !this\.paraEnLaPista\) this\.decirSalPorLaSiguiente/);
+    // Y el autofreno, que no se arma.
+    expect(juego).toMatch(/faltaElAutofreno = [^;]*!this\.practica\?\.sinAutofreno/);
+  });
+});
+
+/*
  * H43: «Seguí la aguja» en Fuerteventura con el alisio va a tres mil pies sobre
  * la pista —el techo justo de la final de la torre— y cruza el embudo de la 01
  * apuntando a ella: con un metro de menos, la torre lo veía en su final y le

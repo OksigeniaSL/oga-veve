@@ -689,6 +689,11 @@ describe("y la megafonía va por el mismo turno", () => {
       "ejercicio.reventon.tren",
       "ejercicio.reventon.sacalo",
       "ejercicio.reventon.toma",
+      // Y el reventón al tomar (H84), por lo mismo.
+      "ejercicio.reventon-al-tomar.antes",
+      "ejercicio.rueda.freno",
+      "ejercicio.rueda.para",
+      "ejercicio.rueda.rodando",
       // Y el ave en el motor (H77), lo mismo: la del golpe, no.
       "ejercicio.ave.antes",
       "ejercicio.ave.petardeo",
@@ -707,6 +712,8 @@ describe("y la megafonía va por el mismo turno", () => {
     expect(valeHastaElPasoSiguiente("ejercicio.cargaDeOtro")).toBe(false);
     expect(valeHastaElPasoSiguiente("ejercicio.reventon.izquierda")).toBe(false);
     expect(valeHastaElPasoSiguiente("ejercicio.reventon.derecha")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.rueda.izquierda")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.rueda.derecha")).toBe(false);
     expect(valeHastaElPasoSiguiente("ejercicio.ave.izquierdo")).toBe(false);
     expect(valeHastaElPasoSiguiente("ejercicio.ave.derecho")).toBe(false);
   });
@@ -1668,6 +1675,8 @@ describe("lo que cierra el vuelo no se pierde", () => {
       "ejercicio.morro.bien",
       "ejercicio.reventon.bien",
       "ejercicio.reventon.bienParado",
+      "ejercicio.rueda.bien",
+      "ejercicio.rueda.bienFuera",
       "ejercicio.ave.bien",
       "ejercicio.ave.bienParado",
       "ejercicio.paradoTrasV1Cuatro",

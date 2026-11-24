@@ -438,6 +438,58 @@ const reventon = (lado: "izquierda" | "derecha"): string =>
 `);
 
 /**
+ * **El freno suave y parejo**: los dos pedales pisados igual y poco —las dos
+ * flechas cortas, el «igual» entre ellos y, arriba, la escalera con dos
+ * peldaños llenos de cuatro—. Con una rueda reventada, a fondo tira hacia la
+ * pata sana. Ver el ADR 0014, enmienda H84.
+ */
+const FRENO_SUAVE = icono(`
+  <rect x="3" y="11.4" width="7.6" height="10" rx="1.6" />
+  <rect x="13.4" y="11.4" width="7.6" height="10" rx="1.6" />
+  <path d="M6.8 7 v2.6 M5.2 8.4 l1.6 1.7 l1.6 -1.7 M17.2 7 v2.6 M15.6 8.4 l1.6 1.7 l1.6 -1.7"
+        fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M11.2 15.6 h1.6 M11.2 17.6 h1.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+  <rect x="7.4" y="4.4" width="1.8" height="1.6" />
+  <rect x="9.9" y="3.4" width="1.8" height="2.6" />
+  <rect x="12.4" y="2.4" width="1.8" height="3.6" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.6" />
+  <rect x="14.9" y="1.4" width="1.8" height="4.6" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.6" />
+`);
+
+/**
+ * **Parar aquí, en la pista**: la pista hacia delante, con su eje, y dentro la
+ * mano de parar, la misma del freno. Ver el ADR 0014, enmienda H84.
+ */
+const PARA_EN_LA_PISTA = icono(`
+  <path d="M1.4 22.4 L7.8 2 h8.4 L22.6 22.4 Z" fill="none" stroke="currentColor" stroke-width="1.6"
+        stroke-linejoin="round" />
+  <path d="M12 3 v2.6 M12 20.6 v1.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+  <path transform="translate(4.6 5) scale(0.68)"
+        d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
+           a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
+           v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
+`);
+
+/**
+ * **La goma que golpea al rodar**: la rueda reventada, la tira de goma suelta
+ * —en el rojo oscuro de la tarjeta— que sube con cada vuelta y da por debajo
+ * del ala. Es por qué es mejor parar en la pista que seguir rodando (AAIB,
+ * *Bulletin* 12/2008, VP-CRC, p. 22). Ver el ADR 0014, enmienda H84.
+ */
+const GOMA_SUELTA = icono(`
+  <path d="M9.6 1.6 H22.6 V4 H11 Z" />
+  <path d="M1.6 22.4 H22.4" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6" />
+  <g class="senal__goma">
+    <path class="senal__roja" d="M12 11.4 Q16.4 10.8 17.6 5 L20 6 Q19 13.4 13.4 14.6 Z" />
+  </g>
+  <circle cx="9" cy="15.4" r="6" />
+  <ellipse cx="9" cy="20.9" rx="5.4" ry="1.2" />
+  <circle class="senal__hueco" cx="9" cy="15.4" r="2.4" />
+  <path d="M20.4 6.6 l1.8 1 M15.6 6 l-1.6 -0.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+  <path d="M1.4 14 A8 8 0 0 1 5.4 8.2 M3.2 7.6 l2.6 0.2 l-0.6 2.6" fill="none" stroke="currentColor"
+        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+`);
+
+/**
  * **El ave en el motor y hacia dónde tira**: el avión por detrás, con el motor
  * de ese lado en el rojo oscuro de la tarjeta, el fogonazo que se enciende y se
  * apaga, y la flecha hacia ese lado. Visto por detrás, que así la izquierda del
@@ -2252,6 +2304,9 @@ export const DIBUJOS = {
   "pie-derecho": pedal("derecho"),
   "reventon-izquierda": reventon("izquierda"),
   "reventon-derecha": reventon("derecha"),
+  "freno-suave": FRENO_SUAVE,
+  "para-en-la-pista": PARA_EN_LA_PISTA,
+  "goma-suelta": GOMA_SUELTA,
   "ave-izquierdo": motorConAve("izquierdo"),
   "ave-derecho": motorConAve("derecho"),
   "palanca-atras-izquierda": palancaDeGases("izquierda", "atras"),
