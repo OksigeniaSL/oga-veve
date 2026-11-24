@@ -187,6 +187,8 @@ export class LaOtraCabecera {
   private dicho: "nada" | "pistaEnUso" | "alAire" = "nada";
   /** Y a qué cabecera se autorizó sin motor, si a alguna. */
   private autorizada: "enUso" | "otra" | null = null;
+  /** Si esa aproximación se dejó y su permiso se retiró. Ver `paso`. */
+  private seDejo = false;
 
   paso(a: AlineadoCon): LoQueDiceLaTorre {
     if (a.sinMotor) {
@@ -196,6 +198,17 @@ export class LaOtraCabecera {
        * y otra vez si se cambia de idea y se alinea con la otra.
        */
       const cual = a.otra !== null ? "otra" : a.enUso !== null ? "enUso" : null;
+      /*
+       * Y si esa aproximación se dejó, la siguiente lleva su permiso aunque
+       * sea a la misma: con una emergencia declarada y motor se puede ir uno
+       * al aire, y volvía a alinearse sin que nadie le diera la pista (H73).
+       * Se rearma al salir de los dos embudos, que en la subida de la
+       * frustrada todavía se está en el suyo.
+       */
+      if (!cual && this.seDejo) {
+        this.seDejo = false;
+        this.autorizada = null;
+      }
       if (!cual || cual === this.autorizada) return null;
       this.autorizada = cual;
       return { que: "autorizada", cabecera: cual };
@@ -237,9 +250,18 @@ export class LaOtraCabecera {
     return null;
   }
 
+  /**
+   * **Se dejó la aproximación a la que se autorizó** y su permiso se retiró:
+   * la siguiente se autoriza otra vez. Ver `paso`.
+   */
+  seDejoLaAproximacion(): void {
+    this.seDejo = true;
+  }
+
   /** Otro vuelo, otra aproximación, o la orden ya resuelta. */
   reiniciar(): void {
     this.dicho = "nada";
     this.autorizada = null;
+    this.seDejo = false;
   }
 }

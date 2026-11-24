@@ -387,6 +387,42 @@ export function alUmbralEnLaAproximacion(
 }
 
 /**
+ * **Dónde se está en los ejes de la aproximación de una pista**, sin recortar:
+ * metros hasta el umbral de aterrizar —negativo pasado—, metros a un lado del
+ * eje —positivo a la derecha de quien llega—, la pista que queda por delante
+ * —negativa pasada la otra punta— y si se está en el cono de
+ * `alUmbralEnLaAproximacion`.
+ *
+ * Lo usa el permiso de aterrizar, que tiene que saber por dónde se deja su
+ * aproximación y no solo que ya no se está en ella: ver
+ * `flight/aproximacion-del-permiso.ts`.
+ */
+export function ejesDeLaAproximacion(
+  runway: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+    desplazado?: number;
+  },
+  x: number,
+  z: number,
+): {
+  readonly alUmbral: number;
+  readonly deLado: number;
+  readonly pistaPorDelante: number;
+  readonly enElCono: boolean;
+} {
+  const { along, across } = enEjesDePista(x, z, runway.x, runway.z, runway.heading);
+  return {
+    alUmbral: -along - hastaElUmbralDeToma(runway),
+    deLado: across,
+    pistaPorDelante: runway.length / 2 - along,
+    enElCono: alUmbralEnLaAproximacion(runway, x, z) !== null,
+  };
+}
+
+/**
  * Lo más torcido que se puede venir respecto a la pista y seguir en final,
  * grados. Treinta, los mismos que pide la fase «final» del plan de vuelo.
  */

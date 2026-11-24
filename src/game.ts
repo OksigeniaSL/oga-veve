@@ -89,7 +89,7 @@ import {
   queExplicaElSinkRate,
   queSeDiceSinMotor,
 } from "./flight/sin-motor";
-import { LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
+import { alReves, LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
 import { Reversa, tiempoDeReversa } from "./flight/reversa";
 import {
   acercarLosMandos,
@@ -303,6 +303,7 @@ import { RITMO_DEL_GAS_DE_AVION } from "./flight/input";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   alUmbralEnLaAproximacion,
+  ejesDeLaAproximacion,
   enElConoDeLaSenda,
   enElEmbudoDeFinal,
   enLaZonaDeAproximacion,
@@ -315,6 +316,11 @@ import {
 } from "./world/runway-guide";
 import { createVegetation, filaDeArboles, zonaDeAeropuerto } from "./world/vegetation";
 import { FinalDeLaTorre } from "./flight/final-de-la-torre";
+import {
+  AproximacionDelPermiso,
+  type LoQueSeVeDelPermiso,
+  type PorQueSeDejo,
+} from "./flight/aproximacion-del-permiso";
 import { crearGranja, type Granja } from "./world/granja";
 import { SitiosConModelo } from "./world/sitios-con-modelo";
 import { compilarYEsperar } from "./world/compilar-y-esperar";
@@ -6234,7 +6240,9 @@ export class Game {
    */
   colocadoParaBanco(): void {
     this.frustrada.reiniciar();
-    this.finalDeLaTorre.reiniciar();
+    // Y con ella el permiso, que era de la aproximación de antes. Ver `otraFinalDeLaTorre`.
+    this.otraFinalDeLaTorre();
+    this.retirarElPermiso("otraPista");
     this.tcas.reiniciar();
     if (this.remolqueDeQuienJuega) this.quitarElRemolque();
     this.olvidarLaHierba();
@@ -6298,6 +6306,17 @@ export class Game {
   private permisoDeAterrizar: "esperando-su-voz" | "sonando" | "oido" | null = null;
   /** Cuál de los permisos dados es el de ahora: lo que avisa tarde, no cuenta. */
   private permisosDados = 0;
+  /**
+   * **La aproximación para la que se dio**: se deja, y el permiso se retira.
+   * Ver `flight/aproximacion-del-permiso.ts` y `mirarSiSeDejaLaAproximacion`.
+   */
+  private readonly aproximacionDelPermiso = new AproximacionDelPermiso();
+  /** Si se dio por la otra punta, sin motor o en emergencia. Ver `autorizarSinMotor`. */
+  private permisoPorLaOtra = false;
+  /** Si el paso anterior el plan te veía en la frustrada. Ver `mirarSiSeDejaLaAproximacion`. */
+  private estabaEnLaFrustrada = false;
+  /** La pista que miraba la torre en el paso anterior. Ver `mirarSiCambiaLaPista`. */
+  private pistaDeLaTorre = "";
   /**
    * **La final de la torre**: desde dónde te ve en final y te da la pista, a
    * millas del umbral y sin parpadear. Ver `flight/final-de-la-torre.ts`.
@@ -13038,6 +13057,11 @@ export class Game {
         this.flight.state.onGround,
       );
       if (queDice !== "aterrizar") {
+        /*
+         * La orden anuló el permiso que hubiera, y levantarla no lo devuelve:
+         * se vuelve por el circuito y se pide en la final siguiente (H73).
+         */
+        this.retirarElPermiso("orden");
         this.laTorreMandaEnLaLuz = false;
         // Sin radio, la lámpara la lleva `encenderSinRadio`, y no se apaga entre una señal y otra.
         if (!this.radioCallada) this.luzDeTorre(null);
@@ -13142,6 +13166,10 @@ export class Game {
      * `permisoDeAterrizar`.
      */
     this.permisoDeAterrizar = "esperando-su-voz";
+    // Y empieza su aproximación. Ver `mirarSiSeDejaLaAproximacion`.
+    this.permisoPorLaOtra =
+      cabecera !== null && cabecera !== cabeceraEnUso(this.elCampo().escenario);
+    this.aproximacionDelPermiso.empieza(this.loQueSeVeDelPermiso());
     const este = ++this.permisosDados;
     const hablo = this.luzDeTorre("verde", "esperar", "ocupada", (que) =>
       this.alSonarElPermiso(este, que, cabecera),
@@ -13271,12 +13299,10 @@ export class Game {
     const pista = campo.pista;
     const torcido =
       (((((s.heading * 180) / Math.PI - pista.heading) % 360) + 540) % 360) - 180;
-    // El tramo final del plan, solo si es el del campo al que se va.
-    const alli = this.elDestino()?.id === this.elCampoMontado().id;
     return this.finalDeLaTorre.paso({
       enElAire: !s.onGround,
       faseDelPlan: fase,
-      enLaFinalDelPlan: alli && this.navegacion.enLaFinal(this.lecturaDeRuta()),
+      enLaFinalDelPlan: this.enLaFinalDelPlanDeAqui(),
       alUmbral: alUmbralEnLaAproximacion(pista, s.position.x, s.position.z),
       torcido,
       sobreLaPista: s.position.y - this.cotaDelCampo(campo),
@@ -13285,6 +13311,120 @@ export class Game {
       gas: this.input.controls.throttle,
       ordenDeIrse: this.laAproximacion.mandanFrustrar,
     });
+  }
+
+  /** Si se está en el tramo final del plan, solo si es el del campo al que se va. */
+  private enLaFinalDelPlanDeAqui(): boolean {
+    const alli = this.elDestino()?.id === this.elCampoMontado().id;
+    return alli && this.navegacion.enLaFinal(this.lecturaDeRuta());
+  }
+
+  /** La pista que mira la torre: su campo y la cabecera en uso. */
+  private pistaQueVeLaTorre(): string {
+    const campo = this.elCampoMontado();
+    return `${campo.id}:${Math.round(campo.pista.heading)}`;
+  }
+
+  /**
+   * **Con otra pista, la final empieza de cero**: otro campo, o la otra
+   * cabecera porque cambió el viento. La final de la torre no volvía a entrar
+   * tras irse al aire hasta haberse dado la vuelta, y esa vuelta se medía
+   * contra la pista nueva: quien se iba al aire en Gran Canaria por la 03 y
+   * seguía derecho a la 03 de Lanzarote llegaba sin que la torre de allí le
+   * viera en final hasta los trescientos metros, con su permiso ahí. Y quien
+   * estaba en la final de la vieja, si lo está en la de la nueva, pide otro:
+   * por eso se olvida también la fase que veía la torre (H73). En tierra no
+   * hay final que olvidar, y la fase es la del rodaje.
+   */
+  private mirarSiCambiaLaPista(): void {
+    const ahora = this.pistaQueVeLaTorre();
+    const antes = this.pistaDeLaTorre;
+    this.pistaDeLaTorre = ahora;
+    if (antes === "" || antes === ahora || this.flight.state.onGround) return;
+    this.otraFinalDeLaTorre();
+  }
+
+  /**
+   * La final de la torre, de cero, con lo que ella veía: si ahora se está en
+   * otra, es otra y pide su permiso.
+   */
+  private otraFinalDeLaTorre(): void {
+    this.finalDeLaTorre.reiniciar();
+    this.enLaFinalDeLaTorre = false;
+    if (this.faseDeLaTorre === "final") this.faseDeLaTorre = "";
+  }
+
+  /** Lo que se ve de tu avión en los ejes de la pista del permiso. */
+  private loQueSeVeDelPermiso(): LoQueSeVeDelPermiso {
+    const s = this.flight.state;
+    const campo = this.elCampo();
+    const pista = this.permisoPorLaOtra ? alReves(campo.pista) : campo.pista;
+    return {
+      enElAire: !s.onGround,
+      pista: this.pistaQueVeLaTorre(),
+      ...ejesDeLaAproximacion(pista, s.position.x, s.position.z),
+      enLaFinalDelPlan: !this.permisoPorLaOtra && this.enLaFinalDelPlanDeAqui(),
+      torcido: (((((s.heading * 180) / Math.PI - pista.heading) % 360) + 540) % 360) - 180,
+      sobreLaPista: s.position.y - this.cotaDelCampo(campo),
+      vertical: s.verticalSpeed,
+      gas: this.input.controls.throttle,
+      ordenDeIrse: this.laAproximacion.mandanFrustrar,
+      sinMotor: this.sinMotor,
+    };
+  }
+
+  /**
+   * **El permiso es de una aproximación, y si se deja se retira** (H73), se
+   * vea por donde se vea que se deja:
+   *
+   * - por lo que hace el avión desde que se dio, que es lo que manda: ver
+   *   `flight/aproximacion-del-permiso.ts`;
+   * - por la final de la torre: yéndose al aire, dándose la vuelta o tocando.
+   *   Saliéndose del cono al coger la final y volviendo, no: ver
+   *   `SalidaDeLaFinal`;
+   * - o por la fase del plan, que se pone en la frustrada (`Vuelo.trasIrse`).
+   *
+   * Solo lo retiraba la segunda, y solo el que ya se había oído: el que se
+   * daba con una «final» que solo era la del plan, el de quien pasaba la pista
+   * de largo y el que todavía sonaba al irse duraban hasta la toma siguiente,
+   * y en la final siguiente no se pedía otro. Con la radio callada, la verde
+   * fija.
+   */
+  private mirarSiSeDejaLaAproximacion(estabaEnLaFinal: boolean): void {
+    const enLaFrustrada = this.plan?.enLaFrustrada ?? false;
+    const seFue = enLaFrustrada && !this.estabaEnLaFrustrada;
+    this.estabaEnLaFrustrada = enLaFrustrada;
+    const salida = this.finalDeLaTorre.ultimaSalida;
+    const porLaTorre: PorQueSeDejo | null =
+      estabaEnLaFinal && !this.enLaFinalDeLaTorre && salida !== "fuera" ? (salida ?? "otraPista") : null;
+    const porElAvion = this.aproximacionDelPermiso.enMarcha
+      ? this.aproximacionDelPermiso.paso(this.loQueSeVeDelPermiso())
+      : null;
+    /*
+     * Sin motor no hay otra aproximación: se planea a la pista que se tenga,
+     * y ni la final de la torre ni la fase dicen que se deja.
+     */
+    const porLoQueVen = this.sinMotor ? null : (porLaTorre ?? (seFue ? "seVa" : null));
+    const porque = porElAvion ?? porLoQueVen;
+    if (porque) this.retirarElPermiso(porque);
+  }
+
+  /**
+   * **Tu permiso se retira**: se dejó su aproximación, o la torre te mandó al
+   * aire y la orden se levantó sin volver a darte la pista. Lo que de él
+   * espere turno ya no se dice —lo que suena, se acaba—, la lámpara y su
+   * tarjeta se apagan si eran suyas, y en la final siguiente se pide otro.
+   * Tocando no: es usarlo, y la lámpara se apaga cuando pasa.
+   */
+  private retirarElPermiso(porque: PorQueSeDejo | "orden"): void {
+    this.aproximacionDelPermiso.olvidar();
+    if (this.permisoDeAterrizar === null) return;
+    this.apuntarCanto(`permiso retirado: ${porque}`);
+    this.permisoDeAterrizar = null;
+    this.laOtraCabecera.seDejoLaAproximacion();
+    if (porque === "tierra") return;
+    BOCA.retirar(esTuPermisoDeAterrizar);
+    this.retirarElPermisoSinOir();
   }
 
   /** Otro vuelo, otro tramo: ninguna final de la torre. */
@@ -14966,6 +15106,10 @@ export class Game {
     this.velocidadJuzgada = null;
     this.laTorreMandaEnLaLuz = false;
     this.permisoDeAterrizar = null;
+    this.aproximacionDelPermiso.olvidar();
+    this.permisoPorLaOtra = false;
+    this.estabaEnLaFrustrada = false;
+    this.pistaDeLaTorre = "";
     this.olvidarLaFinalDeLaTorre();
     this.vaca.quitar();
     // Otro vuelo, otra traza: la raya del anterior ya está guardada.
@@ -16575,6 +16719,11 @@ export class Game {
     this.permisoDeAterrizar = null;
     if (this.laAproximacion.mandanFrustrar || !this.laTorreMandaEnLaLuz) return;
     this.hud.senal.caducar(this.esAfisAqui() ? "toma" : "verde");
+    /*
+     * Sin radio, la lámpara la lleva `encenderSinRadio`, que sin permiso
+     * vuelve a los destellos: apagarla aquí la hacía parpadear.
+     */
+    if (this.radioCallada) return;
     this.luzDeTorre(null);
     this.laTorreMandaEnLaLuz = false;
   }
@@ -31205,6 +31354,7 @@ export class Game {
      * **Y para la torre, la final empieza antes que la del plan.** Ver
      * `faseDeLaTorre` y `flight/final-de-la-torre.ts`.
      */
+    this.mirarSiCambiaLaPista();
     const torreAntes = this.faseDeLaTorre;
     const estabaEnLaFinal = this.enLaFinalDeLaTorre;
     this.enLaFinalDeLaTorre = this.mirarLaFinalDeLaTorre(vista.fase);
@@ -31221,18 +31371,11 @@ export class Game {
       });
     }
     /*
-     * **Y el permiso es de una aproximación.** Se acaba yéndose al aire,
-     * dándose la vuelta o tocando: lo que venga después es otra final con su
-     * permiso. Saliéndose del cono al coger la final y volviendo, no. Ver
-     * `SalidaDeLaFinal` y `pedirAterrizaje` más abajo.
+     * **Y el permiso es de una aproximación.** Lo que venga después de dejarla
+     * es otra final con su permiso. Ver `mirarSiSeDejaLaAproximacion` y
+     * `pedirAterrizaje` más abajo.
      */
-    if (
-      estabaEnLaFinal &&
-      !this.enLaFinalDeLaTorre &&
-      this.finalDeLaTorre.ultimaSalida !== "fuera" &&
-      this.permisoDeAterrizar === "oido"
-    )
-      this.permisoDeAterrizar = null;
+    this.mirarSiSeDejaLaAproximacion(estabaEnLaFinal);
     const torreAhora = this.faseParaLaTorre(vista.fase);
     /*
      * Y para el banco, de dónde le sale a la torre: la fase del plan, que mira
