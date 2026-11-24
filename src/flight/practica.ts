@@ -56,6 +56,13 @@
  * contesta la instructora con los faros). Sin declarar nada: ni llamada, que
  * no hay radio, ni bomberos, que nada se ha roto. Se acaba parado en la pista,
  * y se sabe si se tomó con la verde. Ver el ADR 0014, enmienda H71.
+ *
+ * **La rueda que revienta en la carrera** tampoco: aquí se dice cuándo y de
+ * qué lado, y después lo que decide quien vuela manda. Si para en la pista,
+ * se acaba ahí, y está bien. Si sigue, ya en el aire y subiendo se deja el
+ * tren fuera y a los cuatrocientos pies se avisa con PAN PAN —algo va mal y
+ * hay tiempo—; en la final se cuenta la toma, y al tocar se enseña otra vez el
+ * pie. Ver el ADR 0014, enmienda H74.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -168,6 +175,14 @@ export type Suceso =
     }
   /** Y se le contesta a sus destellos: con las alas, de día, o con los faros, de noche. */
   | { readonly que: "acuse"; readonly como: "alas" | "faros" }
+  /** Con una rueda reventada y ya subiendo: el tren se queda fuera. */
+  | { readonly que: "trenFuera" }
+  /** Y se metió igual: se cuenta por qué va mejor fuera. */
+  | { readonly que: "trenDentro" }
+  /** En la final con la rueda reventada: cómo se toma. */
+  | { readonly que: "toma" }
+  /** Y al tocar, otra vez qué pie. */
+  | { readonly que: "alTocar" }
   | { readonly que: "cerrar"; readonly como: Cierre };
 
 export type FaseDePractica = "armada" | "fallo" | "cerrada";
@@ -243,6 +258,13 @@ export class Practica {
   private contestadas = 0;
   /** Si al tocar la pista la lámpara estaba en verde fija. */
   private conLaVerde: boolean | null = null;
+  /** De qué lado reventó la rueda, y si ya se pasó por cada paso. */
+  private lado: "izquierdo" | "derecho" | null = null;
+  private deprisa = false;
+  private dichoElTren = false;
+  private avisadoDentro = false;
+  private dichaLaToma = false;
+  private tocada = false;
 
   constructor(
     readonly ejercicio: Ejercicio,
@@ -307,6 +329,21 @@ export class Practica {
     return this.conLaVerde;
   }
 
+  /** De qué lado va la rueda reventada, o `null` sin ninguna. */
+  get ladoReventado(): "izquierdo" | "derecho" | null {
+    return this.lado;
+  }
+
+  /**
+   * **Si el tren se queda fuera**: volando con una rueda reventada. Con la
+   * goma suelta, metido puede enganchar lo que hay en su hueco, y fuera no
+   * pone en peligro el avión con los dos motores (*Takeoff Safety Training
+   * Aid*, p. 2.26). Lo mira el juego para no pedir meterlo.
+   */
+  get trenSeQuedaFuera(): boolean {
+    return this.elegida.que === "neumatico" && this.faseActual === "fallo";
+  }
+
   /** Si ya se declaró la emergencia. Desde ahí, la torre da prioridad. */
   get declaradaYa(): boolean {
     return this.declarada;
@@ -358,6 +395,12 @@ export class Practica {
     this.alas = null;
     this.contestadas = 0;
     this.conLaVerde = null;
+    this.lado = null;
+    this.deprisa = false;
+    this.dichoElTren = false;
+    this.avisadoDentro = false;
+    this.dichaLaToma = false;
+    this.tocada = false;
     this.elegida = this.sortear();
   }
 
@@ -381,6 +424,7 @@ export class Practica {
       if (this.tocaFallar(this.elegida.cuando, l)) {
         this.faseActual = "fallo";
         this.cual = this.elegida.que === "motor" ? this.cualSePara() : null;
+        this.lado = this.elegida.que === "neumatico" ? this.cualRevienta() : null;
         this.tocaParar = this.seParaAqui(l);
         this.falloEnElSuelo = l.enElSuelo;
         this.conElTrenFuera =
@@ -405,6 +449,10 @@ export class Practica {
     }
     if (this.elegida.que === "radio") {
       this.pasoSinRadio(l, dt, sucesos);
+      return sucesos;
+    }
+    if (this.elegida.que === "neumatico") {
+      this.pasoDelReventon(l, sucesos);
       return sucesos;
     }
     /*
@@ -548,6 +596,56 @@ export class Practica {
     if (l.enElSuelo && l.parado && this.volo) this.cerrar("vuelta", sucesos);
   }
 
+  /**
+   * **Con una rueda reventada, lo que decide quien vuela**: si para en la
+   * pista sin haber volado, se acaba ahí —«parado», o «paradoTrasV1» si llegó
+   * a ella en el suelo—, con los bomberos a mirar los frenos. Si sigue, el
+   * tren fuera y PAN PAN al subir; la toma, en la final; y parado, la vuelta.
+   */
+  private pasoDelReventon(l: Lectura, sucesos: Suceso[]): void {
+    if (!this.volo) {
+      if (l.enElSuelo && l.indicada >= this.velocidades.v1) this.deprisa = true;
+      if (l.enElSuelo && l.parado && this.desdeElFallo > 1) {
+        this.bomberos = true;
+        sucesos.push({ que: "bomberos", donde: "avion" });
+        this.cerrar(this.deprisa ? "paradoTrasV1" : "parado", sucesos);
+      }
+      return;
+    }
+    /*
+     * El tren, en cuanto vuela de verdad, que es cuando la mano va a la
+     * palanca: el juego lo pide a los veinte metros (`meteElTrenA`). Y la
+     * llamada, a los cuatrocientos pies: primero el avión.
+     */
+    if (!this.dichoElTren && !l.enElSuelo && l.vertical > 0.5) {
+      this.dichoElTren = true;
+      sucesos.push({ que: "trenFuera" });
+    }
+    if (!this.declarada && this.dichoElTren && l.sobreElCampo >= ALTURA_PARA_ASEGURAR) {
+      this.declarada = true;
+      sucesos.push({ que: "declarar", socorro: "panpan" });
+    }
+    // Y si se mete igual, se cuenta por qué va mejor fuera; otra vez solo si se sacó y se vuelve a meter.
+    if (l.tren === "fuera") this.avisadoDentro = false;
+    else if (!this.avisadoDentro && !l.enElSuelo) {
+      this.avisadoDentro = true;
+      sucesos.push({ que: "trenDentro" });
+    }
+    if (!this.bomberos && this.declarada && (l.enFinal || l.enElSuelo)) {
+      this.bomberos = true;
+      sucesos.push({ que: "bomberos", donde: "pista" });
+    }
+    if (!this.dichaLaToma && this.declarada && l.enFinal && !l.enElSuelo) {
+      this.dichaLaToma = true;
+      sucesos.push({ que: "toma" });
+    }
+    if (!this.tocada && this.dichoElTren && l.enElSuelo) {
+      this.tocada = true;
+      sucesos.push({ que: "alTocar" });
+    }
+    if (l.enElSuelo && l.parado) this.cerrar("vuelta", sucesos);
+  }
+
   private cerrar(como: Cierre, sucesos: Suceso[]): void {
     this.faseActual = "cerrada";
     this.comoCerro = como;
@@ -558,7 +656,11 @@ export class Practica {
     const { v1, vr } = this.velocidades;
     if (m.en === "carrera") {
       if (m.antesDeV1)
-        return l.corriendo && l.enElSuelo && l.indicada >= v1 * 0.8;
+        return (
+          l.corriendo &&
+          l.enElSuelo &&
+          l.indicada >= (m.aFaltaDe !== undefined ? v1 - m.aFaltaDe : v1 * 0.8)
+        );
       /*
        * A medio camino entre V1 y la rotación, que es el «fallo de V1» de un
        * simulador de verdad. Y si alguien rota antes de llegar ahí —en un
@@ -592,9 +694,12 @@ export class Practica {
    * pista debajo, que es mientras no vuela de verdad. Ver `conV1`.
    *
    * Lo que no es un motor —todos, la cabina sin aire— nunca llega en la
-   * carrera, y sigue la regla de siempre.
+   * carrera, y sigue la regla de siempre. **Menos la rueda que revienta**, que
+   * llega casi a V1 y así de rápido no se pide parar (*Takeoff Safety Training
+   * Aid*, p. 2.27); quien para en la pista, para, y está bien.
    */
   private seParaAqui(l: Lectura): boolean {
+    if (this.elegida.que === "neumatico") return false;
     if (this.elegida.que === "motor" && !conV1(this.avion))
       return l.enElSuelo || (l.tren === "fuera" && l.sobreElCampo <= EN_EL_AIRE);
     return l.enElSuelo && l.indicada < this.velocidades.v1;
@@ -617,6 +722,11 @@ export class Practica {
     const fuera = motoresDeFuera(this.avion);
     if (!fuera) return 0;
     return this.azar() < 0.5 ? fuera[0] : fuera[1];
+  }
+
+  /** La rueda de un lado o la del otro: se practican los dos pies. */
+  private cualRevienta(): "izquierdo" | "derecho" {
+    return this.azar() < 0.5 ? "izquierdo" : "derecho";
   }
 
   private sortear(): Averia {

@@ -583,6 +583,15 @@ export interface FlightModel {
   /** Si la panza del morro va ahora sobre la pista. */
   readonly morroEnLaPista?: boolean;
   /**
+   * **De qué lado va una rueda principal reventada**: el ejercicio del
+   * reventón (#90). −1 la izquierda, 1 la derecha y 0 ninguna. Solo lo hace el
+   * modelo de coeficientes, y solo con el avión que lleva `ruedasPrincipales`.
+   * Ver el ADR 0014, enmienda H74.
+   */
+  ponerNeumaticoReventado?(lado: -1 | 0 | 1): void;
+  /** Y el que tiene puesto. */
+  readonly neumaticoReventado?: -1 | 0 | 1;
+  /**
    * La ráfaga de este instante, en m/s y en ejes del mundo.
    *
    * Va aparte del viento del parte porque son dos cosas distintas: el viento es

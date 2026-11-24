@@ -279,6 +279,17 @@ const RECORRIDO_DE_LA_PANZA = 0.008;
  */
 export const ROCE_DE_LA_PANZA = 0.4;
 
+/**
+ * **Lo que roza un neumático reventado**, como fracción de lo que carga su
+ * pata. Sin fuente leída: la guía de la FAA para el despegue (*Takeoff Safety
+ * Training Aid*, p. 2.26) dice que puede hacer que el avión tire a un lado y
+ * que no suele dar por sí solo problemas de dirección, sin cifra. Un décimo
+ * es cinco veces la rodadura de una rueda sana, y queda dentro de las dos
+ * cosas: se va a un lado si no se hace nada y se sostiene con poco pie. Lo
+ * mide `neumatico-reventado.test.ts`. Ver el ADR 0014, enmienda H74.
+ */
+export const ROCE_DEL_REVENTADO = 0.1;
+
 /** Cuánto tiene que aguantar el ángulo pasado para que sea pérdida, s. */
 const STALL_DELAY = 0.35;
 
@@ -2211,6 +2222,12 @@ export class CoefficientFlightModel implements FlightModel {
         ? Math.min(1, controls.reversa) * ac.maxThrust * REVERSA_DA
         : 0;
     /*
+     * **Y la rueda reventada, si la hay**: lo que roza y lo que deja de frenar
+     * con el pie a fondo, N. Sin ella, `null`, y la cuenta de abajo es la de
+     * siempre bit a bit. Ver `ponerNeumaticoReventado`.
+     */
+    const reventado = this.loDelReventado(apoyado, mu, rapidez);
+    /*
      * **Y el autofreno**, que pide una deceleración y no un pie: mira lo que
      * ya frena el avión sin él —el aire, la cuesta, el motor, lo que se ha
      * perdido desde el paso anterior— y aprieta lo que falta. Si el pie pisa
@@ -2224,7 +2241,16 @@ export class CoefficientFlightModel implements FlightModel {
       const sinFreno =
         porElAire + (ROZAMIENTO[this.superficie] * apoyado + reversa) / masaDe(ac);
       const aFondo = sinFreno + (mu * apoyado) / masaDe(ac);
-      freno = Math.max(freno, frenoDelAutofreno(objetivo, sinFreno, aFondo));
+      freno = Math.max(
+        freno,
+        reventado === null
+          ? frenoDelAutofreno(objetivo, sinFreno, aFondo)
+          : frenoDelAutofreno(
+              objetivo,
+              sinFreno + reventado.roce / masaDe(ac),
+              aFondo + (reventado.roce - reventado.frenoQueFalta) / masaDe(ac),
+            ),
+      );
     }
     this.frenoDeAhora = freno;
     /*
@@ -2233,11 +2259,24 @@ export class CoefficientFlightModel implements FlightModel {
      * principales frenan sobre lo que queda.
      */
     const enLaPanza = Math.min(apoyado, this.pesoEnElMorro);
-    const frena =
+    let frena =
       ((ROZAMIENTO[this.superficie] + mu * freno) * (apoyado - enLaPanza) +
         ROCE_DE_LA_PANZA * enLaPanza +
         reversa) /
       masaDe(ac);
+    /*
+     * **Y la reventada tuerce el avión**, porque va a un lado del eje: el roce
+     * tira hacia ella, y el freno que falta tira hacia la otra pata, que frena
+     * entera. Rodando y con poco freno manda el roce —el avión se va hacia el
+     * lado de la reventada—; a fondo, manda la pata sana y se va hacia el
+     * otro. Por eso se frena suave y parejo, y el pie sostiene el eje.
+     */
+    if (reventado !== null) {
+      const falta = reventado.frenoQueFalta * freno;
+      frena += (reventado.roce - falta) / masaDe(ac);
+      const par = this.ladoReventado * reventado.brazo * (reventado.roce - falta);
+      s.yawRate += ((Math.sign(longitudinal) * par) / ac.inertia.zz) * dt;
+    }
     s.velocity.addScaledVector(
       this.forward,
       -Math.sign(longitudinal) * Math.min(rapidez, frena * dt),
@@ -2434,6 +2473,44 @@ export class CoefficientFlightModel implements FlightModel {
   /** Si la panza del morro está ahora sobre la pista. */
   get morroEnLaPista(): boolean {
     return this.pesoEnElMorro > 0;
+  }
+
+  /**
+   * **Una rueda principal reventada**, que es el ejercicio del reventón (#90):
+   * de qué lado, −1 la pata izquierda, 1 la derecha y 0 ninguna. Lo pone el
+   * juego en cada paso desde que revienta, y solo cambia algo en el avión que
+   * lleva `ruedasPrincipales` en su ficha. Ver el ADR 0014, enmienda H74.
+   */
+  ponerNeumaticoReventado(lado: -1 | 0 | 1): void {
+    this.ladoReventado = this.aircraft.ruedasPrincipales ? lado : 0;
+  }
+
+  /** El lado de la reventada: −1, 0 o 1. */
+  get neumaticoReventado(): -1 | 0 | 1 {
+    return this.ladoReventado;
+  }
+
+  private ladoReventado: -1 | 0 | 1 = 0;
+
+  /**
+   * **Lo que hace la rueda reventada ahora mismo**: lo que roza, sobre lo que
+   * carga su pata —la mitad de lo que apoya—, y lo que deja de frenar con el
+   * freno a fondo, que es el freno de una rueda: «loss of braking force from
+   * one wheel» (*Takeoff Safety Training Aid*, p. 2.26). `null` sin reventada
+   * o con el avión quieto.
+   */
+  private loDelReventado(
+    apoyado: number,
+    mu: number,
+    rapidez: number,
+  ): { readonly roce: number; readonly frenoQueFalta: number; readonly brazo: number } | null {
+    const ruedas = this.aircraft.ruedasPrincipales;
+    if (this.ladoReventado === 0 || !ruedas || rapidez < STATIC_GRIP) return null;
+    return {
+      roce: (ROCE_DEL_REVENTADO * apoyado) / 2,
+      frenoQueFalta: (mu * apoyado) / ruedas.cuantas,
+      brazo: ruedas.mediaVia,
+    };
   }
 
   /** El cabeceo al que para el morro: el de la pata, o el de la panza sin ella. */
@@ -2719,6 +2796,21 @@ export class CoefficientFlightModel implements FlightModel {
       return 0;
     }
     const tope = capa;
+    /*
+     * **Con una rueda reventada, el rumbo lo sostiene quien vuela**: es lo que
+     * se practica, y con la ayuda sosteniéndolo el avión no se iba a ningún
+     * lado. El volante sigue dando el timón, que es con lo que lo sostiene
+     * quien no tiene pedales. Ver `ponerNeumaticoReventado`.
+     */
+    if (
+      this.ladoReventado !== 0 &&
+      Math.abs(controls.aileron) <= GIRA_QUIEN_LLEVA &&
+      Math.abs(controls.rudder) <= GIRA_QUIEN_LLEVA
+    ) {
+      this.rumboEnTierra = null;
+      this.pieEnTierra = 0;
+      return 0;
+    }
     const proa = Math.atan2(this.forward.x, -this.forward.z);
     /*
      * **Qué rumbo se sostiene.** Al tocar o al echar a rodar, hacia donde se

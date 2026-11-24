@@ -413,6 +413,31 @@ const pedal = (lado: "izquierdo" | "derecho"): string => {
 };
 
 /**
+ * **La rueda reventada y hacia dónde tira**: el avión por detrás, con la
+ * rueda de ese lado aplastada —en el rojo oscuro de la tarjeta y por la forma,
+ * que se distinga sin color— y la flecha hacia ese lado, que se mueve. El pie
+ * que se pisa es el otro, y sale en su tarjeta: ver `pedal`. Visto por detrás
+ * y no de frente, que así la izquierda del dibujo es la de quien vuela. Ver el
+ * ADR 0014, enmienda H74.
+ */
+const reventon = (lado: "izquierda" | "derecha"): string =>
+  icono(`
+  <g${lado === "derecha" ? ' transform="matrix(-1 0 0 1 24 0)"' : ""}>
+    <path d="M11.2 1.6 h1.6 l0.5 5 h-2.6 Z" />
+    <circle cx="12" cy="9.8" r="3.7" />
+    <path d="M1.4 12.2 L9.6 10.6 h4.8 L22.6 12.2 v1.3 L14 13.4 h-4 L1.4 13.5 Z" />
+    <path d="M7.8 13 V19 M16.2 13 V18" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <rect x="14.2" y="16.4" width="1.7" height="5.4" rx="0.8" />
+    <rect x="16.6" y="16.4" width="1.7" height="5.4" rx="0.8" />
+    <rect x="8.2" y="16.4" width="1.7" height="5.4" rx="0.8" />
+    <ellipse class="senal__roja" cx="5.4" cy="20.6" rx="2.3" ry="1.2" />
+    <path d="M2 22.6 H22" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6" />
+    <path class="senal__tira" d="M9 4.4 H2.8 M5.4 1.8 L2.4 4.4 L5.4 7" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+`);
+
+/**
  * **Los bomberos del aeropuerto**: el camión, con su luz en el techo.
  *
  * Lo que se ve esperando junto a la pista cuando un avión vuelve con un motor
@@ -2181,6 +2206,8 @@ export const DIBUJOS = {
   "reactor-parado": REACTOR_PARADO,
   "pie-izquierdo": pedal("izquierdo"),
   "pie-derecho": pedal("derecho"),
+  "reventon-izquierda": reventon("izquierda"),
+  "reventon-derecha": reventon("derecha"),
   // Y sostener la velocidad de un motor es `velocidad`, la de la marca que toca.
   bomberos: BOMBEROS,
   ala: ALA,

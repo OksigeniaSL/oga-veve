@@ -2115,6 +2115,18 @@ const EJ_FALLO_DE_RADIO = escena(`
   ${AVION_DE_PERFIL("translate(90 26) scale(3.6)")}
 `);
 
+/**
+ * **El reventón en la carrera**: el avión por detrás en la pista, con la rueda
+ * de la izquierda aplastada y la flecha de hacia dónde tira, y al lado el
+ * pedal derecho, que es el que lo sostiene. Ver el ADR 0014, enmienda H74.
+ */
+const EJ_REVENTON = escena(`
+  <path class="leccion__asfalto" d="M-6 84 L26 42 h34 L92 84 Z" />
+  <path d="M43 46 V56 M43 62 V84" style="stroke: #f2f1ec; stroke-width: 1.6; opacity: 0.7" />
+  <g class="ejercicio__pedal">${dibujoEn("reventon-izquierda", 16, 22, 54)}</g>
+  <g class="ejercicio__pedal">${dibujoEn("pie-derecho", 86, 44, 30)}</g>
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -2160,6 +2172,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   "tren-de-morro": EJ_TREN_DE_MORRO,
   // La lámpara de la torre en verde, hasta el avión que vuelve. Ver el ADR 0014, enmienda H71.
   "fallo-de-radio": EJ_FALLO_DE_RADIO,
+  // La rueda aplastada, hacia dónde tira y el pie que lo sostiene. Ver el ADR 0014, enmienda H74.
+  reventon: EJ_REVENTON,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {

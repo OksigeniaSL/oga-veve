@@ -3403,6 +3403,7 @@ export const ES_PY = {
   "hangar.ejercicio.carga": "La carga suelta",
   "hangar.ejercicio.tren-de-morro": "El tren de nariz no sale",
   "hangar.ejercicio.fallo-de-radio": "Sin radio",
+  "hangar.ejercicio.reventon": "Se revienta una rueda",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3826,6 +3827,28 @@ export const ES_PY = {
     "Tampoco salió. No pasa nada: avisamos a la torre y aterrizamos sobre las ruedas de atrás, con la nariz arriba todo lo que aguante. Cuando ya no aguante, la bajamos despacito, y sin frenos",
   "ejercicio.morro.bien":
     "Ejercicio hecho: primero la bajada de emergencia, después las ruedas de atrás y la nariz arriba todo lo que aguantó, y abajo despacito. Así sale bien casi siempre",
+  /*
+   * **El reventón en la carrera** (#90, H74): la presentación, el golpe con el
+   * pie que se pisa —una frase corta por lado, que quedan cinco segundos para
+   * rotar—, el tren que se queda afuera, qué se dice si se mete igual, la toma
+   * y los dos cierres. «Conviene seguir» y no «hay que»: es lo que recomienda
+   * la guía de la FAA así de rápido, y parar en la pista también vale. Ver el
+   * ADR 0014, enmienda H74.
+   */
+  "ejercicio.reventon.antes":
+    "Hoy practicamos una rueda que se revienta corriendo por la pista, casi a la velocidad de despegar. Vas a oír un golpe, y el avión va a tirar para un lado: lo sostenés en el eje con el otro pie. Así de rápido conviene seguir: dejamos el tren afuera, avisamos a la torre y volvemos con toda la pista por delante. Y si parás dentro de la pista, también está bien",
+  "ejercicio.reventon.izquierda": "Se reventó una rueda de la izquierda: pie derecho, y seguimos",
+  "ejercicio.reventon.derecha": "Se reventó una rueda de la derecha: pie izquierdo, y seguimos",
+  "ejercicio.reventon.tren":
+    "El tren lo dejamos afuera: adentro, la goma rota se puede enganchar. Con los dos motores, el avión sube bien igual",
+  "ejercicio.reventon.sacalo":
+    "Con una rueda rota, el tren va mejor afuera: adentro, la goma suelta se puede enganchar. Sacalo, y volvemos así",
+  "ejercicio.reventon.toma":
+    "Al tocar, el avión va a tirar otra vez para el lado de la rueda rota: sostené el eje con el otro pie, y frená suave y parejo, con calma",
+  "ejercicio.reventon.bien":
+    "Ejercicio hecho: con una rueda rota, casi a la velocidad de despegar, conviene seguir. Volviste con toda la pista por delante, y así alcanza con frenar con calma",
+  "ejercicio.reventon.bienParado":
+    "Paraste dentro de la pista, y parar a tiempo también es ganar. Con una rueda rota se frena peor: por eso, casi a la velocidad de despegar, lo que suele convenir es seguir, y volver con toda la pista por delante",
   /*
    * **El fallo de radio** (H71): la presentación, la radio que se calla con
    * su 7600, lo que dice cada luz de la lámpara, las alas que contestan y los
