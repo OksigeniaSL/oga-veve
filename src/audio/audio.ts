@@ -1904,6 +1904,35 @@ export class Audio {
     this.cortarElMorse = null;
   }
 
+  /**
+   * **El golpe de una rueda que revienta**, en la carrera: un golpe seco,
+   * grave y corto, debajo del suelo de la cabina, por el bus de interfaz, que
+   * se agacha cuando alguien habla. Ni estallido ni cola: es lo que se oye
+   * desde dentro —«may just be a loud noise, or may not be heard» (*Takeoff
+   * Safety Training Aid* de la FAA, p. 2.26)— y lo que se enseña es la calma.
+   * Menos que el calzo, que se oye al lado. Ver el ADR 0014, enmienda H74.
+   */
+  golpeDeRueda(): void {
+    const ctx = this.context;
+    if (!ctx || ctx.state !== "running") return;
+    const t = ctx.currentTime;
+    const largo = 0.2;
+    const fuente = ctx.createBufferSource();
+    fuente.buffer = this.noiseBuffer();
+    const filtro = ctx.createBiquadFilter();
+    filtro.type = "lowpass";
+    filtro.Q.value = 0.7;
+    filtro.frequency.value = 320;
+    const sobre = ctx.createGain();
+    sobre.gain.setValueAtTime(0.0001, t);
+    sobre.gain.linearRampToValueAtTime(0.32, t + 0.006);
+    sobre.gain.exponentialRampToValueAtTime(0.0001, t + largo);
+    fuente.connect(filtro).connect(sobre).connect(this.bus("interfaz"));
+    fuente.start(t, Math.random() * 1.2, largo + 0.05);
+    fuente.stop(t + largo + 0.08);
+    this.pluck(65.41, t, 0.24, "interfaz", FUERZA * 0.8);
+  }
+
   chasquido(cual: "abre" | "cierra"): void {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running") return;

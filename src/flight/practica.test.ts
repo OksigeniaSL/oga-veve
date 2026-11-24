@@ -487,3 +487,103 @@ describe("el tren de nariz que no sale", () => {
     expect(p.cierre).toBe("otraVez");
   });
 });
+
+/*
+ * **La rueda que revienta en la carrera** (#90, H74): a dieciocho nudos de
+ * V1, dentro de la franja en que la guía de la FAA recoge «not rejecting a
+ * takeoff for a suspected tire failure at speeds above V1−20 knots» (*Takeoff
+ * Safety Training Aid*, p. 2.27).
+ */
+describe("el reventón en la carrera", () => {
+  const KT = 0.514444;
+  const reventon = (azar = 0.1) => new Practica(ejercicioPorId("reventon")!, ARAI, V, () => azar);
+  const corriendo = { ...QUIETO, corriendo: true, parado: false };
+  const CASI = V.v1 - 18 * KT;
+  const volando = { ...QUIETO, enElSuelo: false, enPista: false, parado: false, vertical: 5, indicada: 80 };
+
+  /** Presentado y reventado, a la velocidad a la que toca. */
+  function reventada(azar = 0.1): Practica {
+    const p = reventon(azar);
+    p.paso(QUIETO, 0.1);
+    p.paso({ ...corriendo, indicada: CASI + 0.1 }, 0.1);
+    return p;
+  }
+
+  it("solo en el que tiene su tren medido, desde Taguató", () => {
+    const e = ejercicioPorId("reventon")!;
+    expect(esAvisado(e)).toBe(true);
+    for (const a of AIRCRAFT) {
+      expect(ejerciciosPara("taguato", a).some((x) => x.id === "reventon"), a.id).toBe(a.id === "jaz-90");
+      expect(ejerciciosPara("tuka", a).some((x) => x.id === "reventon"), a.id).toBe(false);
+    }
+  });
+
+  it("revienta casi a V1, dentro de los veinte nudos, y no antes; y de los dos lados", () => {
+    const p = reventon();
+    expect(cuales(p.paso(QUIETO, 0.1))).toEqual(["presentar"]);
+    expect(durante(p, { ...corriendo, indicada: V.v1 - 20 * KT }, 2)).toEqual([]);
+    expect(p.paso({ ...corriendo, indicada: CASI + 0.1 }, 0.1)).toEqual([
+      { que: "fallo", averia: "neumatico", motor: null, parar: false, enElSuelo: true },
+    ]);
+    expect(p.ladoReventado).toBe("izquierdo");
+    expect(reventada(0.9).ladoReventado).toBe("derecho");
+    // Y mientras dura, el tren se queda fuera.
+    expect(p.trenSeQuedaFuera).toBe(true);
+  });
+
+  it("seguir: el tren fuera, PAN PAN a los cuatrocientos pies, la toma en la final, el pie al tocar y la vuelta", () => {
+    const p = reventada();
+    // Rotando, nada: se sostiene el eje.
+    expect(durante(p, { ...corriendo, indicada: 75 }, 3)).toEqual([]);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 10 }, 1))).toEqual([]);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 20 }, 1))).toEqual(["trenFuera"]);
+    expect(p.declaradaYa).toBe(false);
+    expect(durante(p, { ...volando, sobreElCampo: ALTURA_PARA_ASEGURAR + 1 }, 1)).toEqual([
+      { que: "declarar", socorro: "panpan" },
+    ]);
+    expect(p.declaradaYa).toBe(true);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 600, vertical: 0 }, 20))).toEqual([]);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 300, vertical: -4, enFinal: true }, 5))).toEqual([
+      "bomberos",
+      "toma",
+    ]);
+    expect(cuales(durante(p, { ...QUIETO, parado: false, indicada: 55, enFinal: true }, 3))).toEqual(["alTocar"]);
+    expect(cuales(durante(p, QUIETO, 1))).toEqual(["cerrar"]);
+    expect(p.cierre).toBe("vuelta");
+    expect(p.trenSeQuedaFuera).toBe(false);
+  });
+
+  it("parar antes de V1 está bien hecho, y cuenta como parar a tiempo", () => {
+    const p = reventada();
+    durante(p, { ...corriendo, indicada: 40 }, 4);
+    expect(cuales(durante(p, QUIETO, 2))).toEqual(["bomberos", "cerrar"]);
+    expect(p.cierre).toBe("parado");
+  });
+
+  it("parar pasada V1, si cabe, también se cierra bien", () => {
+    const p = reventada();
+    p.paso({ ...corriendo, indicada: V.v1 + 1 }, 0.1);
+    durante(p, { ...corriendo, indicada: 40 }, 4);
+    durante(p, QUIETO, 2);
+    expect(p.cierre).toBe("paradoTrasV1");
+  });
+
+  it("si se mete el tren, se cuenta una vez; y otra solo si se saca y se vuelve a meter", () => {
+    const p = reventada();
+    durante(p, { ...volando, sobreElCampo: 20 }, 1);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 60, tren: "entrando" }, 3))).toEqual(["trenDentro"]);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 80, tren: "dentro" }, 3))).toEqual([]);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 90, tren: "fuera" }, 3))).toEqual([]);
+    expect(cuales(durante(p, { ...volando, sobreElCampo: 95, tren: "entrando" }, 1))).toEqual(["trenDentro"]);
+  });
+
+  it("y si sale mal, sale mal el ejercicio; y reiniciado, otra vez entero", () => {
+    const p = reventada();
+    expect(cuales(p.paso({ ...QUIETO, percance: true }, 0.1))).toEqual(["cerrar"]);
+    expect(p.cierre).toBe("otraVez");
+    p.reiniciar();
+    expect(p.ladoReventado).toBeNull();
+    expect(p.fase).toBe("armada");
+    expect(p.trenSeQuedaFuera).toBe(false);
+  });
+});

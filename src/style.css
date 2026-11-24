@@ -11495,6 +11495,26 @@ button.motor__tecla::after {
   fill: #ff4a3d;
 }
 
+/* La flecha de la rueda reventada, que tira hacia su lado. Ver `reventon` en `ui/senal.ts`. */
+.senal__dibujo .senal__tira {
+  animation: senal-tira 0.9s ease-in-out infinite;
+}
+
+@keyframes senal-tira {
+  50% {
+    transform: translateX(-1.4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .senal__dibujo .senal__tira {
+    animation: none;
+  }
+}
+.sin-movimiento .senal__dibujo .senal__tira {
+  animation: none;
+}
+
 /*
  * La franja del RA y el cuadrado del otro, en la tarjeta: los colores de la
  * cabina, con el filo de tinta para que se lean sobre el fondo de la tarjeta.

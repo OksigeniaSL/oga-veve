@@ -1682,6 +1682,14 @@ export interface AircraftConfig {
    */
   morroSinRueda?: number;
   /**
+   * **Las ruedas del tren principal**: cuántas son, con freno cada una, y a
+   * qué distancia del eje va el centro de cada pata, m —la media vía de su
+   * dibujo, la `VIA` de su `.py`—. Solo la lleva el avión que tiene el
+   * ejercicio del reventón (#90), y por eso es opcional: sin ella no se le
+   * ofrece. Ver `ponerNeumaticoReventado` en `fdm.ts`.
+   */
+  ruedasPrincipales?: { readonly cuantas: number; readonly mediaVia: number };
+  /**
    * **Hasta qué velocidad se puede probar la extensión de emergencia** del
    * tren, m/s indicados: la de su manual. Más deprisa, el aire no deja caer
    * las patas, y el manual lo prohíbe. Solo la lleva el avión del ejercicio
@@ -3850,6 +3858,14 @@ export const ARAI: AircraftConfig = {
   maxGroundPitch: 14.2 * (Math.PI / 180),
   // 11,5 m de morro y quince centímetros: 0,75°.
   minGroundPitch: -0.013,
+  /*
+   * **Dos ruedas por pata, cuatro con freno**, y las patas a 2,55 m del eje:
+   * las de su dibujo, la `VIA` de `modelos/jaz-90-arai.py`
+   * (`neumatico-reventado.test.ts` la lee de allí). Con cuatro, una reventada
+   * es un cuarto del freno: es lo que practica el ejercicio del reventón. Ver
+   * el ADR 0014, enmienda H74.
+   */
+  ruedasPrincipales: { cuantas: 4, mediaVia: 2.55 },
   /*
    * **Y los flaps de un reactor, que no son los de una avioneta.**
    *

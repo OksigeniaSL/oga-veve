@@ -154,6 +154,18 @@
  * SERA (`campoConLamparaYSera`), y en las avionetas de pistón, que son las que
  * hacen circuitos en visual. La regla de la lámpara es de `fallo-de-radio.ts`;
  * el orden, de `practica.ts`. Ver el ADR 0014, enmienda H71.
+ *
+ * ## Y el reventón en la carrera
+ *
+ * «Se revienta una rueda» (#90) es la avería `que: "neumatico"`: en la
+ * carrera, casi a V1, una rueda principal revienta. El avión tira hacia ese
+ * lado y el eje se sostiene con el pie; así de rápido lo recomendado es
+ * seguir, no meter el tren, avisar y volver con toda la pista por delante
+ * (*Takeoff Safety Training Aid* de la FAA, pp. 2.25 a 2.27). Quien para en la
+ * pista también lo ha hecho bien. Solo en el avión con `ruedasPrincipales` en
+ * su ficha; lo que hace la rueda es del modelo de vuelo
+ * (`ponerNeumaticoReventado`) y el orden, de `practica.ts`. Ver el ADR 0014,
+ * enmienda H74.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -209,7 +221,8 @@ export type EjercicioId =
   | "pista-corta"
   | "carga"
   | "tren-de-morro"
-  | "fallo-de-radio";
+  | "fallo-de-radio"
+  | "reventon";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -221,8 +234,11 @@ export type Momento =
    * En la carrera de despegue. `antesDeV1`: al ochenta por ciento de V1, con
    * pista de sobra para parar. Si no, a medio camino entre V1 y la rotación:
    * el «fallo de V1» del simulador de verdad, cuando ya no hay dónde parar.
+   *
+   * Y con `aFaltaDe`, m/s, antes de V1 y a esa distancia de ella: el reventón
+   * a alta velocidad, que llega cuando ya se va casi a V1. Ver `reventon`.
    */
-  | { readonly en: "carrera"; readonly antesDeV1: boolean }
+  | { readonly en: "carrera"; readonly antesDeV1: boolean; readonly aFaltaDe?: number }
   /**
    * Subiendo, al pasar esta altura sobre el campo, m. Y con `trenDentro`,
    * además con el tren ya dentro del todo: el fallo de después de despegar
@@ -254,15 +270,16 @@ export interface Averia {
    * Un motor —el de fuera, de un lado o del otro—, todos, el aire de la
    * cabina —la despresurización, que se vuela con los motores bien— o la
    * carga de la bodega que se suelta y se va hacia la cola, la pata de
-   * morro, que se queda en su pozo, o la radio, que se calla.
+   * morro, que se queda en su pozo, la radio, que se calla, o una rueda
+   * principal, que revienta en la carrera.
    */
-  readonly que: "motor" | "motores" | "presion" | "carga" | "morro" | "radio";
+  readonly que: "motor" | "motores" | "presion" | "carga" | "morro" | "radio" | "neumatico";
   readonly cuando: Momento;
 }
 
 /** Lo que hace falta saber de un avión para ofrecerle un ejercicio. */
 export type AvionDelEjercicio = Pick<AircraftConfig, "id" | "motores" | "presurizacion" | "sound" | "helicoptero"> &
-  Partial<Pick<AircraftConfig, "trenRetractil" | "morroSinRueda" | "extensionDeEmergenciaHasta">>;
+  Partial<Pick<AircraftConfig, "trenRetractil" | "morroSinRueda" | "extensionDeEmergenciaHasta" | "ruedasPrincipales">>;
 
 export interface Ejercicio {
   readonly id: EjercicioId;
@@ -364,6 +381,17 @@ const bimotorDePiston = (a: AvionDelEjercicio): boolean => multimotor(a) && !con
  */
 const conRadarMeteorologico = (a: AvionDelEjercicio): boolean =>
   a.sound.engine === "turboprop" || a.sound.engine === "turbofan";
+
+/**
+ * **A falta de cuánto para V1 revienta la rueda**, m/s: dieciocho nudos.
+ *
+ * Lo que la guía de la FAA recoge de McDonnell Douglas es «a policy of not
+ * rejecting a takeoff for a suspected tire failure at speeds above V1−20
+ * knots» (*Takeoff Safety Training Aid*, p. 2.27). A dieciocho se está dentro
+ * de esa franja —seguir es lo recomendado— y todavía antes de V1, que es
+ * donde la pregunta se hace: parar también se puede, si la pista da.
+ */
+const CASI_A_V1 = 18 * 0.514444;
 
 export const EJERCICIOS: readonly Ejercicio[] = [
   {
@@ -1162,6 +1190,35 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     averias: [{ que: "radio", cuando: { en: "subida", metros: 400 * 0.3048 } }],
     ensena:
       "sin radio, el 7600 en el transpondedor se lo dice a la torre; se vuelve al circuito mirando a la torre, que habla con luces: los destellos verdes, regresar para aterrizar, que se contestan alabeando; la roja fija, ceder el paso y seguir en el circuito; y la verde fija, aterrizar",
+  },
+  /*
+   * **El reventón en la carrera** (#90): casi a V1, una rueda principal
+   * revienta con un golpe seco; el avión tira hacia ese lado y el eje se
+   * sostiene con el otro pie. Así de rápido, seguir es lo recomendado: con una
+   * rueda menos se frena peor, y volviendo se tiene la pista entera. El tren
+   * se queda fuera, se avisa con PAN PAN, y se toma sosteniendo el eje y
+   * frenando suave. Parar en la pista también es hacerlo bien. Ver el ADR
+   * 0014, enmienda H74.
+   */
+  {
+    id: "reventon",
+    /*
+     * **Desde Taguató**, que es donde el #90 pone V1 y el regreso: el reventón
+     * es una pregunta sobre V1 y un regreso con la emergencia declarada. Y en
+     * ese peldaño están las dos cosas que pide, el pedal de la carrera y el
+     * pie que se pisa en la final. Abajo, ninguna avería de despegue.
+     */
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **En el que decide con V1 y tiene su tren medido**: el JAZ 90. La guía
+     * de la FAA es de reactores de transporte, y en él una rueda es un cuarto
+     * del freno; en el JAZ 120, de dieciséis, casi no se nota.
+     */
+    valePara: (a) => conV1(a) && a.ruedasPrincipales !== undefined && (a.trenRetractil ?? false),
+    leccion: "vuelta",
+    averias: [{ que: "neumatico", cuando: { en: "carrera", antesDeV1: true, aFaltaDe: CASI_A_V1 } }],
+    ensena:
+      "una rueda que revienta casi a V1 tira del avión hacia su lado: el eje con el otro pie, se sigue, el tren se queda fuera, se avisa y se vuelve a aterrizar frenando suave; y parar en la pista también vale",
   },
 ];
 

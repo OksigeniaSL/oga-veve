@@ -10336,6 +10336,17 @@ saltadas y una por hacer, en 19 minutos.
   entre el navegador y la mesa» y «Las largas que trae el morro» sigue igual;
   esta enmienda solo quita del número las tres décimas que no eran del avión.
 
+## Enmienda H74 (24-11-2026): la rueda reventada en la rodadura
+
+El ejercicio del reventón (ADR 0014, enmienda H74) mete en `resolveGround` una
+rueda principal reventada, con `ponerNeumaticoReventado`: lo que roza su pata, el
+freno que le falta y el par de las dos a la media vía, y la ayuda del timón en
+tierra que deja de sostener el rumbo. Solo en el avión con `ruedasPrincipales`,
+que es el JAZ 90, y solo mientras dura: sin reventada, `null`, y la carrera, la
+frenada, el autofreno y la toma de los ocho aviones son los de 7b60ea6d bit a
+bit, comprobado con 480 finales y 960 carreras con rachas. Las distancias de este
+ADR no cambian. Lo medido y las fuentes, en el 0014.
+
 ## Enmienda H72 (24-11-2026): el JAZ 50 que tocaba duro, y el empuje que llega tarde
 
 El JAZ 50 del vuelo entero de Los Rodeos (`tenerife-norte taguato 1 jaz-50`)

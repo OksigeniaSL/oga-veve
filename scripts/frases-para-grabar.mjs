@@ -143,7 +143,7 @@ const HABLADOS = [
     // «Se apaga el GPS» escribe delante de su frase, que se lee: ver `atenderAlGps`.
     // Y la carga suelta, que es nueva: ver `DE_LA_CARGA_SUELTA`. Y el tren de nariz: `DEL_TREN_DE_NARIZ`.
     // Y el fallo de radio: `DEL_FALLO_DE_RADIO`.
-    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro|radio|fallo-de-radio)\.|^ejercicio\.gps\.integOk$/,
+    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo|carga|morro|tren-de-morro|radio|fallo-de-radio|reventon)\.|^ejercicio\.gps\.integOk$/,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],
@@ -3464,6 +3464,37 @@ const DEL_FALLO_DE_RADIO = [
   ["ejercicio.radio.bienSinLaVerde", "el cierre del fallo de radio, parado en la pista sin haber visto la verde fija"],
 ];
 for (const [id, para] of DEL_FALLO_DE_RADIO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
+/**
+ * **El reventón en la carrera** (#90, H74): la presentación, el golpe de cada
+ * lado con su pie, el tren que se queda fuera, la toma y los dos cierres. De
+ * la instructora y en calma, detrás de todo. Las dos del golpe, cortas: quedan
+ * cinco segundos para rotar. Ver el ADR 0014, enmienda H74.
+ */
+const DEL_REVENTON = [
+  ["ejercicio.reventon.antes", "el reventón en la carrera, antes de empezar: el golpe, el pie, seguir con el tren fuera y volver; y parar también vale"],
+  ["ejercicio.reventon.izquierda", "el reventón: revienta una rueda de la izquierda en la carrera; pie derecho y se sigue (corta, en cinco segundos se rota)"],
+  ["ejercicio.reventon.derecha", "el reventón: revienta una rueda de la derecha en la carrera; pie izquierdo y se sigue (corta, en cinco segundos se rota)"],
+  ["ejercicio.reventon.tren", "el reventón: ya en el aire, el tren se queda fuera y por qué"],
+  ["ejercicio.reventon.sacalo", "el reventón: si se metió el tren igual, por qué va mejor fuera"],
+  ["ejercicio.reventon.toma", "el reventón: en la final, cómo se toma, con el otro pie y el freno suave"],
+  ["ejercicio.reventon.bien", "el cierre del reventón, parado en la pista tras volver"],
+  ["ejercicio.reventon.bienParado", "el cierre del reventón, parado en la pista sin haber despegado"],
+];
+for (const [id, para] of DEL_REVENTON) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({

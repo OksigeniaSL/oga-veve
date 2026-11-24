@@ -859,6 +859,38 @@
       "ms": 2520,
       "h": "f43b924db4"
     },
+    "ejercicio.reventon.antes": {
+      "ms": 19107,
+      "h": "133cf1ca7c"
+    },
+    "ejercicio.reventon.bien": {
+      "ms": 9007,
+      "h": "7bd940f18c"
+    },
+    "ejercicio.reventon.bienParado": {
+      "ms": 12907,
+      "h": "6578ce044a"
+    },
+    "ejercicio.reventon.derecha": {
+      "ms": 3407,
+      "h": "f2887fbfe3"
+    },
+    "ejercicio.reventon.izquierda": {
+      "ms": 3507,
+      "h": "406731abb8"
+    },
+    "ejercicio.reventon.sacalo": {
+      "ms": 6607,
+      "h": "422edb8480"
+    },
+    "ejercicio.reventon.toma": {
+      "ms": 7507,
+      "h": "bfd209f942"
+    },
+    "ejercicio.reventon.tren": {
+      "ms": 8507,
+      "h": "e8cb3209d0"
+    },
     "ejercicio.rumbo.anochece": {
       "ms": 4207,
       "h": "e76c85251b"
@@ -6551,6 +6583,30 @@
     ],
     "ejercicio.radio.bienSinLaVerde": [
       "ejercicio.radio.bienSinLaVerde"
+    ],
+    "ejercicio.reventon.antes": [
+      "ejercicio.reventon.antes"
+    ],
+    "ejercicio.reventon.izquierda": [
+      "ejercicio.reventon.izquierda"
+    ],
+    "ejercicio.reventon.derecha": [
+      "ejercicio.reventon.derecha"
+    ],
+    "ejercicio.reventon.tren": [
+      "ejercicio.reventon.tren"
+    ],
+    "ejercicio.reventon.sacalo": [
+      "ejercicio.reventon.sacalo"
+    ],
+    "ejercicio.reventon.toma": [
+      "ejercicio.reventon.toma"
+    ],
+    "ejercicio.reventon.bien": [
+      "ejercicio.reventon.bien"
+    ],
+    "ejercicio.reventon.bienParado": [
+      "ejercicio.reventon.bienParado"
     ]
   }
 }

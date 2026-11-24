@@ -281,6 +281,10 @@ const DEL_DESCENSO =
  * mientras esa luz siga encendida, y la luz siguiente es el paso siguiente
  * (ADR 0014, enmienda H71).
  *
+ * **Y los del reventón en la carrera**: «el tren lo dejamos afuera» vale hasta
+ * la toma, y la toma, hasta parar. Menos la del golpe, que pide el pie en el
+ * instante y con el avión en el aire ya no toca (ADR 0014, enmienda H74).
+ *
  * No lo es todo ejercicio: lo del altímetro es una explicación que se cuenta
  * entera y en su orden —ver `porDecirDelAltimetro` en `game.ts`—, y lo que
  * pide un instante, como el pie de un motor parado, deja de ser verdad antes
@@ -290,7 +294,8 @@ export function valeHastaElPasoSiguiente(clave: string | undefined): boolean {
   return !!clave && DE_UN_PASO_QUE_DURA.test(clave);
 }
 
-const DE_UN_PASO_QUE_DURA = /^ejercicio\.(?:aguja|radial|interceptar|cruce|ils|carga|morro|tren-de-morro|radio|fallo-de-radio)\./;
+const DE_UN_PASO_QUE_DURA =
+  /^ejercicio\.(?:(?:aguja|radial|interceptar|cruce|ils|carga|morro|tren-de-morro|radio|fallo-de-radio)\.|reventon\.(?!izquierda|derecha))/;
 
 /**
  * **El ejercicio de la tormenta**, que tampoco es un comentario: qué es, por

@@ -266,6 +266,15 @@ const LOS_EJERCICIOS = [
   "ejercicio.morro.emergencia",
   "ejercicio.morro.tampoco",
   "ejercicio.morro.bien",
+  // El reventón en la carrera (H74): presentación, los pasos y los dos cierres.
+  "ejercicio.reventon.antes",
+  "ejercicio.reventon.izquierda",
+  "ejercicio.reventon.derecha",
+  "ejercicio.reventon.tren",
+  "ejercicio.reventon.sacalo",
+  "ejercicio.reventon.toma",
+  "ejercicio.reventon.bien",
+  "ejercicio.reventon.bienParado",
   // El fallo de radio (H71): presentación, la radio callada, cada luz, las alas y los dos cierres.
   "ejercicio.fallo-de-radio.antes",
   "ejercicio.radio.callada",

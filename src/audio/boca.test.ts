@@ -684,6 +684,11 @@ describe("y la megafonía va por el mismo turno", () => {
       "ejercicio.morro.noSale",
       "ejercicio.morro.emergencia",
       "ejercicio.morro.tampoco",
+      // El reventón (ADR 0014, H74): la presentación y sus pasos; la del golpe, no, que pide el pie en el instante.
+      "ejercicio.reventon.antes",
+      "ejercicio.reventon.tren",
+      "ejercicio.reventon.sacalo",
+      "ejercicio.reventon.toma",
     ]) {
       expect(valeHastaElPasoSiguiente(c), c).toBe(true);
       expect(cuantoAguanta(c, "normal"), c).toBe(Infinity);
@@ -693,6 +698,8 @@ describe("y la megafonía va por el mismo turno", () => {
     expect(valeHastaElPasoSiguiente("ejercicio.ilsDeOtro")).toBe(false);
     expect(valeHastaElPasoSiguiente("ejercicio.altimetro.puesto")).toBe(false);
     expect(valeHastaElPasoSiguiente("ejercicio.cargaDeOtro")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.reventon.izquierda")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.reventon.derecha")).toBe(false);
   });
 
   /*
@@ -1650,6 +1657,8 @@ describe("lo que cierra el vuelo no se pierde", () => {
       "ejercicio.autorrotacion.bien",
       "ejercicio.tormenta.bienCerca",
       "ejercicio.morro.bien",
+      "ejercicio.reventon.bien",
+      "ejercicio.reventon.bienParado",
       "ejercicio.paradoTrasV1Cuatro",
     ])
       expect(cierraElVuelo(c), c).toBe(true);
@@ -1661,6 +1670,7 @@ describe("lo que cierra el vuelo no se pierde", () => {
       "ejercicio.cortar",
       "ejercicio.carga.despacio",
       "ejercicio.morro.tampoco",
+      "ejercicio.reventon.toma",
     ])
       expect(cierraElVuelo(c), c).toBe(false);
     expect(cuantoAguanta("senalero.calzos")).toBe(Infinity);

@@ -54,12 +54,26 @@
  *   final a punto de llegar a la decisión, entre 75 y 62 m: la torre tiene
  *   que poner la roja fija, y tras la otra vuelta, la verde.
  *
+ * - `reventon`: la rueda que revienta en la carrera (H74), en Taguató con el
+ *   JAZ 90. A dieciocho nudos de V1 revienta una rueda principal: el piloto
+ *   del banco sostiene el eje con el pie, sigue, no mete el tren, da el
+ *   circuito con él fuera y toma sosteniendo el eje y frenando a cuatro
+ *   décimas. Mira el golpe y su tarjeta, de qué lado tira y qué pie se pisa,
+ *   que nadie pida meter el tren, el PAN PAN con la torre y los bomberos, la
+ *   toma por el eje y el cierre; y cuenta como fallo una frase del ejercicio
+ *   que la boca tire en la cola (ADR 0033, H67). Con `OGA_PARAR=1` para en la
+ *   pista en vez de seguir, que también está bien hecho. Con `OGA_METE_TREN=1`
+ *   mete el tren al volar y lo saca cuando se lo cuentan. Con `OGA_FOTOS=dir`
+ *   deja ahí las tarjetas. Vuela en calma (`OGA_VIENTO` para otro, «025/20»):
+ *   en Gando, con sus veinte nudos y sus rachas, el pie del viento es tan grande
+ *   como el de la rueda y no se sabe de quién es.
+ *
  * **Las voces que no están grabadas no suenan** —ver `decirDelEjercicio` en
  * `game.ts`—, y el juego apunta cada una que se calla en `cantados`. Así que
  * lo que se mira aquí es que se **pidió**, grabado o no: lo dicho por la
  * instructora y lo callado por sin grabar.
  *
- * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro|radio>
+ * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro|radio|reventon>
  *        [escenario] [avion] [tramo]`
  *
  * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien.
@@ -79,10 +93,11 @@ const EJERCICIO = {
   carga: "carga",
   morro: "tren-de-morro",
   radio: "fallo-de-radio",
+  reventon: "reventon",
 }[MODO];
 if (!EJERCICIO) {
   console.error(
-    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro|radio> [escenario] [avion] [tramo]",
+    "Uso: verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro|radio|reventon> [escenario] [avion] [tramo]",
   );
   process.exit(2);
 }
@@ -115,6 +130,14 @@ const SIN_TREN = MODO === "tren" && process.env.OGA_SIN_TREN === "1";
  * torre tiene que poner la roja (H71).
  */
 const PISTA_OCUPADA = MODO === "radio" && process.env.OGA_PISTA_OCUPADA === "1";
+/** Con `OGA_PARAR=1`, en `reventon` se para en la pista en vez de seguir (H74). */
+const PARAR = MODO === "reventon" && process.env.OGA_PARAR === "1";
+/** Con `OGA_METE_TREN=1`, en `reventon` se mete el tren al volar, y se saca cuando se cuenta por qué. */
+const METE_TREN = MODO === "reventon" && process.env.OGA_METE_TREN === "1";
+/** El viento del reventón, en calma si no se dice otro: lo que tira es la rueda y no la racha. */
+const VIENTO = MODO === "reventon" ? (process.env.OGA_VIENTO ?? "000/00") : null;
+/** Dónde dejar las fotos de las tarjetas, si se piden. */
+const FOTOS = MODO === "reventon" ? process.env.OGA_FOTOS : undefined;
 const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
 // Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
@@ -168,13 +191,21 @@ try {
         Error.stackTraceLimit = 4;
         const pila = new Error().stack ?? "";
         Error.stackTraceLimit = tope;
-        if (pila.includes("cualSePara")) return lado === "derecho" ? 0.75 : 0.25;
+        if (pila.includes("cualSePara") || pila.includes("cualRevienta")) return lado === "derecho" ? 0.75 : 0.25;
         return azar();
       };
     }, process.env.OGA_MOTOR);
+  const fotosHechas = [];
+  if (FOTOS)
+    await page.exposeFunction("__foto", async (nombre) => {
+      const ruta = `${FOTOS}/reventon-${AVION}-${TRAMO}-${nombre}.png`;
+      await page.screenshot({ path: ruta }).catch(() => undefined);
+      fotosHechas.push(ruta);
+    });
   await page.goto(
     `${BASE}/?escenario=${ESCENARIO}&hora=12&avion=${AVION}&tramo=${TRAMO}` +
       `&ejercicio=${EJERCICIO}&teselas=0&meteo=` +
+      (VIENTO ? `&viento=${VIENTO}` : "") +
       (AMARRADA ? "&pasajeros=1&filas=1,0&bodegas=44,0&amarradas=1,1" : ""),
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
@@ -183,7 +214,7 @@ try {
   await page.waitForTimeout(12000);
 
   const r = await page.evaluate(
-    async ({ modo, tope, sinTren, pistaOcupada }) => {
+    async ({ modo, tope, sinTren, pistaOcupada, parar, meteTren }) => {
       const o = globalThis.__oga;
       const espera = (ms) => new Promise((res) => setTimeout(res, ms));
       /*
@@ -309,6 +340,23 @@ try {
       let rojaConAlguienEnLaPista = null;
       let lamparaVista = null;
       let tiraConLaRadioCallada = null;
+      // Con la rueda reventada: lo que se va del eje y el pie que pisa, en la carrera y en la toma; y la tarjeta.
+      const rev = {
+        lado: null,
+        indicada: null,
+        tarjeta: false,
+        pedales: 0,
+        pasos: 0,
+        // El pie de antes, el que pide el viento, con el que se compara el de después.
+        pedalesAntes: 0,
+        pasosAntes: 0,
+        desvio: 0,
+        tirado: null,
+        trenMetido: false,
+        sacadoEn: null,
+        alVolver: null,
+      };
+      let declaradaEn = null;
       const puntos = [
         [pista.length + 3000, 0],
         [pista.length + 3000 + tendido, tendido],
@@ -366,7 +414,14 @@ try {
            * de veinticuatro: con las frases grabadas, el «tampoco» llegaba con
            * el avión ya parado. Las voces no van más deprisa con el reloj.
            */
-          if (modo === "morro") o.acelerar?.(1);
+          if (modo === "morro" || modo === "reventon") o.acelerar?.(1);
+          if (modo === "reventon") {
+            rev.lado = ej?.reventon?.lado ?? null;
+            rev.indicada = o.indicada();
+            rev.rumbo = s.heading;
+            globalThis.setTimeout(() => globalThis.__foto?.("golpe"), 500);
+            globalThis.setTimeout(() => globalThis.__foto?.("pie"), 2600);
+          }
           alFallar = { sobre, trenFuera: o.trenQueSePide() };
           centradoAlFallar = ej?.centrado ?? null;
         }
@@ -408,6 +463,26 @@ try {
           }
           if (ej?.radio?.lampara === "roja" && rojaConAlguienEnLaPista === null)
             rojaConAlguienEnLaPista = (o.trafico?.() ?? []).filter((a) => a.enLaPista).map((a) => a.matricula);
+        }
+
+        if (modo === "reventon" && desdeElFallo !== null) {
+          if (!rev.tarjeta) rev.tarjeta = !!document.querySelector(".senal:not([hidden]) .senal__tira");
+          if (s.onGround && (tramo === "carrera" || tramo === "rotar" || tramo === "parar"))
+            rev.desvio = Math.max(rev.desvio, Math.abs(p.c));
+          // Lo que tira antes de que el pie haga nada: el rumbo a las ocho décimas.
+          if (rev.tirado === null && ahora - desdeElFallo > 0.8) rev.tirado = error(s.heading, rev.rumbo);
+          if (!s.onGround && !o.trenQueSePide()) rev.trenMetido = true;
+          /*
+           * A la velocidad de verdad lo que se dice —del golpe a lo de la
+           * llamada, y la final—, y a cuatro por uno el circuito, que no se
+           * dice nada del ejercicio.
+           */
+          if (ej?.declarada && declaradaEn === null) declaradaEn = ahora;
+          const despacio = declaradaEn === null || ahora - declaradaEn < 35 || tramo === "final";
+          if (rev.despacio !== despacio) {
+            rev.despacio = despacio;
+            o.acelerar?.(despacio ? 1 : 4);
+          }
         }
 
         if (tramo === "crucero") {
@@ -458,6 +533,26 @@ try {
           c.aileron = acota(e * 3, -1, 1);
           c.rudder = acota(e * 4 + 3 * s.beta, -1, 1);
           c.elevator = 0;
+          if (modo === "reventon" && desdeElFallo === null && s.airspeed > 40) {
+            rev.pedalesAntes += c.rudder;
+            rev.pasosAntes++;
+          }
+          if (modo === "reventon" && desdeElFallo !== null) {
+            // Ocho décimas sin tocar nada, lo que se tarda en notarlo; y después, el eje con el pie.
+            if (ahora - desdeElFallo < 0.8) {
+              c.rudder = 0;
+              c.aileron = 0;
+            } else {
+              c.aileron = 0;
+              rev.pedales += c.rudder;
+              rev.pasos++;
+            }
+            pedalMaximo = Math.max(pedalMaximo, Math.abs(c.rudder));
+            if (parar && ahora - desdeElFallo > 1.5) {
+              tramo = "parar";
+              return;
+            }
+          }
           if ((modo === "antes" || modo === "carrera") && ej?.fase !== "armada") tramo = "parar";
           else if (s.airspeed >= (vel.vr ?? vref) && ej?.fase !== "armada") tramo = "rotar";
           else if (s.airspeed >= (vel.vr ?? vref) && modo !== "antes") tramo = "rotar";
@@ -471,6 +566,7 @@ try {
           const e = error(h - Math.atan(p.c * 0.02), s.heading);
           c.aileron = acota(e * 3, -1, 1);
           c.rudder = acota(e * 4 + 3 * s.beta, -1, 1);
+          if (modo === "reventon") pedalMaximo = Math.max(pedalMaximo, Math.abs(c.rudder));
           if (s.groundSpeed < 0.5 && recorridoAlParar === null) recorridoAlParar = p.a;
           return;
         }
@@ -510,6 +606,8 @@ try {
         const meteElTren =
           modo === "morro"
             ? ej?.fase === "armada" && tramo !== "final"
+            : modo === "reventon"
+              ? meteTren && rev.sacadoEn === null && tramo !== "final"
             : ej?.fase !== "armada" || (modo === "tren" && !sinTren);
         if (!s.onGround && meteElTren) {
           /*
@@ -519,6 +617,12 @@ try {
            */
           if (deLineaAzul ? s.verticalSpeed > 0.3 && sobre > 8 : s.verticalSpeed > 1 && sobre > 12)
             o.pedirTren(false);
+        }
+        // Y si se metió, se saca cuando se cuenta por qué.
+        if (modo === "reventon" && rev.trenMetido && rev.sacadoEn === null &&
+            o.cantados().some((k) => String(k).includes("ejercicio.reventon.sacalo"))) {
+          rev.sacadoEn = ahora;
+          o.pedirTren(true);
         }
         c.rudder = pedal(s, dt);
 
@@ -536,7 +640,11 @@ try {
            * de sobra.
            */
           if ((modo === "carga" || modo === "morro" || modo === "radio") && sobre > 60) o.pedirFlaps(0);
-          const v2 = modo === "carga" || modo === "radio" ? vref * 1.15 : (vel.v2 ?? vref * 1.2);
+          // Con los dos motores, la V2 y diez nudos, que es como se sube un reactor entero.
+          const v2 =
+            modo === "carga" || modo === "radio"
+              ? vref * 1.15
+              : (vel.v2 ?? vref * 1.2) + (modo === "reventon" ? 10 * 0.514444 : 0);
           if (deLineaAzul && (ej?.fase !== "armada" || modo === "tren")) {
             /*
              * Sin bajar de la Vr, subiendo lo justo mientras le falte para la
@@ -663,6 +771,27 @@ try {
               c.aileron = 0;
               return;
             }
+            if (modo === "reventon") {
+              /*
+               * El eje con el pie y el freno a cuatro décimas, suave y parejo,
+               * con la reversa, que no es de las ruedas: «gentle wheel
+               * braking», «minimum braking» (AAIB, G-BZAY).
+               */
+              const rumbo = error(h - Math.atan(p.c * 0.008), s.heading);
+              c.rudder = acota(rumbo * 4 + 3 * s.beta, -1, 1);
+              c.aileron = 0;
+              c.brakes = 0.4;
+              c.reversa = 1;
+              c.elevator = 0;
+              rev.alVolver = {
+                alTocar: rev.alVolver?.alTocar ?? Math.abs(p.c),
+                c: Math.abs(p.c),
+                desvio: Math.max(rev.alVolver?.desvio ?? 0, Math.abs(p.c)),
+                pedal: Math.max(rev.alVolver?.pedal ?? 0, Math.abs(c.rudder)),
+                a: p.a,
+              };
+              return;
+            }
             c.brakes = 1;
             c.reversa = 1;
             c.elevator = 0;
@@ -733,7 +862,14 @@ try {
            * 3,2 m/s, con la instructora diciendo «lento».
            */
           const enLaFinal =
-            modo === "morro" && ej?.fase !== "armada" && !ej?.morro?.extension ? 80 * 0.514444 : vref * 1.1;
+            /*
+             * Y en `reventon`, con los flaps de despegue hasta los cuatro mil
+             * metros, a la del circuito: a 1,1 de la Vref con ellos el avisador
+             * de pérdida sonaba en la final larga.
+             */
+            modo === "reventon" && u > 4200
+              ? vref * 1.35
+            : modo === "morro" && ej?.fase !== "armada" && !ej?.morro?.extension ? 80 * 0.514444 : vref * 1.1;
           /*
            * Y sin radio, nunca a fondo en la final: a fondo y subiendo es
            * irse al aire para la torre (`seVaDeVerdad`), que retira el
@@ -838,6 +974,7 @@ try {
         rojaConAlguienEnLaPista,
         lamparaVista,
         tiraConLaRadioCallada,
+        rev,
         caida: o.caida?.() ?? null,
         recorridoAlParar,
         largo: pista.length,
@@ -853,7 +990,7 @@ try {
         descartadas: o.descartadas(),
       };
     },
-    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA },
+    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA, parar: PARAR, meteTren: METE_TREN },
   );
 
   const dice = (lista, trozo) => lista.some((k) => String(k).includes(trozo));
@@ -878,6 +1015,9 @@ try {
             ? ej.averia?.que === "morro" && ej.motorParado === null && r.alFallar?.trenFuera === true
           : MODO === "radio"
             ? ej.averia?.que === "radio" && ej.motorParado === null && r.alFallar?.sobre > 100
+          : MODO === "reventon"
+            ? ej.averia?.que === "neumatico" && ej.motorParado === null && !ej.parar && r.alFallar?.sobre < 15 &&
+              r.rev.indicada >= r.velocidades.v1 - 20 * 0.514444 && r.rev.indicada < r.velocidades.v1
           : MODO === "planeo"
             ? ej.motorParado === null
             : ej.motorParado !== null) &&
@@ -885,6 +1025,7 @@ try {
       (!SIGUE || !(ej.parar ?? ej.antesDeV1)),
     `fase ${ej?.fase} · motor ${ej?.motorParado} · se para ${ej?.parar ?? ej?.antesDeV1} · ` +
       `${r.alFallar ? `a ${Math.round(r.alFallar.sobre)} m · ` : ""}` +
+      `${MODO === "reventon" ? `a ${nudos(r.rev.indicada)} kt indicados · ` : ""}` +
       `V1 ${nudos(r.velocidades.v1)} Vr ${nudos(r.velocidades.vr)} V2 ${nudos(r.velocidades.v2)} Vmc ${nudos(r.velocidades.vmc)} kt`,
   );
   /*
@@ -1192,6 +1333,107 @@ try {
       tiradas.join(" · ") || "nada tirado",
     );
   }
+  if (MODO === "reventon") {
+    const izq = r.rev.lado === "izquierdo";
+    const grados = (x) => `${((x * 180) / Math.PI).toFixed(2)}°`;
+    const suya = `ejercicio.reventon.${izq ? "izquierda" : "derecha"}`;
+    comprobar(
+      "el golpe, su tarjeta y el pie que se pisa, dicho",
+      r.rev.lado !== null &&
+        dice(r.todoCantado, `golpe de la rueda ${izq ? "izquierda" : "derecha"}`) &&
+        r.rev.tarjeta &&
+        dice(pedido, suya),
+      `lado ${r.rev.lado} · ${r.todoCantado.filter((k) => /golpe de la rueda/.test(k)).join(" · ") || "sin golpe"} · ` +
+        `tarjeta ${r.rev.tarjeta} · ${pedido.filter((k) => /reventon\.(izquierda|derecha)/.test(k)).join(" · ") || "no dicho"}`,
+    );
+    const pieMedio = r.rev.pasos ? r.rev.pedales / r.rev.pasos : 0;
+    const pieDeAntes = r.rev.pasosAntes ? r.rev.pedalesAntes / r.rev.pasosAntes : 0;
+    comprobar(
+      "el avión tira hacia la reventada, y el eje se sostiene con el otro pie",
+      /*
+       * Lo que se va en ocho décimas sin tocar nada, y el pie de después contra
+       * el de antes: hacia el otro lado de la reventada. Con viento no se
+       * exige, que una racha es del mismo orden; ni el pie, parando a fondo,
+       * que la pata sana frena más y tira hacia el suyo.
+       */
+      (VIENTO !== "000/00" || (izq ? r.rev.tirado < 0 : r.rev.tirado > 0)) &&
+        (VIENTO !== "000/00" || PARAR || (izq ? pieMedio > pieDeAntes : pieMedio < pieDeAntes)) &&
+        r.rev.desvio < 10 &&
+        ej?.reventon?.enElModelo === (izq ? -1 : 1),
+      `tiró ${grados(r.rev.tirado ?? NaN)} en ocho décimas · pie medio ${pieMedio.toFixed(3)} (antes ${pieDeAntes.toFixed(3)}), máximo ${r.pedalMaximo.toFixed(2)} · ` +
+        `lo más lejos del eje ${r.rev.desvio.toFixed(1)} m · en el modelo ${ej?.reventon?.enElModelo}`,
+    );
+    if (PARAR) {
+      comprobar(
+        "para en la pista",
+        r.recorridoAlParar !== null && r.recorridoAlParar < r.largo && r.tocoEn === null,
+        `parado a ${Math.round(r.recorridoAlParar ?? NaN)} m del umbral, de ${Math.round(r.largo)}`,
+      );
+      comprobar(
+        "y se cierra bien, como parar a tiempo, con los bomberos junto al avión",
+        ej?.cierre === "parado" && ej?.bomberos && !ej?.declarada,
+        `cierre ${ej?.cierre} · bomberos ${ej?.bomberos} · ${ej?.camiones} camiones`,
+      );
+    } else {
+      const desdeElGolpe = r.todoCantado.findIndex((c) => /^golpe de la rueda/.test(c));
+      const despues = desdeElGolpe >= 0 ? r.todoCantado.slice(desdeElGolpe) : r.todoCantado;
+      const pideMeterlo = despues.filter((c) => /^gear up|vuelo\.meteElTren|^positive rate/.test(c));
+      comprobar(
+        METE_TREN
+          ? "se sigue; si se mete el tren, se cuenta por qué va fuera y se saca; nadie pide meterlo"
+          : "se sigue, y el tren se queda fuera: se cuenta, y nadie pide meterlo",
+        pideMeterlo.length === 0 &&
+          dice(pedido, "ejercicio.reventon.tren") &&
+          (METE_TREN
+            ? r.rev.trenMetido && r.rev.sacadoEn !== null && dice(pedido, "ejercicio.reventon.sacalo")
+            : !r.rev.trenMetido && !dice(pedido, "ejercicio.reventon.sacalo")),
+        `${pideMeterlo.join(" · ") || "nadie lo pidió"} · ${pedido.filter((k) => /reventon\.(tren|sacalo)/.test(k)).join(" · ") || "no dicho"}`,
+      );
+      comprobar(
+        "PAN PAN, con la torre contestando y prioridad",
+        ej?.declarada && ej?.prioridad && dice(r.torre, "panpan"),
+        `declarada ${ej?.declarada} · torre ${r.torre.filter((k) => /panpan|mayday/i.test(k)).join(" · ") || "sin llamada"}`,
+      );
+      comprobar(
+        "nadie la manda al aire: tiene prioridad",
+        !r.mandoAlAire,
+        r.mandoAlAire ? "se mandó" : "ninguna orden",
+      );
+      comprobar(
+        "con los bomberos del aeródromo esperando junto a la pista",
+        ej?.bomberos,
+        `bomberos ${ej?.bomberos} · ${ej?.camiones} camiones`,
+      );
+      comprobar(
+        "la toma se cuenta en la final, y se toca en la pista",
+        dice(pedido, "ejercicio.reventon.toma") && r.tocoEn?.enPista,
+        `${pedido.filter((k) => /reventon\.toma/.test(k)).join(" · ") || "no dicha"} · ` +
+          (r.tocoEn
+            ? `tocó ${r.tocoEn.enPista ? "en la pista" : "fuera"} a ${Math.round(r.tocoEn.a)} m del umbral` +
+              `${typeof r.caida === "number" ? `, cayendo ${r.caida.toFixed(1)} m/s` : ""}`
+            : `no llegó · lo más bajo ${Math.round(r.bajo)} m`),
+      );
+      comprobar(
+        "el eje sostenido con el pie y el freno suave hasta parar en la pista",
+        r.rev.alVolver &&
+          r.rev.alVolver.desvio < r.rev.alVolver.alTocar + 6 &&
+          r.rev.alVolver.c < 8 &&
+          r.rev.alVolver.a < r.largo &&
+          ej?.cierre === "vuelta",
+        r.rev.alVolver
+          ? `tocó a ${r.rev.alVolver.alTocar.toFixed(1)} m del eje, lo más lejos ${r.rev.alVolver.desvio.toFixed(1)} y parado a ${r.rev.alVolver.c.toFixed(1)} · pie hasta ${r.rev.alVolver.pedal.toFixed(2)} · ` +
+              `parado a ${Math.round(r.rev.alVolver.a)} m del umbral, de ${Math.round(r.largo)} · cierre ${ej?.cierre}`
+          : "no llegó a la pista",
+      );
+    }
+    const tiradas = r.descartadas.filter((k) => /ejercicio\./.test(String(k)));
+    comprobar(
+      "y nada del ejercicio se cae esperando en la cola",
+      tiradas.length === 0,
+      tiradas.join(" · ") || "nada tirado",
+    );
+    if (FOTOS) console.log(`    fotos: ${fotosHechas.join(" · ") || "ninguna"}`);
+  }
   if (MODO === "planeo") {
     comprobar(
       "se para el motor y empieza el planeo, con calma",
@@ -1216,11 +1458,15 @@ try {
         ? "ejercicio.morro.bien"
         : MODO === "radio"
           ? "ejercicio.radio.bien"
-          : "ejercicio.bien";
+          : MODO === "reventon"
+            ? PARAR
+              ? "ejercicio.reventon.bienParado"
+              : "ejercicio.reventon.bien"
+            : "ejercicio.bien";
   comprobar(
     "y la instructora lo cierra celebrándolo",
     dice(pedido, cierreQueToca),
-    pedido.filter((k) => /ejercicio\.(bien|bomberos|carga\.bien|morro\.bien|radio\.bien)/.test(k)).join(" · ") || "no",
+    pedido.filter((k) => /ejercicio\.(bien|bomberos|carga\.bien|morro\.bien|radio\.bien|reventon\.bien)/.test(k)).join(" · ") || "no",
   );
   const mal = resultados.some((x) => !x.ok);
   if (process.env.OGA_TRAZA || mal) {

@@ -1503,6 +1503,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.carga": "Loose cargo",
   "hangar.ejercicio.tren-de-morro": "Nose gear won't extend",
   "hangar.ejercicio.fallo-de-radio": "No radio",
+  "hangar.ejercicio.reventon": "A tire bursts",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1791,6 +1792,20 @@ export const EN: Dictionary = {
     "It still didn't come. That's fine: we tell the tower and land on the main wheels, holding the nose up as long as it will stay. When it won't, we lower it gently, and no brakes",
   "ejercicio.morro.bien":
     "Exercise done: first the emergency extension, then the main wheels with the nose held up as long as it would stay, and down gently. That way it almost always goes well",
+  "ejercicio.reventon.antes":
+    "Today we practise a tire that bursts on the runway, almost at takeoff speed. You'll hear a thump, and the airplane will pull to one side: you hold it on the centerline with the other foot. That fast, it's better to go on: we leave the gear down, tell the tower and come back with the whole runway ahead. And if you stop on the runway, that's fine too",
+  "ejercicio.reventon.izquierda": "A left tire burst: right foot, and we go on",
+  "ejercicio.reventon.derecha": "A right tire burst: left foot, and we go on",
+  "ejercicio.reventon.tren":
+    "We leave the gear down: inside, the torn rubber could catch on something. With both engines, the airplane still climbs well. We tell the tower, and go back",
+  "ejercicio.reventon.sacalo":
+    "With a burst tire, the gear is better down: inside, the loose rubber could catch on something. Put it down, and we go back like that",
+  "ejercicio.reventon.toma":
+    "When we touch down, the airplane will pull again towards the burst tire: hold the centerline with the other foot, and brake gently and evenly, calmly",
+  "ejercicio.reventon.bien":
+    "Exercise done: with a burst tire, almost at takeoff speed, it's better to go on. You came back with the whole runway ahead, and that way calm braking is enough",
+  "ejercicio.reventon.bienParado":
+    "You stopped on the runway, and stopping is winning too. With a burst tire the brakes do less: that's why, almost at takeoff speed, it's usually better to go on, and come back with the whole runway ahead",
   "ejercicio.fallo-de-radio.antes":
     "Today we practise losing the radio. As we climb it will go quiet, on purpose. That's fine: we set a number on the transponder that tells the tower, we fly back into the circuit and watch the tower, which will talk to us with lights",
   "ejercicio.radio.callada":
