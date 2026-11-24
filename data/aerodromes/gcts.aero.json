@@ -2,6 +2,7 @@
   "id": "GCTS",
   "name": "Tenerife Sur Airport",
   "pasarelas": {"hay": true, "fuente": "Aena, nota de prensa del 29-05-2017: licitación del mantenimiento de las pasarelas del aeropuerto de Tenerife Sur."},
+  "restriccionesDeRodaje": [{"masDeM": 52, "calle": "D1", "fuente": "AIP España AD 2-GCTS, casilla 20.3.3, «Taxiing restrictions» (AIRAC AMDT 10/26, WEF 29-OCT-26): «D1: Entry from RWY 25 which have vacated the runway via TWY B1 or B2: D except B-767. Exit to RWY 07: D except B-767.» La letra D llega hasta los 52 m de envergadura (Anexo 14, tabla 1-1)."}, {"masDeM": 52, "calle": "B1", "fuente": "Ídem: «B1: D.»"}, {"masDeM": 52, "calle": "B6", "fuente": "Ídem: «B6: D except B-767-400. Runway entry maximum length 58 m.»"}],
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

@@ -210,6 +210,28 @@ describe("el APROAR de la casilla 20.3", () => {
     }
   });
 
+  /*
+   * La casilla 20.3.3: la D1, la B1 y la B6, hasta la letra D, que son 52 m. Los dos grandes, de casi sesenta,
+   * salían por la 07 por la D1.
+   */
+  it("y los dos grandes no ruedan por la D1, la B1 ni la B6, que son de letra D", () => {
+    const r = aero.restriccionesDeRodaje!;
+    expect(r.map((x) => [x.calle, x.masDeM])).toEqual([["D1", 52], ["B1", 52], ["B6", 52]]);
+    for (const x of r) expect(x.fuente).toMatch(/AD 2-GCTS, casilla 20\.3\.3|^Ídem/);
+    for (const avion of reactores)
+      for (const rumbo of [la07, la25]) {
+        const plan = new PlanDeVuelo(aero, { ...campo.runway, heading: rumbo }, () => 600, avion);
+        plan.deContacto = true;
+        for (const p of [null, ...deRetroceso.filter((q) => tienePasarela(q.aip) && admite(q.aip, avion.wingSpan))]) {
+          expect(p ? plan.reiniciarDesde(p.xy) : plan.reiniciar(), p?.ref ?? "el suyo").toBe(true);
+          const { letras } = (plan as unknown as { ruta: { letras: readonly string[] } }).ruta;
+          const nombre = `${avion.id} · ${rumbo.toFixed(0)}° · ${p?.ref ?? "el suyo"}: ${letras.join("-")}`;
+          if (avion.wingSpan > 52) for (const l of ["D1", "B1", "B6"]) expect(letras, nombre).not.toContain(l);
+          else expect(letras, nombre).toContain(rumbo === la07 ? "D1" : "B6");
+        }
+      }
+  });
+
   it("el reactor del tráfico sale también con el morro hacia el umbral en uso", () => {
     const t = TIPOS.reactor;
     for (const heading of [la07, la25]) {
