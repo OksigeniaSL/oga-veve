@@ -1340,40 +1340,40 @@
       "surface": null,
       "polygon": [
         [
-          -908.5,
-          509.2
+          -907,
+          512
         ],
         [
-          -898.4,
-          501.8
+          -897.3,
+          504.6
         ],
         [
-          -594.6,
-          386.8
+          -593.5,
+          389.6
         ],
         [
-          -529.7,
-          363
+          -528.6,
+          365.8
         ],
         [
-          -516.1,
-          357
+          -515,
+          359.8
         ],
         [
-          -476.9,
-          343
+          -475.8,
+          345.8
         ],
         [
-          -389.4,
-          309.2
+          -388.3,
+          312
         ],
         [
-          -17.7,
-          170.1
+          -16.6,
+          172.9
         ],
         [
-          -3.3,
-          164.1
+          -2.2,
+          166.9
         ],
         [
           -20,
@@ -1396,7 +1396,7 @@
           473.2
         ]
       ],
-      "fuente": "Deducida: OpenStreetMap acaba la plataforma comercial en su límite (ABL), y la carta AIP España AD 2-GCXO PDC 1.1 (WEF 29-OCT-26) no dibuja borde de pavimento entre él y la R, de la R2 a la R7: la calle va abierta a la plataforma. Su contorno es el borde de la plataforma de OpenStreetMap y el eje de la R."
+      "fuente": "Deducida: OpenStreetMap acaba la plataforma comercial en su límite (ABL), y la carta AIP España AD 2-GCXO PDC 1.1 (WEF 29-OCT-26) no dibuja borde de pavimento entre él y la R, de la R2 a la R7: la calle va abierta a la plataforma. Su contorno es el borde de la plataforma de OpenStreetMap, tres metros por dentro para que no quede rendija, y el eje de la R."
     }
   ],
   "buildings": [
