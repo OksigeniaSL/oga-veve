@@ -1016,6 +1016,31 @@ const cruzando = (luz: "roja" | "verde", derecha: boolean): string =>
     <path d="M3 19.4 L7 16.8 V18.5 H20.5 V20.3 H7 V22 Z" />
   </g>`);
 
+/** El avión de frente, de noche, con los faros de aterrizaje encendidos o apagados. Ver `faros` más abajo. */
+const faros = (encendidos: boolean): string => icono(`${NOCHE}
+  <g class="senal__silueta">
+    <rect x="1.5" y="12.3" width="21" height="1.8" rx="0.9" />
+    <circle cx="12" cy="13.2" r="3.2" />
+    <rect x="11.2" y="6" width="1.6" height="5.5" rx="0.6" />
+  </g>
+  <circle class="senal__luz-verde" cx="2.4" cy="13.2" r="1.5" />
+  <circle class="senal__luz-roja" cx="21.6" cy="13.2" r="1.5" />
+  ${
+    encendidos
+      ? [-1, 1]
+          .map((k) => {
+            // Los rayos, hacia fuera: los de dentro se cruzaban encima del morro.
+            const x = 12 + k * 4.8;
+            return `<circle class="senal__luz-blanca" cx="${x}" cy="13.4" r="2.7" />
+  <path d="M${x} 9.4 v-3 M${x} 17.4 v3 M${x + k * 2.7} 10.5 l${k * 2} -2 M${x + k * 2.7} 16.3 l${k * 2} 2"
+        fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" />`;
+          })
+          .join("")
+      : [7.2, 16.8]
+          .map((x) => `<circle cx="${x}" cy="13.4" r="1.9" fill="#1b2430" stroke="currentColor" stroke-width="1" />`)
+          .join("")
+  }`);
+
 /**
  * **La aguja del ADF**, la de «Seguí la aguja» (#51): la esfera con sus
  * cuatro marcas y la aguja hacia la radio. En un ADF de esfera fija arriba es
@@ -2121,23 +2146,6 @@ const LUCES_DE_RODAJE = icono(`
 `);
 
 /**
- * **Los faros de aterrizaje, encendidos y apagados**: el mismo morro que el de
- * las luces de rodaje, con el haz largo hacia delante o con el faro en hueco.
- * Son los dos dibujos de un solo gesto, que es contestar de noche a la torre:
- * uno detrás del otro, dos veces. Ver `contestarConLosFaros` en `game.ts`.
- */
-const MORRO_CON_FARO = `<path d="M1.2 8.6 h7.6 q4.6 0 6 3.2 q-1.4 3.2 -6 3.2 h-7.6 z" />`;
-const FAROS = icono(`
-  ${MORRO_CON_FARO}
-  <circle cx="14.2" cy="11.8" r="1.9" />
-  <path d="M16.6 10.8 L23 6.4 L23 17.2 L16.6 12.8 Z" opacity="0.75" />
-`);
-const FAROS_APAGADOS = icono(`
-  ${MORRO_CON_FARO}
-  <circle cx="17.4" cy="11.8" r="2" fill="none" stroke="currentColor" stroke-width="1.5" />
-`);
-
-/**
  * **El transpondedor**: la caja que contesta, con sus ondas, y la pausa de
  * «en espera» encima. Es el punto del transpondedor de la misma lista: el
  * TCAS deja de vigilar en tierra, que es lo que escribe la pantalla de
@@ -2436,8 +2444,6 @@ export const DIBUJOS = {
   "aerofrenos-recogidos": AEROFRENOS_RECOGIDOS,
   "aerofrenos-armados": AEROFRENOS_ARMADOS,
   "luces-de-rodaje": LUCES_DE_RODAJE,
-  faros: FAROS,
-  "faros-apagados": FAROS_APAGADOS,
   transpondedor: TRANSPONDEDOR,
   autofreno: AUTOFRENO,
   freno: FRENO,
@@ -2556,6 +2562,13 @@ export const DIBUJOS = {
     <circle class="senal__luz-roja" cx="21.6" cy="13.2" r="2.3" />
     <circle class="senal__luz-blanca" cx="9.6" cy="13.8" r="1.2" />
     <circle class="senal__luz-blanca" cx="14.4" cy="13.8" r="1.2" />`),
+  /*
+   * **Los faros que contestan a la torre de noche**, encendidos y apagados: el
+   * mismo avión de frente, que es como lo ve la torre. Uno detrás del otro, dos
+   * veces. Ver `contestarConLosFaros` en `game.ts` (ADR 0014, H86).
+   */
+  faros: faros(true),
+  "faros-apagados": faros(false),
   "luces-se-aleja": icono(`${NOCHE}
     <g class="senal__silueta">
       <rect x="5" y="12.2" width="14" height="1.3" rx="0.65" />
