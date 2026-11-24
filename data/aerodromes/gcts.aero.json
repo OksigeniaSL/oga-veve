@@ -8641,7 +8641,8 @@
         "salida": "R",
         "max": "A333",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "aproar": "E"
       }
     },
     {
@@ -8664,7 +8665,8 @@
         "salida": "R",
         "max": "B734",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "aproar": "E"
       }
     },
     {
@@ -8691,7 +8693,8 @@
         "salida": "R",
         "max": "B744",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.4"
+        "carta": "AD 2-GCTS PDC 1.4",
+        "aproar": "E"
       }
     },
     {
@@ -8714,7 +8717,8 @@
         "salida": "R",
         "max": "A21N",
         "contacto": null,
-        "carta": "AD 2-GCTS PDC 1.3"
+        "carta": "AD 2-GCTS PDC 1.3",
+        "aproar": "E"
       }
     },
     {
