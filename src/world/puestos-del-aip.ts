@@ -56,7 +56,9 @@ export interface DelAip {
   readonly aproar?: string;
   /**
    * El APROAR según la pista en uso, si la carta lo da así: la Configuración Norte de Barajas es
-   * despegar hacia el norte (AD 2-LEMD PDC 1.7, observaciones 5 y 6).
+   * despegar hacia el norte (AD 2-LEMD PDC 1.7, observaciones 5 y 6). Y en Tenerife Sur la casilla 20
+   * lo da para todos los de retroceso, «nosing to the threshold in use» (H88): con la 07, que va al
+   * 069 y aquí es `norte`, al W, y con la 25, al E.
    */
   readonly aproarPorPista?: { readonly norte: string; readonly sur: string };
   /**

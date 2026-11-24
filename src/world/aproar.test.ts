@@ -147,7 +147,9 @@ describe("el APROAR en los campos que lo publican", async () => {
     for (const p of de(id).aerodrome!.parkingPositions ?? []) {
       if (!p.aip?.carta) continue;
       const q = carta.puestos.find((c) => suelto(c.ref) === suelto(p.ref ?? ""))!;
-      expect(p.aip.aproar ?? null, `${id} · el ${p.ref}`).toBe(q.aproar);
+      // En Tenerife Sur, a los de retroceso que la tabla no se lo da, el de la casilla 20 (H88).
+      const deLaCasilla = id === "GCTS" && p.aip.salida === "R" ? "E/W" : null;
+      expect(p.aip.aproar ?? null, `${id} · el ${p.ref}`).toBe(q.aproar ?? deLaCasilla);
       if (p.aip.aproar) con++;
     }
     expect(con).toBeGreaterThan(id === "LEMD" ? 250 : 3);
@@ -218,7 +220,7 @@ describe("el APROAR en los campos que lo publican", async () => {
       }
   });
 
-  it.each(["GCRR", "LEMD"])("%s: el reactor del tráfico que sale empujado, también", (id) => {
+  it.each(["GCRR", "GCTS", "LEMD"])("%s: el reactor del tráfico que sale empujado, también", (id) => {
     const campo = de(id);
     const aero = campo.aerodrome!;
     const reactor = TIPOS.reactor;

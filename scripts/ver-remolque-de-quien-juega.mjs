@@ -327,7 +327,8 @@ try {
     if (tramo !== "guyrami" && m.motorEmpujando) fallos.push(t("en cabina los motores arrancaron empujando sin pedirlo"));
     if (!(m.tractorFuera > 0) || !(m.personaFuera > 0)) fallos.push(t("el tractor o la persona quedan bajo el ala"));
     if (m.dentroDeUnEdificio > 0) fallos.push(t("el tractor o la persona atraviesan un edificio"));
-    if (!(m.paredAlAcabar > m.paredAlEmpezar)) fallos.push(t("la terminal no se aleja"));
+    // Del que no es de contacto la terminal puede quedar a un lado, y empujarlo lo acerca: el R19 de Tenerife Sur (H88).
+    if (terminal?.deContacto && !(m.paredAlAcabar > m.paredAlEmpezar)) fallos.push(t("la terminal no se aleja"));
     if (m.giroRodando30 === null) fallos.push(t("no rueda 30 m tras soltarse"));
     else if (Math.abs(m.giroRodando30) > 60) fallos.push(t(`al rodar gira ${m.giroRodando30}°: no salía mirando hacia la raya`));
 

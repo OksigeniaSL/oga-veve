@@ -351,6 +351,10 @@ export interface Aerodrome {
      * ortofoto, el mes de la foto y cuándo se leyó. Puesto a puesto, en `data/aerodromes/aip/pasarelas.json`.
      */
     readonly pasarelas?: { readonly fuente: string; readonly url: string; readonly foto: string; readonly leido: string };
+    /** De dónde sale el APROAR de los que no lo llevan en su tabla, si lo da la casilla 20 para todos (H88). */
+    readonly aproar?: string;
+    /** Y las puertas de plataforma que esa casilla manda dejar libres al empujar, por su letra: «leaving apron gates "D" free» (H88). */
+    readonly puertasLibres?: readonly string[];
     /** De dónde salen `salePor` y `llegaPor` de los puestos, si los llevan (H85). */
     readonly rodaje?: string;
     /** Y las calles de la plataforma, por su letra: las que se toman solo si la ruta las nombra. Ver `grafoPorSusCalles`. */
