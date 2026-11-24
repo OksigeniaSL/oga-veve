@@ -679,5 +679,140 @@ tocar; ahora lleva el eje con él, como en los otros, y mira lo que se aparta.
 ### Lo que no
 
 - **La pieza del parado se abre en el dibujo** y REV se enciende una sola vez para
-  todos: la marca del cuadro no va por motor, y el rugido suena como con todos.
+  todos: la marca del cuadro no va por motor, y el rugido suena como con todos (ya no:
+  enmienda H82).
 - **El modelo sencillo** de Guyrami no lleva motores sueltos: allí es la de siempre.
+
+## Enmienda H82 (24-11-2026): la reversa de cada motor, en lo que se ve y se oye
+
+Lo que H80 dejó en «lo que no»: el modelo ya frenaba motor a motor y lo demás seguía
+siendo uno para todos. Aquí no se toca lo que vuela.
+
+### Las fuentes
+
+**La marca, en el instrumento de su motor.**
+
+- **Boeing 747-400**, *Differences Training* de Southern Air (22-12-2011, PDF p. 31,
+  «EPR/N1 Indications», las del motor en la pantalla principal): «Displayed REV
+  (amber) - reverser in transit. Displayed REV (green) - reverser fully deployed».
+- **Boeing 757/767 con GE**, notas de formación de Boeing en hibdz.skydiving.co.uk
+  (*Engines, Thrust Reverse (GE)*): «The reverser indication (REV) is displayed above
+  each digital EPR indication. REV is displayed in amber whilst the reverser is in
+  transit […] changes to green when the reverser is fully deployed»; al recogerla, otra
+  vez ámbar, y «when the reverser reaches the stowed position, the REV annunciation
+  disappears».
+- **Embraer E190**, C. Regli, *Summary* (16-9-2025, p. 1-25, PDF 27): «ENG remains at
+  idle thrust until the REV is fully deployed (green REV label)».
+- **El ámbar y el verde** ya estaban, del TSB A05H0002 (enmienda H78).
+
+**La palanca del motor parado.**
+
+- **AC 25-7D, 4.3.7.10.9** (p. 4-44), ya citada en H80: «it should be assumed that the
+  thrust reverser does not deploy […] on the failed engine».
+- **De qué vive la pieza**: en el 757/767 con GE, «each thrust reverser is powered by
+  bleed air from the respective engine»; en el 747-400, «hydraulically actuated» con
+  PW y «pneumatically actuated» con GE (Southern Air, PDF p. 39); en el E190, «HYD
+  actuated, on GND only», del sistema hidráulico de su lado.
+- **E190, la misma p. 1-25**: «After ENG failure, REV can only be selected within
+  30sec». O sea que en ese avión, los treinta primeros segundos, la del parado todavía
+  sale si se le levanta la palanca. Aquí no sale nunca: es lo que cuenta la norma.
+- **Turbohélice**: NTSB, ERA24LA223, el Super King Air 200 de Buckingham, p. 5: «Each
+  power lever moved freely aft of the idle stop into beta range but was not moved
+  farther aft into reverse (normal) because the engines were not running»; y p. 3, las
+  palas entran en beta con la palanca y «the CSU flyweights must be in an underspeed».
+  Y la hélice del parado, donde se quede al cerrar la palanca (AC 25-7D, 4.3.7.10.12).
+
+**Lo que no se ha encontrado**: el AFM o el FCOM de ninguno —las tres primeras son
+resúmenes de terceros—; el del 787 y el del E170 en esto; una marca REV por motor en un
+turbohélice de la clase de los dos de la flota (en el King Air del informe no la hay:
+lleva un «reverse not ready» y ninguna luz de beta): la de los JAZ 50 y JAZ 60 es la
+que ya llevaban, ahora en su barra de par. Y qué hace la pieza si el motor se para con
+ella fuera: aquí se queda donde está y se recoge con la palanca, como las demás.
+
+### Qué se hizo
+
+- **`Reversa` lleva la pieza de cada motor** (`piezas`, `estados`): la del que va, la de
+  siempre; la del parado no se abre. Lo que devuelve `paso` y lo que empuja, igual.
+- **REV, en el instrumento de cada motor**: dentro del dial, encima de la cifra del N1,
+  en los de línea, y en la barra de par en los turbohélices; en el cuadro plano y, que no
+  la llevaba, en la pantalla de motores de la cabina en 3D, con las letras. Ámbar
+  moviéndose, verde fuera, nada en la recogida. Con todos en marcha salen todas a la vez,
+  del mismo color y en el mismo instante que la de antes; lo que cambia es el sitio: no
+  en la esquina de la pantalla, sino en cada dial. La de la tarjeta del gas sigue siendo
+  una, que la palanca es una, y en los peldaños sin cifras sale donde salía. La columna
+  de las esferas ya no la lleva: ningún avión de esferas tiene reversa.
+- **El manguito del parado no se abre.** Los dos de cada pareja van en la misma malla:
+  no se rehace el modelo, se reparten sus vértices por la distancia al eje y a los del
+  parado se les quita lo que se desliza el vacío (`world/reversas.ts`). Con todos iguales
+  no se copia ni se toca la malla, y sigue siendo una sola llamada de dibujo.
+- **La hélice del parado no se embala, ni sigue girando en bandera** (`GirosDeHelice`):
+  con un motor parado o con el ave, cada una su ritmo; si no, el de siempre. El cambio de
+  paso no se dibuja, como estaba dicho.
+- **El rugido y el golpe, los de los que van**: la mitad con uno de dos, tres cuartos con
+  uno de cuatro, la ley con la que ya se oía el motor. El sonido no distingue lados: no
+  hay lado en que ponerlo.
+- **El del ave** (H77): su pieza se abre, que va en marcha; su rugido, lo que le deja su
+  palanca —la parte que frena—, y su motor calla lo que le falta **también con la
+  reversa**, que se comparaba con el gas de delante y no callaba nada. Su hélice, lo suyo.
+- **«Reversers normal»**, si algún avión lo canta un día: solo con las de todos fuera.
+- **Y las hélices del JAZ 50**: las dos palancas del paso de su cabina,
+  `palanca-de-helice-…`, entraban por el nombre, juntaban las dos hélices en un solo eje
+  a treinta centímetros del centro y las dos daban vueltas alrededor de la cabina. Ya no.
+
+### Al bit
+
+La trayectoria entera —posición, velocidad, actitud, giros, lo que da el motor, el empuje
+y la reversa en cada paso—, en los ocho aviones, con rachas y tres semillas: paradas con
+todos, con cada motor parado antes y con la reversa ya fuera, con el ave a cuatro palancas,
+despegues abortados y el modelo sencillo. **270 de 270 iguales a 4a239b0b**. El control
+—una billonésima más de reversa— cambia las 213 de los aviones que la llevan y ninguna de
+las 57 de los que no.
+
+### Las pruebas
+
+`reversa-de-cada-motor.test.ts`: las piezas paso a paso en los cinco, con todos y con cada
+uno parado; la parte que se oye, con la del ave; los vértices de los manguitos de los tres
+reactores, con cada motor parado, y la malla sin tocar con todos; una marca por motor en su
+instrumento; y las hélices. `ruidos.test.ts`, `giro-de-las-helices.test.ts` y
+`ejes-de-helice.test.ts`, lo suyo.
+
+Tipos limpios, 206 pruebas de lo tocado en verde, y del vitest entero la parte 1 de 4
+(`--shard=1/4`: 149 ficheros, 3.091 pruebas, 16 saltadas). Las partes 2, 3 y 4 no se
+pasaron aquí: no cupieron en la cola. El último retoque —el cuerpo y el filo de REV en la
+barra de par— es posterior a esas pasadas: lleva los tipos, las pruebas de la reversa de cada
+motor y del cuadro, y lo volado de abajo.
+
+### Volado
+
+`verificar-emergencias.mjs despues gran-canaria jaz-90 taguato`, cuatro tiradas: con el
+derecho parado, **12 de 12** (a 12,3 m del eje como mucho, pie 0,28); con el izquierdo,
+**11 de 12 dos veces**, las dos por «se para por el eje, con el pie»: a 10,3 m y pie 1,00,
+y a 22,7 m y pie 1,00. La segunda dice dónde: a 56 m/s y 17,8 m del eje, recién tocado; la
+traza cruza el eje en el aire, de −28 m a 320 m del umbral a 0 con ocho metros de altura, y
+sigue hasta +14 ya en el suelo: llega cruzado antes de que haya reversa. El mismo banco con las fuentes de 4a239b0b y el izquierdo, una tirada: 12
+de 12, a 8,8 m, pie 0,24. El modelo es el mismo al bit y en la final el juego no hace nada
+distinto, así que parece el piloto del banco, que llega cruzado; con una tirada de la base no
+queda separado. El banco medía además el pie parado en la pista, donde el viento de lado da
+el derrape que quiera; ahora lo mide rodando y dice dónde fue.
+
+`verificar-sonidos.mjs`, dos tiradas, 24 de 25 cada una y con fallos distintos que a la otra
+le salen bien —los flaps, que seguían moviéndose al medir los quietos, y las juntas de Pilar,
+a −51 dB en vez de −48—: la reversa, a −21 dB las dos, y con su golpe.
+
+**Mirado**, con la tarjeta de verdad (Intel), el despegue abortado con el izquierdo parado
+en los JAZ 50, 60, 90 y 120 en Taguató: REV ámbar y luego verde solo en los que van, en el
+cuadro y en la cabina; con todos, en todos; la góndola izquierda del JAZ 90 entera y la
+derecha con su cascada a la vista; la hélice izquierda de los turbohélices con las palas
+paradas y la derecha hecha un disco; y las del JAZ 50, cada una en su góndola.
+
+### Lo que no
+
+- **Los treinta segundos del E190** en los que la pieza del parado todavía sale, y **su
+  cerrojo de la otra**: «if one REV fails with MAX REV selected for both ENG, the operating
+  REV will only produce MIN REV thrust. If MAX REV selected only on ENG with operating REV,
+  then MAX REV thrust is produced» (Regli, p. 1-25). Aquí la palanca es una para todos y la
+  del que va da la suya entera, como dejó H80: es el modelo, y aquí no se toca.
+- **Las palancas de la reversa, una por motor**: sigue siendo una tecla.
+- **La tarjeta del avión** en vivo no lleva los manguitos y gira las dos hélices igual.
+- **Guyrami**, sin motores sueltos: todas a la vez, como siempre.
+- **El JAZ 110** no se ha mirado en pantalla; sus vértices los mira la prueba.
