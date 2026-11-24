@@ -1136,3 +1136,93 @@ falta ninguna frase nueva.
 - **Los isleños** de `trafico-de-las-islas.ts` usan `nivelPara` solo para el
   techo de su banda, con el rumbo verdadero y la tabla de la OACI: no los pone
   en un nivel, los separa del avión propio. No se ha tocado.
+
+## Enmienda H80 (24-11-2026): el anemómetro marca lo que le entra al pitot
+
+Lo que vio el banco del remolque: en Lanzarote, parado, con el morro al 209 y
+viento 030/18, la cinta marcaba **quince nudos**. `indicadaDe` salía de
+`airspeed`, que es la velocidad del avión por el aire venga de donde venga, y un
+pitot con el aire por la cola no marca.
+
+### Las fuentes
+
+- **NACA Report 1303** (Gracey, 1957) y **TN 2331** (Gracey, Letko y Russell, 1951):
+  39 tubos, y luego 54, girados en el túnel. El error «remains zero up to a certain
+  angle and then begins to deviate in a negative direction» (1303, p. 498); hasta
+  dónde llega sin un uno por ciento, entre ±8° y ±28° según el tubo (tabla I, p. 504).
+- **AC 43-15 no sirve**: es de la calibración en el taller y no dice nada del ángulo.
+  El *Instrument Flying Handbook* tampoco da cifra.
+- **Garmin, *G1000 Pilot's Guide for Cessna Nav III*** (190-00498-07, p. 50): «speed
+  indication starts at 20 knots».
+- **FlyByWire, *A32NX Pilot Briefing*** (PFD, *Speed Tape*), que cuenta el A320: «the
+  minimum airspeed indication is 30 knots».
+- **POH del 172R** (fig. 2-2): el arco blanco desde 33 KIAS. De la primera marca de la
+  esfera y de dónde empieza a moverse la aguja, nada.
+
+**Lo que no tiene fuente**: la curva más allá de 45°; la toma de estática con el aire
+de través; el pitot de cada avión y cómo le llega el aire al morro; el mínimo de la
+cinta del 747 y del E170 (se usa el del A320), y la aguja de las esferas.
+
+### Qué se hizo
+
+- **`flight/pitot.ts`**: qué parte de la presión de impacto entra según el ángulo del
+  aire con el morro, la del tubo **E-5** (ojiva, boca biselada; TN 2331, fig. 46,
+  p. 68): toda hasta 15°; falta un 1,5 % a 20°, un 3,5 a 25, un 10 a 30, un 22 a 35,
+  un 36,5 a 40 y un 55 a 45. De ahí en adelante, su pendiente, hasta nada a 57°. La
+  velocidad va con la raíz.
+- **El ángulo**, `anguloDelAire`, lo publica `fdm.ts` con los demás derivados.
+  `airspeed` no cambia. El modelo sencillo no tiene viento, y en el helicóptero
+  `airspeed` ya es la del morro: los dos, de frente.
+- **`indicadaDe`** lo aplica, y con ella el HUD, `indicadaAhora` y los relojes. Pasan
+  a `indicadaAhora` los sesenta nudos de la toma, el reloj de la cabina y el ejercicio
+  del pitot que se hiela, que iban con `indicatedAirspeed`, y la sonda
+  `velocidadDeCabina`.
+- **No pasan**: el automático, los gases, la mano, la banda sin motor, los recuerdos
+  del tren y de los flaps y lo que suena. Son lo que vuela o lo que pega el aire, y
+  siguen con la de antes.
+- **La cinta no baja de su mínimo** (`CINTA_DESDE` en `ui/cuadro.ts`): treinta en los
+  de línea y veinte en el turbohélice, en las dos vistas, y sin marcas por debajo. Las
+  esferas y el helicóptero, como estaban.
+
+### Cuánto cambia volando
+
+Nada, al bit, con el aire a menos de quince grados del morro: subida, crucero y final
+con viento, en los ocho. En el resbale a fondo, nada el JAZ 20 (14,9°) y dos nudos el
+JAZ 90 (24°). En la pérdida sostenida, con el morro a 31° del aire, el JAZ 20 marca
+55,9 donde marcaba 59,6.
+
+### Los cantos, antes y después
+
+Segundos desde que se suelta el freno, a nivel del mar, la de antes y la de ahora en
+la misma carrera:
+
+| | «eighty knots» | V1 | Vr |
+|---|---|---|---|
+| JAZ 20, 60, 90 y 120: calma, de cara 20, de cola 10 y 18 | igual | igual | igual |
+| Los cuatro, cruzado 15 | igual | igual | igual |
+| JAZ 20, cruzado 25 | igual | 13,00 → 13,19 | 14,45 → 14,60 |
+| JAZ 90, cruzado 25 | igual | igual | igual |
+| JAZ 120, cruzado 25 | 16,90 → 16,93 | igual | igual |
+| JAZ 20, cruzado 30 | 26,64 → 26,72 | 12,49 → 12,90 | 13,97 → 14,30 |
+| JAZ 60, cruzado 30 | 14,13 → 14,17 | igual | igual |
+| JAZ 90, cruzado 30 | 12,83 → 12,88 | igual | igual |
+| JAZ 120, cruzado 30 | 16,65 → 16,76 | igual | igual |
+
+Los **sesenta** de la toma (en el JAZ 120; los canta él y el JAZ 110): igual en calma, de cara,
+de cola y con 15 cruzados; 32,27 → 32,01 s con 25 y 32,98 → 32,38 s con 30.
+
+Parado, con 18 kt por la cola: de 13,5 (JAZ 20), 15,0 (JAZ 90) y 16,3 (JAZ 120) a
+cero; de cara, lo mismo que antes.
+
+### Al bit
+
+Las finales de la plantilla de siempre, 15 por avión de los cuatro; y por cada uno de
+los ocho, cinco despegues con viento y ocho paradas secas y mojadas, con reversa y sin
+ella, más una con un motor parado y otra con el ave, sin reversa. Contra 87bbe061,
+**iguales**; el control, mover el avión una billonésima de metro, cambia las de todos.
+
+### Las pruebas
+
+`pitot.test.ts`: los puntos de la figura, que no sube al girar, Lanzarote parado en
+toda la flota, los costados, la cara, que volando es la misma y los cantos en las
+cuatro carreras.
