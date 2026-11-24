@@ -224,7 +224,7 @@ export default defineConfig({
      */
     maxWorkers: 6,
     /*
-     * **Cinco minutos por prueba, y no los cinco segundos de fábrica.**
+     * **Diez minutos por prueba, y no los cinco segundos de fábrica.**
      *
      * Las pruebas de tráfico y de rodaje simulan aeródromos enteros de un
      * tirón y tardan hasta un minuto sin soltar el hilo. Con Vitest 2 eso daba
@@ -236,10 +236,11 @@ export default defineConfig({
      *
      * El tope está para cazar una prueba colgada, no para medir cuánto tarda.
      * La más lenta sin tope propio tarda algo más de un minuto con cuatro
-     * hilos; cinco minutos son cuatro veces eso, que es margen para un
-     * portátil más lento o para CI.
+     * hilos en el portátil. En CI depende de la máquina que toque: la misma
+     * prueba, con el mismo código, tardó 174 s en una tirada y 303 en otra, y
+     * con cinco minutos de tope esa segunda cayó por tiempo.
      */
-    testTimeout: 300_000,
+    testTimeout: 600_000,
   },
   build: {
     target: "es2022",

@@ -211,11 +211,11 @@ describe("la plataforma de la T4 de Barajas", () => {
         // De la carta, o, el abocinado de la L de Pettirossi, sin ella, y lo dice.
         const deDonde = id === "SGAS" ? "Anexo 14 .*sin carta que lo dibuje" : `AIP España AD 2-${id} PDC [12]\\.1 \\(WEF `;
         expect(d.fuente, d.nombre).toMatch(new RegExp(`^Deducida: .*${deDonde}`));
-        const alEje = Math.min(
-          ...campo.taxiways.flatMap((t) =>
-            t.path.slice(1).flatMap((b, i) => d.polygon.map((v) => alSegmento(v, t.path[i]!, b))),
-          ),
-        );
+        // Uno a uno: desplegados en un `Math.min` son cientos de miles de argumentos, y no caben en la pila.
+        let alEje = Infinity;
+        for (const t of campo.taxiways)
+          for (let i = 1; i < t.path.length; i++)
+            for (const v of d.polygon) alEje = Math.min(alEje, alSegmento(v, t.path[i - 1]!, t.path[i]!));
         expect(alEje, `${id} ${d.nombre}: a su calle`).toBeLessThan(11.5);
         expect(campo.aprons.some((a) => a.polygon === d.polygon), d.nombre).toBe(true);
       }
