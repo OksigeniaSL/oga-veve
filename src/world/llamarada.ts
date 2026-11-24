@@ -15,7 +15,17 @@
  * nombre, no hay llamarada, y se vuela igual.
  */
 
-import { AdditiveBlending, ConeGeometry, Group, Mesh, MeshBasicMaterial, Vector3, type Object3D } from "three";
+import {
+  AdditiveBlending,
+  ConeGeometry,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  SphereGeometry,
+  Vector3,
+  type BufferGeometry,
+  type Object3D,
+} from "three";
 
 /** Dónde va un motor en el dibujo, en los ejes del avión: x a la derecha, y arriba, z a la cola. */
 export interface Nacela {
@@ -60,9 +70,21 @@ export function nacelaDe(grupo: Object3D, lado: -1 | 1): Nacela | null {
   };
 }
 
-/** Una llama: dos conos, el de fuera naranja y el de dentro claro, que suman luz. */
-function llama(radio: number, largo: number, haciaLaCola: boolean): Group {
+/**
+ * Una llama: dos conos, el de fuera naranja y el de dentro claro, y el
+ * resplandor de la boca, que suman luz.
+ */
+function llama(radio: number, largo: number, resplandor: number, haciaLaCola: boolean): Group {
   const g = new Group();
+  const pieza = (geometria: BufferGeometry, color: number, opacity: number): void => {
+    g.add(
+      new Mesh(
+        geometria,
+        new MeshBasicMaterial({ color, transparent: true, opacity, blending: AdditiveBlending, depthWrite: false }),
+      ),
+    );
+  };
+  pieza(new SphereGeometry(resplandor, 14, 10), 0xff9a3c, 0.35);
   for (const [color, cuanto, opacidad] of [
     [0xff8a2a, 1, 0.55],
     [0xffe2a0, 0.55, 0.8],
@@ -71,11 +93,7 @@ function llama(radio: number, largo: number, haciaLaCola: boolean): Group {
     // El cono nace con la punta en +y: se tumba, con la base en la boca del motor.
     geometria.translate(0, (largo * cuanto) / 2, 0);
     geometria.rotateX(haciaLaCola ? Math.PI / 2 : -Math.PI / 2);
-    const m = new Mesh(
-      geometria,
-      new MeshBasicMaterial({ color, transparent: true, opacity: opacidad, blending: AdditiveBlending, depthWrite: false }),
-    );
-    g.add(m);
+    pieza(geometria, color, opacidad);
   }
   return g;
 }
@@ -130,9 +148,15 @@ export class Llamarada {
     const n = nacelaDe(avion, lado);
     this.hay = n !== null;
     if (!n) return;
-    const delante = llama(n.radio * 0.8, n.radio * 2.2, false);
+    /*
+     * La de atrás, de seis radios y medio: la tobera va por debajo del ala, y
+     * con tres no pasaba de su borde de salida. Desde detrás y por encima, que
+     * es como se mira, no se veía ninguna. Y la de delante, con un resplandor
+     * mayor que la boca, que asoma por encima de la góndola.
+     */
+    const delante = llama(n.radio * 0.8, n.radio * 2.2, n.radio * 1.4, false);
     delante.position.set(n.x, n.y, n.toma);
-    const detras = llama(n.radio * 0.55, n.radio * 3, true);
+    const detras = llama(n.radio * 0.7, n.radio * 6.5, n.radio * 0.9, true);
     detras.position.set(n.x, n.y, n.tobera);
     this.grupo.add(delante, detras);
     avion.add(this.grupo);
