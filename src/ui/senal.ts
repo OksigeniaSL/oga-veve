@@ -2121,6 +2121,23 @@ const LUCES_DE_RODAJE = icono(`
 `);
 
 /**
+ * **Los faros de aterrizaje, encendidos y apagados**: el mismo morro que el de
+ * las luces de rodaje, con el haz largo hacia delante o con el faro en hueco.
+ * Son los dos dibujos de un solo gesto, que es contestar de noche a la torre:
+ * uno detrás del otro, dos veces. Ver `contestarConLosFaros` en `game.ts`.
+ */
+const MORRO_CON_FARO = `<path d="M1.2 8.6 h7.6 q4.6 0 6 3.2 q-1.4 3.2 -6 3.2 h-7.6 z" />`;
+const FAROS = icono(`
+  ${MORRO_CON_FARO}
+  <circle cx="14.2" cy="11.8" r="1.9" />
+  <path d="M16.6 10.8 L23 6.4 L23 17.2 L16.6 12.8 Z" opacity="0.75" />
+`);
+const FAROS_APAGADOS = icono(`
+  ${MORRO_CON_FARO}
+  <circle cx="17.4" cy="11.8" r="2" fill="none" stroke="currentColor" stroke-width="1.5" />
+`);
+
+/**
  * **El transpondedor**: la caja que contesta, con sus ondas, y la pausa de
  * «en espera» encima. Es el punto del transpondedor de la misma lista: el
  * TCAS deja de vigilar en tierra, que es lo que escribe la pantalla de
@@ -2419,6 +2436,8 @@ export const DIBUJOS = {
   "aerofrenos-recogidos": AEROFRENOS_RECOGIDOS,
   "aerofrenos-armados": AEROFRENOS_ARMADOS,
   "luces-de-rodaje": LUCES_DE_RODAJE,
+  faros: FAROS,
+  "faros-apagados": FAROS_APAGADOS,
   transpondedor: TRANSPONDEDOR,
   autofreno: AUTOFRENO,
   freno: FRENO,

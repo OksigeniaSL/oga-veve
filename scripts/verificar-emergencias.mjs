@@ -43,7 +43,7 @@
  *   de 64 KIAS, el arco blanco del POH: aguantó hasta que el ala dejó de volar.
  *   Y cuenta como fallo una frase del ejercicio que la boca tire en la cola.
  * - `radio`: el fallo de radio (H71), en Taguató con la avioneta y en un campo
- *   con torre del SERA. Subiendo, la radio se calla: la instructora marca el
+ *   con torre de España o de Paraguay. Subiendo, la radio se calla: la instructora marca el
  *   7600, que se ve cifra a cifra; el piloto del banco sigue el circuito y,
  *   cuando la torre enciende los destellos verdes, contesta alabeando —no en
  *   la base ni en la final—; aterriza con la verde fija y, si en la final no
@@ -52,7 +52,9 @@
  *   el fallo, que la lámpara se vea grande y sin letras, y las luces en su
  *   orden. Con `OGA_PISTA_OCUPADA=1` sale uno a despegar cuando se va en la
  *   final a punto de llegar a la decisión, entre 75 y 62 m: la torre tiene
- *   que poner la roja fija, y tras la otra vuelta, la verde.
+ *   que poner la roja fija, y tras la otra vuelta, la verde. Vuela por el lado
+ *   del circuito del campo. Con `OGA_HORA=22`, de noche: no se alabea, y los
+ *   faros tienen que contestar solos con sus dos destellos (H86).
  *
  * - `reventon`: la rueda que revienta en la carrera (H74), en Taguató con el
  *   JAZ 90. A dieciocho nudos de V1 revienta una rueda principal: el piloto
@@ -143,6 +145,9 @@ const AVION =
  * ejercicio amarrada en la bodega 1, y no se tiene que mover nada.
  */
 const AMARRADA = MODO === "carga" && process.env.OGA_AMARRADA === "1";
+/** La hora del vuelo: a las doce si no se dice otra. Con `OGA_HORA=22`, de noche (H86). */
+const HORA = Number(process.env.OGA_HORA ?? 12);
+const DE_NOCHE = HORA >= 21 || HORA < 5;
 /** Los que se paran en la pista: antes de V1, y el bimotor de pistón con el tren fuera. */
 const PARA = MODO === "antes" || MODO === "carrera";
 /** Los que siguen volando con un motor. */
@@ -170,7 +175,8 @@ const NO_AGUANTA = MODO === "ave" && process.env.OGA_NO_AGUANTA === "1";
 /** El viento de los reventones y del ave, en calma si no se dice otro: lo que tira es la rueda o el motor y no la racha. */
 const VIENTO = MODO === "reventon" || MODO === "toma" || MODO === "ave" ? (process.env.OGA_VIENTO ?? "000/00") : null;
 /** Dónde dejar las fotos de las tarjetas, si se piden. */
-const FOTOS = MODO === "reventon" || MODO === "toma" || MODO === "ave" ? process.env.OGA_FOTOS : undefined;
+const FOTOS =
+  MODO === "reventon" || MODO === "toma" || MODO === "ave" || MODO === "radio" ? process.env.OGA_FOTOS : undefined;
 const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
 // Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
@@ -282,7 +288,7 @@ try {
       fotosHechas.push(ruta);
     });
   await page.goto(
-    `${BASE}/?escenario=${ESCENARIO}&hora=12&avion=${AVION}&tramo=${TRAMO}` +
+    `${BASE}/?escenario=${ESCENARIO}&hora=${HORA}&avion=${AVION}&tramo=${TRAMO}` +
       `&ejercicio=${EJERCICIO}&teselas=0&meteo=` +
       (VIENTO ? `&viento=${VIENTO}` : "") +
       (AMARRADA ? "&pasajeros=1&filas=1,0&bodegas=44,0&amarradas=1,1" : ""),
@@ -293,7 +299,7 @@ try {
   await page.waitForTimeout(12000);
 
   const r = await page.evaluate(
-    async ({ modo, tope, sinTren, pistaOcupada, parar, meteTren, deja }) => {
+    async ({ modo, tope, sinTren, pistaOcupada, parar, meteTren, deja, deNoche }) => {
       const o = globalThis.__oga;
       const espera = (ms) => new Promise((res) => setTimeout(res, ms));
       /*
@@ -423,6 +429,10 @@ try {
       let rojaConAlguienEnLaPista = null;
       let lamparaVista = null;
       let tiraConLaRadioCallada = null;
+      // De noche: los golpes de los faros que contestan, cada uno con su segundo.
+      const faros = [];
+      let farosALaVelocidad = false;
+      let farosHechos = false;
       // Con la rueda reventada: lo que se va del eje y el pie que pisa, en la carrera y en la toma; y la tarjeta.
       const rev = {
         lado: null,
@@ -475,10 +485,20 @@ try {
       };
       // En `ave` el circuito empieza más lejos: se sube recto mientras la compañera lleva la palanca.
       const lejos = pista.length + (modo === "ave" ? 6500 : 3000);
+      /*
+       * **Y sin radio, por el lado del circuito del campo** (H86), que es por
+       * donde se vuelve mirando a la torre: en Gran Canaria es la derecha, que
+       * es por donde iba siempre el banco, pero en Asunción es la izquierda —
+       * «harán todos los virajes hacia la izquierda» (DINAC R 2, 3.2.5 c)—.
+       */
+      const ladoDelCircuito =
+        modo === "radio"
+          ? Math.sign(o.circuito().reduce((suma, v) => suma + enPista(v.x, v.z).c, 0)) || 1
+          : 1;
       const puntos = [
         [lejos, 0],
-        [lejos + tendido, tendido],
-        [-largoDeFinal, tendido],
+        [lejos + tendido, tendido * ladoDelCircuito],
+        [-largoDeFinal, tendido * ladoDelCircuito],
         [-largoDeFinal, 0],
       ];
       const profundidad = (s, quiereCabeceo, dt) => {
@@ -566,6 +586,27 @@ try {
         // La indicada, que es la que pide su manual: en Gando la verdadera va dos nudos por encima.
         if (ej?.morro?.extension && alExtender === null) alExtender = o.indicada();
         if (modo === "radio") {
+          const golpe = ej?.radio?.faros ?? null;
+          if (golpe !== null && (faros.length === 0 || faros[faros.length - 1].golpe !== golpe)) {
+            faros.push({ golpe, t: ahora });
+            // La tarjeta, con los faros apagados y encendidos.
+            if (faros.length <= 2) globalThis.setTimeout(() => globalThis.__foto?.(golpe ? "faros" : "faros-apagados"), 150);
+          }
+          /*
+           * De noche, a la velocidad de verdad desde los destellos hasta que
+           * acaban los faros: a cuatro por uno cada golpe dura dos décimas de
+           * pared, y no hay quien lo vea.
+           */
+          if (deNoche && !farosHechos) {
+            if (ej?.radio?.lampara === "destellos" && !farosALaVelocidad) {
+              farosALaVelocidad = true;
+              o.acelerar?.(1);
+            }
+            if (faros.length >= 5 && golpe === null) {
+              farosHechos = true;
+              o.acelerar?.(4);
+            }
+          }
           const callada = !!ej?.radio?.callada;
           if (callada && calladaEn === null) {
             calladaEn = ahora;
@@ -937,7 +978,8 @@ try {
              * doce segundos, que es lo que insiste quien no ve respuesta.
              */
             const destellos = ej?.radio?.lampara === "destellos";
-            if (destellos && (ej?.radio?.contestaciones ?? 0) === 0 && paso <= 2 && alasDesde === null) alasDesde = ahora;
+            if (!deNoche && destellos && (ej?.radio?.contestaciones ?? 0) === 0 && paso <= 2 && alasDesde === null)
+              alasDesde = ahora;
             if (alasDesde !== null && alasEn === null) {
               const t = ahora - alasDesde;
               if ((ej?.radio?.contestaciones ?? 0) > 0 || t > 12) alasEn = { t, contestaron: (ej?.radio?.contestaciones ?? 0) > 0 };
@@ -1270,6 +1312,8 @@ try {
         rojaConAlguienEnLaPista,
         lamparaVista,
         tiraConLaRadioCallada,
+        faros,
+        ladoDelCircuito,
         rev,
         tm,
         av,
@@ -1294,7 +1338,7 @@ try {
         descartadas: o.descartadas(),
       };
     },
-    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA, parar: PARAR, meteTren: METE_TREN, deja: DEJA },
+    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA, parar: PARAR, meteTren: METE_TREN, deja: DEJA, deNoche: DE_NOCHE },
   );
 
   const dice = (lista, trozo) => lista.some((k) => String(k).includes(trozo));
@@ -1622,14 +1666,25 @@ try {
           : "") +
         ` · ${(ej?.radio?.luces ?? []).map((l) => `${l.luz ?? "apagada"}@${Math.round(l.alto)}m`).join(" ")}`,
     );
+    /*
+     * De noche, los faros: apagados, encendidos, apagados, encendidos,
+     * apagados, y de vuelta a como iban. Dos destellos, y sin alabear.
+     */
+    const golpes = (r.faros ?? []).map((f) => (f.golpe ? "encendidos" : "apagados")).join(" ");
+    const dosDestellos = /^apagados encendidos apagados encendidos apagados/.test(golpes);
     comprobar(
-      "a los destellos se contesta alabeando, y la instructora explica cada luz",
+      DE_NOCHE
+        ? "a los destellos se contesta con los faros, dos veces, y la instructora explica cada luz"
+        : "a los destellos se contesta alabeando, y la instructora explica cada luz",
       (ej?.radio?.contestaciones ?? 0) >= 1 &&
-        dice(pedido, "ejercicio.radio.alas") &&
-        dice(pedido, "ejercicio.radio.destellos") &&
+        (DE_NOCHE
+          ? dosDestellos && dice(pedido, "ejercicio.radio.destellosDeNoche") && !dice(pedido, "ejercicio.radio.alas")
+          : dice(pedido, "ejercicio.radio.alas") &&
+            pedido.some((k) => /ejercicio\.radio\.destellos(?!DeNoche)/.test(String(k)))) &&
         dice(pedido, "ejercicio.radio.verde") &&
         (!PISTA_OCUPADA || dice(pedido, "ejercicio.radio.roja")),
       `contestaciones ${ej?.radio?.contestaciones ?? 0}${r.alasEn ? ` a los ${r.alasEn.t.toFixed(1)} s` : ""} · ` +
+        `${DE_NOCHE ? `faros: ${golpes || "quietos"} · ` : ""}` +
         `${pedido.filter((k) => /ejercicio\.radio\.(destellos|alas|roja|verde)/.test(k)).join(" · ") || "nada"}`,
     );
     comprobar(
