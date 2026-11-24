@@ -2127,6 +2127,18 @@ const EJ_REVENTON = escena(`
   <g class="ejercicio__pedal">${dibujoEn("pie-derecho", 86, 44, 30)}</g>
 `);
 
+/**
+ * **El ave en el motor**: el ave por delante, el avión por detrás con el motor
+ * de la izquierda petardeando, y al lado la palanca de ese motor atrás. El ave
+ * vuela, y nada más: sin morbo. Ver el ADR 0014, enmienda H77.
+ */
+const EJ_AVE = escena(`
+  <path class="leccion__loma" d="M0 66 q22-10 40-2 q18 8 34-4 q16-11 46 2 v22 H0 Z" />
+  <path d="M15 17 q4.5-6 8 0 q3.5-6 8 0 q-4.6-2.6-8 2.4 q-3.4-5-8-2.4 Z" style="fill: #2b2f36" />
+  <g class="ejercicio__pedal">${dibujoEn("ave-izquierdo", 28, 16, 50)}</g>
+  <g class="ejercicio__pedal">${dibujoEn("palanca-atras-izquierda", 84, 42, 32)}</g>
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -2174,6 +2186,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   "fallo-de-radio": EJ_FALLO_DE_RADIO,
   // La rueda aplastada, hacia dónde tira y el pie que lo sostiene. Ver el ADR 0014, enmienda H74.
   reventon: EJ_REVENTON,
+  // El ave, el motor que petardea y su palanca atrás. Ver el ADR 0014, enmienda H77.
+  ave: EJ_AVE,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {

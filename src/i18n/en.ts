@@ -1504,6 +1504,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.tren-de-morro": "Nose gear won't extend",
   "hangar.ejercicio.fallo-de-radio": "No radio",
   "hangar.ejercicio.reventon": "A tire bursts",
+  "hangar.ejercicio.ave": "A bird in the engine",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1806,6 +1807,24 @@ export const EN: Dictionary = {
     "Exercise done: with a burst tire, almost at takeoff speed, it's better to go on. You came back with the whole runway ahead, and that way calm braking is enough",
   "ejercicio.reventon.bienParado":
     "You stopped on the runway, and stopping is winning too. With a burst tire the brakes do less: that's why, almost at takeoff speed, it's usually better to go on, and come back with the whole runway ahead",
+  "ejercicio.ave.antes":
+    "Today we practise a bird that goes into an engine after takeoff. You'll hear a thud, and then some bangs with a flash: it's the air in the engine, which turns around for a moment. It's loud, and it's almost never serious. First we fly: the other foot, and the speed. Then we pull that engine's lever back until it goes quiet, and we return",
+  "ejercicio.ave.izquierdo": "A bird went into the left engine: right foot, and we keep climbing",
+  "ejercicio.ave.derecho": "A bird went into the right engine: left foot, and we keep climbing",
+  "ejercicio.ave.petardeo":
+    "Those bangs are the air in the engine, which turns around and comes out the front with a flash. The airplane keeps climbing: hold the foot and the speed, calmly",
+  "ejercicio.ave.palanca":
+    "We have altitude now. I'm pulling that engine's lever back, no rush, until it goes quiet",
+  "ejercicio.ave.adelante":
+    "It went quiet. Now I push it forward little by little, to see how far it holds",
+  "ejercicio.ave.aguanta":
+    "It holds like this, and that's where we leave it, no further. We tell the tower, and go back with both engines running",
+  "ejercicio.ave.noAguanta":
+    "It banged again: I pull it all the way back, and shut that engine down. The airplane flies well on the other one. We tell the tower, and go back",
+  "ejercicio.ave.bien":
+    "Exercise done: first fly, and then that engine's lever. Engines like these are tested by putting birds into them at full power, and they have to keep running for twenty minutes. That's why we fly it calmly",
+  "ejercicio.ave.bienParado":
+    "Exercise done: first fly, then the lever, and since it wouldn't hold, we shut it down. Engines like these are tested by putting birds into them, and with the biggest one what they must do is shut down safely. And the airplane flies well on the other one",
   "ejercicio.fallo-de-radio.antes":
     "Today we practise losing the radio. As we climb it will go quiet, on purpose. That's fine: we set a number on the transponder that tells the tower, we fly back into the circuit and watch the tower, which will talk to us with lights",
   "ejercicio.radio.callada":

@@ -285,6 +285,9 @@ const DEL_DESCENSO =
  * la toma, y la toma, hasta parar. Menos la del golpe, que pide el pie en el
  * instante y con el avión en el aire ya no toca (ADR 0014, enmienda H74).
  *
+ * **Y los del ave en el motor**: lo que se cuenta de cada paso de su palanca
+ * vale hasta el siguiente. Menos la del golpe, por lo mismo (H77).
+ *
  * No lo es todo ejercicio: lo del altímetro es una explicación que se cuenta
  * entera y en su orden —ver `porDecirDelAltimetro` en `game.ts`—, y lo que
  * pide un instante, como el pie de un motor parado, deja de ser verdad antes
@@ -295,7 +298,7 @@ export function valeHastaElPasoSiguiente(clave: string | undefined): boolean {
 }
 
 const DE_UN_PASO_QUE_DURA =
-  /^ejercicio\.(?:(?:aguja|radial|interceptar|cruce|ils|carga|morro|tren-de-morro|radio|fallo-de-radio)\.|reventon\.(?!izquierda|derecha))/;
+  /^ejercicio\.(?:(?:aguja|radial|interceptar|cruce|ils|carga|morro|tren-de-morro|radio|fallo-de-radio)\.|reventon\.(?!izquierda|derecha)|ave\.(?!izquierdo|derecho))/;
 
 /**
  * **El ejercicio de la tormenta**, que tampoco es un comentario: qué es, por

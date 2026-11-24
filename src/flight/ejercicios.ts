@@ -166,6 +166,17 @@
  * su ficha; lo que hace la rueda es del modelo de vuelo
  * (`ponerNeumaticoReventado`) y el orden, de `practica.ts`. Ver el ADR 0014,
  * enmienda H74.
+ *
+ * ## Y el ave en el motor
+ *
+ * «Un ave en el motor» (#90) es la avería `que: "ave"`: subiendo, un ave entra
+ * en un motor y el motor petardea —el aire del compresor que se da la vuelta,
+ * con estallidos y llamarada—. Primero se vuela: el pie y la velocidad. Con
+ * altura, la compañera lleva esa palanca atrás hasta que se calla, la avanza
+ * despacio y, si aguanta, la deja donde aguanta; si no, se para. Se avisa y se
+ * vuelve (FAA, *Airplane Turbofan Engine Operation and Malfunctions*, pp. 18 a
+ * 24). Lo que hace ese motor es de `ave-en-el-motor.ts`; el orden, de
+ * `practica.ts`. Ver el ADR 0014, enmienda H77.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -222,7 +233,8 @@ export type EjercicioId =
   | "carga"
   | "tren-de-morro"
   | "fallo-de-radio"
-  | "reventon";
+  | "reventon"
+  | "ave";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -270,10 +282,11 @@ export interface Averia {
    * Un motor —el de fuera, de un lado o del otro—, todos, el aire de la
    * cabina —la despresurización, que se vuela con los motores bien— o la
    * carga de la bodega que se suelta y se va hacia la cola, la pata de
-   * morro, que se queda en su pozo, la radio, que se calla, o una rueda
-   * principal, que revienta en la carrera.
+   * morro, que se queda en su pozo, la radio, que se calla, una rueda
+   * principal, que revienta en la carrera, o un motor que sigue en marcha y
+   * petardea, con un ave dentro.
    */
-  readonly que: "motor" | "motores" | "presion" | "carga" | "morro" | "radio" | "neumatico";
+  readonly que: "motor" | "motores" | "presion" | "carga" | "morro" | "radio" | "neumatico" | "ave";
   readonly cuando: Momento;
 }
 
@@ -392,6 +405,17 @@ const conRadarMeteorologico = (a: AvionDelEjercicio): boolean =>
  * donde la pregunta se hace: parar también se puede, si la pista da.
  */
 const CASI_A_V1 = 18 * 0.514444;
+
+/**
+ * **A qué altura sobre el campo entra el ave**, m: cien, unos trescientos
+ * treinta pies. La guía dice que las aves se tragan sobre todo «in the vicinity
+ * of airports, either during takeoff or during landing» (FAA, *Airplane Turbofan
+ * Engine Operation and Malfunctions*, p. 23), y el ensayo de los motores mira
+ * hasta los 1.500 pies (14 CFR 33.76 (c)(1)). A cien ya se ha pedido y metido
+ * el tren, que es otra cosa que se dice, y todavía queda subida hasta los
+ * cuatrocientos pies: primero se vuela. Ver `ave`.
+ */
+const ENTRA_EL_AVE_A = 100;
 
 export const EJERCICIOS: readonly Ejercicio[] = [
   {
@@ -1219,6 +1243,34 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     averias: [{ que: "neumatico", cuando: { en: "carrera", antesDeV1: true, aFaltaDe: CASI_A_V1 } }],
     ensena:
       "una rueda que revienta casi a V1 tira del avión hacia su lado: el eje con el otro pie, se sigue, el tren se queda fuera, se avisa y se vuelve a aterrizar frenando suave; y parar en la pista también vale",
+  },
+  /*
+   * **Un ave en el motor, y su petardeo** (#90): subiendo, un golpe sordo y
+   * unos estallidos espaciados con llamarada. Son dos cosas del catálogo que
+   * van juntas, porque un ave es una causa corriente del petardeo: «bird
+   * ingestion can also result in an engine surge» (FAA, *Airplane Turbofan
+   * Engine Operation and Malfunctions*, p. 23). Suena a catástrofe y casi nunca
+   * lo es; se vuela primero, y después la palanca de ese motor. Ver el ADR
+   * 0014, enmienda H77.
+   */
+  {
+    id: "ave",
+    /*
+     * **Desde Taguató**, que es donde el #90 pone el fallo asimétrico y el
+     * regreso: un motor que da menos que el otro, sostenido con el pie, y una
+     * vuelta declarada. Abajo solo está el motor parado en vuelo.
+     */
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **En los reactores de dos motores**: la guía y el ensayo son de
+     * turbofanes, y con dos se nota de qué lado va. En el cuatrimotor, un
+     * motor a media potencia casi no pide pie.
+     */
+    valePara: (a) => a.sound.engine === "turbofan" && a.motores === 2,
+    leccion: "vuelta",
+    averias: [{ que: "ave", cuando: { en: "subida", metros: ENTRA_EL_AVE_A } }],
+    ensena:
+      "un ave en un motor lo hace petardear, con estallidos y llamarada, y casi nunca es grave: primero se vuela, con el pie y la velocidad; después, esa palanca atrás hasta que se calla y adelante despacio; si aguanta se deja ahí, y si no se para; se avisa y se vuelve",
   },
 ];
 

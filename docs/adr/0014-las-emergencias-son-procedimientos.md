@@ -1872,3 +1872,302 @@ Van en `LOS_EJERCICIOS` de `sin-instructora.ts` y en `DEL_REVENTON`, al final de
 - `ejercicio.reventon.bien` y `ejercicio.reventon.bienParado`
 
 Y en el hangar, que solo se lee: `hangar.ejercicio.reventon`.
+
+## Enmienda H77 (24-11-2026): un ave en el motor, con su petardeo
+
+### El caso
+
+Del catálogo del #90, dos cosas que van juntas: «**Ave dentro del motor.** Los
+motores se certifican metiéndoles aves. Se puede perder empuje y hay que apagar;
+el avión sigue volando» y «**El petardeo del motor, con llamarada.** […] es el
+flujo de aire dentro del compresor que se **invierte** momentáneamente. Suena a
+catástrofe, se ve fuego por la toma, y **casi nunca es catastrófico**. Saberlo
+cambia por completo cómo se vive». Un ave en la toma es una causa corriente del
+petardeo, y por eso son un solo ejercicio.
+
+### De dónde sale
+
+Leídas, no de memoria:
+
+- **FAA, *Airplane Turbofan Engine Operation and Malfunctions: Basic
+  Familiarization for Flight Crews***, capítulo 4 y fichas del apéndice. En
+  `faa.gov` ya no está en su dirección; se ha leído la copia que guarda el
+  Internet Archive de su `.doc` de 2001, de 38 páginas al imprimirla, y con esa
+  paginación van las citas.
+  - **Qué es** (p. 18): el aire que pasa por las palas del compresor puede entrar
+    en pérdida «just as the air over the wing of an airplane can», y entonces
+    «the high-pressure air behind the stall further back in the engine escapes
+    forward through the compressor and out the inlet»; y el aviso que importa:
+    se ha tomado por un reventón o por una bomba, y «in many cases, this has led
+    to a rejected takeoff above V1».
+  - **Cómo se nota**: «a very loud bang, which will be accompanied by yaw and
+    vibration» (p. 18); «visible flames forward out the inlet and rearward out
+    the tailpipe» (p. 19); y en la ficha (p. 31), «loud bang and yaw (may be
+    repetitive). Flames from inlet and tailpipe. Vibration. High EGT/TGT.
+    Parameter fluctuation».
+  - **Si es grave** (p. 19): «rarely does a single compressor surge CAUSE severe
+    engine damage, but sustained surging will eventually overheat the turbine».
+  - **Las cuatro maneras** (p. 19): uno que se recupera solo, varios que se
+    recuperan solos, varios que piden al piloto, y el que no se recupera.
+  - **Las cifras** (p. 20): cada estallido, «separated by a couple of seconds»,
+    unos dos segundos de *surge* y vuelta «to 98% of the pre-surge power for a
+    few seconds»; el ejemplo de los repetidos, el EPR entre 1,6 y 1,3, la EGT
+    subiendo 5 °C/s y el N1 entre el 103 y el 95 %, «with no change in thrust
+    lever position»; y en el de uno solo, el EPR que cae en dos décimas y el N1
+    en cinco.
+  - **Qué se hace**: lo primero, volar —«their most important task is to fly the
+    airplane» (p. 20); «regardless of the fact that a bird ingestion has resulted
+    in an engine surge, the first priority task of the flight crew is to "fly
+    the airplane." Once the airplane is in stable flight at a safe altitude, the
+    appropriate procedures […] can be accomplished» (p. 24)—. Después, esa
+    palanca: «retard the thrust lever until the engine recovers. The flight crew
+    should then SLOWLY re-advance the thrust lever» (p. 19); los estallidos
+    siguen «until the flight crew retards the thrust lever to idle», y si al
+    avanzarla vuelven, «the engine may be left at idle, or left at some
+    intermediate power, or shutdown, according to the checklists» (p. 20).
+  - **El ave** (pp. 23 y 24): casi siempre cerca de los aeropuertos, despegando o
+    aterrizando; en más de la mitad, la tripulación ni se entera; con una grande,
+    «a thud, bang or vibration»; el motor «may surge once and recover; it may
+    surge continuously until the flight crew takes action; or it may surge once
+    and not recover». La ficha (p. 35): «after stabilizing airplane flight path,
+    watch engine instruments for anomalies. If the engine surges, throttle back
+    or shut down as necessary».
+  - **Los mensajes** (pp. 31 y 35) van como «possible messages»: ENG STALL, EGT
+    OVERLIMIT, ENG FAIL, VIB; o ninguno, «parameters may look normal».
+- **El procedimiento de un manual**, el del A320, tal como lo cita la **AAIB,
+  *Bulletin* 11/2004, G-EUUI** (pp. 3 y 4): la palanca de ese motor al ralentí;
+  comprobados sus parámetros, «THR LEVER (affected engine) … SLOWLY ADVANCE»; «if
+  stall recurs: THR LEVER (affected engine) … REDUCE. Reduce thrust and operate
+  below the stall threshold». Y al principio, «abnormal engine noises,
+  accompanied by flame from the engine exhaust (and possibly from the engine
+  inlet in [a] severe case)».
+- **14 CFR 33.76**, la ingestión de aves:
+  - (a)(1) y (c)(1): a no menos del 100 % del empuje de despegue, y las
+    velocidades de hasta 1.500 pies sobre el suelo.
+  - (b): un ave grande, de 1,85 a 3,65 kg según la toma (tabla 1). Lo que no
+    puede pasar (b)(3) es nada de 33.75 (g)(2): restos que se escapen, fuego sin
+    control, o no poder pararlo, entre otras.
+  - (c)(6): tras las pequeñas y medianas, ni «more than a sustained 25-percent
+    power or thrust loss» ni pararse en la prueba de después; (c)(7): 2 minutos
+    sin tocar la palanca, 3 al 75 %, 6 al 60 %, 6 al 40 %, 1 al ralentí de
+    aproximación y 2 al 75 %. Son **veinte minutos**.
+- **14 CFR 25.571 (e)(1) y 25.631**, del avión y no del motor: completar el vuelo
+  tras un ave de 4 libras, y la cola, de 8. Leídas; no hacen falta para esto.
+- **FAA, *Takeoff Safety Training Aid***, sección 2: el *No Go* pasada V1 «will
+  not leave sufficient runway remaining» (p. 2.11); y el caso que lo enseña, en
+  2.2.3 (p. 2.5): gaviotas «very near V1», «the number one engine surged and
+  flamed out, and the takeoff was rejected. The airplane overran the end of the
+  wet 6,000 foot runway». Y «virtually no revenue flight was found where a "Go"
+  decision was made and the airplane was incapable of continuing the takeoff»
+  (p. 2.5). Lo que se pedía, el 2.3.5, es de lo que cambia las cuentas de la
+  pista —flaps, sangrado, ruedas, frenos— y de V1 no habla.
+
+**Lo que no se ha leído:** el manual del E170, que no está en línea, y con él si
+su EICAS escribe algo. Por eso no se escribe nada. El procedimiento del A320 se
+ha leído citado por la AAIB, no en su FCOM.
+
+### El avión, el peldaño y el momento
+
+- **Los reactores de dos motores**, el JAZ 90 y el JAZ 110: la guía y el 33.76
+  son de turbofanes. Volado en el banco, el JAZ 90; el JAZ 110, en la mesa. El
+  JAZ 120, de cuatro, no: un motor a media potencia casi no le pide pie.
+- **Desde Taguató**, que es donde el #90 pone el fallo asimétrico y el regreso:
+  es un motor que da menos que el otro, sostenido con el pie, y una vuelta
+  declarada. El #90 no nombra el ave en ningún peldaño; el «catálogo entero» es
+  de Ruvichá, y ahí también está. En Tukã, solo el motor parado en vuelo.
+- **A cien metros sobre el campo, subiendo**: después de despegar, que es lo que
+  pide el encargo, con el tren ya pedido y metido, y antes de los cuatrocientos
+  pies, que es donde se toca un motor.
+
+### El ejercicio
+
+`ave`, en `flight/ejercicios.ts`: la lección de dar una vuelta y una avería nueva,
+`que: "ave"`. No es `"motor"`: el motor sigue en marcha.
+
+1. **La instructora lo presenta** en la pista, con el dibujo.
+2. **El golpe**, sordo y corto, y a los ocho décimas el primer **estallido**:
+   seco, sin cola, cada cuatro segundos, por el bus que se agacha cuando alguien
+   habla. Sin alarma ni mensaje. En el dibujo del avión, un **fogonazo** de un
+   cuarto de segundo por la toma y por la tobera de ese motor
+   (`world/llamarada.ts`): ni humo ni fuego que se quede. Y **su aguja de N1** se
+   va de la otra a golpes, que es como se reconoce cuál es. De la EGT, nada: en
+   los cuadros del juego ese reloj no está.
+3. **Sin leer**: la tarjeta del avión por detrás con ese motor en rojo oscuro, el
+   fogonazo que se enciende y se apaga —cada dos segundos, nunca más deprisa— y
+   la flecha hacia donde tira; a los tres segundos y medio, el pedal del otro
+   lado. La instructora: «entró un ave en el motor izquierdo: pie derecho, y
+   seguimos subiendo», una por lado, y detrás qué son esos estallidos.
+4. **Primero se vuela.** Nadie toca la palanca hasta catorce segundos después
+   del ave, a cuatrocientos pies y con el avión sujeto —menos de veinticinco
+   grados de alabeo y sin caer—. Si no se sujeta, a los treinta se toca igual.
+5. **Esa palanca**, que la mueve la compañera y lo va contando, con su dibujo: las
+   dos palancas, la de ese lado en rojo oscuro yéndose atrás y la otra quieta. A
+   los cinco segundos, otra vez el pedal, que con ella atrás es cuando más tira.
+   Diez segundos al ralentí, y adelante despacio, en diez.
+6. **Si aguanta**, se queda en seis décimas y **PAN PAN**: con los dos en marcha,
+   algo va mal y hay tiempo. **Si vuelve a estallar**, atrás, se para, y entonces
+   es un bimotor con uno: **MAYDAY**, como en todo este ADR. Ninguna de las
+   fuentes leídas dice qué llamada se hace; es la regla de aquí. En la pantalla,
+   al pararlo, lo que se hizo —«THR LEVER 1 · IDLE», «FUEL CONTROL 1 · CUTOFF»— y
+   no «ENG 1 FAIL», que lo paró la tripulación. Salen las dos, dos de cada tres
+   veces aguanta: ese reparto **no tiene fuente**.
+7. **La vuelta**, con la prioridad, los bomberos de ese aeródromo y la toma de
+   siempre: con los gases bajos los dos motores dan lo mismo.
+8. **El cierre** cuenta el ensayo: con los dos, los veinte minutos que tienen que
+   seguir andando; con uno parado, que con la más grande lo que se pide es poder
+   pararlo sin peligro.
+
+El ave no se dibuja en el vuelo. En la ficha del hangar, una silueta que vuela.
+
+**La palanca es de la compañera** y no de quien vuela porque en el juego el gas
+es uno para todos los motores. Lo que sí es suyo es lo que la guía pone primero:
+el pie y la velocidad. Y si quien vuela quita gas, ese motor también baja y se
+calla, que es lo que pasaría.
+
+### El modelo
+
+`flight/ave-en-el-motor.ts`, sin three.js: el petardeo —lo que le queda de empuje
+y de vueltas en cada instante— y la palanca. Lo vuela `fdm.ts`
+(`ponerMotorTocado`): ese motor lleva su propio giro, que sigue a su palanca con
+la inercia de siempre (H64, ADR 0034), y lo que le falta de empuje se resta por
+su lado.
+
+| Cifra | Valor | De dónde |
+|---|---|---|
+| Entre estallidos | 4 s | «a couple of seconds» y «a few seconds» (p. 20); lo menos que cabe en las dos |
+| Dura | 2 s, y vuelve al 98 % | p. 20 |
+| Empuje en el estallido | la mitad, en dos décimas | EPR de 1,6 a 1,3 (p. 20), contado por lo que pasa de uno |
+| N1 en el estallido | del 103 al 95 %, en cinco décimas | p. 20 |
+| Estalla recién entrada el ave | por encima de 0,3 | el «to idle» de la p. 20; el número, nuestro |
+| Estalla después, si se recupera | por encima de 0,75 | 33.76 (c)(6)(i) |
+| Donde se deja | 0,6 | 33.76 (c)(7)(iv) y «below the stall threshold» (G-EUUI, p. 4) |
+| Al ralentí | 10 s | los de la p. 20 para que los instrumentos vuelvan |
+| La palanca | 3 s atrás, 10 s adelante | «SLOWLY» (p. 19); los números, nuestros |
+| Del golpe al primer estallido, y hasta tocar la palanca | 0,8 s y 14 s | nuestros |
+
+Medido en la mesa, el JAZ 90 a fondo a 600 m, el motor izquierdo:
+
+| | Empuje medio | Rumbo en 2 s sin pie, en Taguató | en Ruvichá |
+|---|---|---|---|
+| Los dos bien | 104 kN | 0° | 0° |
+| Petardeando | 96 kN; el suyo da el 83 % | 3,7° a la izquierda | 6,0° |
+| Su palanca al ralentí | 53 kN | 10,6° | 28,3° |
+| Dejado en 0,6 | 84 kN | 4,1° | 11,1° |
+
+Con el pie, el derrape no pasa de 2,4° en Taguató y 3,1° en Ruvichá, con seis
+décimas de pedal y la palanca atrás. Y sube: 22 a 27 m/s petardeando.
+
+**Neutral al bit sin el ejercicio**: `tocado` es `null` y cada cuenta nueva va
+detrás de ese `null`. Comprobado huella a huella contra 809545a4 —posición,
+velocidad, orientación, ritmos, velocidad del aire, empuje y gas del motor de
+**cada paso**—: los ocho aviones, 60 finales con rachas hasta veinte segundos
+después de tocar y 120 carreras con rachas y viento cruzado hasta setenta y cinco
+segundos —la mitad abortadas y una de cada cuatro con un motor parado de verdad
+subiendo—, en Tukã, Taguató y Ruvichá por turno y llamando a
+`ponerMotorTocado(null)` en cada paso, como hace el juego. Las dieciséis huellas,
+iguales. **El control**: un empujón de 1e-15 rad/s en un paso de una carrera
+cambia las ocho de las carreras y ninguna de las finales.
+
+### El banco
+
+`verificar-emergencias.mjs ave`, con el JAZ 90 en Taguató y en calma
+(`OGA_VIENTO` para otro). El piloto del banco sube recto con el pie y la nariz
+hasta que se sabe cómo queda el motor, da el circuito y aterriza. A la velocidad
+de verdad del ave a la llamada y en la final, y a cuatro por uno el circuito.
+`OGA_MOTOR` elige el lado, `OGA_NO_AGUANTA=1` hace que vuelva a estallar, y
+`OGA_FOTOS` deja las tarjetas y seis cuadros del lienzo en el segundo estallido.
+Mira:
+
+- que se presente, y que el ave entre subiendo, entre 80 y 160 m;
+- el golpe, la tarjeta de qué motor y la frase del pie que toca;
+- tres estallidos o más antes de la palanca, a más de tres segundos y medio uno
+  de otro, con su fogonazo, y la aguja de ese motor cinco puntos por debajo de la
+  otra; y que se cuente qué es;
+- que la palanca no se toque hasta los catorce segundos, a 122 m o más y con menos
+  de veinticinco grados de alabeo;
+- esa y no la otra, en la tarjeta; callado con ella atrás, y el otro motor dando
+  lo suyo;
+- el pie del otro lado, en la subida y con la palanca atrás;
+- si aguanta o si se para, contado;
+- que no salga ningún mensaje ni alarma, y al pararlo, lo que se hizo y no «FAIL»;
+- PAN PAN o MAYDAY con la torre contestando, la prioridad, los bomberos, la toma
+  en la pista y el cierre que toca;
+- y **nada del ejercicio tirado por la boca** (ADR 0033, enmienda H67).
+
+### Comprobado
+
+- **La primera tirada**, en Gran Canaria con el motor izquierdo y aguantando, con
+  las voces sin grabar, **14 de 16**. El ave, a 93 m sobre el umbral —cien sobre la
+  cota del campo, siete más abajo— y a 160 nudos; cinco estallidos, a los 1,0, 4,8, 8,8,
+  12,8 y 16,8 s, con cinco fogonazos; las agujas se separaron 5,8 puntos y, con
+  el pie, la guiñada no pasó de 2,7°; con la palanca atrás, ningún
+  estallido y el otro al 100 %; aguantó a los 40,9 s; PAN PAN contestado
+  (`torre.canario.panpan`), tres camiones; tocó a 458 m del umbral cayendo 1,1 m/s;
+  cierre «vuelta» con `ejercicio.ave.bien`. Los dos rojos, del banco: el pie máximo
+  contaba el del suelo, y los catorce segundos, medidos con el reloj del piloto
+  del banco, salían trece. Y lo que se vio en las fotos: el banco subía a fondo
+  con la nariz a veinte grados y sonaba la pérdida encima de la tarjeta. Desde
+  entonces sube con nueve décimas y la nariz despacio.
+- **La segunda**, con el derecho y sin aguantar (`OGA_NO_AGUANTA=1`), **16 de 16**:
+  la palanca a los 14,0 s y 392 m, al ralentí a 468 m; al avanzarla vuelve a
+  estallar a los 35,7 s y se para a los 37,7; el pie, −0,37 de media y 0,47 como
+  mucho; MAYDAY contestado (`torre.canario.mayday`) y tres camiones; en la
+  pantalla, «THR LEVER 2 · IDLE / FUEL CONTROL 2 · CUTOFF»; tocó a 418 m del umbral
+  cayendo 1,7 m/s; cierre «vuelta» con `ejercicio.ave.bienParado`. **Nada tirado por
+  la boca** en ninguna de las dos, aunque con las frases sin grabar eso dice poco.
+- **Las tarjetas**, en las fotos de las dos tiradas: el motor con su fogonazo y la
+  flecha, el pedal, la palanca atrás y la palanca adelante, y las agujas a 19 y
+  100 con ella al ralentí. La ficha del hangar, dibujada aparte.
+- **El fogonazo** se dibujaba y no se veía desde detrás: en los seis cuadros del
+  lienzo de la segunda tirada no está. La tobera va por debajo del ala y acaba a
+  2,9 m de su borde de salida, y la llama medía 2,55. Ahora mide seis radios y
+  medio —5,5 m en el JAZ 90, 12 en el 110— y la toma lleva un resplandor mayor que
+  la boca. Dibujado aparte con su profundidad, sin navegador, asoma por
+  encima de la góndola y por detrás del ala; **en el juego, con el arreglo, no se
+  ha visto todavía**: la tercera tirada se quedó en la cola del navegador.
+- `tsc --noEmit -p .`, en verde antes de cada commit. **El vitest entero** se corrió dos
+  veces: la primera, con todo menos la llamarada larga, 587 de 588 ficheros y
+  11.740 pruebas en verde, con un rojo —la hoja de estilos declaraba dos veces la
+  clase de la palanca—, arreglado; la segunda, con el código terminado, 588 de 588 ficheros
+  y 11.741 pruebas en verde, con 32 saltadas y una por hacer. Dentro,
+  `ave-en-el-motor.test.ts` —los estallidos espaciados, lo que le quitan, el umbral,
+  la palanca y sus dos finales, hacia dónde tira y que lo sujeta el pie del otro
+  lado, que se calla con su palanca atrás y el otro sigue, el modelo de siempre al
+  quitarla, y la llamarada en el motor de su lado— y las nuevas de
+  `practica.test.ts` y `boca.test.ts`.
+
+### Lo que queda
+
+- **Las diez frases, por grabar**, y volver a volar el banco con ellas: entonces se
+  ve si la boca tira alguna entre el golpe, los estallidos, la palanca y la
+  llamada.
+- **La palanca, en la mano de quien vuela.** El juego lleva un gas para todos los
+  motores; el día que haya una palanca por motor, la que se lleva atrás es suya y
+  la compañera confirma cuál.
+- **El JAZ 110**, sin volar en el banco: la misma cuenta, en la mesa.
+- **Con viento** y en Ruvichá, sin volar en el banco.
+- **La luz ámbar de MOTOR** se enciende al parar el motor, con las dos líneas de lo
+  hecho, como en todo motor parado de este juego: en el E170 el mensaje de un motor
+  parado a propósito es otro, y sin su manual no se ha puesto.
+- **La EGT**, que es lo que más se mueve en un petardeo (5 °C por segundo, p. 20):
+  los cuadros del juego no la llevan.
+- **El olor**, que la guía nombra (p. 23), no tiene canal aquí ni falta que hace.
+
+### Las frases
+
+Diez, de la instructora y en calma, en `es-PY` y en `en`; el guaraní no se toca.
+Van en `LOS_EJERCICIOS` de `sin-instructora.ts` y en `DEL_AVE`, al final de
+`frases-para-grabar.mjs`. Las de los pasos valen hasta el siguiente
+(`valeHastaElPasoSiguiente`), menos las dos del golpe, y van en fila
+(`FrasesEnFila`). «Avisamos a la torre» va en la frase del motor, como en la H70
+y la H74: un suceso, una voz. **Sin grabar**: hasta entonces se ven en la tarjeta
+y la voz se calla, y el banco no puede ver si la boca las tira.
+
+- `ejercicio.ave.antes`
+- `ejercicio.ave.izquierdo` y `ejercicio.ave.derecho`
+- `ejercicio.ave.petardeo`
+- `ejercicio.ave.palanca`, `ejercicio.ave.adelante`, `ejercicio.ave.aguanta` y
+  `ejercicio.ave.noAguanta`
+- `ejercicio.ave.bien` y `ejercicio.ave.bienParado`
+
+Y en el hangar, que solo se lee: `hangar.ejercicio.ave`.

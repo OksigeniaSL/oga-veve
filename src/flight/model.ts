@@ -384,6 +384,18 @@ export type GroundSampler = (x: number, z: number) => number;
  */
 import type { Superficie } from "../world/superficie";
 
+/** Cómo va un motor con un ave dentro. Ver `ponerMotorTocado`. */
+export interface MotorTocado {
+  readonly motor: number;
+  /** Lo que da, sin lo que le quita el petardeo, como gas de 0 a 1. */
+  readonly da: number;
+  /** Lo que le queda de empuje y de vueltas mientras petardea, de 0 a 1. */
+  readonly empuje: number;
+  readonly vueltas: number;
+  /** Cuántos estallidos lleva. */
+  readonly estallidos: number;
+}
+
 export interface FlightModel {
   readonly state: Readonly<FlightState>;
   /**
@@ -591,6 +603,15 @@ export interface FlightModel {
   ponerNeumaticoReventado?(lado: -1 | 0 | 1): void;
   /** Y el que tiene puesto. */
   readonly neumaticoReventado?: -1 | 0 | 1;
+  /**
+   * **Un motor con un ave dentro**: el ejercicio del ave (#90). Cuál, hasta
+   * dónde le deja ir su palanca, de 0 a 1, y desde qué empuje petardea; `null`,
+   * ninguno. Solo lo hace el modelo de coeficientes, y solo con más de un motor.
+   * Ver `ave-en-el-motor.ts` y el ADR 0014, enmienda H77.
+   */
+  ponerMotorTocado?(m: { readonly motor: number; readonly tope: number; readonly umbral: number } | null): void;
+  /** Y cómo va ese motor ahora. */
+  readonly motorTocado?: MotorTocado | null;
   /**
    * La ráfaga de este instante, en m/s y en ejes del mundo.
    *
