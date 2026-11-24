@@ -413,16 +413,26 @@ try {
       o.ponerVista("pasaje-derecha");
       const espera = (ms) => new Promise((r) => setTimeout(r, ms));
       await espera(1000);
+      /*
+       * Quietos de verdad antes de mirar: en Guyrami los del despegue los sube
+       * la instructora (`decirLaRecogida`, «losSube»), y según lo que tarde la
+       * máquina en llegar aquí los está subiendo justo ahora —salía «quietos
+       * −40 dB» una tirada de cada pocas—. Con su tope: si no paran nunca, eso
+       * es lo que se mide y sale en rojo.
+       */
+      const desde = performance.now();
+      while (o.ruidos().medida.flaps > -70 && performance.now() - desde < 40000) await espera(250);
       const antes = o.ruidos().medida.flaps;
+      const pararon = (performance.now() - desde) / 1000;
       o.pedirFlaps(1 / 3);
       await espera(1500);
       const durante = o.ruidos().medida.flaps;
-      return { antes, durante };
+      return { antes, durante, pararon };
     });
     comprobar(
       "los flaps zumban mientras se mueven",
       flaps.durante > -60 && flaps.antes < CALLA,
-      `quietos ${db(flaps.antes)}, moviéndose ${db(flaps.durante)}`,
+      `quietos ${db(flaps.antes)} (a los ${flaps.pararon.toFixed(1)} s), moviéndose ${db(flaps.durante)}`,
     );
 
     // La carrera: en la pista, con la reversa, por asfalto cuidado.
