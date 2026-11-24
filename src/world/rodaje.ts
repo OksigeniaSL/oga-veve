@@ -1734,6 +1734,11 @@ export function rodajesDesde(
     readonly pintadaHasta?: number;
     /** Si el origen es el avión, ya en la calle: de ahí se sale por la que pisa o por delante, sin volver atrás a otra. */
     readonly enLaCalle?: boolean;
+    /**
+     * Si a la calle hay que llegar atravesado a ella, y no por la tangente (H81): cuántos metros de
+     * calle más allá del primer sitio al que se llega así. Ver `enganchesAtravesados`.
+     */
+    readonly atravesada?: number;
   } = {},
 ): (Ruta | null)[] {
   if (opciones.sentido) return rodajesConSentido(grafo, origen, destinos, maxSalto, ocupados, opciones.sentido, opciones);
@@ -1982,6 +1987,57 @@ interface PasoConSentido {
   readonly llega: Punto | null;
 }
 
+/** A cuánto del eje de la calle llega, como poco, la recta de quien llega atravesado: cincuenta grados. */
+const LLEGA_ATRAVESADO = Math.cos((50 * Math.PI) / 180);
+
+/**
+ * **Los sitios de las calles de al lado a los que se llega atravesado** (H81): la recta del puesto
+ * llega a la calle a más de cincuenta grados de ella, y la calle va hacia el sentido pedido. Uno por
+ * tramo, el más cercano al que se llega por pavimento, o el primero que queda a `masAlla` metros de
+ * él por la calle.
+ *
+ * El enganche de siempre es el más cercano, y por una plataforma abierta el más cercano puede ser la
+ * curva con la que la calle se acaba: del 500 de Barajas, la de la EA-5 a la GATE-12, a la que se
+ * llega casi por la tangente. El tractor no encontraba dónde torcer y seguía de espaldas por la
+ * GATE-12, doscientos metros. Atravesado a la EA-5 tuerce en ella, que es a donde lo lleva uno de
+ * verdad. Se usa solo si por las otras maneras no sale sobre pavimento: ver `rutasHaciaElAproar`.
+ */
+function enganchesAtravesados(
+  grafo: Grafo,
+  p: Punto,
+  maxSalto: number,
+  sentido: readonly Punto[],
+  masAlla: number,
+): Enganche[] {
+  const cajas = cajasDeLosTramos(grafo.tramos);
+  const hechos: Enganche[] = [];
+  grafo.tramos.forEach((t, k) => {
+    if (t.pista || aLaCaja(cajas, k, p) > maxSalto + HOLGURA_DE_LA_CAJA) return;
+    const candidatos: Enganche[] = [];
+    for (let s = 0; s <= t.largo; s += PASO_POR_EL_TRAMO) {
+      const q = puntoDelTramo(t, s);
+      const recta = unitario(p, q);
+      const salto = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      const va = unitario(puntoDelTramo(t, Math.max(0, s - HACIA_DONDE_VA)), puntoDelTramo(t, Math.min(t.largo, s + HACIA_DONDE_VA)));
+      if (!recta || !va || salto > maxSalto || Math.abs(punto(recta, va)) > LLEGA_ATRAVESADO) continue;
+      // De los dos sentidos de la calle, alguno es el pedido, y no es el de seguir de espaldas.
+      const hacia: Punto = sentido.some((h) => punto(va, h) > 0) ? va : [-va[0], -va[1]];
+      if (!sentido.some((h) => punto(hacia, h) > 0)) continue;
+      candidatos.push({ tramo: k, punto: q, desdeA: s, salto });
+    }
+    candidatos.sort((x, y) => x.salto - y.salto);
+    const buenos = candidatos.slice(0, 40).filter((c) => porPavimento(grafo, p, c.punto, true, false));
+    const bueno = buenos.find((c) => Math.abs(c.desdeA - buenos[0]!.desdeA) >= masAlla);
+    if (bueno) hechos.push(bueno);
+  });
+  hechos.sort((x, y) => x.salto - y.salto);
+  // La suya, y lo que empieza junto a ella: por la de más allá se llegaría cruzándola de espaldas.
+  return hechos.filter((e) => e.salto <= hechos[0]!.salto + JUNTO_A_LA_SUYA).slice(0, ENGANCHES);
+}
+
+/** Lo que puede quedar otra calle más allá de la más cercana a la que se llega atravesado, m. */
+const JUNTO_A_LA_SUYA = 30;
+
 /**
  * **La ruta que sale hacia donde tiene que salir** (H76): de espaldas por la recta del puesto
  * hasta la calle, si sale empujado (`deEspaldas`, ver `enganchePorDetras`), y por ella hacia
@@ -2006,11 +2062,13 @@ function rodajesConSentido(
     enLaPrimera = false,
     pintadaHasta = 0,
     enLaCalle = false,
+    atravesada,
   }: {
     readonly deEspaldas?: Punto | null;
     readonly enLaPrimera?: boolean;
     readonly pintadaHasta?: number;
     readonly enLaCalle?: boolean;
+    readonly atravesada?: number;
   },
 ): (Ruta | null)[] {
   const porDetras = deEspaldas ? enganchePorDetras(grafo, origen, deEspaldas, maxSalto, pintadaHasta) : null;
@@ -2018,7 +2076,9 @@ function rodajesConSentido(
     ? [porDetras]
     : deEspaldas
       ? []
-      : enganches(grafo, origen, maxSalto, true).filter(
+      : atravesada !== undefined
+        ? enganchesAtravesados(grafo, origen, maxSalto, sentido, atravesada)
+        : enganches(grafo, origen, maxSalto, true).filter(
           (e) =>
             !grafo.tramos[e.tramo]!.pista &&
             (!enLaCalle || e.salto <= JUNTO_AL_AVION || sentido.some((h) => punto([e.punto[0] - origen[0], e.punto[1] - origen[1]], h) > 0)),
@@ -2380,6 +2440,19 @@ function pavimentoGuardado(
 }
 
 const PAVIMENTOS = new WeakMap<Aerodrome, Map<string, (p: Punto) => boolean>>();
+
+/**
+ * **Si en un punto hay pavimento dibujado**, sin holgura y sin quitar los edificios: lo mismo que
+ * `enElPavimentoDe`, con la rejilla de aquí. Es lo que pisan las ruedas, y el empuje lo pregunta
+ * en cada pose de cada puesto: ver `ruedas-en-el-empuje.ts` (H81).
+ */
+export function pavimentoDibujado(aero: Aerodrome): (p: Punto) => boolean {
+  let delCampo = PAVIMENTOS.get(aero);
+  if (!delCampo) PAVIMENTOS.set(aero, (delCampo = new Map()));
+  let hecho = delCampo.get("dibujado");
+  if (!hecho) delCampo.set("dibujado", (hecho = pavimentoDe(aero, 0)));
+  return hecho;
+}
 
 /**
  * Lo que se aparta la raya de la pared de un edificio, m. Es el eje del

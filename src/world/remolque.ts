@@ -865,7 +865,7 @@ const SALE_DE_LADO = 50 * GRADO;
  * **Si la raya sale del puesto de lado**: sus primeros veinte metros, a más de
  * `SALE_DE_LADO` de la cola del avión aparcado con `rumbo`. Es lo que mira `empujeDesdeElPuesto`
  * para buscar la recta de la plataforma, y lo que el plan mira para no sacar de un puesto
- * con un empuje de quince metros y el avión atravesado (H60f, `saleDeLado` en el plan).
+ * con un empuje de quince metros y el avión atravesado (H60f, `saleMal` en el plan).
  */
 export function rayaDeLado(rumbo: number, raya: readonly PuntoXZ[]): boolean {
   if (raya.length < 2) return false;

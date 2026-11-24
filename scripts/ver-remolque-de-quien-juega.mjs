@@ -17,7 +17,8 @@
  *    cabina se dejan para el final, y el tractor espera enganchado y con el freno
  *    puesto hasta que se arrancan con la tecla.
  * 4. El pasador y el saludo, con su tarjeta, y que al quedar libre se rueda hacia
- *    delante hacia la raya.
+ *    delante hacia la raya. Y que ni empujando ni al acabar pisa ninguna rueda fuera del
+ *    pavimento (H81).
  * 5. La radio de tierra: en el de cabina, la autorización de la ruta —si se va a otro
  *    campo; en una vuelta al campo, ninguna— y el permiso de la torre al pedir el
  *    tractor, los dos con tu matrícula, y las tres frases de la persona de tierra, todo en
@@ -311,6 +312,9 @@ try {
     console.log(
       t(`tractor a ${f(m.tractorFuera)} m de la punta del ala, persona a ${f(m.personaFuera)} m · al fuselaje: tractor ${f(m.tractorAlFuselaje)} persona ${f(m.personaAlFuselaje)} · tractor a la persona ${f(m.tractorALaPersona)} · dentro de un edificio ${m.dentroDeUnEdificio} fotogramas · pared ${f(m.paredAlEmpezar)} → ${f(m.paredAlAcabar)} m`),
     );
+    console.log(t(`las ruedas, fuera del pavimento: ${f(m.fueraDelPavimento)} m empujando y ${m.fueraAlAcabar} de las tres al acabar`));
+    if (m.fueraDelPavimento > 0) fallos.push(t(`empujando, una rueda pisa fuera del pavimento ${f(m.fueraDelPavimento)} m`));
+    if (m.fueraAlAcabar !== 0) fallos.push(t(`al acabar el empuje, ${m.fueraAlAcabar} ruedas fuera del pavimento`));
     if (!(m.peorAdelante < -0.9)) fallos.push(t(`empujando no va de culo (${m.peorAdelante})`));
     if (!m.balizaAlEmpujar) fallos.push(t("la baliza no estaba encendida al empujar"));
     if (tramo === "guyrami" && !m.motorEmpujando) fallos.push(t("en Guyrami los motores no arrancaron empujando"));

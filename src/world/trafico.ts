@@ -3960,6 +3960,8 @@ export function crearTrafico(
     /** Lo que le queda de remonte, s. Ver `loQueTardaEnRemontar`. */
     remonta = 0,
     contigo = true,
+    /** Si ya está alineado en la pista. */
+    alineado = false,
   ): boolean => {
     const hastaElFinal =
       Math.max(0, runway.length - tipo.carrera) / velocidadDeDespegue(tipo);
@@ -3998,9 +4000,17 @@ export function crearTrafico(
      * daba la salida a uno con el JAZ 90 a dos minutos, corría su despegue
      * mientras el JAZ 90 cogía la final y tu permiso se pedía a 2.176 m del
      * umbral. Ver `permiso-a-tiempo.test.ts`.
+     *
+     * **Menos con el que ya está alineado** (H81). Ese margen es para no meter
+     * a nadie delante, y él ya está encima: retenerlo no te guarda la pista, te
+     * la tapa. En Los Rodeos se alineó uno sin nadie a la vista, entraste vos en
+     * el circuito ocho segundos después y estuvo ciento cincuenta segundos en la
+     * cabecera, hasta que cogiste la final: la salida le llegó entonces, y a vos
+     * te mandaron al aire. Un controlador lo saca ya. Con que se haya ido antes
+     * de que cruces el umbral basta.
      */
     const tuyo = tu ? (tu.alUmbral ?? vienes) : null;
-    if (tuyo !== null && tuyo - antesDeTuPermiso(tu?.velocidad) < hueco) return true;
+    if (tuyo !== null && tuyo - (alineado ? 0 : antesDeTuPermiso(tu?.velocidad)) < hueco) return true;
     return laFila(null, contigo).some(
       (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,
     );
@@ -4588,6 +4598,8 @@ export function crearTrafico(
             quien?.tipo ?? tipoDe(matricula),
             clave,
             loQueTardaEnRemontar(quien, matricula),
+            true,
+            clave === "torre.clearedTakeoff" && !!quien && encimaDeLaPista(quien),
           )
         )
           return true;

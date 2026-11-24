@@ -2284,6 +2284,148 @@ su camino, como los de todos, así que los demás los ven; pero la torre no espe
 **El 584 de Barajas**, que la H76 ponía junto al T2: su calle, la EA-2, acaba a cinco metros al norte de su línea, y no hay
 recta hacia atrás por la que pasar el cruce. Sigue igual, y el plan no lo elige.
 
+## Enmienda (24-11-2026, H81): el empuje acaba sobre pavimento
+
+### El caso
+
+Por la 36 de Barajas el plan saca al JAZ 90 del 532 desde la H76, y en el juego el empuje acababa con el avión en la
+hierba, entre la plataforma de la T4S y la EA-6. Esa hierba no existe. Nadie lo miraba: un empuje se juzgaba por la raya
+(H47b), por el morro (H76) y por las paredes, y no por lo que pisan las ruedas.
+
+### Lo que pisaban
+
+Los tres reactores, las dos cabeceras y cada puesto de contacto. Las tres ruedas —la de morro y la pata de fuera de cada
+lado, a la media vía del dibujo— contra el pavimento **dibujado**, sin holgura, en cada pose del empuje; y en los primeros
+cien metros rodando, con la rueda de morro siguiendo la raya y el tren detrás:
+
+| Campo | | Empujes | Pisan fuera | Metros · el peor | Al acabar | Rodando |
+|---|---|---|---|---|---|---|
+| Los Rodeos | antes de H76 · antes de H81 | 18 · 18 | 13 · 13 | 389, 44 · 389, 44 | 3 · 3 | 3, 96 m · 3, 96 m |
+| | **ahora** | 18 | **0** | 0 | **0** | **0** |
+| La Palma | antes de H76 · antes de H81 | 26 · 26 | 0 · 0 | 0 | 0 | 1, 3 m · 1, 10 m |
+| | **ahora** | 26 | 0 | 0 | 0 | 1, 10 m |
+| Gran Canaria | los tres | 34 | 0 | 0 | 0 | 0 |
+| Lanzarote | los tres | 30 | 0 | 0 | 0 | 0 |
+| Tenerife Sur | antes de H76 · antes de H81 | 30 · 30 | 6 · 6 | 190, 35 · 190, 35 | 0 · 0 | 0 |
+| | **ahora** | 30 | **0** | 0 | 0 | 0 |
+| Pettirossi | antes de H76 · antes de H81 | 58 · 58 | 2 · 2 | 49, 25 · 49, 25 | 0 · 0 | 2, 35 m · 2, 35 m |
+| | **ahora** | 58 | 1 | 0,5 | 0 | **0** |
+| Barajas | antes de H76 · antes de H81 | 650 · 710 | 126 · 180 | 4.072, 122 · 6.990, 122 | 66 · 64 | 92, 1.920 m · 97, 1.977 m |
+| | **ahora** | 842 | **7** | **200, 49** | **7** | 27, 397 m |
+| **Todos** | antes de H76 · antes de H81 | 846 · 906 | 147 · 201 | 4.700 · 7.618 | 69 · 67 | 98, 2.054 m · 103, 2.118 m |
+| | **ahora** | 1.038 | **8** | **201** | **7** | 28, 406 m |
+
+«Antes de H76» es 7823fa29; «antes de H81», main en d379eb02. **De las 42 salidas del plan, 34 iban enteras sobre pavimento
+antes de H76 y 31 antes de H81** —en Barajas, 3 y ninguna—; ahora, las 42, con el medio metro de holgura de la regla.
+
+### Las causas
+
+1. **La plataforma de la T4 y la T4S, a tiras.** OpenStreetMap dibuja una franja por cada fila de puestos —veinticuatro
+   `aeroway=apron` en vías—, y ni una relación: no faltaba leerlas ahí. Entre la franja y su calle, de veinte a sesenta y
+   tres metros sin dibujar. Lo que se veía entre medias lo ponía `plataformas-cosidas.ts`, con la envolvente convexa de la
+   franja y de lo que sus esquinas caen sobre las calles a menos de cincuenta metros; en el oeste de la T4S, la esquina del
+   sur llegaba a la EA-2 y la del norte se quedaba a sesenta y tres metros de la EA-6, dos más de los que alcanza, y la envolvente dejaba un
+   triángulo de hierba de la una a la otra: el de debajo del 532. Las cartas AD 2-LEMD PDC 2.1 (WEF 01-OCT-26) y PDC 1.1 (WEF
+   29-OCT-26) dibujan el borde del pavimento y las isletas de hierba, y ahí dentro no hay ni lo uno ni lo otro.
+2. **La plataforma de la T1–T3, sin leer.** Esa sí son relaciones `multipolygon`, seis: R-1, R-2 y de la R-4 a la R-7
+   (18864812 a 18864817), dieciocho anillos. El extractor sabía coserlas (`anillos`) y la consulta no se las daba: pedía
+   `out tags geom`, y el nivel `tags` de Overpass es «solo el identificador y las etiquetas», sin los miembros. Salían sin un
+   anillo y sin avisar. Pedido con `out body geom`, vienen con su geometría.
+3. **Los Rodeos, hasta la R.** OpenStreetMap acaba la plataforma comercial en su límite (ABL), a dieciséis metros del borde
+   dibujado de la R. La carta (AD 2-GCXO PDC 1.1, WEF 29-OCT-26) no dibuja borde entre ella y la calle, de la R2 a la R7.
+4. **Tenerife Sur, entre dos islas.** El R40 entra por entre las del H39 y el H38, con doce metros de nada; la carta (AD
+   2-GCTS PDC 1.1, WEF 11-JUN-26) dibuja el «límite de plataforma» seguido.
+5. **Pettirossi, el pico de un cruce.** El JAZ 110 y el JAZ 120 empujados del 6 por la 20 tuercen de la L a la paralela, y el
+   juego dibuja las dos calles de veintitrés metros y el cruce en pico: las principales lo cortaban.
+
+### Decisión
+
+1. **Se leen las relaciones**: el extractor pide `out body geom` (`anillos`, en `scripts/anillos-de-osm.mjs`), y
+   `scripts/plataformas-de-osm.mjs` añade a una ficha las que le falten sin rehacerla. Barajas, las dieciocho.
+2. **Lo que la carta dibuja y OpenStreetMap no, va en la ficha, marcado** (`plataformasDeducidas`), con la carta y de dónde sale
+   su contorno: los ejes de las calles de plataforma y los puestos, que son de OpenStreetMap. Es deducido, y lo dice. Las cinco
+   de Barajas —la T4, 67 ha con sus franjas dentro; sus puestos PE; la T4S, 78 ha; la T1–T3, del T1 al T35, y su dique sur—, la
+   franja de Los Rodeos (3,8 ha, con los tres metros que solapa) y la de Tenerife Sur del G9 al H43 (3,8 ha). Las isletas de la carta —las de la J-4 y la U-4, la
+   de los PE, las de detrás de la EA-5, la EA-6, la M-27 y la N-10— y el recinto de la torre norte siguen siendo hierba, y una
+   prueba lo mira. En la punta de la J-6, la de la W-6 y la esquina de la EA-5, el borde es el de la carta, llevado a la ficha
+   por los cruces de las calles. La de Pettirossi, el abocinado de la L (710 m²), es la única sin carta: el Anexo 14, volumen
+   I, 3.9, recomienda abocinar los cruces para que las ruedas no se salgan al girar, y lo dice en su fuente.
+3. **Se juntan con las de OpenStreetMap al cargar el campo** (`conPlataformasCosidas`), y la franja que ya une a su calle una
+   deducida no se cose con la envolvente. Lo mismo se dibuja, se rueda y se hornea: Barajas, Los Rodeos, Tenerife Sur y
+   Pettirossi, horneados.
+4. **Un empuje que saca una rueda del pavimento no es bueno** (`ruedas-en-el-empuje.ts`), con medio metro de holgura, que es a
+   lo que se simplifica el borde. El plan busca primero la ruta cuyo empuje va entero sobre pavimento, y solo si no la hay la que
+   saca una rueda por el borde —menos de lo que mide el avión entre ejes—; y si del puesto elegido se sale pisando fuera, elige
+   otro, como con el que sale de lado (`saleMal`). El barrido lo cuenta aparte y no lo da por bueno.
+5. **Y a la calle se llega atravesado** (`enganchesAtravesados`). Con la plataforma abierta, del 500, el 501 y el 502 el enganche
+   más cercano era la curva de la EA-5 a la GATE-12, casi por la tangente: el tractor no encontraba dónde torcer y seguía de
+   espaldas por ella hasta la isleta, doscientos metros. Cuando por las maneras de la H76 no sale sobre pavimento, se prueba la
+   calle a la que la recta llega a más de cincuenta grados: donde antes, y a dieciséis y treinta y dos metros más por ella. Con
+   eso salen además, con su APROAR, los seis puestos de las esquinas de la T4S que la H76 dejó: el 538, el 539 y del 583 al 586.
+6. **El banco lo mira** (`ver-remolque-de-quien-juega.mjs`): falla si empujando pisa fuera alguna rueda, o al acabar.
+
+### El barrido, el APROAR, los choques y el plan
+
+| Campo | Empujes | Bien, antes → ahora | De lado | En un edificio | APROAR, antes → ahora | Metros de media |
+|---|---|---|---|---|---|---|
+| Los Rodeos | 18 | 17 → **18** | 1 → **0** | 0 → 0 | — | 1.707 → 1.710 |
+| La Palma, Gran Canaria, Lanzarote | 26, 34, 30 | 26, 32, 30 → igual, fila a fila | 0, 2, 0 → igual | 0 → 0 | Lanzarote, 30 → 30 de 30 | igual |
+| Tenerife Sur | 30 | 30 → 30 | 0 → 0 | 0 → 0 | — | 1.894 → 1.894 |
+| Pettirossi | 58 | 45 → 45 | 13 → 13 | 0 → 0 | — | 1.901 → 1.901 |
+| Barajas | 710 → 842 | 674 → **836** | 24 → **6** | 7 → **6** | 674 de 710 → **828 de 842** | 3.774 → 3.985, con las que entran |
+| **Todos** | 906 → 1.038 | 854 → **1.017** | 40 → **21** | 7 → **6** | 704 de 740 → **858 de 872** | |
+
+«Bien» es la medida de la H47b, sin mirar el pavimento. **Mirándolo, 659 de 906 antes y 1.009 de 1.038 ahora.** De las 906 que
+había, ninguna sale; **de bien a mal, ninguna; de mal a bien, 31** —una de Los Rodeos, el 22, y 30 de Barajas—, y ninguna
+pierde su APROAR. Las 132 que entran son de Barajas y están todas bien: el 534, el 536 y el 537 de la T4S, que no tenían ruta;
+del 70 al 74; y, de la T1–T3, el T12 y del T22 al T35. Sobre su raya pintada, 780 → 866.
+
+**El plan**, 42 de 42. Cambian tres salidas, las de Barajas por la 18: del 520, 4.936 m, al **332** el JAZ 90 y el JAZ 110, 4.054,
+y al **334** el JAZ 120, 4.116; son los de antes de la H76, a los que ahora se vuelve por la plataforma. Por la 36, el 532 (509 m)
+y el 508, los mismos.
+
+**Los que todavía pisan fuera**, 7 filas de dos puestos de Barajas, que el plan no elige: el **501 por la 18**, que sigue por la GATE-12 como antes (5 m el JAZ 90 y 49 los dos grandes; antes, 60 y 46), y el **537**, de los que entran, con el JAZ 110 y el JAZ 120, que giran en la esquina de la EA-6 y la N-10 y dejan las principales 25 m de empuje por la isleta. Y medio metro el JAZ 120 del 6 de Pettirossi.
+
+### Lo medido
+
+- **La mesa**: los tres barridos con la medida de la prueba (`comoAcaba`), fuera de vitest; los de antes dan lo publicado en la
+  H76 (846 y 775; 906, 854, 40, 780 y 704 de 740).
+- **En planta**, sobre la ficha montada: los campos que cambian enteros, y los empujes del 300, el 388, el 394, del 500 al 502, el
+  532, el 537, del 583 al 586, el 74 y el T30.
+- **Pruebas nuevas** (`empuje-sobre-pavimento.test.ts`): las ruedas y su media vía contra los tres `.glb`; los metros fuera y la
+  holgura; el empuje que elige el plan en cada campo, con los tres y por las dos cabeceras; el 532 y del 500 al 502; que es
+  plataforma lo que lo es y sigue siendo hierba cada isleta de la carta; que cada deducida dice su carta y toca su calle; las seis
+  relaciones; y que sin la plataforma, el plan, entre el 532 y el 545, no sale por la hierba. El del plan de
+  `empuje-hasta-la-calle.test.ts` mira también las ruedas, y `aproar.test.ts` baja de siete puestos que no a tres.
+- **`puesto-de-salida-de-cada-campo.json`**, rehecho después de mirarlo: cambian 8 de sus 418 claves, todas de Barajas: las tres
+  del plan por la 18 y cinco sin pasaje por la 36, que salían de puestos sin nombre puestos sobre la EA-5 y la N-10.
+- **Elegir la salida** en Barajas, de 2,0–2,7 s a 2,1–2,9 s en esta máquina cargada: hay 22 puestos de contacto más.
+- **El reactor del tráfico**, en los dieciocho casos, sobre pavimento antes y ahora; por la 18 de Barajas sale del 520 y no del 508.
+- **Vitest, por carpetas** y con el código terminado: `src/world` entero, 194 ficheros en dos partes, 4.255 en verde, 3 saltadas y
+  una en rojo, de las nuevas —la de la ficha sin plataforma, que pedía un empuje del 532 que ya no hay—, arreglada y comprobada en
+  la mesa; y lo que no es de `src/world` ni de `src/flight`, 124 ficheros y 2.464 en verde. **`src/flight` no está entero**: el
+  turno llegó a las 8.32 y, de los 51 ficheros que tocan el mundo, en doce minutos no acabó; llevaba una en rojo, sin saber
+  cuál. Hay que pasarlo antes de publicar.
+- **El remolque de quien juega en Barajas**, por la 36 y con la tarjeta Intel, en el peldaño de Guyrami, del 532 con el JAZ 90:
+  **todo en orden**. 126 de 126 m, giro de 107°, rumbo al acabar 197°, −2° en los primeros treinta metros rodando, y **las ruedas,
+  0,0 m fuera del pavimento empujando y ninguna de las tres al acabar**. En las capturas el avión está entero sobre el hormigón al
+  acabar, con el tractor y el señalero en la plataforma, y rueda por la GATE-13 con las ruedas en la calle.
+- **Por la 18 no se puede**: Barajas no cambia de cabecera (`sinCambioDeCabecera`, la 18R no publica TORA), y con
+  `OGA_VIENTO=180/12` volvió a salir por la 36, del 532, con lo mismo. La T4, del 332, se mira en planta y en el barrido y no en
+  pantalla. El peldaño de cabina no se voló: se paró recién empezado, que el vitest había cogido su turno a la vez.
+
+### Lo que queda
+
+**El 330** de Barajas, sin línea en OpenStreetMap, sale de lado como antes y se mete en el edificio con los tres; y **el 537 y el
+T30** acaban mirando al S y al W, y la carta los da al W y al N. El plan no los elige.
+
+**Las plataformas de los puestos remotos de la T1–T3** (10 a 67, 75 a 162, 200 a 264) se cosen a su calle con la envolvente, como
+las demás: la carta las dibuja con sus isletas, y ninguna es de contacto. **Y la R-24**, los 700 a 722 junto a la T4S, no está en
+OpenStreetMap ni se usa.
+
+**El T34 y el T35**, con la plataforma leída, entran como puestos de contacto: la carta los da a remolcar por la I-12 «hasta la
+altura de T-33», hacia delante, y el juego los empuja al N por ella. Ver la H79.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
@@ -2293,12 +2435,15 @@ que no se voló. Ver «Lo que queda» de la H66.
 **Pettirossi, a su punto publicado** (H60f): la DINAC publica las coordenadas de las seis puertas (AD 2.1-14.2, 07 AUG
 2025) y nada más; el 5 y el 6 quedan a 23 y 25 m de la ficha. Moverlos pide su barrido y el banco de Asunción. Sus
 puestos siguen en el centro de su línea de entrada y repetidos con su nodo, como los de las fichas de antes de #191.
-La Palma y Lanzarote están en su punto desde la H75. El APROAR del AIP lo usa el empuje desde la H76. Los puestos de
-Barajas que siguen saliendo mal (el 330, el 538, el 539, el 583, el 584 y el 585) o sin su APROAR (esos y el 586), y el
-N11 de Gran Canaria, no tienen línea en OpenStreetMap, salvo el 584. El plan no los elige.
+La Palma y Lanzarote están en su punto desde la H75. El APROAR del AIP lo usa el empuje desde la H76. De
+Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen línea en OpenStreetMap; el plan no los elige. El
+538, el 539 y del 583 al 586 salen desde la H81.
 
-**La plataforma de la T1–T3 de Barajas y el 584, y Fuerteventura** (H79): ver «Lo que queda» de la H79. El T2 de Lanzarote
-por la C, sus restricciones de rodaje y el segundo tramo, hechos en ella.
+**Fuerteventura** (H79): ver «Lo que queda» de la H79. El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
+tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H81.
+
+**Barajas, sobre pavimento** (H81): el 501 por la 18 y el 537 con los dos grandes, que pisan fuera y el plan no elige. Ver «Lo
+que queda» de la H81.
 
 **Los puestos de las fichas de antes de #191**, en Pettirossi: ver arriba. Los de Barajas, Gran Canaria, La Palma y
 Lanzarote están en su parada desde la H60f y la H75, salvo los catorce de Barajas cuyo punto publicado no cae en su raya

@@ -45,6 +45,8 @@ import { conSuAerodromo, SCENARIOS, type Scenario } from "./scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
 import { vaALaPasarela } from "../flight/velocidades-en-tierra";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
+import { fueraDelPavimento } from "./ruedas-en-el-empuje";
+import { pavimentoDibujado } from "./rodaje";
 
 const GRADO = Math.PI / 180;
 /** Lo que se aparta el morro de la raya al acabar: los «pocos grados» de rodar casi recto. */
@@ -186,6 +188,8 @@ interface ComoAcaba {
   /** Lo que se aparta la raya pintada de la del plan, si la hay y mira al edificio, rad. */
   readonly seAparta: number | null;
   readonly porQueNo: string | null;
+  /** Lo que va el empuje con alguna rueda fuera del pavimento, m, y las que quedan fuera al acabar (H81). */
+  readonly fuera: { readonly metros: number; readonly alAcabar: number };
 }
 
 /**
@@ -246,6 +250,7 @@ function comoAcaba(c: Caso): ComoAcaba | null {
     cambia: Math.abs(diferencia(rumbo, enElSuyo.porLaRuta)),
     seAparta: enElSuyo.pintada === null ? null : Math.abs(diferencia(enElSuyo.pintada, enElSuyo.porLaRuta)),
     porQueNo: enElSuyo.porQueNo,
+    fuera: fueraDelPavimento(c.avion, e.poses, pavimentoDibujado(aero)),
   };
 }
 
@@ -303,8 +308,11 @@ describe("el empuje acaba con el morro hacia donde va la raya", async () => {
     for (const rumboDePista of [campo.runway.heading, (campo.runway.heading + 180) % 360])
       for (const avion of AIRCRAFT.filter((a) => vaALaPasarela(a))) {
         const m = comoAcaba({ campo, rumboDePista, avion, puesto: null, nombre: "" });
-        if (!m || m.deLado) continue;
+        if (!m) continue;
         const nombre = `${campo.aerodrome!.id} · ${avion.id} · ${rumboDePista.toFixed(0)}° · el puesto de ${m.ref}`;
+        // Y sobre pavimento con las tres ruedas, también el que sale de lado (H81).
+        expect(m.fuera, `${nombre}: las ruedas, fuera del pavimento`).toEqual({ metros: 0, alAcabar: 0 });
+        if (m.deLado) continue;
         expect(m.torcido / GRADO, `${nombre}: el morro, contra la raya`).toBeLessThan(TORCIDO / GRADO);
         if (!m.debajo) expect(m.aparte, `${nombre}: el avión, fuera de la raya`).toBeLessThan(SOBRE_LA_RAYA);
       }
@@ -331,7 +339,7 @@ const entorno = (globalThis as { process?: { env: Record<string, string | undefi
 describe.runIf(entorno.OGA_BARRIDO_DEL_EMPUJE)("el barrido de todos los empujes de contacto", () => {
   it("la tabla", async () => {
     const filas: string[] = [];
-    const cuenta = { todos: 0, bien: 0, deLado: 0, debajo: 0, elegidos: 0, elegidosBien: 0, pintada: 0, cambian: 0, conRaya: 0, seAparta: 0 };
+    const cuenta = { fuera: 0, todos: 0, bien: 0, deLado: 0, debajo: 0, elegidos: 0, elegidosBien: 0, pintada: 0, cambian: 0, conRaya: 0, seAparta: 0 };
     const vistos = new Set<string>();
     const solo = entorno.OGA_BARRIDO_DEL_EMPUJE!.startsWith("jaz-") ? entorno.OGA_BARRIDO_DEL_EMPUJE! : null;
     for (const e of SCENARIOS) {
@@ -348,7 +356,10 @@ describe.runIf(entorno.OGA_BARRIDO_DEL_EMPUJE)("el barrido de todos los empujes 
           for (const p of puestos) {
             const m = comoAcaba({ campo, rumboDePista, avion, puesto: p.xy, nombre: "" });
             if (!m) continue;
-            const bien = m.torcido < TORCIDO && (m.aparte < SOBRE_LA_RAYA || m.debajo);
+            // El que saca una rueda del pavimento no cuenta como bueno, acabe como acabe (H81).
+            const pisaFuera = m.fuera.metros > 0 || m.fuera.alAcabar > 0;
+            const bien = !pisaFuera && m.torcido < TORCIDO && (m.aparte < SOBRE_LA_RAYA || m.debajo);
+            if (pisaFuera) cuenta.fuera++;
             const delPlan = elegido?.ref === m.ref;
             cuenta.todos++;
             if (bien) cuenta.bien++;
@@ -367,14 +378,14 @@ describe.runIf(entorno.OGA_BARRIDO_DEL_EMPUJE)("el barrido de todos los empujes 
                 ` ${m.deLado ? "de lado " : m.debajo ? "debajo  " : "        "} torcido ${((m.torcido * 180) / Math.PI).toFixed(0).padStart(3)}°` +
                 ` aparte ${Number.isFinite(m.aparte) ? m.aparte.toFixed(1).padStart(5) : "  —  "} m` +
                 ` empuje ${m.largo.toFixed(0).padStart(3)} m giro ${((m.giro * 180) / Math.PI).toFixed(0).padStart(4)}°` +
-                ` a ${m.lejos.toFixed(0).padStart(3)} m de la raya${m.porLaPintada ? ` · pintada, ${((m.cambia * 180) / Math.PI).toFixed(0)}° de la del plan` : m.seAparta !== null && m.seAparta > GRADO ? ` · la pintada no sale (${m.porQueNo}), ${((m.seAparta * 180) / Math.PI).toFixed(0)}°` : ""}`,
+                ` a ${m.lejos.toFixed(0).padStart(3)} m de la raya${pisaFuera ? ` · FUERA DEL PAVIMENTO ${m.fuera.metros.toFixed(0)} m, ${m.fuera.alAcabar} ruedas al acabar` : ""}${m.porLaPintada ? ` · pintada, ${((m.cambia * 180) / Math.PI).toFixed(0)}° de la del plan` : m.seAparta !== null && m.seAparta > GRADO ? ` · la pintada no sale (${m.porQueNo}), ${((m.seAparta * 180) / Math.PI).toFixed(0)}°` : ""}`,
             );
           }
         }
     }
     filas.push(
       `\n${cuenta.todos} empujes: ${cuenta.bien} bien —${cuenta.debajo} de ellos con la raya torciendo debajo del avión,` +
-        ` mirando por ella pero a su lado—, y ${cuenta.todos - cuenta.bien} no; salen de lado ${cuenta.deLado}.` +
+        ` mirando por ella pero a su lado—, y ${cuenta.todos - cuenta.bien} no; salen de lado ${cuenta.deLado} y pisan fuera del pavimento ${cuenta.fuera}.` +
         ` Del plan: ${cuenta.elegidosBien} de ${cuenta.elegidos}. Con raya pintada: ${cuenta.conRaya}; sobre ella: ${cuenta.pintada}; se aparta más de un grado de la del plan en ${cuenta.seAparta}, y de esos se aparcan en ella ${cuenta.cambian}.`,
     );
     (globalThis as { process?: { stderr: { write(s: string): void } } }).process?.stderr.write(`\n${filas.join("\n")}\n`);
