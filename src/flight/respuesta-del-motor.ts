@@ -26,6 +26,10 @@
  * es un turbofán y un pistón responde ya. Lo que dice cada número y de dónde
  * sale está en su ficha y en el ADR 0034.
  *
+ * **Y arriba tarda más, con la densidad del aire**: ver `masLentoArriba`. Abajo
+ * —en la final, la carrera y la frustrada de cualquier campo del juego— es la de
+ * la ficha, sin tocar.
+ *
  * Aquí está la cuenta sin three.js, para poder comprobarla; quien la usa es
  * `fdm.ts`, en cada paso.
  */
@@ -130,11 +134,55 @@ function seguir(va: number, hacia: number, sube: number, baja: number, dt: numbe
 }
 
 /**
- * **Un paso del motor**: las dos etapas siguen al gas pedido, cada una con lo
- * que tarda subiendo o bajando. Cambia `giro`.
+ * **La densidad, como parte de la del nivel del mar, por debajo de la que el
+ * motor ya tarda más que al nivel del mar.**
+ *
+ * Lo que tarda un motor de turbina en acelerar va con uno partido por la
+ * densidad: el par que sobra para acelerar lo pone el aire que pasa por él, y lo
+ * que pesa el rotor no cambia. Es lo que midió la NACA en el J47, de 5,5 segundos
+ * a cinco mil pies a 8 a veinticinco mil: «the engine air flow was decreased by
+ * the reduction in air density while the inertia of the rotating parts of the
+ * engine remained constant» (RM E9I26, 1949, pp. 8-9).
+ *
+ * Y desde dónde se nota sale de la única tabla que se ha leído de un turbofán con
+ * su regulador, la de la NASA (TM-2009-215668, p. 6, tabla 1). Sus tres tiempos
+ * —hasta la mitad, del 10 al 90 % y hasta asentarse—, pasados a constantes de las
+ * dos etapas de aquí y promediados, dicen que subiendo tarda 1,12, 1,41 y 2,82
+ * veces lo del nivel del mar a 10.000, 25.000 y 42.000 pies, y bajando 1,03, 1,95
+ * y 4,03. Con uno partido por la densidad, 0,63 y 0,84 son los números que pasan
+ * por ahí: la cuenta, en el ADR 0034, enmienda H78. O sea que en la estándar
+ * empieza a unos 4.500 m subiendo y a unos 1.800 bajando, y por debajo es la ficha.
  */
-export function avanzarGiro(giro: GiroDelMotor, a: Ficha, gas: number, dt: number): void {
-  const { sube, baja } = constantesDelMotor(a);
+export const DENSIDAD_QUE_BASTA = { sube: 0.63, baja: 0.84 } as const;
+
+/**
+ * **Cuántas veces lo de su ficha tarda el motor con este aire**: uno exacto —ni
+ * un bit distinto— mientras haya densidad de sobra. `sigma` es la densidad del
+ * aire de ese día a esa altura, como parte de la del nivel del mar.
+ */
+export function masLentoArriba(sigma: number): { sube: number; baja: number } {
+  const s = Number.isFinite(sigma) ? Math.max(0.05, sigma) : 1;
+  return {
+    sube: s >= DENSIDAD_QUE_BASTA.sube ? 1 : DENSIDAD_QUE_BASTA.sube / s,
+    baja: s >= DENSIDAD_QUE_BASTA.baja ? 1 : DENSIDAD_QUE_BASTA.baja / s,
+  };
+}
+
+/**
+ * **Un paso del motor**: las dos etapas siguen al gas pedido, cada una con lo
+ * que tarda subiendo o bajando con este aire. Cambia `giro`.
+ */
+export function avanzarGiro(
+  giro: GiroDelMotor,
+  a: Ficha,
+  gas: number,
+  dt: number,
+  sigma = 1,
+): void {
+  const abajo = constantesDelMotor(a);
+  const arriba = masLentoArriba(sigma);
+  const sube = abajo.sube * arriba.sube;
+  const baja = abajo.baja * arriba.baja;
   const pedido = vueltasDe(a, gas);
   giro.nucleo = seguir(giro.nucleo, pedido, sube, baja, dt);
   giro.fan = seguir(giro.fan, giro.nucleo, sube, baja, dt);
