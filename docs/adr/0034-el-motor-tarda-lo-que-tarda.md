@@ -283,6 +283,8 @@ el banco, que en ellos no ha cambiado.
 
 ## Lo que no
 
+(La altura y la reversa, ya no: ver la enmienda H78, al final.)
+
 - **La altura.** El motor tarda lo mismo a nivel del mar que en crucero; el de
   NASA tarda el triple a 42.000 pies. Aquí importa en la final y en la
   frustrada, que son abajo.
@@ -370,3 +372,198 @@ está en la enmienda H72 del ADR 0027.
 hélice que da el empuje al momento, y en un vuelo fue de 0,13 a 1 con el empuje
 siempre detrás. Ahora, 0,12 a la tendencia y 0,01 a lo acumulado, por lo mismo que
 los reactores.
+
+## Enmienda H78 (24-11-2026): el motor que tarda más con la altura, y la reversa que tarda en empujar
+
+### Las fuentes
+
+**La altura, en la norma.** El 33.73(b) ya citado no la nombra: los cinco segundos
+son «from a stabilized static condition using only the bleed air and accessories
+loads necessary to run the engine», y del ralentí, «the fixed minimum flight idle
+power lever position when provided, or if not provided, […] not more than 15
+percent». Donde sí sale es en cómo se ensayan los ocho segundos del 25.119: «At the
+most adverse test altitude, not to exceed the maximum field elevation for which
+certification is sought plus 1,500 feet» (AC 25-7D, 4.8.2.2, p. 4-60). O sea que el
+motor responde distinto según la altura, pero la norma no da cifra.
+
+**La altura, medida y calculada.**
+
+- **NACA RM E9I26** (Bloomer, 1949, pp. 8-9), el J47 en el túnel de altura, del
+  mismo régimen al máximo con la palanca en un segundo: «increased with altitude
+  from 5.5 seconds at 5000 feet to 8 seconds at 25,000 feet […] because the engine
+  air flow was decreased by the reduction in air density while the inertia of the
+  rotating parts of the engine remained constant». Es un reactor sin regulador
+  digital: el generador de gas de un turbohélice de turbina libre se le parece más
+  que un turbofán.
+- **NASA TM-2009-215668** (Litt, Frederick y Guo, p. 6, tabla 1), el turbofán
+  simulado C-MAPSS con su regulador, «this can be attributed to the low air density
+  at these conditions»:
+
+| Altura, Mach | Acelerando: 50 %, del 10 al 90 %, asentado | Decelerando |
+|---|---|---|
+| nivel del mar, 0 | 0,72 · 1,13 · 2,02 s | 0,70 · 0,68 · 2,10 s |
+| 10.000 ft, 0,25 | 0,78 · 1,25 · 2,41 | 0,76 · 0,93 · 1,63 |
+| 25.000 ft, 0,62 | 0,94 · 1,95 · 2,51 | 1,00 · 1,83 · 4,48 |
+| 42.000 ft, 0,84 | 1,63 · 3,66 · 6,27 | 1,60 · 4,52 · 9,63 |
+
+**La reversa.**
+
+- **14 CFR 33.97**: el ensayo, con la reversa puesta, pide mover la palanca de un
+  extremo al otro en un segundo, o en tres «if regimes of control operations are
+  incorporated necessitating scheduling»; y 175 reversas desde el ralentí de vuelo y
+  25 desde el despegue, a fondo treinta segundos cada una en la que es solo para
+  frenar en tierra. No da lo que tarda en abrirse.
+- **14 CFR 25.933 y AC 25.933-1** (30-8-2024): la mayoría son «intended for ground
+  operation only» (4.1.1), y lo que reduce el riesgo es «Inhibit in-flight thrust
+  reversal of ground-use-only reversers, even if commanded by the flightcrew»
+  (4.2.9.2.2, p. 5). Tampoco da tiempos.
+- **AC 25-7D, 4.3.7.10.3 y 4.3.7.10.4 (p. 4-43), y AC 25-32, 10.1.4 (p. 17)**: al
+  contar una distancia hay que meter «delays in system operation, such as thrust
+  reverser interlocks that prevent the pilot from applying reverse thrust until the
+  reverser is deployed» y «the effects of transient response characteristics, such
+  as reverse thrust engine spin-up».
+- **TSB A05H0002**, el A340-313 de Toronto: el manual del avión cuenta «5.1 seconds
+  between main landing gear touchdown and thrust reverser selection, and 1 second
+  for the thrust reversers to deploy» (§1.6.5, p. 14); las palancas «cannot be moved
+  beyond the idle reverse detent unless the thrust reversers on both engines are
+  fully deployed» (§1.6.20, p. 22); la reversa a fondo se pide al oír «Reverse
+  verts», «reversers green, indicating that the four reversers have deployed»
+  (§1.17.6, p. 67); y en el registrador los cuatro N1 se quedaron quietos en la
+  reversa a fondo unos cinco segundos después de pedirla (p. 43).
+- **NTSB AAR-07/06** (p. 17), el 737-700 de Midway: primera señal de la reversa a los
+  15 segundos del toque, desplegada del todo a los 18, y el N1 al 80 % nueve segundos
+  después; los otros cuatro 737 de la tabla 2, desplegada a los cuatro del toque.
+- **NASA TM-81558** (Samanich y otros, p. 13), el fan de paso variable QCSEE: palas a
+  107-120 grados por segundo y la reversa establecida en 1,5 s.
+
+**Lo que no se ha encontrado**: lo que tarda en abrirse la reversa del CF34, del GEnx
+o del JT9D; lo que tarda una hélice de PT6 en pasar al paso inverso; y una curva de
+aceleración con la altura de ninguno de los cinco motores.
+
+### La altura: con uno partido por la densidad, y solo arriba
+
+`masLentoArriba(sigma)` en `respuesta-del-motor.ts`: las constantes de tiempo de la
+ficha, por `0,63 / σ` subiendo y por `0,84 / σ` bajando, y nunca menos que la ficha.
+σ es la densidad del aire de ese día a esa altura (`airDensity`, con el aire del
+parte), la misma que escala el empuje.
+
+**La forma la pone la física** que dice la NACA: el par que acelera va con el aire
+que pasa y la inercia no cambia. **Desde dónde, la tabla**: cada uno de sus tres
+tiempos, pasado a la constante de las dos etapas de aquí —entre 1,68, 3,36 y 5,83
+constantes—, y la media de los tres, sobre la del nivel del mar:
+
+| | 10.000 ft (σ 0,739) | 25.000 ft (0,448) | 42.000 ft (0,224) |
+|---|---|---|---|
+| Tabla, subiendo | 1,12 | 1,41 | 2,82 |
+| Aquí | 1 | 1,41 | 2,82 |
+| Tabla, bajando | 1,03 | 1,95 | 4,03 |
+| Aquí | 1,14 | 1,87 | 3,76 |
+
+Subiendo, σ por el cociente da 0,633 y 0,631 en las dos filas de arriba: que las dos
+den lo mismo es lo que dice que el exponente es uno. Bajando es la media geométrica
+de las tres (0,761, 0,873 y 0,902). Y contra lo medido en el J47, de 5.000 a 25.000
+pies: 1,45 él, 1,41 aquí. Con la estándar, empieza a notarse a unos 4.500 m subiendo
+y 1.800 bajando. **Por debajo es la ficha, sin tocar un bit**: la tabla da a 10.000
+pies un 12 % más subiendo, seis décimas en un motor de cinco segundos, y no se ha
+puesto.
+
+Lo que sale, del ralentí al 95 %: el JAZ 90 a 37.000 pies, de 5 a unos 11 segundos;
+el JAZ 120 a 35.000, de 6 a 12; los turbohélices a 25.000, de 4 a 5,6. El pistón,
+cero. Vale para el turbofán y para el turbohélice; para este la cifra es la de un
+turborreactor y un turbofán, que no hay otra leída.
+
+**Los gases automáticos arriba.** Cuentan con lo que da el motor (H64), y con el motor
+más lento siguen quietos en calma y siguen llegando: en una mesa de quince minutos en
+el crucero de los tres reactores, con escalones de quince nudos y un cambio de nivel,
+lo que se pasan del escalón va de 0,6-1,2 nudos a 2,1-3,0, y en el último minuto la
+palanca vuelve a estar quieta (desviación por debajo de una milésima). Con rachas de
+1,5 m/s, una tirada, trabajan algo más: la desviación de la palanca, de 0,126 de media
+a 0,145, con el error de velocidad en los mismos ±8 nudos. No se han tocado.
+
+### La reversa: la pieza ya tardaba; el motor, no
+
+**Lo que decía «Lo que no» estaba viejo**: la reversa no entraba en el acto desde el
+punto 254. `flight/reversa.ts` abría el manguito en dos segundos, o las palas en uno,
+y empujaba con la pieza fuera del todo. Lo que entraba en el acto era **el motor**: a
+fondo en el instante en que se abría y a cero en el que se soltaba, y con el rugido,
+las agujas y la marca REV puestos desde que se apretaba la tecla.
+
+Ahora `Reversa` lleva el motor, el mismo de `respuesta-del-motor.ts`:
+
+- **En el aire no se abre**, aunque se pida; lo abierto que bote, se queda. Y con los
+  motores parados, tampoco.
+- **Abriéndose**, el cerrojo: motores al ralentí, nada hacia atrás. Dos segundos el
+  turbofán y uno el turbohélice, como estaba: entre el segundo del A340 y los tres del
+  737.
+- **Fuera**, los motores suben a tres cuartos del empuje de despegue (`GAS_DE_REVERSA`,
+  el número que ya llevaban el sonido y la hélice), desde las vueltas que tengan —en un
+  despegue abortado todavía giran y llegan antes— y con lo que tarda la ficha: el JAZ
+  90, cinco segundos al 95 %. Del toque de la palanca a la reversa a fondo, siete
+  segundos el JAZ 90 y el JAZ 110 y ocho el JAZ 120: entre los cinco del A340 y los
+  doce del 737. Lo que empuja al revés es `REVERSA_DA` por lo que dan.
+- **Al soltarla**, el motor se va como se va cualquier gas con la pieza cerrándose.
+- **Lo que se ve y se oye**: la marca REV, ámbar mientras se mueve y verde fuera del
+  todo —el verde que espera quien vigila—, en el cuadro y en la tarjeta del motor; el
+  N1 y el par, con los motores; el golpe de las compuertas al empezar a abrirse y el
+  rugido con lo que empuja. Ya no se enciende en el avión que no la lleva.
+- **Quien juega pide igual.** Y los dos modelos de vuelo reciben lo mismo, que es lo
+  que empuja: ninguno de los dos se ha tocado.
+
+### Lo que cambia en la pista
+
+Desde la velocidad de toma, motor al ralentí, frenos de tierra al tocar, freno y
+reversa al segundo. «Antes» es lo que volaba el juego; «al instante», el modelo con
+la reversa en el acto. Metros:
+
+| | sin reversa | al instante | antes | ahora | más |
+|---|---|---|---|---|---|
+| JAZ 50, pie a fondo, seca | 184 | 139 | 151 | **166** | 15 (10 %) |
+| JAZ 50, pie a fondo, mojada | 234 | 161 | 175 | **195** | 20 (11 %) |
+| JAZ 60, seca | 576 | 389 | 410 | **442** | 31 (8 %) |
+| JAZ 60, mojada | 742 | 444 | 469 | **508** | 39 (8 %) |
+| JAZ 90, seca | 385 | 307 | 334 | **359** | 25 (8 %) |
+| JAZ 90, mojada | 594 | 404 | 448 | **495** | 47 (11 %) |
+| JAZ 110, seca | 716 | 553 | 587 | **625** | 37 (6 %) |
+| JAZ 110, mojada | 1.005 | 690 | 740 | **799** | 58 (8 %) |
+| JAZ 120, seca | 710 | 552 | 585 | **627** | 43 (7 %) |
+| JAZ 120, mojada | 954 | 669 | 718 | **782** | 65 (9 %) |
+| JAZ 90, autofreno LO | 999 | 785 | 822 | **879** | 57 (7 %) |
+| JAZ 110, autofreno LO | 1.483 | 1.300 | 1.337 | **1.396** | 58 (4 %) |
+| JAZ 120, autofreno LO | 1.442 | 1.291 | 1.325 | **1.388** | 63 (5 %) |
+| los tres, autofreno MED | 591 · 870 · 847 | iguales | iguales | **iguales** | 0 |
+| JAZ 60, sin freno hasta 30 kt | 2.156 | 609 | 640 | **689** | 50 (8 %) |
+| JAZ 90, sin freno hasta 30 kt | 2.925 | 715 | 788 | **878** | 91 (12 %) |
+| JAZ 120, sin freno hasta 30 kt | 4.112 | 1.236 | 1.311 | **1.425** | 114 (9 %) |
+| Abortado a V1, pie a fondo: JAZ 60 · 90 · 110 · 120 | 680 · 482 · 802 · 823 | 447 · 379 · 618 · 637 | 471 · 410 · 654 · 672 | **491 · 438 · 691 · 713** | 4-7 % |
+
+En el modelo sencillo, lo mismo a un metro. **Con el autofreno en MED la parada no
+cambia**: pide una deceleración, y lo que el chorro todavía no frena lo frena la rueda.
+
+**Ninguna toma que cabía deja de caber.** Lo que decide si un avión se ofrece en un
+campo (`pistaQueNecesita`, `cabeEn`) es la distancia sin reversa partida por 0,6 o
+0,7, y no se ha movido. De los 105 pares de avión con reversa y escenario, con la
+pista entera —los cincuenta pies por su senda y la rodadura con pie y reversa, seca y
+mojada—, dos cambian, y los dos son de los que el juego no ofrece: el JAZ 110 y el
+JAZ 120 en Yvytu Rape, 900 m, de 878 y 876 a 915 y 918 en seco.
+
+### La prueba de que abajo es igual
+
+Doce finales con rachas, con su rodadura y su autofreno, y veinticuatro carreras con
+rachas —la mitad, despegues hasta 900 m; la otra, abortadas— de cada uno de los ocho
+aviones, a cota cero y a la de Los Rodeos (618 m), con huella de la posición, la
+velocidad, la actitud, los giros, lo que da el motor y el empuje en cada paso, contra
+91a7b015: **las dieciséis parejas de huellas, iguales**. El control —una constante de
+tiempo movida una billonésima— cambia las diez de los aviones de turbina, finales y
+carreras, y no las seis de pistón, que no tienen inercia. Sin reversa en ellas, que es
+lo que cambia. El modelo con la reversa puesta tampoco: lo que cambia es lo que le
+llega.
+
+### Lo que queda
+
+- **Con un motor parado, la reversa empuja como con todos**, y sin guiñar: ni la pieza
+  ni el modelo miran qué motores van.
+- **Lo que empuja el motor hacia delante mientras se abre** es lo que le quede al
+  bajar del gas, como estaba: en un despegue abortado, uno o dos segundos.
+- **El combustible de la reversa**: no se quema más con ella puesta.
+- **La reversa de ralentí**, que se usa de noche y en pista larga, no está: es a fondo
+  o nada.
