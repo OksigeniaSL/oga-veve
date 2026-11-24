@@ -241,8 +241,8 @@ describe("la plataforma de la T4 de Barajas", () => {
     const pav = pavimentoDibujado(antes.aerodrome!);
     const xyDe = (ref: string) => puestos.find((q) => q.ref === ref)!.xy;
     const rumbo = cabeceras(antes).find((r) => r > 270 || r < 90)!;
-    const del532 = empujeDe(antes, rumbo, jaz90, xyDe("532"))!;
-    expect(fueraDelPavimento(jaz90, del532.empuje.poses, pav).metros).toBeGreaterThan(20);
+    // Del 532 no hay ya empuje que valga: el de antes iba treinta metros por la hierba.
+    expect(empujeDe(antes, rumbo, jaz90, xyDe("532"))).toBeNull();
     const elegido = empujeDe(antes, rumbo, jaz90, null)!;
     expect(elegido.en).toEqual(xyDe("545"));
     expect(fueraDelPavimento(jaz90, elegido.empuje.poses, pav)).toEqual({ metros: 0, alAcabar: 0 });
