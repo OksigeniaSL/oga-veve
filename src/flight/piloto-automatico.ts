@@ -219,6 +219,82 @@ const HOLGURA_DEL_MORRO = (4 * Math.PI) / 180;
 const POR_MORRO = 0.8;
 
 /**
+ * Y cuánto giro pide cada radián de trayectoria **cuando se sabe lo que tarda
+ * el camino**, 1/s: la mitad de `POR_MORRO`. Ver `loQueTardaElCamino`.
+ *
+ * Contando con ese retraso, entre lo que se pide y el camino ya solo queda el
+ * lazo del morro, y dos integradores en fila, uno a la mitad de ganancia que el
+ * otro, quedan amortiguados en siete décimas: cogen lo pedido sin pasarse.
+ */
+const POR_TRAYECTORIA_ANTICIPADA = POR_MORRO / 2;
+
+/** Lo que se suaviza la carga medida, s: lo que tarda en notarse desde el asiento. */
+const PARA_MEDIR_LA_CARGA = 0.3;
+
+/** Y lo que se suaviza lo que tarda el camino, s: cambia con la velocidad, no con el bache. */
+const PARA_MEDIR_LO_QUE_TARDA = 3;
+
+/** Lo más que se cuenta que tarda, s. El que más, el JAZ 110 en crucero: 2,7. */
+const TARDA_COMO_MUCHO = 3;
+
+/**
+ * **Lo que tarda el camino en seguir al morro**, s, o `null` si no se sabe.
+ *
+ * Al subir el morro, el avión no cambia de camino en el acto: gana ángulo de
+ * ataque, con él sustentación de más, y esa es la que curva la trayectoria,
+ * con la constante de tiempo `V·(α − α₀)/g` —lo que sostiene ahora, en metros
+ * por segundo de vertical, partido por un g—. Dos segundos y medio en el JAZ 90
+ * en final, seis décimas en la avioneta.
+ *
+ * **El lazo del medio no lo contaba y se pasaba** (#192, H89). Miraba la
+ * trayectoria de ahora y acumulaba morro mientras faltara; cuando el camino
+ * llegaba, el morro ya llevaba tres o cuatro segundos de más. Medido en la
+ * mesa del arco (`scripts/mesa-del-arco.mjs`) con el JAZ 90 y las rachas de
+ * Los Rodeos, ya alineado y con el aire quieto esos diez segundos: pedía
+ * bajar 4,6 m/s y bajó 6,1, y de vuelta. La misma final pasaba la puerta de los
+ * quinientos pies bajando 3 o 5,3 según dónde la pillara el vaivén.
+ *
+ * Un camino que va detrás del morro con un retraso `T` llegará, sin tocar
+ * nada, a `γ + T·γ̇`, y `γ̇` es la carga de más, que el avión siente en el
+ * acto. Así que lo que falta se mide contra eso: es el término de aceleración
+ * normal de cualquier canal de cabeceo, y lo que hace quien vuela, que
+ * empieza a soltar antes de llegar.
+ *
+ * Sin el ángulo de sustentación nula —el modelo sencillo, o quien no lo da—
+ * no se sabe, y el automático vuela como volaba.
+ */
+function loQueTardaElCamino(e: Estado, v: number, trayectoria: number): number | null {
+  if (e.anguloSinSustentacion === undefined) return null;
+  // El ángulo de ataque: el morro sobre el camino, y lo que pone el aire.
+  const alfa = e.cabeceo - trayectoria - porElAire(e, v);
+  return entre((v * (alfa - e.anguloSinSustentacion)) / GRAVITY, 0, TARDA_COMO_MUCHO);
+}
+
+/**
+ * Desde cuándo se anticipa entero: con el doble del timón que el refuerzo llega
+ * a suplir. Ver `cuantoSeAnticipa`.
+ */
+const ANTICIPA_ENTERO_DESDE = 2;
+
+/**
+ * **Cuánto se anticipa el camino**, de cero a uno: nada donde el refuerzo del
+ * servo ya no llega a suplir lo que le falta al timón.
+ *
+ * Contar con lo que tarda el camino pide que el morro obedezca antes que él. El
+ * del JAZ 120 con todo fuera no obedece: su timón mueve 0,14 rad/s² y el refuerzo
+ * está en su tope (`REFUERZO_MAXIMO`), y anticipando entero se columpiaba a ±0,3
+ * g en aire quieto. Ahí vuela con la ley de siempre, y según gana presión
+ * dinámica —en el circuito, en crucero— entra la anticipación. El JAZ 110 en
+ * final, con 0,23, lleva cuatro décimas: entera le da lo mismo de puerta y
+ * aprieta un tercio más con las rachas flojas.
+ */
+function cuantoSeAnticipa(e: Estado): number {
+  if (!e.autoridadDelTimon) return 1;
+  const llega = (e.autoridadDelTimon * REFUERZO_MAXIMO) / AUTORIDAD_SUFICIENTE;
+  return entre((llega - 1) / (ANTICIPA_ENTERO_DESDE - 1), 0, 1);
+}
+
+/**
  * **El morro que pide el aire que sube o baja**, rad: el que deja el ala con
  * el mismo ángulo de ataque, y con él el avión en la misma trayectoria
  * respecto al suelo.
@@ -701,6 +777,12 @@ export interface Memoria {
   gases: MemoriaDeGases;
   /** Cuánto lleva enganchado, s. Ver `EMBRAGUE`. */
   enganchado: number;
+  /** El ritmo de subida del fotograma de antes, m/s, para medir la carga. */
+  vertical: number;
+  /** Lo que se acelera hacia arriba, m/s², suavizado. Ver `loQueTardaElCamino`. */
+  acelera: number;
+  /** Lo que tarda el camino en seguir al morro, s, o `null` si no se sabe. */
+  tarda: number | null;
 }
 
 /** La memoria de un automático recién enganchado: aún no ha cogido nada. */
@@ -715,6 +797,9 @@ export function memoriaNueva(): Memoria {
     alabeo: 0,
     gases: memoriaDeGasesNueva(),
     enganchado: 0,
+    vertical: 0,
+    acelera: 0,
+    tarda: null,
   };
 }
 
@@ -793,6 +878,9 @@ export function mandosPara(
   // Una sola medida de la aceleración para el morro y para los gases.
   medirLaAceleracion(m.gases, e.velocidad, dt);
   m.enganchado += dt;
+  // Y lo que subía antes, para la carga. Ver `loQueTardaElCamino`.
+  const antes = recienCogido ? e.vertical : m.vertical;
+  m.vertical = e.vertical;
 
   if (o.rumbo !== null) {
     /*
@@ -868,7 +956,23 @@ export function mandosPara(
       const trayectoriaPedida = Math.asin(acotar(m.ritmo / v, 0.5));
       const trayectoria = Math.asin(acotar(e.vertical / v, 1));
       const tope = Math.min(GIRO_MAXIMO, (CARGA_TOPE * GRAVITY) / v);
-      const giro = acotar(POR_TRAYECTORIA * (trayectoriaPedida - trayectoria), tope);
+      /*
+       * **Y lo que el camino va a cambiar ya solo, con el morro que lleva.**
+       * Ver `loQueTardaElCamino`.
+       */
+      const tarda = loQueTardaElCamino(e, v, trayectoria);
+      const acelera = acotar((e.vertical - antes) / Math.max(dt, 1e-3), GRAVITY);
+      m.acelera += (acelera - m.acelera) * Math.min(1, dt / PARA_MEDIR_LA_CARGA);
+      m.tarda =
+        recienCogido || m.tarda === null || tarda === null
+          ? tarda
+          : m.tarda + (tarda - m.tarda) * Math.min(1, dt / PARA_MEDIR_LO_QUE_TARDA);
+      const cuanto = m.tarda === null ? 0 : cuantoSeAnticipa(e);
+      const giro = acotar(
+        (POR_TRAYECTORIA + (POR_TRAYECTORIA_ANTICIPADA - POR_TRAYECTORIA) * cuanto) *
+          (trayectoriaPedida - trayectoria - (cuanto * (m.tarda ?? 0) * m.acelera) / v),
+        tope,
+      );
       /*
        * **Y lo que pide el aire, aparte y sin esperar al variómetro.** Ver
        * `porElAire`. Va al mismo ritmo que el resto del morro y dentro del
@@ -938,6 +1042,8 @@ export function mandosPara(
     m.aire = porElAire(e, v);
     m.viraje = porElViraje(e);
     m.morro = e.cabeceo - m.aire - m.viraje;
+    m.acelera = 0;
+    m.tarda = null;
   }
 
   /*
