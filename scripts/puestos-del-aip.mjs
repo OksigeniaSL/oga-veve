@@ -287,7 +287,7 @@ const REPETIDO = 20;
 
 /** Si el punto cae dentro de una plataforma de la ficha. */
 function enLaPlataforma(ficha, [x, y]) {
-  return (ficha.aprons ?? []).some((a) => {
+  return [...(ficha.aprons ?? []), ...(ficha.plataformasDeducidas ?? [])].some((a) => {
     let dentro = false;
     const g = a.polygon;
     for (let i = 0, j = g.length - 1; i < g.length; j = i++)

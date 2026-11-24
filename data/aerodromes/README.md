@@ -87,6 +87,25 @@ envergadura no se rueda por una calle (`calle`, su letra) o por una línea
 `salidasPorInterseccion`, y se conserva al volver a extraer. Lo lleva
 Lanzarote (ADR 0025, enmienda H79).
 
+### Las plataformas que OpenStreetMap dibuja a medias
+
+Una plataforma dibujada como relación `multipolygon` trae su contorno en los
+miembros, y `out tags geom` no los da: hasta la H81 el extractor pedía eso, y a
+Barajas le faltaban seis. Ahora pide `out body geom`. Para añadir a una ficha
+las que le falten sin rehacerla:
+
+```
+node scripts/plataformas-de-osm.mjs LEMD --crudo carpeta   # pregunta a Overpass y guarda lo que trae
+node scripts/plataformas-de-osm.mjs LEMD --de carpeta      # lo vuelve a leer de ahí
+```
+
+Y donde OpenStreetMap solo dibuja los puestos, en franjas, y la carta de
+puestos del AIP dibuja la plataforma seguida, lo que falta va escrito a mano en
+`plataformasDeducidas`, con la carta y de dónde sale su contorno: los ejes de
+las calles de plataforma y los puestos. El juego las junta con las de
+OpenStreetMap (`plataformas-cosidas.ts`) y la extracción las conserva. Las llevan
+Barajas, Los Rodeos y Tenerife Sur (ADR 0025, enmienda H81).
+
 ## La rejilla del pavimento, horneada
 
 Cada `<id>.pavimento.bin` es la rejilla de dos metros con la que las ruedas

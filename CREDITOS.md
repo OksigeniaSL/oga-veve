@@ -182,6 +182,17 @@ cada puesto de la ficha (`scripts/puestos-del-aip.mjs`, ADR 0025, enmiendas
 H60f y H75). La línea del T7 de Lanzarote, en medio de las del T3 y el T4, es
 la que dibuja la carta GCRR PDC 1 (WEF 01-OCT-26). Son hechos de cada puesto, como los de arriba: no se reproduce la carta.
 
+El contorno de las cinco plataformas de Barajas que van en `plataformasDeducidas` de
+`data/aerodromes/lemd.aero.json` —la de la T4, la de sus puestos PE, la de la T4S, la de
+la T1–T3 y la de su dique sur— es **deducido**: los ejes de las calles de plataforma y los
+puestos, que son de OpenStreetMap (ODbL), donde las cartas AD 2-LEMD PDC 2.1 (WEF 01-OCT-26)
+y PDC 1.1 (WEF 29-OCT-26) dibujan la plataforma seguida, sin borde de pavimento entre medias.
+Lo mismo la franja de Los Rodeos entre la plataforma comercial y la R (AD 2-GCXO PDC 1.1,
+WEF 29-OCT-26) y la de Tenerife Sur del H37 al H43 (AD 2-GCTS PDC 1.1, WEF 11-JUN-26). La
+carta no se reproduce: dice que ahí no hay hierba, y dónde la hay. Las plataformas R-1, R-2
+y R-4 a R-7 de la T1–T3 de Barajas son de OpenStreetMap: las relaciones 18864812 a 18864817,
+leídas el 24-NOV-2026.
+
 Y **el ángulo de la senda de cada pista** —al que va reglado su PAPI y por el
 que baja su ILS o su aproximación RNP con guía vertical— sale de los
 apartados AD 2.14 y AD 2.19 de la ficha de cada aeródromo, y de sus cartas
