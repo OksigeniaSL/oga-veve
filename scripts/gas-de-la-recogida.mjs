@@ -47,6 +47,12 @@
  * que la recogida sostiene la palanca—, gas cero; y desde que ha flotado una
  * vez, el de la senda ya no vuelve. Lo de la racha que lo hunde después sigue
  * pidiendo su gas, como en H34d.
+ *
+ * **Esto es del de pistón, que da el empuje en el mismo paso.** Hasta H72
+ * también era el del JAZ 50 y el JAZ 60, y desde que su turbina tarda cuatro
+ * segundos (ADR 0034) uno de cada tres tocaba a más de 2 m/s: el gas de la racha
+ * llegaba cuando ya no hacía falta, y el que se quitaba al flotar, tampoco volvía
+ * a tiempo. El suyo está en `recogida-del-turbohelice.mjs`.
  */
 
 /**

@@ -353,3 +353,20 @@ de entrega. Tampoco el 747 en Gran Canaria ni el JAZ 40 con la pista ocupada.
 
 El vitest entero, una vez y al final, con todo lo de aquí: 576 ficheros, 11.529
 pruebas en verde, 31 saltadas. `tsc` limpio.
+
+## Enmienda H72 (24-11-2026): el bimotor de turbina libre, que se quedó con la mano del pistón
+
+Al meter el motor que tarda se retocaron las leyes del banco de los reactores y
+no las del JAZ 50 y el JAZ 60, que llevan un PT6A y tardan cuatro segundos: su
+recogida siguió siendo la del bimotor de hélice de H34d, H45 y H45b, afinada con
+el empuje llegando en el mismo paso, y cazaba la racha con el gas. En la mesa
+(`scripts/mesa-de-la-recogida.mjs`), las tomas de más de 2 m/s del JAZ 50 van del
+11 % con el motor al instante al 34 % con el suyo; las del JAZ 60, del 9 al 37; y
+en el navegador fallaron cuatro vuelos enteros de siete. El número de la ficha
+no se ha tocado, ni el modelo: es la mano del banco, y lo que cambia y lo volado
+está en la enmienda H72 del ADR 0027.
+
+**Y el gas de la final** de esos dos, también: llevaban 0,08 y 0,03, los de la
+hélice que da el empuje al momento, y en un vuelo fue de 0,13 a 1 con el empuje
+siempre detrás. Ahora, 0,12 a la tendencia y 0,01 a lo acumulado, por lo mismo que
+los reactores.
