@@ -2426,15 +2426,143 @@ OpenStreetMap ni se usa.
 **El T34 y el T35**, con la plataforma leída, entran como puestos de contacto: la carta los da a remolcar por la I-12 «hasta la
 altura de T-33», hacia delante, y el juego los empuja al N por ella. Ver la H79.
 
+## Enmienda (24-11-2026, H83): Pettirossi, sus puertas en el punto que publica la DINAC
+
+### El caso
+
+Lo que dejaron la H60f y la H81 en Silvio Pettirossi: los puestos de las seis puertas repetidos —cada uno en su nodo de
+OpenStreetMap y otra vez, sin nombre, en el centro de su línea de entrada, como en las fichas de antes de #191— y 13 de los 58
+empujes del barrido mal. Por la 02 el plan sacaba a los tres reactores de una de las copias, la de la línea de la 2.
+
+### La fuente, leída otra vez
+
+El AIP Paraguay de la DINAC en vigor a 24 de noviembre de 2026 es la AMDT AIRAC 02/2026, con efecto el 1 de octubre, en el
+paquete `AMDT_AIRAC_02_2026.rar` que enlaza dinac.gov.py. Su **AD 2.1-14.2, «Plano de estacionamiento y atraque de
+aeronaves», es del 01 OCT 2026** —la H60f leyó la del 07 AUG 2025— y da lo mismo: la tabla de las seis puertas y sus coordenadas.
+
+| | Publicado | A cuánto queda el puesto de la ficha, y cómo |
+|---|---|---|
+| GATE 1 | S 25°14'33,59" W 057°30'51,45" | 7,6 m; 3,6 a la izquierda de su línea |
+| GATE 2 | S 25°14'34,69" W 057°30'53,68" | 4,7 m; 2,5 a la derecha |
+| GATE 3 | S 25°14'32,46" W 057°30'55,43" | 4,6 m; 4,0 a la derecha |
+| GATE 4 | S 25°14'30,50" W 057°30'54,41" | 3,7 m; 2,7 a la izquierda |
+| GATE 5 | S 25°14'27,84" W 057°30'53,17" | **23,5 m; 23,1 a la izquierda** |
+| GATE 6 | S 25°14'26,52" W 057°30'53,57" | **25,4 m; 21,6 a la izquierda** |
+
+**No publica la salida, el mayor avión ni el APROAR**, ni en esa hoja ni en el AD 2.1-8, el 2.1-9 o el 2.1-20, que solo dice
+que el remolque o el retroceso se piden en 121.9 o 118.1. Sí dibuja **una pasarela en cada una de las seis puertas** y en ningún
+otro sitio. La hoja es un dibujo sin texto: la tabla está leída de la página ampliada y pasada a mano a `aip/sgas.pdc.json`.
+
+**La 5 y la 6 no son donde para la rueda de morro.** La DINAC da puertas, y las de la 5 y la 6 caen a 4,3 y 4,8 m del codo de su
+pasarela en OpenStreetMap (`aeroway=jet_bridge`). En una ortofoto, mirada para esto y sin guardar, hay un reactor parado en la
+5 con el morro en el puesto de la ficha, sobre su línea, y los dos puntos publicados quedan en el arranque de la pasarela.
+Las de la 2 a la 5 van por lo pintado; la de la 6 no: la pintada, y la que dibuja la hoja, dan la vuelta por el norte y llegan
+de cara al sur; la de OpenStreetMap va recta desde la L.
+
+### Decisión
+
+1. **Las seis puertas, con lo del AIP y la regla de la H75** (`juntar`): la 1, la 2, la 3 y la 4 están en su punto —a menos de los
+   diez metros de `LEJOS`, que es lo que da por estar en él—; la 5 y la 6 no caen en su línea ni en su prolongación, así que no se
+   mueven y lo dicen (`lejos`, 23 y 25): para ellas sigue la pared.
+2. **De contacto, las seis y ninguna más** (`CONTACTO`): la hoja dibuja la pasarela. Los demás puestos de la ficha no lo son,
+   como en Barajas o Los Rodeos. La salida y el mayor avión van sin dato, y con ellos manda la regla de siempre.
+3. **Se entra por su raya si la carta lo da por de pasarela y no dice la salida** (`seEntraPorSuRaya`). Es lo que una pasarela
+   dice sola: se embarca con el avión parado sobre su línea, con el morro hacia dentro, y de ahí no se sale hacia delante. En
+   España no cambia nada: ahí los que no tienen salida son los que no están en la carta.
+4. **Sin copias** (`copiasDeUnNodo`, en `scripts/lineas-de-entrada.mjs`): el puesto sin nombre que es el centro de una vía sin
+   `ref` que pasa por un nodo con nombre, si la ficha trae ese nodo, es él otra vez, y se quita. Son seis, los de las seis
+   puertas: 62 puestos → 56. Y `puestosDeOsm` ya no los vuelve a sacar: daba por línea de un nodo solo la de su mismo `ref`, y en
+   Pettirossi las vías no llevan ninguno.
+5. **Un reactor de línea, sin pasaje, también a un puesto de la carta** (`puestosDeLinea`), si publica alguno en el que quepa. Al
+   quitar las copias, el JAZ 110 y el JAZ 120 se iban por la 20 de la 6 al centro de un ramal que lleva a la 5. De las 418 claves
+   del puesto de salida cambian ocho, todas de Pettirossi (abajo).
+
+### Los 13, uno a uno
+
+| Puesto | Avión y pista | Por qué salía mal | Ahora |
+|---|---|---|---|
+| La 2 | los tres, 02 y 20 (6) | la regla de la pared: su línea entra a 100° con la terminal a la izquierda —la pared más cercana, a 43 m y a 85° del morro— y sin fachada delante; el avión se ponía mirando a la esquina y la raya le salía de lado | **los 6 bien**: sobre su línea, de 162 a 173 m hasta la calle de la plataforma, al 213 por la 02 y al 011 por la 20 |
+| Copia de la 2, en (391, −302) | los tres, 20 (3) | no es un puesto: el centro de la línea de la 2, con la misma pared | quitada; de ella salía el plan por la 02 |
+| Copia de la 1, en (478, −346) | el JAZ 90 y el JAZ 110, 02 y 20 (4) | no es un puesto, y ni siquiera está sobre la línea de la 1: la media de sus vértices cae a dos metros, sin línea propia | quitada |
+
+### El barrido, el plan y los metros
+
+Los tres reactores, las dos cabeceras y cada puesto de contacto, antes —main en 477c30ff— y después:
+
+| Campo | Empujes | Bien | De lado | En un edificio | Pisan fuera | APROAR | Metros de media |
+|---|---|---|---|---|---|---|---|
+| Pettirossi | 58 → **36** | 45 → **36** | 13 → **0** | 0 → 0 | 1 (0,5 m) → 1 (0,5 m) | — | 1.901 → 1.926 |
+| Los Rodeos | 18 | 18 → 18 | 0 | 0 | 0 | — | 1.710 |
+| La Palma | 26 | 26 → 26 | 0 | 0 | 0 | — | 407 |
+| Gran Canaria | 34 | 32 → 32 | 2 | 0 | 0 | — | 1.811 |
+| Tenerife Sur | 30 | 30 → 30 | 0 | 0 | 0 | — | 1.894 |
+| Lanzarote | 30 | 30 → 30 | 0 | 0 | 0 | 30 de 30 | 1.535 |
+| Barajas | 842 | 836 → 836 | 6 | 6 | 7 (200 m) | 828 de 842 | 3.985 |
+| **Todos** | 1.038 → **1.016** | 1.017 → **1.008** | 21 → **8** | 6 → 6 | 8 → 8 | 858 de 872 | |
+
+**Ninguna fila de bien a mal.** Seis de mal a bien, las de la 2. Las 22 que salen de Pettirossi son las de cuatro copias, quince que iban
+bien y siete que no. De las 36 que se quedan, treinta salen igual, y las seis de la 2 ruedan 7 m más por la 20 y 114 más por la
+02: antes salían hacia la J de lado, y ahora van a la calle de la plataforma. Sobre su raya pintada, las 36 (antes, 42 de 58). En los demás
+campos, los 980 empujes iguales, fila a fila.
+
+**El plan, 42 de 42.** Cambian tres: por la 02, los tres reactores, de la copia de la 2 (1.564 m) a la **3 (1.716 m, con 103–109 m
+de empuje y el morro al 193)**. Por la 20 siguen en la 6 (1.853 m).
+
+`puesto-de-salida-de-cada-campo.json`: 8 de sus 418 claves, todas de Pettirossi: las tres del plan por la 02, y sin pasaje el JAZ 90, el
+JAZ 110 y el JAZ 120 por la 02 —de la plataforma 2, que la DINAC rotula «zona militar», y de la copia, a la 3 y a la 2—, y el JAZ 60
+y el JAZ 90 por la 20, de la copia de la 6 al ramal de al lado y a la 6. Las avionetas y el JAZ 50, igual.
+
+**El pavimento**: la ficha montada da las mismas 22 plataformas, punto a punto, y la huella sale de ellas: las rejillas no cambian.
+
+### Lo medido
+
+- **La mesa**: los dos barridos con la medida de la prueba (`comoAcaba`), fuera de vitest; el de antes da lo publicado en la H81
+  (58, 45 y 13 en Pettirossi; 842, 836 y 6 en Barajas).
+- **En planta**, sobre la ficha montada: los empujes de la 2 por las dos cabeceras, el de la 3 y el de la 6.
+- **El reactor del tráfico**: por la 02 salía de una copia y sale de la 1; por la 20, de la 6, como antes; 37 m de empuje, sobre
+  pavimento.
+- **Las rejillas**: `npm run pavimento -- pettirossi --comprobar`, igual byte a byte (huella 086e4af7a1095b25), y el juego la usó al
+  arrancar. No se hornea nada: los demás campos no cambian de ficha.
+- **Pruebas nuevas**: la línea sin `ref` que acaba en un nodo (`puestos-de-osm.test.mjs`); se entra por su raya en un puesto de
+  pasarela sin salida publicada; las seis puertas, en su punto o con `lejos`, una vez cada una y ninguna más de contacto; nada en
+  la línea de una puerta; la 2 sobre su línea; y Pettirossi en las dos que recorren los campos del AIP, la de cada puesto de
+  contacto por su raya y la del puesto que elige el plan.
+- **Vitest, por partes** y con el código terminado: `src/world` entero, 194 ficheros; lo que no es de `src/world` ni de
+  `src/flight`, 124 ficheros y 2.466 pruebas; una octava parte del total (75 ficheros, 1.697 pruebas), que coge parte de
+  `src/flight`; y, de los 23 ficheros de `src/flight` que tocan el plan, el tráfico o Pettirossi, unas 350 pruebas en verde antes
+  de cortarlos por tiempo, sin acabar. Ninguna en rojo. **El resto de `src/flight` no se pasó**: el turno llegó tarde. Hay que
+  pasarlo antes de publicar.
+- **El remolque de quien juega en Pettirossi**, con el JAZ 90, la tarjeta Intel y solo el peldaño de Guyrami: **todo en orden** por
+  las dos. **Por la 02, de la 3**: −1,00 contra el morro, 109 de 109 m empujado, giro de 90° con radio 11,5 m, rumbo al acabar 193°
+  y 0° en los primeros treinta metros rodando; el morro, parado, a 24,3 m de la terminal y a 5° de ella. **Por la 20, de la 6**: −0,99,
+  247 de 247 m, giro de 102°, rumbo al acabar 12° y 1°. En los dos, 0,0 m fuera del pavimento, ninguna rueda al acabar y nada dentro
+  de un edificio. En las capturas de la 02 el avión está de cara a la terminal, con el señalero delante, al acabar en la calle de la
+  plataforma con la raya por delante y el tractor apartado, y rueda detrás del sígame hacia la J; en las de la 20, en la B, con sus
+  letreros a los lados y la raya derecha por ella. No se voló el peldaño de cabina ni la 2, de la que el plan no sale.
+
+### Lo que queda
+
+**La línea de la 6**, que en OpenStreetMap no es la pintada: con la de la hoja —por el norte, de cara al sur, con la pasarela a la
+izquierda— el plan por la 20 no saldría recto por la L, con 231–247 m de empuje. La hoja la dibuja sin cotas; pide dibujarla en
+OpenStreetMap o deducirla, y su barrido. Y su medio metro fuera del pavimento, el del JAZ 120, es de ahí.
+
+**Los 50 puestos sin nombre**, que siguen en el centro de su vía: siete son ramales que llevan a las puertas —por la regla 5 de
+`puestosDeOsm` no son puesto de nadie—, y 43 de las plataformas del sur, con la parada en la punta de su línea y no en el medio.
+Rehechos con `puestosDeOsm` quedan 38, y las avionetas se quedan sin sitio en la plataforma 1: la regla de «lejos de toda pared»
+las manda a una puerta con pasarela, y quitándoles las puertas, a la zona militar, de 451 m a la C hoy a 1.520, y 2.874 el JAZ 40.
+Probado y no metido. El AIP (AD 2.1-20) las manda a la «zona de estacionamiento temporal» con señalero, a los hangares y, si no
+caben, a la plataforma norte, sin coordenadas: falta ese sitio.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
 no da ruta, que es la regla; un avión de línea de allí la tendría. Y el banco de Los Rodeos por la 30 con el banco nuevo,
 que no se voló. Ver «Lo que queda» de la H66.
 
-**Pettirossi, a su punto publicado** (H60f): la DINAC publica las coordenadas de las seis puertas (AD 2.1-14.2, 07 AUG
-2025) y nada más; el 5 y el 6 quedan a 23 y 25 m de la ficha. Moverlos pide su barrido y el banco de Asunción. Sus
-puestos siguen en el centro de su línea de entrada y repetidos con su nodo, como los de las fichas de antes de #191.
+**Pettirossi** (H83): las seis puertas, con lo de la DINAC y sin repetir. La línea de la 6, que en OpenStreetMap no es la
+pintada, y los cincuenta puestos sin nombre, que siguen en el centro de su vía hasta que las avionetas tengan sitio. Ver «Lo que
+queda» de la H83.
+
 La Palma y Lanzarote están en su punto desde la H75. El APROAR del AIP lo usa el empuje desde la H76. De
 Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen línea en OpenStreetMap; el plan no los elige. El
 538, el 539 y del 583 al 586 salen desde la H81.
@@ -2445,7 +2573,7 @@ tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H8
 **Barajas, sobre pavimento** (H81): el 501 por la 18 y el 537 con los dos grandes, que pisan fuera y el plan no elige. Ver «Lo
 que queda» de la H81.
 
-**Los puestos de las fichas de antes de #191**, en Pettirossi: ver arriba. Los de Barajas, Gran Canaria, La Palma y
+**Los puestos de las fichas de antes de #191**: los de Pettirossi sin nombre, ver arriba. Los de Barajas, Gran Canaria, La Palma y
 Lanzarote están en su parada desde la H60f y la H75, salvo los catorce de Barajas cuyo punto publicado no cae en su raya
 y el 7 de Lanzarote. Rehacerlos con `puestosDeOsm`, como los de Los Rodeos y Tenerife Sur, mueve el puesto del que se sale en esos campos y
 pide su barrido y sus bancos: con los 440 de los cuatro campos con respuesta guardada llevados a su parada, el barrido
