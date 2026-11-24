@@ -899,6 +899,10 @@
       "ms": 2520,
       "h": "f43b924db4"
     },
+    "ejercicio.reventon-al-tomar.antes": {
+      "ms": 17507,
+      "h": "0cecdc6bb0"
+    },
     "ejercicio.reventon.antes": {
       "ms": 19107,
       "h": "133cf1ca7c"
@@ -930,6 +934,34 @@
     "ejercicio.reventon.tren": {
       "ms": 8507,
       "h": "e8cb3209d0"
+    },
+    "ejercicio.rueda.bien": {
+      "ms": 10707,
+      "h": "becbb56f3d"
+    },
+    "ejercicio.rueda.bienFuera": {
+      "ms": 8607,
+      "h": "22505f425a"
+    },
+    "ejercicio.rueda.derecha": {
+      "ms": 3407,
+      "h": "aaecd2b517"
+    },
+    "ejercicio.rueda.freno": {
+      "ms": 4507,
+      "h": "a28fff7df7"
+    },
+    "ejercicio.rueda.izquierda": {
+      "ms": 3207,
+      "h": "d31f586528"
+    },
+    "ejercicio.rueda.para": {
+      "ms": 2932,
+      "h": "fa1483d002"
+    },
+    "ejercicio.rueda.rodando": {
+      "ms": 8307,
+      "h": "072eb5d0fb"
     },
     "ejercicio.rumbo.anochece": {
       "ms": 4207,
@@ -6677,6 +6709,30 @@
     ],
     "ejercicio.ave.bienParado": [
       "ejercicio.ave.bienParado"
+    ],
+    "ejercicio.reventon-al-tomar.antes": [
+      "ejercicio.reventon-al-tomar.antes"
+    ],
+    "ejercicio.rueda.izquierda": [
+      "ejercicio.rueda.izquierda"
+    ],
+    "ejercicio.rueda.derecha": [
+      "ejercicio.rueda.derecha"
+    ],
+    "ejercicio.rueda.freno": [
+      "ejercicio.rueda.freno"
+    ],
+    "ejercicio.rueda.para": [
+      "ejercicio.rueda.para"
+    ],
+    "ejercicio.rueda.rodando": [
+      "ejercicio.rueda.rodando"
+    ],
+    "ejercicio.rueda.bien": [
+      "ejercicio.rueda.bien"
+    ],
+    "ejercicio.rueda.bienFuera": [
+      "ejercicio.rueda.bienFuera"
     ]
   }
 }
