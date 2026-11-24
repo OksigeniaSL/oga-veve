@@ -5,12 +5,15 @@
  */
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, PANAMBI, PYKASU } from "./aircraft";
-import { campoConLamparaYSera, ejercicioPorId, ejerciciosPara } from "./ejercicios";
+import { campoConLamparaY7600, ejercicioPorId, ejerciciosPara } from "./ejercicios";
 import {
   ACUSE_EN,
   AlasQueContestan,
   CADA_CIFRA,
   cifrasMarcadas,
+  farosEnElAcuse,
+  GOLPE_DE_FAROS,
+  GOLPES_DE_FAROS,
   hayLampara,
   LA_TORRE_LO_VE,
   LamparaSinRadio,
@@ -23,6 +26,7 @@ import { loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
 import { Practica, type Lectura, type Suceso } from "./practica";
 import { valeHastaElPasoSiguiente } from "../audio/boca";
 import { esAfis, sinTorre } from "../world/aerodrome";
+import { lucesDelTrafico } from "../world/luces-del-trafico";
 import { oaciDe, SCENARIOS } from "../world/scenarios";
 
 const EN_SU_CIRCUITO: LoQueVeLaTorre = {
@@ -162,17 +166,43 @@ describe("las alas que contestan", () => {
   });
 });
 
+describe("los faros que contestan de noche", () => {
+  it("dos destellos: apagados, encendidos, apagados, encendidos, apagados, y como iban", () => {
+    const medio = (i: number) => farosEnElAcuse((i + 0.5) * GOLPE_DE_FAROS);
+    expect([0, 1, 2, 3, 4].map(medio)).toEqual([false, true, false, true, false]);
+    expect(medio(GOLPES_DE_FAROS)).toBeNull();
+  });
+
+  it("y ni antes de empezar ni después mandan ellos: van como siempre, por debajo de diez mil pies", () => {
+    expect(farosEnElAcuse(-0.1)).toBeNull();
+    expect(farosEnElAcuse(60)).toBeNull();
+    expect(lucesDelTrafico("volando", 300).aterrizaje).toBe(true);
+  });
+});
+
 describe("dónde y con qué se ofrece", () => {
-  it("en las avionetas de pistón, de Taguató para arriba, y en un campo con torre del SERA", () => {
-    expect(campoConLamparaYSera("GCXO")).toBe(true);
-    expect(campoConLamparaYSera("GCLP")).toBe(true);
-    for (const peldano of ["taguato", "taguato-ruvicha"] as const)
-      for (const a of [PYKASU, PANAMBI])
-        expect(ejerciciosPara(peldano, a, "GCXO").map((e) => e.id), `${a.id} ${peldano}`).toContain(
-          "fallo-de-radio",
-        );
-    for (const peldano of ["guyrami", "tuka"] as const)
-      expect(ejerciciosPara(peldano, PYKASU, "GCXO").map((e) => e.id)).not.toContain("fallo-de-radio");
+  it("en las avionetas de pistón, de Taguató para arriba, y en un campo con torre de España o de Paraguay", () => {
+    for (const oaci of ["GCXO", "GCLP", "SGAS", "SGES"]) {
+      expect(campoConLamparaY7600(oaci), oaci).toBe(true);
+      for (const peldano of ["taguato", "taguato-ruvicha"] as const)
+        for (const a of [PYKASU, PANAMBI])
+          expect(ejerciciosPara(peldano, a, oaci).map((e) => e.id), `${a.id} ${peldano} ${oaci}`).toContain(
+            "fallo-de-radio",
+          );
+      for (const peldano of ["guyrami", "tuka"] as const)
+        expect(ejerciciosPara(peldano, PYKASU, oaci).map((e) => e.id), oaci).not.toContain("fallo-de-radio");
+    }
+  });
+
+  it("en Paraguay, los de torre con radar publicado, y ninguno más: Encarnación no lo tiene, y los demás son AFIS, sin servicio o privados", () => {
+    const abiertos = SCENARIOS.filter((e) => e.pais === "py" && campoConLamparaY7600(oaciDe(e))).map((e) => oaciDe(e));
+    expect([...abiertos].sort()).toEqual(["SGAS", "SGES"]);
+    expect(campoConLamparaY7600("SGEN")).toBe(false);
+  });
+
+  it("y los inventados, nunca: sin aeródromo no hay torre, ni país del que leer la norma", () => {
+    for (const e of SCENARIOS.filter((s) => s.pais === "inventado"))
+      expect(campoConLamparaY7600(oaciDe(e)), e.id).toBe(false);
   });
 
   it("ni en los de turbina, ni en el fumigador, ni en un helicóptero", () => {
@@ -184,11 +214,13 @@ describe("dónde y con qué se ofrece", () => {
     }
   });
 
-  it("ni en un AFIS, ni sin torre, ni en Paraguay mientras no se lea la fuente del 7600 allí", () => {
-    expect(campoConLamparaYSera("GCGM")).toBe(false); // La Gomera, AFIS
-    expect(campoConLamparaYSera("SGAS")).toBe(false); // Asunción: la DINAC leída no manda el 7600 en VFR
-    expect(campoConLamparaYSera(null)).toBe(false);
-    expect(campoConLamparaYSera("XXXX")).toBe(false);
+  it("ni en un AFIS, aunque tenga pistola de luces, ni sin torre, ni fuera de los campos que hay", () => {
+    expect(campoConLamparaY7600("GCGM")).toBe(false); // La Gomera, AFIS
+    // Concepción, AFIS: con su pistola, la verde fija no autoriza, dice que la pista está libre (DINAC R 11).
+    expect(campoConLamparaY7600("SGCO")).toBe(false);
+    expect(campoConLamparaY7600("SGAY")).toBe(false); // Ayolas, sin torre
+    expect(campoConLamparaY7600(null)).toBe(false);
+    expect(campoConLamparaY7600("XXXX")).toBe(false);
   });
 
   it("y `hayLampara` dice lo mismo que `sinTorre` y `esAfis` en todos los escenarios", () => {

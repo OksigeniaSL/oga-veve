@@ -1227,7 +1227,8 @@ Canarias: **el SERA**. Dónde no coinciden:
   Paraguay todavía no**: el 7600 en VFR no está en lo leído de la DINAC, y lo
   que no está en una fuente leída no entra. Cuando se lea su R10, se abre.
   La aeronáutica no cambia de un lado al otro del mar —la tabla de las luces
-  es la misma—, pero lo que se dice tiene que estar escrito.
+  es la misma—, pero lo que se dice tiene que estar escrito. *(Leído y abierto
+  en la enmienda H86.)*
 - **El avión**: las avionetas de pistón, el JAZ 20 y el JAZ 40. Son las que
   vuelan circuitos en visual, que es donde se aterriza con la lámpara. Un
   avión de línea vuela por instrumentos y, sin radio, sigue su autorización
@@ -1380,6 +1381,7 @@ la final que no se coge recién despegado y la práctica paso a paso.
 - **Grabar las frases** de abajo.
 - **Paraguay**: abrir el ejercicio en Asunción, Encarnación y Minga Guazú
   cuando se lea dónde manda la DINAC el 7600 en VFR (su R10, volumen II).
+  *(Hecho en la H86.)*
 - **Los faros**: de noche contesta la instructora, porque quien vuela no
   tiene interruptor de faros. El día que lo tenga, se contestan con dos
   destellos suyos.
@@ -2392,3 +2394,167 @@ la misma del reventón). **Sin grabar.**
 - `ejercicio.rueda.bien` y `ejercicio.rueda.bienFuera`
 
 Y en el hangar, que solo se lee: `hangar.ejercicio.reventon-al-tomar`.
+
+## Enmienda H86 (24-11-2026): el fallo de radio, en Paraguay
+
+### El caso
+
+La H71 dejó el ejercicio solo en los campos de España: en el Reglamento del Aire
+de la DINAC el 7600 sale en el caso IFR y nada más, y lo que remite a su R 10 no
+se había leído. «Cuando se lea su R10, se abre». Y quedaban sin volar la noche
+—los faros en vez de las alas— y Taguató Ruvichá.
+
+### La norma, leída
+
+En los PDF de la DINAC (`dinac.gov.py`, los de su página de reglamentos a
+24-11-2026), y el AIP en la enmienda que publica, la AIRAC 02/2026. La página es
+la impresa en el documento.
+
+- **R 2, *Reglamento del Aire***, séptima edición (2024), Resolución 1854/2024,
+  3.6.5.2, p. 16/19: «Si la falla de las comunicaciones impide cumplir con lo
+  dispuesto en 3.6.5.1, la aeronave observará los procedimientos de falla de
+  comunicaciones orales del **DINAC R10, Volumen II**, y aquellos de los
+  procedimientos siguientes que sean apropiados. La aeronave intentará comunicarse
+  con la dependencia […] utilizando todos los demás medios disponibles. Además, la
+  aeronave, cuando forme parte del tránsito de aeródromo en un aeródromo
+  controlado, se mantendrá vigilante para atender a las instrucciones que puedan
+  darse por medio de señales visuales». 3.6.5.2.1 a): en VMC, seguirá en VMC,
+  «aterrizará en el aeródromo adecuado más próximo y notificará su llegada». 3.2.5
+  b) y c), p. 6/19: ajustarse al circuito y virar a la izquierda salvo orden. Es la
+  vigente; lo mismo dice el **R 91**, 91.265 b), enmienda 5 (2022), parte I,
+  capítulo B, p. 13/28, que en lugar del R 10 nombra el Anexo 10.
+- **R 10, *Telecomunicaciones Aeronáuticas*, volumen II**, quinta edición,
+  enmienda 2 (15-9-2025), Resolución 1612/2025, 5.2.2.7.1.3.3, p. 24/33 del
+  capítulo 5: «**Cuando una aeronave no pueda establecer comunicación por falla del
+  equipo de a bordo, seleccionará, si está equipada al respecto, la clave apropiada
+  SSR para indicar la falla de radio**». No distingue IFR de VFR, y su nota remite
+  a la vuelta al R 2 para las reglas generales. Está dentro de «Falla del receptor»,
+  como en el Anexo 10 de la OACI, pero habla del equipo de a bordo. Antes, en
+  5.2.2.7.1.1 y 5.2.2.7.1.2: probar el canal anterior, otro canal y otras
+  aeronaves, y después transmitir dos veces «a ciegas».
+- **R 10, volumen IV**, quinta edición, enmienda 1 (21-11-2024), Resolución
+  2210/2024, 2.1.4.2.2, p. 4/7 del capítulo 2: **qué código es**: «El código 7600
+  para poder reconocer a una aeronave con falla de radiocomunicaciones». Y
+  2.1.4.3: el equipo de tierra tiene que reconocerlo inmediatamente.
+- **AIP Paraguay, ENR 1.6, 2.4**, p. ENR 1.6-3 (1-3-2018, AMDT 42): «Cuando una
+  aeronave experimente una **falla total de radiocomunicaciones**, utilizaran el
+  transpondedor en el **Código 7600 en Modo A**». En la p. ENR 1.6-2 el código de
+  salida, 2000, es para «plan de vuelo IFR o VFR». GEN 1.7 (p. GEN 1.7-4 y 1.7-14)
+  no publica diferencias con el Anexo 2 ni con el volumen II del Anexo 10 que
+  toquen esto.
+- **R 2, apéndice 1**, 4.1.1, p. 4/22, la tabla de las luces, y 4.1.2, p. 5/22, el
+  acuse de recibo, que ya estaban leídos: en vuelo, de día, «alabeando», con la nota
+  «Esta señal no debe esperarse que se haga en los tramos básicos ni final»; de
+  noche, «emitiendo destellos dos veces con los faros de aterrizaje de la aeronave, o
+  si no dispone de ellos, encendiendo y apagando, dos veces, las luces de
+  navegación». El AIP no trae señales de luz: ni en GEN, ni en ENR 1, ni en AD.
+- **La lámpara: R 14, volumen I**, octava edición, Resolución 959/2026 (29-6-2026),
+  5.1.3.1, p. 1/87 del capítulo 5: «En la torre de control de cada aeródromo
+  controlado, se debe disponer de una lámpara de señales».
+- **Con AFIS es otra cosa: R 11**, octava edición, enmienda 2 (4-8-2026),
+  Resolución 1184/2026, apéndice 9, 11.1, p. 8/9: un operador AFIS puede usar la
+  pistola de luces, y allí la verde fija dice «pista libre» y la roja fija «pista
+  ocupada». No autoriza. Por eso un AFIS sigue fuera.
+- **De noche**, R 2, 4.12.1, p. 3/3 del capítulo 4, y ENR 1.2, 4.1: volar en visual
+  de noche pide al piloto la habilitación IFR, el avión homologado para ello, y la
+  radio funcionando para salir. Y **la noche**, R 91, parte I, capítulo A, p. 13/28:
+  del fin del crepúsculo civil vespertino al comienzo del matutino; el SERA, lo
+  mismo en su artículo 2.
+
+### En qué difiere del SERA
+
+- **De dónde sale el 7600.** El SERA lo manda en el mismo punto, SERA.14083 c) 2); en
+  la DINAC son tres pasos —el R 2 remite al R 10 II, que manda «la clave apropiada
+  si está equipada», y el R 10 IV dice cuál es—, y el AIP lo escribe entero. Lo que
+  se hace es lo mismo.
+- **El alabeo**: el SERA lo excluye en la base y en la final; la DINAC dice en una
+  nota que ahí no debe esperarse. El ejercicio ya no lo pedía.
+- **De noche en visual**: la DINAC pide la habilitación y el avión de IFR; el SERA,
+  no. Es de la licencia y del avión, no del ejercicio.
+- **El ADS-B**: el SERA lo añade al transpondedor; la DINAC leída, no.
+- **En lo demás, nada**: las luces son las mismas, los faros dos veces, el más
+  próximo en visual, atentos a la torre, y los virajes a la izquierda salvo orden.
+  Ninguna de las dos da una altura ni un sitio.
+
+Así que **el ejercicio se vuela igual en los dos lados, y con las mismas nueve
+frases**: no hay ninguna nueva ni nada que grabar.
+
+### Qué se abre
+
+`campoConLamparaY7600`, que era `campoConLamparaYSera`: con torre de verdad y en un
+país cuya norma se ha leído, España o Paraguay (`NORMA_LEIDA`). En Paraguay salen
+**Asunción (SGAS) y Minga Guazú (SGES)**, dos de los tres que en el AIP tienen torre
+(AD 2.1-7, AD 2.2-8 y AD 2.5-7). **Encarnación (SGEN), no todavía**: no publica radar
+(abajo), y las dos frases del ejercicio dicen que el número se lo dice a la torre
+(`SIN_RADAR_PUBLICADO`). Mariscal Estigarribia, Pedro Juan Caballero, Concepción y
+Pilar son AFIS; Ayolas no tiene servicio y Yvytu Rape es privado.
+`fallo-de-radio.test.ts` mira que sean esos dos y ninguno más.
+
+### Lo que se vio al ir a volarlo
+
+- **De noche los faros no hacían nada.** La instructora decía «los prendo y los apago
+  dos veces», la práctica contaba el acuse, y en el avión los faros seguían
+  encendidos toda la vuelta, que es como van por debajo de diez mil pies. Ahora los
+  apaga y los prende dos veces (`farosEnElAcuse`: apagados, encendidos, apagados,
+  encendidos, apagados, siete décimas cada uno, y de vuelta a como iban), a los cinco
+  segundos de ver los destellos, que es cuando lo está contando. Se ve en el avión
+  desde fuera y, desde el asiento, en la tarjeta, con dos dibujos nuevos: el avión de
+  frente, que es como lo ve la torre, con los dos faros encendidos y en hueco.
+- **La noche empezaba al ponerse el sol.** Preguntaba si el sol estaba por debajo del
+  horizonte, y la noche de las dos normas es desde el fin del crepúsculo civil, con
+  el sol a seis grados; el juego ya lo tenía escrito (`esDeNoche`, en `sellos.ts`).
+  Con el sol recién puesto ahora se alabea.
+- **El banco volaba siempre por la derecha**, que es el lado de Gran Canaria. Ahora
+  va por el lado del circuito del campo, y con `OGA_HORA=22` vuela de noche.
+
+### Comprobado
+
+`verificar-emergencias.mjs radio`, con el JAZ 20 y las nueve frases grabadas:
+
+| Campo y hora | Peldaño | | Destellos | Verde fija | Contesta |
+|---|---|---|---|---|---|
+| Asunción, a las doce | Taguató | 13 de 13 | a 184 m | a 289 m | las alas, a los 3,0 s |
+| Asunción, a las doce | Taguató Ruvichá | 13 de 13 | a 176 m | a 160 m | las alas, a los 2,3 s |
+| Los Rodeos, a las 22 | Taguató | 13 de 13 | a 176 m | a 296 m | los faros, dos destellos |
+| Los Rodeos, a las 22 | Taguató Ruvichá | 13 de 13 | a 171 m | a 299 m | los faros, dos destellos |
+
+En los cuatro, el 7600 cifra a cifra, nadie en la radio mientras estuvo callada, sin
+roja, la toma en la pista con la verde, `ejercicio.radio.bien`, y **la boca no tiró
+nada del ejercicio**. Asunción se voló por la izquierda.
+
+**Antes, de noche en Los Rodeos y Taguató, otra tirada que dio 13 de 13 y no estaba
+bien**: tocó en la pista y, rodando, el piloto del banco quitaba el derrape con el
+pie, que con el viento de lado es ponerse cara a él; se fue a la hierba, a 45 m del
+eje, y nada lo miraba. Ahora rueda por el eje con el pie y la comprobación de la toma
+pide también parar en la pista. Las tres tiradas de Ruvichá y de noche de la tabla
+son con eso: 2 m del eje como mucho en Asunción, y 19 y 22 m en Los Rodeos, en una
+pista de 45. La de Asunción en Taguató es de antes, y paró a 3 m.
+
+`tsc --noEmit -p .` en verde. El vitest, por partes: todo lo que no es `src/world` ni
+`src/flight`, 124 de 124 ficheros y 2.471 pruebas; `src/flight`, 276 de 276 ficheros
+y 5.232 pruebas, con 29 saltadas y una pendiente; tras los dibujos de los
+faros, `src/ui` otra vez, 60 de 60 y 1.332; y la primera de las tres partes de
+`src/world`, 65 de 65 ficheros y 1.351 pruebas, con dos saltadas. **Las otras dos
+partes de `src/world` no llegaron a correr**: el turno del vitest no se libró a tiempo.
+
+### Lo que queda
+
+- **El radar de Encarnación.** El AIP publica el de Asunción, con 250 millas (ENR 1.6,
+  1.1.1), y el propio de Minga Guazú, de lunes a viernes de 1100 a 2300 UTC (ENR 1.6,
+  4.1-1). En Encarnación no publica ninguno, y el de Asunción está a unas 150 millas:
+  por la curvatura de la Tierra no ve a un avión a la altura del circuito. El código
+  se pone igual, que es lo mandado; que la torre lo vea en una pantalla, como dice la
+  instructora, ahí no está publicado. Por eso se queda fuera hasta que haya una frase
+  que sea verdad allí: que el número se marca igual, que esa torre no lo ve, y que por
+  eso se mira su lámpara desde el principio.
+- **El otro canal y el «transmitiendo a ciegas»** del R 10 II, que el SERA.14085
+  también pide antes: aquí falla todo, el transmisor y el receptor.
+- **De noche en Paraguay** no se ha mirado que el avión sea de los homologados para
+  IFR: el juego deja volar de noche con cualquiera, y es de antes.
+- **Los faros de quien vuela**: sigue contestando la instructora, que quien vuela no
+  tiene interruptor de faros.
+- **Los faros, mirados desde fuera y de frente**, no: en la foto del banco, detrás del
+  avión, se ve la tarjeta; lo que se comprobó es que las luces del avión reciben los
+  cinco golpes.
+- **Se cierra donde se pare**, también en la hierba, como los demás ejercicios que
+  acaban en «vuelta»: `cerrar` no pregunta si fue en la pista.

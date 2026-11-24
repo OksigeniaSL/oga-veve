@@ -132,6 +132,10 @@ import {
   CODIGO_SIN_RADIO,
   CADA_CIFRA,
   cifrasMarcadas,
+  CONTESTA_CON_LOS_FAROS_A_LOS,
+  farosEnElAcuse,
+  GOLPE_DE_FAROS,
+  GOLPES_DE_FAROS,
   LamparaSinRadio,
   MARCADO_EN,
   type LuzSinRadio,
@@ -4467,6 +4471,8 @@ export class Game {
   private enLaBaseOEnLaFinalSinRadio = false;
   /** En el reloj del juego, la última vez que se tocó el suelo con la radio callada. Ver `REBOTE`. */
   private tocoSinRadioEn: number | null = null;
+  /** En el reloj del juego: cuándo empiezan los destellos de los faros, de noche. Ver `contestarConLosFaros`. */
+  private farosDesde: number | null = null;
   /** Lo que dice el EICAS del motor parado. Ver `listaDelMotor`. */
   private mensajesDeMotor: readonly MensajeDeMotor[] = [];
   /** Los bomberos del aeropuerto. Ver `world/bomberos.ts`. */
@@ -4515,6 +4521,8 @@ export class Game {
       readonly luces: readonly { readonly luz: LuzSinRadio; readonly t: number; readonly alto: number }[];
       readonly contestaciones: number;
       readonly conLaVerde: boolean | null;
+      /** De noche, los faros contestando: encendidos, apagados, o `null` si van como siempre. Ver H86. */
+      readonly faros: boolean | null;
     };
     /** El reventón: de qué lado, y si el modelo lo vuela. Ver el ADR 0014, H74. */
     readonly reventon: { readonly lado: "izquierdo" | "derecho" | null; readonly enElModelo: -1 | 0 | 1 };
@@ -4574,6 +4582,7 @@ export class Game {
         luces: [...this.lucesSinRadio],
         contestaciones: p.contestaciones,
         conLaVerde: p.tomoConLaVerde,
+        faros: this.farosDesde === null ? null : farosEnElAcuse(this.relojDelJuego - this.farosDesde),
       },
       reventon: { lado: p.ladoReventado, enElModelo: this.flight.neumaticoReventado ?? 0 },
       ave: {
@@ -23018,16 +23027,18 @@ export class Game {
        */
       this.pruebaDeLuces > 0
         ? { navegacion: true, baliza: true, estroboscopicas: true, rodaje: true, aterrizaje: true }
-        : this.conLaBaliza(
-            lucesDelTrafico(
-              faseDelTuyo({
-                motor: this.input.controls.engineOn,
-                enElSuelo: s.onGround,
-                enLaPista: s.onRunway,
-                velocidad: Math.hypot(s.velocity.x, s.velocity.z),
-              }),
-              s.position.y,
-              this.input.controls.tren > 0.5,
+        : this.lasLucesDelAcuse(
+            this.conLaBaliza(
+              lucesDelTrafico(
+                faseDelTuyo({
+                  motor: this.input.controls.engineOn,
+                  enElSuelo: s.onGround,
+                  enLaPista: s.onRunway,
+                  velocidad: Math.hypot(s.velocity.x, s.velocity.z),
+                }),
+                s.position.y,
+                this.input.controls.tren > 0.5,
+              ),
             ),
           ),
     );
@@ -25766,7 +25777,8 @@ export class Game {
         // Y sin radio, lo que enseña la lámpara y cómo van las alas. Ver `seCallaLaRadio`.
         lampara: this.lamparaSinRadio,
         alabeo: bankAngleOf(s.orientation),
-        deNoche: this.sky.sunDirection.y <= 0,
+        // La noche de la norma: con el sol recién puesto todavía se ve alabear.
+        deNoche: esDeNoche(this.sky.sunDirection.y),
         enLaBaseOEnLaFinal: this.enLaBaseOEnLaFinalSinRadio,
         // Y con un ave en un motor, cuántas veces ha estallado.
         estallidos: this.flight.motorTocado?.estallidos ?? 0,
@@ -25812,8 +25824,9 @@ export class Game {
       case "senal":
         return this.contarLaLuz(suceso.luz, suceso.deNoche, suceso.enLaBaseOEnLaFinal);
       case "acuse":
-        // De noche ya lo dijo con los destellos: «los prendo y los apago dos veces».
+        // De noche ya lo dice con los destellos —«los prendo y los apago dos veces»—, y se hace.
         if (suceso.como === "alas") this.frasesSinRadio.pedir("ejercicio.radio.alas", () => this.radioCallada);
+        else this.contestarConLosFaros();
         return;
       case "trenFuera":
         return this.elTrenSeQuedaFuera("ejercicio.reventon.tren");
@@ -26016,6 +26029,7 @@ export class Game {
    */
   private seCallaLaRadio(): void {
     this.radioCallada = true;
+    this.farosDesde = null;
     this.lamparaQueNoSeApaga.reiniciar();
     this.tocoSinRadioEn = null;
     this.torre.callaSalvo = () => false;
@@ -26047,10 +26061,40 @@ export class Game {
     this.frasesSinRadio.pedir("ejercicio.radio.callada", () => this.radioCallada);
   }
 
+  /**
+   * **De noche, la instructora contesta con los faros**: los apaga y los
+   * prende dos veces, en el avión que se ve desde fuera y en la tarjeta, que
+   * desde el asiento los faros no se ven. Antes lo decía y no pasaba nada: los
+   * faros seguían encendidos toda la vuelta, que es como van por debajo de
+   * diez mil pies (H86). Ver `farosEnElAcuse` y `lasLucesDelAcuse`.
+   */
+  private contestarConLosFaros(): void {
+    this.farosDesde = this.relojDelJuego + CONTESTA_CON_LOS_FAROS_A_LOS;
+    for (let i = 0; i < GOLPES_DE_FAROS; i++)
+      this.agenda.luego(CONTESTA_CON_LOS_FAROS_A_LOS + i * GOLPE_DE_FAROS, () => {
+        if (!this.radioCallada || this.farosDesde === null) return;
+        const encendidos = i % 2 === 1;
+        this.apuntarCanto(`faros: ${encendidos ? "encendidos" : "apagados"}`);
+        this.hud.senal.mostrar(encendidos ? "faros" : "faros-apagados", "", "", {
+          // Hasta que acaban y los faros vuelven a ir como iban: la tarjeta no se queda con ellos apagados.
+          segundos: (GOLPES_DE_FAROS - i) * GOLPE_DE_FAROS,
+          prioridad: IMPORTANTE,
+        });
+      });
+  }
+
+  /** Las luces del avión, con los faros a como los lleve el acuse de noche. Ver `contestarConLosFaros`. */
+  private lasLucesDelAcuse<T extends { readonly aterrizaje: boolean }>(luces: T): T {
+    if (this.farosDesde === null) return luces;
+    const faros = farosEnElAcuse(this.relojDelJuego - this.farosDesde);
+    return faros === null ? luces : { ...luces, aterrizaje: faros };
+  }
+
   /** Y vuelve: al cerrarse el ejercicio o con un vuelo nuevo. */
   private devolverLaRadio(): void {
     if (!this.radioCallada) return;
     this.radioCallada = false;
+    this.farosDesde = null;
     this.lamparaQueNoSeApaga.reiniciar();
     this.codigoDesde = null;
     this.lamparaSinRadio = null;
