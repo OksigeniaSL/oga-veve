@@ -588,6 +588,10 @@ function miraALaCalle(e: Empuje, raya: readonly PuntoXZ[]): boolean {
 /** Lo que tiene que torcer la raya en un punto para ser una vuelta en seco. Ver `dondeVuelve`. */
 const VUELVE = 170 * GRADO;
 
+/** Y lo que tiene que volver por donde vino, m, y lo que se aparta de ello: un paso atrás del dibujo no es una vuelta. */
+const VUELVE_POR_DONDE_VINO = 15;
+const SE_APARTA_AL_VOLVER = 3;
+
 /**
  * **Dónde da la vuelta en seco la raya**, si la da antes de `SIGUE_LA_RAYA`, y `null` si no (H79):
  * hasta ahí lleva el tractor el avión, de espaldas, y la ruta empieza ahí, hacia delante. El plan
@@ -596,14 +600,28 @@ const VUELVE = 170 * GRADO;
  * en redondo.
  */
 export function dondeVuelve(raya: readonly PuntoXZ[]): number | null {
+  /** El punto de la raya a `VUELVE_POR_DONDE_VINO` del `i`, hacia atrás o hacia delante; `null` si no llega. */
+  const aQuince = (i: number, paso: 1 | -1): PuntoXZ | null => {
+    let quedan = VUELVE_POR_DONDE_VINO;
+    for (let k = i; k + paso >= 0 && k + paso < raya.length; k += paso) {
+      const a = raya[k]!;
+      const b = raya[k + paso]!;
+      const l = Math.hypot(b.x - a.x, b.z - a.z);
+      if (quedan <= l) return { x: a.x + ((b.x - a.x) * quedan) / (l || 1), z: a.z + ((b.z - a.z) * quedan) / (l || 1) };
+      quedan -= l;
+    }
+    return null;
+  };
   let andado = 0;
   for (let i = 1; i < raya.length - 1 && andado <= SIGUE_LA_RAYA; i++) {
     const a = raya[i - 1]!;
     const b = raya[i]!;
     const c = raya[i + 1]!;
     andado += Math.hypot(b.x - a.x, b.z - a.z);
-    if (Math.hypot(b.x - a.x, b.z - a.z) < 1 || Math.hypot(c.x - b.x, c.z - b.z) < 1) continue;
-    if (Math.abs(diferencia(rumboEntre(a, b), rumboEntre(b, c))) > VUELVE) return i;
+    if (Math.abs(diferencia(rumboEntre(a, b), rumboEntre(b, c))) <= VUELVE) continue;
+    const viene = aQuince(i, -1);
+    const sigue = aQuince(i, 1);
+    if (viene && sigue && Math.hypot(viene.x - sigue.x, viene.z - sigue.z) <= SE_APARTA_AL_VOLVER) return i;
   }
   return null;
 }

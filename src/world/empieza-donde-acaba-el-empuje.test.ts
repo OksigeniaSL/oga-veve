@@ -109,6 +109,8 @@ describe("el empuje de una raya que da la vuelta en seco", () => {
   it("la raya de siempre no la da; la que sí, en su punto", () => {
     expect(dondeVuelve(raya)).toBe(2);
     expect(dondeVuelve([raya[0]!, raya[1]!, raya[3]!])).toBeNull();
+    // Un paso atrás del dibujo de las calles, de doce metros, no es una vuelta.
+    expect(dondeVuelve([{ x: 0, z: 0 }, { x: 0, z: 100 }, { x: 60, z: 100 }, { x: 48, z: 100 }, { x: 48, z: 300 }])).toBeNull();
   });
 
   it("acaba pasada la vuelta, con ella por delante, sobre la calle y mirando por ella", () => {
@@ -127,7 +129,7 @@ describe("el empuje de una raya que da la vuelta en seco", () => {
   });
 
   it("y si la vuelta queda demasiado cerca para el giro, no hay empuje por ahí", () => {
-    const cerrada: PuntoXZ[] = [{ x: 0, z: 0 }, { x: 0, z: 12 }, { x: -2, z: 12 }, { x: 200, z: 12 }];
+    const cerrada: PuntoXZ[] = [{ x: 0, z: 0 }, { x: 0, z: 12 }, { x: -16, z: 12 }, { x: 200, z: 12 }];
     const e = empujeDesdeElPuesto({ x: 0, z: 0 }, terminal, cerrada, null, 20, (r) => ({ x: -vector(r).x * 10, z: -vector(r).z * 10 }))!;
     expect(e.empuje).toBeNull();
   });
