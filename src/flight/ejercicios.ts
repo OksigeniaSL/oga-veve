@@ -150,10 +150,11 @@
  *
  * «Sin radio» (#90, #83) es la avería `que: "radio"`: subiendo, la radio se
  * calla. Se marca el 7600, se vuelve al circuito mirando a la torre y se
- * aterriza con su lámpara. Solo en un campo con torre de los que vuelan con el
- * SERA (`campoConLamparaYSera`), y en las avionetas de pistón, que son las que
- * hacen circuitos en visual. La regla de la lámpara es de `fallo-de-radio.ts`;
- * el orden, de `practica.ts`. Ver el ADR 0014, enmienda H71.
+ * aterriza con su lámpara. Solo en un campo con torre —con lámpara— de un país
+ * cuya norma se ha leído (`campoConLamparaY7600`: el SERA en España, la DINAC
+ * en Paraguay), y en las avionetas de pistón, que son las que hacen circuitos
+ * en visual. La regla de la lámpara es de `fallo-de-radio.ts`; el orden, de
+ * `practica.ts`. Ver el ADR 0014, enmiendas H71 y H86.
  *
  * ## Y el reventón en la carrera
  *
@@ -208,7 +209,7 @@ import { monteDelCampo, subidaDe } from "./pista-corta";
 import { conV1 } from "./decide-con-v1";
 import { centradoDeSuTipo } from "./centrado";
 import { hayLampara } from "./fallo-de-radio";
-import { oaciDe, SCENARIOS } from "../world/scenarios";
+import { oaciDe, SCENARIOS, type Scenario } from "../world/scenarios";
 
 export type EjercicioId =
   | "planeo"
@@ -1219,13 +1220,13 @@ export const EJERCICIOS: readonly Ejercicio[] = [
      * lección—; el fumigador no es de campos con torre.
      */
     valePara: (a) => a.sound.engine === "piston" && a.helicoptero === undefined,
-    dondeVale: campoConLamparaYSera,
+    dondeVale: campoConLamparaY7600,
     leccion: "vuelta",
     /*
      * **Subiendo, a cuatrocientos pies**, como la carga suelta: el despegue ya
-     * está hecho y queda el circuito entero para volver, que es lo que pide el
-     * SERA con la radio callada: seguir en visual y al aeródromo adecuado más
-     * próximo, que es el de salida.
+     * está hecho y queda el circuito entero para volver, que es lo que piden el
+     * SERA y la DINAC con la radio callada: seguir en visual y al aeródromo
+     * adecuado más próximo, que es el de salida.
      */
     averias: [{ que: "radio", cuando: { en: "subida", metros: 400 * 0.3048 } }],
     ensena:
@@ -1318,17 +1319,26 @@ export const EJERCICIOS: readonly Ejercicio[] = [
 ];
 
 /**
- * **Si en este campo se practica el fallo de radio**: con torre de verdad
- * —con lámpara, ni AFIS ni sin servicio— y en un país que vuela con el SERA,
- * que es la fuente leída que manda el 7600 y dice cómo se contesta a la
- * lámpara (ADR 0014, H71). En el Reglamento del Aire de la DINAC leído, el
- * 7600 solo sale en el caso IFR, y lo que remite al R10 no se ha leído: hasta
- * leerlo, en Paraguay no se ofrece.
+ * **Los países cuya norma se ha leído**, y manda marcar el 7600 y mirar a la
+ * torre también a quien vuela en visual: en España, el SERA (ADR 0014, H71); en
+ * Paraguay, la DINAC —el R 2 remite al R 10, volumen II, 5.2.2.7.1.3.3, que
+ * manda el código de falla de radio; cuál es lo dice el volumen IV, 2.1.4.2.2,
+ * y el AIP, ENR 1.6, 2.4— (H86). En otro país no se ofrece hasta leer la suya.
  */
-export function campoConLamparaYSera(oaci: string | null): boolean {
+const NORMA_LEIDA: ReadonlySet<Scenario["pais"]> = new Set<Scenario["pais"]>(["es", "py"]);
+
+/**
+ * **Si en este campo se practica el fallo de radio**: con torre de verdad
+ * —con lámpara, ni AFIS ni sin servicio— y en un país cuya norma se ha leído.
+ * La lámpara no hace falta buscarla campo a campo: donde hay torre, la hay
+ * (en Paraguay lo manda el R 14, volumen I, 5.1.3.1). En un AFIS no, aunque
+ * tenga pistola de luces: allí la verde fija no autoriza, dice que la pista
+ * está libre (R 11, apéndice 9, 11.1).
+ */
+export function campoConLamparaY7600(oaci: string | null): boolean {
   if (!oaci) return false;
   const esc = SCENARIOS.find((e) => oaciDe(e) === oaci);
-  return !!esc && esc.pais === "es" && hayLampara(esc.aerodrome);
+  return !!esc && NORMA_LEIDA.has(esc.pais) && hayLampara(esc.aerodrome);
 }
 
 export function ejercicioPorId(id: string | null | undefined): Ejercicio | null {

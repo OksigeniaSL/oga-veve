@@ -4,7 +4,12 @@
  *
  * Se va la radio en la subida: ni se oye a la torre ni ella te oye. Lo que se
  * hace es lo del SERA, el Reglamento de Ejecución (UE) 923/2012, que es el que
- * vale en Canarias; las páginas, en el ADR 0014, enmienda H71:
+ * vale en Canarias; las páginas, en el ADR 0014, enmienda H71. **En Paraguay
+ * manda la DINAC**, y en todo lo de este ejercicio dice lo mismo: el 7600, el
+ * R 10 volumen II, 5.2.2.7.1.3.3, con el volumen IV, 2.1.4.2.2, y el AIP, ENR
+ * 1.6, 2.4; seguir en visual, aterrizar en el más próximo y mirar a la torre,
+ * el R 2, 3.6.5.2; las luces y las alas o los faros, su apéndice 1, 4.1. Las
+ * páginas, en la enmienda H86. El SERA:
  *
  * - **El 7600 en el transpondedor** (SERA.14083 c) 2) y SERA.13005 a) 2)). Es
  *   el código de «fallo de la radiocomunicación»: en la pantalla de la torre
@@ -23,7 +28,9 @@
  *   existen y no salen en este ejercicio: aquí no hay aeródromo peligroso ni
  *   una plataforma a la que mandar a nadie sin el permiso de aterrizar.
  * - **Acusar recibo** (apéndice 1, 3.1.2 a)): de día, alabeando, **excepto en
- *   la base y en la final**; de noche, con dos destellos de los faros.
+ *   la base y en la final** —para la DINAC es una nota: ahí no debe esperarse—;
+ *   de noche, con dos destellos de los faros. La noche es la de la norma, desde
+ *   el fin del crepúsculo civil: ver `esDeNoche` en `sellos.ts`.
  *
  * **La lámpara manda lo que el tráfico pide, con la misma regla que los
  * permisos de siempre**: la roja cuando la torre te manda irte —la pista
@@ -206,6 +213,32 @@ export class AlasQueContestan {
     return contesta;
   }
 }
+
+/**
+ * **Lo que tarda la instructora en contestar con los faros**, s, desde que la
+ * torre enciende los destellos: los ve, y en su frase va contando qué quieren
+ * decir cuando los prende. Sin fuente.
+ */
+export const CONTESTA_CON_LOS_FAROS_A_LOS = 5;
+
+/** Lo que dura cada golpe de los faros, encendidos o apagados, s: que se vea y se cuente. */
+export const GOLPE_DE_FAROS = 0.7;
+
+/**
+ * **Los dos destellos de los faros**, a los `segundos` de empezar: apagados,
+ * encendidos, apagados, encendidos, apagados, y de vuelta a como iban. Van
+ * apagados primero porque abajo vuelan siempre encendidos, por debajo de diez
+ * mil pies: sin apagarlos no hay destello que ver. `null`, antes de empezar o
+ * ya acabados: mandan las luces de siempre. Ver `lucesDelTrafico`.
+ */
+export function farosEnElAcuse(segundos: number): boolean | null {
+  if (!(segundos >= 0)) return null;
+  const golpe = Math.floor(segundos / GOLPE_DE_FAROS);
+  return golpe >= GOLPES_DE_FAROS ? null : golpe % 2 === 1;
+}
+
+/** Cuántos golpes son: dos encendidos, con un apagado antes, entre medias y después. */
+export const GOLPES_DE_FAROS = 5;
 
 /**
  * **Si en este campo hay una torre con lámpara**: ni privado, ni sin
