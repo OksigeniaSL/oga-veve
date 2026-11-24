@@ -2665,3 +2665,130 @@ Gran Canaria con el JAZ 20 dos veces seguidas, 13 de 13; con la pista
 ocupada, 13 de 13; con el JAZ 40, 13 de 13; y el vuelo entero de Tenerife
 Norte con el JAZ 20, 58 de 58, con un permiso y en la final. El vitest
 entero, 584 ficheros y 11.624 pruebas en verde.
+
+## Enmienda (24-11-2026, H73): el permiso de aterrizar es de una aproximación, y si se deja se retira
+
+### El caso
+
+Lo que dejó escrito la H71c: la torre te ve en final por dos caminos —la fase
+«final» del plan y su propia final, `faseQueVeLaTorre`— y el permiso solo lo
+retiraba salir de la segunda. Se buscó en una mesa de node, con la máquina de
+fases, la final de la torre y el permiso en el orden del juego, qué lo dejaba
+vivo **hoy**. No era un resto teórico: eran siete formas, y solo dos venían
+por la fase del plan.
+
+| Lo que se vuela | Con la regla de antes |
+| --- | --- |
+| La frustrada con el permiso ya oído | retirado |
+| **La frustrada con el permiso todavía sonando** | **vivo** el circuito entero: se retiraba solo el oído, y al acabar de sonar, ya fuera, se daba por oído |
+| **Dado con la «final» del plan sola**, y la frustrada, o la media vuelta | **vivo**: a cuatro millas, gas a fondo y veinte metros arriba es irse para la torre, que no vuelve a entrar hasta la media vuelta; se sigue bajando, y a trescientos metros la fase del plan es «final» |
+| El mismo, y tocar y despegar | **vivo** subiendo: tocar lo gastaba solo si se estaba en la final de la torre |
+| **Pasar la pista de largo sin subir** | **vivo**: para la final de la torre es salirse «fuera», que no retiraba nada |
+| **Romper la final a un lado**, de través, y luego el viento en cola | **vivo**: se sale del cono antes de los 120°, «fuera» |
+| **Un viraje que cruza el eje bajo**, cerca del umbral | **vivo**: lo mismo |
+| Alejarse por un lado sin darse la vuelta | **vivo**: lo mismo |
+| Irse al aire y seguir derecho a **otro campo** con la pista al mismo rumbo | la torre de allí no te veía en su final, y el permiso salía a 300 m |
+| **Despegar de una pista con la cabecera desplazada** (la 01 de Fuerteventura) | el permiso **al despegar**: ver abajo |
+| La cabecera de enfrente pasa a ser la de uso a media final | retirado: para ella se va en media vuelta |
+| La frustrada sin seguir: gas y diez metros, y abajo otra vez | vale el que había, como tiene que ser |
+| Quien se coloca en el aire | ninguno de más: todos los de la mesa empiezan así |
+| El vuelo libre sin plan, o una lección sin torre | no hay permiso que pedir (`laTorreTeLleva`) |
+
+Y lo peor de los vivos no era la lámpara: en la final siguiente la torre **no
+daba otro permiso**, porque el de antes seguía «oído». Sin radio, la verde
+fija duraba el circuito.
+
+La cabecera desplazada no se había visto. La final de la torre se coge por
+delante del umbral **de aterrizar**, y en la 01 de Fuerteventura, con mil
+metros de desplazado, la avioneta deja el suelo setecientos metros antes de
+él: alineada, dentro del cono y, en el primer instante, con la vertical por
+debajo de un metro por segundo. Entraba, y a los doce metros, cuando la fase
+pasa a «en vuelo», la torre te veía en final y te daba la pista para
+aterrizar. Con el gas de despegue entero se iba a los quince metros; con el
+gas reducido, a los cien. Las otras desplazadas de más de cuatrocientos
+metros: la 19 de Fuerteventura y cuatro de Barajas.
+
+### Lo real
+
+La autorización de aterrizar es de una aproximación (Doc 4444, 7.10.2, ya
+citado en la H69): quien se va, se da la vuelta o pasa la pista de largo no
+la lleva puesta al circuito, y la torre le da otra en la final siguiente. Y
+quien corrige la senda o se pasa un poco del eje al coger la final sigue en
+la misma, y no se le repite.
+
+### Decisión
+
+- **El permiso se retira cuando se deja su aproximación, mirando lo que hace
+  el avión desde que se dio** y no por dónde le veía la torre
+  (`flight/aproximacion-del-permiso.ts`, `AproximacionDelPermiso`): irse al
+  aire de verdad (`seVaDeVerdad`, la misma regla de la torre y de la fase,
+  desde lo más bajo desde que se dio), darse la vuelta (120°), salirse del
+  cono hacia fuera y de través (60°, los de entrar en ella), pasar la otra
+  punta de la pista sin tocar, alejarse más allá de donde llega la final de
+  la torre, tocar, u otra pista. Ningún número nuevo.
+- **Y también por la torre y por la fase**: salir de la final de la torre por
+  donde antes, y entrar el plan en la frustrada (`mirarSiSeDejaLaAproximacion`
+  en `game.ts`). Se retira esté oído, sonando o esperando turno; lo que de él
+  espere en la boca no se dice, y la lámpara y la tarjeta se apagan si eran
+  suyas (`retirarElPermiso`).
+- **No se deja por un bache**: veinticinco metros corrigiendo la senda, el
+  bamboleo de ochenta sin el gas de despegue, salirse del cono al coger la
+  final y volver, flotar media pista o diez metros con el gas a fondo siguen
+  con el suyo, dicho una vez.
+- **Levantar una orden de irse sin volver a darte la pista lo retira**: la
+  orden lo había anulado. **Sin motor no hay otra aproximación**: solo se
+  gasta tocando o con otra pista. Y con una **emergencia declarada y motor**,
+  quien deja la aproximación a la que se autorizó tiene otra al alinearse
+  (`LaOtraCabecera.seDejoLaAproximacion`): se retiraba y nadie la volvía a
+  dar.
+- **Con otra pista, la final de la torre empieza de cero**
+  (`mirarSiCambiaLaPista`): otro campo, o la otra cabecera.
+- **Recién despegado, la final de la torre tampoco** (`recienDespegado` en
+  `LoQueVeLaTorre`): la regla de la H71c, que solo miraba la fase, vale ahora
+  para los dos caminos.
+
+Sin frases nuevas: no hace falta ninguna.
+
+### La prueba
+
+`flight/permiso-de-una-aproximacion.test.ts`: cada caso de la tabla con la
+regla de antes y con la de ahora, en la misma mesa; los vivos están
+comprobados como vivos con la de antes, y con la de ahora se retiran por lo
+que toca y la final siguiente lleva el suyo. Los baches, la cabecera
+desplazada y la aproximación publicada, igual con las dos. La lámpara del
+fallo de radio, con la pista pasada de largo: antes, verde en el viento en
+cola; ahora, destellos, y verde en la final siguiente. Y
+`LaOtraCabecera`, que se rearma solo si se dejó y solo fuera de los embudos.
+
+### Lo medido
+
+En el navegador, con las voces grabadas, sobre una copia fija de la rama
+(el `src/` de 5fa3609e):
+
+- **`radio gran-canaria jaz-20 taguato`: 13 de 13.** Destellos a 197 m, las
+  alas a los 3,1 s, la verde fija en la final a 248 m, y la toma con ella a
+  82 m del umbral, cerrada con `ejercicio.radio.bien`.
+- **`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-20`: 58 de 58**
+  (dos sin medir). Un permiso, y en la final: «aterrizar» a los 539 s, a
+  197 m, y «cleared to land» a los 547 s, a 186 m; nadie de frente; apagado a
+  los 961 s.
+
+Y el vitest entero de la rama: 585 ficheros y 11.663 pruebas en verde, con 32
+saltadas y una pendiente. `tsc --noEmit -p .`, en verde.
+
+### Lo que queda
+
+- **Los bancos con la pista ocupada** (`OGA_PISTA_OCUPADA=1`, el de Gran Canaria sin radio y el de Tenerife
+  Norte) no se volaron: el anillo de memoria y el navegador los tenían otros
+  hasta la hora de entregar. La mesa vuela la frustrada con el permiso oído y
+  sonando; falta verla con la orden de la torre y el tráfico.
+- **El despegue por delante del umbral desplazado** se ve en la mesa, no en el
+  navegador: falta un despegue del JAZ 20 por la 01 de Fuerteventura con la
+  lámpara apuntada.
+- **Quien se va al aire a cuatro millas y se arrepiente** sigue como estaba:
+  para la torre se fue, no vuelve a su final hasta la media vuelta, y su
+  permiso sale por la fase del plan, a trescientos metros. Ahora, ese permiso
+  también se retira si se deja.
+- **Lo que ya está sonando se acaba**: quien se va en mitad del «autorizado
+  para aterrizar» oye el final de la frase con la lámpara ya apagada. Cortarla
+  sería un sobresalto, y no hay orden que la contradiga.
