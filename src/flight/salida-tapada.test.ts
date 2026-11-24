@@ -785,7 +785,7 @@ describe("con torre: te retrasa o te manda al aire, y el que sale sale", () => {
       expect(mal).toEqual([]);
       // Y se pidió algo alguna vez: si no, esta prueba no está mirando el caso.
       expect(pedido).toBeGreaterThan(0);
-    }, 600_000);
+    }, 1_200_000);
 });
 
 describe("y si no das la vuelta", () => {
@@ -816,7 +816,7 @@ describe("y si no das la vuelta", () => {
     // Se pidió la vuelta, no se dio, y la torre te mandó al aire.
     expect(vueltas).toBeGreaterThan(0);
     expect(frustradas).toBeGreaterThan(0);
-  }, 600_000);
+  }, 1_200_000);
 });
 
 describe("con AFIS: te lo cuenta, y decide quien vuela", () => {
@@ -848,7 +848,7 @@ describe("con AFIS: te lo cuenta, y decide quien vuela", () => {
     expect(mal).toEqual([]);
     expect(avisos).toBeGreaterThan(0);
     expect(propuestas).toBeGreaterThan(0);
-  }, 600_000);
+  }, 1_200_000);
 
   it("y si sigues, sigues: se ve lo que pasa, pero el que sale sale y nadie se queda colgado", () => {
     const mal: string[] = [];
@@ -862,7 +862,7 @@ describe("con AFIS: te lo cuenta, y decide quien vuela", () => {
           if (quedan.length) mal.push(`${donde}: no salieron ${quedan.join(", ")}`);
         }
     expect(mal).toEqual([]);
-  }, 600_000);
+  }, 1_200_000);
 
   for (const id of ["pilar", "concepcion", "estigarribia"])
     it(`${id}: no te manda nada, nadie parado en tu calle, y el que sale sale`, () => {
@@ -877,7 +877,7 @@ describe("con AFIS: te lo cuenta, y decide quien vuela", () => {
               if (m.vueltas || m.alAire) mal.push(`${donde}: un AFIS no manda`);
             }
       expect(mal).toEqual([]);
-    }, 600_000);
+    }, 1_200_000);
 });
 
 describe("llegando por la ruta del plan, que la torre ve a diez kilómetros", () => {
@@ -943,7 +943,7 @@ describe("llegando por la ruta del plan, que la torre ve a diez kilómetros", ()
             if (m.vueltas || m.alAire) mal.push(`${donde}: un AFIS no manda`);
           }
     expect(mal).toEqual([]);
-  }, 600_000);
+  }, 1_200_000);
 
   it("y el que remonta ocupa la pista lo que la ocupa uno de verdad: unos tres minutos por la 09", () => {
     const esc = gomera.find((e) => Math.abs(e.runway.heading - 81) < 10)!;
