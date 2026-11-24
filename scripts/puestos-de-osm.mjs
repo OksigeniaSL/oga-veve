@@ -30,7 +30,10 @@
  *    de entrada de ese nodo: el puesto ya está, no se repite. Y también la que
  *    empalma con esa línea y lleva su mismo `ref`, que es otro tramo de ella:
  *    en Tenerife Norte, la del 25 y la del 17 van en dos trozos, y el de fuera
- *    salía como otro 25 y otro 17 en su punta suelta.
+ *    salía como otro 25 y otro 17 en su punta suelta. Y la que **no lleva
+ *    `ref`** y pasa por un nodo: así está dibujado Silvio Pettirossi, con el
+ *    número en el nodo y la línea sin nada, y cada puerta salía dos veces, una
+ *    con su número y otra sin él (H83).
  * 3. Una vía sin nodo es un puesto en **su punta suelta**: la que no toca ni
  *    una calle ni otra vía de puesto. No se fía de que la última sea la
  *    parada, que es lo que pide la wiki, porque no siempre se dibuja así: en
@@ -105,7 +108,9 @@ export function puestosDeOsm(elementos, proj) {
   const aLasCalles = (p) => Math.min(Infinity, ...calles.map((c) => aLaPolilinea(p, c)));
 
   const conSuNodo = (w) =>
-    nodos.some((n) => ref(n) === ref(w) && w.geometry.some((p) => p.lat === n.lat && p.lon === n.lon));
+    nodos.some(
+      (n) => (ref(w) === null || ref(n) === ref(w)) && w.geometry.some((p) => p.lat === n.lat && p.lon === n.lon),
+    );
 
   const puestos = nodos.map((n) => ({ ref: ref(n), xy: proj(n.lat, n.lon) }));
   for (const v of vias) {

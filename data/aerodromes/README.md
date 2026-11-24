@@ -52,11 +52,14 @@ Solo toca `parkingPositions`, y en ellos solo `entrada`: ningún puesto se
 mueve, se quita ni se añade. Las de los nueve campos con pasarelas se
 añadieron el 21-11-2026. En las fichas que no se rehicieron con
 `puestosDeOsm` (#191) hay puestos en mitad de su línea de entrada —el centro
-que sacaba el extractor de antes—; esos llevan la línea hasta ellos.
+que sacaba el extractor de antes—; esos llevan la línea hasta ellos. El que
+es, sin nombre, el centro de la línea que acaba en un nodo que la ficha ya
+trae con su `ref` es ese puesto otra vez, y se quita: así salían dos veces
+las seis puertas de Silvio Pettirossi (H83).
 
 ### Lo que dice el AIP de cada puesto
 
-En los campos españoles con cartas PDC, cada puesto lleva en `aip` lo que
+En los campos españoles con cartas PDC, y en Silvio Pettirossi, cada puesto lleva en `aip` lo que
 publica la tabla de características de los puestos del AIP de ENAIRE: la
 salida (`R` empujado, `A` por sus medios, `AR` las dos), el mayor avión que
 admite y, donde la carta lo dice, si tiene pasarela; y la ficha lleva en
@@ -77,6 +80,11 @@ queda. Y una línea sin nombre cuya otra mitad llega al punto publicado de uno
 que la ficha trae sin línea se le da a ese y la copia se quita; la del ancho
 entre dos incompatibles, si OpenStreetMap no la trae, es la paralela a las de
 ellos (`entradaDeducida`): ver la enmienda H75.
+
+Silvio Pettirossi lleva lo de la DINAC (AIP Paraguay, AD 2.1-14.2, 01 OCT
+2026): las seis puertas, con sus coordenadas y su pasarela dibujada, y nada
+más. La hoja es un dibujo sin texto, y `aip/sgas.pdc.json` está pasado a mano;
+se junta igual, `node scripts/puestos-del-aip.mjs juntar SGAS` (H83).
 
 ### Por dónde no se rueda con más de una envergadura
 

@@ -1,0 +1,95 @@
+{
+ "id": "SGAS",
+ "fuente": "AIP Paraguay (DINAC), AD 2.1-14.2, plano de estacionamiento y atraque de aeronaves: las puertas de la plataforma 1 y sus coordenadas; AMDT AIRAC 02/2026",
+ "url": "https://www.dinac.gov.py/v3/index.php/ais/aip-paraguay",
+ "leido": "2026-11-24",
+ "aMano": "La hoja es un dibujo sin texto que extraer. La tabla da «GATE 1» a «GATE 6» con sus coordenadas y nada más: ni salida, ni mayor avión, ni APROAR. La pasarela de cada puerta va dibujada.",
+ "cartas": [
+  {
+   "carta": "AD 2.1-14.2",
+   "wef": "01-OCT-26"
+  }
+ ],
+ "contacto": {
+  "rangos": [
+   [
+    "1",
+    "6"
+   ]
+  ]
+ },
+ "puestos": [
+  {
+   "ref": "1",
+   "lat": -25.242663888888888,
+   "lon": -57.514291666666665,
+   "salida": null,
+   "max": null,
+   "aproar": null,
+   "obs": null,
+   "carta": "AD 2.1-14.2",
+   "wef": "01-OCT-26",
+   "contacto": true
+  },
+  {
+   "ref": "2",
+   "lat": -25.242969444444444,
+   "lon": -57.51491111111111,
+   "salida": null,
+   "max": null,
+   "aproar": null,
+   "obs": null,
+   "carta": "AD 2.1-14.2",
+   "wef": "01-OCT-26",
+   "contacto": true
+  },
+  {
+   "ref": "3",
+   "lat": -25.242350000000002,
+   "lon": -57.51539722222222,
+   "salida": null,
+   "max": null,
+   "aproar": null,
+   "obs": null,
+   "carta": "AD 2.1-14.2",
+   "wef": "01-OCT-26",
+   "contacto": true
+  },
+  {
+   "ref": "4",
+   "lat": -25.24180555555556,
+   "lon": -57.51511388888889,
+   "salida": null,
+   "max": null,
+   "aproar": null,
+   "obs": null,
+   "carta": "AD 2.1-14.2",
+   "wef": "01-OCT-26",
+   "contacto": true
+  },
+  {
+   "ref": "5",
+   "lat": -25.24106666666667,
+   "lon": -57.51476944444445,
+   "salida": null,
+   "max": null,
+   "aproar": null,
+   "obs": null,
+   "carta": "AD 2.1-14.2",
+   "wef": "01-OCT-26",
+   "contacto": true
+  },
+  {
+   "ref": "6",
+   "lat": -25.2407,
+   "lon": -57.51488055555556,
+   "salida": null,
+   "max": null,
+   "aproar": null,
+   "obs": null,
+   "carta": "AD 2.1-14.2",
+   "wef": "01-OCT-26",
+   "contacto": true
+  }
+ ]
+}

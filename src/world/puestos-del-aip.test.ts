@@ -10,7 +10,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { admite, delAipEn, seEntraPorSuRaya, seSaleEmpujado, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
-import { empujeDesdeElPuesto, entradaDelPuesto, quedaSobreLaRaya, rayaDeLado, saleConRemolque, edificiosDePasarela } from "./remolque";
+import { empujeDesdeElPuesto, entradaDelPuesto, quedaSobreLaRaya, rayaDeLado, rumboDeLaPintada, saleConRemolque, edificiosDePasarela } from "./remolque";
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { conSuAerodromo, SCENARIOS, type Scenario } from "./scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
@@ -26,6 +26,7 @@ const CARTAS: Readonly<Record<string, () => Promise<unknown>>> = {
   GCLP: () => import("../../data/aerodromes/aip/gclp.pdc.json"),
   GCXO: () => import("../../data/aerodromes/aip/gcxo.pdc.json"),
   LEMD: () => import("../../data/aerodromes/aip/lemd.pdc.json"),
+  SGAS: () => import("../../data/aerodromes/aip/sgas.pdc.json"),
 };
 
 const puesto = (salida: DelAip["salida"], max: string | null, contacto: boolean | null = null): DelAip => ({
@@ -67,6 +68,13 @@ describe("lo que dice el AIP de un puesto", () => {
     expect(seEntraPorSuRaya({ ...puesto("R", "A321"), lejos: 136 })).toBe(false);
     expect(seEntraPorSuRaya(puesto(null, null, false))).toBe(false);
     expect(seEntraPorSuRaya(null)).toBe(false);
+  });
+
+  it("y si la carta no dice la salida pero el puesto es de pasarela, también (H83)", () => {
+    expect(seEntraPorSuRaya(puesto(null, null, true))).toBe(true);
+    expect(seEntraPorSuRaya({ ...puesto(null, null, true), lejos: 23 })).toBe(false);
+    expect(seEntraPorSuRaya(puesto(null, null, null))).toBe(false);
+    expect(seEntraPorSuRaya(puesto("A", null, true))).toBe(false);
   });
 
   it("de un «A» no se sale empujado; de un «R» o un «AR», sí; y sin pasarela en la carta, nada de empuje", () => {
@@ -123,7 +131,9 @@ describe("las fichas, con lo del AIP", async () => {
    * **Cada puesto en su punto publicado** (H75): a diez metros o menos, o dice a cuántos está.
    * Los que quedan lejos son los de la ficha y el AIP que no dicen el mismo sitio: los de Barajas
    * de las rampas con otra raya, el 13 de Los Rodeos, once metros al lado de la suya, y el 7 de
-   * Lanzarote, que el AIP publica en 0133627.65W, detrás de la terminal y fuera de su fila.
+   * Lanzarote, que el AIP publica en 0133627.65W, detrás de la terminal y fuera de su fila. Y las
+   * puertas 5 y 6 de Pettirossi (H83): la DINAC da el arranque de su pasarela, a más de veinte
+   * metros al lado de la raya.
    */
   it.each([
     ["GCLA", []],
@@ -131,6 +141,7 @@ describe("las fichas, con lo del AIP", async () => {
     ["GCTS", []],
     ["GCLP", []],
     ["GCXO", ["13"]],
+    ["SGAS", ["5", "6"]],
     ["LEMD", ["T27", "T31", "626", "628", "627", "124", "124A", "123", "123A", "122", "122A", "120", "120A", "LAV2"]],
   ] as const)("%s: los puestos están en su punto publicado, o dicen a cuántos metros", async (id, fuera) => {
     const { default: carta } = (await CARTAS[id]!()) as unknown as {
@@ -192,6 +203,53 @@ describe("las fichas, con lo del AIP", async () => {
     expect(admite(gcla.parkingPositions!.find((p) => p.ref === "H2")!.aip, avion("jaz-20").wingSpan)).toBe(false);
   });
 
+  /*
+   * **Las seis puertas de Pettirossi, una vez cada una y nada más de pasarela** (H83): la ficha
+   * traía cada línea de entrada como otro puesto, en su centro, y por la 02 el plan sacaba a los
+   * tres reactores de la mitad de la línea de la 2.
+   */
+  it("Pettirossi: seis puertas de la DINAC, con su línea, y ningún puesto más de pasarela", () => {
+    const sgas = de("SGAS");
+    const puertas = sgas.parkingPositions!.filter((p) => p.ref);
+    expect(puertas.map((p) => p.ref)).toEqual(["1", "2", "3", "4", "5", "6"]);
+    for (const p of puertas) {
+      expect(p.aip, p.ref!).toMatchObject({ salida: null, max: null, contacto: true, carta: "AD 2.1-14.2" });
+      expect(p.aip!.aproar, p.ref!).toBeUndefined();
+      expect(p.entrada!.at(-1), p.ref!).toEqual(p.xy);
+    }
+    expect(sgas.aipPuestos?.cartas).toEqual([{ carta: "AD 2.1-14.2", wef: "01-OCT-26" }]);
+    // Ningún otro puesto es de pasarela, ni está en la línea de una puerta.
+    for (const p of sgas.parkingPositions!.filter((q) => !q.ref)) {
+      expect(p.aip?.contacto, String(p.xy)).toBe(false);
+      for (const q of puertas)
+        for (let i = 1; i < q.entrada!.length; i++) {
+          const [a, b] = [q.entrada![i - 1]!, q.entrada![i]!];
+          const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+          const t = Math.max(0, Math.min(1, ((p.xy[0] - a[0]) * dx + (p.xy[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+          expect(Math.hypot(p.xy[0] - a[0] - t * dx, p.xy[1] - a[1] - t * dy), `${p.xy} en la línea de la ${q.ref}`).toBeGreaterThan(3);
+        }
+    }
+    const campo = campos.find((c) => c.aerodrome!.id === "SGAS")!;
+    const plan = new PlanDeVuelo(campo.aerodrome!, campo.runway, () => 600, avion("jaz-90"));
+    const refs = (plan as unknown as { puestosDeContacto(): { ref: string | null }[] }).puestosDeContacto().map((p) => p.ref);
+    expect([...refs].sort()).toEqual(["1", "2", "3", "4", "5", "6"]);
+  });
+
+  it("y en la 2, que tiene la terminal a la izquierda, se aparca sobre su línea, a 100°", () => {
+    const sgas = de("SGAS");
+    const p = sgas.parkingPositions!.find((q) => q.ref === "2")!;
+    const entrada = entradaDelPuesto(sgas, p.xy[0], -p.xy[1])!;
+    expect(entrada.publicada).toBe(true);
+    const rumbo = rumboDeLaPintada(p.xy[0], -p.xy[1], edificiosDePasarela(sgas), entrada)!;
+    expect((rumbo * 180) / Math.PI).toBeGreaterThan(95);
+    expect((rumbo * 180) / Math.PI).toBeLessThan(105);
+    // Las que no están en su punto, por la pared: la 5 y la 6.
+    for (const ref of ["5", "6"]) {
+      const q = sgas.parkingPositions!.find((x) => x.ref === ref)!;
+      expect(entradaDelPuesto(sgas, q.xy[0], -q.xy[1])!.publicada, ref).toBe(false);
+    }
+  });
+
   it("el 11 de La Palma no es de contacto: la terminal le queda a la derecha, al través", () => {
     const campo = campos.find((c) => c.aerodrome!.id === "GCLA")!;
     const plan = new PlanDeVuelo(campo.aerodrome!, campo.runway, () => 600, avion("jaz-90"));
@@ -207,7 +265,7 @@ describe("las fichas, con lo del AIP", async () => {
    * en ella mirando por donde va a rodar. Con la regla de la pared, en La Palma salían de lado el
    * 4, el 4A y el 10, que tienen la terminal al costado.
    */
-  it.each(["GCLA", "GCRR", "GCTS"])("%s: de cada puesto de contacto, por su raya y sin que salga de lado", (id) => {
+  it.each(["GCLA", "GCRR", "GCTS", "SGAS"])("%s: de cada puesto de contacto, por su raya y sin que salga de lado", (id) => {
     const campo = campos.find((c) => c.aerodrome!.id === id)!;
     const aero = campo.aerodrome!;
     const edificios = edificiosDePasarela(aero);
@@ -235,7 +293,7 @@ describe("las fichas, con lo del AIP", async () => {
     expect(mirados).toBeGreaterThan(20);
   });
 
-  it.each(["GCXO", "LEMD", "GCLP", "GCLA", "GCRR", "GCTS"])(
+  it.each(["GCXO", "LEMD", "GCLP", "GCLA", "GCRR", "GCTS", "SGAS"])(
     "%s: el puesto del que sale empujado cada reactor, por cada cabecera, lo admite el AIP",
     (id) => {
       const campo = campos.find((c) => c.aerodrome!.id === id)!;

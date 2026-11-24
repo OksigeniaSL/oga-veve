@@ -3,6 +3,8 @@
  * empujado por un tractor («R») o por sus propios medios («A»), el mayor avión que
  * admite y si es de contacto. Sale de las cartas PDC de la parte AD 2 del AIP de
  * ENAIRE, con `scripts/puestos-del-aip.mjs`, y va en `aip` de cada puesto de la ficha.
+ * El de la DINAC, en Silvio Pettirossi, publica las seis puertas con sus coordenadas y su
+ * pasarela dibujada, y nada más (H83): la salida y el mayor avión van sin dato.
  *
  * Hasta aquí el juego daba por puesto de contacto cualquiera que quedara a lo que
  * alcanza una pasarela de la terminal (`esPuestoDeContacto`), y por la 18 de Barajas
@@ -17,7 +19,8 @@ export interface DelAip {
   /**
    * «R», empujado por un tractor; «A», por sus medios; «AR», cualquiera de las dos; `null`,
    * un puesto que la carta no trae —en un campo cuyo AIP dice cuáles son de contacto, un
-   * puesto de OpenStreetMap que no está en su lista no lo es (`contacto: false`)—.
+   * puesto de OpenStreetMap que no está en su lista no lo es (`contacto: false`)— o del que
+   * la carta no lo dice, como las puertas de Pettirossi (H83).
    */
   readonly salida: "R" | "A" | "AR" | null;
   /**
@@ -82,9 +85,17 @@ export function cumpleElAproar(rumbo: number, aproar: readonly number[]): boolea
  * empujado** (H75): la carta lo da de salida con tractor, y el puesto está en su punto
  * publicado, que es donde acaba la raya. A un puesto así se entra de frente por su línea y se
  * sale de espaldas por ella. Ver `rumboDeLaPintada`.
+ *
+ * **Y la de uno con pasarela del que la carta no dice la salida** (H83): la pasarela llega a la
+ * puerta de un avión que está parado sobre su raya con el morro hacia dentro, que es como se
+ * embarca por ella, y de ahí no se sale hacia delante. Es lo de las puertas de Pettirossi: la
+ * DINAC publica cuáles son y dónde están, y dibuja la pasarela de cada una. Su 2 tiene la
+ * terminal a la izquierda de la raya, no delante, y con la regla de la pared el avión se ponía
+ * mirando a la esquina, atravesado a su línea.
  */
 export function seEntraPorSuRaya(aip: DelAip | null | undefined): boolean {
-  return !!aip && aip.lejos === undefined && (aip.salida === "R" || aip.salida === "AR");
+  if (!aip || aip.lejos !== undefined) return false;
+  return aip.salida === "R" || aip.salida === "AR" || (aip.salida === null && aip.contacto === true);
 }
 
 /**
