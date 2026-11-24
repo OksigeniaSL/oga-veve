@@ -156,6 +156,20 @@ export interface LoQueVeLaTorre {
    * obedece y sube, se va. Ver `seVaDeVerdad`.
    */
   readonly ordenDeIrse?: boolean;
+  /**
+   * **Si se está despegando, o se acaba de despegar y no se ha dado la
+   * vuelta**: ahí no se entra en la final. Ver `recienDespegado` en
+   * `flight/vuelo.ts`.
+   *
+   * La final de la torre se coge por delante del umbral **de aterrizar**, y
+   * con la cabecera desplazada la avioneta deja el suelo por delante de él: en
+   * la 01 de Fuerteventura, a setecientos metros. En el primer instante del
+   * despegue, con la vertical todavía por debajo de `SIN_SUBIR`, ya se entraba:
+   * a los doce metros la torre te veía en final y te daba la pista para
+   * aterrizar, y sin el gas de despegue entero el permiso duraba hasta los
+   * cien metros (H73).
+   */
+  readonly recienDespegado?: boolean;
 }
 
 /**
@@ -225,7 +239,7 @@ export class FinalDeLaTorre {
        * viento en cola del circuito, o el viraje de vuelta de la frustrada.
        */
       if (this.trasIrse && Math.abs(v.torcido) > TORCIDO_PARA_SALIR) this.trasIrse = false;
-      if (!this.trasIrse && (v.faseDelPlan === "final" || entra(v))) {
+      if (!this.trasIrse && !v.recienDespegado && (v.faseDelPlan === "final" || entra(v))) {
         this.dentro = true;
         this.loMasBajo = v.sobreLaPista;
       }
@@ -261,7 +275,7 @@ export class FinalDeLaTorre {
    * antes la fase del plan (`faseQueVeLaTorre`), y el permiso de la subida
    * salía de ahí, de un «final» del plan subiendo por una pista larga. La
    * regla para todos los vuelos está en `recienDespegado`, en
-   * `flight/vuelo.ts` (H71c).
+   * `flight/vuelo.ts` (H71c), y desde la H73 la mira también esta final.
    */
   despegado(): void {
     this.salir("seVa");

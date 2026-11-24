@@ -216,6 +216,9 @@ class Mesa {
       vertical: a.vs,
       gas: a.gas,
       ordenDeIrse: a.orden,
+      recienDespegado:
+        this.regla === "ahora" &&
+        (this.v.acabaDeDespegar || (this.fase !== "en-vuelo" && this.fase !== "final")),
     });
     // ── La regla ──
     const salida = this.final.ultimaSalida;
@@ -529,6 +532,55 @@ describe("y por un bache no se retira, ni suena dos veces (H73)", () => {
     for (let d = 9; d > 1; d -= 0.1)
       expect(a.paso({ ...v, alUmbral: d * MILLA, deLado: (d / 3) * MILLA })).toBeNull();
     expect(a.enMarcha).toBe(true);
+  });
+});
+
+describe("despegando de una pista con la cabecera desplazada (H73)", () => {
+  /**
+   * **El despegue de Fuerteventura por la 01**: 3.406 m de asfalto y el umbral
+   * de aterrizar a mil metros de la punta. La avioneta deja el suelo a unos
+   * trescientos metros, o sea **por delante del umbral de aterrizar**, dentro
+   * del cono de la aproximación y alineada: lo mismo que ve la torre en una
+   * final. La vertical crece en dos segundos hasta su subida.
+   */
+  const despegue = (
+    regla: Regla,
+    gas: number,
+  ): { torre: Set<string>; dados: number; alUmbral: number; alto: number } => {
+    const fuerteventura: Pista = { ...GANDO, length: 3406, desplazado: 1000 };
+    const m = new Mesa(regla, fuerteventura);
+    m.v.reiniciar(true);
+    m.final.reiniciar();
+    m.en({ x: -1703 + 40, eje: 1, rumbo: 0, h: 0, vs: 0, gs: 0, gas, enElSuelo: true });
+    while (m.a.gs < 30) m.vuela(PASO, { gs: m.a.gs + 2 * PASO });
+    const alUmbral = m.alUmbral;
+    m.en({ enElSuelo: false });
+    const torre = new Set<string>();
+    // Hasta dónde se sube con el permiso de aterrizar puesto.
+    let alto = 0;
+    for (let t = 0; t < 40; t += PASO) {
+      m.vuela(PASO, { vs: Math.min(4.8, t * 2.4) });
+      torre.add(m.torre);
+      if (m.permiso !== null) alto = m.a.h;
+    }
+    return { torre, dados: m.dados.length, alUmbral, alto };
+  };
+
+  for (const gas of [1, 0.85])
+    it(`con el gas al ${gas * 100} %, la torre no te ve en final ni te da la pista`, () => {
+      const ahora = despegue("ahora", gas);
+      // Se va al aire por delante del umbral de aterrizar.
+      expect(ahora.alUmbral).toBeGreaterThan(500);
+      expect([...ahora.torre]).not.toContain("final");
+      expect(ahora.dados).toBe(0);
+      // Y antes te veía y te la daba, recién despegado.
+      const antes = despegue("antes", gas);
+      expect([...antes.torre]).toContain("final");
+      expect(antes.dados).toBe(1);
+    });
+
+  it("antes, con el gas reducido, el permiso duraba casi cien metros de subida", () => {
+    expect(despegue("antes", 0.85).alto).toBeGreaterThan(90);
   });
 });
 

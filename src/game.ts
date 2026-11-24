@@ -13310,6 +13310,9 @@ export class Game {
       // Lo que dice que uno se va al aire de verdad: ver `seVaDeVerdad`.
       gas: this.input.controls.throttle,
       ordenDeIrse: this.laAproximacion.mandanFrustrar,
+      // En el aire y despegando todavía —hasta los doce metros—, o recién despegado.
+      recienDespegado:
+        (this.plan?.acabaDeDespegar ?? false) || (fase !== "en-vuelo" && fase !== "final"),
     });
   }
 
