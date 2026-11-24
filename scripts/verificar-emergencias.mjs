@@ -431,6 +431,9 @@ try {
       let tiraConLaRadioCallada = null;
       // De noche: los golpes de los faros que contestan, cada uno con su segundo.
       const faros = [];
+      // Y en el suelo: lo que se aparta del eje, y dónde se para.
+      let radioDesvio = 0;
+      let paroEn = null;
       let farosALaVelocidad = false;
       let farosHechos = false;
       // Con la rueda reventada: lo que se va del eje y el pie que pisa, en la carrera y en la toma; y la tarjeta.
@@ -1118,6 +1121,21 @@ try {
               };
               return;
             }
+            if (modo === "radio") {
+              /*
+               * **Por el eje con el pie**, y no contra el derrape: en el suelo,
+               * quitar el derrape es ponerse cara al viento. De noche en Los
+               * Rodeos, con el viento de lado, se fue a la hierba, a 45 m del
+               * eje, y el banco no lo miraba (H86).
+               */
+              c.rudder = acota(error(h - Math.atan(p.c * 0.02), s.heading) * 4 - s.yawRate, -1, 1);
+              c.aileron = 0;
+              c.brakes = 0.4;
+              c.elevator = 0;
+              if (s.groundSpeed > 3) radioDesvio = Math.max(radioDesvio, Math.abs(p.c));
+              paroEn = { enPista: !!s.onRunway, c: p.c };
+              return;
+            }
             if (modo === "despues") {
               // El eje con el pie: la reversa del motor que queda tira hacia su lado (H80).
               c.rudder = acota(error(h - Math.atan(p.c * 0.008), s.heading) * 4 + 3 * s.beta, -1, 1);
@@ -1314,6 +1332,8 @@ try {
         tiraConLaRadioCallada,
         faros,
         ladoDelCircuito,
+        radioDesvio,
+        paroEn,
         rev,
         tm,
         av,
@@ -1688,10 +1708,11 @@ try {
         `${pedido.filter((k) => /ejercicio\.radio\.(destellos|alas|roja|verde)/.test(k)).join(" · ") || "nada"}`,
     );
     comprobar(
-      "toca en la pista con la verde fija, sin percance",
-      r.tocoEn?.enPista && ej?.radio?.conLaVerde === true && !r.percance,
+      "toca en la pista con la verde fija y para en ella, sin percance",
+      r.tocoEn?.enPista && ej?.radio?.conLaVerde === true && !r.percance && r.paroEn?.enPista === true,
       r.tocoEn
         ? `tocó ${r.tocoEn.enPista ? "en la pista" : "fuera"} a ${Math.round(r.tocoEn.a)} m del umbral a ${r.tocoEn.vs.toFixed(1)} m/s · ` +
+            `paró ${r.paroEn?.enPista ? "en la pista" : "fuera"} a ${Math.abs(r.paroEn?.c ?? 0).toFixed(0)} m del eje, con ${r.radioDesvio.toFixed(0)} m como mucho · ` +
             `con la verde ${ej?.radio?.conLaVerde} · finales sin la verde ${r.sinVerdeEnLaFinal}`
         : `no llegó · lo más bajo ${Math.round(r.bajo)} m · finales sin la verde ${r.sinVerdeEnLaFinal}`,
     );
