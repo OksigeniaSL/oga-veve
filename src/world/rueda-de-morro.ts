@@ -55,9 +55,11 @@ const DEL_DIBUJO: Readonly<Record<string, { readonly puerta: number; readonly pu
   "jaz-40": { puerta: 0, punta: 1.4 },
   "jaz-50": { puerta: 0, punta: 1.8 },
   "jaz-60": { puerta: 0, punta: 0.7 },
-  "jaz-90": { puerta: 0.9, punta: 5.6 },
-  "jaz-110": { puerta: -0.8, punta: 5.5 },
-  "jaz-120": { puerta: -2.7, punta: 7.9 },
+  // Y la de los tres que salen empujados, que es por donde pisan: ver `ruedas-en-el-empuje.ts`. La
+  // del JAZ 120, la de las patas del ala, que son las de fuera.
+  "jaz-90": { puerta: 0.9, punta: 5.6, via: 2.55 },
+  "jaz-110": { puerta: -0.8, punta: 5.5, via: 4.9 },
+  "jaz-120": { puerta: -2.7, punta: 7.9, via: 5.6 },
 };
 
 /** Lo que se le da a un avión sin dibujo medido: la punta, a un par de metros. */
@@ -121,6 +123,14 @@ export function barraAlTrenDe(
     largo: morroDe(a).punta + DELANTE_DE_LA_HELICE,
     via: DEL_DIBUJO[a.id]?.via ?? VIA_SIN_MEDIR,
   };
+}
+
+/**
+ * **La media vía de las principales**, m: del eje del avión al centro de su pata de fuera. La del
+ * dibujo; y en el que no la lleva medida, la de su ficha.
+ */
+export function mediaViaDe(a: Pick<AircraftConfig, "id" | "ruedasPrincipales">): number {
+  return DEL_DIBUJO[a.id]?.via ?? a.ruedasPrincipales?.mediaVia ?? VIA_SIN_MEDIR;
 }
 
 /**

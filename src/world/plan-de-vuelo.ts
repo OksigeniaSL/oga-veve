@@ -76,6 +76,7 @@ import {
 } from "./remolque";
 import { admite, aproarDe, cumpleElAproar, delAipEn, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
+import { empujaSobrePavimento, fueraDelPavimento } from "./ruedas-en-el-empuje";
 import { YA_EN_SU_SITIO } from "../flight/senalero";
 import {
   aLaCaja,
@@ -83,6 +84,7 @@ import {
   construirGrafo,
   HOLGURA_DE_LA_CAJA,
   pasandoElCruce,
+  pavimentoDibujado,
   puestosEnElPavimento,
   rectaPorPavimento,
   rodajeEntre,
@@ -1154,7 +1156,7 @@ const DELANTE_DEL_MORRO = 1;
 const HASTA_DONDE_SE_BUSCA = 80;
 const HACIA_DONDE_SIGUE = Math.cos((20 * Math.PI) / 180);
 
-/** Cuántos puestos más prueba el plan si del elegido se sale de lado: ver `saleDeLado`. */
+/** Cuántos puestos más prueba el plan si del elegido se sale mal: ver `saleMal`. */
 const OTROS_SI_SALE_DE_LADO = 8;
 
 /**
@@ -2878,11 +2880,21 @@ export class PlanDeVuelo {
    * ella, lo que queda es el empuje de la raya del plan sin mirar, y en el 24 de Los Rodeos
    * era el de «La esquina, que vio el banco». Así ningún empuje que salía bien sale peor.
    *
+   * **Y sin sacar las ruedas del pavimento** (H81): con `sobrePavimento`, ni un metro; sin él, lo
+   * que mide el avión entre ejes, que es una rueda que se sale por el borde al girar. El 388 de
+   * Barajas acaba con las principales a cinco metros del borde de la J-6, y es la única manera
+   * de dejarlo mirando a su calle. El que se mete en la hierba no sale bien, acabe como acabe.
+   *
    * Se guarda por puesto y por los primeros quinientos metros de la ruta, que es todo lo que
    * mira el empuje: elegir el par de salida pregunta por el mismo puesto con cada punto de
    * espera, y casi todas sus rutas salen del puesto igual.
    */
-  private saleBienDeEspaldas(puesto: Punto, ruta: Ruta, aproar: readonly number[] | null = null): boolean {
+  private saleBienDeEspaldas(
+    puesto: Punto,
+    ruta: Ruta,
+    aproar: readonly number[] | null = null,
+    sobrePavimento = false,
+  ): boolean {
     let andado = 0;
     const firma: string[] = [];
     for (let i = 0; i < ruta.puntos.length && andado <= 500; i++) {
@@ -2892,7 +2904,7 @@ export class PlanDeVuelo {
     }
     const clave = `${this.avion.id}|${puesto[0].toFixed(2)},${puesto[1].toFixed(2)}|${aproar?.join(",") ?? ""}|${firma.join(";")}`;
     const ya = this.empujesMirados.get(clave);
-    if (ya !== undefined) return ya;
+    if (ya !== undefined) return ya <= (sobrePavimento ? 0 : this.avion.batalla);
     if (this.empujesMirados.size > 2000) this.empujesMirados.clear();
     const x = puesto[0];
     const z = -puesto[1];
@@ -2917,12 +2929,18 @@ export class PlanDeVuelo {
         cumpleElAproar(empuje.poses.at(-1)!.rumbo, aproar) &&
         (enElSuyo.porLaPintada || (!rayaDeLado(enElSuyo.rumbo, raya) && acabaEnLaCalle(empuje, raya, this.avion.batalla)))
       : enElSuyo?.porLaPintada === true;
-    this.empujesMirados.set(clave, bien);
-    return bien;
+    // Y cuánto pisa fuera del pavimento, m (H81): el que no sale bien, infinito.
+    let fuera = Infinity;
+    if (bien && empuje) {
+      const f = fueraDelPavimento(this.avion, empuje.poses, pavimentoDibujado(this.aero));
+      fuera = f.alAcabar > 0 ? Math.max(f.metros, 1) : f.metros;
+    }
+    this.empujesMirados.set(clave, fuera);
+    return fuera <= (sobrePavimento ? 0 : this.avion.batalla);
   }
 
   /** Ver `saleBienDeEspaldas`. Se tira al mudarse de campo. */
-  private readonly empujesMirados = new Map<string, boolean>();
+  private readonly empujesMirados = new Map<string, number>();
 
   /**
    * **Las rutas de un puesto hacia su APROAR** (H76), a cada punto de espera: la calle a la que
@@ -2931,8 +2949,10 @@ export class PlanDeVuelo {
    * el APROAR igual, que es por donde lo saca el aeropuerto.
    *
    * De espaldas por su raya pintada; si por ella no sale, perpendicular a la pared, que es como se
-   * empuja de un puesto del que no se tiene la raya; y si tampoco, por la calle más cercana. De
-   * espaldas, primero por la primera calle que encuentra, que es la de su plataforma.
+   * empuja de un puesto del que no se tiene la raya; y si tampoco, por la calle más cercana, y por
+   * la que se llega atravesado a ella (`enganchesAtravesados`, H81). De espaldas, primero por la primera calle que encuentra, que es la de su plataforma. Y antes que
+   * ninguna, la que va entera sobre pavimento (H81); la que saca una rueda por el borde, solo si
+   * no hay otra (`saleBienDeEspaldas`).
    */
   private rutasHaciaElAproar(puesto: Punto, esperas: readonly Punto[], ocupados?: Ocupados): (Ruta | null)[] {
     const rutas: (Ruta | null)[] = esperas.map(() => null);
@@ -2957,23 +2977,29 @@ export class PlanDeVuelo {
         manera.deEspaldas ? [{ ...manera, enLaPrimera: true }, { ...manera, enLaPrimera: false }] : [],
       ),
       { deEspaldas: null },
+      ...[0, 16, 32].map((atravesada) => ({ deEspaldas: null, atravesada })),
     ];
-    for (const manera of maneras) {
-      if (rutas.every((r) => r)) break;
-      const buenas = rodajesDesde(this.grafo, puesto, esperas, 220, ocupados, { ...manera, sentido }).map((r, k) =>
-        !rutas[k] && r && this.saleBienDeEspaldas(puesto, r, aproar) ? r : null,
-      );
-      // Y empujando un poco más, si así se llega a un ramal que queda antes del cruce (H79).
-      const pasando = manera.deEspaldas
-        ? this.desdeDondeAcabaElEmpuje(puesto, esperas, buenas, manera.deEspaldas, ocupados, aproar)
-        : [];
-      buenas.forEach((r, k) => {
-        const ruta = pasando[k] ?? r;
-        if (!ruta) return;
-        this.conAproar.add(ruta);
-        rutas[k] = ruta;
-      });
-    }
+    const trazadas = new Map<(typeof maneras)[number], (Ruta | null)[]>();
+    for (const sobrePavimento of [true, false])
+      for (const manera of maneras) {
+        if (rutas.every((r) => r)) break;
+        let delSentido = trazadas.get(manera);
+        if (!delSentido)
+          trazadas.set(manera, (delSentido = rodajesDesde(this.grafo, puesto, esperas, 220, ocupados, { ...manera, sentido })));
+        const buenas = delSentido.map((r, k) =>
+          !rutas[k] && r && this.saleBienDeEspaldas(puesto, r, aproar, sobrePavimento) ? r : null,
+        );
+        // Y empujando un poco más, si así se llega a un ramal que queda antes del cruce (H79).
+        const pasando = manera.deEspaldas
+          ? this.desdeDondeAcabaElEmpuje(puesto, esperas, buenas, manera.deEspaldas, ocupados, aproar, sobrePavimento)
+          : [];
+        buenas.forEach((r, k) => {
+          const ruta = pasando[k] ?? r;
+          if (!ruta) return;
+          this.conAproar.add(ruta);
+          rutas[k] = ruta;
+        });
+      }
     return rutas;
   }
 
@@ -2990,10 +3016,11 @@ export class PlanDeVuelo {
     deEspaldas: Punto,
     ocupados?: Ocupados,
     aproar: readonly number[] | null = null,
+    sobrePavimento = true,
   ): (Ruta | null)[] {
     if (!rutas.some((r) => r)) return rutas.map(() => null);
     return pasandoElCruce(this.grafo, esperas, rutas, deEspaldas, ocupados).map((r) =>
-      r && this.saleBienDeEspaldas(puesto, r, aproar) ? r : null,
+      r && this.saleBienDeEspaldas(puesto, r, aproar, sobrePavimento) ? r : null,
     );
   }
 
@@ -3048,30 +3075,32 @@ export class PlanDeVuelo {
     /*
      * **Y de un puesto del que el tractor sepa sacarlo** (H60f): si de ahí se sale empujado y
      * la raya sale del puesto de lado —el empuje se queda en quince metros con el avión
-     * atravesado a ella—, el siguiente de la lista que no, hasta `OTROS_SI_SALE_DE_LADO`; si
-     * ninguno, el primero, como antes. Con el AIP el 329 de Barajas dejó de ser de contacto,
-     * y por la 18 el plan pasó al 330, que sale así (los «siguen mal» de la H60e).
+     * atravesado a ella— o el empuje saca una rueda del pavimento (H81), el siguiente de la
+     * lista que no, hasta `OTROS_SI_SALE_DE_LADO`; si ninguno, el primero, como antes. Con el
+     * AIP el 329 de Barajas dejó de ser de contacto, y por la 18 el plan pasó al 330, que sale
+     * así (los «siguen mal» de la H60e).
      */
     if (donde && this.deContacto && vaALaPasarela(this.avion)) {
       let quedan = pares;
       let otro: ParDeSalida | null = donde;
-      for (let i = 0; otro && i < OTROS_SI_SALE_DE_LADO && this.saleDeLado(otro); i++) {
+      for (let i = 0; otro && i < OTROS_SI_SALE_DE_LADO && this.saleMal(otro); i++) {
         const fuera = otro.puesto;
         quedan = quedan.filter((p) => p.puesto !== fuera);
         otro = this.elegirSalida(quedan);
       }
-      if (otro && !this.saleDeLado(otro)) donde = otro;
+      if (otro && !this.saleMal(otro)) donde = otro;
     }
     if (donde) this.par = { puesto: donde.puesto, espera: donde.espera };
     return this.par;
   }
 
   /**
-   * **Si de este par se sale empujado con la raya de lado**: con la ruta como se pinta y el
-   * avión aparcado como lo pone `empujeDesdeElPuesto`, la raya sale a más de cincuenta grados
-   * de su cola (`rayaDeLado`). Solo si de ahí se sale empujado.
+   * **Si de este par se sale empujado con la raya de lado, o sacando una rueda del pavimento**: con
+   * la ruta como se pinta y el avión aparcado como lo pone `empujeDesdeElPuesto`, la raya sale a
+   * más de cincuenta grados de su cola (`rayaDeLado`), o el empuje pisa fuera
+   * (`empujaSobrePavimento`, H81). Solo si de ahí se sale empujado.
    */
-  private saleDeLado(par: ParDeSalida): boolean {
+  private saleMal(par: ParDeSalida): boolean {
     const [px, py] = par.puesto.xy;
     const x = px;
     const z = -py;
@@ -3090,7 +3119,9 @@ export class PlanDeVuelo {
       this.avion.batalla,
       (r) => conLaRuedaEn({ x, z }, r, morro),
     );
-    return enElSuyo !== null && rayaDeLado(enElSuyo.rumbo, raya);
+    if (enElSuyo === null) return false;
+    if (rayaDeLado(enElSuyo.rumbo, raya)) return true;
+    return !!enElSuyo.empuje && !empujaSobrePavimento(this.avion, enElSuyo.empuje.poses, pavimentoDibujado(this.aero));
   }
 
   /**

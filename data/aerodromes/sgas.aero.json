@@ -3424,6 +3424,27 @@
       ]
     }
   ],
+  "plataformasDeducidas": [
+    {
+      "nombre": "Abocinado de la L con la paralela",
+      "surface": null,
+      "polygon": [
+        [
+          243.1,
+          54
+        ],
+        [
+          233.3,
+          10.1
+        ],
+        [
+          266.9,
+          15.8
+        ]
+      ],
+      "fuente": "Deducida: OpenStreetMap da las calles por su eje, y el juego las dibuja de veintitrés metros y con el cruce en pico; el Anexo 14 de la OACI, volumen I, 3.9, recomienda abocinar los cruces de las calles para que las ruedas no se salgan al girar, y el empuje del 6 gira aquí con un B747 (JAZ 120). Su contorno es el borde de las dos calles, cuarenta y cinco metros desde el pico: sin carta que lo dibuje."
+    }
+  ],
   "buildings": [
     {
       "kind": "terminal",

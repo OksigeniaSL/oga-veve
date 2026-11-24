@@ -1334,6 +1334,71 @@
       ]
     }
   ],
+  "plataformasDeducidas": [
+    {
+      "nombre": "Plataforma comercial, hasta la R",
+      "surface": null,
+      "polygon": [
+        [
+          -907,
+          512
+        ],
+        [
+          -897.3,
+          504.6
+        ],
+        [
+          -593.5,
+          389.6
+        ],
+        [
+          -528.6,
+          365.8
+        ],
+        [
+          -515,
+          359.8
+        ],
+        [
+          -475.8,
+          345.8
+        ],
+        [
+          -388.3,
+          312
+        ],
+        [
+          -16.6,
+          172.9
+        ],
+        [
+          -2.2,
+          166.9
+        ],
+        [
+          -20,
+          135.8
+        ],
+        [
+          -61.4,
+          151.4
+        ],
+        [
+          -85.8,
+          156.7
+        ],
+        [
+          -180.8,
+          192.6
+        ],
+        [
+          -925,
+          473.2
+        ]
+      ],
+      "fuente": "Deducida: OpenStreetMap acaba la plataforma comercial en su límite (ABL), y la carta AIP España AD 2-GCXO PDC 1.1 (WEF 29-OCT-26) no dibuja borde de pavimento entre él y la R, de la R2 a la R7: la calle va abierta a la plataforma. Su contorno es el borde de la plataforma de OpenStreetMap, tres metros por dentro para que no quede rendija, y el eje de la R."
+    }
+  ],
   "buildings": [
     {
       "kind": "terminal",

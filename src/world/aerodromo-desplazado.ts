@@ -55,6 +55,9 @@ export function desplazarAerodromo(
     })),
     taxiways: aero.taxiways.map((t) => ({ ...t, path: lista(t.path) })),
     aprons: aero.aprons.map((a) => ({ ...a, polygon: lista(a.polygon) })),
+    ...(aero.plataformasDeducidas
+      ? { plataformasDeducidas: aero.plataformasDeducidas.map((d) => ({ ...d, polygon: lista(d.polygon) })) }
+      : {}),
     buildings: aero.buildings.map((b) => ({ ...b, polygon: lista(b.polygon) })),
     windsocks: lista(aero.windsocks),
     holdingPositions: aero.holdingPositions.map((h) => ({

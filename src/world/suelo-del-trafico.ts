@@ -680,7 +680,7 @@ export function sueloDelTrafico(
   /**
    * **Si de ese camino se sale empujado con la raya de lado** (H60f, ADR 0025): de un puesto de
    * contacto, con el avión como lo aparca el tráfico, la raya sale a más de cincuenta grados de
-   * su cola (`rayaDeLado`). Es la regla del plan de quien juega (`saleDeLado` en
+   * su cola (`rayaDeLado`). Es la regla del plan de quien juega (`saleMal` en
    * `plan-de-vuelo.ts`), y el tráfico no la tenía: en Los Rodeos, desde que el AIP le quitó el
    * 17, el reactor se iba al 14, cuya raya sale hacia el oeste a lo largo de la fachada; el
    * tractor no tenía calle por detrás y lo giraba ciento tres grados casi en el sitio, con la
