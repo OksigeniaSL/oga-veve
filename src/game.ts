@@ -13373,6 +13373,7 @@ export class Game {
       gas: this.input.controls.throttle,
       ordenDeIrse: this.laAproximacion.mandanFrustrar,
       sinMotor: this.sinMotor,
+      aSuHelipuerto: !!this.aircraft.helicoptero,
     };
   }
 

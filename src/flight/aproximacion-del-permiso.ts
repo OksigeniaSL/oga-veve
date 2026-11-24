@@ -94,6 +94,11 @@ export interface LoQueSeVeDelPermiso {
    * otro campo. Ver `autorizarSinMotor` en `game.ts`.
    */
   readonly sinMotor?: boolean;
+  /**
+   * **El helicóptero**, que se posa en su helipuerto y no en la pista: cruzar
+   * su eje, darse la vuelta o pasarla no es dejar su aproximación.
+   */
+  readonly aSuHelipuerto?: boolean;
 }
 
 export class AproximacionDelPermiso {
@@ -140,17 +145,12 @@ export class AproximacionDelPermiso {
     if (v.pista !== this.pista) return "otraPista";
     if (v.sinMotor) return null;
     if (seVaDeVerdad(v, v.sobreLaPista - this.loMasBajo)) return "seVa";
-    if (Math.abs(v.torcido) > TORCIDO_PARA_SALIR) return "vuelta";
-    /*
-     * Pasada la punta de la pista, y no el umbral ni el centro: hasta ahí
-     * todavía se puede tocar, y quien flota en la recogida de una pista larga
-     * sigue con su permiso.
-     */
-    if (v.pistaPorDelante < 0) return "pasada";
-    // Con una aproximación publicada se llega a la final de lado y de lejos.
+    if (!v.aSuHelipuerto) {
+      const porElEje = this.dejaElEje(v);
+      if (porElEje) return porElEje;
+    }
+    // Con una aproximación publicada se llega a la final de lejos.
     if (v.enLaFinalDelPlan) return null;
-    const haciaFuera = v.deLado * v.torcido > 0;
-    if (!v.enElCono && haciaFuera && Math.abs(v.torcido) > TORCIDO_AL_ENTRAR) return "deTraves";
     /*
      * Alejándose de donde se dio, y no solo estando lejos: con una
      * aproximación publicada el permiso se puede dar a más de cinco millas, y
@@ -159,5 +159,24 @@ export class AproximacionDelPermiso {
     if (Math.hypot(v.alUmbral, v.deLado) > Math.max(FINAL_DE_LA_TORRE, this.deLejos) + MILLA)
       return "lejos";
     return null;
+  }
+
+  /** Si se deja por cómo se va respecto al eje de la pista. */
+  private dejaElEje(v: LoQueSeVeDelPermiso): PorQueSeDejo | null {
+    if (Math.abs(v.torcido) > TORCIDO_PARA_SALIR) return "vuelta";
+    /*
+     * Pasada la punta de la pista, y no el umbral ni el centro: hasta ahí
+     * todavía se puede tocar, y quien flota en la recogida de una pista larga
+     * sigue con su permiso.
+     */
+    if (v.pistaPorDelante < 0) return "pasada";
+    // Y con una aproximación publicada, también de lado.
+    const haciaFuera = v.deLado * v.torcido > 0;
+    return !v.enLaFinalDelPlan &&
+      !v.enElCono &&
+      haciaFuera &&
+      Math.abs(v.torcido) > TORCIDO_AL_ENTRAR
+      ? "deTraves"
+      : null;
   }
 }

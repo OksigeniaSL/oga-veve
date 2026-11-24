@@ -512,6 +512,30 @@ describe("y por un bache no se retira, ni suena dos veces (H73)", () => {
     }
   });
 
+  it("y el helicóptero, que va a su helipuerto: ni cruzar el eje ni pasar la pista", () => {
+    const a = new AproximacionDelPermiso();
+    const v = {
+      enElAire: true,
+      pista: "a",
+      alUmbral: 1000,
+      deLado: 100,
+      pistaPorDelante: 4104,
+      enElCono: true,
+      enLaFinalDelPlan: false,
+      torcido: 10,
+      sobreLaPista: 90,
+      vertical: -1,
+      gas: 0.5,
+      ordenDeIrse: false,
+      aSuHelipuerto: true,
+    };
+    a.empieza(v);
+    expect(a.paso({ ...v, alUmbral: 200, deLado: 600, enElCono: false, torcido: 80 })).toBeNull();
+    expect(a.paso({ ...v, alUmbral: -3200, deLado: 600, pistaPorDelante: -100, enElCono: false })).toBeNull();
+    // Irse al aire, alejarse y posarse, sí.
+    expect(a.paso({ ...v, enElAire: false })).toBe("tierra");
+  });
+
   it("y con una aproximación publicada, dado de lejos y de lado, viniendo", () => {
     const a = new AproximacionDelPermiso();
     const v = {
