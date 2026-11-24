@@ -10658,25 +10658,26 @@ radios y lo que alarga la senda.
 
 ### Volado
 
-`verificar-vuelo-entero.mjs tenerife-norte tuka 1 jaz-90`, reloj por uno, 040/12, sobre
-copias fijas, puerto 5687, con las dos trazas. La primera con el banco de ahora y
-cuatro décimas de ganancia; la segunda, con un tercio y el retraso contado entero. Con
-las siete décimas no ha volado nadie: es lo que dicen la mesa y las pruebas.
+`verificar-vuelo-entero.mjs tenerife-norte … 1 jaz-90`, reloj por uno, 040/12, sobre
+copias fijas, puerto 5687, con las dos trazas. Las dos de Tukã con el banco de ahora y
+lo que se fue probando del automático —cuatro décimas de ganancia, y un tercio con el
+retraso contado entero—; la de Taguató, con lo que queda.
 
 | | Sobre la senda en el arco, como mucho | Baja en el arco, como mucho | La puerta | La toma | Comprobaciones |
 |---|---|---|---|---|---|
 | Antes, siete vuelos | 28 m (mesa) | 5,0–5,9 m/s | 3,0–5,3 m/s, de −9 a +4 m, 8–15 m del eje | | tres de siete en rojo |
-| Cuatro décimas | 10,4 m | 5,4, con racha | 124 kt, −2,7 m, 12,3 m del eje, **3,8 m/s** | 0,76 m/s a 391 m | 66 de 67: ✗ la consola, un módulo que no bajó al arrancar |
-| Un tercio | 11,6 m | 4,6 | 125 kt, +1,4 m, 11,8 m del eje, **3,6 m/s** | 1,47 m/s a 538 m | **66 de 66** |
+| Tukã, cuatro décimas | 10,4 m | 5,4, con racha | 124 kt, −2,7 m, 12,3 m del eje, **3,8 m/s** | 0,76 m/s a 391 m | 66 de 67: ✗ la consola, un módulo que no bajó al arrancar |
+| Tukã, un tercio, entero | 11,6 m | 4,6 | 125 kt, +1,4 m, 11,8 m del eje, **3,6 m/s** | 1,47 m/s a 538 m | **66 de 66** |
+| **Taguató, lo que queda** | 10,3 m | 6,3, en una racha | 124 kt, +0,3 m, 12,2 m del eje, **3,4 m/s** | 0,48 m/s a 382 m | **63 de 63** |
 
 La mesa da la entrada en el arco a una veintena de metros (a 4.117 m del umbral, −2.165
-del eje y 319 de ruedas; la primera, 4.096, −2.147 y 313) y los 10 m. De la puerta al umbral, la primera va a
-menos de 3 m de la senda.
+del eje y 319 de ruedas; la primera de Tukã, 4.096, −2.147 y 313) y los 10 m. En la recta, la de Tukã del banco
+de ahora y la de Taguató van a tres metros de la senda como mucho.
 
 ### Lo que queda
 
-- **Volar las siete décimas**, en Tukã y en Taguató, y lo que no cupo: el JAZ 120 y el
-  JAZ 90 en Gran Canaria y el JAZ 60 en Los Rodeos. Solo se voló dos veces en Tukã.
+- **Volar las siete décimas en Tukã**, y lo que no cupo: el JAZ 120 y el JAZ 90 en Gran
+  Canaria y el JAZ 60 en Los Rodeos. Tres finales en verde no son una cifra.
 - **Una final mala seguida con la traza, la de antes**: no se voló. Lo que se dice de
   ellas sale de sus registros y de la mesa.
 - **Por qué en el navegador salían más rojos que en la mesa** (tres de siete y una de
