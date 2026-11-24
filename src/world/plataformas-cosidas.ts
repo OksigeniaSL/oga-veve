@@ -17,9 +17,15 @@
  * No es cosa de la raya, es cosa del mapa, así que se arregla en el mapa: a
  * cada plataforma con puestos que no toca ninguna calle se le añade la franja
  * que la une con las calles que tiene al lado. Se dibuja, se rueda y se mide
- * igual que el resto de la plataforma, porque **es** plataforma. Hoy solo le
- * pasa a Tenerife Sur; la regla es de todos los campos, y en los demás no
+ * igual que el resto de la plataforma, porque **es** plataforma. Le pasa a
+ * Tenerife Sur y a Barajas; la regla es de todos los campos, y en los demás no
  * cambia nada porque sus plataformas ya tocan su calle.
+ *
+ * **Y antes, las que se deducen de la carta** (H81). En Barajas, OpenStreetMap
+ * dibuja la plataforma de la T4 a tiras —una franja por cada fila de puestos—, y
+ * la carta de puestos del AIP la dibuja seguida. Esas vienen escritas en la ficha,
+ * con su carta (`plataformasDeducidas`), y aquí se juntan con las de OpenStreetMap.
+ * Lo del cosido es una regla, y lo de ellas, un papel: donde hay papel, manda él.
  */
 
 import type { Aerodrome, Punto } from "./aerodrome";
@@ -36,7 +42,12 @@ import { ANCHO_RODADURA } from "./ancho-de-rodadura";
  */
 const HASTA_SU_CALLE = 50;
 
-export function conPlataformasCosidas(aero: Aerodrome): Aerodrome {
+export function conPlataformasCosidas(deLaFicha: Aerodrome): Aerodrome {
+  const deducidas = (deLaFicha.plataformasDeducidas ?? []).map(({ polygon, surface }) => ({
+    polygon,
+    surface: surface ?? null,
+  }));
+  const aero = deducidas.length ? { ...deLaFicha, aprons: [...deLaFicha.aprons, ...deducidas] } : deLaFicha;
   const cosidas: { polygon: Punto[]; surface: string | null }[] = [];
   const puestos = (aero.parkingPositions ?? []).map((p) => p.xy);
   for (const plataforma of aero.aprons) {
@@ -45,6 +56,14 @@ export function conPlataformasCosidas(aero: Aerodrome): Aerodrome {
     // Solo las que tienen dónde aparcar: una plataforma vacía no hace falta
     // cruzarla para salir de ningún sitio.
     if (!puestos.some((p) => dentro(p, poligono))) continue;
+    /*
+     * Ni la que ya une a su calle una deducida de la carta. La envolvente de abajo llegaba en la
+     * T4S de Barajas a la EA-2 por la esquina del sur y no a la EA-6 por la del norte —a sesenta
+     * y tres metros, dos más de los que alcanza—, y entre la plataforma y la calle dejaba un
+     * triángulo de hierba: el de debajo del JAZ 90 que salía del 532 (H81).
+     */
+    if (deducidas.some((d) => poligono.some((v) => dentro(v, d.polygon)) || d.polygon.some((v) => dentro(v, poligono))))
+      continue;
     const cerca: { path: readonly Punto[]; media: number; hueco: number }[] = [];
     let tocaUna = false;
     for (const calle of aero.taxiways) {

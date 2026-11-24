@@ -104,7 +104,8 @@ puestos del AIP dibuja la plataforma seguida, lo que falta va escrito a mano en
 `plataformasDeducidas`, con la carta y de dónde sale su contorno: los ejes de
 las calles de plataforma y los puestos. El juego las junta con las de
 OpenStreetMap (`plataformas-cosidas.ts`) y la extracción las conserva. Las llevan
-Barajas, Los Rodeos y Tenerife Sur (ADR 0025, enmienda H81).
+Barajas, Los Rodeos y Tenerife Sur, y Pettirossi el abocinado de un cruce (ADR
+0025, enmienda H81).
 
 ## La rejilla del pavimento, horneada
 

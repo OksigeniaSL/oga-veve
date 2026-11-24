@@ -228,6 +228,18 @@ export interface Aerodrome {
      */
     readonly surface?: string | null;
   }[];
+  /**
+   * **Las plataformas que OpenStreetMap no dibuja y la carta de puestos del AIP, sí** (H81), con
+   * la carta y de dónde sale su contorno. Van escritas a mano en el fichero del campo, aparte de
+   * las de OpenStreetMap, y `conPlataformasCosidas` las junta con ellas: se dibujan, se ruedan y
+   * se miden igual, porque son plataforma.
+   */
+  readonly plataformasDeducidas?: readonly {
+    readonly nombre: string;
+    readonly polygon: readonly Punto[];
+    readonly surface?: string | null;
+    readonly fuente: string;
+  }[];
   readonly buildings: readonly {
     readonly heightM: number | null;
     readonly polygon: readonly Punto[];

@@ -3734,6 +3734,83 @@
       ]
     }
   ],
+  "plataformasDeducidas": [
+    {
+      "nombre": "DEL02 y FINGER, del G9 al H43",
+      "surface": "concrete",
+      "polygon": [
+        [
+          -988,
+          68
+        ],
+        [
+          -979,
+          110
+        ],
+        [
+          -954,
+          120
+        ],
+        [
+          -904,
+          131
+        ],
+        [
+          -889,
+          130
+        ],
+        [
+          -882,
+          132
+        ],
+        [
+          -872,
+          143.6
+        ],
+        [
+          -799.6,
+          173.2
+        ],
+        [
+          -769,
+          152.4
+        ],
+        [
+          -756,
+          174
+        ],
+        [
+          -712,
+          195
+        ],
+        [
+          -698,
+          196.5
+        ],
+        [
+          -677.5,
+          175
+        ],
+        [
+          -655,
+          114
+        ],
+        [
+          -653.2,
+          102.2
+        ],
+        [
+          -742,
+          68.7
+        ],
+        [
+          -981,
+          -27
+        ]
+      ],
+      "fuente": "Deducida: OpenStreetMap dibuja estos puestos en tres islas, con doce metros de nada entre el H39 y el R40 y entre el H37 y el G10, y la carta AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26) dibuja el límite de plataforma seguido, de la R19 al D1; de hormigón (PCN 85/R/A/W/T). Su contorno es el de las tres islas y el eje de la calle de plataforma (INNER)."
+    }
+  ],
   "buildings": [
     {
       "kind": "terminal",
