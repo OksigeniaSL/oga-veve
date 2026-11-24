@@ -173,12 +173,13 @@ describe("el APROAR en los campos que lo publican", async () => {
   });
 
   /*
-   * **Barajas, con el JAZ 90 y por las dos cabeceras**: de todos menos de los que no tienen línea
-   * de entrada en OpenStreetMap y no encuentran su calle de espaldas a la pared —el 330, el 538, el
-   * 539, el 583, el 585 y el 586—, y el 584, cuya calle acaba a cinco metros de su línea. El plan
-   * no elige ninguno de ellos.
+   * **Barajas, con el JAZ 90 y por las dos cabeceras**: de todos menos del 330, que no tiene línea de
+   * entrada en OpenStreetMap y no encuentra su calle de espaldas a la pared; del 537, en la esquina
+   * del dique, que acaba en la EA-6 mirando al S y no al W; y del T30, en la punta del dique norte,
+   * que acaba al W y no al N. El 538, el 539 y del 583 al 586 salen desde la H81, con la plataforma
+   * entera y llegando atravesados a su calle. El plan no elige ninguno de los tres.
    */
-  it("Barajas: de cada puesto que lo publica, el morro hacia él, menos de siete", () => {
+  it("Barajas: de cada puesto que lo publica, el morro hacia él, menos de tres", () => {
     const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
     const no = new Set<string>();
     let si = 0;
@@ -187,7 +188,7 @@ describe("el APROAR en los campos que lo publican", async () => {
         if (cumpleElAproar(e.empuje.poses.at(-1)!.rumbo, e.aproar)) si++;
         else no.add(e.ref ?? "—");
       }
-    expect([...no].sort()).toEqual(["330", "538", "539", "583", "584", "585", "586"]);
+    expect([...no].sort()).toEqual(["330", "537", "T30"]);
     expect(si).toBeGreaterThan(200);
   }, 120_000);
 

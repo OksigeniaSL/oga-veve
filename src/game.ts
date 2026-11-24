@@ -1392,6 +1392,8 @@ import {
 } from "./world/remolque";
 import { DibujoDelRemolque } from "./world/tractor-de-remolque";
 import { barraAlTrenDe, conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
+import { ruedasFuera } from "./world/ruedas-en-el-empuje";
+import { pavimentoDibujado } from "./world/rodaje";
 import { AvisoDeLaRaya } from "./flight/aviso-de-la-raya";
 import { AvisoDeVelocidad } from "./flight/aviso-de-velocidad";
 import { altitudMaximaDe, AvisoDeLaAltitudMaxima } from "./flight/altitud-maxima";
@@ -2788,6 +2790,12 @@ interface MedidaDelRemolque {
   tractorALaPersona: number;
   /** Fotogramas con alguno de los dos dentro de un edificio. */
   dentroDeUnEdificio: number;
+  /**
+   * Lo empujado con alguna rueda del avión fuera del pavimento, m, y las que quedan fuera al
+   * acabar (H81): ver `ruedas-en-el-empuje.ts`.
+   */
+  fueraDelPavimento: number;
+  fueraAlAcabar: number | null;
   /** Al quedar libre, lo que quedan fuera del ala por donde va a rodar, m. */
   tractorFuera: number | null;
   personaFuera: number | null;
@@ -23856,6 +23864,8 @@ export class Game {
       personaAlFuselaje: Infinity,
       tractorALaPersona: Infinity,
       dentroDeUnEdificio: 0,
+      fueraDelPavimento: 0,
+      fueraAlAcabar: null,
       tractorFuera: null,
       personaFuera: null,
       fases: [{ fase: "enganchado", reloj: this.relojDePared }],
@@ -24610,9 +24620,11 @@ export class Game {
       if (d > 0.01) m.peorAdelante = Math.max(m.peorAdelante, (dx * n.x + dz * n.z) / d);
       m.empujado = r.empujado;
       if (this.input.controls.engineOn) m.motorEmpujando = true;
+      if (d > 0 && this.ruedasFueraDelPavimento(a) > 0) m.fueraDelPavimento += d;
     }
     const edificios = this.plan?.aerodromoActual.buildings ?? [];
     if (r.acabado && m.paredAlAcabar === null) {
+      m.fueraAlAcabar = this.ruedasFueraDelPavimento(a);
       m.paredAlAcabar = Math.hypot(a.x - m.paredDelPuesto.x, a.z - m.paredDelPuesto.z);
       m.rumboAlAcabar = (a.rumbo * 180) / Math.PI;
       m.motorAlAcabar = this.input.controls.engineOn;
@@ -24643,6 +24655,12 @@ export class Game {
       if (g < -180) g += 360;
       m.giroRodando30 = g;
     }
+  }
+
+  /** Cuántas ruedas del avión pisan fuera del pavimento dibujado con él ahí, para el banco (H81). */
+  private ruedasFueraDelPavimento(a: { readonly x: number; readonly z: number; readonly rumbo: number }): number {
+    const aero = this.plan?.aerodromoActual;
+    return aero ? ruedasFuera(this.aircraft, a, pavimentoDibujado(aero)) : 0;
   }
 
   /**
