@@ -2718,8 +2718,10 @@ OGA_PUERTO=5686 node scripts/verificar-emergencias.mjs radio encarnacion jaz-20 
   convencionales y a 1.800 los reactores (AD 2.1-48, 1-10-2026, y AD 2.1-48.1,
   18-4-2024); Minga Guazú, dibujado en la AD 2.2-22 (18-4-2024). La H86 voló Asunción
   por la izquierda, que por la 20 es ese lado y por la 02 el otro; no está apuntado por
-  cuál fue.
+  cuál fue. Hecho en la enmienda H92 del ADR 0027, con Estigarribia, Pedro
+  Juan Caballero y Cuatro Vientos.
 - **La altura del circuito**, 2.100 pies en Encarnación, unos 440 m sobre el campo: el
-  juego la saca del terreno y del avión, y no de la carta.
+  juego la saca del terreno y del avión, y no de la carta. Hecho en la misma, menos en
+  las dos avionetas más pequeñas, que no caben.
 - **El R 4444 vigente**: el que cuelga la DINAC es el de 2018, y no está en su lista de
   reglamentos; no se ha visto una edición posterior.
