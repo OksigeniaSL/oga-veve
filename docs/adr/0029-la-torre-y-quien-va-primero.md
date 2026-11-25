@@ -3137,6 +3137,9 @@ En tu subida, con el que se aparta y con el que sale detrás, y entre dos del
 tráfico: de 13 parejas cerca a ninguna en Los Rodeos, y de 5 a ninguna en Gando.
 Las salidas de los demás, las mismas (664 y 671).
 
+El vitest entero, por partes, en verde: 592 ficheros y 12.080 pruebas, con las
+saltadas de siempre.
+
 ### Lo que queda
 
 - **Los bancos del navegador no se volaron**: no hay turno.
