@@ -2939,9 +2939,15 @@ Con el criterio de antes, el banco seguiría dando 19 rojos de 600 sin que ningu
 pase a menos de 480 m en su vuelta: por eso hacía falta cambiarlo también. Con el de ahora,
 ninguno en los 80 vuelos por la 30 en los que el de antes daba once.
 
+Mirarlo cuesta 0,7 ms en el percentil 99 y 2,8 en el peor caso, una vez por
+segundo y solo mientras hay que esperar. El vitest entero, en verde: 591 ficheros
+y 12.008 pruebas, con 32 saltadas y una pendiente.
+
 ### Lo que queda
 
 - **Los bancos del navegador no se volaron**: los tenía la ronda de cierre.
+- **Llegando por la ruta del plan**, fuera del circuito, la mesa no vuela: ahí lo
+  que mira la torre es que sigues derecho.
 - **Barajas no está en la mesa**: su aeródromo no va con los demás escenarios.
 - **La verde con uno en la base.** En 46 de los 600 vuelos (54 con lo de ahora,
   tres semillas más) alguien que no espera pasa a menos de 300 m, casi siempre en
