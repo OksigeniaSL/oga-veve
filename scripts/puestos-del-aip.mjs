@@ -131,6 +131,25 @@ const APROAR_DE_LA_CASILLA = {
 };
 
 /**
+ * **Por qué puerta se deja la plataforma, si la casilla 20 lo dice para todos** (H95). En Tenerife Sur:
+ * «After push-back or autonomous departure, aircraft shall proceed to the threshold in use through the
+ * first available apron gate», y los de salida autónoma de la segunda línea, «nosing to the threshold in
+ * use», con su morro a la calle de plataforma. Se llega «from the appropriate apron gate for PRKG R19 to
+ * G48, and from the parking stand centre line for PRKG E49 to E70»: cuál de las puertas no lo dice, y a
+ * los de la segunda línea se entra de la paralela, por su raya. La calle de plataforma, que el AIP llama
+ * «inner apron taxiway» y no tiene letra, es la INNER de OpenStreetMap. Las puertas son las de
+ * `puertasLibres`.
+ */
+const RODAJE_DE_LA_CASILLA = {
+  GCTS: {
+    primeraPuerta: { calle: "INNER", puertas: ["D1", "D2", "D3", "D4", "D5", "D6"] },
+    deFrente: { desde: "E49", hasta: "E70", salePor: ["INNER"], llegaPor: { norte: ["T"], sur: ["T"] } },
+    fuente:
+      "AIP España AD 2-GCTS, casilla 20.3.2 (AIRAC AMDT 10/26, WEF 29-OCT-26): «After push-back or autonomous departure, aircraft shall proceed to the threshold in use through the first available apron gate, unless there are operational or safety reasons to the contrary»; de los de salida autónoma, «Departure shall be performed nosing to the threshold in use»; y al llegar, «from the appropriate apron gate for PRKG R19 to G48, and from the parking stand centre line for PRKG E49 to E70».",
+  },
+};
+
+/**
  * **El campo cuyos puestos se ponen enteros de la carta** (H85), porque OpenStreetMap no trae
  * ninguno. En Fuerteventura, cero `parking_position`:
  *
@@ -642,6 +661,12 @@ async function juntar(id) {
       cuenta.movidos++;
       movidos.push(`${p.ref} ${lejos.toFixed(0)} m`);
     }
+    // Y los que la casilla 20 saca por delante y mete por su raya (H95).
+    const deFrente = RODAJE_DE_LA_CASILLA[id]?.deFrente;
+    if (deFrente && a.salida === "A" && enRango(a.ref, [deFrente.desde, deFrente.hasta])) {
+      nuevo.aip.salePor = deFrente.salePor;
+      nuevo.aip.llegaPor = deFrente.llegaPor;
+    }
     puestos.push(nuevo);
   }
   // Dos puestos con el mismo `ref` en el mismo punto: el del centro de su línea y el de
@@ -676,6 +701,13 @@ async function juntar(id) {
     leido: aip.leido,
     cartas: aip.cartas,
     ...(APROAR_DE_LA_CASILLA[id] ? { aproar: APROAR_DE_LA_CASILLA[id].fuente, puertasLibres: APROAR_DE_LA_CASILLA[id].puertasLibres } : {}),
+    ...(RODAJE_DE_LA_CASILLA[id]
+      ? {
+          rodaje: RODAJE_DE_LA_CASILLA[id].fuente,
+          callesDePlataforma: [RODAJE_DE_LA_CASILLA[id].primeraPuerta.calle],
+          primeraPuerta: RODAJE_DE_LA_CASILLA[id].primeraPuerta,
+        }
+      : {}),
     ...fuenteDeLasPasarelas(id),
   };
   // Lo del AIP, al final de cada puesto: la ficha sale igual se junte las veces que se junte.

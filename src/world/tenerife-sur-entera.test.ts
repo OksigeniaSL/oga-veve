@@ -227,7 +227,8 @@ describe("el APROAR de la casilla 20.3", () => {
           const { letras } = (plan as unknown as { ruta: { letras: readonly string[] } }).ruta;
           const nombre = `${avion.id} · ${rumbo.toFixed(0)}° · ${p?.ref ?? "el suyo"}: ${letras.join("-")}`;
           if (avion.wingSpan > 52) for (const l of ["D1", "B1", "B6"]) expect(letras, nombre).not.toContain(l);
-          else expect(letras, nombre).toContain(rumbo === la07 ? "D1" : "B6");
+          // Y el que cabe, por la primera que se encuentra (`primera-puerta.test.ts`, H95); a la 25, por la B6.
+          else if (rumbo === la25) expect(letras, nombre).toContain("B6");
         }
       }
   });

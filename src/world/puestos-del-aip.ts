@@ -224,6 +224,30 @@ export function valeParaElEmpuje(aip: DelAip | null | undefined, envergadura: nu
 }
 
 /**
+ * **Cómo se sale por delante de un puesto** (H95), si el AIP lo da así: el de salida autónoma con la raya
+ * que viene de la paralela y la salida a la calle de plataforma (`salePor`), en el campo que manda dejarla
+ * por la primera puerta. Son del E49 al E70 de Tenerife Sur: «Autonomous exits (…) shall be performed
+ * nosing to the threshold in use» (AD 2-GCTS, casilla 20.3.2.1 B). `null` si no.
+ *
+ * Es lo que pide el buscador, en los ejes de la ficha: la recta del puesto, que es la prolongación de su
+ * raya —`deEspaldas` en `rodajesDesde`, que aquí se anda hacia delante—, y hacia qué lado se tuerce al
+ * llegar a la calle, el del umbral del que se despega. `rumboDePista`, el de despegue, en grados.
+ */
+export function saleDeFrente(
+  aero: Pick<Aerodrome, "parkingPositions" | "aipPuestos">,
+  puesto: Punto,
+  rumboDePista: number,
+): { readonly deEspaldas: Punto; readonly sentido: readonly Punto[]; readonly enLaPrimera: true } | null {
+  const calle = aero.aipPuestos?.primeraPuerta?.calle;
+  if (!calle) return null;
+  const suyo = puestoEn(aero, puesto[0], -puesto[1]);
+  const [a, b] = [suyo?.entrada?.at(-2), suyo?.entrada?.at(-1)];
+  if (suyo?.aip?.salida !== "A" || suyo.aip.salePor?.[0] !== calle || !a || !b) return null;
+  const r = (rumboDePista * Math.PI) / 180;
+  return { deEspaldas: [b[0] - a[0], b[1] - a[1]], sentido: [[-Math.sin(r), -Math.cos(r)]], enLaPrimera: true };
+}
+
+/**
  * **Lo del AIP del puesto que hay en (x, z)**, en los ejes del mundo y a menos de cinco
  * metros, como `entradaDelPuesto`; `null` si no hay puesto o no lo trae.
  */
