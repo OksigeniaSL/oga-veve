@@ -18712,8 +18712,8 @@ export class Game {
    * calle por la que dejarías la pista y no se iría antes de que llegues. Ver
    * `flight/salida-tapada.ts`.
    *
-   * Hacia fuera del circuito —por la derecha si se vuela por la izquierda—,
-   * que es por donde no hay nadie en la base. La tarjeta con su dibujo en los
+   * Hacia fuera del circuito —por la derecha si se vuela por la izquierda—, o
+   * hacia la pista si por fuera pasa alguien (H94). La tarjeta con su dibujo en los
    * cuatro peldaños, quieta hasta que la vuelta está dada; en los de abajo lo
    * cuenta la instructora, y de Taguató para arriba lo dice la torre en su
    * fraseología, «orbit right, departing traffic», escrita en la tira de la
@@ -18722,7 +18722,10 @@ export class Game {
    */
   private pedirteUnaVuelta(porQuien: string): void {
     this.apuntarCanto(`vuelta por ${porQuien}`);
-    const derecha = (this.circuitoDeLaTorre?.mano ?? "izquierda") === "izquierda";
+    // Hacia fuera, o hacia la pista si por fuera pasa alguien: ver `ladoDeTuVuelta`.
+    const haciaFuera = this.trafico?.ladoDeTuVuelta() !== "dentro";
+    const aIzquierdas = (this.circuitoDeLaTorre?.mano ?? "izquierda") === "izquierda";
+    const derecha = aIzquierdas === haciaFuera;
     const dicho = this.avisoCon("vuelo.vueltaPorTuSalida", "palabra.vuelta");
     this.hud.senal.mostrar(derecha ? "vuelta-derecha" : "vuelta-izquierda", dicho.rotulo, null, {
       segundos: TOPE_DE_LA_VUELTA,

@@ -854,7 +854,13 @@ export function porDondeSigues(
     const ox = yo.x - (a.x + dx * t);
     const oz = yo.z - (a.z + dz * t);
     const d2 = ox * ox + oz * oz;
-    if (d2 >= menor) continue;
+    /*
+     * Con un metro de más, que un empate no lo decida el redondeo: con el
+     * umbral desplazado, la final y la subida son la misma recta hasta él, y a
+     * quien acababa de irse al aire le salía que seguía por la final, hasta un
+     * umbral que tenía delante y ahí se acababa (H94, Fuerteventura).
+     */
+    if (d2 >= menor - 1) continue;
     menor = d2;
     tramo = i;
     pasado = u > 1;

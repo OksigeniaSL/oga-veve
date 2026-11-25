@@ -1909,9 +1909,10 @@ const SOBRE_EL_SUELO_AL_APARTARSE = 100;
 const RETENIDO_POR_DELANTE = 150;
 
 /**
- * **Lo más que los que llegan esperan por ti en la roja**, s desde que te
- * paras en la doble raya: cinco minutos. Pasados, giran como si no estuvieras,
- * y sales cuando se pueda. Ver `tuQueEsperas`.
+ * **Lo más que los que llegan esperan por ti**, s: cinco minutos desde que te
+ * paras en la doble raya, y otros tantos desde que te dan la pista. Pasados,
+ * giran como antes, y el que llegue a la decisión contigo en ella se va al
+ * aire por el lado. Ver `tuQueEsperas` y `laFila`.
  */
 const ESPERAN_POR_TI = 300;
 
@@ -2318,6 +2319,12 @@ export interface Trafico {
    * Ver `paso` en `flight/turno-de-pista.ts`.
    */
   ocupanLaPista(): string[];
+  /**
+   * **Hacia qué lado te pide la torre la vuelta de espera**: hacia fuera del
+   * circuito, que es lo de siempre, o hacia la pista si por fuera pasa alguien.
+   * Ver `vueltaSegura`, que es la misma regla para los demás.
+   */
+  ladoDeTuVuelta(): "fuera" | "dentro";
   /**
    * **Quién no deja darte la pista todavía**: el que llegaría a la decisión
    * contigo en ella, y el que vuela por delante —se fue al aire, o acaba de
@@ -3912,6 +3919,8 @@ export function crearTrafico(
     grupo.remove(quien.grupo);
     quien.luces.dispose();
     aviones.delete(matricula);
+    retenidoPorDelante.delete(matricula);
+    vistoPorDelante.delete(matricula);
     for (const par of [...tramoDe.keys()])
       if (par.split("|").includes(matricula)) tramoDe.delete(par);
   };
@@ -4032,6 +4041,9 @@ export function crearTrafico(
    */
   let tuEsperasDesde: number | null = null;
 
+  /** Y desde cuándo tienes la pista para salir, o `null`. Ver `ESPERAN_POR_TI`. */
+  let tuPistaDesde: number | null = null;
+
   /**
    * **La última que se fue al aire**: quién, de qué estela y cuándo. Ver
    * `ultimaSalida`.
@@ -4102,7 +4114,10 @@ export function crearTrafico(
               hora: reloj,
               velocidad,
               sale: true,
-              ...(tu.sale ? { enElAire: tu.sale.enElAire } : {}),
+              // Y si te quedas en ella sin salir, como a quien no se sabe lo que le falta.
+              ...(tu.sale && (tuPistaDesde === null || reloj - tuPistaDesde < ESPERAN_POR_TI)
+                ? { enElAire: tu.sale.enElAire }
+                : {}),
             },
       );
     return fila.sort((a, b) => a.hora - b.hora);
@@ -4427,9 +4442,9 @@ export function crearTrafico(
    * acabar el viento en cola—, y los demás del tráfico que vuelan, por su
    * camino o por la vuelta que estén dando.
    */
-  const dondeVanAEstar = (menos: Volando): VaAEstar[] => {
+  const dondeVanAEstar = (menos: Volando | null, contigo = true): VaAEstar[] => {
     const van: VaAEstar[] = [];
-    const tu = opciones.quienJuega?.();
+    const tu = contigo ? opciones.quienJuega?.() : null;
     const camino = tu?.porDondeVuela?.();
     if (tu && camino && camino.length > 1) {
       const largo = largoDelCamino([...camino]);
@@ -4537,6 +4552,58 @@ export function crearTrafico(
         if (!mejor || holgura > mejor.holgura) mejor = { vuelta, holgura };
       }
     return mejor!;
+  };
+
+  /**
+   * **El lado de tu vuelta de espera** (H94). Era siempre hacia fuera y sin
+   * mirar, como la de los demás antes de H93: fuera de tu viento en cola está
+   * el de otro. Se cuenta con un viraje medio desde donde vas, a lo que vuelas,
+   * y con uno más suave, que cada cual lo da como sabe; y hacia la pista, sin
+   * llegar a la final.
+   */
+  const ladoDeTuVuelta = (): "fuera" | "dentro" => {
+    const tu = opciones.quienJuega?.();
+    const camino = tu?.porDondeVuela?.();
+    const [a, b] = [camino?.[0], camino?.[1]];
+    if (!tu || !a || !b) return "fuera";
+    const largo = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    const f = { x: (b.x - a.x) / largo, z: (b.z - a.z) / largo };
+    const otros = dondeVanAEstar(null, false);
+    const velocidad = Math.max(15, tu.velocidad ?? VUELA_A);
+    // Con el circuito a la izquierda, fuera es la derecha.
+    const derecha = mano === "izquierda" ? 1 : -1;
+    const holgura = (lado: "fuera" | "dentro"): number => {
+      const s = lado === "fuera" ? derecha : -derecha;
+      const haciaAlli = { x: -f.z * s, z: f.x * s };
+      let menor = Infinity;
+      for (const alabeo of ALABEOS_DE_LA_VUELTA) {
+        const radio = radioDeViraje(velocidad, alabeo);
+        if (lado === "dentro") {
+          const lejos = enLaPistaDe({
+            x: a.x + haciaAlli.x * 2 * radio,
+            z: a.z + haciaAlli.z * 2 * radio,
+          });
+          if (Math.abs(lejos.across) < APARTADA_DE_LA_FINAL || lejos.across * enLaPistaDe(a).across < 0)
+            return 0;
+        }
+        for (let t = 0; t * velocidad <= 2 * Math.PI * radio; t += MIRA_LA_VUELTA) {
+          const giro = (t * velocidad) / radio;
+          const yo = {
+            x: a.x + f.x * radio * Math.sin(giro) + haciaAlli.x * radio * (1 - Math.cos(giro)),
+            y: a.y,
+            z: a.z + f.z * radio * Math.sin(giro) + haciaAlli.z * radio * (1 - Math.cos(giro)),
+          };
+          for (const otro of otros) {
+            const el = otro.en(t);
+            if (!el || Math.abs(yo.y - el.y) >= APARTADOS_EN_ALTURA) continue;
+            menor = Math.min(menor, Math.hypot(yo.x - el.x, yo.z - el.z) / APARTADO_DE_TI);
+          }
+        }
+      }
+      return menor;
+    };
+    const fuera = holgura("fuera");
+    return fuera >= 1 || holgura("dentro") <= fuera ? "fuera" : "dentro";
   };
 
   /**
@@ -4693,13 +4760,23 @@ export function crearTrafico(
    * `RETENIDO_POR_DELANTE`.
    */
   const seEchariaEncima = (matricula: string, quien: Volando): boolean => {
+    const visto = vistoPorDelante.get(matricula);
+    // Se pregunta en cada fotograma mientras espera su salida: con dos veces por segundo basta.
+    if (visto && reloj > visto.cuando && reloj - visto.cuando < 0.5) return visto.encima;
+    const encima = calcularSiSeEchariaEncima(matricula, quien);
+    vistoPorDelante.set(matricula, { cuando: reloj, encima });
+    return encima;
+  };
+  const vistoPorDelante = new Map<string, { cuando: number; encima: boolean }>();
+  const calcularSiSeEchariaEncima = (matricula: string, quien: Volando): boolean => {
     const c = quien.caminos;
     const t = c?.enTierra;
     const vuela = c?.marcas["torre.clearedTakeoff"]?.velocidad;
     if (!c || !t || t.despega <= 0 || !vuela) return false;
     const otros: VaAEstar[] = [];
     const tu = opciones.quienJuega?.();
-    const porDonde = tu?.porDondeVuela?.();
+    // En final no: entonces llegas, y eso lo mira `llegaAntesDeQueSalga`.
+    const porDonde = tu && tu.alUmbral == null ? tu.porDondeVuela?.() : null;
     if (tu && porDonde && porDonde.length > 1) {
       const tuyo = [...porDonde];
       const largo = largoDelCamino(tuyo);
@@ -4718,9 +4795,14 @@ export function crearTrafico(
         (dandoLaVuelta(b) || (b.marca.camino === b.caminos?.salida && !porTierra(b)))
       )
         otros.push({ apartado: APARTADO_DE_LOS_DEMAS, en: (s) => dondeVaAEstar(b, s) });
-    const alineado = quien.marca.camino === c.salida && quien.recorrido >= t.eje - 1;
+    // Lo que le quede de entrar y alinearse: entrando con «line up and wait» ya es menos.
+    const entrado =
+      quien.marca.camino === c.salida
+        ? Math.max(0, Math.min(1, (quien.recorrido - c.espera) / Math.max(1, t.eje - c.espera)))
+        : 0;
     const enElAire =
-      (alineado ? 0 : loQueTardaEnRemontar(quien, matricula) + ENTRAR_Y_ALINEARSE) +
+      loQueTardaEnRemontar(quien, matricula) +
+      ENTRAR_Y_ALINEARSE * (1 - entrado) +
       tiempoDeCarrera(quien.tipo);
     let encima = false;
     for (let s = enElAire; s <= enElAire + TRAS_IRSE_AL_AIRE && !encima; s += MIRA_LA_VUELTA) {
@@ -4757,7 +4839,7 @@ export function crearTrafico(
     };
     const tu = opciones.quienJuega?.();
     if (tu?.sale?.conLaPista) return true;
-    const camino = tu?.porDondeVuela?.();
+    const camino = tu && tu.alUmbral == null ? tu.porDondeVuela?.() : null;
     if (camino && camino.length > 1) {
       const [a, b] = [enLaPistaDe(camino[0]!), enLaPistaDe(camino[1]!)];
       // Hacia donde se despega, y no en la base ni en el viento en cola.
@@ -5017,6 +5099,8 @@ export function crearTrafico(
       const tuEnTierra = tu?.enTierra ?? null;
       if (tuEnTierra?.esperandoLaPista) tuEsperasDesde ??= reloj;
       else tuEsperasDesde = null;
+      if (tu?.sale?.conLaPista) tuPistaDesde ??= reloj;
+      else tuPistaDesde = null;
       if (reloj >= proximoReparto) {
         proximoReparto = reloj + MIRA_LOS_TRAMOS;
         repartirLosTramos(tuEnTierra);
@@ -5580,6 +5664,7 @@ export function crearTrafico(
       });
     },
     estorbanTuSalida,
+    ladoDeTuVuelta,
     ocupanLaPista() {
       return [...aviones]
         .filter(([, quien]) => encimaDeLaPista(quien))
