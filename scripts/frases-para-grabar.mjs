@@ -3372,6 +3372,32 @@ for (const [voz, id] of DEL_REGRESO_POR_PISTA) {
 }
 
 /*
+ * **Y la torre, a quien entra en final con la pista ocupada** (25-11-2026, H96):
+ * que siga. En castellano la pieza de `torre.continue` y `torre.canario.continue`,
+ * y en fraseología la de `torre.continueApproach`; la matrícula la pone la
+ * receta. Con las dos voces de torre y detrás de todo, por lo mismo que las de
+ * arriba. Ver `decirQueSigas` en `src/game.ts` y el ADR 0029, enmienda H96.
+ */
+const DEL_CONTINUE = ["torre", "torre-canarias"].flatMap((voz) => {
+  const solo = voz === "torre" ? "torre.solo" : "torre.canario.solo";
+  return [
+    [voz, `${solo}.continueAproximacion`, "continúe aproximación", "es"],
+    [voz, `${solo}.continueApproach`, "continue approach", "en"],
+  ];
+});
+for (const [voz, id, texto, idioma] of DEL_CONTINUE) {
+  if (filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz,
+    idioma,
+    texto,
+    para: "en final con la pista todavía ocupada: seguí bajando, que el permiso llega cuando quede libre",
+  });
+  total += texto.length;
+}
+
+/*
  * **Y la carrera empezada sin la autorización de despegar** (21-11-2026): con
  * la pista dada, quien llega al eje ya corriendo y despega sin haber visto la
  * verde fija; la instructora cuenta dónde se espera esa autorización, en los

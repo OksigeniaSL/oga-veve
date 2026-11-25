@@ -454,6 +454,14 @@ export const ES_PY = {
    * en la roja; lo pone `luzDeTorre`. Ver `flight/luz-de-la-salida.ts`.
    */
   "torre.regreso": "{indicativo}, regreso por pista",
+  /*
+   * **Y a quien llega con la pista todavía ocupada** (H96): que siga, y el
+   * permiso llega cuando la tenga libre. «Continúe aproximación [prepare
+   * posible motor y al aire]» en el RD 1180/2018, anexo V, 1.4.16 d; «continue
+   * approach» en el Doc 4444, 12.3.4.15 d. Espera su toma: ver
+   * `ESPERAN_SU_TOMA` en `audio/torre.ts`.
+   */
+  "torre.continue": "{indicativo}, continúe aproximación",
   /* Y la verde a un avión **en el aire**, que en las señales de luz de verdad
      quiere decir otra cosa: autorizado para aterrizar. Con «para», que es
      como lo escriben las tres fuentes (Doc 4444 y DINAC R 4444, 12.3.4.16;
@@ -548,6 +556,8 @@ export const ES_PY = {
   "torre.canario.verde": "{indicativo}, autorizado a despegar",
   "torre.canario.roja": "{indicativo}, mantenga fuera de pista",
   "torre.canario.regreso": "{indicativo}, regreso por pista",
+  // RD 1180/2018, anexo V, 1.4.16 d. Ver `torre.continue`.
+  "torre.canario.continue": "{indicativo}, continúe aproximación",
   "torre.canario.aterrizar": "{indicativo}, autorizado para aterrizar",
   // En España no es «ida al aire»: «motor y al aire» (RD 1180/2018, 1.4.19).
   "torre.canario.alAire": "{indicativo}, motor y al aire",

@@ -363,6 +363,9 @@ export const EN: Dictionary = {
   "torre.canario.verde": "{indicativo}, cleared for take-off",
   "torre.canario.roja": "{indicativo}, hold short of runway",
   "torre.canario.regreso": "{indicativo}, backtrack runway",
+  // Con la pista todavía ocupada en final: Doc 4444, 12.3.4.15 d.
+  "torre.continue": "{indicativo}, continue approach",
+  "torre.canario.continue": "{indicativo}, continue approach",
   "torre.aterrizar": "{indicativo}, cleared to land",
   "torre.canario.aterrizar": "{indicativo}, cleared to land",
   "torre.alAire": "{indicativo}, go around",

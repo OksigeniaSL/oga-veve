@@ -824,6 +824,10 @@ export function loQueQuedaDeCircuito(
  * viento en cola donde lo hay (`lineaDelCircuito`): quien va por ella a su
  * altura llega a la esquina a la de la esquina, y quien la lleva cincuenta
  * metros por encima, cincuenta por encima.
+ *
+ * Y **`subiendo`**: quien se va al aire en la final sigue por la pista y la
+ * subida, no hasta el umbral. Sin eso, a la torre se le acababas en él y soltaba
+ * uno que salía por debajo de ti (H96).
  */
 export function porDondeSigues(
   linea: readonly PuntoDeCircuito[],
@@ -831,6 +835,7 @@ export function porDondeSigues(
   yo: PuntoDeCircuito & { readonly rumbo: number },
   velocidad: number,
   escala = 1,
+  subiendo = false,
 ): PuntoDeCircuito[] | null {
   const quebrada = [...linea, umbral];
   const ancho = 2 * EN_EL_CIRCUITO * escala;
@@ -850,7 +855,10 @@ export function porDondeSigues(
     const largo2 = dx * dx + dz * dz;
     if (largo2 < 1) continue;
     const u = ((yo.x - a.x) * dx + (yo.z - a.z) * dz) / largo2;
-    const t = Math.max(0, Math.min(1, u));
+    // Subiendo hacia la pista, la subida empieza antes de ella, y la final no se vuela.
+    if (subiendo && i === quebrada.length - 1) continue;
+    const antesDeLaPista = subiendo && i === 1 && mx * dx + mz * dz > 0.7 * Math.sqrt(largo2);
+    const t = Math.max(antesDeLaPista ? -Infinity : 0, Math.min(1, u));
     const ox = yo.x - (a.x + dx * t);
     const oz = yo.z - (a.z + dz * t);
     const d2 = ox * ox + oz * oz;

@@ -23334,6 +23334,34 @@
     "para": "la lámpara a destellos verdes, a quien remonta la pista antes de despegar; detrás, las cifras de la pista"
   },
   {
+    "id": "torre.solo.continueAproximacion",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "continúe aproximación",
+    "para": "en final con la pista todavía ocupada: seguí bajando, que el permiso llega cuando quede libre"
+  },
+  {
+    "id": "torre.solo.continueApproach",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "continue approach",
+    "para": "en final con la pista todavía ocupada: seguí bajando, que el permiso llega cuando quede libre"
+  },
+  {
+    "id": "torre.canario.solo.continueAproximacion",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "continúe aproximación",
+    "para": "en final con la pista todavía ocupada: seguí bajando, que el permiso llega cuando quede libre"
+  },
+  {
+    "id": "torre.canario.solo.continueApproach",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "continue approach",
+    "para": "en final con la pista todavía ocupada: seguí bajando, que el permiso llega cuando quede libre"
+  },
+  {
     "id": "vuelo.sinAutorizacion",
     "voz": "instructor",
     "idioma": "es-PY",

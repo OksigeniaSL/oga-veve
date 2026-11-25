@@ -71,6 +71,14 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
   "cleared for take-off": "torre.clearedTakeoff",
   // Y la de llegada.
   "cleared to land": "torre.clearedLand",
+  /*
+   * **Y a quien entra en final con la pista todavía ocupada: que siga**, que el
+   * permiso llega cuando la tenga libre (Doc 4444, 12.3.4.15 d; en español, RD
+   * 1180/2018, anexo V, 1.4.16 d). Antes no se le decía nada. Espera su toma
+   * —ver `ESPERAN_SU_TOMA`— y hasta entonces no se dice. Ver
+   * `decirQueLaPistaEstaOcupada` en `game.ts`.
+   */
+  "continue approach": "torre.continueApproach",
   "go around, runway occupied": "torre.goAround",
   /*
    * **Y las de quien viene por la otra punta.** Primero la pista en uso, con
@@ -241,6 +249,8 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
   "torre.clearedTakeoff": "torre.afisFreeTakeoff",
   "torre.goAround": "torre.afisOccupied",
   "torre.goAroundEnUso": "torre.pistaEnUso",
+  // Ni te dice que sigas: te dice que está ocupada, y decide quien vuela.
+  "torre.continueApproach": null,
   // Un AFIS no da permisos, así que tampoco manda al aire por no tenerlo.
   "torre.goAroundSinPermiso": null,
   "torre.vacateNext": null,
@@ -295,7 +305,11 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * La de la lámpara en castellano, «regreso por pista» (H41i), los destellos
  * verdes de quien remonta, se grabó el 21-11-2026 con las dos voces de torre.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
+  // H96: «continúe aproximación» y «continue approach», en las dos torres.
+  "torre.continue",
+  "torre.continueApproach",
+]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice
@@ -457,9 +471,12 @@ export function esDeLaLampara(
  *
  * Y los destellos de quien remonta, «regreso por pista» (H41i): con la verde
  * fija ya no es verdad, que ya se dio la vuelta.
+ *
+ * Y «continúe aproximación» (H96): con el permiso dado o la orden de irse al
+ * aire, ya no lo es.
  */
 const DE_LA_LAMPARA =
-  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|regreso|aterrizar|alAire|holdShort(?:Landing|Departing|NumberTwo|NumberThree|Wake)?|numeroDos|numeroTres|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso|SinPermiso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|regreso|aterrizar|continue(?:Approach)?|alAire|holdShort(?:Landing|Departing|NumberTwo|NumberThree|Wake)?|numeroDos|numeroTres|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso|SinPermiso)?|afis(?:Libre(?:EnFinal)?|Ocupada|SinTrafico|Trafico(?:Aterriza|Despega)|Free(?:Takeoff)?|Occupied|NoTraffic|InUse(?:Landing|Departing)))(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la torre dándole la pista a otro avión para que se quede
@@ -523,6 +540,17 @@ export function esTuFraseologiaDeAterrizar(
 ): boolean {
   return !!clave && urgencia !== "baja" && FRASEOLOGIA_DE_ATERRIZAR.test(clave);
 }
+
+/**
+ * Si esta frase es **la torre diciéndote que sigas** con la pista ocupada. Se
+ * retira al dejar la final y a la altura de decisión. Ver `paso` en
+ * `flight/turno-de-pista.ts`.
+ */
+export function esTuContinua(clave: string | undefined, urgencia: string): boolean {
+  return !!clave && urgencia !== "baja" && TU_CONTINUA.test(clave);
+}
+
+const TU_CONTINUA = /^torre\.(?:[a-z]+\.)?continue(?:Approach)?(?:@|$)/;
 
 const FRASEOLOGIA_DE_ATERRIZAR =
   /^torre\.(?:[a-z]+\.)?(?:clearedLand|afisFree)(?:\.[LCR])?(?:@|$)/;
