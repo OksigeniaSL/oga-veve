@@ -1753,6 +1753,19 @@ try {
         : `no llegó · lo más bajo ${Math.round(r.bajo)} m · finales sin la verde ${r.sinVerdeEnLaFinal}`,
     );
     for (const f of r.sinVerdePor ?? []) console.log(`    final sin la verde: ${JSON.stringify(f)}`);
+    /*
+     * **Y a la decisión se llega con una señal**: con la pista libre y nadie
+     * delante con permiso, la verde. En Pettirossi se llegó con los destellos
+     * —la torre había pedido una vuelta que sin radio no se oye— (H98).
+     */
+    const sinSenal = (r.sinVerdePor ?? []).filter(
+      (f) => f.luz !== "roja" && !f.enLaPista.length && !f.trafico.some((x) => x.includes("con permiso")),
+    );
+    comprobar(
+      "y a ninguna decisión se llega sin señal con la pista libre",
+      sinSenal.length === 0,
+      sinSenal.length ? `${sinSenal.length}: ${sinSenal.map((f) => f.luz).join(" · ")}` : "ninguna",
+    );
     comprobar(
       "sin llamada ni bomberos: sin radio no hay llamada, y nada se ha roto",
       !ej?.declarada && !ej?.bomberos,

@@ -17121,9 +17121,19 @@ export class Game {
       vuelvesAqui: !this.haciaOtroCampo(),
       trasIrse: this.laFinalTrasIrse.yendose,
       vertical: s.verticalSpeed,
+      aSuAltura: !s.onGround && campo.id === c?.campo && enLaAltura,
+      reloj: this.relojDelJuego,
     });
-    if (!teCuenta || !queda || !ultimo) return null;
-    const metros = queda.metros + distanciaAlUmbral(campo, ultimo.x, ultimo.z);
+    if (!teCuenta || !ultimo) return null;
+    // Fuera de su franja y volviendo, en la base: es donde no se pide alabear para contestar.
+    if (!queda) this.tramoQueVeLaTorre = "base";
+    /*
+     * Alargándolo más allá de su franja te sigue viendo —ver `SIGUE_VIENDOTE`—,
+     * y lo que te queda es, como poco, lo que hay hasta el umbral.
+     */
+    const metros = queda
+      ? queda.metros + distanciaAlUmbral(campo, ultimo.x, ultimo.z)
+      : distanciaAlUmbral(campo, s.position.x, s.position.z);
     return metros / Math.max(15, s.groundSpeed);
   }
 

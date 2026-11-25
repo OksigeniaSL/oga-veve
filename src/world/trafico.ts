@@ -316,9 +316,8 @@ export interface Caminos {
      */
     readonly virajes?: readonly number[];
     /**
-     * **Lo que tiene la pista ocupada el que aterriza y remonta**, s: de cruzar
-     * el umbral a dejarla libre, media vuelta incluida. Solo si da media
-     * vuelta en ella. Ver `ocupaLaPista`.
+     * **Lo que tiene la pista ocupada el que aterriza**, s: de cruzar el umbral
+     * a dejarla libre, con la media vuelta si la da. Ver `ocupaLaPista`.
      */
     readonly ocupa?: number;
     /**
@@ -654,8 +653,18 @@ const MIRA_ANTES_DE_EMPUJAR = 120;
  */
 const ENTRANDO_EN_SU_PUESTO = 150;
 
+/** Desde cuánto antes de esos metros se mira si hay que pararse, m: lo que frena rodando. */
+const FRENA_PARA_ENTRAR = 40;
+
 /** Lo cerca que está de un puesto el punto que es ese puesto, m. */
 const EN_ESE_PUESTO = 6;
+
+/**
+ * **Lo más que espera para entrar en su puesto quien llega con uno empujado en el de al lado**, s: tres minutos, como
+ * quien juega para salir (`TOPE_DEL_DE_AL_LADO`, H97). Un empuje dura uno y pico. Es su red: pasada, entra como
+ * siempre. Ver `antesDelDeAlLado`.
+ */
+export const ESPERA_AL_DE_AL_LADO = 180;
 
 /**
  * **Qué tráfico opera en este campo**, por su código OACI, y en qué
@@ -982,11 +991,12 @@ export function alAterrizar(
 }
 
 /**
- * **Cuánto tiene la pista ocupada el que aterriza y da media vuelta en
- * ella**, s: lo que vuela del umbral a tocar, lo que rueda hasta la vuelta,
- * la vuelta casi parado y el remonte a veinte nudos hasta dejarla libre.
+ * **Cuánto tiene la pista ocupada el que aterriza**, s: lo que vuela del umbral
+ * a tocar y lo que rueda hasta dejarla libre; y si da media vuelta en ella, lo
+ * que rueda hasta la vuelta, la vuelta casi parado y el remonte a veinte nudos.
  *
- * Es lo que la torre de un campo sin paralela deja entre dos llegadas: «a
+ * Es lo que la torre de un campo sin paralela —o con la calle lejos, como
+ * Mariscal Estigarribia, a 2.953 m del umbral de la 01— deja entre dos llegadas: «a
  * landing aircraft will not normally be permitted to cross the runway
  * threshold on its final approach until [...] all preceding landing aircraft
  * are clear of the runway-in-use» (OACI, Doc 4444, 7.10.1.2), y la separación
@@ -1299,7 +1309,7 @@ export function trazar(
         despega: 0,
         tipo: t,
         virajes,
-        ...(virajes.length ? { ocupa: ocupaLaPista(t, boca, virajes, enLaToma, fuera) } : {}),
+        ocupa: ocupaLaPista(t, boca, virajes, enLaToma, fuera),
       };
     }
     const sale = tierra.suelo.salida(
@@ -1767,10 +1777,22 @@ interface EnLaFila {
   velocidad: number;
   sale: boolean;
   prioridad?: boolean;
-  /** Si remonta la pista al aterrizar, lo que la tiene ocupada. Ver `ocupaLaPista`. */
+  /** Lo que tiene la pista ocupada al aterrizar, si se sabe. Ver `ocupaLaPista`. */
   ocupa?: number;
   /** Si sale, lo que le falta para estar en el aire, s. Ver `TuSalida`. */
   enElAire?: number;
+  /** Y para haber pasado el final de la pista, s. Ver `pasasElFinal`. */
+  pasaElFinal?: number;
+}
+
+/** Lo que se sabe de uno que llega para ponerlo en la fila, s. Ver `retrasoPara`. */
+interface LoQueTarda {
+  /** Lo que vuela desde la decisión hasta tocar. */
+  readonly trasDecidir: number;
+  /** Y desde el umbral. */
+  readonly trasElUmbral: number;
+  /** Lo que tiene la pista ocupada. Ver `ocupaLaPista`. */
+  readonly ocupa: number;
 }
 
 /**
@@ -1958,6 +1980,13 @@ export const LIBRE_ANTES_DEL_UMBRAL = 5;
 
 /** Y el tráfico, que no tarda en decidir, s. Ver `sigueHastaElUmbral`. */
 export const LIBRE_ANTES_EL_TRAFICO = 3;
+
+/**
+ * **Lo más que se espera por quien sube por encima de la pista**, s: en lo más
+ * largo, cuatro kilómetros a cuarenta metros por segundo, son cien. Es la red de
+ * quien se queda encima de ella. Ver `subesPorLaPista`.
+ */
+const SUBES_COMO_MUCHO = 120;
 
 /** Cada cuántos metros se cuenta lo que le falta a uno para dejar la pista. */
 const CADA_AL_DEJARLA = 25;
@@ -2195,6 +2224,8 @@ interface Volando {
   recorrido: number;
   /** Cuánto lleva sin que nadie lo nombre. */
   olvidado: number;
+  /** Segundos que lleva esperando a que saquen al del puesto de al lado. Ver `antesDelDeAlLado`. */
+  esperaAlLado: number;
   /**
    * Si la torre le ha dicho «cleared to land». Lo sabe la frecuencia, que es
    * quien se lo dice: ver `puedeAterrizar` en `flight/radio.ts`.
@@ -3955,6 +3986,41 @@ export function crearTrafico(
   };
 
   /**
+   * **Lo que rueda el que llega, sin entrar en su puesto con uno empujado en el de al lado** (H98). La regla es la
+   * misma al llegar —«Simultaneous arrival/departure manoeuvres from adjacent stands (…) are incompatible», casilla
+   * 20.3.2.2 de Tenerife Sur— y solo la cumplía el que sale: no le empujaban con otro entrando, pero con el empuje ya
+   * en marcha el que llega seguía hasta donde lo paraba lo que barre, que entre esos puestos no llega a tocarle.
+   *
+   * Espera en la calle antes de los metros de entrar (`ENTRANDO_EN_SU_PUESTO`), y quien ya está en ellos, entra. Mira
+   * solo al que ya empujan —y a ti, desde que pides el tractor hasta que el avión es tuyo—, no al que está enganchado
+   * sin permiso: ése espera por él, y los dos no se esperan. Con su red, `ESPERA_AL_DE_AL_LADO`.
+   */
+  const antesDelDeAlLado = (quien: Volando, quiere: number, tu: EnTierra | null, dt: number): number => {
+    const c = quien.caminos;
+    if (!c || quien.marca.camino !== c.llegada || quien.esperaAlLado >= ESPERA_AL_DE_AL_LADO) return quiere;
+    const libre = largoDe(c.llegada) - ENTRANDO_EN_SU_PUESTO - 1 - quien.recorrido;
+    if (libre < -1 || libre > quiere + FRENA_PARA_ENTRAR) return quiere;
+    const sitios = deAlLado(suPuestoAlLlegar(quien, c));
+    if (!sitios.length) return quiere;
+    const enUno = (p: EnElPlano | null | undefined) =>
+      !!p && sitios.some((s) => Math.hypot(p.x - s.x, p.z - s.z) < EN_ESE_PUESTO);
+    const empujan =
+      enUno(tu?.maniobra) || [...aviones.values()].some((b) => b !== quien && empujando(b) && enUno(puestoDelEmpuje(b)));
+    if (!empujan) return quiere;
+    const puede = antesDe(libre, quiere, dt);
+    if (puede < quiere - 1e-6) quien.esperaAlLado += dt;
+    return puede;
+  };
+
+  /** El punto del puesto al que llega uno: su camino acaba con la rueda de morro en él y el centro por detrás. */
+  const suPuestoAlLlegar = (quien: Volando, c: Caminos): EnElPlano | null => {
+    const b = c.llegada[c.llegada.length - 1];
+    const a = c.llegada[c.llegada.length - 2];
+    if (!a || !b) return null;
+    return ruedaDeMorroEn(b, Math.atan2(b.x - a.x, -(b.z - a.z)), MORRO_DEL_TRAFICO[quien.tipo.id]);
+  };
+
+  /**
    * **Si la calle está libre para empujar**: nadie en lo que va a barrer, ni a
    * punto de pasar por ello. Es lo que mira el control de tierra antes de decir
    * «pushback approved»: el que rueda por detrás del puesto pasa primero. Quien
@@ -4300,6 +4366,24 @@ export function crearTrafico(
   const DEJA_LA_PISTA = 75;
 
   /**
+   * **Lo que te falta para pasar el final de la pista**, s, volando por encima
+   * de ella: acabas de despegar o te vas al aire. Cero si no, o si llevas más de
+   * `SUBES_COMO_MUCHO` encima, que es dar vueltas o quedarse quieto: nadie espera
+   * por eso. Se mira cada medio segundo, que la fila se pide a cada paso.
+   */
+  let subes = { mirado: -Infinity, falta: 0, desde: 0 };
+  const subesPorLaPista = (tu: QuienJuega): number => {
+    if (tu.alUmbral != null || tu.enLaPista || tu.sale?.conLaPista) return 0;
+    if (reloj - subes.mirado >= 0.5) {
+      const falta = loQueTeFaltaParaDejarla();
+      // Si se dejó de mirar hace rato, es otra subida.
+      const sigue = subes.falta > 0 && reloj - subes.mirado < SUBES_COMO_MUCHO / 4;
+      subes = { mirado: reloj, falta: Number.isFinite(falta) ? falta : 0, desde: sigue ? subes.desde : reloj };
+    }
+    return reloj - subes.desde < SUBES_COMO_MUCHO ? subes.falta : 0;
+  };
+
+  /**
    * **La fila de llegadas**, sin `sin`: la hora de umbral de cada uno de los
    * que ya están en ella y a cuánto vienen, y quien juega si viene en final
    * o está encima de la pista. `sale` es quien la ocupa despegando, que no
@@ -4350,20 +4434,35 @@ export function crearTrafico(
               sale: true,
               // Y si te quedas en ella sin salir, como a quien no se sabe lo que le falta.
               ...(tu.sale && (tuPistaDesde === null || reloj - tuPistaDesde < ESPERAN_POR_TI)
-                ? { enElAire: tu.sale.enElAire }
+                ? { enElAire: tu.sale.enElAire, pasaElFinal: pasasElFinal(tu.sale) }
                 : {}),
             },
       );
+    /*
+     * **Y recién ido al aire, hasta que pasas el final de la pista** (H98): se te
+     * dejaba de contar con las ruedas en el aire, y quien giraba entonces cruzaba
+     * el umbral contigo encima.
+     */
+    const pasaElFinal = tu ? subesPorLaPista(tu) : 0;
+    if (pasaElFinal > 0) fila.push({ hora: reloj, velocidad, sale: true, enElAire: 0, pasaElFinal });
     return fila.sort((a, b) => a.hora - b.hora);
   };
 
   /**
-   * **Lo que se le deja a quien sale antes de que el siguiente cruce el
-   * umbral**, s: que al llegar a la decisión ya esté en el aire. Sin saber lo
-   * que le falta, `QUIEN_SALE`.
+   * **Lo que se le deja a quien sale antes de que el siguiente toque**, s: que
+   * al llegar a la decisión ya esté en el aire, y que al cruzar el umbral haya
+   * pasado el final de la pista (H98; OACI, Doc 4444, 7.10.1). Con lo primero
+   * solo, 29 de 759 cruzaban el umbral contigo en el aire sobre ella, a kilómetro
+   * y medio; a quien todavía no ha girado a la base le cuesta un poco más de
+   * vuelta, y a ti nada. Sin saber lo que le falta, `QUIEN_SALE`.
    */
-  const hastaQueSale = (b: Pick<EnLaFila, "enElAire">, trasDecidir: number): number =>
-    b.enElAire === undefined ? QUIEN_SALE : b.enElAire + MARGEN_AL_SALIR + trasDecidir;
+  const hastaQueSale = (b: EnLaFila, llega: LoQueTarda): number =>
+    b.enElAire === undefined
+      ? QUIEN_SALE
+      : Math.max(
+          b.enElAire + MARGEN_AL_SALIR + llega.trasDecidir,
+          (b.pasaElFinal ?? 0) + LIBRE_ANTES_EL_TRAFICO + llega.trasElUmbral,
+        );
 
   /**
    * **Y contigo esperando la verde, entre una llegada y la siguiente cabe tu
@@ -4412,19 +4511,23 @@ export function crearTrafico(
     sin: Volando | null,
     natural: number,
     velocidad: number,
-    /** Lo que vuela desde la decisión hasta tocar, s. Ver `hastaQueSale`. */
-    trasDecidir: number,
+    llega: LoQueTarda,
     colchon = COLCHON,
   ): number => {
     let hora = natural;
-    const hueco = huecoParaTuSalida(trasDecidir);
+    const hueco = huecoParaTuSalida(llega.trasDecidir);
     for (const b of [...laFila(sin), ...tuTurnoDeSalir(sin)]) {
       const detras = b.sale
-        ? hastaQueSale(b, trasDecidir)
+        ? hastaQueSale(b, llega)
         : Math.max(detrasDe(b, velocidad) + colchon, hueco);
+      /*
+       * Y por delante de otro, con lo que él mismo va a tener la pista ocupada:
+       * en Estigarribia son 2.953 m del umbral de la 01 a la única calle, y la
+       * avioneta se metía delante de ti con los dos minutos de siempre (H98).
+       */
       const delante = b.sale
         ? 0
-        : separacionPara(b.velocidad) + colchon + (b.prioridad ? PRIORIDAD : 0);
+        : detrasDe(llega, b.velocidad) + colchon + (b.prioridad ? PRIORIDAD : 0);
       if (hora < b.hora + detras && hora > b.hora - delante) hora = b.hora + detras;
     }
     return hora - natural;
@@ -4436,8 +4539,15 @@ export function crearTrafico(
       quien,
       reloj + (c.toca - metros) / quien.marca.velocidad,
       quien.marca.velocidad,
-      (c.toca - c.decide) / quien.marca.velocidad,
+      loQueTarda(c, quien.marca.velocidad),
     );
+
+  /** Lo que tarda quien llega por esos caminos a esa velocidad. Ver `retrasoPara`. */
+  const loQueTarda = (c: Caminos, velocidad: number): LoQueTarda => ({
+    trasDecidir: (c.toca - c.decide) / velocidad,
+    trasElUmbral: (c.toca - c.umbral) / velocidad,
+    ocupa: c.enTierra?.ocupa ?? 0,
+  });
 
   /**
    * **Si alguien va delante demasiado cerca** de quien vuela la final sin
@@ -4619,7 +4729,7 @@ export function crearTrafico(
           return true;
       }
     const natural = reloj + (c.toca - marca.metros) / marca.velocidad;
-    return retrasoPara(null, natural, marca.velocidad, (c.toca - c.decide) / marca.velocidad) > 0;
+    return retrasoPara(null, natural, marca.velocidad, loQueTarda(c, marca.velocidad)) > 0;
   };
 
   /**
@@ -5341,6 +5451,7 @@ export function crearTrafico(
           frenteATi: null,
           aguarda: 0,
           atascado: 0,
+          esperaAlLado: 0,
           recula: null,
           remolque: null,
           dibujoDelRemolque: null,
@@ -5462,7 +5573,8 @@ export function crearTrafico(
               : cedeALosOtros(quien, quiere, velocidad, dt);
             quien.cedido = puede < quiere - 1e-6 ? quien.cedido + dt : 0;
             quien.atascado = porLosOtros < 1e-6 && quiere > 1e-6 ? quien.atascado + dt : 0;
-            puede = Math.min(puede, porElTramo, porLosOtros);
+            const porElDeAlLado = dejandoLaPista ? quiere : antesDelDeAlLado(quien, quiere, tuEnTierra, dt);
+            puede = Math.min(puede, porElTramo, porLosOtros, porElDeAlLado);
           } else {
             quien.cedido = 0;
             quien.atascado = 0;

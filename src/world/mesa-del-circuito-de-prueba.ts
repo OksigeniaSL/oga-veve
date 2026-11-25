@@ -235,10 +235,14 @@ export function volar(k: Campo, avion: AircraftConfig, semilla: number, como: Co
       vuelvesAqui: true,
       trasIrse: false,
       vertical,
+      aSuAltura: alto >= 60 && alto <= 2 * f.altura,
+      reloj,
     });
-    if (teCuenta && queda)
+    if (teCuenta)
       llegada = porElCircuito =
-        (queda.metros + Math.hypot(v4.x - umbral.x, v4.z - umbral.z)) / vel;
+        (queda
+          ? queda.metros + Math.hypot(v4.x - umbral.x, v4.z - umbral.z)
+          : Math.hypot(x - umbral.x, z - umbral.z)) / vel;
   };
   const vr = avion.approachSpeed * 1.05;
   let reloj = 0;

@@ -3368,3 +3368,201 @@ salida de los 590 m por la 12 retrocede 128 m, y antes no llegaba a aterrizar.
 - **En Pedro Juan**, dos del tráfico dando vueltas a 295 m uno de otro, de antes.
 - **La vuelta, con los virajes de cada cual**: se dice treinta grados y se sigue
   contando con los tres alabeos; no se mide si se da.
+
+## Enmienda H98 (25-11-2026): la luz que no salía, y quien va a tardar en dejar la pista
+
+### El caso
+
+En la ronda de la tanda 26, el fallo de radio en Pettirossi con el JAZ 20: en la
+final, a sesenta metros y con la pista libre, seguían los destellos. Ni verde ni
+roja. El banco apuntó a un reactor del tráfico, ZP-TCC, «salida 764 m, 5 m de
+alto», y se leyó como uno que despegaba. **No despegaba**: 764 son los metros de su
+camino, y la doble raya del reactor está a 1.857. Puesto ahí en la mesa, rueda por la
+paralela, a 210 m del eje y con las ruedas cuatro por encima del centro de la pista, que
+la calle sube. Por eso no contaba como «en la pista»: no lo estaba.
+
+Con la mesa de H96 ampliada —la vuelta de espera que se te pide, tu salida de la
+pista y la radio callada—, 600 vuelos por campo en los once con torre, la mitad
+por la línea del circuito y la mitad alargando el viento en cola tres kilómetros,
+que es como lo vuela el banco. **Sin señal ninguna, 223 de 6.895 finales**, todas con
+la pista libre:
+
+| | por la línea | alargado |
+|---|---|---|
+| Guaraní | 24 | 51 |
+| La Palma | 4 | 46 |
+| Tenerife Sur | 13 | 36 |
+| Pettirossi | 0 | 27 |
+| Encarnación | 3 | 10 |
+| El Hierro | 0 | 9 |
+| Los Rodeos, Gando, Lanzarote, Fuerteventura y Cuatro Vientos | 0 | 0 |
+
+### Por qué
+
+Tres cosas, una detrás de otra:
+
+1. **La torre dejó de verte en la esquina.** Su franja llega hasta 2.400 m de la
+   línea; alargando, entre el viento en cola y la final hay medio minuto en que no te
+   contaba. En 12 de las 13 de una tirada de 30 se le dijo «ruede al punto de espera»
+   justo ahí al que luego estorbaba. La decimotercera, recién despegado.
+2. **Te pidió una vuelta, con la voz.** Su doble raya está en tu salida y no se iba
+   antes que tú (`mirarTuSalida`). Sin radio no se oye, y en la lámpara no hay «dé una
+   vuelta».
+3. **Al pedírtela te quitó el permiso, y al dejar de esperarla no lo pidió otra vez.**
+   Solo lo pedía entrar en la final. **Con radio, lo mismo** a quien no la daba: 10 de
+   24 en Pettirossi, alargando.
+
+### Lo real
+
+- **OACI, Doc 4444 (PANS-ATM), 16.ª ed., con la enmienda 8** (leído hoy en una copia;
+  la de la OACI se vende). **7.8**: «An aircraft landing or in the final stages of an
+  approach to land shall normally have priority over an aircraft intending to depart
+  from the same or an intersecting runway». **7.9.2** y **7.9.3.1** hablan de empezar a
+  despegar, y **7.10.1**, de la salida que está en la pista o en el aire: a quien rueda
+  fuera de ella no hay por qué contarlo para dejarte aterrizar (**7.10.2**). **7.7.3.1**,
+  de quien entra en el circuito sin hablar con la torre: «it shall be permitted to land
+  if its actions indicate that it so desires. If circumstances warrant, aircraft which
+  are in contact with the controller may be instructed by the controller to give way
+  […]. In no case shall permission to land be withheld indefinitely». **15.3.3 a)**: con
+  la comunicación perdida, en visual, la separación con los demás se hace contando con
+  que aterrizará en el aeródromo adecuado más próximo. **7.1.1.2**: «shall maintain a
+  continuous watch on all flight operations on and in the vicinity of an aerodrome».
+- **SERA, apéndice 1, tabla AP 1-1**: la roja fija a un avión en vuelo es «ceda el paso
+  a las otras aeronaves y siga en el circuito» (H71).
+- **AIP Paraguay, AD 2.3, SGME** (DINAC, paquete AMDT AIRAC 02/2026, leído hoy).
+  **2.3-8**: calle de rodaje, de hormigón, 34 m. **Plano, AD 2.3-10 (07 APR 2026, AMDT
+  NR 02)**: una sola calle, «TWY», y una plataforma; «01 a TWY, 550 M; 19 a TWY, 2953 M»,
+  lo que queda de pista desde ella para cada despegue, o sea a 2.953 m del umbral de la
+  01 y a 550 del de la 19. **2.3-13**: LDA, 3.503 m por las dos. **2.3-18**: AFIS, H24.
+- **AD 2-GCTS, casillas 20.3.2.1 y 20.3.2.2** (H97): las dos maniobras, la de salir y la
+  de llegar, entre puestos de al lado.
+
+### Contestado: ¿tenía que haberlo retenido?
+
+**Por la pista, no**: no iba a despegar, rodaba, y nada de 7.9 ni de 7.10 lo frena. **Por
+tu salida, sí**: es la regla de no dejar rodar hacia tu salida a quien no se iría
+antes (`quienDejaLaPistaPorSuRaya`), y no se aplicó porque la torre no te veía. Y con él
+ya rodando, lo que tocaba era lo que ya se hace en la final corta: retenerlo en su doble
+raya, que oye, y dejarte aterrizar.
+
+### Decisión
+
+- **Sin radio no se te pide una vuelta** (`remedioParaTuSalida`, `teOyen`): en el
+  circuito, nada; en la final se retiene al que sale, y si su doble raya está en tu
+  única salida, la roja. Si la radio se va con la vuelta pedida, se deja de esperar.
+- **El permiso que se cae al pedir una vuelta se vuelve a pedir** al acabarla o al dejar
+  de esperarla, si sigues en la final; si saliste de ella, al volver, como antes.
+- **Quien te vio volver te sigue viendo** (`SIGUE_VIENDOTE`): si te sales de la franja
+  desde el viento en cola o la base, a la altura del circuito, te cuenta tres minutos
+  más, a lo que hay en línea recta hasta el umbral. Después, como si te hubieras ido.
+- **El que entra en un puesto de pareja espera** (`antesDelDeAlLado`) en la calle, a
+  ciento cincuenta metros, si empujan al del otro —o a ti, desde que pides el tractor—;
+  quien ya ha empezado a entrar, entra, y no se espera al que está enganchado sin
+  permiso, que es quien espera por él. Con su red: tres minutos
+  (`ESPERA_AL_DE_AL_LADO`).
+- **7.10.1, con el que todavía no ha girado** (`hastaQueSale`, `subesPorLaPista`): con la
+  pista ya tuya, gira cuando al umbral habrás pasado el final, y no solo cuando a la
+  decisión estés en el aire; y en el aire se te sigue contando hasta que lo pasas. Con su
+  red, dos minutos encima de la pista. La verde, igual que antes.
+- **Nadie se mete delante de otro si va a tardar en dejar la pista** (`retrasoPara`):
+  cuenta lo que él mismo la va a tener ocupada, y detrás de él, también, remonte o no.
+  Solo se daba a quien daba media vuelta en ella, y solo a los de detrás.
+- **En Estigarribia la calle está donde la pone el AIP**, y se sale por ella: 2.963 m en el
+  juego. Lo que faltaba era contar con que la avioneta está en la pista 166 s.
+
+**Sin frases nuevas.** Y en el banco del fallo de radio, una comprobación más: «y a
+ninguna decisión se llega sin señal con la pista libre».
+
+### La prueba
+
+`src/world/la-luz-que-no-sale.test.ts`: la vuelta que no se oye, el permiso que vuelve,
+24 finales en Pettirossi con su tráfico y sin radio —sin el arreglo, la tercera parte sin
+señal—, la torre que no te pierde en la esquina, el que llega al J1 de Tenerife Sur con
+el del G2 y con su red, el que no ha girado contigo corriendo, y la avioneta de
+Estigarribia contigo detrás. Sin los arreglos fallan todas menos tres, las que dicen lo
+que no debe cambiar.
+
+### Lo medido
+
+Sin radio, 600 vuelos por campo en los once con torre (JAZ 20 y 50, las dos cabeceras):
+
+| | finales sin señal | rojas | vueltas que se pedían |
+|---|---|---|---|
+| Guaraní | 75 → 0 | 21 → 0 | 123 → 0 |
+| La Palma | 50 → 0 | 82 → 0 | 154 → 0 |
+| Tenerife Sur | 49 → 0 | 9 → 0 | 100 → 0 |
+| Pettirossi | 27 → 0 | 9 → 0 | 70 → 0 |
+| Encarnación | 13 → 0 | 73 → 55 | 96 → 0 |
+| El Hierro | 9 → 0 | 213 → 0 | 227 → 0 |
+| Los Rodeos, Gando, Lanzarote, Fuerteventura y Cuatro Vientos | 0 → 0 | 1 → 0 | 0 → 0 |
+| **los once** | **223 → 0** | **408 → 55** | **770 → 0** |
+
+Las 55 de Encarnación, que remonta, son con uno en la pista. Con radio y sin dar la vuelta,
+en Pettirossi y alargando, de 10 de 24 a una, que es el permiso tardío de H96 a 34 m; y las
+vueltas que se piden, de 14 a 5, o de 20 a 7 dándolas, porque la torre ya no te pierde.
+
+**Quien llega y cruza el umbral contigo en el aire sobre la pista**, de 93 a 12 en los
+catorce campos; y lo demás, antes y ahora, con los vuelos de H96:
+
+| | contigo encima | roja media, s | frustradas | tomas | espera por llegada, s |
+|---|---|---|---|---|---|
+| Los Rodeos (600) | 29 → 8 | 36,3 → 36,3 | 40 → 40 | 759 → 744 | 59,6 → 65,5 |
+| Gando (60) | 4 → 0 | 49,0 → 49,0 | 6 → 6 | 79 → 78 | 59,3 → 64,5 |
+| Tenerife Sur (60) | 4 → 0 | 47,7 → 47,7 | 3 → 3 | 73 → 70 | 53,3 → 67,6 |
+| Lanzarote (60) | 2 → 0 | 18,5 → 18,5 | 0 → 0 | 66 → 65 | 62,0 → 67,9 |
+| Fuerteventura (60) | 7 → 1 | 25,4 → 25,4 | 0 → 0 | 75 → 71 | 57,9 → 71,3 |
+| La Palma (60) | 0 → 0 | 81,5 → 81,5 | 18 → 18 | 74 → 73 | 83,4 → 86,7 |
+| Cuatro Vientos (60) | 0 → 0 | 17,3 → 17,3 | 0 → 0 | 63 → 63 | 63,9 → 64,6 |
+| Pettirossi (60) | 4 → 1 | 40,2 → 40,2 | 7 → 7 | 70 → 69 | 42,6 → 45,5 |
+| El Hierro, remontando (300) | 0 → 0 | 90,8 → 90,8 | 64 → 64 | 438 → 438 | 90,6 → 90,6 |
+| La Gomera, remontando (300) | 5 → 0 | 83,0 → 83,0 | 6 → 6 | 365 → 362 | 97,6 → 101,2 |
+| Pilar (300) | 0 → 0 | 44,4 → 44,4 | 2 → 2 | 456 → 456 | 59,0 → 59,1 |
+| Pedro Juan (300) | 0 → 0 | 30,6 → 30,6 | 0 → 0 | 426 → 424 | 71,4 → 72,8 |
+| Concepción (300) | 7 → 2 | 64,8 → 64,8 | 13 → 13 | 396 → 396 | 73,8 → 75,5 |
+| Estigarribia (300) | 31 → 0 | 48,7 → 46,7 | 32 → 26 | 424 → 403 | 53,1 → 72,1 |
+
+A menos de 300 m y 150 de altura de quien juega, ninguno en ninguno, como antes; y
+entre dos del tráfico, lo mismo, más una pareja en Estigarribia, las dos en su vuelta, a
+299 m. La mediana, el p90 y el máximo de la roja tampoco se mueven, salvo en
+Estigarribia (mediana, de 12,5 a 15,5 s; p90, de 149 a 145; máximo, de 236,5 a 226).
+
+**En Estigarribia**, a quien juega se le mandaba al aire en 10 de 300 y ahora en una; con la
+pista ocupada se tocaba en 9 y ahora en ninguna; y permisos por debajo de los sesenta
+metros, de 6 a 3.
+
+**La roja y las frustradas no se mueven; las tomas bajan** un dos por ciento en Los
+Rodeos, y un cinco en Fuerteventura y en Estigarribia: son vueltas de más, 26 en los 600 de
+Los Rodeos. No se pierden, llegan después: quien da una vuelta de más llega un minuto más
+tarde, y los de detrás, también. Con cuatro minutos más de mesa detrás de tu toma son las
+mismas en Tenerife Sur (95), 101 por 104 en Fuerteventura y 341 por 354 en 180 vuelos de
+Los Rodeos. Contando tu subida con la velocidad entera, y no con el 85 %, lo mismo (152 por
+151, con el JAZ 20). Es lo que cuesta la regla a la letra, y va en `hastaQueSale`.
+
+**Lo de antes, igual**: de frente con el criterio de H93, 0 de 600; a menos de 300 m y 150 de
+altura, 0 de 600, y 0 yéndose al aire quien juega, en 480 por el circuito y 318 derecho a la
+final. Llegando derecho y sin avisar, 180 vuelos idénticos uno a uno.
+
+El vitest entero, por partes: `src/world`, 203 ficheros y 4.532 pruebas; `src/audio`, 38 y
+874; `src/flight`, 277 y 5.246; el resto, 87 y 1.606. En verde, con las saltadas de siempre, y
+sin tocar ninguna de las de antes; la nueva, también en `--pool=forks`.
+
+### Lo que queda
+
+- **Los bancos del navegador no se volaron**: no hay turno. Son
+  `OGA_PUERTO=5691 OGA_GPU=1 node scripts/verificar-emergencias.mjs radio pettirossi jaz-20 taguato`,
+  el mismo con `guarani` y con `la-palma`, y
+  `OGA_PUERTO=5691 OGA_GPU=1 node scripts/verificar-vuelo-entero.mjs estigarribia guyrami 12 jaz-20`.
+- **Quedan 12 contigo encima** de las 93: ocho en Los Rodeos, reactores que ya bajaban por
+  la base cuando te dieron la verde, a 62 s de decidir. Con la regla a la letra, o se van
+  al aire, o esperas tú dos minutos más.
+- **Con radio, y quien sale lejos todavía**, la torre te pide una vuelta en la final larga
+  aunque puedas dejar la pista por otra calle. Con 7.8 delante, lo suyo sería retenerlo a
+  él, como sin radio; no se ha tocado, y pide su mesa.
+- **Quien juega, aterrizando delante de otro en Estigarribia**, tiene la pista lo mismo que
+  la avioneta, y el que viene detrás sigue contando dos minutos: lo que tardas en dejarla
+  no lo sabe el tráfico.
+- **Aterrizar largo**, que es lo que se hace con la calle a tres kilómetros (7.10.3.1 b: «land
+  beyond the touchdown zone»), no lo hace nadie del tráfico: baja de la toma a la calle en
+  dos minutos y tres cuartos.
+- **La pareja del J1 y el G2**, la única a la que llega el tráfico casi siempre, no se ha visto
+  en el navegador.
