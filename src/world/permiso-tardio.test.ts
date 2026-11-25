@@ -21,6 +21,8 @@ import {
 import { EN } from "../i18n/en";
 import { ES_PY } from "../i18n/es-PY";
 import fuenteDelJuego from "../game.ts?raw";
+import deTorreCanarias from "../../data/voces/torre-canarias/manifiesto.json";
+import deTorre from "../../data/voces/torre/manifiesto.json";
 import frases from "../../docs/voces/frases.json";
 import { sinTorre, type Aerodrome } from "./aerodrome";
 import { porDondeSigues, verticesDelCircuito, type Pista, type PuntoDeCircuito } from "./circuito";
@@ -519,25 +521,35 @@ describe("y quien juega, con uno en la pista que la está dejando", () => {
   });
 });
 
-describe("«continúe aproximación», dicho en los tres sitios y a la espera de su toma", () => {
+describe("«continúe aproximación», dicho en los tres sitios y con su toma", () => {
   it("está en los diccionarios, con las dos torres", () => {
     for (const d of [ES_PY, EN])
       for (const clave of ["torre.continue", "torre.canario.continue"] as const)
         expect(d[clave]).toMatch(/^\{indicativo\}, /);
   });
 
-  it("su pieza está en la lista de grabar, y hasta entonces no se pide", () => {
+  it("su pieza está en la lista de grabar y grabada, y se pide con su grabación", () => {
     const lista = frases as { id: string; voz: string; texto: string }[];
     const de = (id: string) => lista.find((f) => f.id === id);
-    for (const [voz, solo] of [
-      ["torre", "torre.solo"],
-      ["torre-canarias", "torre.canario.solo"],
-    ]) {
+    for (const [voz, raiz, pack] of [
+      ["torre", "torre", deTorre],
+      ["torre-canarias", "torre.canario", deTorreCanarias],
+    ] as const) {
+      const solo = `${raiz}.solo`;
       expect(de(`${solo}.continueAproximacion`)).toMatchObject({ voz, texto: "continúe aproximación" });
       expect(de(`${solo}.continueApproach`)).toMatchObject({ voz, texto: "continue approach" });
+      // Con su matrícula delante, que así se dice, y la pieza en el pack.
+      const { recetas, piezas } = pack as { recetas: Record<string, string[]>; piezas: Record<string, unknown> };
+      for (const [clave, pieza] of [
+        [`${raiz}.continue`, `${solo}.continueAproximacion`],
+        [`${raiz}.continueApproach`, `${solo}.continueApproach`],
+      ] as const) {
+        expect(recetas[clave]).toEqual(["{c1}", "{c2}", "{c3}", "{c4}", "{c5}", pieza]);
+        expect(piezas).toHaveProperty([pieza]);
+      }
     }
-    expect(ESPERAN_SU_TOMA.has("torre.continue")).toBe(true);
-    expect(ESPERAN_SU_TOMA.has("torre.continueApproach")).toBe(true);
+    expect(ESPERAN_SU_TOMA.has("torre.continue")).toBe(false);
+    expect(ESPERAN_SU_TOMA.has("torre.continueApproach")).toBe(false);
     // Y el juego no la pide sin su toma: sería muda en el navegador de quien más juega.
     const dice = fuenteDelJuego.slice(
       fuenteDelJuego.indexOf("private decirQueSigas()"),
