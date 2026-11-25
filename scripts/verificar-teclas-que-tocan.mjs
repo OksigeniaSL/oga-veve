@@ -21,10 +21,14 @@
  *   el botón del tren y que la tarjeta no pisa la palanca ni el gas;
  * - **con mando de consola**, que se dibuja el mando con su botón encendido.
  *
+ * Con los motores en marcha mientras se mide en vuelo (H99): lo colocaba a
+ * dos mil quinientos pies con el gas a seis décimas y las hélices paradas.
+ *
  * Uso: `node scripts/verificar-teclas-que-tocan.mjs`. Con `OGA_PUERTO`.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5371);
@@ -53,6 +57,8 @@ const URL_DEL_VUELO = (tramo) =>
 async function enElAire(page, mando) {
   await page.waitForFunction(() => !!globalThis.__oga?.estado?.(), null, { timeout: 120000 });
   await page.waitForTimeout(4000);
+  // Antes de colocarlo, y antes de decir con qué se juega: su tecla cuenta como teclado.
+  await ponerEnMarcha(page);
   await page.evaluate(async (mando) => {
     const o = globalThis.__oga;
     const j = o.juegoParaTrazas();
@@ -73,6 +79,13 @@ async function enElAire(page, mando) {
     for (let i = 0; i < 100 && j.hud.tutor.visible; i++) await espera(200);
     await espera(300);
   }, mando);
+  await vigilarElMotor(page);
+}
+
+/** Y lo vigilado, antes de cerrar la página o de volver a cargarla. */
+async function elMotor(page, donde) {
+  const m = await loDelMotor(page, { prueba: true });
+  comprobar(`${EN_MARCHA} (${donde})`, m.ok, m.detalle);
 }
 
 /** La tarjeta: si se ve, qué pide, qué teclas lleva y qué pisa. */
@@ -175,6 +188,7 @@ try {
     );
     // Lo guardado se escribe con freno: se da tiempo antes de recargar.
     await page.waitForTimeout(2500);
+    await elMotor(page, "tablet");
     await page.reload();
     await enElAire(page, "teclado");
     const trasRecargar = await page.evaluate(() => {
@@ -214,6 +228,7 @@ try {
       conMando.visible && conMando.mando === "consola" && conMando.consola,
       JSON.stringify({ v: conMando.visible, m: conMando.mando, on: conMando.consola }),
     );
+    await elMotor(page, "tablet, al recargar");
     if (errores.length) comprobar("sin errores en la página (tablet)", false, errores.slice(0, 3).join(" | "));
     await page.close();
   }
@@ -260,6 +275,7 @@ try {
       tarjeta.pisa.join(", ") || (tarjeta.fuera ? "se sale" : "libre"),
     );
     if (process.env.OGA_CAPTURA) await page.screenshot({ path: `${process.env.OGA_CAPTURA}-telefono-${ancho}.png` });
+    await elMotor(page, `${ancho}×${alto}`);
     if (errores.length) comprobar(`sin errores en la página (${ancho}×${alto})`, false, errores.slice(0, 3).join(" | "));
     await page.close();
   }

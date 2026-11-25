@@ -32,6 +32,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { arrancarConLaLlave } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5292);
@@ -196,7 +197,19 @@ await page.evaluate(() => {
   const o = globalThis.__oga;
   o.acelerar(6);
 });
-await page.keyboard.press("KeyI");
+/*
+ * **Con la llave y en su orden** (H99): donde hay tractor —un reactor en un
+ * puesto de pasarela— la llave sola no arranca, y se llegaba al punto de espera
+ * con el motor parado. No vuela, así que no hay motor que vigilar en el aire:
+ * lo que se mira es que arrancó.
+ */
+const arranco = await arrancarConLaLlave(page);
+comprobar(
+  "el motor arranca con la llave",
+  arranco !== null,
+  arranco ?? "no arrancó",
+  "con el motor parado no se rueda a ningún punto de espera, y no hay quien autorice nada",
+);
 await page.waitForTimeout(4000);
 await page.evaluate(() => {
   const o = globalThis.__oga;

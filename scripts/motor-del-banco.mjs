@@ -25,6 +25,12 @@
  * Los que van de otra cosa —el planeo sin combustible— no vigilan.
  */
 
+/**
+ * **Con `OGA_MOTOR_PARADO=1` no arranca**, ni a mano ni con la llave: es la
+ * prueba de que cada banco ve lo que vigila (H99). Tiene que salir en rojo.
+ */
+const PARADO_A_PROPOSITO = process.env.OGA_MOTOR_PARADO === "1";
+
 /** Con qué régimen se da por parado, en tanto por ciento. El ralentí de cualquiera pasa de ahí. */
 const PARADO = 5;
 
@@ -43,6 +49,12 @@ const PARADO = 5;
  */
 export async function ponerEnMarcha(page) {
   await page.keyboard.press("Shift");
+  if (PARADO_A_PROPOSITO) {
+    await page.evaluate(() => {
+      globalThis.__oga.controles().engineOn = false;
+    });
+    return;
+  }
   const puesto = await page.evaluate(() => {
     const c = globalThis.__oga.controles();
     c.engineOn = true;
@@ -50,6 +62,18 @@ export async function ponerEnMarcha(page) {
   });
   if (!puesto) throw new Error("el motor no se puso en marcha");
 }
+
+/**
+ * **El gas que sostiene el vuelo de ahora**, para el banco que coloca el avión
+ * en el aire y no lo pilota: en marcha y al ralentí también se cae, más
+ * despacio. Se pide después de colocarlo.
+ */
+export const gasQueSostiene = (page) =>
+  page.evaluate(() => {
+    const o = globalThis.__oga;
+    const j = o.juegoParaTrazas();
+    o.controles().throttle = Math.max(0.2, Math.min(1, j.flight.gasPara?.(o.estado().airspeed) ?? 0.5));
+  });
 
 /** Cómo está el motor ahora, y el tractor si lo hay. */
 export const comoEstaElMotor = (page) =>
@@ -73,6 +97,7 @@ export const comoEstaElMotor = (page) =>
  * empuje y, en cuanto echa a andar, la llave otra vez.
  */
 export async function arrancarConLaLlave(page, tope = 60) {
+  if (PARADO_A_PROPOSITO) return null;
   const pasos = [];
   let pedido = false;
   for (const hasta = Date.now() + tope * 1000; Date.now() < hasta; ) {
@@ -127,22 +152,38 @@ export const vigilarElMotor = (page) =>
 /**
  * Lo vigilado hasta ahora, y deja de vigilar: si el motor estuvo en marcha en
  * todo lo volado, y el detalle para la comprobación.
+ *
+ * **Con `prueba`, y la vigilancia probada en cada tirada** (H99): con lo suyo ya
+ * apuntado, y si el avión sigue en el aire, se le para el motor nueve décimas y
+ * tiene que contarlo. Si no lo ve, en rojo: un vigilante que no ve nada también
+ * da cero paradas. Para el banco que lo pide al acabar, que después no mide.
  */
-export async function loDelMotor(page) {
-  const v = await page.evaluate(() => {
+export async function loDelMotor(page, { prueba = false } = {}) {
+  const v = await page.evaluate(async (prueba) => {
     const v = globalThis.__vigilaElMotor;
     if (!v) return null;
+    const visto = { muestras: v.muestras, paradas: v.paradas, primera: v.primera, n1Min: v.n1Min, n1Max: v.n1Max, laPrueba: null };
+    const o = globalThis.__oga;
+    const s = o.estado();
+    if (prueba && v.paradas === 0 && !s.onGround && s.heightAboveGround > 10) {
+      o.controles().engineOn = false;
+      await new Promise((r) => setTimeout(r, 900));
+      visto.laPrueba = v.paradas > 0 && v.n1Min === 0;
+      o.controles().engineOn = true;
+    }
     clearInterval(v.cada);
     globalThis.__vigilaElMotor = null;
-    return { muestras: v.muestras, paradas: v.paradas, primera: v.primera, n1Min: v.n1Min, n1Max: v.n1Max };
-  });
+    return visto;
+  }, prueba);
   if (!v || !v.muestras) return { ok: false, detalle: "no se vio volar ni un momento: no se sabe", ...(v ?? {}) };
-  const ok = v.paradas === 0 && v.n1Min > PARADO;
+  const ok = v.paradas === 0 && v.n1Min > PARADO && v.laPrueba !== false;
   const n1 = `N1 de ${v.n1Min.toFixed(0)} a ${v.n1Max.toFixed(0)}`;
   return {
     ok,
     detalle: ok
-      ? `${n1}, en ${v.muestras} muestras volando`
+      ? `${n1}, en ${v.muestras} muestras volando${v.laPrueba ? " · y parado a propósito, lo ve" : prueba ? " · sin probar, que acabó en tierra" : ""}`
+      : v.laPrueba === false
+        ? `${n1}, pero con el motor parado a propósito la vigilancia no lo vio`
       : `MOTOR PARADO en ${v.paradas} de ${v.muestras} muestras volando, ${v.primera ?? "sin régimen"} · ${n1}`,
     ...v,
   };
