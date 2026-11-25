@@ -2546,7 +2546,7 @@ partes de `src/world` no llegaron a correr**: el turno del vitest no se libró a
   se pone igual, que es lo mandado; que la torre lo vea en una pantalla, como dice la
   instructora, ahí no está publicado. Por eso se queda fuera hasta que haya una frase
   que sea verdad allí: que el número se marca igual, que esa torre no lo ve, y que por
-  eso se mira su lámpara desde el principio.
+  eso se mira su lámpara desde el principio. *(Hecho en la H91.)*
 - **El otro canal y el «transmitiendo a ciegas»** del R 10 II, que el SERA.14085
   también pide antes: aquí falla todo, el transmisor y el receptor.
 - **De noche en Paraguay** no se ha mirado que el avión sea de los homologados para
@@ -2558,3 +2558,168 @@ partes de `src/world` no llegaron a correr**: el turno del vitest no se libró a
   cinco golpes.
 - **Se cierra donde se pare**, también en la hierba, como los demás ejercicios que
   acaban en «vuelta»: `cerrar` no pregunta si fue en la pista.
+
+## Enmienda H91 (25-11-2026): el fallo de radio en un campo sin radar
+
+### El caso
+
+La H86 dejó fuera a Encarnación: tiene torre, y por tanto lámpara, pero el AIP no
+publica allí ningún radar, y lo que decía la instructora es que con el 7600 la torre
+ya lo sabe. «Se queda fuera hasta que haya una frase que sea verdad allí».
+
+### Qué hay en Encarnación, publicado
+
+AIP Paraguay, AMDT AIRAC 02/2026. La página y la fecha son las impresas.
+
+- **La dependencia**: «ENCARNACIÓN TWR», 118.0 la principal y 118.2 la secundaria, y
+  «ENCARNACIÓN RODAJE», 121.8, las tres H24 (AD 2.5-7, 1-10-2026). No hay oficina de
+  aproximación.
+- **El espacio aéreo**: la zona de control, semicircular, de 15 millas con centro en el
+  VOR/DME VEN y limitada por el Paraná, del suelo a 4.000 pies; y dentro la ATZ, de 5
+  millas, del suelo a 2.500. Las dos de clase C y las dos de la torre, con esta
+  observación: «No se permite la operación de aeronaves sin equipo de comunicaciones
+  en ambos sentidos» (ENR 2.2-4 y AD 2.5-15, 1-10-2026). Es lo que se pide para entrar;
+  al que se queda sin radio dentro le vale el R 2, 3.6.5.2.
+- **Vigilancia, ninguna**: la ficha AD 2.5 no nombra radar ni vigilancia en ninguno de
+  sus diecinueve apartados, no tiene carta de altitud mínima de vigilancia —la de
+  Asunción es la AD 2.1-50; la de Minga Guazú, la AD 2.2-24— y ENR 1.6 solo publica
+  dos sistemas: el radar secundario del centro de control de Asunción (1.1.1, p. ENR
+  1.6-1, 14-7-2022) y el de Minga Guazú, «40NM del VES» (4.1-1, p. ENR 1.6-5,
+  5-12-2019).
+- **El de Asunción llega en el papel**: «un rango de 250 NM del VAS», y VEN está a 150.
+  Fuera de su TMA da información de vuelo. Pero la antena, de la carta AD 2.1-50, es la
+  que AD 2.1-4.1 da a 422 pies de elevación, y a 150 millas, por la curvatura de la
+  Tierra con la refracción de siempre, **no ve nada por debajo de unos diez mil pies**:
+  el circuito se vuela a 2.100 (AD 2.5-16). Y lo que ve lo ve el centro de control,
+  no la torre.
+- **El de enfrente**: la Argentina tiene radar secundario en el aeropuerto de Posadas,
+  a doce millas, renovado con modo S en enero de 2026, y sus datos van al centro de
+  control de Resistencia (EANA, nota del 14-1-2026, en su web). Su AIP da cobertura «con
+  todo el espacio aéreo en el cual se brinda Servicio de Vigilancia ATS» (ENR 1.6, h,
+  p. ENR 1.6-3) y no nombra Encarnación; y en ENR 2.1-50 (AMDT AIRAC 1/2026, 11-6-2026)
+  lleva su TMA Posadas quince millas dentro de la FIR Asunción, que el AIP de Paraguay
+  termina en el río (ENR 2.1-2, 1-10-2026). Que la torre de Encarnación reciba esos
+  datos no lo publica ninguno de los dos.
+
+Así que **cobertura publicada abajo no hay**, y no se abre con las frases de siempre.
+
+### La norma
+
+- **El 7600 se marca igual**: lo de la H86 —R 10, volumen II, 5.2.2.7.1.3.3; volumen
+  IV, 2.1.4.2.2; AIP, ENR 1.6, 2.4— no distingue si hay radar. Y lo repite el
+  **R 4444**, *Gestión de Tránsito Aéreo*, cuarta edición R00 (2018), Resolución
+  419/2018, 8.8.3.1.1, nota 1, p. 22/32 del capítulo 8; y 15.2, nota 2, p. 5/20 del 15.
+- **Cómo lo sabe una torre sin radar.** R 4444, 7.1.1.2, p. 1/23 del capítulo 7: los
+  controladores de aeródromo «mantendrán bajo vigilancia constante todas las
+  operaciones de vuelo que se efectúen en el aeródromo o en su proximidad […]. Se
+  vigilará por **observación visual**, aumentándola cuando esté disponible por medio de
+  un sistema de vigilancia ATS». R 10, volumen II, 5.2.2.7.2.1 y 5.2.2.7.2.2, pp. 24 y
+  25/33 del capítulo 5: en tierra se llama por la frecuencia principal y por la
+  secundaria, se pide ayuda a otras estaciones y a otras aeronaves, y se hace también
+  «cuando no se haya recibido una comunicación esperada […] dentro de un período de
+  tiempo tal que dé lugar a sospechar la ocurrencia de una falla»; el período lo
+  prescribe la autoridad, y no está publicado. Y R 4444, 15.2.7, p. 7/20 del capítulo
+  15, y 11.4.1.3.1, p. 11/38 del 11: la dependencia que se entera se lo cuenta a las
+  demás, hasta la torre del destino.
+- **Y contesta con la lámpara**: R 2, 3.6.5.2 y apéndice 1, y R 14, volumen I, 5.1.3.1,
+  leídos en la H71 y la H86.
+
+### En España no hay ninguno así
+
+AIP España, ENR 1.6-22 a 1.6-24 (WEF 19-3-2026, AIRAC AMDT 02/26), las mínimas de
+separación de cada dependencia según su vigilancia: están las nueve torres del juego
+—Cuatro Vientos, Gran Canaria, Madrid-Barajas y Tenerife Sur en la 22; La Palma,
+Lanzarote y Tenerife Norte en la 23; El Hierro y Fuerteventura en la 24—, todas con
+pista de radar secundario. Y el fallo de radio, ENR 1.6-16, 4.3: «Modo A/3, clave 76 (o
+7600)». Las frases de siempre son verdad en las nueve; el ejercicio se ofrece en ocho,
+que Barajas solo sale en un cuento.
+
+### Qué se abre, y qué se dice
+
+**Encarnación, en Taguató y Taguató Ruvichá, con el JAZ 20 y el JAZ 40**, como los
+demás. `sinRadarPublicado` (antes `SIN_RADAR_PUBLICADO` solo cerraba) dice dónde no hay
+radar, y `segunElRadar` cambia las tres frases que lo contaban de otra manera; la H86
+contó dos y eran tres, que el cierre también decía que el número se lo dijo a la
+torre. **No se dice que la torre no tenga radar**, que no publicarlo no es negarlo:
+se dice lo que sí se sabe. De la instructora, en calma, en `es-PY` y en `en`; el
+guaraní no se toca. **Sin grabar**: hasta entonces se ven y se callan.
+
+- `ejercicio.fallo-de-radio.antesSinRadar`: «Hoy practicamos quedarnos sin radio. Al
+  subir se va a callar, a propósito. No pasa nada: ponemos en el transpondedor el número
+  de sin radio, volvemos al circuito y miramos la torre, que nos ve llegar y nos va a
+  hablar con luces».
+- `ejercicio.radio.calladaSinRadar`: «Se calló la radio: no oímos a la torre, y ella no
+  nos oye. Todo bien: marco siete seis cero cero, que sin radio se pone siempre, y lo ve
+  quien nos tenga en su pantalla. La torre se da cuenta porque no contestamos y nos ve
+  volver. Seguimos el circuito, mirando la torre».
+- `ejercicio.radio.bienSinRadar`: «¡Aterrizamos sin radio! La torre se dio cuenta porque
+  no contestábamos, nos vio llegar y nos habló con su luz. Y el siete seis cero cero
+  quedó puesto, para quien lo pudiera ver. Así lo hace un piloto de verdad».
+
+Lo que cuenta el control de área no va en la frase: en el circuito de casa no hay nadie
+más con quien se hablara. Las otras seis —cada luz, las alas, los faros y el cierre sin
+la verde— valen igual y se quedan.
+
+**Lo que tarda la lámpara.** Con radar, diez segundos desde que el código está puesto
+(`LA_TORRE_LO_VE`). Sin él ese reloj no decía nada, y los primeros destellos esperan a
+que la torre se dé cuenta: veinte segundos desde que se calló la radio
+(`LA_TORRE_SE_DA_CUENTA`), lo que tarda en llamarte, no oírte, llamarte por la otra
+frecuencia y coger la lámpara. Sin fuente, como los diez. El resto de la lámpara, con
+la misma regla.
+
+**La presentación con variante.** «….antesSinRadar» no acababa en `.antes`, y la radio
+callada la habría retirado de la cola: ahora lo mira `esLaPresentacion`, que reconoce
+también las variantes.
+
+### El circuito, por el este
+
+La carta de aproximación visual de Encarnación (AD 2.5-16, 9-7-2026) dibuja el
+circuito al este de la pista, a 2.100 pies por las dos cabeceras, y dice: «Entrada al
+circuito de tránsito de aeródromo **solamente por el sector "este"**». El juego no la
+había leído, y por la 02 daba la izquierda de costumbre, que es el oeste. Es el circuito
+que el ejercicio pide seguir, así que va como se publica: `circuitoPublicado`, la 02 a
+la derecha y la 20 a la izquierda. Vale para todo lo que se vuele en ese campo, no solo
+para esto; la altura la sigue poniendo el terreno.
+
+### Comprobado
+
+`tsc --noEmit -p .` en verde. En `fallo-de-radio.test.ts`: el ejercicio se ofrece en
+Encarnación en los dos peldaños y con los dos aviones; en Paraguay lo abren los tres
+que tienen torre y ninguno más, y en España los ocho de siempre; en todos los demás
+escenarios las frases son, clave a clave, las de siempre; las variantes existen en los
+dos idiomas, ninguna dice que el número se lo diga a la torre y ninguna que lo diga se
+queda sin la suya; sin radar los destellos esperan a que la torre se dé cuenta y con
+radar mandan los diez segundos del código, como antes; y la presentación con variante
+no la retira el paso siguiente (`boca.test.ts`). Que el circuito va por el lado
+publicado y pasa por encima de su terreno, `circuito-terreno.test.ts`.
+
+El vitest entero, 598 de 599 ficheros y 12.079 pruebas en verde, con 32 saltadas y una
+pendiente; la que falló era la lista nueva de los campos de España, que contaba
+Barajas. Corregida la lista, `fallo-de-radio.test.ts` y `boca.test.ts` en verde, 144
+de 144.
+
+`frases-para-grabar.mjs`: de 2.239 frases a 2.242, las tres al final del guion de la
+instructora —945, 946 y 947—, sin mover ninguna de las de antes.
+
+**Sin volar**: el navegador lo ocupaba la ronda de cierre. `verificar-emergencias.mjs
+radio` mira ahora además que lo que se dice del 7600 sea lo de ese campo:
+
+```bash
+OGA_PUERTO=5686 node scripts/verificar-emergencias.mjs radio encarnacion jaz-20 taguato
+```
+
+### Lo que queda
+
+- **Volarlo**, y grabar las tres frases. Los destellos, veinte segundos después de que
+  se calla la radio, tienen que caer todavía en la subida o en el tramo cruzado, y la
+  voz que cuenta por qué lo sabe la torre, haber acabado.
+- **El circuito de Asunción y el de Minga Guazú** también están publicados y el juego
+  no los lleva: Asunción, «Tránsito del aeródromo sector "E"», a 1.500 pies los
+  convencionales y a 1.800 los reactores (AD 2.1-48, 1-10-2026, y AD 2.1-48.1,
+  18-4-2024); Minga Guazú, dibujado en la AD 2.2-22 (18-4-2024). La H86 voló Asunción
+  por la izquierda, que por la 20 es ese lado y por la 02 el otro; no está apuntado por
+  cuál fue.
+- **La altura del circuito**, 2.100 pies en Encarnación, unos 440 m sobre el campo: el
+  juego la saca del terreno y del avión, y no de la carta.
+- **El R 4444 vigente**: el que cuelga la DINAC es el de 2018, y no está en su lista de
+  reglamentos; no se ha visto una edición posterior.
