@@ -25,7 +25,7 @@ import frases from "../../docs/voces/frases.json";
 import { sinTorre, type Aerodrome } from "./aerodrome";
 import { porDondeSigues, verticesDelCircuito, type Pista, type PuntoDeCircuito } from "./circuito";
 import { SCENARIOS } from "./scenarios";
-import { sueloDelTrafico } from "./suelo-del-trafico";
+import { sueloDelTrafico, type SueloDelTrafico } from "./suelo-del-trafico";
 import {
   crearTrafico,
   LIBRE_ANTES_DEL_UMBRAL,
@@ -195,6 +195,40 @@ describe("y la verde, con uno a punto de decidir", () => {
     expect(k.trafico.estorbanTuSalida()).toEqual([]);
     k.seas({ sale: { ...sale, carrera: 1000 } });
     expect(k.trafico.estorbanTuSalida()).toEqual([{ matricula: EC, llega: true }]);
+  });
+});
+
+describe("y el que se va al aire por el lado, por el de tu circuito no si pasas tú", () => {
+  /**
+   * El lado muerto —a la derecha, con el circuito a la izquierda— es monte, y
+   * quien se va al aire solo tiene el eje o el lado de tu circuito.
+   */
+  const alLado = (tuCruzas: boolean): number => {
+    let tu: QuienJuega = EN_TIERRA;
+    const suelo = { llegada: () => null, salida: () => null } as unknown as SueloDelTrafico;
+    const trafico = crearTrafico(PISTA, COTA, "ala-alta", "izquierda", 1, undefined, {
+      quienJuega: () => tu,
+      tierra: () => ({ suelo, alto: (_x: number, z: number) => (z > 60 ? COTA + 900 : COTA) }),
+    });
+    trafico.anuncia(EC, "otro.enCola");
+    const dentro = () => trafico.porDentro().find((q) => q.matricula === EC)!;
+    const sitio = () => trafico.quienes().find((q) => q.matricula === EC)!;
+    for (let t = 0; t < 900 && dentro().recorrido < dentro().decide! - 20; t += PASO)
+      trafico.paso(PASO);
+    const el = sitio();
+    const v = dentro().velocidad;
+    // Subes por el eje hacia tu circuito, a su lado; o derecho y kilómetro y medio por delante.
+    const a: Sitio = { x: el.x + (tuCruzas ? 100 : 1500), y: COTA + 60, z: 0 };
+    const b: Sitio = { x: a.x + 3000, y: COTA + 200, z: tuCruzas ? -600 : 0 };
+    tu = { ...EN_TIERRA, enLaPista: true, velocidad: v, porDondeVuela: () => [a, b, { ...b, x: b.x + 9000 }] };
+    for (let t = 0; t < 60 && dentro().camino !== "otro"; t += PASO) trafico.paso(PASO);
+    for (let t = 0; t < 2000 / v; t += PASO) trafico.paso(PASO);
+    return sitio().z;
+  };
+
+  it("por ahí si no te encuentra, y si no, por el eje", () => {
+    expect(alLado(false)).toBeLessThan(-400);
+    expect(Math.abs(alLado(true))).toBeLessThan(5);
   });
 });
 

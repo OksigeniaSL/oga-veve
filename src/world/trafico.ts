@@ -5027,6 +5027,25 @@ export function crearTrafico(
     return false;
   };
 
+  /** Si por ese camino, a esa velocidad, te encontraría en los próximos dos minutos. */
+  const teEncontraria = (camino: readonly Sitio[], velocidad: number): boolean => {
+    const tu = opciones.quienJuega?.();
+    const vuelas = tu && tu.alUmbral == null ? tu.porDondeVuela?.() : null;
+    const tus: ((s: number) => Sitio | null)[] = tu?.sale?.conLaPista ? [tuSalidaEn(tu.sale)] : [];
+    if (vuelas && vuelas.length > 1)
+      for (const cuanto of FRENAS_EN_EL_CIRCUITO)
+        tus.push((s) => porElCamino(vuelas, (tu?.velocidad ?? VUELA_A) * cuanto * s)?.sitio ?? null);
+    for (let s = 0; s <= 120 && velocidad * s < largoDelCamino(camino); s += MIRA_LA_VUELTA) {
+      const el = porElCamino(camino, velocidad * s)?.sitio;
+      if (!el) break;
+      for (const yo of tus) {
+        const suyo = yo(s);
+        if (suyo && seEncuentran(el, suyo, APARTADO_AL_SALIR)) return true;
+      }
+    }
+    return false;
+  };
+
   /**
    * **Al aire por el lado**, con otro despegando por la pista (H94), o `null` si
    * no sale nadie o no hay por dónde.
@@ -5059,7 +5078,8 @@ export function crearTrafico(
     const alturaA = (m: number): number =>
       Math.max(aqui.y, Math.min(arriba.y, aqui.y + pendiente * m));
     const alto = opciones.tierra?.()?.alto;
-    for (const lado of mano === "izquierda" ? [1, -1] : [-1, 1]) {
+    const muerto = mano === "izquierda" ? 1 : -1;
+    for (const lado of [muerto, -muerto]) {
       const across = lado * AL_LADO_MUERTO;
       const apartado = desde.along + EN_APARTARSE;
       const camino: Sitio[] = [aqui];
@@ -5090,7 +5110,8 @@ export function crearTrafico(
           Math.min(SOBRE_EL_SUELO_AL_APARTARSE, aqui.y - alto(aqui.x, aqui.z) - 1);
       let vale = true;
       for (let m = 0; m <= hastaElGiro && vale; m += 200) vale = libra(porElCamino(camino, m)!.sitio);
-      if (!vale) continue;
+      // Y por el lado de tu circuito, solo si por ahí no pasas tú: en La Gomera el otro es el monte.
+      if (!vale || (lado !== muerto && teEncontraria(camino, orden.velocidad))) continue;
       quien.apartado = true;
       return { camino, metros: 0, velocidad: orden.velocidad, pendiente };
     }
