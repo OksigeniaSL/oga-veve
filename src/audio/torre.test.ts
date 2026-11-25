@@ -43,6 +43,8 @@ describe("lo que dice la torre", () => {
     "torre.roja",
     // Y los destellos de quien remonta, «regreso por pista» (H41i).
     "torre.regreso",
+    // Y «continúe aproximación», que también se pide por su clave (H96). Ver `decirQueSigas`.
+    "torre.continue",
     "torre.aterrizar",
     // Y la roja en el aire, la orden de irse al aire. Ver `luzDeTorre`.
     "torre.alAire",

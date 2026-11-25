@@ -571,6 +571,10 @@
       "ms": 12007,
       "h": "1c494aa67f"
     },
+    "ejercicio.fallo-de-radio.antesSinRadar": {
+      "ms": 12107,
+      "h": "3ca6a62a73"
+    },
     "ejercicio.giroscopo.antes": {
       "ms": 4507,
       "h": "344e8f55e4"
@@ -879,9 +883,17 @@
       "ms": 7307,
       "h": "f8775eb16b"
     },
+    "ejercicio.radio.bienSinRadar": {
+      "ms": 12607,
+      "h": "2b9166b563"
+    },
     "ejercicio.radio.callada": {
       "ms": 11707,
       "h": "f2dee41e04"
+    },
+    "ejercicio.radio.calladaSinRadar": {
+      "ms": 15007,
+      "h": "3744b081cb"
     },
     "ejercicio.radio.destellos": {
       "ms": 7407,
@@ -6733,6 +6745,15 @@
     ],
     "ejercicio.rueda.bienFuera": [
       "ejercicio.rueda.bienFuera"
+    ],
+    "ejercicio.fallo-de-radio.antesSinRadar": [
+      "ejercicio.fallo-de-radio.antesSinRadar"
+    ],
+    "ejercicio.radio.calladaSinRadar": [
+      "ejercicio.radio.calladaSinRadar"
+    ],
+    "ejercicio.radio.bienSinRadar": [
+      "ejercicio.radio.bienSinRadar"
     ]
   }
 }

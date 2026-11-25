@@ -16,18 +16,23 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, MEDIDOS } from "../flight/aircraft";
+import { AIRCRAFT, MEDIDOS, propulsionDe } from "../flight/aircraft";
 import {
   alturaDelCircuito,
+  altitudPublicada,
+  bajadaDelVientoEnCola,
   crearCircuito,
   escalaDeCircuito,
   escalaDelCircuitoDe,
+  loPublicado,
   manoPublicada,
   pasilloDelCircuito,
   SOBRE_EL_TERRENO,
 } from "./circuito";
-import { SCENARIOS, type Scenario } from "./scenarios";
+import { oaciDe, SCENARIOS, type Scenario } from "./scenarios";
+import { sendaDeLaCabecera } from "./sendas-publicadas";
 import { cabeceraEnUso, Terrain } from "./terrain";
+import { porElCamino, TIPOS, tiposDelCampo, trazar } from "./trafico";
 
 /*
  * El `fs` de Node pedido en marcha, como en `flaps-del-modelo.test.ts`: así no
@@ -70,6 +75,7 @@ const MEDIDAS = MEDIDOS.map((a) => ({
   id: a.id,
   escala: escalaDelCircuitoDe(a),
   velocidad: a.velocidadDeCircuito,
+  reactor: propulsionDe(a) === "chorro",
 }));
 
 /**
@@ -142,13 +148,14 @@ function elCircuito(
   campo: ReturnType<typeof elCampo>,
   escala: number,
   velocidad?: number,
+  reactor = false,
 ) {
   return crearCircuito(
     runway,
     campo.cota,
     campo.suelo,
     escala,
-    manoPublicada(esc, cabecera, escala),
+    loPublicado(esc, cabecera, escala, reactor),
     velocidad,
   );
 }
@@ -165,8 +172,8 @@ describe("ningún circuito se mete en el monte", () => {
       const campo = elCampo(esc);
       const malos: string[] = [];
       for (const { runway, cabecera } of porLasDos(esc)) {
-        for (const { id, escala, velocidad } of MEDIDAS) {
-          const c = elCircuito(esc, runway, cabecera, campo, escala, velocidad);
+        for (const { id, escala, velocidad, reactor } of MEDIDAS) {
+          const c = elCircuito(esc, runway, cabecera, campo, escala, velocidad, reactor);
           const altura = c.vertices[2]!.y;
           const peor = peorDelPasillo(
             c.vertices,
@@ -204,8 +211,8 @@ describe("ningún circuito se mete en el monte", () => {
     for (const { runway, cabecera } of porLasDos(esc)) {
       expect(cabecera, "una cabecera sin nombre no se puede buscar en el AIP").not.toBeNull();
       expect(esc.circuitoPublicado?.[cabecera!], `${cabecera} sin circuito publicado`).toBeDefined();
-      for (const { id, escala, velocidad } of MEDIDAS) {
-        const c = elCircuito(esc, runway, cabecera, campo, escala, velocidad);
+      for (const { id, escala, velocidad, reactor } of MEDIDAS) {
+        const c = elCircuito(esc, runway, cabecera, campo, escala, velocidad, reactor);
         const toca = manoPublicada(esc, cabecera, escala);
         if (c.forma.mano !== toca)
           distintos.push(`${cabecera} · ${id}: ${c.forma.mano}, publica ${toca}`);
@@ -213,6 +220,61 @@ describe("ningún circuito se mete en el monte", () => {
       }
     }
     expect(distintos).toEqual([]);
+  });
+
+  /*
+   * **El lado, sobre el terreno y no por cabecera**: los campos que lo publican
+   * lo dibujan a un lado de la pista, el mismo por las dos puntas, y lo que se
+   * puede escribir al revés es la mano. De la carta de cada uno, adónde cae.
+   */
+  const ADONDE_CAE: Readonly<Record<string, number>> = {
+    pettirossi: 90, // «sector "E"», AD 2.1-48 y 48.1
+    guarani: 315, // dibujado al noroeste, AD 2.2-22
+    estigarribia: 270, // dibujado al oeste, AD 2.3-16
+    "pedro-juan": 270, // «sector "oeste"», AD 2.4-15
+    encarnacion: 90, // «sector "este"», AD 2.5-16
+    "cuatro-vientos": 180, // dibujado al sur, AD 2-LECU/LEVS-12
+    "la-palma": 90,
+    "tenerife-sur": 180,
+    "gran-canaria": 90,
+    fuerteventura: 90,
+    "el-hierro": 90,
+    "la-gomera": 180,
+  };
+
+  it.each(Object.entries(ADONDE_CAE))("%s: cae a %i° de la pista, por las dos cabeceras", (id, rumbo) => {
+    const esc = CON_RELIEVE.find((e) => e.id === id)!;
+    for (const { runway, cabecera } of porLasDos(esc)) {
+      const mano = manoPublicada(esc, cabecera, 1);
+      const lado = runway.heading + (mano === "derecha" ? 90 : -90);
+      expect(Math.cos(((lado - rumbo) * Math.PI) / 180), `${cabecera} por la ${mano}`).toBeGreaterThan(0.7);
+    }
+  });
+
+  it("y los que publican un lado y no están en la lista son solo el de los dos circuitos", () => {
+    const otros = CON_RELIEVE.filter((e) => e.circuitoPublicado && !(e.id in ADONDE_CAE)).map((e) => e.id);
+    expect(otros).toEqual(["lanzarote"]);
+  });
+
+  /*
+   * **Y el tráfico, por el mismo que quien juega**: los dos salen de
+   * `loPublicado`, y quien juega en Asunción por la 02 se cruzaría de frente con
+   * un tráfico que siguiera por el oeste. En Lanzarote no: allí el AIP separa
+   * las avionetas del resto, y el tipo va con los de su velocidad.
+   */
+  it.each(
+    CON_RELIEVE.filter((e) => e.circuitoPublicado && e.id !== "lanzarote").map((e) => [e.id, e] as const),
+  )("%s: el tráfico va por el mismo lado que quien juega", (_id, esc) => {
+    for (const { cabecera } of porLasDos(esc)) {
+      const lados = new Set([
+        ...MEDIDAS.map((m) => loPublicado(esc, cabecera, m.escala, m.reactor).mano),
+        ...Object.values(TIPOS).map(
+          (t) => loPublicado(esc, cabecera, escalaDeCircuito(t.aproximacion), t.id === "reactor").mano,
+        ),
+      ]);
+      expect([...lados], cabecera!).toHaveLength(1);
+      expect([...lados][0]).toBeDefined();
+    }
   });
 
   it("en Lanzarote, las avionetas por su circuito y los reactores por el suyo", () => {
@@ -257,5 +319,125 @@ describe("ningún circuito se mete en el monte", () => {
     expect(avioneta.forma.altura).toBeGreaterThan(alturaDelCircuito(1));
     reactor.dispose();
     avioneta.dispose();
+  });
+});
+
+/**
+ * **A la altitud que publica el AIP**, en los cinco campos que la publican, y
+ * sin tocar la base ni la final (ADR 0027, enmienda H92).
+ */
+describe("el circuito, a la altitud publicada", () => {
+  const CON_ALTITUD = CON_RELIEVE.filter((e) => e.altitudDelCircuito !== undefined);
+  /** Los pies de la carta, para un convencional y para un reactor. */
+  const PIES: Readonly<Record<string, readonly [number, number]>> = {
+    pettirossi: [1500, 1800],
+    estigarribia: [1700, 1700],
+    "pedro-juan": [3000, 3000],
+    encarnacion: [2100, 2100],
+    "cuatro-vientos": [3000, 3000],
+  };
+  /** Donde la figura de este avión no da para bajarlos. Ver `formaDelCircuito`. */
+  const NO_CABE: readonly string[] = ["encarnacion jaz-20", "encarnacion jaz-25"];
+
+  it("son los cinco que la publican", () => {
+    expect(CON_ALTITUD.map((e) => e.id).sort()).toEqual(Object.keys(PIES).sort());
+  });
+
+  it.each(CON_ALTITUD.map((e) => [e.id, e] as const))(
+    "%s: el altímetro marca lo de la carta, y la base y la final son las de siempre",
+    (id, esc) => {
+      const campo = elCampo(esc);
+      const sinCaber = new Set<string>();
+      for (const p of porLasDos(esc)) {
+        const senda = (sendaDeLaCabecera(oaciDe(esc), p.cabecera) * Math.PI) / 180;
+        const runway = { ...p.runway, senda };
+        for (const { id: avion, velocidad, reactor } of MEDIDAS) {
+          const ficha = MEDIDOS.find((a) => a.id === avion)!;
+          const escala = escalaDelCircuitoDe(ficha, runway);
+          const dicho = `${p.cabecera} · ${avion}`;
+          const con = elCircuito(esc, runway, p.cabecera, campo, escala, velocidad, reactor);
+          const sin = crearCircuito(
+            runway,
+            campo.cota,
+            campo.suelo,
+            escala,
+            { mano: manoPublicada(esc, p.cabecera, escala) },
+            velocidad,
+          );
+          const [a, b] = [con.vertices, sin.vertices];
+          const publicados = PIES[id]![reactor ? 1 : 0];
+          const pies = a[2]!.y / 0.3048;
+          if (Math.abs(pies - publicados) > 1) sinCaber.add(`${id} ${avion}`);
+          if (Math.abs(pies - publicados) > 1) expect(con.forma, dicho).toEqual(sin.forma);
+          // La línea por el suelo es la misma, y la entrada en final también.
+          a.forEach((v, i) => {
+            expect(v.x, dicho).toBeCloseTo(b[i]!.x, 6);
+            expect(v.z, dicho).toBeCloseTo(b[i]!.z, 6);
+          });
+          expect(a[4]!.y, dicho).toBeCloseTo(b[4]!.y, 6);
+          // La base baja, y nunca más empinada que sin la altitud.
+          expect(a[3]!.y - a[4]!.y, dicho).toBeGreaterThan(0);
+          expect(a[3]!.y, dicho).toBeLessThanOrEqual(b[3]!.y + 1e-6);
+          // Con la publicada por encima, ningún tramo va más bajo que sin ella.
+          if (con.forma.enLaBase !== undefined) {
+            expect(a[1]!.y, dicho).toBeGreaterThanOrEqual(b[1]!.y - 1e-6);
+            expect(a[2]!.y, dicho).toBeGreaterThan(b[2]!.y);
+            expect(a[3]!.y, dicho).toBeCloseTo(b[3]!.y, 6);
+            // Se sube al mismo paso por el eje y por el viento cruzado, o menos.
+            const sube = (i: number) =>
+              (a[i]!.y - a[i - 1]!.y) / Math.hypot(a[i]!.x - a[i - 1]!.x, a[i]!.z - a[i - 1]!.z);
+            expect(sube(2), dicho).toBeLessThanOrEqual(sube(1) + 1e-6);
+            // Y se baja por la senda, del través del centro de la pista en adelante.
+            const baja = bajadaDelVientoEnCola(a, senda)!;
+            expect(baja, dicho).not.toBeNull();
+            const antes = Math.hypot(baja.x - a[3]!.x, baja.z - a[3]!.z);
+            expect((baja.y - a[3]!.y) / antes, dicho).toBeCloseTo(Math.tan(senda), 6);
+            const h = (runway.heading * Math.PI) / 180;
+            const delante = (baja.x - runway.x) * Math.sin(h) - (baja.z - runway.z) * Math.cos(h);
+            expect(delante, dicho).toBeLessThanOrEqual(1e-6);
+          }
+          con.dispose();
+          sin.dispose();
+        }
+      }
+      expect([...sinCaber].sort()).toEqual(NO_CABE.filter((x) => x.startsWith(`${id} `)));
+    },
+  );
+
+  it("el reactor de Asunción, trescientos pies por encima de los de hélice", () => {
+    const esc = CON_ALTITUD.find((e) => e.id === "pettirossi")!;
+    expect(altitudPublicada(esc, false)).toBeCloseTo(1500 * 0.3048, 6);
+    expect(altitudPublicada(esc, true)).toBeCloseTo(1800 * 0.3048, 6);
+    // El JAZ 50 y el JAZ 60 son turbohélices: convencionales.
+    const reactores = MEDIDAS.filter((m) => m.reactor).map((m) => m.id);
+    expect(reactores).toEqual(["jaz-90", "jaz-110", "jaz-120"]);
+  });
+
+  it("y el tráfico la vuela también: llega a la esquina de allá a ella y baja por la misma línea", () => {
+    const esc = CON_ALTITUD.find((e) => e.id === "pettirossi")!;
+    const campo = elCampo(esc);
+    const tipos = tiposDelCampo(oaciDe(esc), esc.runway.length);
+    expect(tipos.map((t) => t.id)).toContain("reactor");
+    for (const t of tipos) {
+      const escala = escalaDeCircuito(t.aproximacion);
+      const c = elCircuito(esc, esc.runway, "02", campo, escala, undefined, t.id === "reactor");
+      const caminos = trazar(
+        esc.runway,
+        campo.cota,
+        c.forma.mano,
+        escala,
+        c.forma.altura,
+        null,
+        t.subeAlAire,
+        c.forma.enLaBase,
+      )!;
+      const pies = t.id === "reactor" ? 1800 : 1500;
+      const enCola = porElCamino(caminos.llegada, 0)!.sitio;
+      expect(enCola.y / 0.3048, t.id).toBeCloseTo(pies, 0);
+      const baja = bajadaDelVientoEnCola(c.vertices)!;
+      expect(caminos.llegada[1], t.id).toEqual(baja);
+      expect(caminos.llegada[2]!.y, t.id).toBeCloseTo(c.vertices[3]!.y, 6);
+      c.dispose();
+    }
   });
 });

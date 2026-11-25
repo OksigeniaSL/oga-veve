@@ -58,3 +58,32 @@ describe("el arco a final del JAZ 90 en el banco", () => {
     expect(lejos.length, `${lejos.length} fuera de la senda o del eje`).toBe(0);
   });
 });
+
+/*
+ * **Y desde la altitud que publica el AIP, la final es la misma** (ADR 0027,
+ * enmienda H92). El circuito se vuela más alto en el viento en cola y se baja
+ * por la línea que se dibuja, así que a la base se llega como siempre. Sin
+ * bajar hasta la esquina, el JAZ 110 empezaba la final cuarenta metros alto.
+ */
+describe("el viento en cola a la altitud publicada", () => {
+  it.each([
+    // El avión, la altura de costumbre y la publicada: Asunción y Encarnación.
+    ["jaz-90", 332, 466.5],
+    ["jaz-110", 362, 466.5],
+    ["jaz-60", 308, 447],
+    ["jaz-40", 276, 447],
+    ["jaz-20", 250, 375],
+  ])("%s: de %i a %i m, empieza la final y pasa la puerta igual", (avion, enLaBase, altura) => {
+    for (const mano of ["izquierda", "derecha"]) {
+      const vuela = (a) =>
+        vuelaElArco({ avion, piloto: ahora, sinRacha: true, mano, altura: a, enLaBase });
+      const [sin, con] = [vuela(enLaBase), vuela(altura)];
+      const empieza = con.laFinalEmpieza.ruedas - sin.laFinalEmpieza.ruedas;
+      expect(Math.abs(empieza), `${mano}: empieza ${empieza.toFixed(1)} m más alta`).toBeLessThan(25);
+      const p = con.puerta;
+      expect(p.baja, `${mano}: ${p.baja} m/s`).toBeLessThan(MIL_PIES_POR_MINUTO);
+      expect(Math.abs(p.senda), `${mano}: ${p.senda} m de la senda`).toBeLessThan(p.tolSenda);
+      expect(Math.abs(p.eje), `${mano}: ${p.eje} m del eje`).toBeLessThan(p.tolEje);
+    }
+  });
+});

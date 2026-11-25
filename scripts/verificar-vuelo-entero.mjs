@@ -4580,6 +4580,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const traficoAntes = new Map();
   let deFrente = 0;
   let deFrenteDonde = null;
+  // Tu rumbo en la muestra de antes, para saber si vas virando.
+  let rumboAntes = null;
+  // Y el que da su vuelta de espera y pasa cerca de ti, de verdad.
+  let vueltaCerca = 0;
+  let vueltaCercaDonde = null;
+  let vueltaMasCerca = null;
   /**
    * **Y una sola fuente: lo que se ve, lo que pinta el radar y lo que nombra
    * la radio.** «Veo aviones durante el vuelo que no aparecen en el radar, es
@@ -5747,6 +5753,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const fz = -Math.cos(rumbo);
         const cota = o.cotaDePistaDeAhora?.(p.x, p.z) ?? 0;
         const orden = !!o.ordenDeFrustrar?.();
+        /*
+         * Con alguien en ella se puede seguir por debajo de la decisión si al
+         * umbral va a estar libre (H96); lo que no puede ser es llegar a él. A
+         * menos de cuatro segundos, o está libre o hay orden de irse. Ver
+         * `LIBRE_ANTES_DEL_UMBRAL` en `src/world/trafico.ts`.
+         */
+        const tuAlong = (s.position.x - p.x) * fx + (s.position.z - p.z) * fz;
+        const alUmbral =
+          (-p.length / 2 + (p.desplazado ?? 0) - tuAlong) / Math.max(15, Math.hypot(s.velocity.x, s.velocity.z));
         for (const a of o.trafico?.() ?? []) {
           if (a.y - cota > 15) continue;
           const along = (a.x - p.x) * fx + (a.z - p.z) * fz;
@@ -5757,7 +5772,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             (d) => d.matricula === a.matricula,
           );
           const como = `${a.matricula} a ${Math.round(along + p.length / 2)} m del umbral y ${Math.round(across)} m del eje (${a.enLaPista ? "en la pista para el juego" : "fuera para el juego"}${dentroDe ? `, ${dentroDe.camino} ${dentroDe.recorrido}/${dentroDe.espera}/${dentroDe.toca}/${dentroDe.fuera}` : ""})`;
-          if (dentro && !orden) {
+          if (dentro && !orden && alUmbral < 4) {
             enTuPistaSinOrden++;
             enTuPistaSinOrdenDonde ??= `${t.toFixed(0)} s a ${Math.round(alto(s))} m: ${como}`;
           } else if (!dentro && Math.abs(across) < 400)
@@ -6006,6 +6021,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * cincuenta de altura entre los dos. En la salida y en la final, que es
        * donde se pidió. Uno en su viento en cola, a un kilómetro de lado y en
        * sentido contrario, no es de frente: es un circuito.
+       *
+       * **Y la línea es de quien la vuela.** El que da su vuelta de espera lleva
+       * en cada muestra un rumbo que va a dejar en dos segundos, y tú en el
+       * viraje de la base también: alargados un minuto en línea recta se
+       * cruzaban dos que pasaron a entre 300 y 1.900 m, y no se veía al
+       * turbohélice que sí dio su vuelta a 46 m de la base del JAZ 90, porque
+       * nunca iba de frente (H93, la mesa de 600 vuelos). Así que las dos rectas
+       * se alargan si los dos van derechos, y **lo demás se mide de verdad**: de
+       * frente a menos de trescientos metros, y en su vuelta de espera a menos
+       * de trescientos metros venga como venga.
        */
       if (!s.onGround && /despegando|comprometido|en-vuelo|final/.test(fase)) {
         /*
@@ -6017,6 +6042,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * `world/trafico.ts`—, pero lo que mide esto es quién vuela de frente,
          * y un salto no vuela. Los saltos los mide `pista-compartida.test.ts`.
          */
+        const giras =
+          rumboAntes && t > rumboAntes.t
+            ? Math.abs(
+                Math.atan2(
+                  Math.sin(s.heading - rumboAntes.rumbo),
+                  Math.cos(s.heading - rumboAntes.rumbo),
+                ),
+              ) /
+              (t - rumboAntes.t)
+            : 0;
+        rumboAntes = { rumbo: s.heading, t };
+        // Un grado por segundo: por debajo es llevarlo derecho, y un viraje va a tres.
+        const virando = giras > Math.PI / 180;
         const vistos = new Set((o.trafico?.() ?? []).map((a) => a.matricula));
         for (const m of [...traficoAntes.keys()])
           if (!vistos.has(m)) traficoAntes.delete(m);
@@ -6041,13 +6079,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           const rv2 = rvx * rvx + rvz * rvz || 1;
           const tc = -(dx * rvx + dz * rvz) / rv2;
           const cerca = Math.hypot(dx + rvx * tc, dz + rvz * tc);
+          const aTuAltura = Math.abs(a.y - s.position.y) < 150;
+          if (a.esperandoTurno && aTuAltura) {
+            vueltaMasCerca = Math.min(vueltaMasCerca ?? Infinity, d);
+            if (d < 300) {
+              vueltaCerca++;
+              vueltaCercaDonde ??=
+                `${t.toFixed(0)} s en «${fase}»: ${a.matricula}, ${a.tipo}, a ${Math.round(d)} m y ${Math.round(a.y - s.position.y)} m de altura` +
+                ` · rumbo ${Math.round(a.rumbo)}° frente a tu ${Math.round(((s.heading * 180) / Math.PI + 360) % 360)}°`;
+            }
+          }
+          const derechos = !virando && !a.esperandoTurno;
           if (
             opuesto &&
-            tc > 0 &&
-            tc < 60 &&
-            cerca < 300 &&
-            d < 5000 &&
-            Math.abs(a.y - s.position.y) < 150
+            aTuAltura &&
+            ((derechos && tc > 0 && tc < 60 && cerca < 300 && d < 5000) || d < 300)
           ) {
             deFrente++;
             /*
@@ -6063,7 +6109,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               ` · rumbo ${Math.round(a.rumbo)}° frente a tu ${Math.round(tuRumbo)}° · se cruzan a ${Math.round(cerca)} m en ${Math.round(tc)} s`;
           }
         }
-      } else traficoAntes.clear();
+      } else {
+        traficoAntes.clear();
+        rumboAntes = null;
+      }
       if (fase === "esperando" && !esperandoPorAlguien) {
         /*
          * Y **los que se ven** encima de la pista, no solo los que la tienen
@@ -7635,7 +7684,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * que es lo que dice `porLaSenda`. Y el JAZ 60 y el JAZ 90 igual: ver
        * `BAJA_POR_EL_ARCO`.
        */
-      const tope = BAJA_POR_EL_ARCO && aDonde >= 4 && v?.[3] ? v[3].y : meta?.y;
+      /*
+       * **Y hasta la esquina de la base, la altura es la del viento en cola**,
+       * la de la esquina de allá, y a la de acá se llega bajando por la senda,
+       * que es la línea que se dibuja. La altitud que publica el AIP se sigue
+       * ganando en el viento cruzado y se deja antes de la esquina (H92): con la
+       * de cada vértice se nivelaba dos veces y se volaba el viento en cola
+       * abajo, y sin bajar a la de la esquina el JAZ 110 empezaba la final
+       * cuarenta metros alto. Donde no la publica, las tres son la misma.
+       */
+      const tope = !v
+        ? meta?.y
+        : aDonde >= 4
+          ? BAJA_POR_EL_ARCO
+            ? v[3].y
+            : meta?.y
+          : aDonde === 3
+            ? Math.min(
+                v[2].y,
+                v[3].y + Math.hypot(v[3].x - s.position.x, v[3].z - s.position.z) * SENDA,
+              )
+            : v[2].y;
       const altoQueToca = meta
         ? Math.min(tope - cotaDePista, porLaSenda + (suyas.tren ?? 0))
         : CRUCERO;
@@ -8918,6 +8987,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     fila: { ...fila, porDelante: [...fila.porDelante] },
     deFrente,
     deFrenteDonde,
+    vueltaCerca,
+    vueltaCercaDonde,
+    vueltaMasCerca,
     radar,
     porQueSeDijo,
     // Si el campo donde se aterriza tiene torre: el de llegada, o el de ahora.
@@ -10247,21 +10319,21 @@ else
   });
 
 /*
- * **Y con alguien en tu pista a la altura de decisión, la torre te manda al
- * aire.** Sin la pista libre no hay permiso, y el que se dio se anula con su
+ * **Y con alguien en tu pista que no la va a dejar a tiempo, la torre te manda
+ * al aire** antes del umbral. Sin la pista libre no hay permiso, y el que se dio se anula con su
  * orden. Gran Canaria, de noche, con el JAZ 120: «tengo un avión en la pista
  * y nadie me dice que frustre, ya lo hago yo». Ver `paso` en
  * `flight/turno-de-pista.ts`.
  */
 comprobar(
-  "y con alguien en tu pista a la decisión, te mandan al aire",
+  "y con alguien en tu pista, te mandan al aire antes del umbral",
   (vuelo.enTuPistaSinOrden ?? 0) === 0 &&
     (process.env.OGA_PISTA_OCUPADA !== "1" ||
       (!!vuelo.pistaOcupadaPuesta && (vuelo.frustradasPorLaPista ?? 0) > 0)),
   [
     vuelo.enTuPistaSinOrden
       ? `${vuelo.enTuPistaSinOrden} muestras sin orden, la primera a los ${vuelo.enTuPistaSinOrdenDonde}`
-      : "nadie en tu pista por debajo de la decisión sin orden de irse",
+      : "nadie en tu pista a cuatro segundos del umbral sin orden de irse",
     vuelo.alCostadoDeTuPista ? `al costado: ${vuelo.alCostadoDeTuPista}` : null,
     process.env.OGA_PISTA_OCUPADA === "1"
       ? vuelo.pistaOcupadaPuesta
@@ -10519,6 +10591,16 @@ comprobar(
     ? `${vuelo.deFrente} muestras, la primera a los ${vuelo.deFrenteDonde}`
     : "nadie de frente",
   "«un avión de frente y ni aviso ni radar ni nada», despegando de Pettirossi",
+);
+comprobar(
+  "y nadie da su vuelta de espera por donde pasas",
+  (vuelo.vueltaCerca ?? 0) === 0,
+  vuelo.vueltaCerca
+    ? `${vuelo.vueltaCerca} muestras, la primera a los ${vuelo.vueltaCercaDonde}`
+    : vuelo.vueltaMasCerca === null || vuelo.vueltaMasCerca === undefined
+      ? "nadie dio su vuelta a tu altura"
+      : `el que más, a ${Math.round(vuelo.vueltaMasCerca)} m`,
+  "a menos de trescientos metros y ciento cincuenta de altura: la torre manda esperar por el otro lado (H93)",
 );
 
 /*

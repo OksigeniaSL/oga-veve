@@ -174,7 +174,10 @@ describe("el APROAR de la casilla 20.3", () => {
           expect(sacaBienPorSuRaya(suyo, raya), nombre).toBe(true);
           expect(rayaDeLado(suyo.rumbo, raya), nombre).toBe(false);
           expect(fueraDelPavimento(avion, suyo.empuje!.poses, pavimentoDibujado(aero)), nombre).toEqual({ metros: 0, alAcabar: 0 });
-          expect(cumpleElAproar(fin.rumbo, aproarDe(p.aip, rumbo)!), nombre).toBe(true);
+          // Menos los dos grandes del R45 y del R47 por la 07: con el morro a ella solo les queda la D1, que no les cabe (H97).
+          const alOtro = avion.wingSpan > 52 && rumbo === la07 && ["R45", "R47"].includes(p.ref!);
+          expect(cumpleElAproar(fin.rumbo, aproarDe(p.aip, alOtro ? la25 : rumbo)!), nombre).toBe(true);
+          expect(cumpleElAproar(fin.rumbo, aproarDe(p.aip, rumbo)!), nombre).toBe(!alOtro);
           for (const q of suyo.empuje!.poses)
             for (const r of ruedasEn(avion, q))
               for (const t of puertas) expect(aLaPolilinea([r.x, -r.z], t.path), `${nombre}: por la ${t.ref}`).toBeGreaterThan(11.4);
@@ -216,18 +219,20 @@ describe("el APROAR de la casilla 20.3", () => {
    */
   it("y los dos grandes no ruedan por la D1, la B1 ni la B6, que son de letra D", () => {
     const r = aero.restriccionesDeRodaje!;
-    expect(r.map((x) => [x.calle, x.masDeM])).toEqual([["D1", 52], ["B1", 52], ["B6", 52]]);
+    expect(r.map((x) => [x.calle, x.masDeM])).toEqual([["D1", 52], ["B1", 52], ["B6", 52], ["U1", 22], ["U2", 22], ["U3", 22]]);
     for (const x of r) expect(x.fuente).toMatch(/AD 2-GCTS, casilla 20\.3\.3|^Ídem/);
     for (const avion of reactores)
       for (const rumbo of [la07, la25]) {
         const plan = new PlanDeVuelo(aero, { ...campo.runway, heading: rumbo }, () => 600, avion);
         plan.deContacto = true;
-        for (const p of [null, ...deRetroceso.filter((q) => tienePasarela(q.aip) && admite(q.aip, avion.wingSpan))]) {
+        // De los de retroceso, todos: hasta la H97, del R45 y del R47 bajaban por la D1.
+        for (const p of [null, ...deRetroceso.filter((q) => admite(q.aip, avion.wingSpan))]) {
           expect(p ? plan.reiniciarDesde(p.xy) : plan.reiniciar(), p?.ref ?? "el suyo").toBe(true);
           const { letras } = (plan as unknown as { ruta: { letras: readonly string[] } }).ruta;
           const nombre = `${avion.id} · ${rumbo.toFixed(0)}° · ${p?.ref ?? "el suyo"}: ${letras.join("-")}`;
           if (avion.wingSpan > 52) for (const l of ["D1", "B1", "B6"]) expect(letras, nombre).not.toContain(l);
-          else expect(letras, nombre).toContain(rumbo === la07 ? "D1" : "B6");
+          // Y el que cabe, por la primera que se encuentra (`primera-puerta.test.ts`, H95); a la 25, por la B6.
+          else if (rumbo === la25) expect(letras, nombre).toContain("B6");
         }
       }
   });

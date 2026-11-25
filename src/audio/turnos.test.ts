@@ -39,6 +39,11 @@ describe("quién habla primero", () => {
       expect(pesoDe(clave, "baja"), clave).toBeGreaterThan(tuyo);
       expect(pesoDe(clave, "baja"), clave).toBeLessThan(urgente);
     }
+    // Y la respuesta a una emergencia, delante de lo demás que es para ti.
+    for (const clave of ["torre.mayday@z-p", "torre.canario.mayday@e-c", "torre.panpan@z-p"]) {
+      expect(pesoDe(clave, "mando"), clave).toBeGreaterThan(tuyo);
+      expect(pesoDe(clave, "mando"), clave).toBeLessThan(pesoDe("comandante.despegue", "baja"));
+    }
     // Lo demás de la megafonía, que no lleva llamada, sigue con su peso.
     expect(pesoDe("comandante.descenso", "baja")).toBeLessThan(pesoDe("vuelo.final", "normal"));
   });

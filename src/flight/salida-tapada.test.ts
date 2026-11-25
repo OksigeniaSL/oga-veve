@@ -39,6 +39,7 @@ import {
 import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { cabeEn, campoDe } from "./cabe";
 import { distanciaDeAterrizaje } from "./carrera";
+import { ALTURA_DE_DECISION } from "./minimos";
 import { esAfis, sinTorre, type Aerodrome } from "../world/aerodrome";
 import { MARGEN_ENTRE_ALAS, PlanDeVuelo, separacionEnTierra } from "../world/plan-de-vuelo";
 import { SCENARIOS, conViento, type Scenario } from "../world/scenarios";
@@ -226,6 +227,8 @@ interface Medida {
   contradicciones: string[];
   /** Los que la torre retuvo en su doble raya para que aterrizaras. */
   retenidos: number;
+  /** Si el permiso te llegó por debajo de la decisión, con la pista ya libre (H96). */
+  permisoTardio: boolean;
   /** Las veces que te fuiste al aire, por lo que fuera, y cuándo tocaste. */
   frustradas: number;
   toco: number | null;
@@ -453,6 +456,7 @@ function llegarConDosQueSalen(
     alAireSinPistaOcupada: 0,
     contradicciones: [],
     retenidos: 0,
+    permisoTardio: false,
     frustradas: 0,
     toco: null,
     oido: [],
@@ -498,7 +502,9 @@ function llegarConDosQueSalen(
         );
       return null;
     },
-    autorizarte: () => {},
+    autorizarte: () => {
+      if (alto < ALTURA_DE_DECISION && !trafico.ocupanLaPista().length) medida.permisoTardio = true;
+    },
     mandarteAlAire: (_a, sigue) => {
       apunta("al aire: pista ocupada");
       irseAlAire(sigue);
@@ -789,9 +795,10 @@ describe("con torre: te retrasa o te manda al aire, y el que sale sale", () => {
 });
 
 describe("y si no das la vuelta", () => {
-  it("El Hierro: te vas al aire —por tu salida o con la pista ocupada—, y nunca dos en la pista", () => {
+  it("El Hierro: te vas al aire —por tu salida o con la pista ocupada— o te llega el permiso tarde, y nunca dos en la pista", () => {
     const mal: string[] = [];
     let frustradas = 0;
+    let tardios = 0;
     let vueltas = 0;
     for (const esc of cabeceras(SCENARIOS.find((e) => e.id === "el-hierro")!))
       for (const salen of SALEN_EN_EL_HIERRO)
@@ -800,22 +807,25 @@ describe("y si no das la vuelta", () => {
           const donde = `El Hierro ${Math.round(esc.runway.heading)}°, salen ${salen.join("/")} s antes, semilla ${semilla}`;
           for (const f of loQueFalla(m)) mal.push(`${donde}: ${f}`);
           frustradas += m.frustradas;
+          tardios += m.permisoTardio ? 1 : 0;
           vueltas += m.vueltas;
           /*
            * Quien no da la vuelta y sigue, o se va al aire o aterriza con el
            * de su salida retenido en su doble raya —quien está en final va
            * primero, Doc 4444, 7.8— y deja la pista por otra salida, sin
-           * pasar a su lado: eso ya lo mira `loQueFalla`.
+           * pasar a su lado: eso ya lo mira `loQueFalla`. O sigue con él
+           * corriendo, él se va antes de que llegue al umbral y el permiso le
+           * llega por debajo (H96).
            */
-          if (m.vueltas && !m.frustradas && !m.retenidos)
-            mal.push(`${donde}: sin vuelta, sin irse al aire y sin retener a nadie`);
+          if (m.vueltas && !m.frustradas && !m.retenidos && !m.permisoTardio)
+            mal.push(`${donde}: sin vuelta, sin irse al aire, sin retener a nadie y sin permiso tardío`);
           if (m.alAireSinPistaOcupada) mal.push(`${donde}: al aire por tu salida sin que la tapara`);
           if (m.contradicciones.length) mal.push(`${donde}: ${m.contradicciones.join("; ")}`);
         }
     expect(mal).toEqual([]);
-    // Se pidió la vuelta, no se dio, y la torre te mandó al aire.
+    // Se pidió la vuelta, no se dio, y la torre te mandó al aire o te dio el permiso tarde.
     expect(vueltas).toBeGreaterThan(0);
-    expect(frustradas).toBeGreaterThan(0);
+    expect(frustradas + tardios).toBeGreaterThan(0);
   }, 1_200_000);
 });
 

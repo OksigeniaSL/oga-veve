@@ -35,7 +35,7 @@ import {
   type Sitio,
   type TipoDeTrafico,
 } from "./trafico";
-import { escalaDeCircuito, formaDelCircuito, manoPublicada, type Pista } from "./circuito";
+import { escalaDeCircuito, formaDelCircuito, loPublicado, type Pista } from "./circuito";
 import { relieveDe } from "./relieve-en-disco";
 import { SCENARIOS, type Scenario } from "./scenarios";
 import { cabeceraEnUso } from "./terrain";
@@ -103,7 +103,7 @@ function montar(id: string): Montado {
         cota,
         suelo,
         escala,
-        manoPublicada(esc, cabeceraEnUso(esc), escala),
+        loPublicado(esc, cabeceraEnUso(esc), escala, tipo.id === "reactor"),
       );
       return trazar(
         pista,
@@ -113,6 +113,7 @@ function montar(id: string): Montado {
         forma.altura,
         calles ? { suelo: calles, alto: suelo, tipo } : null,
         tipo.subeAlAire,
+        forma.enLaBase,
       )!;
     },
   };
@@ -159,13 +160,13 @@ describe("el que aterriza toca en la zona de toma y frena, en los campos altos y
     );
     const t = crearTrafico(m.pista, m.cota, "ala-alta", "izquierda", 1, undefined, {
       tipos,
-      forma: (escala) =>
+      forma: (escala, reactor) =>
         formaDelCircuito(
           m.pista,
           m.cota,
           m.suelo,
           escala,
-          manoPublicada(m.esc, cabeceraEnUso(m.esc), escala),
+          loPublicado(m.esc, cabeceraEnUso(m.esc), escala, reactor),
         ),
       tierra: () => (calles ? { suelo: calles, alto: m.suelo } : null),
     });

@@ -1454,5 +1454,27 @@
     "{p1}",
     "{p2}",
     "lado.es.central"
+  ],
+  "torre.canario.solo.continueAproximacion": [
+    "torre.canario.solo.continueAproximacion"
+  ],
+  "torre.canario.solo.continueApproach": [
+    "torre.canario.solo.continueApproach"
+  ],
+  "torre.canario.continue": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.continueAproximacion"
+  ],
+  "torre.canario.continueApproach": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.continueApproach"
   ]
 }

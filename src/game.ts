@@ -74,6 +74,7 @@ import {
   DICE_LA_TORRE,
   DICE_UN_AFIS,
   enUnAfis,
+  esDeAntesDeRodar,
   esElAvisoDeAves,
   esLaInformacionDeTrafico,
   esTuPermisoDeAterrizar,
@@ -81,6 +82,7 @@ import {
   PISTA_DETRAS,
   PISTA_EN_MEDIO,
   PISTA_EN_USO_DELANTE,
+  respondeAUnaEmergencia,
 } from "./audio/torre";
 import {
   bandaSinMotor,
@@ -96,7 +98,7 @@ import {
   MANDOS_AL_CENTRO,
   type PosicionDeLosMandos,
 } from "./world/superficies-de-mando";
-import { conV1, seOfrece, type Ejercicio } from "./flight/ejercicios";
+import { conV1, segunElRadar, seOfrece, sinRadarPublicado, type Ejercicio } from "./flight/ejercicios";
 import { SE_DICE_HASTA, seSigueEnV1, yaSeSigue } from "./flight/lo-que-se-dice-al-despegar";
 import { LosOchentaNudos } from "./flight/los-ochenta-nudos";
 import { faseQueVeLaTorre, loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
@@ -232,8 +234,10 @@ import {
   crearCircuito,
   escalaDelCircuitoDe,
   formaDelCircuito,
+  lineaDelCircuito,
+  loPublicado,
   loQueQuedaDeCircuito,
-  manoPublicada,
+  porDondeSigues,
   verticesDelCircuito,
   type Circuito,
   type Mano,
@@ -243,10 +247,13 @@ import { TOPE_DE_LA_VUELTA, type TuLlegadaALaPista } from "./flight/salida-tapad
 import { FLOTA, modeloPorId, type SiluetaDeAvion } from "./flight/flota";
 import { AERONAVES, seVuelaEn } from "./flight/aeronaves";
 import {
+  ALABEO_DE_LA_VUELTA,
   crearTrafico,
   tiposDelCampo,
   type EnTierra,
+  type QuienManiobra,
   type QuienJuega,
+  type TuSalida,
   type Trafico,
 } from "./world/trafico";
 import {
@@ -411,6 +418,12 @@ const HORA_DEL_PASAJE = 15;
  * sería un zumbido. Ver `girarElObs`.
  */
 const CLIC_DE_LA_RUEDA = 0.08;
+
+/**
+ * **Lo más que se espera a que acabe el que maniobra en el puesto de al lado**, s (H97): tres minutos, que es
+ * un empuje con su arranque y su saludo, y otro tanto. Ver `pedirElRemolque`.
+ */
+const TOPE_DEL_DE_AL_LADO = 180;
 
 /** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
 /** A cuántos metros del umbral empieza la lección de aterrizar. */
@@ -717,6 +730,9 @@ const EXPLICACION_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> 
   monitor: "vuelo.ra.vigila",
 };
 
+/** Fuera del circuito, lo que se da por que sigues derecho, s. Ver `porDondeSigoVolando`. */
+const PREVER_POR_DERECHO = 120;
+
 /**
  * **Las fases en que estás encima de la pista**, con las ruedas en el suelo:
  * del eje, alineado, a dejarla. Es lo que el tráfico mira para no cruzar el
@@ -731,6 +747,38 @@ const ENCIMA_DE_LA_PISTA = new Set<string>([
   "aterrizado",
   "abandonando",
 ]);
+
+/**
+ * **Las fases en que vas a salir**, de la doble raya a irte al aire. Ver
+ * `tuSalidaParaLaTorre`.
+ */
+const VAS_A_SALIR = new Set<string>([
+  "esperando",
+  "autorizado",
+  "back-taxi",
+  "alineando",
+  "despegando",
+  "comprometido",
+]);
+
+/**
+ * **Lo que se tarda de la verde a dar gas**, s: soltar frenos, rodar de la doble
+ * raya al eje y enderezar; y, ya alineándose, lo que queda de eso. Es lo que
+ * cuenta la torre para saber si sales antes de que llegue el de la base. Ver
+ * `tuSalidaParaLaTorre`.
+ */
+const ENTRAS_Y_TE_ALINEAS = 30;
+const TE_ALINEAS = 10;
+
+/** A cuánto se remonta la pista de media, m/s, y lo que lleva la media vuelta, s. */
+const REMONTAS_A = 8;
+const DAS_LA_MEDIA_VUELTA = 25;
+
+/** Desde cuánto se cuenta que subes, m/s: la torre te ve irte al aire. Ver `porDondeSigues`. */
+const SUBES = 1;
+
+/** Lo que se sube al irse, en tanto por uno de lo que se vuela: seis o siete grados. */
+const SUBES_AL_SALIR = 0.12;
 
 /**
  * **Las fases en que vuelves por tu salida de la pista**: de tocar a llegar a
@@ -1548,6 +1596,7 @@ import {
   cuantoAguanta,
   esDeLaListaDeDespegue,
   cuentaPorDondeSeSale,
+  esLaPresentacion,
   valeHastaElPasoSiguiente,
   esDelDescenso,
 } from "./audio/boca";
@@ -1602,6 +1651,7 @@ import type { Fma } from "./ui/tablero";
 import { familiaDe, patasDe, peldanoDe } from "./ui/familia";
 import {
   distanciaDeAterrizaje,
+  distanciaDeDespegue,
   pistaNecesariaHoy,
   rodaduraDeFrenada,
   type DiaDeDespegue,
@@ -6912,7 +6962,7 @@ export class Game {
     mandarteAlAire: (alto, sigue) =>
       this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
     mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
-    avisarteOcupada: () => this.decirQueLaPistaEstaOcupada(),
+    avisarteOcupada: (conPermiso) => this.decirQueLaPistaEstaOcupada(conPermiso),
     retirarteElPermiso: () => this.retirarElPermisoSinOir(),
     permisoSinOir: () => this.permisoSinOir,
     darteElPermisoYa: () => this.darElPermisoYa(),
@@ -6920,6 +6970,7 @@ export class Game {
     // Y el que tapa tu salida: ver `flight/salida-tapada.ts`.
     afis: () => this.esAfisAqui(),
     tuLlegada: () => this.tuLlegadaParaLaTorre(),
+    sinRadio: () => this.radioCallada,
     rumbo: () => this.flight.state.heading,
     darteUnaVuelta: (por) => this.pedirteUnaVuelta(por),
     acabarTuVuelta: (dada) => this.acabarTuVuelta(dada),
@@ -16192,6 +16243,8 @@ export class Game {
      * `seLePasoElMomento`.
      */
     BOCA.retirar((c) => seLePasoElMomento(c, this.faseDeAhora as Fase));
+    // Ni la ruta ni el empuje, que son del puesto, con el avión ya volando.
+    if (!this.flight.state.onGround) BOCA.retirar((c) => esDeAntesDeRodar(c));
     // Las llamadas de cabina que esperan su anuncio, y el «arrancá el motor»
     // que espera a los toboganes. Ver `atenderALasLlamadas`.
     this.atenderALasLlamadas();
@@ -16486,9 +16539,15 @@ export class Game {
       this.cotaDelCampo(campo),
       (x, z) => this.terrain.sampleHeight(x, z),
       escala,
-      // Y por el lado que publica el campo, si lo publica: la cabecera es la
-      // del viento, la misma que la de todo lo demás. Ver `manoPublicada`.
-      manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), escala),
+      // Y por el lado y a la altitud que publica el campo, si los publica: la
+      // cabecera es la del viento, la misma que la de todo lo demás. Ver
+      // `loPublicado`.
+      loPublicado(
+        campo.escenario,
+        cabeceraEnUso(campo.escenario),
+        escala,
+        propulsionDe(this.aircraft) === "chorro",
+      ),
       // Y el pasillo contra el terreno, a la velocidad a la que **este**
       // avión vuela el circuito. Ver `pasilloDelCircuito`.
       this.aircraft.velocidadDeCircuito,
@@ -16559,19 +16618,30 @@ export class Game {
      * **Cada tipo, su circuito**, con la misma regla de lado y altura que el
      * hilo ocre de quien juega a esa escala. Ver `formaDelCircuito`.
      */
-    const forma = (esc: number, velocidadDeCircuito?: number) =>
+    const forma = (esc: number, reactor: boolean, velocidadDeCircuito?: number) =>
       formaDelCircuito(
         pistaConSenda,
         cota,
         suelo,
         esc,
-        manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), esc),
+        loPublicado(campo.escenario, cabeceraEnUso(campo.escenario), esc, reactor),
         velocidadDeCircuito,
       );
-    const deTu = forma(escala, this.aircraft.velocidadDeCircuito);
+    const deTu = forma(
+      escala,
+      propulsionDe(this.aircraft) === "chorro",
+      this.aircraft.velocidadDeCircuito,
+    );
     // Y tu circuito para la torre, aunque no se dibuje. Ver `circuitoDeLaTorre`.
     this.circuitoDeLaTorre = {
-      vertices: verticesDelCircuito(pistaConSenda, cota, deTu.mano, escala, deTu.altura),
+      vertices: verticesDelCircuito(
+        pistaConSenda,
+        cota,
+        deTu.mano,
+        escala,
+        deTu.altura,
+        deTu.enLaBase,
+      ),
       escala,
       mano: deTu.mano,
       altura: deTu.altura,
@@ -16771,6 +16841,8 @@ export class Game {
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
       prioridad: this.conPrioridad,
+      porDondeVuela: s.onGround ? null : () => this.porDondeSigoVolando(),
+      sale: this.tuSalidaParaLaTorre(fase),
       enTierra: s.onGround ? this.tuSitioEnTierra() : null,
       saleDeLaPista: aterrizandoAqui
         ? {
@@ -16779,6 +16851,91 @@ export class Game {
           }
         : null,
     };
+  }
+
+  /**
+   * **Tu salida, como la cuenta la torre**: cuánto tardas en estar en el aire,
+   * desde la doble raya o desde donde vayas, y cómo subes. Con eso no te da la
+   * pista si el que viene por la base llega antes a la decisión, ni deja girar
+   * a la base a uno que llegaría contigo en ella. Ver `TuSalida` en
+   * `world/trafico.ts`.
+   */
+  private tuSalidaParaLaTorre(fase: string): TuSalida | null {
+    const s = this.flight.state;
+    if (fase !== "esperando") this.giroEnLaRoja = undefined;
+    if (!s.onGround || !VAS_A_SALIR.has(fase)) return null;
+    const a = this.aircraft;
+    // La distancia de despegue se integra: una vez por avión y por peso.
+    if (this.carreraDeTuSalida?.avion !== a || this.carreraDeTuSalida.masa !== a.mass)
+      this.carreraDeTuSalida = { avion: a, masa: a.mass, metros: distanciaDeDespegue(a) };
+    const carrera = this.carreraDeTuSalida.metros;
+    const vr = Math.max(10, a.rotationSpeed);
+    if (!Number.isFinite(carrera)) return null;
+    const corriendo = fase === "despegando" || fase === "comprometido";
+    const { x, z, heading, length } = this.elCampo().escenario.runway;
+    /*
+     * Y lo que remontes, que es pista ocupada a paso de calle: en la roja, lo
+     * que vas a remontar con la verde, mirado una vez.
+     */
+    if (fase === "esperando" && this.giroEnLaRoja === undefined) {
+      const como = this.plan?.comoSeSaldraDesdeAqui();
+      this.giroEnLaRoja = como?.desde === "remonte" ? length / 2 - como.porDelante : null;
+    }
+    const giro =
+      fase === "esperando"
+        ? (this.giroEnLaRoja ?? null)
+        : corriendo || fase === "alineando"
+          ? null
+          : (this.plan?.dondeSeGira ?? null);
+    let remonta = 0;
+    if (giro !== null) {
+      const h = (heading * Math.PI) / 180;
+      const along = (s.position.x - x) * Math.sin(h) - (s.position.z - z) * Math.cos(h);
+      remonta = Math.abs(along - giro) / REMONTAS_A + DAS_LA_MEDIA_VUELTA;
+    }
+    const antes =
+      fase === "esperando" || fase === "autorizado" ? ENTRAS_Y_TE_ALINEAS : corriendo ? 0 : TE_ALINEAS;
+    const corre = ((2 * carrera) / vr) * Math.max(0, 1 - s.groundSpeed / vr);
+    return {
+      enElAire: antes + remonta + corre,
+      conLaPista: fase !== "esperando",
+      carrera,
+      velocidad: a.velocidadDeCircuito,
+      sube: a.velocidadDeCircuito * SUBES_AL_SALIR,
+    };
+  }
+
+  /** Dónde vas a dar la media vuelta, mirado en la roja: `undefined` es sin mirar. */
+  private giroEnLaRoja: number | null | undefined = undefined;
+
+  /** La distancia de despegue de ahora, guardada. Ver `tuSalidaParaLaTorre`. */
+  private carreraDeTuSalida: { avion: AircraftConfig; masa: number; metros: number } | null = null;
+
+  /**
+   * **Por dónde sigues en el aire**, visto desde el tráfico: lo que te queda
+   * de tu circuito hasta el umbral si lo vuelas, y si no, por derecho. Ver
+   * `QuienJuega.porDondeVuela`.
+   */
+  private porDondeSigoVolando(): { x: number; y: number; z: number }[] {
+    const s = this.flight.state;
+    const { x, y, z } = s.position;
+    const velocidad = Math.max(15, s.groundSpeed);
+    const c = this.circuitoDeLaTorre;
+    const campo = this.elCampo();
+    if (c && campo.id === c.campo) {
+      const [ux, uz] = umbralEnUso(campo);
+      const umbral = { x: ux, y: this.cotaDelCampo(campo), z: uz };
+      const yo = { x, y, z, rumbo: s.heading };
+      // La línea que se vuela: donde la altura es la publicada se baja en el viento en cola.
+      const linea = lineaDelCircuito(c.vertices, this.pistaDelCircuito(campo).senda);
+      const sigue = porDondeSigues(linea, umbral, yo, velocidad, c.escala, s.velocity.y > SUBES);
+      if (sigue) return sigue;
+    }
+    const lejos = velocidad * PREVER_POR_DERECHO;
+    return [
+      { x, y, z },
+      { x: x + Math.sin(s.heading) * lejos, y, z: z - Math.cos(s.heading) * lejos },
+    ];
   }
 
   /**
@@ -16813,7 +16970,16 @@ export class Game {
        * que no esté ya dentro. Ver `repartirLosTramos` en `world/trafico.ts`.
        */
       ruta: this.plan?.rutaReservada() ?? [],
+      ...this.tuManiobraEnElPuesto(),
     };
+  }
+
+  /** Y de qué puesto te saca el tractor, si lo has pedido o ya te empuja (H97). Ver `maniobra` en `EnTierra`. */
+  private tuManiobraEnElPuesto(): { readonly maniobra?: { readonly x: number; readonly z: number } } {
+    const r = this.remolque;
+    if (!r || r.libre || (r.fase === "enganchado" && this.paraEmpujar === null && this.esperaAlDeAlLado === null)) return {};
+    const puesto = this.puestoDelRemolque();
+    return puesto ? { maniobra: puesto } : {};
   }
 
   /**
@@ -16839,12 +17005,15 @@ export class Game {
    * **Que la pista está ocupada, dicho por quien lo diría**: donde contesta
    * un AFIS, al llegar a final con alguien encima. Un AFIS no te para ni te
    * manda al aire; te dice lo que hay, en castellano en los cuatro peldaños
-   * y, de Taguató para arriba, en su fraseología. Donde hay torre no se dice
-   * nada: la torre te deja de número dos y la luz ya lo cuenta. Ver
+   * y, de Taguató para arriba, en su fraseología. Donde hay torre, la torre
+   * dice que sigas, y el permiso llega cuando la tengas libre. Ver
    * `avisarteOcupada` en `flight/turno-de-pista.ts`.
    */
-  private decirQueLaPistaEstaOcupada(): void {
-    if (!this.esAfisAqui()) return;
+  private decirQueLaPistaEstaOcupada(conPermiso: boolean): void {
+    if (!this.esAfisAqui()) {
+      if (!conPermiso) this.decirQueSigas();
+      return;
+    }
     const yo = this.miIndicativo;
     const clave = comoSeDiceAqui(
       "torre.afisOcupada",
@@ -16854,6 +17023,40 @@ export class Game {
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     if (conCifras) this.porRadioClave("torre.afisOccupied");
+  }
+
+  /**
+   * **«Continue approach»**: la torre, a quien entra en final con la pista
+   * todavía ocupada (H96). No es un permiso: es que siga bajando, y el permiso
+   * llega cuando la tenga libre —por debajo de la decisión, si hace falta, a la
+   * vista—. Doc 4444, 12.3.4.15 d; RD 1180/2018, anexo V, 1.4.16 d.
+   *
+   * En castellano en los dos peldaños de abajo y en fraseología en los de
+   * arriba, con su tira, y **solo con su grabación**: sin ella sería muda en el
+   * navegador de quien más juega, y lo que queda es lo que ya había, que la
+   * lámpara se enciende cuando la pista es tuya.
+   */
+  private decirQueSigas(): void {
+    if (!this.hayTorreQueHable() || this.radioCallada) return;
+    if (this.laAproximacion.mandanFrustrar) return;
+    const alto = this.flight.state.position.y - this.cotaDelCampo(this.elCampo());
+    if (alto < ALTURA_DE_DECISION) return;
+    const yo = this.miIndicativo;
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras) {
+      const montada = this.deTorre("torre.continueApproach", yo);
+      if (!montada || !this.instructor.vozDe(montada.clave, montada.relleno)) return;
+      this.porRadioClave("torre.continueApproach", "mando", undefined, true);
+      return;
+    }
+    const relleno = rellenoDe(yo);
+    const clave = comoSeDiceAqui(
+      "torre.continue",
+      hablaDe(this.elCampo().escenario.aerodrome?.id),
+    ) as TranslationKey;
+    if (this.instructor.vozDe(clave, relleno))
+      this.torre.decir(t(clave, { indicativo: yo.dicho }), clave, "mando", relleno);
   }
 
   /**
@@ -18535,7 +18738,17 @@ export class Game {
    */
   private decirQueDasPaso(): void {
     const a = this.plan?.dandoPasoA;
-    if (!a || this.pasoDadoA.has(a.matricula)) return;
+    if (a) this.decirQueLeDasPaso(a);
+  }
+
+  /** Lo mismo, a quien sea: ver `decirQueDasPaso`, y `pedirElRemolque`, donde se espera en el puesto. */
+  private decirQueLeDasPaso(a: {
+    readonly matricula: string;
+    readonly sale: boolean;
+    readonly recula?: boolean;
+    readonly empuja?: boolean;
+  }): void {
+    if (this.pasoDadoA.has(a.matricula)) return;
     /*
      * El que recula para dejarte la calle no pasa él: se aparta y pasas tú.
      * «Lo dejamos pasar» no sería verdad. Ver `recula` en `world/trafico.ts`.
@@ -18571,8 +18784,8 @@ export class Game {
    * calle por la que dejarías la pista y no se iría antes de que llegues. Ver
    * `flight/salida-tapada.ts`.
    *
-   * Hacia fuera del circuito —por la derecha si se vuela por la izquierda—,
-   * que es por donde no hay nadie en la base. La tarjeta con su dibujo en los
+   * Hacia fuera del circuito —por la derecha si se vuela por la izquierda—, o
+   * hacia la pista si por fuera pasa alguien (H94). La tarjeta con su dibujo en los
    * cuatro peldaños, quieta hasta que la vuelta está dada; en los de abajo lo
    * cuenta la instructora, y de Taguató para arriba lo dice la torre en su
    * fraseología, «orbit right, departing traffic», escrita en la tira de la
@@ -18581,15 +18794,27 @@ export class Game {
    */
   private pedirteUnaVuelta(porQuien: string): void {
     this.apuntarCanto(`vuelta por ${porQuien}`);
-    const derecha = (this.circuitoDeLaTorre?.mano ?? "izquierda") === "izquierda";
+    // Hacia fuera, o hacia la pista si por fuera pasa alguien: ver `ladoDeTuVuelta`.
+    const haciaFuera = this.trafico?.ladoDeTuVuelta() !== "dentro";
+    const aIzquierdas = (this.circuitoDeLaTorre?.mano ?? "izquierda") === "izquierda";
+    const derecha = aIzquierdas === haciaFuera;
     const dicho = this.avisoCon("vuelo.vueltaPorTuSalida", "palabra.vuelta");
-    this.hud.senal.mostrar(derecha ? "vuelta-derecha" : "vuelta-izquierda", dicho.rotulo, null, {
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    /*
+     * **Y con cuánto, donde hay cifras** (H96): el viraje medio, treinta grados,
+     * que es con el que la cuenta la torre y el que se mide en el horizonte. Ver
+     * `ALABEO_DE_LA_VUELTA` en `world/trafico.ts`.
+     */
+    const rotulo =
+      conCifras && dicho.rotulo
+        ? `${dicho.rotulo} · ${Math.round((ALABEO_DE_LA_VUELTA * 180) / Math.PI)}°`
+        : dicho.rotulo;
+    this.hud.senal.mostrar(derecha ? "vuelta-derecha" : "vuelta-izquierda", rotulo, null, {
       segundos: TOPE_DE_LA_VUELTA,
       prioridad: IMPORTANTE,
     });
     this.avisar("attention");
-    const conCifras =
-      this.tier.instruments === "numeric" || this.tier.instruments === "full";
     if (!conCifras) {
       if (laInstructoraLoExplica(this.tier.avisos))
         this.decirLoGrabado("vuelo.vueltaPorTuSalida", "mando");
@@ -23946,6 +24171,7 @@ export class Game {
     this.remolque = null;
     this.remolquePorMirar = false;
     this.paraEmpujar = null;
+    this.esperaAlDeAlLado = null;
     this.remolqueContado = "";
     this.empujeAutorizado = false;
   }
@@ -23969,8 +24195,38 @@ export class Game {
       this.avisar("error");
       return;
     }
+    /*
+     * **Y si en el puesto de al lado maniobra otro y no se puede a la vez** (H97), la torre te
+     * retiene el empuje hasta que acabe: se oye que se ha pedido, se dice a quién se espera y el
+     * tractor echa a andar solo, sin volver a pedirlo. «Simultaneous arrival/departure manoeuvres
+     * from adjacent stands J1 and G2, G9 and G10 and G10 and H37 are incompatible» (AD 2-GCTS,
+     * casilla 20.3.2.1). Al que entra no hay frase grabada que lo diga: se ve entrar.
+     */
+    const otro = this.quienManiobraAlLado();
+    if (otro) {
+      if (this.esperaAlDeAlLado !== null) return;
+      this.esperaAlDeAlLado = 0;
+      this.avisar("attention");
+      if (otro.sale) this.decirQueLeDasPaso({ ...otro, empuja: true });
+      return;
+    }
     this.paraEmpujar = BALIZA_ANTES_DE_EMPUJAR;
   }
+
+  /** Quién maniobra en un puesto en el que no se puede a la vez que en el tuyo, con el tractor enganchado. Ver `maniobraAlLadoDe`. */
+  private quienManiobraAlLado(): QuienManiobra | null {
+    const puesto = this.puestoDelRemolque();
+    return (puesto && this.trafico?.maniobraAlLadoDe(puesto)) ?? null;
+  }
+
+  /** El punto del puesto del que saca el tractor: donde está la rueda de morro antes de empujar. */
+  private puestoDelRemolque(): { readonly x: number; readonly z: number } | null {
+    const p = this.remolque?.empuje.poses[0];
+    return p ? ruedaDeMorroEn(p, p.rumbo, morroDe(this.aircraft)) : null;
+  }
+
+  /** Lo que llevas esperando, s, a que acabe el que maniobra al lado; `null` si no esperas. Ver `pedirElRemolque`. */
+  private esperaAlDeAlLado: number | null = null;
 
   /** **El interruptor de la baliza**, a mano: el botón, la tecla o la tarjeta del puesto. */
   private moverLaBaliza(): void {
@@ -24245,6 +24501,18 @@ export class Game {
     // Lo de quien juega: el tractor echa a andar al rato de pedirlo, y espera a sus motores.
     // Y si se apaga la baliza antes de que eche a andar, no empuja: vuelve a pedirla.
     if (this.paraEmpujar !== null && !this.baliza.encendida) this.paraEmpujar = null;
+    /*
+     * El que esperaba al de al lado: en cuanto acaba, su permiso. Con un tope, que una espera entre dos
+     * no puede quedarse sin salida: lo que dura un empuje largo con el saludo, y otro tanto.
+     */
+    if (this.esperaAlDeAlLado !== null) {
+      this.esperaAlDeAlLado += dt;
+      if (!this.baliza.encendida || r.fase !== "enganchado") this.esperaAlDeAlLado = null;
+      else if (this.esperaAlDeAlLado > TOPE_DEL_DE_AL_LADO || !this.quienManiobraAlLado()) {
+        this.esperaAlDeAlLado = null;
+        this.paraEmpujar = BALIZA_ANTES_DE_EMPUJAR;
+      }
+    }
     if (this.paraEmpujar !== null) {
       this.paraEmpujar -= dt;
       if (this.paraEmpujar <= 0) {
@@ -25066,6 +25334,14 @@ export class Game {
       9,
       true,
     );
+    /*
+     * **Una respuesta, no dos**: la del combustible y la del motor que se para
+     * pueden pedirse en el mismo medio minuto, y con la primera sin sonar eran
+     * dos «roger MAYDAY» seguidos. Y la que se quedó vieja —un PAN-PAN que ya es
+     * MAYDAY— se retira.
+     */
+    if (BOCA.esperaAlguna((c) => c?.startsWith(montada.clave) === true)) return;
+    BOCA.retirar((c) => respondeAUnaEmergencia(c));
     this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
   }
 
@@ -25514,8 +25790,9 @@ export class Game {
    * **Si la torre te lleva el turno de la pista**: en las lecciones con torre
    * y, con la radio callada, también en la vuelta al campo. Un 7600 en su
    * pantalla es un avión que vuelve a aterrizar sin radio, y la torre le hace
-   * sitio y le habla con la lámpara, con la misma regla de sus permisos. Ver
-   * el ADR 0014, enmienda H71.
+   * sitio y le habla con la lámpara, con la misma regla de sus permisos. Donde
+   * no tiene pantalla, lo es el que no contesta y al que ve volver. Ver el ADR
+   * 0014, enmiendas H71 y H91.
    */
   private get laTorreTeLleva(): boolean {
     return this.leccion.torre || this.radioCallada;
@@ -25718,7 +25995,7 @@ export class Game {
      * «interceptar» sale en el mismo fotograma que «a tope», y las dos se
      * dicen, en su orden. Lo que la retira es el cierre.
      */
-    BOCA.retirar((c) => c !== clave && valeHastaElPasoSiguiente(c) && !c?.endsWith(".antes"));
+    BOCA.retirar((c) => c !== clave && valeHastaElPasoSiguiente(c) && !esLaPresentacion(c));
     if (!this.instructor.sabeLoGrabado) this.apuntarCanto(`${clave}: espera a saber si está grabada`);
     const pedida = this.instructor.decirGrabada(t(clave), clave, peso, undefined, (que, porque) => {
       if (que === "se-cae" && porque === "sin-grabar") this.apuntarCanto(`${clave}: sin grabar, se calla`);
@@ -25912,10 +26189,15 @@ export class Game {
     return this.aircraft.motores > 2 ? (CON_MAS_DE_DOS[clave] ?? clave) : clave;
   }
 
+  /** La frase del fallo de radio para el campo de hoy. Ver `segunElRadar` en `flight/ejercicios.ts`. */
+  private segunElRadar(clave: TranslationKey): TranslationKey {
+    return segunElRadar(clave, oaciDe(this.scenario));
+  }
+
   private presentarElEjercicio(): void {
     const e = this.ejercicioDeHoy;
     if (!e) return;
-    const clave = this.segunLosMotores(`ejercicio.${e.id}.antes` as TranslationKey);
+    const clave = this.segunElRadar(this.segunLosMotores(`ejercicio.${e.id}.antes` as TranslationKey));
     this.hud.senal.mostrar(
       DIBUJO_DEL_EJERCICIO[e.id],
       this.rotulo(clave, "palabra.practica"),
@@ -26051,8 +26333,9 @@ export class Game {
    * suenan, ni se escribe nada en la tira. La instructora lo cuenta con calma
    * y marca el 7600, que se ve cifra a cifra en la tarjeta del transpondedor,
    * con las cifras en el hueco de la letra: un número se reconoce sin leer.
-   * La torre te sigue viendo, y desde que ve el código te habla con la
-   * lámpara: ver `encenderSinRadio`. Ver el ADR 0014, enmienda H71.
+   * La torre te sigue viendo, y desde que ve el código —o, si no tiene radar,
+   * desde que se da cuenta de que no contestas— te habla con la lámpara: ver
+   * `encenderSinRadio`. Ver el ADR 0014, enmiendas H71 y H91.
    */
   private seCallaLaRadio(): void {
     this.radioCallada = true;
@@ -26085,7 +26368,7 @@ export class Game {
           prioridad: IMPORTANTE,
         });
       });
-    this.frasesSinRadio.pedir("ejercicio.radio.callada", () => this.radioCallada);
+    this.frasesSinRadio.pedir(this.segunElRadar("ejercicio.radio.callada"), () => this.radioCallada);
   }
 
   /**
@@ -26134,9 +26417,9 @@ export class Game {
   /**
    * **La lámpara, para quien no tiene radio**, en cada paso del aire: la roja
    * si la torre te manda irte, la verde fija si te deja aterrizar, y los
-   * destellos mientras te cuenta en su circuito con el 7600 ya visto. La
-   * orden y el permiso son los de siempre; esto solo los enciende. Ver
-   * `luzParaQuienNoTieneRadio`.
+   * destellos mientras te cuenta en su circuito con el 7600 ya visto —o, donde
+   * no tiene radar, sabiendo ya que no contestas—. La orden y el permiso son
+   * los de siempre; esto solo los enciende. Ver `luzParaQuienNoTieneRadio`.
    */
   private encenderSinRadio(): void {
     const s = this.flight.state;
@@ -26150,6 +26433,11 @@ export class Game {
       teCuenta: enSuCircuito || this.enLaFinalDeLaTorre,
       enLaBaseOEnLaFinal: this.enLaBaseOEnLaFinalSinRadio,
       conElCodigo: this.codigoDesde === null ? null : this.relojDelJuego - this.codigoDesde - MARCADO_EN,
+      // El 7600 se empieza a marcar en el instante en que se calla. Ver `seCallaLaRadio`.
+      sinContestar:
+        this.codigoDesde !== null && sinRadarPublicado(oaciDe(this.scenario))
+          ? this.relojDelJuego - this.codigoDesde
+          : null,
       desdeQueToco: this.tocoSinRadioEn === null ? null : this.relojDelJuego - this.tocoSinRadioEn,
     });
     if (luz === "roja") this.luzDeTorre("roja", "alAire");
@@ -26946,7 +27234,7 @@ export class Game {
     const clave =
       this.practica?.ejercicio.id === "fallo-de-radio" && como === "vuelta"
         ? this.practica.tomoConLaVerde
-          ? "ejercicio.radio.bien"
+          ? this.segunElRadar("ejercicio.radio.bien")
           : "ejercicio.radio.bienSinLaVerde"
         : this.practica?.ejercicio.id === "despresurizacion" && como === "vuelta"
         ? CIERRE_DE_LA_DESPRESURIZACION

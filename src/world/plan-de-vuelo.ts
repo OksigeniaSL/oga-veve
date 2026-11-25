@@ -75,7 +75,7 @@ import {
   rumboDeLaPintada,
   SIGUE_LA_RAYA,
 } from "./remolque";
-import { admite, aproarDe, cumpleElAproar, delAipEn, llegaPorDe, puestoEn, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
+import { admite, aproarDe, cumpleElAproar, delAipEn, dePorSusMedios, llegaPorDe, puestoEn, saleDeFrente, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
 import { empujaSobrePavimento, fueraDelPavimento, ruedasEn } from "./ruedas-en-el-empuje";
 import { YA_EN_SU_SITIO } from "../flight/senalero";
@@ -87,6 +87,7 @@ import {
   grafoPorSusCalles,
   pasandoElCruce,
   pavimentoDibujado,
+  porLaPrimeraPuerta,
   porLaRectaDeSuCalle,
   puestosEnElPavimento,
   rectaPorPavimento,
@@ -1161,6 +1162,21 @@ const HACIA_DONDE_SIGUE = Math.cos((20 * Math.PI) / 180);
 
 /** De cuántos puestos, de los más cercanos, se mira lo que se rueda por las calles que publica el AIP. Ver `puestoDeLlegada`. */
 const MIRA_POR_LAS_SUYAS = 12;
+
+/**
+ * Hasta dónde del puesto del que se sale por delante no se ha llegado todavía a la calle de plataforma, m
+ * (H95): en Tenerife Sur, de la parada de la segunda línea a su eje hay cincuenta y seis.
+ */
+const HASTA_SU_CALLE = 60;
+
+/**
+ * A cuánto por delante de quien rueda por sus medios tiene que quedar una puerta de la plataforma para
+ * tomarla, m: de su centro, con el morro a unos quince. El tráfico, igual. Ver `porLaPrimeraPuerta`.
+ */
+export const DELANTE_DE_QUIEN_RUEDA = 20;
+
+/** Lo que se rueda de más por la puerta que se llevaba antes de darla por pasada, m: con la de antes o la siguiente se llega casi igual. */
+const YA_LA_HA_PASADO = 40;
 
 /** Cuántos puestos más prueba el plan si del elegido se sale mal: ver `saleMal`. */
 const OTROS_SI_SALE_DE_LADO = 8;
@@ -2621,6 +2637,12 @@ export class PlanDeVuelo {
     const enElAsfalto = this.puestosEnElAsfalto();
     // Donde la carta dice cuáles son de aviación general, a esos (H85); si no, el tercio más apartado de todos.
     const generales = enElAsfalto.filter((p) => p.aip?.uso === "general");
+    /*
+     * Y donde no lo dice y trae de cuáles se sale sin tractor, a uno de esos, el que menos se ruede (H97): en
+     * La Palma, del 11 y del 16, que son de retroceso, la avioneta salía por sus medios.
+     */
+    const autonomos = generales.length ? [] : dePorSusMedios(this.aero, enElAsfalto, this.avion.wingSpan);
+    if (autonomos.length) return (this.candidatosGuardados = [...autonomos]);
     const puestos = generales.length ? generales : enElAsfalto;
     if (!puestos.length) return [];
     /*
@@ -2723,7 +2745,9 @@ export class PlanDeVuelo {
        */
       // Los de la plataforma de carga y aviación general no son para el pasaje, si hay otros (H85).
       const enElAsfalto = this.puestosEnElAsfalto();
-      const comerciales = enElAsfalto.filter((p) => !p.aip?.uso);
+      // Y el de línea que no sale empujado, a los de salir por sus medios, donde la ficha los trae (H97).
+      const autonomos = vaALaPasarela(this.avion) ? [] : dePorSusMedios(this.aero, enElAsfalto, this.avion.wingSpan);
+      const comerciales = autonomos.length ? autonomos : enElAsfalto.filter((p) => !p.aip?.uso);
       const caben = (comerciales.length ? comerciales : enElAsfalto).filter(
         (p) => (p.aip?.max != null && admite(p.aip, this.avion.wingSpan)) || this.cabeDeLinea(p.xy),
       );
@@ -2926,13 +2950,49 @@ export class PlanDeVuelo {
     if (haciaSuAproar) return haciaSuAproar;
     const deEspaldas = desdeFuera ? null : this.deEspaldasDesde(puesto);
     if (deEspaldas) {
-      const porLaPintada = rodajeEntre(this.grafoDeSalida(puesto), puesto, espera, 220, ocupados, { deEspaldas });
+      const [porLaPintada = null] = this.porSuPuerta(this.grafoDeSalida(puesto), puesto, [espera], ocupados, { deEspaldas });
       // Sin la terminal a su alcance, sin sacar una rueda del pavimento, o no hay tractor (H87): ver `sacaBienPorSuRaya`.
       const sobrePavimento = !esPuestoDeContacto(puesto[0], -puesto[1], edificiosDePasarela(this.aero), morroDe(this.avion));
       if (porLaPintada && this.saleBienDeEspaldas(puesto, porLaPintada, null, sobrePavimento))
         return this.desdeDondeAcabaElEmpuje(puesto, [espera], [porLaPintada], deEspaldas, ocupados)[0] ?? porLaPintada;
     }
-    return rodajeEntre(this.grafoDeSalida(puesto), puesto, espera, 220, ocupados, { desdeFuera, ...this.saleEn(puesto) });
+    return this.porSusMedios(puesto, [espera], ocupados, desdeFuera)[0] ?? null;
+  }
+
+  /**
+   * **Las rutas de un puesto a cada punto de espera, saliendo por sus medios**: enganchado a la calle
+   * más cercana —o a la que publica la casilla 20 (H85)—, y por la primera puerta de la plataforma que
+   * se encuentra, si el AIP lo manda (H95).
+   *
+   * Y de la segunda línea de Tenerife Sur, **por delante**: se entra en él de la paralela, con el morro a
+   * la calle de plataforma, y se sale recto a ella y hacia el umbral en uso («nosing to the threshold in
+   * use», casilla 20.3.2.1 B; H95). Si por ahí no hay ruta, como siempre.
+   */
+  private porSusMedios(puesto: Punto, esperas: readonly Punto[], ocupados: Ocupados | undefined, desdeFuera: boolean): (Ruta | null)[] {
+    const grafo = this.grafoDeSalida(puesto);
+    const deFrente = saleDeFrente(this.aero, puesto, this.pista.heading);
+    const rutas = deFrente
+      ? this.porSuPuerta(grafo, puesto, esperas, ocupados, deFrente, DELANTE_DE_QUIEN_RUEDA)
+      : esperas.map(() => null);
+    if (rutas.every((r) => r)) return rutas;
+    const comoSiempre = this.porSuPuerta(grafo, puesto, esperas, ocupados, { desdeFuera, ...this.saleEn(puesto) });
+    return rutas.map((r, k) => r ?? comoSiempre[k] ?? null);
+  }
+
+  /**
+   * **Las rutas de un puesto, por la primera puerta de su plataforma** (H95, `porLaPrimeraPuerta` en
+   * `rodaje.ts`), si el AIP lo manda; si no, las del buscador.
+   */
+  private porSuPuerta(
+    grafo: Grafo,
+    desde: Punto,
+    esperas: readonly Punto[],
+    ocupados: Ocupados | undefined,
+    opciones: NonNullable<Parameters<typeof rodajesDesde>[5]>,
+    margen?: number,
+  ): (Ruta | null)[] {
+    const trazar = (g: Grafo) => rodajesDesde(g, desde, esperas, 220, ocupados, opciones);
+    return porLaPrimeraPuerta(grafo, trazar(grafo), this.aero.aipPuestos?.primeraPuerta, trazar, margen);
   }
 
   /**
@@ -3094,12 +3154,41 @@ export class PlanDeVuelo {
   private rutasHaciaElAproar(puesto: Punto, esperas: readonly Punto[], ocupados?: Ocupados): (Ruta | null)[] {
     const rutas: (Ruta | null)[] = esperas.map(() => null);
     if (!this.deContacto || !vaALaPasarela(this.avion)) return rutas;
+    const aproar = aproarDe(delAipEn(this.aero, puesto[0], -puesto[1]), this.pista.heading);
+    if (!aproar || !this.seEmpujaDe(puesto[0], -puesto[1], edificiosDePasarela(this.aero))) return rutas;
+    const haciaEl = this.rutasHacia(aproar, puesto, esperas, ocupados);
+    /*
+     * **Y si hacia él no le queda más puerta que una por la que no cabe, hacia el otro lado y por otra** (H97). La
+     * casilla 20.3.3 de Tenerife Sur no deja salir por la D1 a la 07 a los de letra E, y del R45 y del R47, con
+     * el morro a la 07, no hay otra por delante; la 20.3.2.1 exceptúa el APROAR del umbral en uso «when there are
+     * operational or safety reasons», y a los de letra F del S41 los saca por la D2. Así los dos grandes salen
+     * empujados hacia la 25 y bajan por la primera puerta de ese lado.
+     */
+    const estrechas = this.puertasEstrechas();
+    const porUnaEstrecha = (r: Ruta | null): boolean => !!r && r.letras.some((l) => estrechas.includes(l));
+    if (!estrechas.length || !haciaEl.some(porUnaEstrecha)) return haciaEl;
+    const alOtroLado = this.rutasHacia(aproar.map((a) => a + Math.PI), puesto, esperas, ocupados);
+    return haciaEl.map((r, k) => {
+      const otra = alOtroLado[k];
+      return porUnaEstrecha(r) && otra && !porUnaEstrecha(otra) && !(otra.ocupada && !r!.ocupada) ? otra : r;
+    });
+  }
+
+  /** Las puertas de la plataforma por las que el AIP no deja pasar a este avión. Ver `rutasHaciaElAproar`. */
+  private puertasEstrechas(): readonly string[] {
+    const puertas = this.aero.aipPuestos?.primeraPuerta?.puertas ?? [];
+    return (this.aero.restriccionesDeRodaje ?? [])
+      .filter((r) => r.calle && puertas.includes(r.calle) && this.avion.wingSpan > r.masDeM)
+      .map((r) => r.calle!);
+  }
+
+  /** Las de un puesto con el morro, al acabar el empuje, hacia alguno de estos rumbos: ver `rutasHaciaElAproar`. */
+  private rutasHacia(aproar: readonly number[], puesto: Punto, esperas: readonly Punto[], ocupados?: Ocupados): (Ruta | null)[] {
+    const rutas: (Ruta | null)[] = esperas.map(() => null);
     const x = puesto[0];
     const z = -puesto[1];
     const aip = delAipEn(this.aero, x, z);
-    const aproar = aproarDe(aip, this.pista.heading);
     const edificios = edificiosDePasarela(this.aero);
-    if (!aproar || !this.seEmpujaDe(x, z, edificios)) return rutas;
     const sentido = aproar.map(enElGrafo);
     const alEdificio = rumboAlEdificio(x, z, edificios);
     const pared = alEdificio === null ? null : enElGrafo(alEdificio + Math.PI);
@@ -3127,7 +3216,7 @@ export class PlanDeVuelo {
           if (rutas.every((r) => r)) break;
           let delSentido = trazadas.get(manera);
           if (!delSentido)
-            trazadas.set(manera, (delSentido = rodajesDesde(grafo, puesto, esperas, 220, ocupados, { ...manera, sentido })));
+            trazadas.set(manera, (delSentido = this.porSuPuerta(grafo, puesto, esperas, ocupados, { ...manera, sentido })));
           const vale = (r: Ruta): boolean => !soloPorLasSuyas || !porLasSuyas || porLasSuyas(r);
           const buenas = delSentido.map((r, k) =>
             !rutas[k] && r && vale(r) && this.saleBienDeEspaldas(puesto, r, aproar, sobrePavimento) ? r : null,
@@ -3347,13 +3436,10 @@ export class PlanDeVuelo {
       if (!rutas.every((r) => r)) {
         const deEspaldas = desdeFuera ? null : this.deEspaldasDesde(puesto.xy);
         const grafo = this.grafoDeSalida(puesto.xy);
-        const comoSiempre = rodajesDesde(grafo, puesto.xy, esperas, 220, undefined, {
-          desdeFuera,
-          ...this.saleEn(puesto.xy),
-        });
+        const comoSiempre = this.porSusMedios(puesto.xy, esperas, undefined, desdeFuera);
         // Por su raya pintada donde el tractor saca bien el avión por ella (H60c); si no, como siempre.
         const porLaPintada = deEspaldas
-          ? rodajesDesde(grafo, puesto.xy, esperas, 220, undefined, { deEspaldas })
+          ? this.porSuPuerta(grafo, puesto.xy, esperas, undefined, { deEspaldas })
           : [];
         const buenas = comoSiempre.map((_, k) => {
           const p = porLaPintada[k];
@@ -5123,12 +5209,48 @@ export class PlanDeVuelo {
       this.ponerLaVuelta(this.rutaDeVuelta(meta));
       return;
     }
-    const salio = this.arranque();
-    this.ponerRuta(
-      rodajeEntre(salio ? this.grafoDeSalida([salio[0], -salio[1]]) : this.grafo, this.ultimaPos, meta, 600, this.ocupadosAhora(true), {
-        desdeFuera: true,
-      }),
+    this.ponerRuta(this.aLaEsperaDesdeAqui(meta));
+  }
+
+  /**
+   * **La ruta al punto de espera desde donde está el avión**: por las calles que publica la casilla 20
+   * para salir de su puesto (H85) y por la primera puerta de la plataforma que le queda por delante, si
+   * el AIP manda esa (H95). Y si sale por delante de un puesto de la segunda línea de Tenerife Sur y no
+   * ha llegado a su calle, sigue recto a ella: la paralela, por la que entró, le queda a la espalda.
+   */
+  private aLaEsperaDesdeAqui(meta: Punto, siguiendo = false): Ruta | null {
+    const arranque = this.arranque();
+    const salio: Punto | null = arranque ? [arranque[0], -arranque[1]] : null;
+    const grafo = salio ? this.grafoDeSalida(salio) : this.grafo;
+    const deFrente = salio && saleDeFrente(this.aero, salio, this.pista.heading);
+    const enElPuesto = deFrente && Math.hypot(this.ultimaPos[0] - salio[0], this.ultimaPos[1] - salio[1]) < HASTA_SU_CALLE;
+    return (
+      (enElPuesto ? this.siguePorSuPuerta(grafo, meta, deFrente, siguiendo) : null) ??
+      this.siguePorSuPuerta(grafo, meta, { desdeFuera: true }, siguiendo)
     );
+  }
+
+  /**
+   * Y rodando ya, por la puerta de la plataforma por la que iba, si no se la ha pasado; si no, por la
+   * primera que le quede por delante. Sin lo primero, empujado del J8 de Tenerife Sur, que va a la D2, al
+   * recalcular la raya saltaba a la D3, que el tractor le deja veinte metros delante del morro.
+   */
+  private siguePorSuPuerta(
+    grafo: Grafo,
+    meta: Punto,
+    opciones: NonNullable<Parameters<typeof rodajeEntre>[5]>,
+    siguiendo: boolean,
+  ): Ruta | null {
+    const ocupados = this.ocupadosAhora(true);
+    const trazar = (g: Grafo) => rodajeEntre(g, this.ultimaPos, meta, 600, ocupados, opciones);
+    const corta = trazar(grafo);
+    const datos = this.aero.aipPuestos?.primeraPuerta;
+    const llevaba = siguiendo ? this.ruta?.letras.find((l) => datos?.puertas.includes(l)) : undefined;
+    if (corta && datos && llevaba) {
+      const suya = trazar(grafoPorSusCalles(grafo, [llevaba], new Set(datos.puertas)));
+      if (suya?.letras.includes(llevaba) && suya.largo <= corta.largo + YA_LA_HA_PASADO) return suya;
+    }
+    return porLaPrimeraPuerta(grafo, [corta], datos, (g) => [trazar(g)], DELANTE_DE_QUIEN_RUEDA)[0] ?? null;
   }
 
   /**
@@ -5648,14 +5770,9 @@ export class PlanDeVuelo {
     const grafo =
       this.destino === "puesto" ? this.grafoDeLlegada(meta) : salio ? this.grafoDeSalida([salio[0], -salio[1]]) : this.grafo;
     const desdeAqui = (desdeLaCalle: boolean) =>
-      rodajeEntre(
-        grafo,
-        this.ultimaPos,
-        meta,
-        600,
-        this.ocupadosAhora(this.destino === "espera"),
-        { desdeFuera: true, desdeLaCalle, ...(this.destino === "puesto" ? this.llegaEn(meta) : {}) },
-      );
+      this.destino === "espera"
+        ? this.aLaEsperaDesdeAqui(meta, true)
+        : rodajeEntre(grafo, this.ultimaPos, meta, 600, this.ocupadosAhora(false), { desdeFuera: true, desdeLaCalle, ...this.llegaEn(meta) });
     /*
      * **Y si desde la calle no se llega, desde la pista.** Quien ya no rueda
      * pista abajo sale por la calle que pisa, y no se le devuelve a la pista
@@ -5681,7 +5798,7 @@ export class PlanDeVuelo {
       this.conAproar.has(this.ruta) &&
       salio &&
       Math.hypot(this.ultimaPos[0] - salio[0], this.ultimaPos[1] + salio[1]) < SIGUE_LA_RAYA
-        ? rodajeEntre(grafo, this.ultimaPos, meta, 600, this.ocupadosAhora(true), { sentido: [enElGrafo(this.ultimoRumbo)], enLaCalle: true })
+        ? this.siguePorSuPuerta(grafo, meta, { sentido: [enElGrafo(this.ultimoRumbo)], enLaCalle: true }, true)
         : null;
     if (haciaDondeMira) this.conAproar.add(haciaDondeMira);
     const ruta =

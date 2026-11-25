@@ -454,6 +454,13 @@ export const ES_PY = {
    * en la roja; lo pone `luzDeTorre`. Ver `flight/luz-de-la-salida.ts`.
    */
   "torre.regreso": "{indicativo}, regreso por pista",
+  /*
+   * **Y a quien llega con la pista todavía ocupada** (H96): que siga, y el
+   * permiso llega cuando la tenga libre. «Continúe aproximación [prepare
+   * posible motor y al aire]» en el RD 1180/2018, anexo V, 1.4.16 d; «continue
+   * approach» en el Doc 4444, 12.3.4.15 d.
+   */
+  "torre.continue": "{indicativo}, continúe aproximación",
   /* Y la verde a un avión **en el aire**, que en las señales de luz de verdad
      quiere decir otra cosa: autorizado para aterrizar. Con «para», que es
      como lo escriben las tres fuentes (Doc 4444 y DINAC R 4444, 12.3.4.16;
@@ -548,6 +555,8 @@ export const ES_PY = {
   "torre.canario.verde": "{indicativo}, autorizado a despegar",
   "torre.canario.roja": "{indicativo}, mantenga fuera de pista",
   "torre.canario.regreso": "{indicativo}, regreso por pista",
+  // RD 1180/2018, anexo V, 1.4.16 d. Ver `torre.continue`.
+  "torre.canario.continue": "{indicativo}, continúe aproximación",
   "torre.canario.aterrizar": "{indicativo}, autorizado para aterrizar",
   // En España no es «ida al aire»: «motor y al aire» (RD 1180/2018, 1.4.19).
   "torre.canario.alAire": "{indicativo}, motor y al aire",
@@ -3923,6 +3932,20 @@ export const ES_PY = {
     "¡Aterrizamos sin radio! El siete seis cero cero se lo dijo a la torre por nosotros, y la torre nos habló con su luz. Así lo hace un piloto de verdad",
   "ejercicio.radio.bienSinLaVerde":
     "Ya estamos en tierra. Sin radio, la pista es nuestra cuando la torre prende la verde fija: la próxima, la esperamos dando otra vuelta",
+  /*
+   * **Y donde la torre no tiene radar publicado** (H91), que es Encarnación:
+   * el 7600 se marca igual, pero no es él quien se lo dice a esa torre. Se da
+   * cuenta porque no se le contesta y porque nos ve volver —vigila mirando, DINAC
+   * R 4444, 7.1.1.2—. No se dice que no tenga radar: el AIP no lo publica, y
+   * eso no es decir que no lo haya; se dice lo que sí se sabe. Ver el ADR
+   * 0014, enmienda H91.
+   */
+  "ejercicio.fallo-de-radio.antesSinRadar":
+    "Hoy practicamos quedarnos sin radio. Al subir se va a callar, a propósito. No pasa nada: ponemos en el transpondedor el número de sin radio, volvemos al circuito y miramos la torre, que nos ve llegar y nos va a hablar con luces",
+  "ejercicio.radio.calladaSinRadar":
+    "Se calló la radio: no oímos a la torre, y ella no nos oye. Todo bien: marco siete seis cero cero, que sin radio se pone siempre, y lo ve quien nos tenga en su pantalla. La torre se da cuenta porque no contestamos y nos ve volver. Seguimos el circuito, mirando la torre",
+  "ejercicio.radio.bienSinRadar":
+    "¡Aterrizamos sin radio! La torre se dio cuenta porque no contestábamos, nos vio llegar y nos habló con su luz. Y el siete seis cero cero quedó puesto, para quien lo pudiera ver. Así lo hace un piloto de verdad",
   // La palabra de Tukã para soltar los frenos: «¡Frená!» diría lo contrario.
   "palabra.solta": "¡Soltá!",
   /*

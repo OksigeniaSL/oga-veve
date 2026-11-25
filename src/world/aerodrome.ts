@@ -215,6 +215,15 @@ export interface Aerodrome {
     readonly ref?: string | null;
     readonly widthM: number | null;
     readonly path: readonly Punto[];
+    /**
+     * **Si no es más que una raya pintada en la losa** (H97): las calles de una plataforma que no tienen asfalto
+     * ni luces propias, como la U1, la U2 y la U3 de la aviación general de Tenerife Sur, y las líneas por las que
+     * se entra y se sale de sus puestos. Se rueda por ellas y se pinta su eje; la losa es la de la plataforma, y
+     * no llevan balizas azules: ahí su carta da «balizas reflectantes en el lado oeste» (AD 2-GCTS PDC 1.1).
+     */
+    readonly soloPintada?: boolean;
+    /** De dónde sale, si se puso a mano. Con `manual`, la extracción la conserva. */
+    readonly fuente?: string;
   }[];
   readonly aprons: readonly {
     readonly polygon: readonly Punto[];
@@ -359,6 +368,26 @@ export interface Aerodrome {
     readonly rodaje?: string;
     /** Y las calles de la plataforma, por su letra: las que se toman solo si la ruta las nombra. Ver `grafoPorSusCalles`. */
     readonly callesDePlataforma?: readonly string[];
+    /**
+     * **Por qué puertas se deja la plataforma, si el AIP manda dejarla por la primera** (H95): «aircraft
+     * shall proceed to the threshold in use through the first available apron gate» (AD 2-GCTS, casilla
+     * 20.3.2.1). La calle por la que se rueda dentro de ella y las puertas a la paralela, por su letra en
+     * la ficha. Ver `porLaPrimeraPuerta` en `rodaje.ts`.
+     */
+    readonly primeraPuerta?: { readonly calle: string; readonly puertas: readonly string[] };
+    /** De dónde sale qué puestos son de aviación general, si no es de la columna de la tabla (H97). */
+    readonly general?: string;
+    /**
+     * **De qué puestos sale quien se va por sus medios**, sin tractor, donde la carta da casi todos de salida en
+     * retroceso y no publica plataforma de aviación general (H97): en La Palma, el 12 y el 14. Ver `dePorSusMedios`.
+     */
+    readonly porSusMedios?: { readonly puestos: readonly string[]; readonly fuente: string };
+    /**
+     * **Los puestos de al lado en los que no se maniobra a la vez** (H97): «simultaneous arrival/departure
+     * manoeuvres from adjacent stands J1 and G2 (…) are incompatible» (AD 2-GCTS, casilla 20.3.2). Ver
+     * `nuncaALaVezCon`.
+     */
+    readonly nuncaALaVez?: { readonly parejas: readonly (readonly [string, string])[]; readonly fuente: string };
   };
   /**
    * Las ayudas **visuales** de OpenStreetMap: PAPI, VASI, luces de aproximación.
@@ -483,8 +512,8 @@ export function enElPavimento(aero: Aerodrome, p: Punto, margen = 0): boolean {
 }
 
 /**
- * **`enElPavimento` sin margen, para preguntar muchas veces en el mismo
- * campo.** Contesta lo mismo, pregunta a pregunta: mira las mismas pistas,
+ * **`enElPavimento`, para preguntar muchas veces en el mismo campo**, con su
+ * margen o sin él. Contesta lo mismo, pregunta a pregunta: mira las mismas pistas,
  * calles y plataformas con las mismas cuentas, pero solo las que tienen el
  * punto dentro de su caja —la del eje ensanchada medio ancho, o la del
  * polígono—, que fuera de ella no puede caer dentro de ninguna. Es un «o»,
@@ -492,10 +521,15 @@ export function enElPavimento(aero: Aerodrome, p: Punto, margen = 0): boolean {
  *
  * Existe por `puestosEnElPavimento`: los 425 puestos de Barajas contra sus
  * 756 calles eran una décima de segundo en la mesa al elegir la salida (ADR
- * 0028, enmienda H23a). Las cajas se hacen una vez por aeródromo.
+ * 0028, enmienda H23a). Y el tráfico lo pregunta cada cinco metros de cada
+ * camino: en Barajas, elegir su llegada eran dos décimas y media, casi todo
+ * esto (ADR 0025, enmienda H95). Las cajas se hacen una vez por aeródromo y
+ * margen.
  */
-export function enElPavimentoDe(aero: Aerodrome): (p: Punto) => boolean {
-  const ya = PAVIMENTO_CON_CAJAS.get(aero);
+export function enElPavimentoDe(aero: Aerodrome, margen = 0): (p: Punto) => boolean {
+  let porMargen = PAVIMENTO_CON_CAJAS.get(aero);
+  if (!porMargen) PAVIMENTO_CON_CAJAS.set(aero, (porMargen = new Map()));
+  const ya = porMargen.get(margen);
   if (ya) return ya;
   // Un milímetro de más: lo que se deja fuera tiene que estar fuera de verdad.
   const holgura = 1e-3;
@@ -516,11 +550,11 @@ export function enElPavimentoDe(aero: Aerodrome): (p: Punto) => boolean {
   };
   for (const pista of aero.runways) {
     const medio = (pista.widthM ?? 45) / 2;
-    caja(pista.centerline, medio, (p) => aLaPolilinea(p, pista.centerline) < medio + 0);
+    caja(pista.centerline, medio + margen, (p) => aLaPolilinea(p, pista.centerline) < medio + margen);
   }
   for (const calle of aero.taxiways) {
     const medio = (calle.widthM ?? ANCHO_RODADURA) / 2;
-    caja(calle.path, medio, (p) => aLaPolilinea(p, calle.path) < medio + 0);
+    caja(calle.path, medio + margen, (p) => aLaPolilinea(p, calle.path) < medio + margen);
   }
   for (const plataforma of aero.aprons)
     caja(plataforma.polygon, 0, (p) => dentroDelRecinto(p, plataforma.polygon));
@@ -529,11 +563,11 @@ export function enElPavimentoDe(aero: Aerodrome): (p: Punto) => boolean {
       if (p[0] >= c.x0 && p[0] <= c.x1 && p[1] >= c.y0 && p[1] <= c.y1 && c.mira(p)) return true;
     return false;
   };
-  PAVIMENTO_CON_CAJAS.set(aero, dentro);
+  porMargen.set(margen, dentro);
   return dentro;
 }
 
-const PAVIMENTO_CON_CAJAS = new WeakMap<Aerodrome, (p: Punto) => boolean>();
+const PAVIMENTO_CON_CAJAS = new WeakMap<Aerodrome, Map<number, (p: Punto) => boolean>>();
 
 /**
  * ¿Hay pavimento a menos de `margen` metros? **Plataformas incluidas.**
@@ -1240,6 +1274,8 @@ export function createAerodrome(
    */
   const deHierba = !esDura(principal?.surface);
   for (const calle of aero.taxiways) {
+    // La que es solo una raya en la losa no tiene asfalto suyo que tender.
+    if (calle.soloPintada) continue;
     for (const trozo of cortarEnLaPista(calle.path)) {
       anotar(
         deHierba ? "hierba-segada" : "rodadura",

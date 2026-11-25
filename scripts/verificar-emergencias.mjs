@@ -54,7 +54,9 @@
  *   final a punto de llegar a la decisión, entre 75 y 62 m: la torre tiene
  *   que poner la roja fija, y tras la otra vuelta, la verde. Vuela por el lado
  *   del circuito del campo. Con `OGA_HORA=22`, de noche: no se alabea, y los
- *   faros tienen que contestar solos con sus dos destellos (H86).
+ *   faros tienen que contestar solos con sus dos destellos (H86). En
+ *   `encarnacion`, cuya torre no tiene radar publicado, mira que lo que se dice
+ *   del 7600 sea lo de allí, y en los demás, lo de siempre (H91).
  *
  * - `reventon`: la rueda que revienta en la carrera (H74), en Taguató con el
  *   JAZ 90. A dieciocho nudos de V1 revienta una rueda principal: el piloto
@@ -164,6 +166,8 @@ const SIN_TREN = MODO === "tren" && process.env.OGA_SIN_TREN === "1";
  * torre tiene que poner la roja (H71).
  */
 const PISTA_OCUPADA = MODO === "radio" && process.env.OGA_PISTA_OCUPADA === "1";
+/** El campo cuya torre no tiene radar publicado. Ver `sinRadarPublicado` en `src/flight/ejercicios.ts` (H91). */
+const SIN_RADAR = MODO === "radio" && ESCENARIO === "encarnacion";
 /** Con `OGA_PARAR=1`, en `reventon` se para en la pista en vez de seguir (H74). */
 const PARAR = MODO === "reventon" && process.env.OGA_PARAR === "1";
 /** Con `OGA_METE_TREN=1`, en `reventon` se mete el tren al volar, y se saca cuando se cuenta por qué. */
@@ -182,10 +186,11 @@ const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
 /**
  * Lo más que se espera a que acabe el ejercicio, en segundos de reloj. El de
- * la despresurización empieza a cien kilómetros, arriba: más rato.
+ * la despresurización empieza a cien kilómetros, arriba: más rato. Y en el de la
+ * radio cabe otra vuelta: si al ir a tomar hay alguien en la pista, uno se va.
  */
 const TOPE = Number(
-  process.env.OGA_TOPE ?? (MODO === "despres" ? 1800 : MODO === "radio" && process.env.OGA_PISTA_OCUPADA === "1" ? 2600 : 1200),
+  process.env.OGA_TOPE ?? (MODO === "despres" ? 1800 : MODO === "radio" ? 2600 : 1200),
 );
 
 const server = await createServer({
@@ -425,6 +430,8 @@ try {
       let ladoDeLasAlas = 1;
       let alasEn = null;
       let sinVerdeEnLaFinal = 0;
+      /** En cada final sin la verde: con qué luz, y quién estaba en la pista o en la final por delante. */
+      const sinVerdePor = [];
       let ocupadaPuesta = null;
       let rojaConAlguienEnLaPista = null;
       let lamparaVista = null;
@@ -491,8 +498,8 @@ try {
       /*
        * **Y sin radio, por el lado del circuito del campo** (H86), que es por
        * donde se vuelve mirando a la torre: en Gran Canaria es la derecha, que
-       * es por donde iba siempre el banco, pero en Asunción es la izquierda —
-       * «harán todos los virajes hacia la izquierda» (DINAC R 2, 3.2.5 c)—.
+       * es por donde iba siempre el banco, y en Asunción, el este que publica su
+       * carta, que por la 02 es la derecha y por la 20 la izquierda (H92).
        */
       const ladoDelCircuito =
         modo === "radio"
@@ -1168,6 +1175,18 @@ try {
             }
             if (luz === "roja" || (luz !== "verde" && sobre < 60 && u > 0)) {
               if (luz !== "roja") sinVerdeEnLaFinal++;
+              sinVerdePor.push({
+                luz: luz ?? "apagada",
+                sobre: Math.round(sobre),
+                enLaPista: (o.trafico?.() ?? []).filter((a) => a.enLaPista).map((a) => a.matricula),
+                trafico: (o.traficoPorDentro?.() ?? []).map(
+                  (a) =>
+                    `${a.matricula} ${a.tipo} ${a.camino} ${Math.round(a.recorrido)} m (raya ${a.espera ?? "—"}, corre hasta ${a.despega ?? "—"}), ${Math.round(a.alto)} m de alto${a.conPermiso ? ", con permiso" : ""}${a.quieto > 1 ? `, parado ${Math.round(a.quieto)} s` : ""}`,
+                ),
+                permiso: o.sendaYPermiso?.() ?? null,
+                enLaFinalDeLaTorre: o.enLaFinalDeLaTorre?.() ?? null,
+                noTeMira: o.noTeMira?.() ?? null,
+              });
               if (luz === "roja" || sinVerdeEnLaFinal <= 2) {
                 tramo = "circuito";
                 paso = 0;
@@ -1327,6 +1346,7 @@ try {
         dichoAlVolver,
         alasEn,
         sinVerdeEnLaFinal,
+        sinVerdePor,
         ocupadaPuesta,
         rojaConAlguienEnLaPista,
         lamparaVista,
@@ -1648,6 +1668,21 @@ try {
       r.calladaEn !== null && dice(pedido, "ejercicio.radio.callada"),
       `callada ${r.calladaEn !== null ? "sí" : "no"} · ${pedido.filter((k) => /ejercicio\.radio\.callada/.test(k)).join(" · ") || "no dicho"}`,
     );
+    /*
+     * Las tres que hablan del 7600 —presentarlo, la radio callada y el
+     * cierre—, con la razón de ese campo: donde la torre tiene radar, el número
+     * se lo dice; donde no, se da cuenta porque no se le contesta (H91).
+     */
+    const del7600 = pedido
+      .map((k) => /ejercicio\.(fallo-de-radio\.antes|radio\.callada|radio\.bien)(SinRadar)?(?!\w)/.exec(String(k)))
+      .filter(Boolean);
+    comprobar(
+      SIN_RADAR
+        ? "lo que se dice del 7600 es lo del campo sin radar: no es él quien se lo dice a la torre"
+        : "lo que se dice del 7600 es lo de siempre: el número se lo dice a la torre",
+      new Set(del7600.map((m) => m[1])).size === 3 && del7600.every((m) => (m[2] !== undefined) === SIN_RADAR),
+      [...new Set(del7600.map((m) => `${m[1]}${m[2] ?? ""}`))].join(" · ") || "nada",
+    );
     const cifras = r.todoCantado.map((c) => /^transpondedor: (\d+)/.exec(c)?.[1]).filter(Boolean);
     comprobar(
       "el 7600, marcado cifra a cifra",
@@ -1717,6 +1752,7 @@ try {
             `con la verde ${ej?.radio?.conLaVerde} · finales sin la verde ${r.sinVerdeEnLaFinal}`
         : `no llegó · lo más bajo ${Math.round(r.bajo)} m · finales sin la verde ${r.sinVerdeEnLaFinal}`,
     );
+    for (const f of r.sinVerdePor ?? []) console.log(`    final sin la verde: ${JSON.stringify(f)}`);
     comprobar(
       "sin llamada ni bomberos: sin radio no hay llamada, y nada se ha roto",
       !ej?.declarada && !ej?.bomberos,

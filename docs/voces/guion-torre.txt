@@ -168,3 +168,5 @@ ascienda a tres mil pies
 deviation right of route approved, advise clear of weather
 deviation left of route approved, advise clear of weather
 regreso por pista
+continúe aproximación
+continue approach

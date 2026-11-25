@@ -2,7 +2,7 @@
   "id": "GCTS",
   "name": "Tenerife Sur Airport",
   "pasarelas": {"hay": true, "fuente": "Aena, nota de prensa del 29-05-2017: licitación del mantenimiento de las pasarelas del aeropuerto de Tenerife Sur."},
-  "restriccionesDeRodaje": [{"masDeM": 52, "calle": "D1", "fuente": "AIP España AD 2-GCTS, casilla 20.3.3, «Taxiing restrictions» (AIRAC AMDT 10/26, WEF 29-OCT-26): «D1: Entry from RWY 25 which have vacated the runway via TWY B1 or B2: D except B-767. Exit to RWY 07: D except B-767.» La letra D llega hasta los 52 m de envergadura (Anexo 14, tabla 1-1)."}, {"masDeM": 52, "calle": "B1", "fuente": "Ídem: «B1: D.»"}, {"masDeM": 52, "calle": "B6", "fuente": "Ídem: «B6: D except B-767-400. Runway entry maximum length 58 m.»"}],
+  "restriccionesDeRodaje": [{"masDeM": 52, "calle": "D1", "fuente": "AIP España AD 2-GCTS, casilla 20.3.3, «Taxiing restrictions» (AIRAC AMDT 10/26, WEF 29-OCT-26): «D1: Entry from RWY 25 which have vacated the runway via TWY B1 or B2: D except B-767. Exit to RWY 07: D except B-767.» La letra D llega hasta los 52 m de envergadura (Anexo 14, tabla 1-1)."}, {"masDeM": 52, "calle": "B1", "fuente": "Ídem: «B1: D.»"}, {"masDeM": 52, "calle": "B6", "fuente": "Ídem: «B6: D except B-767-400. Runway entry maximum length 58 m.»"}, {"masDeM": 22, "calle": "U1", "fuente": "AIP España AD 2-GCTS, casilla 20.3.3 (AIRAC AMDT 10/26, WEF 29-OCT-26): «Taxiways for general aviation (TWY U1, U2 and U3) are limited to aircraft with maximum wingspan of 22 m.»"}, {"masDeM": 22, "calle": "U2", "fuente": "Ídem."}, {"masDeM": 22, "calle": "U3", "fuente": "Ídem."}],
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",
@@ -2122,6 +2122,306 @@
         [
           -1562.2,
           -405.1
+        ]
+      ]
+    },
+    {
+      "ref": "U1",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): calle de la plataforma de aviación general («GA APN»), «22 MAX WINGSPAN», de la calle de plataforma a los puestos. El trazado, la raya pintada en la ortofoto PNOA de máxima actualidad del Instituto Geográfico Nacional (CC BY 4.0; foto de 2024-02, vista el 25-11-2026 a 20 cm por píxel), de las puntas de las líneas de los puestos, que son de OpenStreetMap, a la calle de plataforma, perpendicular a ella.",
+      "path": [
+        [
+          -1213.7,
+          -118.5
+        ],
+        [
+          -1237.2,
+          -58.1
+        ]
+      ]
+    },
+    {
+      "ref": "U2",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): calle de la plataforma de aviación general («GA APN»), «22 MAX WINGSPAN», de la calle de plataforma a los puestos. El trazado, la raya pintada en la ortofoto PNOA de máxima actualidad del Instituto Geográfico Nacional (CC BY 4.0; foto de 2024-02, vista el 25-11-2026 a 20 cm por píxel), de las puntas de las líneas de los puestos, que son de OpenStreetMap, a la calle de plataforma, perpendicular a ella.",
+      "path": [
+        [
+          -1168.9,
+          -100.8
+        ],
+        [
+          -1192.5,
+          -40.1
+        ],
+        [
+          -1193.5,
+          -37.4
+        ],
+        [
+          -1202.2,
+          -14.8
+        ],
+        [
+          -1204.3,
+          -9.8
+        ]
+      ]
+    },
+    {
+      "ref": "U3",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): calle de la plataforma de aviación general («GA APN»), «22 MAX WINGSPAN», de la calle de plataforma a los puestos. El trazado, la raya pintada en la ortofoto PNOA de máxima actualidad del Instituto Geográfico Nacional (CC BY 4.0; foto de 2024-02, vista el 25-11-2026 a 20 cm por píxel), de las puntas de las líneas de los puestos, que son de OpenStreetMap, a la calle de plataforma, perpendicular a ella.",
+      "path": [
+        [
+          -1117.6,
+          -80.7
+        ],
+        [
+          -1142.3,
+          -17
+        ],
+        [
+          -1151.1,
+          5.7
+        ]
+      ]
+    },
+    {
+      "ref": "U1",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): la entrada al AG2, de la U1. El trazado es el de OpenStreetMap, que lo da como línea del puesto.",
+      "path": [
+        [
+          -1237.2,
+          -58.1
+        ],
+        [
+          -1240.4,
+          -49.8
+        ],
+        [
+          -1240.5,
+          -48.8
+        ],
+        [
+          -1240.2,
+          -47.6
+        ],
+        [
+          -1231.9,
+          -28.1
+        ]
+      ]
+    },
+    {
+      "ref": "U2",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): la salida del AG2, a la U2. El trazado es el de OpenStreetMap, que lo da como línea del puesto.",
+      "path": [
+        [
+          -1224.5,
+          -11.1
+        ],
+        [
+          -1222.7,
+          -7.1
+        ],
+        [
+          -1221,
+          -4.9
+        ],
+        [
+          -1219.4,
+          -3.7
+        ],
+        [
+          -1217.2,
+          -2.7
+        ],
+        [
+          -1214.9,
+          -2.2
+        ],
+        [
+          -1212.6,
+          -2.3
+        ],
+        [
+          -1210.1,
+          -3
+        ],
+        [
+          -1208.2,
+          -4.3
+        ],
+        [
+          -1206.3,
+          -6.1
+        ],
+        [
+          -1205.1,
+          -7.8
+        ],
+        [
+          -1204.3,
+          -9.8
+        ]
+      ]
+    },
+    {
+      "ref": "U2",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): la entrada al AG5, de la U2. El trazado es el de OpenStreetMap, que lo da como línea del puesto.",
+      "path": [
+        [
+          -1204.3,
+          -9.8
+        ],
+        [
+          -1204.6,
+          -7.5
+        ],
+        [
+          -1204.5,
+          -5.1
+        ],
+        [
+          -1203.8,
+          -2.7
+        ],
+        [
+          -1202.7,
+          0
+        ],
+        [
+          -1201.1,
+          3
+        ],
+        [
+          -1199.2,
+          6
+        ],
+        [
+          -1197.1,
+          8.8
+        ],
+        [
+          -1195.5,
+          10.6
+        ],
+        [
+          -1193.6,
+          12.3
+        ],
+        [
+          -1192.3,
+          12.8
+        ]
+      ]
+    },
+    {
+      "ref": "U3",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): la salida del AG5, a la U3. El trazado es el de OpenStreetMap, que lo da como línea del puesto.",
+      "path": [
+        [
+          -1176.7,
+          18.9
+        ],
+        [
+          -1163.7,
+          24
+        ],
+        [
+          -1161.9,
+          24.4
+        ],
+        [
+          -1159.8,
+          23.8
+        ],
+        [
+          -1158.3,
+          22.9
+        ],
+        [
+          -1151.1,
+          5.7
+        ]
+      ]
+    },
+    {
+      "ref": "U2",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): la salida del AG1, a la U2. El trazado es el de OpenStreetMap, que lo da como línea del puesto.",
+      "path": [
+        [
+          -1209,
+          -46.4
+        ],
+        [
+          -1192.5,
+          -40.1
+        ]
+      ]
+    },
+    {
+      "ref": "U3",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): la salida del AG3, a la U3. El trazado es el de OpenStreetMap, que lo da como línea del puesto.",
+      "path": [
+        [
+          -1160.2,
+          -24.2
+        ],
+        [
+          -1142.3,
+          -17
+        ]
+      ]
+    },
+    {
+      "ref": "U3",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): la salida del AG4, a la U3. El trazado es el de OpenStreetMap, que lo da como línea del puesto.",
+      "path": [
+        [
+          -1167.8,
+          -1
+        ],
+        [
+          -1151.1,
+          5.7
         ]
       ]
     }
@@ -7696,7 +7996,7 @@
       700.4
     ]
   ],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCTS, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCTS/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCTS PDC 1.3","wef":"16-APR-26"},{"carta":"AD 2-GCTS PDC 1.4","wef":"05-SEP-24"}],"aproar":"AIP España AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26): «Pushback is obligatory in front stands and shall be performed such that the aircraft remains nosing to the threshold in use and leaving apron gates \"D\" free», y «Pushbacks on parking stands R19, G20, AG21, and J22 shall be performed nosing to THR 25», que son los que la tabla da al E.","puertasLibres":["D1","D2","D3","D4","D5","D6"],"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-02","leido":"2026-11-24"}},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCTS, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCTS/","leido":"2026-11-25","cartas":[{"carta":"AD 2-GCTS PDC 1.3","wef":"16-APR-26"},{"carta":"AD 2-GCTS PDC 1.4","wef":"05-SEP-24"}],"aproar":"AIP España AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26): «Pushback is obligatory in front stands and shall be performed such that the aircraft remains nosing to the threshold in use and leaving apron gates \"D\" free», y «Pushbacks on parking stands R19, G20, AG21, and J22 shall be performed nosing to THR 25», que son los que la tabla da al E. Salvo que «there are operational or safety reasons for push-backs without nosing to the threshold in use or leaving apron gates D free».","puertasLibres":["D1","D2","D3","D4","D5","D6"],"rodaje":"AIP España AD 2-GCTS, casilla 20.3.2 (AIRAC AMDT 10/26, WEF 29-OCT-26): «After push-back or autonomous departure, aircraft shall proceed to the threshold in use through the first available apron gate, unless there are operational or safety reasons to the contrary»; de los de salida autónoma, «Departure shall be performed nosing to the threshold in use»; y al llegar, «from the appropriate apron gate for PRKG R19 to G48, and from the parking stand centre line for PRKG E49 to E70».","callesDePlataforma":["INNER"],"primeraPuerta":{"calle":"INNER","puertas":["D1","D2","D3","D4","D5","D6"]},"general":"AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26), «GA APN», con las calles U1, U2 y U3, y PDC 1.3 (WEF 16-APR-26), del AG1 al AG5, «Aviación General»; a qué calle se entra y por cuál se sale, de dónde está su parada y de la ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0; foto de 2024-02).","nuncaALaVez":{"parejas":[["J1","G2"],["G9","G10"],["G10","H37"]],"fuente":"AIP España AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26): «Simultaneous arrival/departure manoeuvres from adjacent stands J1 and G2, G9 and G10 and G10 and H37 are incompatible.» Y la 20.3.2.2, al llegar."},"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-02","leido":"2026-11-24"}},
   "parkingPositions": [
     {
       "ref": "G23",
@@ -7984,7 +8284,18 @@
         "max": "B738",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8008,7 +8319,18 @@
         "max": "A21N",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8032,7 +8354,18 @@
         "max": "B39M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8056,7 +8389,18 @@
         "max": "B39M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8080,7 +8424,18 @@
         "max": "B39M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8104,7 +8459,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8128,7 +8494,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8152,7 +8529,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8529,24 +8917,8 @@
       ],
       "entrada": [
         [
-          -1151.1,
-          5.7
-        ],
-        [
-          -1158.3,
-          22.9
-        ],
-        [
-          -1159.8,
-          23.8
-        ],
-        [
-          -1161.9,
-          24.4
-        ],
-        [
-          -1163.7,
-          24
+          -1192.3,
+          12.8
         ],
         [
           -1176.7,
@@ -8555,10 +8927,25 @@
       ],
       "aip": {
         "salida": "A",
-        "max": null,
+        "max": "18 m",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "uso": "general",
+        "salePor": [
+          "U3",
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "INNER",
+            "U2"
+          ],
+          "sur": [
+            "INNER",
+            "U2"
+          ]
+        }
       }
     },
     {
@@ -8569,8 +8956,12 @@
       ],
       "entrada": [
         [
-          -1151.1,
-          5.7
+          -1202.2,
+          -14.8
+        ],
+        [
+          -1185.8,
+          -8.2
         ],
         [
           -1167.8,
@@ -8579,10 +8970,25 @@
       ],
       "aip": {
         "salida": "A",
-        "max": null,
+        "max": "20 m",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "uso": "general",
+        "salePor": [
+          "U3",
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "INNER",
+            "U2"
+          ],
+          "sur": [
+            "INNER",
+            "U2"
+          ]
+        }
       }
     },
     {
@@ -8593,8 +8999,12 @@
       ],
       "entrada": [
         [
-          -1142.3,
-          -17
+          -1193.5,
+          -37.4
+        ],
+        [
+          -1175.7,
+          -30.4
         ],
         [
           -1160.2,
@@ -8603,10 +9013,25 @@
       ],
       "aip": {
         "salida": "A",
-        "max": null,
+        "max": "22 m",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "uso": "general",
+        "salePor": [
+          "U3",
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "INNER",
+            "U2"
+          ],
+          "sur": [
+            "INNER",
+            "U2"
+          ]
+        }
       }
     },
     {
@@ -8615,12 +9040,41 @@
         -1209,
         -46.4
       ],
+      "entrada": [
+        [
+          -1237.2,
+          -58.1
+        ],
+        [
+          -1220.7,
+          -51.3
+        ],
+        [
+          -1209,
+          -46.4
+        ]
+      ],
       "aip": {
         "salida": "A",
-        "max": null,
+        "max": "15 m",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "uso": "general",
+        "salePor": [
+          "U2",
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "INNER",
+            "U1"
+          ],
+          "sur": [
+            "INNER",
+            "U1"
+          ]
+        }
       }
     },
     {
@@ -8629,12 +9083,37 @@
         -1224.5,
         -11.1
       ],
+      "entrada": [
+        [
+          -1231.9,
+          -28.1
+        ],
+        [
+          -1224.5,
+          -11.1
+        ]
+      ],
       "aip": {
         "salida": "A",
-        "max": null,
+        "max": "20 m",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "uso": "general",
+        "salePor": [
+          "U2",
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "INNER",
+            "U1"
+          ],
+          "sur": [
+            "INNER",
+            "U1"
+          ]
+        }
       }
     },
     {
@@ -8658,7 +9137,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8682,7 +9172,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8706,7 +9207,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8730,7 +9242,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8754,7 +9277,18 @@
         "max": "B738",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8778,7 +9312,18 @@
         "max": "A21N",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8802,7 +9347,18 @@
         "max": "A21N",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8826,7 +9382,18 @@
         "max": "A21N",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8850,7 +9417,18 @@
         "max": "A21N",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8874,7 +9452,18 @@
         "max": "A21N",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8898,7 +9487,18 @@
         "max": "B738",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8951,7 +9551,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8975,7 +9586,18 @@
         "max": "B38M",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -8999,7 +9621,18 @@
         "max": "A20N",
         "contacto": null,
         "carta": "AD 2-GCTS PDC 1.3",
-        "pasarela": false
+        "pasarela": false,
+        "salePor": [
+          "INNER"
+        ],
+        "llegaPor": {
+          "norte": [
+            "T"
+          ],
+          "sur": [
+            "T"
+          ]
+        }
       }
     },
     {
@@ -9219,262 +9852,6 @@
           "norte": "W",
           "sur": "E"
         }
-      }
-    },
-    {
-      "ref": "AG2 (U1)",
-      "xy": [
-        -1231.9,
-        -28.1
-      ],
-      "entrada": [
-        [
-          -1237.2,
-          -58.1
-        ],
-        [
-          -1240.4,
-          -49.8
-        ],
-        [
-          -1240.5,
-          -48.8
-        ],
-        [
-          -1240.2,
-          -47.6
-        ],
-        [
-          -1231.9,
-          -28.1
-        ]
-      ],
-      "aip": {
-        "salida": null,
-        "max": null,
-        "contacto": null,
-        "pasarela": false,
-        "carta": null
-      }
-    },
-    {
-      "ref": "AG1 (U2)",
-      "xy": [
-        -1209,
-        -46.4
-      ],
-      "entrada": [
-        [
-          -1192.5,
-          -40.1
-        ],
-        [
-          -1209,
-          -46.4
-        ]
-      ],
-      "aip": {
-        "salida": null,
-        "max": null,
-        "contacto": null,
-        "pasarela": false,
-        "carta": null
-      }
-    },
-    {
-      "ref": "AG2 (U2)",
-      "xy": [
-        -1224.5,
-        -11.1
-      ],
-      "entrada": [
-        [
-          -1204.3,
-          -9.8
-        ],
-        [
-          -1205.1,
-          -7.8
-        ],
-        [
-          -1206.3,
-          -6.1
-        ],
-        [
-          -1208.2,
-          -4.3
-        ],
-        [
-          -1210.1,
-          -3
-        ],
-        [
-          -1212.6,
-          -2.3
-        ],
-        [
-          -1214.9,
-          -2.2
-        ],
-        [
-          -1217.2,
-          -2.7
-        ],
-        [
-          -1219.4,
-          -3.7
-        ],
-        [
-          -1221,
-          -4.9
-        ],
-        [
-          -1222.7,
-          -7.1
-        ],
-        [
-          -1224.5,
-          -11.1
-        ]
-      ],
-      "aip": {
-        "salida": null,
-        "max": null,
-        "contacto": null,
-        "pasarela": false,
-        "carta": null
-      }
-    },
-    {
-      "ref": "AG1 (U1)",
-      "xy": [
-        -1220.7,
-        -51.3
-      ],
-      "entrada": [
-        [
-          -1237.2,
-          -58.1
-        ],
-        [
-          -1220.7,
-          -51.3
-        ]
-      ],
-      "aip": {
-        "salida": null,
-        "max": null,
-        "contacto": null,
-        "pasarela": false,
-        "carta": null
-      }
-    },
-    {
-      "ref": "AG3 (U2)",
-      "xy": [
-        -1175.7,
-        -30.4
-      ],
-      "entrada": [
-        [
-          -1193.5,
-          -37.4
-        ],
-        [
-          -1175.7,
-          -30.4
-        ]
-      ],
-      "aip": {
-        "salida": null,
-        "max": null,
-        "contacto": null,
-        "pasarela": false,
-        "carta": null
-      }
-    },
-    {
-      "ref": "AG4 (U2)",
-      "xy": [
-        -1185.8,
-        -8.2
-      ],
-      "entrada": [
-        [
-          -1202.2,
-          -14.8
-        ],
-        [
-          -1185.8,
-          -8.2
-        ]
-      ],
-      "aip": {
-        "salida": null,
-        "max": null,
-        "contacto": null,
-        "pasarela": false,
-        "carta": null
-      }
-    },
-    {
-      "ref": "AG5 (U2)",
-      "xy": [
-        -1192.3,
-        12.8
-      ],
-      "entrada": [
-        [
-          -1204.3,
-          -9.8
-        ],
-        [
-          -1204.6,
-          -7.5
-        ],
-        [
-          -1204.5,
-          -5.1
-        ],
-        [
-          -1203.8,
-          -2.7
-        ],
-        [
-          -1202.7,
-          0
-        ],
-        [
-          -1201.1,
-          3
-        ],
-        [
-          -1199.2,
-          6
-        ],
-        [
-          -1197.1,
-          8.8
-        ],
-        [
-          -1195.5,
-          10.6
-        ],
-        [
-          -1193.6,
-          12.3
-        ],
-        [
-          -1192.3,
-          12.8
-        ]
-      ],
-      "aip": {
-        "salida": null,
-        "max": null,
-        "contacto": null,
-        "pasarela": false,
-        "carta": null
       }
     }
   ],

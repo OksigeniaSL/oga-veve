@@ -10688,3 +10688,189 @@ de ahora y la de Taguató van a tres metros de la senda como mucho.
   nula. Dándoselo, la peor del JAZ 60 pasa de 2,5 a 2,64 m/s y la prueba la ve.
 - **El banco del ILS y el del automático en el navegador** no se han pasado con la ley
   nueva.
+
+## Enmienda H92 (25-11-2026): el circuito que publica cada campo
+
+La H91 vio de paso que Asunción publica su circuito por el este, con altitud, y que
+Minga Guazú también lo dibuja; el juego no llevaba ninguno de los dos, y la altitud de
+Encarnación no la usaba. Se han mirado todos los campos del juego que tienen ficha en
+un AIP: el lado de cada cabecera, la altitud y de qué es.
+
+### Lo que publica cada uno
+
+Paraguay: AIP de la DINAC, AMDT AIRAC 02/2026, en vigor el 1-10-2026, con sus seis
+partes AD 2 de los campos del juego y la AD 3. España: AIP de ENAIRE leído el
+25-11-2026, apartado «AD traffic circuit» de AD 2.22 de cada ficha, que es un dibujo.
+
+| Campo | Lado | Altitud | Página y fecha |
+|---|---|---|---|
+| Asunción (SGAS, 290 ft) | este: «tránsito del aeródromo: sector "E"» | **QNH**: convencional 1.500 ft, jet 1.800 ft | AD 2.1-48, 1-10-2026, y AD 2.1-48.1, 18-4-2024 |
+| Minga Guazú (SGES, 846 ft) | noroeste, dibujado | no la da | AD 2.2-22, 18-4-2024 |
+| Mariscal Estigarribia (SGME, 554 ft) | oeste, dibujado | 1.700 ft | AD 2.3-16, 5-10-2023 |
+| Pedro Juan Caballero (SGPJ, 1.851 ft) | oeste: «entrada al circuito […] solamente por el sector "oeste"» | 3.000 ft | AD 2.4-15, 5-10-2023 |
+| Encarnación (SGEN, 653 ft) | este: «entrada al circuito […] solamente por el sector "este"» | 2.100 ft | AD 2.5-16, 9-7-2026 |
+| Concepción (SGCO) y Pilar (SGPI) | nada: no tienen carta de aproximación visual ni lo dicen en su ficha | — | AD 2.6 y AD 2.8 enteras |
+| Ayolas (SGAY) | nada: solo su línea en la tabla de aeródromos | — | AD 3.1 |
+| Cuatro Vientos (LECU, 2.269 ft) | sur, dibujado | **sobre el mar**: «ACFT / HEL 3000 ft AMSL» | AD 2-LECU/LEVS-12, 22.4, WEF 6-8-2026 |
+| Los Rodeos (GCXO) | los dos, norte y sur | no; del norte, en el viento en cola, «maintain minimum 1000 ft **AGL**» | AD 2-GCXO-19, 22.4, WEF 29-10-2026 |
+| Gran Canaria (GCLP) | este | no | AD 2-GCLP-32, 22.7, WEF 1-10-2026 |
+| Tenerife Sur (GCTS) | sur | no | AD 2-GCTS-22, 22.6, WEF 29-10-2026 |
+| La Palma (GCLA) | este | no | AD 2-GCLA-14, 22.4, WEF 1-10-2026 |
+| Lanzarote (GCRR) | este; el ligero visual A, B y H, oeste | no | AD 2-GCRR-21, 22.7, 29-10-2026 |
+| Fuerteventura (GCFV) | este | no | AD 2-GCFV-21, 22.6, 9-7-2026 |
+| El Hierro (GCHI) | este | no | AD 2-GCHI-10, 22.4, WEF 11-6-2026 |
+| La Gomera (GCGM) | sur | no | AD 2-GCGM-9, 22.2, 9-7-2026 |
+| Barajas (LEMD) | nada: «aerodrome closed to training operations» | — | AD 2-LEMD-19, WEF 29-10-2026 |
+
+Los ocho de Canarias ya iban como se publican: nada que poner. Yvytu Rape, el Valle y el
+Chaco no están en ningún AIP.
+
+**De qué es la altitud.** Asunción escribe «QNH» y Cuatro Vientos «AMSL». Las cartas de
+Estigarribia, Pedro Juan y Encarnación dicen solo los pies, junto a obstáculos con su
+elevación y con la misma plantilla que la de Asunción, así que se leen como altitud: dan
+1.146, 1.149 y 1.447 ft sobre el campo, y como altura el de Pedro Juan serían 3.000. Es
+deducido, no escrito. Las cartas visuales de las islas traen topes de los pasillos y de
+la CTR, que no son del circuito, y no se usan.
+
+### El lado
+
+`circuitoPublicado` en los cinco que faltaban. Con él cambian cinco cabeceras: la 02 de
+Asunción, la 23 de Minga Guazú, la 19 de Estigarribia, la 21 de Pedro Juan y la 09 de
+Cuatro Vientos, todas de la izquierda de costumbre a la derecha. Las otras cinco iban ya
+por su lado.
+
+Que el tráfico y quien juega no vayan uno por cada lado sale de que los dos lo piden a la
+misma puerta, `loPublicado`, con la cabecera en uso, y lo mira una prueba en todos los
+campos que lo publican y por las dos cabeceras.
+
+### La altitud, por una sola puerta
+
+`altitudDelCircuito` en el escenario, en pies sobre el nivel del mar, con los reactores
+aparte en Asunción; un turbohélice es convencional. `loPublicado` (`world/circuito.ts`)
+la junta con el lado y la pasan el hilo ocre —que es la raya y lo que dice la
+instructora—, el circuito de la torre, el del tráfico y la sonda del banco a
+`formaDelCircuito`, que vuela los tramos a nivel ahí: lo que marca el altímetro es lo de
+la carta. El terreno sigue mandando por abajo, con sus 150 m sobre el pasillo.
+
+**La base y la final no se mueven.** La altura de costumbre es la de una base que baja
+150 m en el ancho de la figura del juego, y la publicada es la de circuitos más anchos:
+con los 375 m de Asunción la base de la avioneta caería 16°, y hoy cae 8,8°. Lo que
+sobra se sube y se baja fuera de ella:
+
+- **subiendo**, en el viento cruzado, al mismo paso que desde la pista y nunca por debajo
+  de lo que tendría el circuito sin altitud;
+- **bajando**, en el viento en cola, por la senda de la final y hasta la altura de
+  costumbre en la esquina de la base (`FormaDelCircuito.enLaBase`). Con la avioneta, el
+  punto cae hacia el través del umbral —a 1.799 m de la esquina en Pedro Juan, con el
+  través a 1.800—, que es donde se empieza a bajar de verdad. La línea lo lleva
+  (`lineaDelCircuito`): se dibuja, y por ella van el tráfico y el banco.
+
+La línea sobre el suelo es la misma: ni un metro más de circuito. El tráfico que se va
+al aire sube a su paso hasta la altitud de su circuito y no se nivela antes a la del
+final de la subida; lo vio `trafico-que-aterriza.test.ts` en Asunción.
+
+**Y donde no cabe, no se fuerza.** Si para bajar a tres grados hay que empezar antes del
+través del centro de la pista, el viento en cola ya no es un tramo a esa altitud. Les
+pasa al JAZ 20 y al JAZ 25 en Encarnación, y a nadie más: la carta dibuja un circuito de
+cinco kilómetros de ancho con ocho de final, el suyo tiene uno y 1.800 m, y habría que
+bajar 197 m en 3.760 de los 4.990 del tramo, después de subirlos a 6,1° desde la punta de
+la pista. Se quedan a 250 m, como estaban.
+
+El techo a partir del cual la instructora da por dejado el circuito, 500 m, sube lo que
+suba el circuito con su altitud: el reactor de Asunción vuela a 466.
+
+### Antes y después
+
+Altura sobre la pista, m, y lado. JAZ 20 y 25 / JAZ 40 / JAZ 50 / JAZ 60 / JAZ 90 / JAZ
+110 / JAZ 120:
+
+| | Lado | Antes | Después | En el altímetro |
+|---|---|---|---|---|
+| SGAS 02 | izquierda → **derecha** | 250 / 276 / 302 / 308 / 332 / 362 / 359 | 375 / 375 / 375 / 375 / 466 / 466 / 466 | 1.500 ft; reactores, 1.800 |
+| SGAS 20 | izquierda | lo mismo | lo mismo | lo mismo |
+| SGES 05 | izquierda | 250 / 276 / 302 / 308 / 332 / 362 / 359 | igual | — |
+| SGES 23 | izquierda → **derecha** | lo mismo | igual | — |
+| SGME 01 | izquierda | 250 / 276 / 302 / 308 / 332 / 362 / 359 | 351 todos | 1.700 ft |
+| SGME 19 | izquierda → **derecha** | lo mismo | 351 todos | 1.700 ft |
+| SGPJ 03 | izquierda | 250 / 276 / 302 / 308 / 332 / 362 / 359 | 344 todos | 3.000 ft |
+| SGPJ 21 | izquierda → **derecha** | lo mismo | 344 todos | 3.000 ft |
+| SGEN 02 | derecha (H91) | 250 / 276 / 302 / 308 / 332 / 362 / 359 | 250 / 447 / 447 / 447 / 447 / 447 / 447 | 2.100 ft; JAZ 20 y 25, no cabe |
+| SGEN 20 | izquierda | lo mismo | lo mismo | lo mismo |
+| LECU 09 | izquierda → **derecha** | 250 / 267 / 302 / 302 / 320 / 348 / 345 | 227 todos | 3.000 ft |
+| LECU 27 | izquierda | 250 / 276 / 302 / 308 / 332 / 362 / 359 | 227 todos | 3.000 ft |
+
+Las otras veinticuatro cabeceras —Yvytu Rape, Concepción, Pilar, Ayolas y las ocho islas—
+dan la misma mano, altura, entrada en final y base que antes con los ocho aviones.
+
+La base baja lo mismo que antes en todos menos en Cuatro Vientos, que ahora va más bajo
+que la costumbre y la tiende: la avioneta, de 8,8–9,2° a 7,5–7,9°; el JAZ 40, de 6,4° a
+4,3–4,7°; el JAZ 50 y el 60, de 4,2–4,8° a 2,0–2,4°; y en el JAZ 110 y el 120 de
+Estigarribia y Pedro Juan, unas décimas.
+
+### Comprobado
+
+`tsc --noEmit -p .` en verde.
+
+En `circuito-terreno.test.ts`, sobre el relieve de verdad y con toda la flota medida: a
+qué punto cardinal cae el circuito de cada campo por las dos cabeceras; que el tráfico y
+quien juega van por el mismo; que el altímetro marca lo de la carta, con la lista cerrada
+de los que no caben; que la línea sobre el suelo y la entrada en final son las de siempre,
+la base baja y nunca más empinada, ningún tramo va más bajo que sin la altitud donde la
+publicada es más alta, y se baja por la senda del centro de la pista en adelante; y que el
+tráfico de Asunción llega a la esquina de allá a 1.500 y a 1.800 y baja por la misma
+línea. Las reglas sueltas, en `circuito-mano.test.ts`; el techo, en
+`la-aproximacion.test.ts`. Y lo que ya había: ningún circuito se mete en el monte, y
+volando la frustrada y el circuito el aviso de terreno no salta donde no saltaba
+(`aproximaciones-sobre-el-relieve.test.ts`, que vuela ahora la línea dibujada).
+
+**En la mesa del arco a final** (`mesa-del-arco.mjs`, el banco tal cual con el modelo y las
+rachas, 40 circuitos por fila y mano), del viento en cola a la puerta de los 500 pies: el
+JAZ 20, el 40, el 50, el 60 y el 90 a la altitud publicada, ni uno a más de 1.000 ft/min y
+ninguno fuera de la senda o del eje —el JAZ 50, 1 de 40 antes por la derecha y 0 ahora—;
+el JAZ 110, de 80, a más de 1.000 ft/min 1 antes y 2 ahora, y fuera ninguno y 1; el JAZ
+120, 16 antes y 11 ahora, y fuera, 37 y 34, que es de antes. La final empieza a la misma
+altura, con diez metros de más como mucho. Para eso el banco
+baja en el viento en cola hasta la altura de la esquina, que es la línea dibujada: sin
+eso, el JAZ 110 la empezaba cuarenta metros alto. Es una prueba, en calma, con cinco
+aviones (`la-puerta-del-reactor.test.mjs`). `la-puerta-del-reactor.test.mjs` da lo mismo
+que antes donde la altitud no se publica.
+
+El vitest entero, en tres partes de 2 GB con dos hilos: `src/world`, 197 ficheros y 4.404
+pruebas en verde (3 saltadas); `src/flight`, 277 y 5.246 (29 saltadas y una pendiente); y
+el resto, 125 y 2.479. Son 599 ficheros y 12.129 pruebas en verde.
+
+### Lo que queda
+
+- **Volarlo.** El navegador lo ocupaba la ronda de cierre. Los comandos:
+
+  ```bash
+  OGA_PUERTO=5686 node scripts/verificar-circuito.mjs pettirossi guarani encarnacion estigarribia pedro-juan cuatro-vientos
+  OGA_PUERTO=5686 node scripts/verificar-vuelo-entero.mjs pettirossi taguato 1 jaz-90
+  OGA_PUERTO=5686 node scripts/verificar-vuelo-entero.mjs pettirossi guyrami 12 jaz-20
+  OGA_PUERTO=5686 node scripts/verificar-vuelo-entero.mjs encarnacion taguato 1 jaz-40
+  OGA_PUERTO=5686 node scripts/verificar-vuelo-entero.mjs estigarribia guyrami 12 jaz-20
+  OGA_PUERTO=5686 node scripts/verificar-vuelo-entero.mjs pedro-juan guyrami 12 jaz-20
+  OGA_PUERTO=5686 node scripts/verificar-vuelo-entero.mjs cuatro-vientos taguato 1 jaz-50
+  OGA_PUERTO=5686 node scripts/verificar-emergencias.mjs radio pettirossi jaz-20 taguato
+  ```
+
+- **El JAZ 50 en Cuatro Vientos, en el banco.** A 227 m la mesa saca de su eje en la puerta
+  a entre 1 y 15 de 24 según el viento, y a 302 a 0 o 1. No es la figura: la base se vuela
+  a nivel y con todos los flaps, el avión va a 69–72 nudos en vez de 77–80, y el banco, que
+  aprende su radio de los instantes con el alerón a fondo, lo aprende al entrar y al salir
+  del viraje y pide luego seis grados de alabeo en la final (`medirElViraje`). Al JAZ 60,
+  al 40 y al 20 no les pasa. Sin tocar: cambia cómo vira el banco en todos los campos.
+- **El viento en cola del circuito norte de Los Rodeos**, «mínimo 1.000 ft AGL»: el juego
+  pasa, en su punto peor, a 541–925 ft del suelo de debajo por la 12 (toda la flota, por
+  el norte) y a 659–922 por la 30 (los reactores). No se ha forzado: es un mínimo de todo el
+  tramo, así que no se puede bajar dentro de él, y en la figura de la avioneta la base
+  caería 18°; y el circuito de los reactores de Los Rodeos es el que calibran la H89 y los
+  bancos. Al JAZ 110 y al 120 les faltan 23–33 m; al JAZ 90, 104; a la avioneta, 137.
+- **La bajada del viento en cola no la dice nadie**: se ve en la raya. La instructora
+  sigue diciendo «girá otra vez y empezá a bajar» en la base, que es donde empieza en los
+  demás campos; una frase en el través pide grabarla.
+- **La figura publicada.** Las cartas de Encarnación, Estigarribia y Pedro Juan dibujan
+  circuitos de cinco kilómetros de ancho con ocho de final, y la de Asunción, de dos con
+  tres: el juego sigue con la suya, que es la que cabe en un vuelo.
+- **Los números de la carta de Asunción** valen para el tráfico y para quien juega, y no
+  para la base de Ñu Guazú, que el juego no tiene.

@@ -13,7 +13,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { Vector3 } from "three";
-import { LaAproximacion, type CampoDeLaAproximacion } from "./la-aproximacion";
+import { LaAproximacion, techoDelCircuito, type CampoDeLaAproximacion } from "./la-aproximacion";
 import type { FlightState } from "./model";
 import { PYKASU } from "./aircraft";
 import { Reparto } from "../hechos";
@@ -291,6 +291,20 @@ describe("el circuito, solo si se vuelve a este campo", () => {
     });
     return { visible: circuito.grupo.visible, tramos };
   }
+
+  /*
+   * **Y el techo sube con la altitud publicada** (ADR 0027, enmienda H92): el
+   * reactor de Asunción vuela a 466 m, y con los quinientos a secas pasarse
+   * treinta y cinco metros era quedarse sin hilo.
+   */
+  it("el techo del circuito es el de siempre, y sube lo que suba el circuito con su altitud", () => {
+    expect(techoDelCircuito({ forma: { mano: "izquierda", altura: 250 } })).toBe(500);
+    // Uno que sube por el terreno, el de siempre: no lo publica nadie.
+    expect(techoDelCircuito({ forma: { mano: "izquierda", altura: 389 } })).toBe(500);
+    expect(
+      techoDelCircuito({ forma: { mano: "derecha", altura: 466, enLaBase: 332 } }),
+    ).toBe(634);
+  });
 
   it("volviendo a casa se dibuja y se canta el tramo", () => {
     const r = volar(false);

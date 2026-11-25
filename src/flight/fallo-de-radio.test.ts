@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, PANAMBI, PYKASU } from "./aircraft";
-import { campoConLamparaY7600, ejercicioPorId, ejerciciosPara } from "./ejercicios";
+import { campoConLamparaY7600, ejercicioPorId, ejerciciosPara, segunElRadar, sinRadarPublicado } from "./ejercicios";
 import {
   ACUSE_EN,
   AlasQueContestan,
@@ -16,15 +16,20 @@ import {
   GOLPES_DE_FAROS,
   hayLampara,
   LA_TORRE_LO_VE,
+  LA_TORRE_SE_DA_CUENTA,
   LamparaSinRadio,
   luzParaQuienNoTieneRadio,
   MARCADO_EN,
+  SIN_RADAR,
   type LoQueVeLaTorre,
 } from "./fallo-de-radio";
 import { FinalDeLaTorre } from "./final-de-la-torre";
 import { loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
 import { Practica, type Lectura, type Suceso } from "./practica";
-import { valeHastaElPasoSiguiente } from "../audio/boca";
+import { ES_PY } from "../i18n/es-PY";
+import { EN } from "../i18n/en";
+import type { TranslationKey } from "../i18n";
+import { esLaPresentacion, valeHastaElPasoSiguiente } from "../audio/boca";
 import { esAfis, sinTorre } from "../world/aerodrome";
 import { lucesDelTrafico } from "../world/luces-del-trafico";
 import { oaciDe, SCENARIOS } from "../world/scenarios";
@@ -81,6 +86,84 @@ describe("la lámpara para quien no tiene radio", () => {
     expect(
       luzParaQuienNoTieneRadio({ ...EN_SU_CIRCUITO, enElAire: false, teDejaAterrizar: true }),
     ).toBeNull();
+  });
+});
+
+describe("donde la torre no tiene radar, la avisa que no contestas y no el código", () => {
+  const SIN = { ...EN_SU_CIRCUITO, conElCodigo: 60 };
+
+  it("con el 7600 puesto hace un minuto, nada hasta que se da cuenta; después, los destellos", () => {
+    expect(luzParaQuienNoTieneRadio({ ...SIN, sinContestar: LA_TORRE_SE_DA_CUENTA - 0.5 })).toBeNull();
+    expect(luzParaQuienNoTieneRadio({ ...SIN, sinContestar: LA_TORRE_SE_DA_CUENTA })).toBe("destellos");
+  });
+
+  it("y sin transpondedor que valga, igual: no le hace falta el código", () => {
+    expect(
+      luzParaQuienNoTieneRadio({ ...SIN, conElCodigo: null, sinContestar: LA_TORRE_SE_DA_CUENTA }),
+    ).toBe("destellos");
+  });
+
+  it("tarda más que con radar, contado desde que se calla la radio", () => {
+    expect(LA_TORRE_SE_DA_CUENTA).toBeGreaterThan(MARCADO_EN + LA_TORRE_LO_VE);
+  });
+
+  it("y todo lo demás, con la misma regla: la roja, la verde, la base y la final, y fuera de su circuito", () => {
+    const sabe = { ...SIN, sinContestar: LA_TORRE_SE_DA_CUENTA + 5 };
+    expect(luzParaQuienNoTieneRadio({ ...sabe, teMandaIrte: true, teDejaAterrizar: true })).toBe("roja");
+    expect(luzParaQuienNoTieneRadio({ ...sabe, teDejaAterrizar: true, enLaBaseOEnLaFinal: true })).toBe("verde");
+    expect(luzParaQuienNoTieneRadio({ ...sabe, enLaBaseOEnLaFinal: true })).toBeNull();
+    expect(luzParaQuienNoTieneRadio({ ...sabe, teCuenta: false })).toBeNull();
+    expect(luzParaQuienNoTieneRadio({ ...sabe, enElAire: false })).toBeNull();
+  });
+
+  it("y con radar, `sinContestar` va a null y manda el código, como siempre", () => {
+    for (const conElCodigo of [null, 0, LA_TORRE_LO_VE - 0.5, LA_TORRE_LO_VE, 60])
+      expect(luzParaQuienNoTieneRadio({ ...EN_SU_CIRCUITO, conElCodigo, sinContestar: null })).toBe(
+        luzParaQuienNoTieneRadio({ ...EN_SU_CIRCUITO, conElCodigo }),
+      );
+  });
+});
+
+describe("y lo que se dice allí", () => {
+  const DEL_EJERCICIO = (Object.keys(ES_PY) as TranslationKey[]).filter((k) =>
+    /^ejercicio\.(?:radio|fallo-de-radio)\./.test(k),
+  );
+  const VARIANTES = Object.values(SIN_RADAR);
+
+  it("son tres, en los dos idiomas, y ninguna dice que el número se lo diga a la torre", () => {
+    expect(VARIANTES).toHaveLength(3);
+    for (const k of VARIANTES) {
+      expect(ES_PY[k], k).toBeTruthy();
+      expect(EN[k], k).toBeTruthy();
+      expect(ES_PY[k], k).not.toMatch(/(?:se lo dice|se lo dijo) a la torre|ya sabe/);
+      expect(EN[k], k).not.toMatch(/tells the tower|told the tower/);
+    }
+    // Y las que sí lo dicen, que son las de siempre, tienen todas su variante.
+    for (const k of DEL_EJERCICIO)
+      if (/(?:se lo dice|se lo dijo) a la torre|la torre ya sabe/.test(ES_PY[k])) expect(SIN_RADAR[k], k).toBeDefined();
+  });
+
+  it("de las que cambian, el 7600 se marca igual y la razón es que no se contesta", () => {
+    expect(ES_PY["ejercicio.radio.calladaSinRadar"]).toMatch(/marco siete seis cero cero/);
+    expect(ES_PY["ejercicio.radio.calladaSinRadar"]).toMatch(/no contestamos/);
+  });
+
+  it("en Encarnación, esas; en todos los demás campos, las de siempre", () => {
+    const sin = SCENARIOS.filter((e) => sinRadarPublicado(oaciDe(e))).map((e) => oaciDe(e));
+    expect(sin).toEqual(["SGEN"]);
+    for (const e of SCENARIOS) {
+      const oaci = oaciDe(e);
+      for (const k of DEL_EJERCICIO)
+        expect(segunElRadar(k, oaci), `${k} ${oaci ?? e.id}`).toBe(oaci === "SGEN" ? (SIN_RADAR[k] ?? k) : k);
+    }
+    expect(sinRadarPublicado(null)).toBe(false);
+  });
+
+  it("la presentación sigue siendo la presentación, y la radio callada, un paso que dura", () => {
+    expect(esLaPresentacion("ejercicio.fallo-de-radio.antes")).toBe(true);
+    expect(esLaPresentacion("ejercicio.fallo-de-radio.antesSinRadar")).toBe(true);
+    expect(esLaPresentacion("ejercicio.radio.calladaSinRadar")).toBe(false);
+    expect(valeHastaElPasoSiguiente("ejercicio.radio.calladaSinRadar")).toBe(true);
   });
 });
 
@@ -182,7 +265,7 @@ describe("los faros que contestan de noche", () => {
 
 describe("dónde y con qué se ofrece", () => {
   it("en las avionetas de pistón, de Taguató para arriba, y en un campo con torre de España o de Paraguay", () => {
-    for (const oaci of ["GCXO", "GCLP", "SGAS", "SGES"]) {
+    for (const oaci of ["GCXO", "GCLP", "SGAS", "SGES", "SGEN"]) {
       expect(campoConLamparaY7600(oaci), oaci).toBe(true);
       for (const peldano of ["taguato", "taguato-ruvicha"] as const)
         for (const a of [PYKASU, PANAMBI])
@@ -194,10 +277,14 @@ describe("dónde y con qué se ofrece", () => {
     }
   });
 
-  it("en Paraguay, los de torre con radar publicado, y ninguno más: Encarnación no lo tiene, y los demás son AFIS, sin servicio o privados", () => {
+  it("en Paraguay, los tres que tienen torre, y ninguno más: los demás son AFIS, sin servicio o privados", () => {
     const abiertos = SCENARIOS.filter((e) => e.pais === "py" && campoConLamparaY7600(oaciDe(e))).map((e) => oaciDe(e));
-    expect([...abiertos].sort()).toEqual(["SGAS", "SGES"]);
-    expect(campoConLamparaY7600("SGEN")).toBe(false);
+    expect([...abiertos].sort()).toEqual(["SGAS", "SGEN", "SGES"]);
+  });
+
+  it("en España, los de siempre: los que tienen torre, y todos con vigilancia publicada (AIP, ENR 1.6-22 a 1.6-24)", () => {
+    const abiertos = SCENARIOS.filter((e) => e.pais === "es" && campoConLamparaY7600(oaciDe(e))).map((e) => oaciDe(e));
+    expect([...abiertos].sort()).toEqual(["GCFV", "GCHI", "GCLA", "GCLP", "GCRR", "GCTS", "GCXO", "LECU"]);
   });
 
   it("y los inventados, nunca: sin aeródromo no hay torre, ni país del que leer la norma", () => {

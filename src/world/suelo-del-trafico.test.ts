@@ -54,8 +54,7 @@ describe("el tráfico rueda por las calles, nunca por la hierba", () => {
     const aero = esc.aerodrome as Aerodrome;
     const ancho = aero.runways[0]?.widthM ?? 45;
     const suelo = sueloDelTrafico(aero, esc.runway, ancho);
-    const sobreElAsfalto = (p: EnElPlano) =>
-      enElPavimento(aero, [p.x, -p.z], HOLGURA);
+    const sobreElAsfalto = (p: EnElPlano) => enElPavimento(aero, [p.x, -p.z], HOLGURA);
 
     it(`${esc.id}: el que aterriza sale por una calle y rueda por asfalto hasta un puesto`, () => {
       expect(suelo, esc.id).not.toBeNull();

@@ -35,7 +35,7 @@ import {
   virajesCerrados,
   type Sitio,
 } from "./trafico";
-import { formaDelCircuito, manoPublicada } from "./circuito";
+import { formaDelCircuito, loPublicado } from "./circuito";
 import { relieveDe } from "./relieve-en-disco";
 import { SCENARIOS, conViento } from "./scenarios";
 import { TIEMPO_DE_CASA } from "./meteo";
@@ -138,8 +138,8 @@ describe("en Los Rodeos, con el campo llenándose, nadie corre por la pista haci
       const across = (x: number, z: number) => (x - ux) * Math.cos(h) + (z - uz) * Math.sin(h);
       const t = crearTrafico(pista, cota, "ala-alta", "izquierda", 1, undefined, {
         tipos: tiposDelCampo(aero.id, pista.length),
-        forma: (escala) =>
-          formaDelCircuito(pista, cota, suelo, escala, manoPublicada(esc, cabeceraEnUso(esc), escala)),
+        forma: (escala, reactor) =>
+          formaDelCircuito(pista, cota, suelo, escala, loPublicado(esc, cabeceraEnUso(esc), escala, reactor)),
         tierra: () => (calles ? { suelo: calles, alto: suelo } : null),
       });
       const matriculas = ["EC-TIX", "EC-HWR", "EC-RTI", "EC-KRV", "EC-ABC", "EC-ESB", "EC-FYY", "EC-LMN"];
@@ -191,9 +191,11 @@ describe("en Los Rodeos, con el campo llenándose, nadie corre por la pista haci
        * Lo que retrocede, sin salir aún de la franja, quien coge casi parado una
        * salida trazada para la otra cabecera —la E4 por la 30, la de los 1.598 m
        * por la 12—, y nada más: 95 m medidos por la 30. Remontando hasta la
-       * de 590 m eran 1.144.
+       * de 590 m eran 1.144. Y por la 12, la avioneta que para en la de 590 m, 128:
+       * antes no llegaba a verse, que se iba al aire en la decisión con el de
+       * delante a un segundo de dejar la pista (H96).
        */
-      expect(remonto, dondeRemonto).toBeLessThan(120);
+      expect(remonto, dondeRemonto).toBeLessThan(140);
       expect(peor, donde).toBeLessThanOrEqual(REMONTA_A + 0.25);
     });
   }

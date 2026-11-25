@@ -37,7 +37,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, MEDIDOS } from "../flight/aircraft";
+import { AIRCRAFT, MEDIDOS, propulsionDe } from "../flight/aircraft";
 import {
   MILLA,
   PIE,
@@ -60,7 +60,8 @@ import { desplazarAerodromo } from "./aerodromo-desplazado";
 import {
   escalaDelCircuitoDe,
   formaDelCircuito,
-  manoPublicada,
+  lineaDelCircuito,
+  loPublicado,
   verticesDelCircuito,
 } from "./circuito";
 import { dondeCae } from "./entre-aerodromos";
@@ -419,10 +420,14 @@ function vueloDelCircuito(
     c.cota,
     suelo,
     escala,
-    manoPublicada(e, c.nombre, escala),
+    loPublicado(e, c.nombre, escala, propulsionDe(avion) === "chorro"),
     avion.velocidadDeCircuito,
   );
-  const v = verticesDelCircuito(pista, c.cota, forma.mano, escala, forma.altura);
+  // Por la línea que se dibuja, con la bajada del viento en cola donde la hay.
+  const v = lineaDelCircuito(
+    verticesDelCircuito(pista, c.cota, forma.mano, escala, forma.altura, forma.enLaBase),
+    pista.senda,
+  );
   const puntos = [{ ...v[0]!, y: c.cota + 60 }, ...v.slice(1), { x: c.x, y: c.cota, z: c.z }];
   const fijos = puntos.map(
     (p, i): Fijo => ({ x: p.x, z: p.z, nombre: `C${i}`, papel: "ruta", minima: null }),
@@ -441,7 +446,7 @@ function vueloDelCircuito(
   };
   return {
     vuelo: volar(r, altitud, avion.velocidadDeCircuito),
-    baseDesde: r.total - r.acumulado[3]!,
+    baseDesde: r.total - r.acumulado[v.length - 2]!,
   };
 }
 
@@ -501,10 +506,17 @@ function frustrada(
       c.cota,
       suelo,
       escala,
-      manoPublicada(e, c.nombre, escala),
+      loPublicado(e, c.nombre, escala, propulsionDe(avion) === "chorro"),
       avion.velocidadDeCircuito,
     );
-    const v = verticesDelCircuito(pista, c.cota, forma.mano, escala, forma.altura);
+    const v = verticesDelCircuito(
+      pista,
+      c.cota,
+      forma.mano,
+      escala,
+      forma.altura,
+      forma.enLaBase,
+    );
     const fin = v[1]!;
     const hasta = Math.hypot(fin.x - c.x, fin.z - c.z);
     const decision = c.cota + 60;

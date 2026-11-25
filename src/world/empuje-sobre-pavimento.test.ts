@@ -203,7 +203,7 @@ describe("la plataforma de la T4 de Barajas", () => {
     const conDeducidas = new Map(
       campos.filter((c) => c.aerodrome?.plataformasDeducidas?.length).map((c) => [c.aerodrome!.id, c.aerodrome!]),
     );
-    expect([...conDeducidas.keys()].sort()).toEqual(["GCTS", "GCXO", "LEMD", "SGAS"]);
+    expect([...conDeducidas.keys()].sort()).toEqual(["GCFV", "GCTS", "GCXO", "LEMD", "SGAS"]);
     for (const [id, campo] of conDeducidas)
       for (const d of campo.plataformasDeducidas!) {
         // De la carta, o, el abocinado de la L de Pettirossi, sin ella, y lo dice.

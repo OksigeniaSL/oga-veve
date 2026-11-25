@@ -88,6 +88,18 @@ export const ALTO_PARA_EL_CIRCUITO = 60;
 const TECHO_DEL_CIRCUITO = ALTURA_DE_CIRCUITO * 2;
 
 /**
+ * El techo de este circuito, m sobre la pista: el de siempre, y donde el AIP
+ * publica una altura por encima de la de costumbre, **lo que haya subido el
+ * circuito con ella**. El reactor de Asunción vuela a 466 m: con los quinientos
+ * a secas, quien se pasara treinta metros en el viento en cola se quedaba sin
+ * hilo y sin tramos. Ver `FormaDelCircuito`.
+ */
+export function techoDelCircuito(c: Pick<Circuito, "forma">): number {
+  const { altura, enLaBase } = c.forma;
+  return TECHO_DEL_CIRCUITO + (enLaBase === undefined ? 0 : altura - enLaBase);
+}
+
+/**
  * El campo al que se viene, tal y como lo necesita la aproximación.
  *
  * **Se pregunta en cada paso y no se guarda**, que era el fallo. Esta pieza
@@ -919,7 +931,7 @@ export class LaAproximacion {
       preparando ||
       (enElAire &&
         alto >= ALTO_PARA_EL_CIRCUITO &&
-        alto <= TECHO_DEL_CIRCUITO &&
+        alto <= techoDelCircuito(c) &&
         !enLlegada);
     if (!enElAire) {
       // En tierra se olvida lo dicho, que la vuelta siguiente empieza de cero.
@@ -940,7 +952,7 @@ export class LaAproximacion {
     if (alto < ALTO_PARA_EL_CIRCUITO) return;
     // Ni por encima del techo: eso ya no es volar el circuito, es irse. Ver
     // `TECHO_DEL_CIRCUITO`.
-    if (alto > TECHO_DEL_CIRCUITO) return;
+    if (alto > techoDelCircuito(c)) return;
     const tramo = c.tramoEn(s.position.x, s.position.z);
     // Volando el circuito es exactamente esto: a su altura, cerca de un tramo
     // y sin estar ya en la llegada. Ver `enElCircuito`.

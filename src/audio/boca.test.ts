@@ -25,7 +25,7 @@ import {
   SILENCIO,
 } from "./boca";
 import { CADUCA_LA_MEGAFONIA, caducaAlApagar, cierraElVuelo, cuentaLaSena } from "./turnos";
-import { esLaInformacionDeTrafico } from "./torre";
+import { esDeAntesDeRodar, esLaInformacionDeTrafico } from "./torre";
 
 let reloj = 0;
 let cortes = 0;
@@ -701,6 +701,9 @@ describe("y la megafonía va por el mismo turno", () => {
       "ejercicio.ave.adelante",
       "ejercicio.ave.aguanta",
       "ejercicio.ave.noAguanta",
+      // El fallo de radio donde la torre no tiene radar (H91), como el de siempre.
+      "ejercicio.fallo-de-radio.antesSinRadar",
+      "ejercicio.radio.calladaSinRadar",
     ]) {
       expect(valeHastaElPasoSiguiente(c), c).toBe(true);
       expect(cuantoAguanta(c, "normal"), c).toBe(Infinity);
@@ -1328,6 +1331,27 @@ describe("tu autorización no se pierde esperando turno", () => {
     expect(b.espera("vuelo.rapido")).toBe(false);
     acabar["terreno"]!();
     expect(dicho.at(-1)).toBe("tuya");
+  });
+
+  /*
+   * El planeo del JAZ 90 (H90, ronda de la tanda 26): con la ruta, «podés
+   * aterrizar» y «cleared to land» pedidas antes, el «roger MAYDAY» sonaba el
+   * último o se quedaba en la cola al tocar.
+   */
+  it("y la respuesta a una emergencia pasa delante de lo demás que es para ti", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("urgente", frase("sin motor"), "vuelo.sinMotor");
+    b.pedir("mando", frase("ruta"), "torre.canario.destino@echo-destino.tenerife-norte");
+    b.pedir("mando", frase("tuya"), TUYA);
+    b.pedir("mando", frase("mayday"), "torre.canario.mayday@fonetico.echo");
+    acabar["sin motor"]!();
+    expect(dicho.at(-1)).toBe("mayday");
+    // Y en el aire la ruta ya no vale: lo siguiente es la pista.
+    b.retirar((c) => esDeAntesDeRodar(c));
+    acabar["mayday"]!();
+    expect(dicho.at(-1)).toBe("tuya");
+    expect(dicho).not.toContain("ruta");
   });
 
   it("y la retira solo quien sabe que ya no vale", () => {

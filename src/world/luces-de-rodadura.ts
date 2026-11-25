@@ -178,7 +178,8 @@ export function crearLucesDeRodadura(
 export function dondeVanLasLuces(aero: Aerodrome): [Punto, number][] {
   const puestas: [Punto, number][] = [];
   for (const calle of aero.taxiways) {
-    if (calle.path.length < 2) continue;
+    // Ni a la que es solo una raya en la losa: ver `soloPintada` en `aerodrome.ts`.
+    if (calle.path.length < 2 || calle.soloPintada) continue;
     for (const p of bordesDe(calle.path, calle.widthM ?? ANCHO_POR_DEFECTO)) {
       puestas.push([p, AZUL]);
     }

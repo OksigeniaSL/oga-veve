@@ -208,7 +208,8 @@ import { cabinaDelGps } from "./gps-con-apagones";
 import { monteDelCampo, subidaDe } from "./pista-corta";
 import { conV1 } from "./decide-con-v1";
 import { centradoDeSuTipo } from "./centrado";
-import { hayLampara } from "./fallo-de-radio";
+import { hayLampara, SIN_RADAR } from "./fallo-de-radio";
+import type { TranslationKey } from "../i18n";
 import { oaciDe, SCENARIOS, type Scenario } from "../world/scenarios";
 
 export type EjercicioId =
@@ -1198,7 +1199,8 @@ export const EJERCICIOS: readonly Ejercicio[] = [
   },
   /*
    * **El fallo de radio** (#90, #83, H71): subiendo, la radio se calla. La
-   * instructora marca el 7600, que se lo dice a la torre; se vuelve al
+   * instructora marca el 7600, que se lo dice a la torre donde la torre tiene
+   * radar (`sinRadarPublicado`); se vuelve al
    * circuito mirando a la torre, que contesta con su lámpara —los destellos
    * verdes, «regresar para aterrizar», que se contestan alabeando; la roja fija
    * si hay que ceder el paso; la verde fija para aterrizar—, y se aterriza con
@@ -1230,7 +1232,7 @@ export const EJERCICIOS: readonly Ejercicio[] = [
      */
     averias: [{ que: "radio", cuando: { en: "subida", metros: 400 * 0.3048 } }],
     ensena:
-      "sin radio, el 7600 en el transpondedor se lo dice a la torre; se vuelve al circuito mirando a la torre, que habla con luces: los destellos verdes, regresar para aterrizar, que se contestan alabeando; la roja fija, ceder el paso y seguir en el circuito; y la verde fija, aterrizar",
+      "sin radio, el 7600 en el transpondedor, que se lo dice a la torre que tenga radar; la que no, se da cuenta porque no se contesta y porque ve llegar al avión; se vuelve al circuito mirando a la torre, que habla con luces: los destellos verdes, regresar para aterrizar, que se contestan alabeando; la roja fija, ceder el paso y seguir en el circuito; y la verde fija, aterrizar",
   },
   /*
    * **El reventón en la carrera** (#90): casi a V1, una rueda principal
@@ -1329,12 +1331,31 @@ const NORMA_LEIDA: ReadonlySet<Scenario["pais"]> = new Set<Scenario["pais"]>(["e
 
 /**
  * **Los que tienen torre y ningún radar publicado que los vea** abajo, en el
- * circuito (AIP Paraguay, ENR 1.6 y AD 2): Encarnación. El 7600 se marca
- * igual, que lo manda la norma, pero las dos frases del ejercicio dicen que el
- * número se lo dice a la torre, y allí nada publicado lo respalda. Se abre
- * cuando haya una que sea verdad en ese campo (H86).
+ * circuito: Encarnación (AIP Paraguay, AMDT AIRAC 02/2026: ENR 1.6, ENR 2.2-4
+ * y AD 2.5). Su torre no publica sistema de vigilancia, y el único que alcanza
+ * hasta allí en el papel, el del centro de control de Asunción, con 250
+ * millas, está a 150: por la curvatura de la Tierra no baja de unos diez mil
+ * pies. Los de España con torre lo publican todos (AIP España, ENR 1.6-22 a
+ * 1.6-24), y Asunción y Minga Guazú también. Ver el ADR 0014, enmienda H91.
  */
 const SIN_RADAR_PUBLICADO: ReadonlySet<string> = new Set(["SGEN"]);
+
+/**
+ * **Si la torre de este campo no tiene radar publicado**: el 7600 se marca
+ * igual, que lo manda la norma y lo ve quien tenga al avión en su pantalla,
+ * pero no es él quien se lo dice a esa torre. Se da cuenta porque no se le
+ * contesta y porque ve volver al avión —vigila mirando: DINAC R 4444,
+ * 7.1.1.2—. Cambian tres frases (`segunElRadar`) y lo que tarda la lámpara en
+ * encenderse (`LA_TORRE_SE_DA_CUENTA`, en `fallo-de-radio.ts`).
+ */
+export function sinRadarPublicado(oaci: string | null): boolean {
+  return oaci !== null && SIN_RADAR_PUBLICADO.has(oaci);
+}
+
+/** La frase del fallo de radio para este campo: la de siempre, o la de donde no hay radar. Ver `SIN_RADAR`. */
+export function segunElRadar(clave: TranslationKey, oaci: string | null): TranslationKey {
+  return sinRadarPublicado(oaci) ? (SIN_RADAR[clave] ?? clave) : clave;
+}
 
 /**
  * **Si en este campo se practica el fallo de radio**: con torre de verdad
@@ -1342,10 +1363,11 @@ const SIN_RADAR_PUBLICADO: ReadonlySet<string> = new Set(["SGEN"]);
  * La lámpara no hace falta buscarla campo a campo: donde hay torre, la hay
  * (en Paraguay lo manda el R 14, volumen I, 5.1.3.1). En un AFIS no, aunque
  * tenga pistola de luces: allí la verde fija no autoriza, dice que la pista
- * está libre (R 11, apéndice 9, 11.1).
+ * está libre (R 11, apéndice 9, 11.1). Con radar o sin él (H91): ver
+ * `sinRadarPublicado`.
  */
 export function campoConLamparaY7600(oaci: string | null): boolean {
-  if (!oaci || SIN_RADAR_PUBLICADO.has(oaci)) return false;
+  if (!oaci) return false;
   const esc = SCENARIOS.find((e) => oaciDe(e) === oaci);
   return !!esc && NORMA_LEIDA.has(esc.pais) && hayLampara(esc.aerodrome);
 }

@@ -1580,7 +1580,8 @@ export class Mapa {
       g.lineCap = "round";
       g.lineJoin = "round";
       for (const calle of aero.taxiways ?? []) {
-        if (calle.path.length < 2) continue;
+        // La que es solo una raya en la losa no tiene asfalto: su eje, abajo, y nada más.
+        if (calle.path.length < 2 || calle.soloPintada) continue;
         g.lineWidth = Math.max(2, (calle.widthM ?? 23) * escala);
         g.beginPath();
         calle.path.forEach((p, i) => {

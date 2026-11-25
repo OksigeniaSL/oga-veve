@@ -2703,7 +2703,7 @@ el 17, el 23 y el 27, y el 21B, el 21C y el 22B, que son de ATR 72. Hecho en la 
 norte desde su nacimiento, y la ruta no tiene recta de la que tirar.
 
 **Las llegadas del tráfico** eligen el puesto por cercanía y después van por sus calles: el turbohélice que deja la 01 por la E6
-va al 35B, 989 m por la L1 y la A1, con el 36 a doscientos por la T3.
+va al 35B, 989 m por la L1 y la A1, con el 36 a doscientos por la T3. Hecho en la H95.
 
 **Los puestos de helicóptero**, del H1 al H8, no se leen: la carta no les da salida. Y las restricciones por tipo de la L5, la A5,
 la E3, la E4, la E7 y la E8.
@@ -2866,7 +2866,7 @@ tabla no lo da por puestos y el plan no lo usa. Hecho en la H88.
 pared no alcanza (punto 2) y las llegadas, que siguen midiendo las alas alrededor de la rueda de morro.
 
 **La avioneta y el bimotor del tráfico en La Palma** salen del 5 y llegan a él por la 36, que es de pasarela: no tienen plataforma de
-aviación general en la carta. Era así.
+aviación general en la carta. Era así. Hecho en la H95.
 
 ## Enmienda (24-11-2026, H88): Tenerife Sur, la plataforma entera y el APROAR que publica
 
@@ -2905,7 +2905,7 @@ AD 2-GCTS (AIRAC AMDT 10/26, WEF 29-OCT-26), leída entera:
   «**Pushbacks on parking stands R19, G20, AG21, and J22 shall be performed nosing to THR 25**», los cuatro que la tabla da al E.
 - **Por pista**: es eso, el umbral en uso. **Por puesto**: los cuatro; y los pares incompatibles a la vez —J1 y G2, G9 y G10, G10 y
   H37—, que son de dos aviones maniobrando. **Por envergadura** no hay ninguna del APROAR; de rodaje, la U1, la U2 y la
-  U3 de la aviación general, 22 m, que en la ficha no son calles.
+  U3 de la aviación general, 22 m, que en la ficha no son calles (desde la H97, sí).
 - **20.3.3, rodaje**: la D1 —al entrar dejando la 25 por la B1 o la B2, y al salir a la 07—, la B1 y la B6, hasta la letra D, que son 52 m: el
   JAZ 110 y el JAZ 120 no caben. La B2, al entrar en pista, 51 m de envergadura y 50 de largo, y «runway exit without restrictions»; y la
   B5, por tipo, A340-600 y B777-300.
@@ -2995,15 +2995,16 @@ E63: son las cuatro filas que cambian de las 418 de `puesto-de-salida-de-cada-ca
 
 **«Through the first available apron gate»**: el plan rueda por la calle de plataforma hasta la D1 o la D6 y baja ahí, y el AIP manda
 bajar por la primera puerta que se encuentra. Miden casi lo mismo, que la T va en paralelo; pide que la ruta de salida sepa de puertas.
+Hecho en la H95.
 
 **«Leaving apron gates D free» es aquí no pasar por ellas**. Un avión parado en la calle de plataforma delante de la boca de una, como
 el J1 por la 07 ante la D5, sigue pareciendo bien: el tractor no sabe de cuánto más empujar para no taparla.
 
 **Los de salida autónoma**, la segunda línea, del E49 al E70: en el AIP entran de la T de frente y salen hacia delante, por la calle de
-plataforma y hacia el umbral en uso; las avionetas del juego salen de ellos a la T, como antes.
+plataforma y hacia el umbral en uso; las avionetas del juego salen de ellos a la T, como antes. Hecho en la H95.
 
 **La B2 de entrada y la B5**, ver «Lo que publica la casilla 20.3». **Dos maniobras a la vez** en el J1 y el G2, el
-G9 y el G10, y el G10 y el H37: el tráfico y quien juega no se esperan por eso.
+G9 y el G10, y el G10 y el H37: el tráfico y quien juega no se esperan por eso. Hecho en la H97.
 
 **El R40 y el H47** están pintados y no están en la carta: sin salida publicada no llevan APROAR ni tractor.
 
@@ -3024,6 +3025,322 @@ es el del combustible; y vigilado cada quinto de segundo en el aire, con una com
 llegó a volar. A mano lleva una tecla que no hace nada: la «i» era también el primer gesto de la página, el que despierta el
 audio y baja el pack de voz.
 
+## Enmienda (25-11-2026, H95): por la primera puerta, la segunda línea por delante, y a qué puesto va el que llega
+
+### El caso
+
+Lo que dejaron la H85, la H87 y la H88. En Tenerife Sur la salida rodaba por dentro de la plataforma hasta la D1 o la D6, y el AIP
+manda dejarla por la primera puerta que se encuentra; de la segunda línea, que entra de la T y sale hacia delante, las avionetas del
+juego salían dando la vuelta, a la T. El tráfico que llega elegía el puesto entre los ocho más cercanos en línea recta, por lo corto, y
+después iba por las calles publicadas. Y la avioneta y el bimotor de La Palma salían de un puesto de pasarela.
+
+### Lo que publica el AIP, leído otra vez el 25-11-2026
+
+Los AD 2 y las PDC de los dos, bajados otra vez de ENAIRE: los AD 2, iguales byte a byte a los del 24.
+
+- **AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26), salidas**: «After push-back or autonomous departure, aircraft shall
+  proceed to the threshold in use through the **first available apron gate**, unless there are operational or safety reasons to the
+  contrary (compliance with CTOT, improvements to the take-off sequence, request for opposite runway, inner apron taxiway occupied due
+  to push-backs or aircraft, etc.)». Y la letra B: «Autonomous exits (…) **Departure shall be performed nosing to the threshold in use**
+  may be modified if there are operational or safety reasons to the contrary».
+- **20.3.2.2, llegadas**: «All fixed-wing aircraft shall always access the apron or parking stand with "FOLLOW ME" vehicle guidance, from
+  the **appropriate apron gate** for PRKG R19 to G48, and from the **parking stand centre line** for PRKG E49 to E70». De los primeros no
+  dice cuál, y se entra por la que menos se rueda, como hasta aquí.
+- **PDC 1.1 (WEF 11-JUN-26)**: la segunda línea, dibujada de la T a la parada. **PDC 1.3 (WEF 16-APR-26)**: del E49 al E70, salida «A».
+- **AD 2-GCLA (AIRAC AMDT 09/26, WEF 01-OCT-26) y PDC 1.1 y 1.2**: **no publican dónde aparca la aviación general**. La casilla 2 la
+  restringe a pedir permiso con 24 h; la PDC 1.2 da diecinueve puestos y ninguno como de aviación general: catorce
+  de retroceso, tres de ellos con pasarela en la foto (H87); dos de salida autónoma, el 12 y el 14; y tres de helicóptero.
+
+### Decisión
+
+1. **La primera puerta es una regla, y no una tabla** (`aipPuestos.primeraPuerta`, la calle y las seis puertas; `porLaPrimeraPuerta` en
+   `rodaje.ts`). La ruta se traza como siempre; si rodando por la INNER se salta una puerta que le quedaba por delante, se traza otra vez con
+   las demás encarecidas (`grafoPorSusCalles`, H85). Que le quede por delante es que su ramal empiece a más de 32 m de donde la línea del puesto
+   cruza la calle, los de la H79: a menos, el tractor deja el avión con el morro en la boca. Y «available»: la de letra D no le cabe a los dos
+   grandes (H88), y si por la primera hay un avión parado y por la otra no, por la otra.
+2. **Es la misma en todas partes**: el plan, por su raya, por su APROAR o por sus medios; el tráfico; y la raya recalculada, que sigue por
+   la puerta que llevaba si no se la ha pasado, y si no, por la primera que le quede. Sin eso, empujado del J8, que va a la D2, al recalcular saltaría a la D3.
+3. **La segunda línea, por delante** (`saleDeFrente`): los veintidós llevan `salePor: ["INNER"]` y `llegaPor` la T. Se sale recto por la
+   prolongación de la raya hasta la calle —la recta del puesto de la H60c, andada hacia delante— y se tuerce hacia el umbral en uso; por sus medios, la puerta vale desde veinte metros por delante, y del E64 por la 25 se toma la D2. Se llega
+   de la T por la raya (H85). Y quien se aparta de la raya antes de llegar a la INNER sigue hacia delante, y no a la T, que le queda a la espalda.
+4. **El puesto del que llega, por lo que se rueda** (`alQueMenosSeRueda`): elegida la salida de pista como antes, entre los suyos que en
+   línea recta quedan a menos de lo que se rueda hasta el elegido, que son los únicos que pueden ganarle, y por las calles de la
+   casilla 20 donde las hay. Ni por encima de nadie, ni recortado, ni a uno de contacto sin raya —el N11 de Gran Canaria—, si el elegido no lo era; y al
+   reactor, los que admiten su ala.
+5. **La raya pintada es pavimento** aunque el dibujo le deje una rendija (H76): en Fuerteventura, de nueve a once metros y medio entre la T y la
+   plataforma, y por ella el tráfico no llegaba por la T a ninguno del 31 al 47. En la ortofoto es asfalto seguido.
+6. **La avioneta y el bimotor, mejor sin pasarela** (`mejorNoDe`), donde se sabe cuáles la tienen y la carta no da una plataforma de aviación
+   general: entre los que tienen a mano, uno de la carta que los admita y no la tenga. En La Palma, el 7; en Los Rodeos, donde pasaba lo mismo con
+   el 13 y el 25, el 15 y el 26. En la T4 de Barajas los que tienen a mano son todos de pasarela, y siguen: buscarles uno lejos los mandaba a rodar cuatro kilómetros.
+7. **El pavimento con cajas, también con margen** (`enElPavimentoDe`): casi todo lo que costaba elegir la llegada del tráfico era preguntar por
+   el asfalto cada cinco metros contra todas las calles.
+
+### Metros y calles, puesto a puesto
+
+La puerta y los metros hasta la doble raya, antes —82b20507— y ahora. Los de retroceso, con los reactores que caben:
+
+| Puesto | JAZ 90, 07 | JAZ 90, 25 | JAZ 110 y 120, 07 | JAZ 110 y 120, 25 |
+|---|---|---|---|---|
+| G48 | D1, 818 | D6, 2.796 → **D2, 2.806** | — | — |
+| R47 | D1, 870 | D6, 2.802 → **D2, 2.812** | D1, 1.087 | D6, 2.902 → **D2, 2.913** |
+| H46 | D1, 882 | D6, 2.762 → **D2, 2.772** | — | — |
+| S41 | D1, 1.063 | D6, 2.681 → **D3, 2.692** | D2, 1.298 | D6, 2.781 → **D3, 2.793** |
+| R45 | D1, 934 | D6, 2.721 → **D3, 2.732** | D1, 1.150 | D6, 2.821 → **D3, 2.833** |
+| H44 | D1, 936 | D6, 2.706 → **D3, 2.717** | — | — |
+| H43 | D1, 999 | D6, 2.652 → **D3, 2.664** | — | — |
+| R42 | D1, 1.008 | D6, 2.651 → **D3, 2.662** | D2, 1.244 | D6, 2.751 → **D3, 2.763** |
+| H39 | D1, 1.047 → **D2, 1.066** | D6, 2.587 → **D3, 2.599** | — | — |
+| H38 | D1, 1.105 → **D2, 1.124** | D6, 2.535 → **D3, 2.546** | — | — |
+| H37 | D1, 1.162 → **D2, 1.181** | D6, 2.478 → **D3, 2.490** | — | — |
+| G10 | D1, 1.197 → **D2, 1.216** | D6, 2.426 → **D4, 2.431** | — | — |
+| G9 | D1, 1.237 → **D2, 1.256** | D6, 2.385 → **D4, 2.391** | — | — |
+| J8 | D1, 1.310 → **D2, 1.329** | D6, 2.367 → **D4, 2.373** | D2, 1.546 | D6, 2.468 → **D4, 2.473** |
+| J7 | D1, 1.408 → **D3, 1.428** | D6, 2.250 → **D4, 2.256** | D2, 1.643 → **D3, 1.645** | D6, 2.351 → **D4, 2.356** |
+| G6 | D1, 1.461 → **D3, 1.482** | D6, 2.193 → **D5, 2.197** | — | — |
+| J5 | D1, 1.520 → **D3, 1.541** | D6, 2.142 → **D5, 2.146** | D2, 1.756 → **D3, 1.757** | D6, 2.242 → **D5, 2.246** |
+| R5A | D1, 1.474 → **D3, 1.494** | D6, 2.235 → **D5, 2.239** | D2, 1.709 → **D3, 1.711** | D6, 2.335 → **D5, 2.339** |
+| G4 | D1, 1.568 → **D4, 1.585** | D6, 2.076 → **D5, 2.080** | — | — |
+| J3 | D1, 1.633 → **D4, 1.649** | D6, 2.028 → **D5, 2.032** | D4, 1.866 | D6, 2.128 → **D5, 2.132** |
+| G2 | D1, 1.684 → **D4, 1.700** | D6, 1.965 | — | — |
+| J1 | D1, 1.726 → **D4, 1.742** | D6, 1.965 | D4, 1.958 | D6, 2.065 |
+| G25 | D1, 1.801 → **D5, 1.822** | D6, 1.842 | — | — |
+| J24 | D1, 1.859 → **D5, 1.880** | D6, 1.788 | D4, 2.091 → **D5, 2.097** | D6, 1.889 |
+| G23 | D1, 1.927 → **D5, 1.949** | D6, 1.720 | — | — |
+| J22 | D6, 2.137 | D6, 1.663 | D6, 2.353 | D6, 1.763 |
+| AG21 | D6, 2.086 | D6, 1.612 | — | — |
+| R19 | D6, 2.208 | D6, 1.734 | D6, 2.424 | D6, 1.835 |
+| G20 | D6, 2.177 | D6, 1.703 | — | — |
+
+De los 110, cambian de puerta **63**; se ruedan de 0 a 22 m más, 6 de media. Los cuatro del este, con el morro a la 25 por las dos
+cabeceras, bajan por la D6, que les queda delante. La segunda línea —«T» es salir hacia atrás, a la paralela—:
+
+| Puesto | JAZ 20 a 50, 07 | 25 | JAZ 60, 07 | 25 |
+|---|---|---|---|---|
+| E70 | T, 466 → **D1, 597** | T, 1.662 → **D2, 1.739** | T, 476 → **D1, 597** | T, 2.063 → **D2, 2.139** |
+| E69 | T, 427 → **D1, 637** | T, 1.623 → **D2, 1.699** | T, 512 → **D1, 637** | T, 2.023 → **D2, 2.100** |
+| E68 | T, 327 → **D1, 677** | T, 1.523 → **D2, 1.659** | T, 561 → **D1, 677** | T, 1.924 → **D2, 2.060** |
+| E67 | T, 299 → **D1, 717** | T, 1.495 → **D2, 1.619** | T, 660 → **D1, 717** | T, 1.896 → **D2, 2.019** |
+| E66 | T, 280 → **D1, 757** | T, 1.476 → **D2, 1.578** | T, 700 → **D1, 757** | T, 1.877 → **D2, 1.979** |
+| E65 | T, 275 → **D1, 797** | T, 1.462 → **D2, 1.538** | T, 733 → **D1, 797** | T, 1.863 → **D2, 1.939** |
+| E64 | T, 198 → **D1, 837** | T, 1.369 → **D2, 1.499** | D1, 837 | T, 1.770 → **D2, 1.900** |
+| E63 | T, 190 → **D2, 352** | T, 1.260 → **D3, 1.338** | D2, 924 → **D2, 1.018** | T, 1.661 → **D3, 1.739** |
+| E62 | T, 186 → **D2, 397** | T, 1.215 → **D3, 1.294** | T, 938 → **D2, 1.063** | T, 1.616 → **D3, 1.694** |
+| E61 | T, 280 → **D2, 442** | T, 1.171 → **D3, 1.248** | T, 1.032 → **D2, 1.107** | T, 1.571 → **D3, 1.649** |
+| E60 | T, 324 → **D2, 486** | D3, 1.113 → **D3, 1.204** | T, 1.076 → **D2, 1.152** | D3, 1.513 → **D3, 1.604** |
+| E59 | D3, 453 → **D3, 549** | T, 974 → **D4, 1.051** | D3, 1.205 → **D3, 1.301** | T, 1.375 → **D4, 1.451** |
+| E58 | T, 511 → **D3, 594** | T, 929 → **D4, 1.005** | T, 1.263 → **D3, 1.346** | T, 1.330 → **D4, 1.406** |
+| E57 | T, 556 → **D3, 638** | D4, 871 → **D4, 960** | T, 1.308 → **D3, 1.390** | D4, 1.272 → **D4, 1.361** |
+| E56 | D4, 690 → **D4, 781** | T, 738 → **D5, 812** | D4, 1.442 → **D4, 1.533** | T, 1.138 → **D5, 1.213** |
+| E55 | T, 747 → **D4, 826** | T, 693 → **D5, 768** | T, 1.499 → **D4, 1.578** | T, 1.094 → **D5, 1.168** |
+| E54 | T, 792 → **D4, 871** | D5, 630 → **D5, 723** | T, 1.544 → **D4, 1.623** | D5, 1.031 → **D5, 1.123** |
+| E53 | D5, 922 → **D5, 1.019** | T, 509 → **D6, 576** | D5, 1.674 → **D5, 1.771** | T, 910 → **D6, 976** |
+| E52 | T, 983 → **D5, 1.065** | T, 463 → **D6, 532** | T, 1.735 → **D5, 1.817** | T, 697 → **D6, 933** |
+| E51 | T, 1.029 → **D5, 1.110** | T, 419 → **D6, 486** | T, 1.781 → **D5, 1.862** | T, 653 → **D6, 887** |
+| E50 | T, 1.074 → **D5, 1.155** | T, 311 → **D6, 442** | T, 1.826 → **D5, 1.907** | T, 544 → **D6, 675** |
+| E49 | T, 1.118 → **D5, 1.200** | T, 270 → **D6, 397** | T, 1.870 → **D5, 1.952** | T, 671 → **D6, 631** |
+
+Se ruedan de 57 a 136 m más, que es salir por donde se sale —el E64 del JAZ 60 por la 07 ya salía así—, y otra cosa donde cambia el punto de espera: del E60 al E69 por la 07
+las ligeras tenían enfrente, por la T, el de la boca de media pista, y del E64 al E69 van ahora a la B2 (de 210 a 639 m más); y por la 25, del E49 al E52, el
+JAZ 60 pasa con uno u otro el tope de setecientos metros del plan (`elegirSalida`): de 40 m menos a 236 más.
+
+**De dónde sale quien juega** (cambian cinco de las 418 filas de `puesto-de-salida-de-cada-campo.json`):
+
+| Avión | 07 | 25 |
+|---|---|---|
+| JAZ 20, 25, 40 y 50 | E62, 186 m → **E63**, 352, por la D2 | E49, 270 → E49, **397**, por la D6 |
+| JAZ 60 | E68, 561 → E68, **677**, por la D1 | E49, 671 → E49, **631**, por la D6 y otra boca |
+| JAZ 90 | G10, 1.197, por la D1 → G10, **1.216, por la D2** | J1, 1.965 → igual |
+| JAZ 110 y 120 | J8, 1.546, por la D2 → igual | J1, 2.065 → igual |
+
+**El tráfico de Tenerife Sur**: la avioneta, el bimotor y el turbohélice salen del E70 y del E49, 738 m → **866** por la 07 y 1.525 → **1.652** por la
+25; el reactor, del G10, 1.449 → **1.459**, por la D2, y del J1 igual. Llegan al E70 y al E49 por su raya, de 58 a 62 m más.
+
+### A qué puesto va el que llega
+
+Mirado en los diecinueve campos con calles, las dos cabeceras, los cuatro tipos y dejando de correr cada 150 m: **2.416 casos**. La boca no cambia en ninguno.
+
+| | Casos | Antes → ahora |
+|---|---|---|
+| Otro puesto, por lo que se rueda: 4 campos | **336** | 335 ruedan menos y uno, más |
+| — Fuerteventura | 75 | turbohélice que deja la 01 por la E6, **35B, 989 m → 36, 324**; por la 19, 35B, 576 → 36, 323; avionetas, 53B, 2.230 → 60, 2.108; reactor, 19, 1.010 → 18B, 521 |
+| — Gran Canaria | 33 | P34, 714 → P28, 551; reactor, T01, 648 → N01, 602 |
+| — Tenerife Sur | 12 | E58, 1.158 → E63, 836; reactor, J7, 1.259 → G10, 1.185 |
+| — Barajas | 216 | reactor, 508, 1.738 → 332, 1.471; los demás, 185,−52, 1.606 → 420, 1.330; y 534 → 526 y 530 → 526, de 3 a 9 m |
+| El mismo puesto, por su raya | 144 | Tenerife Sur, 115, de 58 a 62 m más; Fuerteventura, 29, de 19 a 59 |
+| Otro, sin pasarela | 96 | Los Rodeos, 82, de 13 a 48 m más; La Palma, 14, 19 m más |
+| Iguales | 1.840 | |
+
+**El que rueda más por cambiar de puesto** es uno: el turbohélice de Fuerteventura que por la 01 deja de correr a 1.850 m, pasada la boca de la E4 y delante de ella, volvía
+doscientos metros por la pista hasta la E5 y cruzaba la plataforma al 33, 472 m; ahora sale por la E4 hacia delante y va por la T al 31, 1.086. Los demás que ruedan más no
+eligen otro: van por donde manda la casilla, o dejan la pasarela.
+
+**La Palma**, la avioneta y el bimotor por la 36: salen del 5, a 145 m de la doble raya → del **7**, a 163; la avioneta llega al 5, 207 m → al **7**, 226; el bimotor,
+al 8, igual. Por la 18 salen del 16 y llegan a él, igual que antes.
+
+### El barrido, el plan y los demás campos
+
+- **Tenerife Sur, 110 de 110**: 46 con pasarela y 64 sin ella, bien, sobre su raya, hacia su APROAR y sin pisar fuera, sin acabar fuera, sin meterse por una puerta D ni en un
+  edificio; del plan, 6 de 6. Los empujes no cambian.
+- **Los demás campos**, iguales: las 160 filas del barrido de los otros seis y las 842 de Barajas, una a una; las 396 filas del puesto de salida que no son de aquí, las salidas del tráfico menos las de Los Rodeos y La Palma de arriba, y el plan, que no mira puertas sin el dato.
+- **La llegada del tráfico**, en las 4.832 llamadas de la mesa —con dos medias alas—: la suma de la más lenta de cada campo, tipo y pista, de 8.184 a **2.106 ms**; la peor, en
+  Barajas, de 588 a 195. **Elegir la salida** en Tenerife Sur, de 34–123 ms a 37–148: son dos trazados por puesto.
+- **El peso**: la ficha, de 171.511 a 176.081 bytes, y en gzip, de 19.061 a 20.094.
+
+### Lo medido
+
+- **La mesa**, antes y después, con la medida de las pruebas: los barridos de Tenerife Sur, las salidas puesto a puesto, las salidas y llegadas del tráfico en los diecinueve
+  campos, y el puesto de salida de todos.
+- **La ortofoto** (PNOA de máxima actualidad, por su WMS, a 50 cm por píxel), de la T de Fuerteventura: tres recortes.
+- **Pruebas nuevas** (`primera-puerta.test.ts`, 37): lo que lleva la ficha y que ningún otro campo lo lleva; las 110 salidas de los puestos de retroceso,
+  cada una por la primera puerta, medida en la ficha y no en el buscador; once puestos con su puerta y sus metros; la raya recalculada; la segunda línea, por
+  delante, con todos los aviones que caben y por las dos cabeceras; la llegada a ella por su raya, quien juega y el tráfico; el puesto del que llega en
+  Fuerteventura, Gran Canaria, Tenerife Sur, Lanzarote y Barajas; la avioneta y el bimotor en La Palma y en Los Rodeos; la regla en un campo de mentira —la primera, la que
+  queda en la boca, la que no cabe, la ocupada—; y que el pavimento con cajas y margen contesta lo mismo. Cambian `tenerife-sur-entera`, que pedía la D1 del JAZ 90, y
+  `suelo-del-trafico`, que mira la raya pintada.
+- **Vitest entero, por partes** de 2 GB y con el código terminado: `src/world` en cuatro, 200 ficheros, 4.466 en verde y 3 saltadas; `src/flight` en
+  tres —los 35 que tocan el plan, el tráfico o los escenarios, y los otros 242 en dos—, 5.246 en verde, 29 saltadas y una pendiente; y lo demás, 125 ficheros y 2.479 en
+  verde. Ninguna en rojo.
+- **Navegador, no**: no había turno. Queda dicho abajo.
+
+### Lo que queda
+
+**En el navegador**, sin volar, con `OGA_PUERTO=5686 OGA_GPU=1 OGA_ESCENARIO=tenerife-sur`: `node scripts/ver-remolque-de-quien-juega.mjs carpeta` por la 07 (del G10, y que ruede por la
+D2) y con `OGA_VIENTO=250/10` por la 25 (del J1); con `OGA_PUESTO=J7`, por la D3. Y la avioneta, que sale del E63 hacia delante y vuelve por la raya de
+uno de la segunda línea: `OGA_PUERTO=5686 OGA_GPU=1 node scripts/verificar-vuelo-entero.mjs tenerife-sur guyrami 12 jaz-20`. Y
+`npm run pavimento -- --comprobar`, que tiene que salir igual: la ficha no toca el pavimento.
+
+**La rendija de Fuerteventura**: es asfalto y en la ficha no está, ni en la rejilla horneada: quien juega y llega por la T a uno del 31 al 47 rueda por su raya de ocho a doce metros sin
+pavimento, desde la H85. El contorno, leído en la foto, es [-196,4, 470], [-213, -63,2], [-222,4, -405] por el
+borde de la plataforma y [-197,1, -405], [-192,6, -248,1], [-188,9, -138,1], [-181,9, 142,7], [-180,6, 191,7], [-172,9, 470] por el eje de la T; pide hornear la rejilla, que es en el navegador.
+En la ficha desde la H97; falta hornear.
+
+**«Leaving apron gates D free»** sigue siendo no pasar por ellas. **El R45 y el R47 de los dos grandes, por la 07**, bajan por la D1, que no les cabe: no tienen otra por delante. Hecho en la H97. **Del R42 y el S41**, por la D2, que
+tienen en la boca.
+
+**Los AG1 a AG5**, la plataforma de aviación general de Tenerife Sur («GA APN», PDC 1.1): sus calles, la U1, la U2 y la U3, no están en la ficha, y las avionetas del juego aparcan en la segunda línea. Hecho en la H97.
+
+**La T4 de Barajas**: la avioneta y el bimotor del tráfico siguen yendo a una pasarela, y el turbohélice, en todos. En La Palma el 7 es de retroceso y salen de él por sus medios; los dos de salida
+autónoma, el 12 y el 14, quedan al norte, a trescientos metros más. Hecho en la H97.
+
+## Enmienda (25-11-2026, H97): los flecos de las plataformas
+
+### El caso
+
+Lo que dejaron escrito la H85, la H88 y la H95. Entre la T y la plataforma de Fuerteventura faltaba asfalto, y quien llega a uno del 31 al 47 lo cruza. La
+aviación general de Tenerife Sur no tenía calles, y las avionetas aparcaban en la segunda línea, entre los A320. Los dos grandes del R45 y del R47 bajaban por la 07
+por la D1, que no les cabe. En La Palma, la avioneta y el bimotor salían por sus medios del 7, que es de retroceso. Y de dos puestos de al lado que el AIP
+no deja maniobrar a la vez, se maniobraba a la vez.
+
+### Lo que publica el AIP
+
+Los AD 2 y las PDC de los tres campos, leídos del 24 y el 25-11-2026.
+
+- **AD 2-GCFV PDC 1.1 (WEF 11-JUN-26)**: el límite de plataforma, al oeste de la T a una decena de metros, y la raya de cada puesto del 31 al 47 naciendo en el eje de
+  la T y cruzando ese hueco. Que es asfalto, en la ortofoto (PNOA de máxima actualidad, foto de 2024-07).
+- **AD 2-GCTS PDC 1.1 (WEF 11-JUN-26)**: «GA APN», con tres calles de la de plataforma a los puestos, la U1, la U2 y la U3, «22 MAX WINGSPAN»; y en la luz de la
+  plataforma, «balizas reflectantes en el lado oeste». **PDC 1.3 (WEF 16-APR-26)**: del AG1 al AG5, salida «A», «(3) Aviación General», con 15, 20, 22, 20 y 18 m de
+  envergadura. **Casilla 20.3.3** (AIRAC AMDT 10/26, WEF 29-OCT-26): «Taxiways for general aviation (TWY U1, U2 and U3) are limited to aircraft with maximum wingspan of 22 m».
+- **Los R45 y R47**: PDC 1.4, mayor avión B77W: los dos grandes pueden ocuparlos. **Casilla 20.3.3**: «D1: (…) Exit to RWY 07: D except B-767», y ellos son de letra E.
+  **Casilla 20.3.2.1 A**: el morro al umbral en uso, «except when: there are operational or safety reasons for push-backs without nosing to the threshold in use».
+  Y la 20.8 saca por la 07 a los de letra F del S41 «via D2».
+- **AD 2-GCLA PDC 1.2 (WEF 15-MAY-25)**: catorce puestos «R» y, de avión, dos «A», el 12 y el 14, que la PDC 1.1 dibuja de paso, entrando de la R y saliendo a ella.
+  Dónde aparca la aviación general no lo publica (H95).
+- **Casilla 20.3.2.1, A1**: «Simultaneous arrival/departure manoeuvres from adjacent stands J1 and G2, G9 and G10 and G10 and H37 are incompatible», y lo mismo al llegar, la 20.3.2.2.
+
+### Decisión
+
+1. **El asfalto de Fuerteventura, en la ficha** (`plataformasDeducidas`, H81), con su contorno y su fuente. Sobra la excepción de la H95 —«la raya pintada es
+   pavimento»— en `publicadaHasta` y en `suelo-del-trafico.test.ts`, y se quita: sin ella, las 4.832 llegadas del tráfico y las salidas salen iguales.
+   La de `enganchePorDetras` (`pintadaHasta`, H76) no es de aquí: es el hueco de detrás del 518 de Barajas, y se queda.
+2. **La U1, la U2 y la U3, calles de la ficha**, trazadas sobre la raya pintada en la ortofoto, y con ellas los trozos por los que se entra y se sale de cada puesto,
+   que en OpenStreetMap son líneas de puesto. Son **solo una raya en la losa** (`soloPintada`): se rueda por ellas y se pinta su eje, y no tienen asfalto ni balizas
+   azules suyas. Y **solo se engancha a ellas quien está encima** (`SOBRE_LA_RAYA`): al G48, al R47, al H46 y a los dos que no están en la carta, la U3 les quedaba
+   más cerca que la calle de plataforma, y salían por ella. No hacía falta hornear Tenerife Sur: lo dibujado es lo mismo.
+3. **Los cinco puestos, de paso** (`DE_PASO`): se entra por la calle lejana y se sale hacia delante por la cercana. Lo dice la parada, que está a 17 m de una y a 35 de la
+   otra, con el avión detrás; y en la ortofoto hay una avioneta en el AG1 y un helicóptero en el AG5, puestos así. OpenStreetMap los daba por doce: «AG4» y
+   «AG4 (U2)» son las dos líneas del mismo.
+4. **Son de aviación general** (`uso`), con la regla de la H85: las avionetas, a ellos, y los de línea y el turbohélice, a los demás. Los JAZ 50 y 60 caben en alguno y no van.
+   La envergadura se lee ahora de la tabla, que la parte en dos renglones; hasta aquí salía sin dato y en los cinco cabía todo.
+5. **Si hacia su APROAR no queda más puerta que una por la que no cabe, hacia el otro lado y por otra** (`rutasHaciaElAproar`): la excepción que publica la casilla, y solo
+   donde la ficha trae puertas y restricción. Los dos grandes del R45 y del R47 por la 07 salen empujados con el morro a la 25 y bajan por la primera de ese lado.
+6. **Quien se va por sus medios, en La Palma, del 12 o del 14** (`aipPuestos.porSusMedios`, `dePorSusMedios`): las avionetas, el JAZ 50 y el JAZ 60 de quien juega, y la avioneta y el
+   bimotor del tráfico, que llegan también a ellos; con los dos cogidos, a otro, como antes. Va en la ficha y no es regla de todos: ver «Lo que queda».
+7. **Los de al lado, de uno en uno** (`aipPuestos.nuncaALaVez`). La torre retiene el empuje del tráfico en `calleLibreParaEmpujar`, mirando lo que barre contra los que
+   ruedan; ahí se mira también si en el puesto de al lado maniobra alguien —otro empujado o entrando, o tú, desde que pides el tractor hasta que el avión es
+   tuyo, o en tus últimos ciento cincuenta metros—. Y al revés: si pides el empuje con el de al lado maniobrando, la torre te lo retiene (`maniobraAlLadoDe`),
+   suena que se ha pedido, se dice a quién se espera con lo que ya está grabado —«give way to departing traffic», o la instructora contando el tractor— y
+   echa a andar solo en cuanto acaba. Con un tope de tres minutos, que un empuje dura uno y pico. El permiso, «pushback and start-up approved», se oye entonces y no antes.
+
+### Metros, antes y después
+
+| | Antes | Ahora |
+|---|---|---|
+| Fuerteventura, por la raya del 31 al 47, sin pavimento | de 8 a 12 m en los trece | **0** |
+| JAZ 20, 25 y 40 por la 07 | E63, 352 m, por la D2 | **AG3**, 461, por la U3 y la D2 |
+| JAZ 20, 25 y 40 por la 25 | E49, 397, por la D6 | **AG3**, 1.633, por la U3 y la D2 |
+| JAZ 50 | E63, 352 · E49, 397 | igual |
+| JAZ 60 por la 07 · la 25 | E68, 677 · E49, 631 | **E69**, 637 · igual |
+| Reactores del plan | G10, 1.216 · J1, 1.965 · J8, 1.546 · J1, 2.065 | iguales |
+| Avioneta y bimotor del tráfico, 07 · 25 | E70, 866 · E49, 1.652 | **AG1**, 977 · **AG3**, 2.888 |
+| y llegando, desde la salida por la que dejan la pista | E70, 790 · E63, 836 · E49, de 1.047 a 1.697 | **AG1**, 932 · **AG3**, 1.183 · **AG3**, de 2.412 a 3.062 |
+| Turbohélice y reactor del tráfico | | iguales |
+| JAZ 110 y 120, R47 por la 07 | D1, 1.087 | **D2**, 1.307, con el morro a la 25 |
+| R45 por la 07 | D1, 1.150 | **D3**, 1.829: la D2 la tiene en la boca (H95) |
+| La Palma, JAZ 20, 25 y 40 por la 36 · la 18 | 11, 352 · 16, 216 | **12**, 430 · **14**, 224 |
+| JAZ 50 y 60 | 8, 182 · 15, 265 | **12**, 430 · **12**, 315 |
+| Avioneta y bimotor del tráfico, saliendo | 7, 163 · 16, 248 | **12**, 436 · **14**, 256 |
+| y llegando | 7, 226 · 8, 221 · 16, 372 | **12**, 499 · 12, 333 · **14**, 380 |
+
+Las avionetas ruedan más por la 25 de Tenerife Sur: la aviación general está en la punta oeste y la 25 empieza en la este. Es donde está, como en Fuerteventura (H85). Quien juega llega
+al AG1 por la D1 y al AG3 por las demás, de 656 m dejando la pista por la B3 a 3.010 por la B7. El JAZ 60 cambia del E68 al E69, que le queda más cerca,
+porque los cinco de aviación general ya no están entre los suyos. De las 418 filas de `puesto-de-salida-de-cada-campo.json` cambian 18: ocho de aquí y diez de La Palma.
+
+### El barrido, el plan y los demás campos
+
+- **Tenerife Sur, 110 de 110** sobre su raya, sin pisar fuera, sin acabar fuera y sin meterse por una puerta D ni en un edificio; hacia su APROAR, 106, y los otros cuatro
+  —los dos grandes del R45 y del R47 por la 07— hacia el otro, por lo de arriba. De ellos ya no rueda ninguno por la D1. Del plan, 6 de 6.
+- **Los demás campos**, iguales una a una: las 40 con pasarela de Fuerteventura, las 10 de La Palma y las de sin ella de los dos, las 110 de Los Rodeos, Gran Canaria,
+  Lanzarote y Pettirossi, y las 842 de Barajas.
+- **El tráfico**, en los diecinueve campos, las dos cabeceras, los cuatro tipos y dejando de correr cada 150 m: cambian la avioneta y el bimotor de Tenerife Sur y de
+  La Palma, y nada más. La suma de la más lenta de cada campo, de 2.159 a 2.257 ms, que es lo mismo; la peor, en Barajas, 191 y 201.
+- **Elegir la salida** en Tenerife Sur: las avionetas, de 46–148 ms a 25–111, que son cinco puestos; los demás, igual.
+- **El peso**: la ficha de Tenerife Sur, de 176.081 a 181.810 bytes, y en gzip, 20.178; la de Fuerteventura, 103.854 y 10.486.
+
+### Lo medido
+
+- **La mesa**, antes —6ae1c99c— y después: los barridos con la medida de la prueba, los de sin pasarela, las salidas puesto a puesto de Tenerife Sur, las salidas y llegadas
+  del tráfico en los diecinueve campos y el puesto de salida de todos.
+- **En planta**, sobre la ortofoto a 20 cm por píxel: las cinco salidas y las cinco llegadas de los AG, del tráfico y de quien juega, van por la raya pintada.
+- **Pruebas nuevas** (`flecos-de-las-plataformas.test.ts`, 25): el asfalto de Fuerteventura, con él y sin él; los cinco AG, sus calles, sus balizas y la salida y la llegada
+  de cada uno; los de al lado, que no se enganchan a la U3; los dos de La Palma, con los demás campos sin ellos; y las tres parejas, con el tráfico
+  esperándote a ti, y tú a él. Cambian lo que contaban `primera-puerta`, `tenerife-sur-entera`, `empuje-sobre-pavimento`, `suelo-del-trafico` y el puesto de salida de cada campo.
+- **Vitest entero, por partes** de 2 GB: `src/world` en cuatro, 201 ficheros, 4.493 en verde y 3 saltadas; `src/flight` en tres —los 35 que tocan el plan, el tráfico o los escenarios,
+  y los otros 242 en dos—, 5.246 en verde, 29 saltadas y una pendiente; y lo demás, 125 ficheros y 2.480 en verde. Ninguna en rojo. El plano (`src/ui/mapa.ts`), que no dibuja
+  asfalto donde la calle es solo una raya, se tocó entre medias, y lo suyo está en la última parte.
+- **Navegador, no**: no había turno. Queda dicho abajo.
+
+### Lo que queda
+
+**Hornear Fuerteventura**: `OGA_PUERTO=5688 npm run pavimento -- fuerteventura`, que cambia `data/aerodromes/gcfv.pavimento.bin` y nada más. Mientras tanto la rejilla es vieja, el
+juego lo ve por la huella y hace la cuenta al arrancar: el asfalto ya se pisa, y lo que falta es lo que se ahorra. Después, `npm run pavimento -- --comprobar`: los
+demás campos tienen que salir iguales, Tenerife Sur también.
+
+**En el navegador**, sin volar: `OGA_PUERTO=5688 OGA_GPU=1 node scripts/verificar-vuelo-entero.mjs tenerife-sur guyrami 12 jaz-20`, la avioneta del AG3 por la U3, y de vuelta por la U1 o la U2;
+`OGA_PUERTO=5688 OGA_GPU=1 node scripts/verificar-vuelo-entero.mjs la-palma guyrami 12 jaz-20`, del 12; con `OGA_PUERTO=5688 OGA_GPU=1 OGA_ESCENARIO=tenerife-sur OGA_AVION=jaz-110`,
+`OGA_PUESTO=R47 node scripts/ver-remolque-de-quien-juega.mjs carpeta` por la 07, empujado con el morro a la 25 y por la D2; y con `OGA_ESCENARIO=fuerteventura OGA_AVION=jaz-60`, la llegada a
+uno del 31 al 47. La espera del empuje de quien juega pide un reactor del tráfico saliendo del G9 o del H37 contigo en el G10: no hay banco que lo monte.
+
+**El que entra** en un puesto de al lado no espera al que empujan: el otro no empuja con él entrando, pero si ya empuja, el que llega sigue hasta donde lo para lo que barre. Y de
+pasaje, la tripulación no espera: el vuelo lleva su guion.
+
+**Los Rodeos tiene lo mismo que La Palma**: el 17 y el 19, de AT72 y de salida autónoma, y los demás «R»; las avionetas, los dos turbohélices de quien juega y el tráfico salen por
+sus medios del 15, el 25 y el 26. Es una línea en `POR_SUS_MEDIOS`, y no va porque mueve el puesto del que se sale en el campo en el que más se prueba y pide sus bancos. En Barajas pasa en
+la T4. **El turbohélice del tráfico de La Palma** sigue saliendo del 5 y del 16.
+
+**«Leaving apron gates D free»**, como en la H95. **El R45**, por la D3: el tractor podría dejarlo antes de la D2 empujando más largo hacia el oeste.
+
+**El color**: el asfalto de Fuerteventura se dibuja con el gris de las plataformas y no con el de las calles, como las demás.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
@@ -3039,7 +3356,8 @@ Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen lí
 538, el 539 y del 583 al 586 salen desde la H81.
 
 **Qué puestos tienen pasarela**, en los cuatro campos cuyo AIP no lo dice, desde la H87. Las dos puntas de la plataforma de
-Tenerife Sur y su APROAR, desde la H88: ver su «Lo que queda».
+Tenerife Sur y su APROAR, desde la H88: ver su «Lo que queda». Por la primera puerta y la segunda línea por delante, y el tráfico al
+puesto al que menos se rueda, desde la H95; la aviación general, los de al lado de uno en uno y el asfalto de la T de Fuerteventura, desde la H97: ver el suyo.
 
 **Fuerteventura**, con los puestos del AIP desde la H85: ver su «Lo que queda». El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
 tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H81.

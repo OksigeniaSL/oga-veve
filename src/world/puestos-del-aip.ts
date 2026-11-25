@@ -74,7 +74,8 @@ export interface DelAip {
   /**
    * **Si la carta lo da en la plataforma de carga y aviación general** (H85), de qué es: los que dan su
    * mayor avión por envergadura —«24 m», «15 m»—, de las avionetas; los que lo dan por un tipo —B767,
-   * A321, A320 y CL-600—, de carga y ambulancia. Ahí no va el pasaje.
+   * A321, A320 y CL-600—, de carga y ambulancia. Ahí no va el pasaje. Y en Tenerife Sur, los cinco que su
+   * tabla da de «Aviación General», del AG1 al AG5 (H97).
    */
   readonly uso?: "general" | "carga";
   /** Y por cuáles se llega, con la pista al norte y al sur. */
@@ -221,6 +222,63 @@ export function seSaleEmpujado(aip: DelAip | null | undefined): boolean {
  */
 export function valeParaElEmpuje(aip: DelAip | null | undefined, envergadura: number): boolean {
   return !aip || (tienePasarela(aip) !== false && seSaleEmpujado(aip) && admite(aip, envergadura));
+}
+
+/**
+ * **De estos puestos, los de salir por sus medios** (H97), donde la ficha los trae (`aipPuestos.porSusMedios`):
+ * en La Palma, el 12 y el 14, que son los dos de salida autónoma; de los otros catorce se sale en retroceso, con
+ * tractor, y la avioneta no lo lleva. Los que admiten esta envergadura; ninguno, si la ficha no los trae.
+ */
+export function dePorSusMedios<P extends { readonly ref?: string | null; readonly aip?: DelAip }>(
+  aero: Pick<Aerodrome, "aipPuestos">,
+  puestos: readonly P[],
+  envergadura: number,
+): readonly P[] {
+  const refs = aero.aipPuestos?.porSusMedios?.puestos;
+  if (!refs) return [];
+  return puestos.filter((p) => p.ref != null && refs.includes(p.ref) && admite(p.aip, envergadura));
+}
+
+/**
+ * **Los puestos en los que no se puede maniobrar mientras se maniobra en este** (H97, `aipPuestos.nuncaALaVez`),
+ * por su punto, en los ejes de la ficha. Ninguno, si el AIP no lo dice del suyo.
+ */
+export function nuncaALaVezCon(
+  aero: Pick<Aerodrome, "parkingPositions" | "aipPuestos"> | null | undefined,
+  x: number,
+  z: number,
+): readonly Punto[] {
+  const parejas = aero?.aipPuestos?.nuncaALaVez?.parejas;
+  const puestos = aero?.parkingPositions;
+  if (!parejas || !puestos) return [];
+  const suyo = puestos.find((p) => Math.hypot(p.xy[0] - x, p.xy[1] + z) < 5)?.ref;
+  if (!suyo) return [];
+  const otros = parejas.flatMap(([a, b]) => (a === suyo ? [b] : b === suyo ? [a] : []));
+  return puestos.filter((p) => p.ref != null && otros.includes(p.ref)).map((p) => p.xy);
+}
+
+/**
+ * **Cómo se sale por delante de un puesto** (H95), si el AIP lo da así: el de salida autónoma con la raya
+ * que viene de la paralela y la salida a la calle de plataforma (`salePor`), en el campo que manda dejarla
+ * por la primera puerta. Son del E49 al E70 de Tenerife Sur: «Autonomous exits (…) shall be performed
+ * nosing to the threshold in use» (AD 2-GCTS, casilla 20.3.2.1 B). `null` si no.
+ *
+ * Es lo que pide el buscador, en los ejes de la ficha: la recta del puesto, que es la prolongación de su
+ * raya —`deEspaldas` en `rodajesDesde`, que aquí se anda hacia delante—, y hacia qué lado se tuerce al
+ * llegar a la calle, el del umbral del que se despega. `rumboDePista`, el de despegue, en grados.
+ */
+export function saleDeFrente(
+  aero: Pick<Aerodrome, "parkingPositions" | "aipPuestos">,
+  puesto: Punto,
+  rumboDePista: number,
+): { readonly deEspaldas: Punto; readonly sentido: readonly Punto[]; readonly enLaPrimera: true } | null {
+  const calle = aero.aipPuestos?.primeraPuerta?.calle;
+  if (!calle) return null;
+  const suyo = puestoEn(aero, puesto[0], -puesto[1]);
+  const [a, b] = [suyo?.entrada?.at(-2), suyo?.entrada?.at(-1)];
+  if (suyo?.aip?.salida !== "A" || suyo.aip.salePor?.[0] !== calle || !a || !b) return null;
+  const r = (rumboDePista * Math.PI) / 180;
+  return { deEspaldas: [b[0] - a[0], b[1] - a[1]], sentido: [[-Math.sin(r), -Math.cos(r)]], enLaPrimera: true };
 }
 
 /**

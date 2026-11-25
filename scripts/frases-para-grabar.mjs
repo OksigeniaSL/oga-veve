@@ -3372,6 +3372,32 @@ for (const [voz, id] of DEL_REGRESO_POR_PISTA) {
 }
 
 /*
+ * **Y la torre, a quien entra en final con la pista ocupada** (25-11-2026, H96):
+ * que siga. En castellano la pieza de `torre.continue` y `torre.canario.continue`,
+ * y en fraseología la de `torre.continueApproach`; la matrícula la pone la
+ * receta. Con las dos voces de torre y detrás de todo, por lo mismo que las de
+ * arriba. Ver `decirQueSigas` en `src/game.ts` y el ADR 0029, enmienda H96.
+ */
+const DEL_CONTINUE = ["torre", "torre-canarias"].flatMap((voz) => {
+  const solo = voz === "torre" ? "torre.solo" : "torre.canario.solo";
+  return [
+    [voz, `${solo}.continueAproximacion`, "continúe aproximación", "es"],
+    [voz, `${solo}.continueApproach`, "continue approach", "en"],
+  ];
+});
+for (const [voz, id, texto, idioma] of DEL_CONTINUE) {
+  if (filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz,
+    idioma,
+    texto,
+    para: "en final con la pista todavía ocupada: seguí bajando, que el permiso llega cuando quede libre",
+  });
+  total += texto.length;
+}
+
+/*
  * **Y la carrera empezada sin la autorización de despegar** (21-11-2026): con
  * la pista dada, quien llega al eje ya corriendo y despega sin haber visto la
  * verde fija; la instructora cuenta dónde se espera esa autorización, en los
@@ -3560,6 +3586,32 @@ const DE_LA_RUEDA = [
   ["ejercicio.rueda.bienFuera", "el cierre del reventón al tomar, parado fuera de la pista, sin reproche"],
 ];
 for (const [id, para] of DE_LA_RUEDA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
+/**
+ * **El fallo de radio donde la torre no tiene radar** (#90, H91): las tres que
+ * dicen el 7600 de otra manera, porque allí no es él quien se lo dice a la
+ * torre. De la instructora y en calma, detrás de todo. Ver el ADR 0014,
+ * enmienda H91.
+ */
+const DEL_FALLO_DE_RADIO_SIN_RADAR = [
+  ["ejercicio.fallo-de-radio.antesSinRadar", "el fallo de radio en un campo cuya torre no tiene radar, antes de empezar: al subir se calla la radio, el número del transpondedor y la torre, que nos ve llegar y habla con luces"],
+  ["ejercicio.radio.calladaSinRadar", "el fallo de radio en un campo cuya torre no tiene radar: se calló la radio; la instructora marca siete seis cero cero, y la torre se da cuenta porque no se le contesta"],
+  ["ejercicio.radio.bienSinRadar", "el cierre del fallo de radio en un campo cuya torre no tiene radar, parado en la pista tras tomar con la verde"],
+];
+for (const [id, para] of DEL_FALLO_DE_RADIO_SIN_RADAR) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({
