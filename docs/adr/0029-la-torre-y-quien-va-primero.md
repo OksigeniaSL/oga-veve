@@ -3153,3 +3153,219 @@ saltadas de siempre.
   antes en media docena de los 600.
 - **La vuelta que se te pide** sigue sin decir con qué alabeo: cada cual la da
   como sabe, y se cuenta con tres.
+
+## Enmienda H96 (25-11-2026): el permiso tardío
+
+### El caso
+
+Lo que quedó de H94, punto por punto y medido antes de tocar nada, con su mesa
+ampliada: quien juega remonta donde su avión remonta, se va al aire si se lo
+mandan o porque sí, y llega también derecho a la final, a diez kilómetros y sin
+que nadie le espere.
+
+- **El permiso tardío.** A la decisión con la pista ocupada, al aire siempre: el
+  tráfico y quien juega. En las 600 de Los Rodeos se iban 47 del tráfico, y de los
+  quince que se miraron uno a uno, **ninguno ya por quien juega**, que desde H94
+  no tiene la verde con uno a punto de decidir: por otro del tráfico que salía, y
+  a dos y a cuatro segundos de dejarla libre al umbral, dos de los seis distintos.
+  Y a quien juega, en Estigarribia, 17 de 300: una avioneta que aterrizó delante y
+  rueda la pista entera hasta su calle.
+- **Dos llegadas tuyas.** Con quien juega en el circuito o en la final, y el de
+  delante yéndose al aire a la fuerza en la decisión, **nadie a menos de 300 m
+  y 150 de altura, en 840 vuelos** (Los Rodeos, Gando, Tenerife Sur y Pettirossi;
+  por el circuito y derecho) y 137 idas al aire forzadas. No se toca.
+- **Pero si quien se va al aire es quien juega**, sí: 8 de 480 por el circuito y 7
+  de 360 derecho, todos con el JAZ 20. No es el de delante: es uno que esperaba
+  en su doble raya, al que la torre daba la salida y pasaba por debajo, a 120 o
+  150 m, subiendo más.
+- **Remontando y con AFIS**, 300 salidas y 300 llegadas por campo (JAZ 20, 50 y
+  60; las dos cabeceras): El Hierro, 0; La Gomera, 3; Pilar, Pedro Juan,
+  Concepción y Estigarribia, 0. Y entre dos del tráfico, 18 parejas en El Hierro,
+  3 en Pilar, una en Pedro Juan y una en Concepción.
+
+### Por qué
+
+- **La torre te acababa en el umbral.** `porDondeSigues` mira en qué tramo vas, y
+  antes de la pista, subiendo, sale la final: para la torre ibas a desaparecer en
+  el umbral, y soltaba al que esperaba.
+- **El que sale tarda más de lo contado**: veinte segundos en entrar, cuando por la
+  E-2 de Los Rodeos son treinta y tres; y con diez de menos se le contaba un
+  kilómetro por delante de quien tenía encima.
+- **En La Gomera**, al lado muerto hay monte, y el que se iba al aire por el lado
+  iba por el del circuito de quien acababa de despegar. Dos de los tres eran la
+  frustrada **del guion**, la que la frecuencia sortea, con la pista libre y quien
+  juega subiendo por delante.
+- **En El Hierro**, a 148 m de altura uno del otro: la cuenta era de 150 justos,
+  mirada cada dos segundos.
+
+### Lo real
+
+- **OACI, Doc 4444 (PANS-ATM), 16.ª ed., 7.10.2**: «An aircraft may be cleared to
+  land when there is reasonable assurance that the separation in 7.10.1, or
+  prescribed in accordance with 7.11 will exist when the aircraft crosses the
+  runway threshold, provided that a clearance to land shall not be issued until a
+  preceding landing aircraft has crossed the runway threshold». Y la de 7.10.1 es
+  que la salida de delante haya pasado el final de la pista en uso o haya empezado
+  a virar, o que todos los que aterrizaron la hayan dejado: en el aire no basta.
+- **12.3.4.15 d)**: «CONTINUE APPROACH [PREPARE FOR POSSIBLE GO AROUND]». En
+  español, **RD 1180/2018, anexo V, 1.4.16 d)**: «CONTINÚE APROXIMACIÓN [PREPARE
+  POSIBLE MOTOR Y AL AIRE]».
+- **Europa**: lo mismo, en los medios aceptables de la Parte ATS —Decisión ED
+  2020/008/R, anexo IV—, **AMC18 ATS.TR.210(a)(3)**, «Clearance to land», y **AMC8
+  ATS.TR.210(c)(2)(i)**, la separación en la pista. Los que H94 no pudo leer. La
+  **SERA.8012**, leída en la copia de la CAA británica, es la separación por estela
+  y de esto no dice nada; su AMC no se ha podido leer.
+- **AIP España** (leído hoy; AD 2, enmienda AIRAC 10/26). Lo publica para dos: **AD 2-GCTS, 20.2**
+  —«Even if the runway is temporarily occupied by other traffic, landing clearance
+  may be issued to an arriving ACFT if the controller is satisfied that at the time
+  the ACFT crosses the threshold of the runway in use, the prescribed separation
+  from the preceding ACFT shall exist»— y **AD 2-LEMD, 20.9**, lo mismo; con su
+  fraseología, «BEHIND LANDING/DEPARTING (ACFT type) CLEARED TO LAND RUNWAY
+  (number)», y solo de día. Los Rodeos, Gando, Lanzarote, Fuerteventura, La Palma,
+  El Hierro y La Gomera no publican nada de esto, ni separación reducida (7.11).
+- **AFIS**, ENR 1.5, 4.2: «The AFIS officer shall not provide any instructions with
+  regard to joining the traffic circuit, nor shall he/she establish a landing
+  order»; y AD 1.1, 5.6 G: en el punto de espera, «if there is traffic
+  interference, the aircraft will remain on the spot». La Gomera es AFIS siempre;
+  **El Hierro, torre de lunes a viernes y AFIS los fines de semana** (AD 2-GCHI, 3,
+  18 y 20).
+- **El alabeo de la vuelta**: el viraje medio, el de «a 360-degree medium level
+  turn» del CAA de Nueva Zelanda (H93). El Doc 4444 no lo dice: «ORBIT».
+
+### Decisión
+
+**Al umbral, libre; si no, al aire** (`sigueHastaElUmbral` y `libreDentroDe` en
+`world/trafico.ts`, `quedaLibreATiempo` en `flight/turno-de-pista.ts`):
+
+- Se cuenta lo que le falta para dejar la pista a quien la tiene, con la velocidad
+  de su tipo metro a metro: al que aterriza, frenar y salir; al que sale y ya
+  corre, pasar el final; a ti, lo que tardas en pasarlo. Alineado sin su salida,
+  remontando, parado o tú aterrizado, no se sabe, y entonces no.
+- **El tráfico** sigue por debajo de la decisión si la deja libre tres segundos
+  antes de que cruce el umbral; con ella libre se le da el permiso, y si deja de
+  estar claro, al aire desde donde esté. Solo con alguien en ella: con la pista
+  libre y sin permiso, decide donde siempre.
+- **Quien juega**, lo mismo con cinco segundos: a esos cinco del umbral, o está libre
+  o te manda al aire, y se felicita. El permiso llega por debajo, **a la vista**:
+  la lámpara verde y su tarjeta, sin la frase, que a esa altura no se dice. Con el
+  permiso ya dado y uno que entra y sale a tiempo, sigue valiendo. Al que iba
+  delante y ya la dejó no se le espera a que lo cante (`dejoLaPista`). Sin radio no
+  hay quien te lo diga y no vale: la pista es tuya con la verde fija.
+- **Y la torre te dice que sigas**, una vez por final, si está ocupada al entrar:
+  «continúe aproximación» en los dos peldaños de abajo y «continue approach» en los
+  de arriba, por la puerta por la que un AFIS dice «pista ocupada». Antes no decía
+  nada. Esperan su toma (`ESPERAN_SU_TOMA`) y no se piden sin ella.
+- **La verde** no espera a quien decide contigo corriendo si al umbral ya habrás
+  pasado el final (`estorbanTuSalida`).
+
+**Y con quien se va al aire:** subiendo antes del umbral sigues por la pista y la
+subida (`porDondeSigues`, `subiendo`); al que sale se le cuenta lo que mide su
+entrada, y cinco segundos de menos y diez de más (`seEchariaEncima`); por el lado
+de tu circuito no va nadie si por ahí pasas tú (`teEncontraria`); la frustrada del
+guion espera si tú subes por delante, y con la pista libre aterriza; y quien gira
+deja treinta metros más de altura.
+
+**La vuelta que se te pide** dice con cuánto, donde hay cifras: «· 30°» detrás del
+rótulo de su tarjeta, sin frase nueva. En los dos de abajo sigue siendo la flecha.
+
+En el banco del vuelo entero, la comprobación de alguien en tu pista sin orden se
+mira a cuatro segundos del umbral, y no a la decisión.
+
+### La prueba
+
+`src/world/permiso-tardio.test.ts`: el tráfico y quien juega, quién sigue y quién
+no, a cuánto se va, la cuenta de lo que falta contra lo que tarda de verdad cada
+tipo, la verde, el lado del circuito, la frustrada del guion, quien se va al aire
+antes del umbral y las frases.
+
+### Lo medido
+
+A menos de 300 m y 150 de altura de quien juega, en vuelos, y entre dos del
+tráfico, en parejas:
+
+| | vuelos | antes | ahora | parejas, antes | ahora |
+|---|---|---|---|---|---|
+| Los Rodeos | 600 | 0 | 0 | 0 | 0 |
+| Gando | 60 | 0 | 0 | 0 | 0 |
+| Tenerife Sur | 60 | 0 | 0 | 0 | 0 |
+| Lanzarote | 60 | 0 | 0 | 0 | 0 |
+| Fuerteventura | 60 | 0 | 0 | 0 | 0 |
+| La Palma | 60 | 0 | 0 | 0 | 0 |
+| Cuatro Vientos | 60 | 0 | 0 | 0 | 0 |
+| Pettirossi | 60 | 0 | 0 | 0 | 0 |
+| El Hierro, remontando | 300 | 0 | 0 | 18 | 0 |
+| La Gomera, remontando | 300 | 3 | 0 | 0 | 0 |
+| Pilar | 300 | 0 | 0 | 3 | 0 |
+| Pedro Juan | 300 | 0 | 0 | 1 | 1 |
+| Concepción | 300 | 0 | 0 | 1 | 0 |
+| Estigarribia | 300 | 0 | 0 | 0 | 0 |
+
+Lo que se espera por la verde, s (media; mediana; p90; máximo), y los demás:
+
+| | antes | ahora | se van al aire en la decisión | tomas | espera por llegada |
+|---|---|---|---|---|---|
+| Los Rodeos (600) | 36,3; 7; 116,5; 246,5 | 36,3; 7; 116,5; 246,5 | 47 → 40 | 736 → 759 | 60,6 → 59,6 s |
+| Gando (60) | 49,0; 24,5; 115,5; 197 | 49,0; 24,5; 115,5; 197 | 7 → 6 | 74 → 79 | 60,2 → 59,3 s |
+| Tenerife Sur (60) | 45,2; 36; 120; 150,5 | 47,7; 36; 150,5; 164 | 6 → 3 | 71 → 73 | 53,2 → 53,3 s |
+| Lanzarote (60) | 19,4; 2; 89,5; 102 | 18,5; 2; 89,5; 102 | 3 → 0 | 63 → 66 | 60,5 → 62,0 s |
+| Fuerteventura (60) | 25,4; 2; 88; 126 | 25,4; 2; 88; 126 | 1 → 0 | 69 → 75 | 57,7 → 57,9 s |
+| La Palma (60) | 81,5; 56; 182,5; 274,5 | 81,5; 56; 182,5; 274,5 | 18 → 18 | 71 → 74 | 84,9 → 83,4 s |
+| Cuatro Vientos (60) | 17,3; 2; 75; 104 | 17,3; 2; 75; 104 | 3 → 0 | 60 → 63 | 70,8 → 63,9 s |
+| Pettirossi (60) | 40,2; 12; 107,5; 139 | 40,2; 12; 107,5; 139 | 7 → 7 | 68 → 70 | 45,8 → 42,6 s |
+| El Hierro, remontando (300) | 90,5; 96; 173; 256,5 | 90,8; 96,5; 171,5; 256,5 | 81 → 64 | 409 → 438 | 95,4 → 90,6 s |
+| La Gomera, remontando (300) | 83,0; 55,5; 199,5; 319,5 | 83,0; 55,5; 199,5; 319,5 | 7 → 6 | 347 → 365 | 99,3 → 97,6 s |
+| Pilar (300) | 44,4; 39; 114; 289 | 44,4; 39; 114; 289 | 7 → 2 | 431 → 456 | 60,8 → 59,0 s |
+| Pedro Juan (300) | 30,6; 5; 83,5; 190 | 30,6; 5; 83,5; 190 | 6 → 0 | 404 → 426 | 71,9 → 71,4 s |
+| Concepción (300) | 64,4; 31; 193,5; 332,5 | 64,8; 31; 193,5; 332,5 | 18 → 13 | 384 → 396 | 73,4 → 73,8 s |
+| Estigarribia (300) | 50,1; 28; 149; 236,5 | 48,7; 12,5; 149; 236,5 | 37 → 32 | 383 → 424 | 50,3 → 53,1 s |
+
+**Siguen por debajo de la decisión**, del tráfico, 7 en las 600 de Los Rodeos, 11 en
+los otros siete campos, 6 en El Hierro, 2 en Concepción y 33 en Estigarribia, y
+todos esos aterrizan; con quien juega llegando derecho y sin avisar, 9, y tres de
+ellos acaban al aire. Las tomas salen a más en todos los campos, y las idas al
+aire en la decisión, a menos o igual. La espera de los que llegan, a menos, salvo
+1,5 s más en Lanzarote y 2,8 en Estigarribia; y las salidas de los demás, casi las
+mismas (682 por 684 en Los Rodeos; la que más, nueve menos en Pilar, de 585).
+
+**Quien juega**: en Estigarribia, de 17 idas al aire ordenadas en 300 vuelos a 10,
+con 6 permisos por debajo de los sesenta metros; y llegando derecho a la final (540
+vuelos en Los Rodeos, Gando y Tenerife Sur, sin que nadie le haga sitio), de 7 a 1,
+con 6 permisos tardíos y ninguna toma con alguien en la pista. Yéndose al aire él, a
+menos de 300 m y 150: de 8 en 480 vuelos por el circuito a ninguno, y de 7 en 360
+derecho a ninguno.
+
+**La roja** no se mueve: la misma en Los Rodeos, al décimo, y en los demás, entre
+1,4 s menos (Estigarribia) y 0,4 más. Menos en Tenerife Sur, 2,5 s más: es **una**
+semilla de las veinte, en la que aterriza uno que antes se iba al aire y otro llega
+antes a la fila de salida; con cincuenta semillas más, 40,5 s antes y ahora.
+
+La verde no llega antes en ninguno de los 600: con la separación de 7.10.1 —pasar el
+final, no solo estar en el aire— en una pista de 3.171 m no da. La media docena que
+se esperaba en H94 era contando con el avión en el aire.
+
+El vitest entero, por partes: `src/world`, 201 ficheros y 4.490 pruebas; `src/audio`, 38
+y 874; `src/flight`, 277 y 5.246; el resto, 87 y 1.606. En verde, con las saltadas de
+siempre, después de ajustar dos pruebas que contaban con irse al aire: en
+`salida-tapada.test.ts`, quien no da la vuelta en El Hierro ahora puede llegar con el
+permiso tardío; y en `trafico-que-da-la-vuelta.test.ts`, la avioneta que para en la
+salida de los 590 m por la 12 retrocede 128 m, y antes no llegaba a aterrizar.
+
+### Lo que queda
+
+- **Los bancos del navegador no se volaron**: no hay turno.
+- **Las cuatro tomas** de «continúe aproximación» y «continue approach», con cada
+  torre. Hasta entonces no se dice nada, como antes.
+- **El permiso «detrás de»** de Tenerife Sur y Barajas, con la pista ocupada y de día:
+  pide una frase nueva por tipo de avión, «behind landing…, cleared to land».
+- **Con quien juega ya en el aire y todavía sobre la pista**, quien llega decide como
+  siempre, con las ruedas en el aire y no con el final pasado: en 29 de las 759 tomas
+  de Los Rodeos (25 de 736, antes) cruza el umbral con él a kilómetro y medio o más y
+  a ciento cuarenta metros o más. Con la regla a la letra se irían al aire, o esperarías
+  más la verde.
+- **El Hierro los fines de semana es AFIS**, y en el juego tiene torre siempre.
+- **En Estigarribia**, la avioneta que aterriza delante de ti rueda la pista hasta su
+  calle, a tres kilómetros del umbral, y no cuenta con que llegas: de ahí las diez
+  idas al aire que quedan.
+- **En Pedro Juan**, dos del tráfico dando vueltas a 295 m uno de otro, de antes.
+- **La vuelta, con los virajes de cada cual**: se dice treinta grados y se sigue
+  contando con los tres alabeos; no se mide si se da.
