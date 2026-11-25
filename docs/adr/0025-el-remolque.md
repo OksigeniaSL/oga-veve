@@ -3341,6 +3341,144 @@ la T4. **El turbohélice del tráfico de La Palma** sigue saliendo del 5 y del 1
 
 **El color**: el asfalto de Fuerteventura se dibuja con el gris de las plataformas y no con el de las calles, como las demás.
 
+## Enmienda (25-11-2026, H99): los pilotos de los bancos, la mano y el radio
+
+Solo bancos: el juego no cambia. Ni el AIP ni el modelo de vuelo tienen que ver con esto; lo que se mide es cómo vuela quien mide.
+
+### La final con un motor del JAZ 90: la mano, y no el rumbo
+
+Se mecía ±25 m y tocaba de 2 a 29 m del eje, según la vez. Con `OGA_TRAZA_FINA=fichero`, `verificar-emergencias` escribe la final cada
+medio segundo: el desvío, la traza y el rumbo, la inclinación pedida y la que hay, el alerón, el pie, el gas pedido y el que da el motor, y
+el aire. Volada en Gran Canaria con el banco como estaba:
+
+| a, m | eje, m | pide | alabeo | alerón |
+|---|---|---|---|---|
+| −1.570 | −13 | −7,5° | +4,2° | −0,34 |
+| −1.515 | −6 | −10,2° | +7,0° | −0,49 |
+| −1.462 | +2 | −13,0° | +5,7° | −0,50 |
+| −1.351 | +21 | −16,1° | −2,8° | −0,35 |
+| −1.240 | +39 | −15,0° | −8,8° | −0,16 |
+| −1.005 | +57 | −7,0° | −10,2° | +0,08 |
+| −400 | +3 | +9,9° | +3,4° | +0,18 |
+| 14 | −25 | +2,3° | +5,6° | −0,09 |
+
+**El que se mece es el lazo del alabeo.** Llevaba 1,6 de alerón por radián que falta, y eso es un ritmo distinto en cada avión: lo que falta se
+cierra a 1,6 veces lo que rueda por unidad de alerón. La avioneta, con las ayudas de Taguató, rueda 43 °/s y trae el ala en ocho décimas; el
+JAZ 90 rueda 12 y tarda tres segundos, lo que tarda una racha en volver a ladearlo. En los últimos cuatro kilómetros, la inclinación estuvo a
+6,6° de la pedida de media cuadrática. El lazo de fuera corregía bien, y lo que pedía llegaba cuatro segundos tarde.
+
+**Y quien lo empuja sin racha ninguna es el gas.** El lazo del gas no cuenta los cinco segundos que tarda el motor y va y viene entre 0 y 0,97 cada
+cuarenta; con uno parado, cada vaivén es guiñada, el pie va detrás con ±0,9° de derrape, y el derrape ladea el avión lo que la mano floja no
+le quita. En la mesa, sin rachas, ±14 m con un motor y 0,2 al tocar con los dos; con el gas quieto, 0,7 con uno. El modelo no cambió: la mesa
+lo hace igual con el de hoy, y las seis tiradas guardadas —2,5; 10,4; 10,7; 20,2; 20,9 y 29,0 m—, y los 21,6 de esta traza, son la misma distribución.
+
+**La mano es un tiempo** (es la H34g del banco del vuelo entero, que aquí no había llegado): en la final, el alerón que trae el ala en seis décimas
+con lo que rueda cada avión a su velocidad y con la amortiguación de su peldaño, y nunca menos de 1,6: 8 en el JAZ 90, 5 en el 50, 3 en
+el 40, 2,3 en la avioneta. Y lo de fuera, a su paso: el rumbo pide 2,5 de inclinación en vez de 1,4, y se mira seis segundos por delante en
+vez de ochocientos metros, que al JAZ 90 le son doce y a la avioneta veinticinco. Al gas no se le ha tocado: con la mano firme ya no llega al eje, y
+amansarlo a secas, en la mesa, dejaba al avión sin velocidad y lo hacía tocar antes del umbral.
+
+**La mesa** (`scripts/mesa-de-la-final.mjs`) vuela ese mismo texto con el modelo, las ayudas y las rachas del juego, el viento de Gando y el aire
+calibrado con la traza. El desvío al tocar, media y peor:
+
+| | antes | ahora |
+|---|---|---|
+| JAZ 90, un motor, 48 finales | 12,1 y 68,4 | **1,1 y 3,2** |
+| JAZ 90, dos motores | 9,9 y 36,9 | 0,5 y 1,4 |
+| JAZ 90, un motor, Ruvicha | 20,1 y 99,0 | 1,7 y 5,2 |
+| JAZ 90, cruzado 12 a 60° | 13,1 y 26,7 | 1,2 y 3,2 |
+| JAZ 110 y JAZ 120, un motor | 19,2 y 51,4; 23,7 y 56,0 | 1,2 y 3,5; 1,7 y 5,6 |
+| JAZ 60, un motor | 4,5 y 10,5 | 0,9 y 2,5 |
+| JAZ 50, un motor | 14,1 y 62,7 | 0,6 y 1,8 |
+| JAZ 40, un motor; con el tren de nariz | 3,7 y 9,7; 3,6 y 16,6 | 0,8 y 2,0; 0,6 y 2,8 |
+| JAZ 20 | 4,4 y 15,6 | 0,5 y 1,6 |
+
+Lo que se hunde al tocar y dónde toca no cambian. `la-final-con-un-motor.test.mjs` lo deja en la integración, con la mano de antes en rojo.
+
+**Volada cuatro veces en Gran Canaria**, la primera con el banco como estaba y las tres seguidas con él como queda:
+
+| | antes | ahora | ahora | ahora |
+|---|---|---|---|---|
+| al tocar, m del eje | −21,5 | +0,7 | −0,4 | −0,4 |
+| lo más lejos en los dos últimos kilómetros | 57,5 | 7,0 | 8,0 | 7,6 |
+| lo más lejos en tierra, hasta parar | 21,6 | 1,2 | 1,0 | 3,8 |
+| la inclinación, de la pedida, media cuadrática | 6,6° | 1,1° | 1,2° | 0,9° |
+| rachas de lado, media cuadrática, m/s | 1,4 | 1,8 | 1,1 | 1,1 |
+| comprobaciones | 11 de 12 | 12 de 12 | 12 de 12 | 12 de 12 |
+
+
+### El JAZ 50 en Cuatro Vientos: el radio se aprendía sin virar
+
+**Qué medía**: lo que el avión tira de lado con **el alerón en su tope**. En el modelo completo eso es entrando y saliendo del viraje, con el ala a
+medio camino; asentado, el alerón anda por la mitad. **Qué tiene que medir**: lo que tira con **la inclinación en su tope y el ala ya asentada** —se
+mueve a menos de 4 °/s—, y llevado a los treinta grados de la base, que es donde se usa; los virajes de antes se vuelan a veinticinco.
+El JAZ 50, que vira en unos 400 m, lo aprendía de 545 a 1.974 según la tirada; el JAZ 110, de 3.560 a 8.449 los 1.330 suyos. **En Guyrami se queda
+como estaba**: allí el alerón ya es la inclinación y sigue en su tope todo el viraje. Con el tope de un tercio de los de hélice cuenta desde quince
+grados, que es un radio de más y del lado seguro; la mesa no vuela ese modelo, y sin medirlo no se toca.
+
+**Y de ese error vivían los reactores.** Con el radio de verdad a secas, el JAZ 90 llegaba a la puerta fuera del eje en 4 de 20 finales en Taguató y en
+9 de 20 en Tukã: el viraje empezaba tan tarde que no quedaba sitio para la captura. El radio de antes era, de media, el doble, así que ese doble se
+dice: **el viraje a final se planea con la mitad de lo que el avión sostiene** (`MARGEN_DEL_VIRAJE`), un arco de doce a quince grados.
+En la mesa del arco, con cuatro o cinco vientos, fuera del eje en la puerta y metros de media:
+
+| | antes | ahora |
+|---|---|---|
+| JAZ 50 a 227 m, Tukã | 10 de 25, 66 m | **0 de 25, 3,3 m** |
+| JAZ 50 a 227 m, Taguató | 2 de 25, 20 m | **0 de 25, 4,1 m** |
+| JAZ 50 a 302 m, Tukã | 1 de 24, 7,3 m | 0 de 24, 1,7 m |
+| JAZ 90, Taguató y Tukã | 0 y 0 de 25; 14,8 y 14,0 m | 0 y 0 de 25; 15,8 y 14,3 m |
+| JAZ 110, Taguató y Tukã | 0 y 0 de 24; 27,4 y 24,5 m | 0 y 0; 26,8 y 24,7 m |
+| JAZ 120, Taguató y Tukã | 0 y 0 de 24; 26,7 y 20,1 m | 0 y 0; 26,5 y 20,1 m |
+| JAZ 60, Taguató y Tukã | 0 y 0 de 24; 14,2 y 12,5 m | 0 y 0; 13,9 y 12,7 m |
+| JAZ 40 y JAZ 20, Taguató | 0 y 0 de 24; 5,8 y 2,5 m | 0 y 0; 5,7 y 2,6 m |
+
+**La mesa del arco no volaba a los reactores con su alerón**: pedía la flota por un nombre que ya no existe (`FLEET`, que es `AIRCRAFT`), el banco se quedaba con
+el tercio de los de hélice y no lo decía. Ahora lleva el de cada uno, y las pruebas de la H89 siguen en verde. El informe de la puerta dice con qué
+radio se viró y de cuántas medidas sale.
+
+### Los bancos que aún arrancaban con la tecla
+
+| Banco | Cómo estaba | Ahora |
+|---|---|---|
+| `ver-frenos-de-tierra` | no arrancaba: la final, la toma y el despegue «con gas a fondo» eran un planeo | en marcha tras lo del puesto, vigilado, y con código de salida |
+| `verificar-teclas-que-tocan` | 2.500 ft con el gas a 0,6 y las hélices paradas | en marcha, vigilado en las cuatro cargas |
+| `verificar-quien-habla` | la tecla, sin mirar | la llave en su orden; no vuela: mira que arrancó |
+| `probar-arranque` | la tecla, y lo que saliera, sin verde ni rojo | la llave en su orden, con el tractor; en rojo si no arranca o no se mueve |
+| `verificar-radar` | los de 14.000 y 24.000 ft, planeando | en marcha, vigilado, con el gas que lo sostiene, y arriba en rojo si baja de 20.000 |
+| `verificar-rendimiento` | «en crucero», con el automático y sin motor | en marcha en lo que se mide en el aire, vigilado; el helicóptero del faro, fuera |
+| `medir-mundo` | parado | parado: no mide un vuelo, compara dos compilaciones, y en una compilación no está el `/src` que pide la vigilancia |
+
+`verificar-crucero` ya lo pone a mano y ya falla con el N1 por debajo de 20: se queda.
+
+**La prueba de que ven, en cada tirada**: los cuatro que vuelan piden lo vigilado con `prueba`, y al acabar, con lo suyo ya apuntado, se le para el motor
+nueve décimas en el aire: si la vigilancia no lo cuenta, en rojo. Y con `OGA_MOTOR_PARADO=1` el módulo común no lo pone ni con la llave, y cada banco
+tiene que salir en rojo entero.
+
+**Volados**: `verificar-teclas-que-tocan`, 16 de 16, con el N1 en 78 en las cuatro cargas y la vigilancia viendo el motor parado a propósito en las cuatro;
+`verificar-radar`, 20 de 21, con el JAZ 90 a 24.000 ft al cabo de los doscientos segundos, el N1 de 16 a 93 en 189 muestras y de 45 a 80 en 63 con el
+JAZ 60, y la vigilancia viéndolo en los dos; y `ver-frenos-de-tierra` con el JAZ 90, con el N1 de 80 a 100 en 103 muestras de la final, la toma y el
+despegue, y también visto. El rojo del radar no era del motor: el JAZ 60 lleva TCAS II desde que es un 1900D (13-11) y el banco le seguía
+pidiendo que no diera la maniobra; ahora lo pregunta por el equipo que lleva cada avión.
+
+### Lo que queda
+
+- **Por volar**: `probar-arranque`, `verificar-quien-habla`, `verificar-rendimiento` y el vuelo entero del JAZ 50 en Cuatro Vientos; el
+  navegador lo tenía la ronda de cierre. Y la tirada entera en rojo con `OGA_MOTOR_PARADO=1`, de los seis:
+
+  ```bash
+  OGA_PUERTO=5692 node scripts/probar-arranque.mjs
+  OGA_PUERTO=5692 node scripts/verificar-quien-habla.mjs
+  OGA_PUERTO=5692 OGA_APRIETES=1 node scripts/verificar-rendimiento.mjs tenerife-norte
+  OGA_PUERTO=5692 node scripts/verificar-radar.mjs
+  OGA_PUERTO=5692 node scripts/verificar-vuelo-entero.mjs cuatro-vientos taguato 1 jaz-50
+  OGA_PUERTO=5692 OGA_MOTOR_PARADO=1 node scripts/…
+  ```
+
+- **El lazo del gas** de este piloto sigue yendo y viniendo con el reactor: con la mano firme no llega al eje, y se nota en la velocidad, ±3,5 nudos, y en lo que
+  se hunde al tocar, 2,7 m/s de media en la mesa. Amansarlo pide contar lo que tarda el motor, como el del vuelo entero.
+- **Los que colocan el avión en el aire para una foto** siguen con el motor parado: carteles, paneles, ventanilla, estrellas, PAPI, la lluvia, el mar y el cielo y
+  las luces de noche. Ninguno mide un vuelo.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
