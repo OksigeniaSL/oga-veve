@@ -145,7 +145,8 @@ for (const [escenario, avion] of LISTA) {
     return {
       avion: o.avion().id,
       cotaDePista: +v[0].y.toFixed(0),
-      altura: +(v[1].y - v[0].y).toFixed(0),
+      // La del viento en cola: con una altitud publicada se sigue subiendo en el cruzado.
+      altura: +(v[2].y - v[0].y).toFixed(0),
       holgura: +peor.holgura.toFixed(0),
       tramo: peor.tramo,
       suelo: +peor.suelo.toFixed(0),

@@ -232,8 +232,8 @@ import {
   crearCircuito,
   escalaDelCircuitoDe,
   formaDelCircuito,
+  loPublicado,
   loQueQuedaDeCircuito,
-  manoPublicada,
   verticesDelCircuito,
   type Circuito,
   type Mano,
@@ -16487,9 +16487,15 @@ export class Game {
       this.cotaDelCampo(campo),
       (x, z) => this.terrain.sampleHeight(x, z),
       escala,
-      // Y por el lado que publica el campo, si lo publica: la cabecera es la
-      // del viento, la misma que la de todo lo demás. Ver `manoPublicada`.
-      manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), escala),
+      // Y por el lado y a la altitud que publica el campo, si los publica: la
+      // cabecera es la del viento, la misma que la de todo lo demás. Ver
+      // `loPublicado`.
+      loPublicado(
+        campo.escenario,
+        cabeceraEnUso(campo.escenario),
+        escala,
+        propulsionDe(this.aircraft) === "chorro",
+      ),
       // Y el pasillo contra el terreno, a la velocidad a la que **este**
       // avión vuela el circuito. Ver `pasilloDelCircuito`.
       this.aircraft.velocidadDeCircuito,
@@ -16560,19 +16566,30 @@ export class Game {
      * **Cada tipo, su circuito**, con la misma regla de lado y altura que el
      * hilo ocre de quien juega a esa escala. Ver `formaDelCircuito`.
      */
-    const forma = (esc: number, velocidadDeCircuito?: number) =>
+    const forma = (esc: number, reactor: boolean, velocidadDeCircuito?: number) =>
       formaDelCircuito(
         pistaConSenda,
         cota,
         suelo,
         esc,
-        manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), esc),
+        loPublicado(campo.escenario, cabeceraEnUso(campo.escenario), esc, reactor),
         velocidadDeCircuito,
       );
-    const deTu = forma(escala, this.aircraft.velocidadDeCircuito);
+    const deTu = forma(
+      escala,
+      propulsionDe(this.aircraft) === "chorro",
+      this.aircraft.velocidadDeCircuito,
+    );
     // Y tu circuito para la torre, aunque no se dibuje. Ver `circuitoDeLaTorre`.
     this.circuitoDeLaTorre = {
-      vertices: verticesDelCircuito(pistaConSenda, cota, deTu.mano, escala, deTu.altura),
+      vertices: verticesDelCircuito(
+        pistaConSenda,
+        cota,
+        deTu.mano,
+        escala,
+        deTu.altura,
+        deTu.enLaBase,
+      ),
       escala,
       mano: deTu.mano,
       altura: deTu.altura,

@@ -338,12 +338,21 @@ export interface Scenario {
    * Canarias lo dibujan del lado del mar, y quien lo aprenda aquí tiene que
    * encontrárselo igual en la carta. Donde publica los dos lados —Los Rodeos,
    * norte y sur— o donde no lo sabemos, no se pone y lo decide el terreno.
-   * La altura la pone siempre el terreno. Ver `formaDelCircuito`.
+   * Ver `formaDelCircuito`.
    *
    * Con `ligero` y `resto` cuando el AIP separa el tráfico ligero —categorías
    * A y B— del resto: Lanzarote tiene su circuito de avionetas al otro lado.
    */
   circuitoPublicado?: Readonly<Record<string, CircuitoPublicado>>;
+  /**
+   * **La altitud a la que publica el AIP ese circuito**, en pies sobre el nivel
+   * del mar: es la que marca el altímetro con el QNH, no la altura sobre el
+   * campo. Donde no la publica —todas las islas, y Minga Guazú— no se pone, y la
+   * altura es la de costumbre o la que pida el terreno. Ver `formaDelCircuito`.
+   *
+   * Con `convencional` y `reactor` cuando el AIP los separa, que es Asunción.
+   */
+  altitudDelCircuito?: AltitudDelCircuito;
   /**
    * **Cuánta cola aguanta la pista preferente, en nudos, si el AIP lo dice.**
    *
@@ -405,6 +414,11 @@ export async function conSuAerodromo(e: Scenario): Promise<Scenario> {
 export type CircuitoPublicado =
   | Mano
   | { readonly ligero: Mano; readonly resto: Mano };
+
+/** Una altitud publicada, pies: para todos, o separando los reactores del resto. */
+export type AltitudDelCircuito =
+  | number
+  | { readonly convencional: number; readonly reactor: number };
 
 /**
  * Valle de la Cordillera — escenario de partida.
@@ -762,6 +776,15 @@ export const PETTIROSSI: Scenario = {
   // Deducida de los propios datos: el umbral 02 apunta a 10° verdaderos.
   magneticVariation: 10,
   aerodrome: conPlataformasCosidas(SGAS as unknown as Aerodrome),
+  /*
+   * **Por el este, por las dos cabeceras**, los convencionales a 1.500 pies y
+   * los reactores a 1.800, los dos con QNH (AIP Paraguay, AD 2.1-48, la carta de
+   * aproximación visual del 1 de octubre de 2026, y AD 2.1-48.1, del 18 de abril
+   * de 2024: «tránsito del aeródromo: sector "E"»). El oeste es del circuito de
+   * la base aérea de Ñu Guazú, pegada al sur.
+   */
+  circuitoPublicado: { "02": "derecha", "20": "izquierda" },
+  altitudDelCircuito: { convencional: 1500, reactor: 1800 },
   /**
    * **Y de Asunción se sale a algún sitio, que es lo que faltaba.**
    *
@@ -1825,6 +1848,13 @@ export const CUATRO_VIENTOS: Scenario = {
    */
   magneticVariation: 1,
   aerodrome: conPlataformasCosidas(LECU as unknown as Aerodrome),
+  /*
+   * **Por el sur, por las dos cabeceras, a 3.000 pies** sobre el nivel del mar
+   * (AIP España, AD 2-LECU/LEVS-12, 22.4, WEF 6-8-2026: «ACFT / HEL 3000 ft
+   * AMSL»). Al norte están la pista militar y su circuito de helicópteros.
+   */
+  circuitoPublicado: { "09": "derecha", "27": "izquierda" },
+  altitudDelCircuito: 3000,
 };
 
 /**
@@ -2057,6 +2087,9 @@ export const GUARANI: Scenario = {
    */
   magneticVariation: 9,
   aerodrome: conPlataformasCosidas(SGES as unknown as Aerodrome),
+  // Por el noroeste, por las dos cabeceras: dibujado en la carta de los circuitos
+  // de la TMA Foz, sin altitud (AIP Paraguay, AD 2.2-22, 18 de abril de 2024).
+  circuitoPublicado: { "05": "izquierda", "23": "derecha" },
   /**
    * **Y de Ciudad del Este se vuela a la granja, al sur, a la capital y al
    * norte.**
@@ -2165,6 +2198,10 @@ export const ESTIGARRIBIA: Scenario = {
   // Doce grados: la 19 corre a 177,8° verdaderos y la cabecera pone 19.
   magneticVariation: 12,
   aerodrome: conPlataformasCosidas(SGME as unknown as Aerodrome),
+  // Por el oeste, por las dos cabeceras, a 1.700 pies (AIP Paraguay, AD 2.3-16,
+  // la carta de aproximación visual del 5 de octubre de 2023).
+  circuitoPublicado: { "01": "izquierda", "19": "derecha" },
+  altitudDelCircuito: 1700,
   /*
    * **Y del Chaco a la capital**: 475 km, eje 355 —en diagonal, y por eso
    * tanto—. Es la ruta que anunció en 2024 el gobernador de Boquerón para
@@ -2240,6 +2277,12 @@ export const PEDRO_JUAN: Scenario = {
   // verdaderos y la cabecera pone 03.
   magneticVariation: 16,
   aerodrome: conPlataformasCosidas(SGPJ as unknown as Aerodrome),
+  // Por el oeste, por las dos cabeceras, a 3.000 pies: «entrada al circuito de
+  // tránsito de aeródromo solamente por el sector "oeste"» (AIP Paraguay,
+  // AD 2.4-15, la carta de aproximación visual del 5 de octubre de 2023). Al
+  // este está Brasil.
+  circuitoPublicado: { "03": "izquierda", "21": "derecha" },
+  altitudDelCircuito: 3000,
   /*
    * **Y las dos rutas que tuvo de verdad**, las de Sol del Paraguay: a
    * Asunción, 336 km, y a Ciudad del Este, 329. Esta segunda es la que fija
@@ -2318,11 +2361,12 @@ export const ENCARNACION: Scenario = {
   // verdaderos y la cabecera pone 02.
   magneticVariation: 8,
   aerodrome: conPlataformasCosidas(SGEN as unknown as Aerodrome),
-  // Por el este, por las dos cabeceras: «entrada al circuito de tránsito de
-  // aeródromo solamente por el sector "este"» (AIP Paraguay, AD 2.5-16, la
-  // carta de aproximación visual del 9 de julio de 2026). Las salidas de la
-  // 20 por el oeste se coordinan con Posadas.
+  // Por el este, por las dos cabeceras, a 2.100 pies: «entrada al circuito de
+  // tránsito de aeródromo solamente por el sector "este"» (AIP Paraguay,
+  // AD 2.5-16, la carta de aproximación visual del 9 de julio de 2026). Las
+  // salidas de la 20 por el oeste se coordinan con Posadas.
   circuitoPublicado: { "02": "derecha", "20": "izquierda" },
+  altitudDelCircuito: 2100,
   /**
    * **Y Encarnación deja de ser un campo suelto.**
    *

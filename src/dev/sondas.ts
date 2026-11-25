@@ -75,7 +75,7 @@ import { glbDePrueba } from "../world/glb-de-prueba";
 import {
   escalaDelCircuitoDe,
   formaDelCircuito,
-  manoPublicada,
+  loPublicado,
   verticesDelCircuito,
 } from "../world/circuito";
 import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
@@ -3042,7 +3042,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         juego.terrain.runwayElevation,
         (x, z) => juego.terrain.sampleHeight(x, z),
         escala,
-        manoPublicada(juego.scenario, cabeceraEnUso(juego.scenario), escala),
+        loPublicado(
+          juego.scenario,
+          cabeceraEnUso(juego.scenario),
+          escala,
+          propulsionDe(juego.aircraft) === "chorro",
+        ),
         juego.aircraft.velocidadDeCircuito,
       );
       return verticesDelCircuito(
@@ -3051,6 +3056,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         forma.mano,
         escala,
         forma.altura,
+        forma.enLaBase,
       );
     },
     /** A qué caída se tocó, m/s. Para el banco y para las sondas. */

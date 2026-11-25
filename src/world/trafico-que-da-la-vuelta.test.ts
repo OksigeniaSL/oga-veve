@@ -35,7 +35,7 @@ import {
   virajesCerrados,
   type Sitio,
 } from "./trafico";
-import { formaDelCircuito, manoPublicada } from "./circuito";
+import { formaDelCircuito, loPublicado } from "./circuito";
 import { relieveDe } from "./relieve-en-disco";
 import { SCENARIOS, conViento } from "./scenarios";
 import { TIEMPO_DE_CASA } from "./meteo";
@@ -138,8 +138,8 @@ describe("en Los Rodeos, con el campo llenándose, nadie corre por la pista haci
       const across = (x: number, z: number) => (x - ux) * Math.cos(h) + (z - uz) * Math.sin(h);
       const t = crearTrafico(pista, cota, "ala-alta", "izquierda", 1, undefined, {
         tipos: tiposDelCampo(aero.id, pista.length),
-        forma: (escala) =>
-          formaDelCircuito(pista, cota, suelo, escala, manoPublicada(esc, cabeceraEnUso(esc), escala)),
+        forma: (escala, reactor) =>
+          formaDelCircuito(pista, cota, suelo, escala, loPublicado(esc, cabeceraEnUso(esc), escala, reactor)),
         tierra: () => (calles ? { suelo: calles, alto: suelo } : null),
       });
       const matriculas = ["EC-TIX", "EC-HWR", "EC-RTI", "EC-KRV", "EC-ABC", "EC-ESB", "EC-FYY", "EC-LMN"];

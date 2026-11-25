@@ -75,6 +75,8 @@ import {
 } from "./cuerpos-del-trafico";
 import {
   escalaDeCircuito,
+  lineaDelCircuito,
+  sendaDe,
   verticesDelCircuito,
   type Mano,
   type Pista,
@@ -1093,10 +1095,18 @@ export function trazar(
    * va el de la avioneta. Ver `TipoDeTrafico.subeAlAire`.
    */
   subeAlAire = tierra?.tipo.subeAlAire ?? TIPOS.avioneta.subeAlAire,
+  /** A qué altura se llega a la esquina de la base. Ver `FormaDelCircuito`. */
+  enLaBase?: number,
 ): Caminos | null {
-  const v = verticesDelCircuito(runway, cota, mano, escala, altura);
+  const v = verticesDelCircuito(runway, cota, mano, escala, altura, enLaBase);
   const [umbral, arriba, lejos, esquina, entrada] = v;
   if (!umbral || !arriba || !lejos || !esquina || !entrada) return null;
+  /*
+   * El viento en cola, de la esquina de allá a la de la base, con el punto en
+   * el que se empieza a bajar donde la altura es la publicada: el tráfico vuela
+   * la misma línea que se dibuja. Ver `lineaDelCircuito`.
+   */
+  const cola: readonly Sitio[] = lineaDelCircuito(v, sendaDe(runway)).slice(2, -1);
 
   // Los dos ejes de la pista, sacados de los propios vértices. Con las cuentas
   // escritas otra vez aquí, el día que el circuito cambie de mano el tráfico
@@ -1133,7 +1143,7 @@ export function trazar(
    * **El que llega**: el tramo largo, la base, el final, la toma y la salida.
    * Es el circuito del juego con la carrera de frenado pegada al final.
    */
-  let llegada = [lejos, esquina, entrada, aterriza, toma, salida];
+  let llegada = [...cola, entrada, aterriza, toma, salida];
   /*
    * **Y la altura de decisión, en su senda.** Es la de verdad, la de los
    * mínimos —ver `ALTURA_DE_DECISION`—, y cae en el tramo recto de la entrada
@@ -1177,14 +1187,13 @@ export function trazar(
    * frente por su línea. Ver `otraVuelta`.
    */
   const sinPermiso = [
-    lejos,
-    esquina,
+    ...cola,
     entrada,
     decision,
     ...subidaHasta(decision, arriba, pendiente),
     lejos,
   ];
-  const decide = largoDelCamino([lejos, esquina, entrada, decision]);
+  const decide = largoDelCamino([...cola, entrada, decision]);
   /** **El que sale**: del aparcamiento a la espera, al eje, y arriba. */
   let salidaDelCampo = [lejosDelCampo, espera, enElEje, arriba];
   /**
@@ -1198,7 +1207,7 @@ export function trazar(
   const alAire = [decision, ...subidaHasta(decision, arriba, pendiente), lejos];
   // La toma, de donde se cuenta hacia atrás: es el único punto del circuito
   // que está donde está y no admite discusión.
-  let enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza]);
+  let enLaToma = largoDelCamino([...cola, entrada, aterriza]);
   let fuera = largoDelCamino(llegada);
   let hastaLaEspera = largoDelCamino([lejosDelCampo, espera]);
   let hastaElEje = largoDelCamino([lejosDelCampo, espera, enElEje]);
@@ -1238,15 +1247,14 @@ export function trazar(
           ? [sobre(en(Math.min(runway.length - 60, hastaFrenar), 0, 0))]
           : [];
       const hastaLaBoca = [
-        lejos,
-        esquina,
+        ...cola,
         entrada,
         aterriza,
         tomaDeVerdad,
         ...vuelta,
       ];
       llegada = [...hastaLaBoca, ...rodando];
-      enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza, tomaDeVerdad]);
+      enLaToma = largoDelCamino([...cola, entrada, aterriza, tomaDeVerdad]);
       const boca = largoDelCamino([...hastaLaBoca, rodando[0]!]);
       fuera = boca + llega.pista;
       const virajes = virajesCerrados(llegada, enLaToma, fuera);
@@ -1335,7 +1343,7 @@ export function trazar(
    * de ti en final con el avión dibujado a tu lado o detrás. Ahora «en
    * final» se dice en final.
    */
-  const enFinal = largoDelCamino([lejos, esquina, entrada]);
+  const enFinal = largoDelCamino([...cola, entrada]);
   /*
    * **Y el viento en cola, lo bastante antes para que «en final» no llegue
    * tarde nunca.** La frase de final espera a que el avión haya girado —ver
@@ -1418,7 +1426,7 @@ export function trazar(
     llegada,
     sinPermiso,
     decide,
-    base: largoDelCamino([lejos, esquina]),
+    base: largoDelCamino(cola),
     haciaFuera: unitario(entrada, esquina),
     entra: enFinal,
     toca: enLaToma,
@@ -2327,8 +2335,14 @@ export interface OpcionesDelTrafico {
    * tipo que habla, que es cuando el juego ya sabe dónde está quien juega.
    */
   readonly tierra?: () => Omit<TierraDelTrafico, "tipo"> | null;
-  /** La mano y la altura del circuito de una escala. Ver `formaDelCircuito`. */
-  readonly forma?: (escala: number) => { mano: Mano; altura?: number };
+  /**
+   * La mano y la altura del circuito de una escala, y de un reactor o no: hay
+   * campos que publican la suya aparte. Ver `formaDelCircuito`.
+   */
+  readonly forma?: (
+    escala: number,
+    reactor: boolean,
+  ) => { mano: Mano; altura?: number; enLaBase?: number };
   /**
    * Si se dibujan con los modelos de la flota —ver `cuerpos-del-trafico.ts`—
    * o con la fábrica. El juego dice que sí; las pruebas, que corren sin red,
@@ -2390,7 +2404,7 @@ export function crearTrafico(
     deOtros?: PuestosDeOtros,
   ): Caminos | null => {
     const esc = conTipos ? escalaDeCircuito(tipo.aproximacion) : escala;
-    const forma = opciones.forma?.(esc) ?? { mano, altura };
+    const forma = opciones.forma?.(esc, tipo.id === "reactor") ?? { mano, altura };
     const suelo = opciones.tierra?.() ?? null;
     return trazar(
       runway,
@@ -2400,6 +2414,7 @@ export function crearTrafico(
       forma.altura,
       suelo ? { ...suelo, tipo, ...(ocupados ? { ocupados } : {}), ...(deOtros ? { deOtros } : {}) } : null,
       tipo.subeAlAire,
+      forma.enLaBase,
     );
   };
 

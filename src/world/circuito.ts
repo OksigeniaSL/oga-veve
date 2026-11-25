@@ -60,6 +60,10 @@
  * No hace falta ninguna carta ni ningún dato nuevo: el juego ya tiene el
  * relieve de verdad de cada aeródromo.
  *
+ * **Y donde el AIP publica el lado o la altitud, mandan los publicados**: el
+ * terreno solo pone lo que el AIP calla, y lo que haga falta para no acercarse
+ * al monte. Ver `loPublicado`.
+ *
  * ## Y se dibuja igual que la senda
  *
  * Un hilo de puntos, del mismo ocre que dice «por aquí» en el resto del juego.
@@ -403,6 +407,22 @@ export interface FormaDelCircuito {
   readonly mano: Mano;
   /** Altura de los tramos a nivel sobre la pista, m. */
   readonly altura: number;
+  /**
+   * **A qué altura se llega a la esquina de la base**, m, si no es la de los
+   * tramos a nivel: solo donde el AIP publica una altura por encima de la que
+   * tendría el circuito sin ella. Ver `formaDelCircuito`.
+   */
+  readonly enLaBase?: number;
+}
+
+/**
+ * **Lo que publica el AIP del circuito** de una cabecera, para un avión: el
+ * lado y la altitud, cada uno si lo publica. Ver `loPublicado`.
+ */
+export interface LoPublicado {
+  readonly mano?: Mano | undefined;
+  /** Metros sobre el nivel del mar, que es como lo publica: altitud con QNH. */
+  readonly altitud?: number | undefined;
 }
 
 /**
@@ -437,6 +457,31 @@ export interface FormaDelCircuito {
  * Donde los dos lados piden lo mismo y es más que la costumbre —la avioneta
  * en Los Rodeos, en su llano entre dos montes—, el circuito sube lo que haga
  * falta y se queda a la izquierda.
+ *
+ * ## Y a la altitud que publica el AIP, donde la publica
+ *
+ * Cinco campos del juego la publican, los cinco sobre el nivel del mar: los
+ * convencionales de Asunción a 1.500 pies y sus reactores a 1.800, Encarnación
+ * a 2.100, Pedro Juan Caballero a 3.000, Mariscal Estigarribia a 1.700 y Cuatro
+ * Vientos a 3.000 (ADR 0014, enmienda H92). Entonces los tramos a nivel se
+ * vuelan ahí, y lo que marca el altímetro es lo que dice la carta. El terreno
+ * sigue mandando por abajo: nunca a menos de `SOBRE_EL_TERRENO` del pasillo.
+ *
+ * **La base y la final no se mueven.** La altura de costumbre es la de una base
+ * que baja ciento cincuenta metros en el ancho de esta figura, que es más
+ * estrecha que la publicada: con los 375 m de Asunción la base de la avioneta
+ * caería dieciséis grados. Lo que sobra se baja antes, en el viento en cola y
+ * por la senda de la final, y a la esquina se llega a la altura de siempre
+ * (`enLaBase`). Es como se vuela: la bajada empieza hacia el través del umbral,
+ * no en la esquina. Ver `lineaDelCircuito`.
+ *
+ * **Y donde no cabe, no se fuerza.** Si a tres grados hay que empezar a bajar
+ * antes del través del centro de la pista, el viento en cola ya no es un tramo a
+ * esa altura sino una bajada, y se vuela la de costumbre. Les pasa a las
+ * avionetas de Encarnación: la carta dibuja un circuito de cinco kilómetros de
+ * ancho con ocho de final, y el suyo tiene uno y menos de dos. Para bajar los
+ * 197 m de más tendrían que empezar a 3.760 m de la esquina, en un tramo de
+ * 4.990 y después de subir a 6,1° desde la punta misma de la pista.
  */
 export function formaDelCircuito(
   runway: Pista,
@@ -444,10 +489,10 @@ export function formaDelCircuito(
   suelo?: (x: number, z: number) => number,
   escala = 1,
   /**
-   * El lado que publica el AIP, si lo publica: entonces no se elige, y el
-   * terreno solo pone la altura. Ver `manoPublicada`.
+   * Lo que publica el AIP, si lo publica. Con lado no se elige, y el terreno
+   * solo pone la altura; con altitud, se vuela a ella. Ver `loPublicado`.
    */
-  publicada?: Mano,
+  publicado: LoPublicado = {},
   /**
    * A qué vuela el circuito **este** avión, m/s: su `velocidadDeCircuito`.
    * Es lo que ancha el pasillo que se mira. Ver `pasilloDelCircuito`.
@@ -455,21 +500,30 @@ export function formaDelCircuito(
   velocidad?: number,
 ): FormaDelCircuito {
   const costumbre = alturaDelCircuito(escala, sendaDe(runway));
-  if (!suelo) return { mano: publicada ?? "izquierda", altura: costumbre };
-  const pide = (mano: Mano): number =>
-    Math.max(
-      costumbre,
-      Math.ceil(
-        techoDelPasillo(runway, cotaDePista, suelo, mano, escala, velocidad) +
-          SOBRE_EL_TERRENO,
-      ),
-    );
-  if (publicada) return { mano: publicada, altura: pide(publicada) };
-  const izquierda = pide("izquierda");
-  const derecha = pide("derecha");
-  return derecha + VENTAJA < izquierda
-    ? { mano: "derecha", altura: derecha }
-    : { mano: "izquierda", altura: izquierda };
+  // Lo que hace falta para pasar por encima del pasillo de este lado.
+  const libra = (mano: Mano): number =>
+    suelo
+      ? Math.ceil(
+          techoDelPasillo(runway, cotaDePista, suelo, mano, escala, velocidad) +
+            SOBRE_EL_TERRENO,
+        )
+      : -Infinity;
+  const conLaAltitud = (mano: Mano, libre: number): FormaDelCircuito => {
+    const pide = Math.max(costumbre, libre);
+    if (publicado.altitud === undefined) return { mano, altura: pide };
+    const altura = Math.max(publicado.altitud - cotaDePista, libre);
+    if (altura <= pide) return { mano, altura };
+    // Del través del centro de la pista a la esquina de la base.
+    const desdeElCentro = hastaElUmbralDeToma(runway) + BASE_A_FINAL * escala;
+    const cabe = (altura - pide) / Math.tan(sendaDe(runway)) <= desdeElCentro;
+    return cabe ? { mano, altura, enLaBase: pide } : { mano, altura: pide };
+  };
+  if (publicado.mano) return conLaAltitud(publicado.mano, libra(publicado.mano));
+  const izquierda = libra("izquierda");
+  const derecha = libra("derecha");
+  return Math.max(costumbre, derecha) + VENTAJA < Math.max(costumbre, izquierda)
+    ? conLaAltitud("derecha", derecha)
+    : conLaAltitud("izquierda", izquierda);
 }
 
 /**
@@ -488,6 +542,38 @@ export function manoPublicada(
   const p = cabecera ? escenario.circuitoPublicado?.[cabecera] : undefined;
   if (p === undefined || typeof p === "string") return p;
   return APROXIMACION_DEL_ENTRENADOR * escala < LIGERO_HASTA ? p.ligero : p.resto;
+}
+
+/**
+ * La altitud que publica el AIP para el circuito de este campo, m sobre el
+ * nivel del mar, o nada si no la publica. Con la de los reactores aparte donde
+ * el AIP la separa: «convencional» es lo que no es un reactor, y un turbohélice
+ * lo es. Ver `altitudDelCircuito` en `scenarios.ts`.
+ */
+export function altitudPublicada(
+  escenario: Pick<Scenario, "altitudDelCircuito">,
+  reactor: boolean,
+): number | undefined {
+  const p = escenario.altitudDelCircuito;
+  if (p === undefined) return undefined;
+  return (typeof p === "number" ? p : reactor ? p.reactor : p.convencional) * 0.3048;
+}
+
+/**
+ * **Lo que publica el AIP del circuito de esta cabecera para este avión**, y la
+ * única puerta por la que entra: la piden el hilo ocre, el circuito de la torre,
+ * el del tráfico y el de los bancos. Ver `formaDelCircuito`.
+ */
+export function loPublicado(
+  escenario: Pick<Scenario, "circuitoPublicado" | "altitudDelCircuito">,
+  cabecera: string | null,
+  escala: number,
+  reactor: boolean,
+): LoPublicado {
+  return {
+    mano: manoPublicada(escenario, cabecera, escala),
+    altitud: altitudPublicada(escenario, reactor),
+  };
 }
 
 /** Hasta qué velocidad de aproximación se es tráfico ligero, m/s: 121 nudos. */
@@ -579,8 +665,13 @@ export function verticesDelCircuito(
   cotaDePista: number,
   mano: Mano = "izquierda",
   escala = 1,
-  /** Altura de los tramos a nivel, m. La pide el terreno: ver `formaDelCircuito`. */
+  /**
+   * Altura de los tramos a nivel, m. La pide el terreno o la publica el AIP:
+   * ver `formaDelCircuito`.
+   */
   altura = alturaDelCircuito(escala, sendaDe(runway)),
+  /** A cuál se llega a la esquina de la base, m. Ver `FormaDelCircuito.enLaBase`. */
+  enLaBase = altura,
 ): PuntoDeCircuito[] {
   const h = (runway.heading * Math.PI) / 180;
   // Hacia dónde se despega, y qué es la izquierda desde ahí. Con el circuito
@@ -602,7 +693,17 @@ export function verticesDelCircuito(
   const recto = RECTO_TRAS_LA_PISTA * escala;
   const separacion = separacionDelCircuito(escala);
   const entrada = BASE_A_FINAL * escala;
-  const circuito = altura;
+  /*
+   * **Y con una altura publicada por encima de la de costumbre, se sigue
+   * subiendo en el viento cruzado**, al mismo paso que desde la pista: en una
+   * figura de avioneta, los 447 m de Encarnación no se ganan antes del primer
+   * giro. Nunca por debajo de la que tendría el circuito sin ella, que es la
+   * que libra el terreno.
+   */
+  const alGirar =
+    enLaBase < altura
+      ? Math.max(enLaBase, (altura * (runway.length + recto)) / (runway.length + recto + separacion))
+      : altura;
   /*
    * **La final se cuenta desde donde se toca**, que con el umbral desplazado
    * no es la punta del asfalto: la base se gira a la misma distancia del
@@ -615,14 +716,53 @@ export function verticesDelCircuito(
     // La cabecera de salida, a ras de pista: el circuito empieza en el suelo.
     en(-medio, 0, 0),
     // Final de la subida, ya a la altura del circuito.
-    en(medio + recto, 0, circuito),
+    en(medio + recto, 0, alGirar),
     // La esquina de allá: fin del viento cruzado.
-    en(medio + recto, separacion, circuito),
+    en(medio + recto, separacion, altura),
     // La esquina de acá: fin del viento en cola, empieza la base.
-    en(toma - entrada, separacion, circuito),
+    en(toma - entrada, separacion, enLaBase),
     // Y la entrada en final, sobre el eje y ya en la senda de los aros.
     en(toma - entrada, 0, entrada * Math.tan(sendaDe(runway))),
   ];
+}
+
+/**
+ * **Dónde se empieza a bajar en el viento en cola**, o `null` si se vuela a
+ * nivel hasta la esquina de la base, que es lo de siempre.
+ *
+ * Es el punto desde el que, por la senda de la final, se llega a la esquina a su
+ * altura. Con la avioneta cae hacia el través del umbral —a 1.930 m de la
+ * esquina en Mariscal Estigarribia, con el través a 1.800—, que es donde se
+ * empieza a bajar de verdad. Sin pasarse del principio del tramo.
+ */
+export function bajadaDelVientoEnCola(
+  vertices: readonly PuntoDeCircuito[],
+  senda = SENDA,
+): PuntoDeCircuito | null {
+  const lejos = vertices[2];
+  const esquina = vertices[3];
+  if (!lejos || !esquina || lejos.y <= esquina.y) return null;
+  const largo = Math.hypot(lejos.x - esquina.x, lejos.z - esquina.z);
+  const antes = (lejos.y - esquina.y) / Math.tan(senda);
+  if (antes >= largo) return null;
+  return {
+    x: esquina.x + ((lejos.x - esquina.x) * antes) / largo,
+    y: lejos.y,
+    z: esquina.z + ((lejos.z - esquina.z) * antes) / largo,
+  };
+}
+
+/**
+ * **La línea que se vuela**: los cinco vértices, con el punto del viento en cola
+ * en el que se empieza a bajar si lo hay. Es lo que se dibuja y por donde va el
+ * tráfico. Ver `bajadaDelVientoEnCola`.
+ */
+export function lineaDelCircuito(
+  vertices: readonly PuntoDeCircuito[],
+  senda = SENDA,
+): readonly PuntoDeCircuito[] {
+  const baja = bajadaDelVientoEnCola(vertices, senda);
+  return baja ? [...vertices.slice(0, 3), baja, ...vertices.slice(3)] : vertices;
 }
 
 /**
@@ -700,8 +840,8 @@ export function crearCircuito(
   cotaDePista: number,
   suelo?: (x: number, z: number) => number,
   escala = 1,
-  /** El lado que publica el AIP, si lo publica. Ver `manoPublicada`. */
-  publicada?: Mano,
+  /** Lo que publica el AIP, si lo publica. Ver `loPublicado`. */
+  publicado?: LoPublicado,
   /** A qué vuela el circuito este avión, m/s. Ver `formaDelCircuito`. */
   velocidad?: number,
 ): Circuito {
@@ -710,7 +850,7 @@ export function crearCircuito(
     cotaDePista,
     suelo,
     escala,
-    publicada,
+    publicado,
     velocidad,
   );
   const vertices = verticesDelCircuito(
@@ -719,14 +859,16 @@ export function crearCircuito(
     forma.mano,
     escala,
     forma.altura,
+    forma.enLaBase,
   );
+  const linea = lineaDelCircuito(vertices, sendaDe(runway));
   const grupo = new Group();
   grupo.name = "circuito";
 
   const puntos: number[] = [];
-  for (let i = 1; i < vertices.length; i++) {
-    const a = vertices[i - 1]!;
-    const b = vertices[i]!;
+  for (let i = 1; i < linea.length; i++) {
+    const a = linea[i - 1]!;
+    const b = linea[i]!;
     const largo = Math.hypot(b.x - a.x, b.z - a.z);
     const cuantos = Math.max(1, Math.round(largo / PASO));
     for (let k = 0; k < cuantos; k++) {

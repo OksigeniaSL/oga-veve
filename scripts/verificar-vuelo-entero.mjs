@@ -7635,7 +7635,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * que es lo que dice `porLaSenda`. Y el JAZ 60 y el JAZ 90 igual: ver
        * `BAJA_POR_EL_ARCO`.
        */
-      const tope = BAJA_POR_EL_ARCO && aDonde >= 4 && v?.[3] ? v[3].y : meta?.y;
+      /*
+       * **Y hasta la esquina de la base, la altura es la del viento en cola**,
+       * la de la esquina de allá, y a la de acá se llega bajando por la senda,
+       * que es la línea que se dibuja. La altitud que publica el AIP se sigue
+       * ganando en el viento cruzado y se deja antes de la esquina (H92): con la
+       * de cada vértice se nivelaba dos veces y se volaba el viento en cola
+       * abajo, y sin bajar a la de la esquina el JAZ 110 empezaba la final
+       * cuarenta metros alto. Donde no la publica, las tres son la misma.
+       */
+      const tope = !v
+        ? meta?.y
+        : aDonde >= 4
+          ? BAJA_POR_EL_ARCO
+            ? v[3].y
+            : meta?.y
+          : aDonde === 3
+            ? Math.min(
+                v[2].y,
+                v[3].y + Math.hypot(v[3].x - s.position.x, v[3].z - s.position.z) * SENDA,
+              )
+            : v[2].y;
       const altoQueToca = meta
         ? Math.min(tope - cotaDePista, porLaSenda + (suyas.tren ?? 0))
         : CRUCERO;
