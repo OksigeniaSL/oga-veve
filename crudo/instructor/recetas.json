@@ -2939,5 +2939,14 @@
   ],
   "ejercicio.rueda.bienFuera": [
     "ejercicio.rueda.bienFuera"
+  ],
+  "ejercicio.fallo-de-radio.antesSinRadar": [
+    "ejercicio.fallo-de-radio.antesSinRadar"
+  ],
+  "ejercicio.radio.calladaSinRadar": [
+    "ejercicio.radio.calladaSinRadar"
+  ],
+  "ejercicio.radio.bienSinRadar": [
+    "ejercicio.radio.bienSinRadar"
   ]
 }
