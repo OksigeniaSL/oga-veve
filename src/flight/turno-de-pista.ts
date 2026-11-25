@@ -241,7 +241,8 @@ export interface AlrededorDelTurno {
   tuLlegada?(): TuLlegadaALaPista | null;
   /**
    * **Si te quedaste sin radio**: entonces no hay quien te diga que sigas, y la
-   * pista es tuya con la verde fija. Sin esto, no. Ver `quedaLibreATiempo`.
+   * pista es tuya con la verde fija; ni quien te pida una vuelta. Sin esto, no.
+   * Ver `quedaLibreATiempo` y `mirarTuSalida`.
    */
   sinRadio?(): boolean;
   /** Tu rumbo, rad: para saber si la vuelta que se te pidió está dada. */
@@ -510,6 +511,8 @@ export class TurnoDePista {
     girado: number;
     rumbo: number | null;
     lleva: number;
+    /** Si al pedirla se cayó tu permiso, dado o pedido: se vuelve a pedir al acabar. */
+    readonly quitoElPermiso: boolean;
   } | null = null;
 
   /**
@@ -1256,7 +1259,8 @@ export class TurnoDePista {
       }
       // Pasada la red, ya no se te retrasa más: se aterriza.
       if (this.retrasoEnEstaLlegada > RED_DE_LA_SALIDA) continue;
-      const remedio = remedioParaTuSalida(llegada, q, quien, this.vueltasEnEstaLlegada);
+      const teOyen = !this.de.sinRadio?.();
+      const remedio = remedioParaTuSalida(llegada, q, quien, this.vueltasEnEstaLlegada, teOyen);
       /*
        * **Retenido en su doble raya**: no se le da la pista —ni aquí, ni en
        * `despejarTuSalida`, que cuenta lo mismo— y a ti no se te pide nada.
@@ -1283,25 +1287,28 @@ export class TurnoDePista {
         continue;
       }
       if (remedio === "vuelta" && this.de.darteUnaVuelta) {
+        const quitoElPermiso = this.aterrizajeSinAutorizar || this.enFinal;
         this.tapada = {
           por: q.matricula,
           como: "vuelta",
           girado: 0,
           rumbo: this.de.rumbo?.() ?? null,
           lleva: 0,
+          quitoElPermiso,
         };
         this.porTuSalida.vueltas++;
         /*
          * Tu permiso, si lo había, deja de valer: «orbit» es no aterrizar
-         * todavía. Se pide otra vez al volver a la final. Ver `pedirAterrizaje`.
+         * todavía. Se pide otra vez al volver a la final —ver
+         * `pedirAterrizaje`—, o al dejar de esperarla si no se salió de ella.
          */
-        if (this.aterrizajeSinAutorizar || this.enFinal) this.de.retirarteElPermiso?.();
+        if (quitoElPermiso) this.de.retirarteElPermiso?.();
         this.aterrizajeSinAutorizar = false;
         this.de.darteUnaVuelta(q.matricula);
         return;
       }
       if (remedio === "alAire" && this.de.mandarteAlAirePorTuSalida && !this.de.mandanFrustrar?.()) {
-        this.tapada = { por: q.matricula, como: "alAire", girado: 0, rumbo: null, lleva: 0 };
+        this.tapada = { por: q.matricula, como: "alAire", girado: 0, rumbo: null, lleva: 0, quitoElPermiso: true };
         this.porTuSalida.alAire++;
         this.aterrizajeSinAutorizar = false;
         this.despejeSinDecir = null;
@@ -1348,9 +1355,18 @@ export class TurnoDePista {
         llegada?.donde === "final" &&
         llegada.segundos < VUELTA_DESDE_EN_FINAL &&
         t.girado < VUELTA_HECHA / 4;
-      if (dada || sinDarla || t.lleva > TOPE_DE_LA_VUELTA) {
+      // Y sin radio desde que se pidió, no se espera a que la dé quien no la oyó.
+      if (dada || sinDarla || t.lleva > TOPE_DE_LA_VUELTA || this.de.sinRadio?.()) {
         this.vueltasEnEstaLlegada++;
         this.tapada = null;
+        /*
+         * **Y el permiso que se cayó al pedirla se vuelve a pedir** (H98), si
+         * se sigue en la misma final. Solo lo pedía entrar en ella: quien no
+         * daba la vuelta llegaba a la decisión sin permiso y sin orden, con
+         * radio y sin ella. Si la final se dejó dándola, se pide al volver.
+         */
+        if (t.quitoElPermiso && this.enFinal && !this.alAireEnEstaFinal)
+          this.aterrizajeSinAutorizar = true;
         this.de.acabarTuVuelta?.(dada);
         return;
       }

@@ -59,6 +59,20 @@
  * no viene bien: si se va, se felicita; si no, se ve lo que pasa. Ver
  * `proponenIrseAlAire` en `game.ts`.
  *
+ * ## Sin radio, a ti no se te pide nada
+ *
+ * La vuelta se pide con la voz, y quien no la oye no la da: la torre se la
+ * pedía igual, le quitaba el permiso y le dejaba llegar a la decisión sin verde
+ * ni roja (H98). Con la lámpara no hay «dé una vuelta»: hay verde, roja y
+ * destellos (SERA, apéndice 1, tabla AP 1-1). Lo que hace una torre es apartar a
+ * los que sí la oyen —«aircraft which are in contact with the controller may be
+ * instructed by the controller to give way […]. In no case shall permission to
+ * land be withheld indefinitely», OACI, Doc 4444, 7.7.3.1, de quien entra en el
+ * circuito sin hablar con ella—, y con quien está en la final delante de quien
+ * va a salir (7.8). Así que se retiene al que sale, y si su doble raya está en
+ * tu única salida, la roja fija: «ceda el paso a las otras aeronaves y siga en
+ * el circuito».
+ *
  * ## Y la red
  *
  * Es un candado entre la frecuencia, el dibujo y tu vuelo, y lleva la suya:
@@ -209,10 +223,13 @@ export function remedioParaTuSalida(
   tapa: LoQueTardaEnIrse,
   quien: "torre" | "afis",
   vueltas: number,
+  /** Si se te puede pedir: con la radio callada, no. Ver la cabecera. */
+  teOyen = true,
 ): RemedioDeTuSalida | null {
   if (seVaAntes(llegada, tapa)) return null;
   if (quien === "afis") return "aviso";
   const cabeLaVuelta =
+    teOyen &&
     vueltas < VUELTAS_COMO_MUCHO &&
     llegada.alto >= ALTO_PARA_LA_VUELTA &&
     (llegada.donde === "circuito" || llegada.segundos >= VUELTA_DESDE_EN_FINAL);
