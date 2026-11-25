@@ -4580,6 +4580,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const traficoAntes = new Map();
   let deFrente = 0;
   let deFrenteDonde = null;
+  // Tu rumbo en la muestra de antes, para saber si vas virando.
+  let rumboAntes = null;
+  // Y el que da su vuelta de espera y pasa cerca de ti, de verdad.
+  let vueltaCerca = 0;
+  let vueltaCercaDonde = null;
+  let vueltaMasCerca = null;
   /**
    * **Y una sola fuente: lo que se ve, lo que pinta el radar y lo que nombra
    * la radio.** «Veo aviones durante el vuelo que no aparecen en el radar, es
@@ -6006,6 +6012,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * cincuenta de altura entre los dos. En la salida y en la final, que es
        * donde se pidió. Uno en su viento en cola, a un kilómetro de lado y en
        * sentido contrario, no es de frente: es un circuito.
+       *
+       * **Y la línea es de quien la vuela.** El que da su vuelta de espera lleva
+       * en cada muestra un rumbo que va a dejar en dos segundos, y tú en el
+       * viraje de la base también: alargados un minuto en línea recta se
+       * cruzaban dos que pasaron a entre 300 y 1.900 m, y no se veía al
+       * turbohélice que sí dio su vuelta a 46 m de la base del JAZ 90, porque
+       * nunca iba de frente (H93, la mesa de 600 vuelos). Así que las dos rectas
+       * se alargan si los dos van derechos, y **lo demás se mide de verdad**: de
+       * frente a menos de trescientos metros, y en su vuelta de espera a menos
+       * de trescientos metros venga como venga.
        */
       if (!s.onGround && /despegando|comprometido|en-vuelo|final/.test(fase)) {
         /*
@@ -6017,6 +6033,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * `world/trafico.ts`—, pero lo que mide esto es quién vuela de frente,
          * y un salto no vuela. Los saltos los mide `pista-compartida.test.ts`.
          */
+        const giras =
+          rumboAntes && t > rumboAntes.t
+            ? Math.abs(
+                Math.atan2(
+                  Math.sin(s.heading - rumboAntes.rumbo),
+                  Math.cos(s.heading - rumboAntes.rumbo),
+                ),
+              ) /
+              (t - rumboAntes.t)
+            : 0;
+        rumboAntes = { rumbo: s.heading, t };
+        // Un grado por segundo: por debajo es llevarlo derecho, y un viraje va a tres.
+        const virando = giras > Math.PI / 180;
         const vistos = new Set((o.trafico?.() ?? []).map((a) => a.matricula));
         for (const m of [...traficoAntes.keys()])
           if (!vistos.has(m)) traficoAntes.delete(m);
@@ -6041,13 +6070,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           const rv2 = rvx * rvx + rvz * rvz || 1;
           const tc = -(dx * rvx + dz * rvz) / rv2;
           const cerca = Math.hypot(dx + rvx * tc, dz + rvz * tc);
+          const aTuAltura = Math.abs(a.y - s.position.y) < 150;
+          if (a.esperandoTurno && aTuAltura) {
+            vueltaMasCerca = Math.min(vueltaMasCerca ?? Infinity, d);
+            if (d < 300) {
+              vueltaCerca++;
+              vueltaCercaDonde ??=
+                `${t.toFixed(0)} s en «${fase}»: ${a.matricula}, ${a.tipo}, a ${Math.round(d)} m y ${Math.round(a.y - s.position.y)} m de altura` +
+                ` · rumbo ${Math.round(a.rumbo)}° frente a tu ${Math.round(((s.heading * 180) / Math.PI + 360) % 360)}°`;
+            }
+          }
+          const derechos = !virando && !a.esperandoTurno;
           if (
             opuesto &&
-            tc > 0 &&
-            tc < 60 &&
-            cerca < 300 &&
-            d < 5000 &&
-            Math.abs(a.y - s.position.y) < 150
+            aTuAltura &&
+            ((derechos && tc > 0 && tc < 60 && cerca < 300 && d < 5000) || d < 300)
           ) {
             deFrente++;
             /*
@@ -6063,7 +6100,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               ` · rumbo ${Math.round(a.rumbo)}° frente a tu ${Math.round(tuRumbo)}° · se cruzan a ${Math.round(cerca)} m en ${Math.round(tc)} s`;
           }
         }
-      } else traficoAntes.clear();
+      } else {
+        traficoAntes.clear();
+        rumboAntes = null;
+      }
       if (fase === "esperando" && !esperandoPorAlguien) {
         /*
          * Y **los que se ven** encima de la pista, no solo los que la tienen
@@ -8918,6 +8958,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     fila: { ...fila, porDelante: [...fila.porDelante] },
     deFrente,
     deFrenteDonde,
+    vueltaCerca,
+    vueltaCercaDonde,
+    vueltaMasCerca,
     radar,
     porQueSeDijo,
     // Si el campo donde se aterriza tiene torre: el de llegada, o el de ahora.
@@ -10519,6 +10562,16 @@ comprobar(
     ? `${vuelo.deFrente} muestras, la primera a los ${vuelo.deFrenteDonde}`
     : "nadie de frente",
   "«un avión de frente y ni aviso ni radar ni nada», despegando de Pettirossi",
+);
+comprobar(
+  "y nadie da su vuelta de espera por donde pasas",
+  (vuelo.vueltaCerca ?? 0) === 0,
+  vuelo.vueltaCerca
+    ? `${vuelo.vueltaCerca} muestras, la primera a los ${vuelo.vueltaCercaDonde}`
+    : vuelo.vueltaMasCerca === null || vuelo.vueltaMasCerca === undefined
+      ? "nadie dio su vuelta a tu altura"
+      : `el que más, a ${Math.round(vuelo.vueltaMasCerca)} m`,
+  "a menos de trescientos metros y ciento cincuenta de altura: la torre manda esperar por el otro lado (H93)",
 );
 
 /*
