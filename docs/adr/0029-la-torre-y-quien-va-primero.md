@@ -3166,8 +3166,9 @@ que nadie le espere.
 - **El permiso tardío.** A la decisión con la pista ocupada, al aire siempre: el
   tráfico y quien juega. En las 600 de Los Rodeos se iban 47 del tráfico, y de los
   quince que se miraron uno a uno, **ninguno ya por quien juega**, que desde H94
-  no tiene la verde con uno a punto de decidir: por otro del tráfico que salía, y
-  a dos y a cuatro segundos de dejarla libre al umbral, dos de los seis distintos.
+  no tiene la verde con uno a punto de decidir: por otro del tráfico que salía. De
+  los seis casos distintos, dos la habrían dejado libre a tiempo, dos y cuatro
+  segundos antes de que cruzara el umbral.
   Y a quien juega, en Estigarribia, 17 de 300: una avioneta que aterrizó delante y
   rueda la pista entera hasta su calle.
 - **Dos llegadas tuyas.** Con quien juega en el circuito o en la final, y el de
