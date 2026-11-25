@@ -70,6 +70,15 @@ try {
    * motor ya parado y lo daba por bueno.
    */
   await ponerEnMarcha(page);
+  /*
+   * Y con el pack de voz bajado, como en un vuelo que lleva su rato: empieza a
+   * bajar con esa tecla, lo que se pide antes lo espera hasta veinticinco
+   * segundos y el planeo entero dura treinta y tantos. El «roger MAYDAY» no
+   * salía ni en lo dicho ni en lo descartado.
+   */
+  await page
+    .waitForFunction(() => (globalThis.__oga?.voz?.().pack ?? "listo") === "listo", null, { timeout: 120000 })
+    .catch(() => {});
   await page.waitForTimeout(1500);
 
   const r = await page.evaluate(async (lejos) => {
