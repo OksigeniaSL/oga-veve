@@ -986,7 +986,7 @@ export class Frecuencia {
     let i = a.paso;
     while (i < pasos.length && LLAMADAS_DE_LLEGADA.has(pasos[i]!.clave)) i++;
     /*
-     * Menos si la de irse al aire espera porque alguien sale por delante: la
+     * Menos si la de irse al aire espera porque quien juega sube por delante: la
      * torre no le sube por encima, y con la pista libre aterriza. Ver `todaviaNo`
      * en `world/trafico.ts`.
      */

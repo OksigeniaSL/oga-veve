@@ -305,7 +305,7 @@ describe("lo que le falta a uno para dejar la pista, contado de verdad", () => {
   });
 });
 
-describe("la frustrada del guion, con alguien saliendo por delante, no se manda", () => {
+describe("la frustrada del guion, contigo subiendo por delante, no se manda", () => {
   it("espera, y con la pista libre aterriza", () => {
     const k = enLaDecision();
     expect(k.trafico.todaviaNo(EC, "torre.goAround")).toBe(false);

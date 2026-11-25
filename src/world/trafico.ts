@@ -4990,33 +4990,39 @@ export function crearTrafico(
     return reloj - desde < RETENIDO_POR_DELANTE;
   };
 
+  /** Si eso cae por delante de quien está aquí, sobre la pista o la subida. */
+  const porDelanteDeLaSubida = (p: { x: number; z: number }, aqui: Sitio): boolean => {
+    const q = enLaPistaDe(p);
+    return (
+      q.along > enLaPistaDe(aqui).along - 500 &&
+      q.along < runway.length / 2 + SIGUE_POR_EL_LADO &&
+      Math.abs(q.across) < AL_LADO_MUERTO
+    );
+  };
+
+  /** Y si por ahí subes tú: hacia donde se despega, y no en la base ni en el viento en cola. */
+  const subesPorDelante = (aqui: Sitio): boolean => {
+    const tu = opciones.quienJuega?.();
+    const camino = tu && tu.alUmbral == null ? tu.porDondeVuela?.() : null;
+    if (!camino || camino.length < 2) return false;
+    const [a, b] = [enLaPistaDe(camino[0]!), enLaPistaDe(camino[1]!)];
+    return (
+      porDelanteDeLaSubida(camino[0]!, aqui) &&
+      b.along - a.along > Math.abs(b.across - a.across)
+    );
+  };
+
   /**
    * **Si alguien sale por debajo de quien se va al aire**: tú, con la pista
    * dada o subiendo delante de él, o uno del tráfico que la corre o acaba de
    * dejarla.
    */
   const saleAlguienPorDebajo = (quien: Volando, aqui: Sitio): boolean => {
-    const el = enLaPistaDe(aqui);
-    const delante = (p: { x: number; z: number }): boolean => {
-      const q = enLaPistaDe(p);
-      return (
-        q.along > el.along - 500 &&
-        q.along < runway.length / 2 + SIGUE_POR_EL_LADO &&
-        Math.abs(q.across) < AL_LADO_MUERTO
-      );
-    };
-    const tu = opciones.quienJuega?.();
-    if (tu?.sale?.conLaPista) return true;
-    const camino = tu && tu.alUmbral == null ? tu.porDondeVuela?.() : null;
-    if (camino && camino.length > 1) {
-      const [a, b] = [enLaPistaDe(camino[0]!), enLaPistaDe(camino[1]!)];
-      // Hacia donde se despega, y no en la base ni en el viento en cola.
-      if (delante(camino[0]!) && b.along - a.along > Math.abs(b.across - a.across)) return true;
-    }
+    if (opciones.quienJuega?.()?.sale?.conLaPista || subesPorDelante(aqui)) return true;
     for (const b of aviones.values()) {
       const c = b.caminos;
       if (b === quien || !c || b.marca.camino !== c.salida || b.recorrido <= c.espera + 0.5) continue;
-      if (delante(b.grupo.position)) return true;
+      if (porDelanteDeLaSubida(b.grupo.position, aqui)) return true;
     }
     return false;
   };
@@ -5678,8 +5684,8 @@ export function crearTrafico(
       }
       if (!quien) return noCabeTodavia(matricula, clave);
       /*
-       * **Y la frustrada del guion, con la pista ya libre y alguien subiendo por
-       * delante, no se manda** (H96): la torre no sube a uno por encima de una
+       * **Y la frustrada del guion, con la pista ya libre y tú subiendo por
+       * delante, no se manda** (H96): la torre no sube a uno por encima de tu
        * salida sin que le haga falta. Aterriza: ver `autorizarAlLlegar` en
        * `flight/radio.ts`.
        */
@@ -5690,7 +5696,7 @@ export function crearTrafico(
           llegando(quien) &&
           !pistaOcupadaPorOtro(matricula) &&
           !opciones.quienJuega?.()?.sale?.conLaPista &&
-          saleAlguienPorDebajo(quien, aqui)
+          subesPorDelante(aqui)
         );
       }
       // Viento en cola y final, cuando haya vuelto al circuito. Ver `sinSaltar`.
