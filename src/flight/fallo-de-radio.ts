@@ -14,7 +14,11 @@
  * - **El 7600 en el transpondedor** (SERA.14083 c) 2) y SERA.13005 a) 2)). Es
  *   el código de «fallo de la radiocomunicación»: en la pantalla de la torre
  *   tu etiqueta cambia, y sin decir nada ya saben lo que te pasa. Es lo que
- *   «lo dice por ti».
+ *   «lo dice por ti». **Donde la torre no tiene radar se marca igual**, que lo
+ *   manda la norma y lo ve quien te tenga en su pantalla; pero a esa torre la
+ *   avisan otras dos cosas: que no contestas y que te ve volver. Vigila
+ *   mirando, con un radar o sin él (DINAC R 4444, 7.1.1.2). Es Encarnación:
+ *   ver `sinRadarPublicado` en `ejercicios.ts` y la enmienda H91.
  * - **Seguir en visual y aterrizar en el aeródromo adecuado más próximo**
  *   (c) 3)), que aquí es el de salida; y, en el tránsito de un aeródromo
  *   controlado, **estar atento a las señales visuales** (c) 1)): mirar a la
@@ -43,6 +47,20 @@
  *
  * Sin three.js ni DOM: se prueba en `fallo-de-radio.test.ts`.
  */
+
+import type { TranslationKey } from "../i18n";
+
+/**
+ * **Lo que se dice donde la torre no tiene radar**: allí no es verdad que el
+ * 7600 se lo diga a la torre, que es lo que cuentan las tres de siempre. Las
+ * demás —cada luz, las alas, el otro cierre— valen igual en los dos sitios.
+ * Ver `segunElRadar` en `ejercicios.ts` y el ADR 0014, enmienda H91.
+ */
+export const SIN_RADAR: Readonly<Partial<Record<TranslationKey, TranslationKey>>> = {
+  "ejercicio.fallo-de-radio.antes": "ejercicio.fallo-de-radio.antesSinRadar",
+  "ejercicio.radio.callada": "ejercicio.radio.calladaSinRadar",
+  "ejercicio.radio.bien": "ejercicio.radio.bienSinRadar",
+};
 
 /** El código de fallo de comunicaciones, en el transpondedor. */
 export const CODIGO_SIN_RADIO = "7600";
@@ -75,6 +93,17 @@ export const MARCADO_EN = CADA_CIFRA * CODIGO_SIN_RADIO.length;
 export const LA_TORRE_LO_VE = 10;
 
 /**
+ * **Lo que tarda en darse cuenta la torre que no tiene radar**, s, desde que
+ * se calló la radio: te llama, no contestas, te llama por la otra frecuencia
+ * —Encarnación publica dos, 118.0 y 118.2— y coge la lámpara. Que se llame por
+ * la principal y por la secundaria es lo que manda el R 10, volumen II,
+ * 5.2.2.7.2.1; cuánto se espera lo fija la autoridad en cada sitio
+ * (5.2.2.7.2.2) y no está publicado: los segundos son nuestros, y más que con
+ * radar, que es lo que pasa cuando hay que darse cuenta sin una pantalla.
+ */
+export const LA_TORRE_SE_DA_CUENTA = 20;
+
+/**
  * Lo que enciende la lámpara **para un avión en vuelo**: verde fija, roja fija
  * o verde a destellos. `null`, apagada.
  */
@@ -101,6 +130,12 @@ export interface LoQueVeLaTorre {
   /** Segundos desde que el 7600 está marcado entero, o `null` sin él. */
   readonly conElCodigo: number | null;
   /**
+   * **En un campo sin radar publicado**, segundos desde que se calló la radio:
+   * ahí el código no lo ve la torre, y lo que la avisa es que no contestas.
+   * Sin decir, o `null`, la torre ve el código. Ver `sinRadarPublicado`.
+   */
+  readonly sinContestar?: number | null;
+  /**
    * Segundos desde la última vez que se tocó el suelo, o `null` si no se ha
    * tocado desde el despegue. Ver `REBOTE`.
    */
@@ -116,22 +151,25 @@ export interface LoQueVeLaTorre {
 export const REBOTE = 5;
 
 /**
+ * **Si la torre ya sabe que estás sin radio**: con radar, porque ha visto el
+ * 7600; sin él, porque no contestas. Ver `sinContestar`.
+ */
+export function laTorreSabeQueNoTienesRadio(v: Pick<LoQueVeLaTorre, "conElCodigo" | "sinContestar">): boolean {
+  if (v.sinContestar !== undefined && v.sinContestar !== null) return v.sinContestar >= LA_TORRE_SE_DA_CUENTA;
+  return v.conElCodigo !== null && v.conElCodigo >= LA_TORRE_LO_VE;
+}
+
+/**
  * **La luz que toca**, para quien no tiene radio. Primero la orden de irse,
  * que corta todo lo demás; después el permiso; y si no hay ni lo uno ni lo
- * otro y te cuenta en su circuito con el 7600 ya visto, los destellos:
- * «regresar para aterrizar». Ver la cabecera.
+ * otro y te cuenta en su circuito sabiendo ya que estás sin radio, los
+ * destellos: «regresar para aterrizar». Ver la cabecera.
  */
 export function luzParaQuienNoTieneRadio(v: LoQueVeLaTorre): LuzSinRadio {
   if (!v.enElAire) return null;
   if (v.teMandaIrte) return "roja";
   if (v.teDejaAterrizar) return "verde";
-  if (
-    v.teCuenta &&
-    !v.enLaBaseOEnLaFinal &&
-    v.conElCodigo !== null &&
-    v.conElCodigo >= LA_TORRE_LO_VE
-  )
-    return "destellos";
+  if (v.teCuenta && !v.enLaBaseOEnLaFinal && laTorreSabeQueNoTienesRadio(v)) return "destellos";
   return null;
 }
 

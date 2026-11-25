@@ -296,6 +296,7 @@ const LOS_EJERCICIOS = [
   "ejercicio.ave.bien",
   "ejercicio.ave.bienParado",
   // El fallo de radio (H71): presentación, la radio callada, cada luz, las alas y los dos cierres.
+  // Al final, las tres que cambian donde la torre no tiene radar (H91).
   "ejercicio.fallo-de-radio.antes",
   "ejercicio.radio.callada",
   "ejercicio.radio.destellos",
@@ -305,6 +306,9 @@ const LOS_EJERCICIOS = [
   "ejercicio.radio.verde",
   "ejercicio.radio.bien",
   "ejercicio.radio.bienSinLaVerde",
+  "ejercicio.fallo-de-radio.antesSinRadar",
+  "ejercicio.radio.calladaSinRadar",
+  "ejercicio.radio.bienSinRadar",
   /*
    * Y la tormenta, entera: es un ejercicio que se elige, y lo que dice —qué
    * es, por qué no se entra, que un rayo no hace nada— es el ejercicio mismo.
