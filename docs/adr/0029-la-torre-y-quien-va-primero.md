@@ -2957,3 +2957,194 @@ y 12.008 pruebas, con 32 saltadas y una pendiente.
   hay algo más de gente en la base. Pide su encargo.
 - **La vuelta que la torre te pide a ti** (`salida-tapada.ts`) sigue siendo de
   tres grados por segundo y hacia fuera: no mira a los demás.
+
+## Enmienda H94 (25-11-2026): la verde con uno en la base, y al aire por el lado
+
+### El caso
+
+Lo que quedó de H93. En su mesa —600 vuelos en Los Rodeos: las dos cabeceras;
+JAZ 20, 50, 60, 90 y 120; 60 semillas—, en 54 vuelos alguien del tráfico **que
+no da vueltas** pasa a menos de 300 m y 150 de altura de quien juega. Contados
+uno a uno, son 56 encuentros:
+
+| | cuántos | a qué distancia (en planta; en altura) | cuándo |
+|---|---|---|---|
+| **la verde con uno girado a la base o en final**, que se va al aire por ti y sube por tu línea | 39 | 0–295 m, mediana 10; mediana 73 m | 38 en tu subida y uno en el viento cruzado, de 14 a 127 s después de irte |
+| **uno que sale detrás de ti** y te alcanza antes de tu giro | 8 | 7–95 m; 11–115 m | subida, 82–96 s después |
+| **uno que se fue al aire antes de tu verde** y va delante, más despacio | 7 | 0–204 m; 12–105 m | subida, 28–65 s después |
+| uno que se fue al aire y vuelve por su viento en cola, al lado del tuyo | 2 | 75 y 203 m; 60 y 15 m | viento en cola |
+
+Al de la base **le quedaban de 29 a 76 s para la decisión** (mediana, 52) cuando
+te dieron la verde, y quien juega tarda de 47 (JAZ 20) a 69 s (JAZ 120) en
+estar en el aire. No había cantado final: con la roja puesta la frecuencia
+solo deja hablar al que ya ocupa la pista o va a cantarla, y con la pista libre
+un instante la lámpara se ponía verde sin mirar quién venía volando. En 87 de
+los 600 vuelos se daba la verde a alguien que no iba a irse antes; en los que
+no salía cerca, el otro se fue al aire más alto o más lejos.
+
+**Ninguno es solo de la mesa.** Con quien juega tardando 8 s en alinearse, y no
+25, salen los mismos: 27 de los 240 vuelos del JAZ 20, 50, 60 y 90 por la 12 (15
+de la verde, por 20 antes, y más de los que van delante). Y tardando cien —un
+niño parado en la cabecera—, 50 de 360.
+
+Entre dos del tráfico pasaba lo mismo: 13 parejas a menos de 300 m en los 600.
+
+### Lo real
+
+- **OACI, Doc 4444 (PANS-ATM), 16.ª ed.** 7.9.2: «a departing aircraft will not
+  normally be permitted to commence take-off until the preceding departing
+  aircraft has crossed the end of the runway-in-use or has started a turn or
+  until all preceding landing aircraft are clear of the runway-in-use».
+  7.9.3.1: «Take-off clearance may be issued to an aircraft when there is
+  reasonable assurance that the separation in 7.9.2 […] will exist when the
+  aircraft commences take-off». 7.10.1, quien llega no cruza el umbral hasta
+  que la salida de delante ha pasado el final de la pista o ha empezado a virar.
+  7.8, quien aterriza o está en las últimas fases de la aproximación va antes
+  que quien sale. Y 7.7.1.2, en el circuito se deja el hueco para las salidas.
+- **La salida inmediata** (7.9.3.5): «In the interest of expediting traffic, a
+  clearance for immediate take-off may be issued to an aircraft before it enters
+  the runway. On acceptance of such clearance the aircraft shall taxi out to the
+  runway and take off in one continuous movement». Es lo que se usa con uno en
+  la base, y es para quien puede hacerlo: no se le pide a quien está
+  aprendiendo. Lo mismo el «behind the landing …, line up and wait»: la
+  autorización condicional pide ver al que llega, y aquí la lámpara es roja o
+  verde.
+- **SERA.8012** es la separación por estela, no la de la pista; la de la pista, en
+  Europa, va en los medios aceptables de ATS.TR.210, que no se han podido leer
+  (la página de EASA no da el texto). La del **FAA, JO 7110.65, 3-9-6 y 3-10-3**,
+  es la misma regla con sus distancias si la otra va en el aire; tampoco se ha
+  releído, que faa.gov no deja. Lo que manda aquí es el Doc 4444, que sí.
+- **Quien se va al aire con otro despegando, se aparta del eje para verle.**
+  FAA, *Airplane Flying Handbook* (FAA-H-8083-3), «Standard airport traffic
+  patterns»: el tramo de la pista es también el de quien se va al aire desde la
+  final, y «when a safe altitude is attained, the pilot should commence a
+  shallow bank turn to the upwind side of the airport. This will allow better
+  visibility of the runway for departing aircraft». CAA de Nueva Zelanda,
+  *Vector*, 3/2017, «Go-arounds»: «If the go-around was initiated due to traffic
+  on the runway […] it is advisable to perform the procedure to the right of
+  centreline. This ensures that any aircraft on the runway, or climbing out,
+  remain in sight to the pilot's left». FAA, AC 90-66C, 11.6: ni quien despega
+  ni quien se va al aire vira antes del final de la pista.
+- **TAIC (Nueva Zelanda), informe 95-012**, un 737 y un HS 748 en Wellington:
+  es este caso. Al 748 se le dio la salida con el 737 a 1,1 millas del umbral;
+  de haberse ido al aire, lo habría adelantado «within 60 seconds, or about 1 NM
+  north of the aerodrome». Y: «Historically ab-initio pilot training has taught
+  that aircraft going around from short final should be flown to the right, or
+  to the non-traffic side of the runway ahead», que con un reactor pesado o con
+  un monte a ese lado puede no valer.
+
+### Decisión
+
+**La torre no da la pista** (`estorbanTuSalida` en `world/trafico.ts`; la pieza
+«llega» de `pistaDeOtros`):
+
+- si uno **ya girado a la base** llega a la decisión antes de que estés en el
+  aire, con cinco segundos de margen. Lo que tardas lo dice el juego
+  (`QuienJuega.sale`, `tuSalidaParaLaTorre` en `game.ts`): entrar y alinearse,
+  lo que remontes, y la carrera de ese avión con su peso.
+- si alcanzarías a **uno que vuela por delante** —se fue al aire, o acaba de
+  salir—, mirando los próximos tres minutos por tu circuito, con las esquinas
+  viradas.
+
+El que todavía **no ha girado** no te frena: da él su vuelta en la esquina, la
+de H93. Con la pista ya tuya, si llegaría a la decisión contigo en ella; y
+contigo en la roja, si nadie ha girado antes que él (`tuTurnoDeSalir`): uno
+aterriza y sale otro. Y entre dos llegadas se deja el hueco en que cabes
+(`huecoParaTuSalida`). Al que ya baja por la final no se le manda al aire por
+ti hasta la decisión, si al umbral vas a estar en el aire.
+
+**Todo candado con su red**: a los tres minutos de roja solo por esto, la torre
+te la da (`LO_QUE_SE_ESPERA_POR_QUIEN_LLEGA`); a los cinco, los que llegan dejan
+de esperar por ti, en la roja y con la pista dada (`ESPERAN_POR_TI`). El porqué
+de la roja es el de siempre, «viene un avión a aterrizar», con su matrícula:
+**sin frases nuevas**.
+
+**Quien se va al aire con otro despegando no sube por su línea**
+(`alAirePorElLado`): se aparta 600 m al lado muerto en dos kilómetros —unos
+diecisiete grados—, el contrario a **tu** circuito, sube paralelo a la pista y
+gira donde siempre si al girar no se encuentra contigo ni con nadie
+(`girarSiSePuede`); si no, sigue derecho y mira otra vez, hasta seis kilómetros.
+Si por ese lado no libra el suelo por 100 m, por el otro; y si por ninguno, por
+el eje. Vale por ti, desde que tienes la pista hasta que viras, y por cualquiera
+del tráfico que la corra. Sin nadie saliendo, por el eje como siempre.
+
+**Detrás de uno más lento no se sale hasta que se aparta** (`seEchariaEncima`):
+el «cleared for take-off» espera si a 600 m de ti —300 de otro del tráfico— y a
+menos de 150 de altura os vais a encontrar. Alinearse, sí. Con su red: 150 s.
+
+**Y de paso, la vuelta que la torre te pide a ti** (`ladoDeTuVuelta`): hacia
+fuera, o hacia la pista si por fuera pasa alguien, con la misma cuenta que la de
+los demás. La flecha de la tarjeta y la torre ya sabían decir los dos lados.
+
+`porDondeSigues` desempataba por redondeo entre la subida y la final, que con el
+umbral desplazado son la misma recta: a quien acababa de despegar de
+Fuerteventura le salía que seguía por la final, y por eso se le soltaba uno
+detrás. Ahora gana la subida.
+
+### La prueba
+
+`src/world/verde-con-uno-en-la-base.test.ts`: quién estorba y quién no; la red;
+el lado muerto con las dos manos, el eje sin nadie y que acaba girando aunque te
+quedes en la pista; la salida detrás de ti y su red; el empate de la subida; tu
+vuelta; y la mesa, 93 vuelos en Los Rodeos sin nadie encima —y 62 tardando cien
+segundos—, que sin saber la torre que sales da catorce. La mesa es la de H93,
+sacada a `mesa-del-circuito-de-prueba.ts` para las dos.
+
+### Lo medido
+
+A menos de 300 m y 150 de altura, sin estar en su vuelta, en vuelos:
+
+| | vuelos | antes | ahora |
+|---|---|---|---|
+| Los Rodeos, dos cabeceras, cinco aviones | 600 | 54 | 0 |
+| Los Rodeos, tardando cien segundos alineado | 360 | 50 | 0 |
+| Gando | 60 | 4 | 0 |
+| Cuatro Vientos | 60 | 2 | 0 |
+| Pettirossi | 60 | 6 | 0 |
+| Tenerife Sur | 60 | 6 | 0 |
+| La Palma | 60 | 0 | 0 |
+| Fuerteventura | 60 | 9 | 0 |
+| Lanzarote | 60 | 2 | 0 |
+
+Y en su vuelta, ninguno, como con H93; entre dos del tráfico, en los 600, de 13
+a 0.
+
+**Lo que se espera por la verde**, s (media; mediana; p90; máximo), y los demás:
+
+| | antes | ahora | se van al aire en la decisión | tomas | espera por llegada |
+|---|---|---|---|---|---|
+| Los Rodeos (600) | 24,9; 2; 97; 246 | 35,9; 2; 118; 246 | 174 → 39 | 654 → 742 | 65,9 → 60,9 s |
+| Gando (60) | 50,8; 24; 177; 197 | 49,0; 24; 115; 197 | 15 → 7 | 69 → 74 | 62,6 → 60,2 s |
+| Cuatro Vientos (60) | 11,3; 2; 61; 75 | 17,3; 2; 75; 104 | 11 → 3 | 54 → 60 | 76,8 → 70,8 s |
+| Pettirossi (60) | 34,5; 2; 106; 107 | 40,2; 12; 107; 139 | 16 → 7 | 62 → 68 | 48,0 → 45,8 s |
+| Tenerife Sur (60) | 30,1; 2; 108; 112 | 39,4; 15; 120; 149 | 22 → 6 | 58 → 69 | 66,2 → 58,3 s |
+| La Palma (60) | 80,0; 55; 182; 274 | 81,5; 56; 182; 274 | 20 → 18 | 71 → 71 | 86,4 → 84,9 s |
+| Fuerteventura (60) | 20,4; 2; 88; 99 | 25,4; 2; 88; 126 | 16 → 1 | 61 → 69 | 65,5 → 57,7 s |
+| Lanzarote (60) | 19,1; 2; 89; 102 | 19,4; 2; 89; 102 | 11 → 3 | 57 → 63 | 62,6 → 60,5 s |
+
+**La roja sí sale a más**: once segundos de media en Los Rodeos, entre nada y
+nueve en los otros y dos menos en Gando; la mediana, igual salvo en Pettirossi
+y Tenerife Sur, y el máximo, igual o hasta 37 s más en los demás (en Los Rodeos no
+se mueve). Es lo que se esperaba menos de la cuenta: de los 90 vuelos de los 600
+que ahora esperan más, en todos se daba la verde con uno girado que no iba a
+caber —en 28 pasaba encima; en los otros 62 el otro se iba al aire por ti, más
+alto—. A cambio, más de tres de cada cuatro de esas aproximaciones (174 → 39)
+acaban en el suelo, y los demás esperan menos, no más.
+
+En tu subida, con el que se aparta y con el que sale detrás, y entre dos del
+tráfico: de 13 parejas cerca a ninguna en Los Rodeos, y de 5 a ninguna en Gando.
+Las salidas de los demás, las mismas (664 y 671).
+
+### Lo que queda
+
+- **Los bancos del navegador no se volaron**: no hay turno.
+- **El Hierro y La Gomera**, remontando, y los AFIS no están en la mesa: ahí lo
+  que tardas lo lleva el remonte, y la red son los mismos tres minutos.
+- **Dos llegadas tuyas no se miran**: lo de aquí es tu salida. Con quien juega
+  en final y otro que se va al aire por delante, no cambia nada.
+- **El permiso tardío.** Con quien juega ya corriendo, quien llega a la decisión
+  se va al aire aunque al umbral la pista fuera a estar libre; una torre le
+  diría «continue» y le daría el permiso por debajo (7.10.2). Daría la verde
+  antes en media docena de los 600.
+- **La vuelta que se te pide** sigue sin decir con qué alabeo: cada cual la da
+  como sabe, y se cuenta con tres.
