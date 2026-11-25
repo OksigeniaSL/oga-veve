@@ -701,6 +701,9 @@ describe("y la megafonía va por el mismo turno", () => {
       "ejercicio.ave.adelante",
       "ejercicio.ave.aguanta",
       "ejercicio.ave.noAguanta",
+      // El fallo de radio donde la torre no tiene radar (H91), como el de siempre.
+      "ejercicio.fallo-de-radio.antesSinRadar",
+      "ejercicio.radio.calladaSinRadar",
     ]) {
       expect(valeHastaElPasoSiguiente(c), c).toBe(true);
       expect(cuantoAguanta(c, "normal"), c).toBe(Infinity);

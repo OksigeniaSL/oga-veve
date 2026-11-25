@@ -24014,5 +24014,50 @@
       "use_speaker_boost": false,
       "speed": 0.95
     }
+  },
+  {
+    "id": "ejercicio.fallo-de-radio.antesSinRadar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos quedarnos sin radio. Al subir se va a callar, a propósito. No pasa nada: ponemos en el transpondedor el número de sin radio, volvemos al circuito y miramos la torre, que nos ve llegar y nos va a hablar con luces",
+    "para": "el fallo de radio en un campo cuya torre no tiene radar, antes de empezar: al subir se calla la radio, el número del transpondedor y la torre, que nos ve llegar y habla con luces",
+    "dicho": "Hoy practicamos quedarnos sin radio. Al subir se va a callar, a propósito. No pasa nada: ponemos en el transpondedor el número de sin radio, volvemos al circuito y miramos la torre, que nos ve llegar y nos va a hablar con luces.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.calladaSinRadar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se calló la radio: no oímos a la torre, y ella no nos oye. Todo bien: marco siete seis cero cero, que sin radio se pone siempre, y lo ve quien nos tenga en su pantalla. La torre se da cuenta porque no contestamos y nos ve volver. Seguimos el circuito, mirando la torre",
+    "para": "el fallo de radio en un campo cuya torre no tiene radar: se calló la radio; la instructora marca siete seis cero cero, y la torre se da cuenta porque no se le contesta",
+    "dicho": "Se calló la radio: no oímos a la torre, y ella no nos oye. Todo bien: marco siete seis cero cero, que sin radio se pone siempre, y lo ve quien nos tenga en su pantalla. La torre se da cuenta porque no contestamos y nos ve volver. Seguimos el circuito, mirando la torre.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radio.bienSinRadar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizamos sin radio! La torre se dio cuenta porque no contestábamos, nos vio llegar y nos habló con su luz. Y el siete seis cero cero quedó puesto, para quien lo pudiera ver. Así lo hace un piloto de verdad",
+    "para": "el cierre del fallo de radio en un campo cuya torre no tiene radar, parado en la pista tras tomar con la verde",
+    "dicho": "¡Aterrizamos sin radio! La torre se dio cuenta porque no contestábamos, nos vio llegar y nos habló con su luz. Y el siete seis cero cero quedó puesto, para quien lo pudiera ver. Así lo hace un piloto de verdad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   }
 ]

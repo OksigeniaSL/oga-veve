@@ -300,6 +300,16 @@ export function valeHastaElPasoSiguiente(clave: string | undefined): boolean {
   return !!clave && DE_UN_PASO_QUE_DURA.test(clave);
 }
 
+/**
+ * **La presentación de un ejercicio**, con su variante si la tiene —la del
+ * cuatrimotor, la de la palanca de verdad, la del campo sin radar—: no es un
+ * paso, sino lo que los abre, así que un paso nuevo no la retira. Ver
+ * `decirDelEjercicio` en `game.ts`.
+ */
+export function esLaPresentacion(clave: string | undefined): boolean {
+  return !!clave && /^ejercicio\.[\w-]+\.antes(?:[A-Z]\w*)?$/.test(clave);
+}
+
 const DE_UN_PASO_QUE_DURA =
   /^ejercicio\.(?:(?:aguja|radial|interceptar|cruce|ils|carga|morro|tren-de-morro|radio|fallo-de-radio)\.|reventon\.(?!izquierda|derecha)|reventon-al-tomar\.|rueda\.(?!izquierda|derecha)|ave\.(?!izquierdo|derecho))/;
 

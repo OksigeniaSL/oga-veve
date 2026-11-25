@@ -3574,6 +3574,32 @@ for (const [id, para] of DE_LA_RUEDA) {
   total += texto.length;
 }
 
+/**
+ * **El fallo de radio donde la torre no tiene radar** (#90, H91): las tres que
+ * dicen el 7600 de otra manera, porque allí no es él quien se lo dice a la
+ * torre. De la instructora y en calma, detrás de todo. Ver el ADR 0014,
+ * enmienda H91.
+ */
+const DEL_FALLO_DE_RADIO_SIN_RADAR = [
+  ["ejercicio.fallo-de-radio.antesSinRadar", "el fallo de radio en un campo cuya torre no tiene radar, antes de empezar: al subir se calla la radio, el número del transpondedor y la torre, que nos ve llegar y habla con luces"],
+  ["ejercicio.radio.calladaSinRadar", "el fallo de radio en un campo cuya torre no tiene radar: se calló la radio; la instructora marca siete seis cero cero, y la torre se da cuenta porque no se le contesta"],
+  ["ejercicio.radio.bienSinRadar", "el cierre del fallo de radio en un campo cuya torre no tiene radar, parado en la pista tras tomar con la verde"],
+];
+for (const [id, para] of DEL_FALLO_DE_RADIO_SIN_RADAR) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

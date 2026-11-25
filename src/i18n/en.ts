@@ -1855,6 +1855,12 @@ export const EN: Dictionary = {
     "We landed without a radio! Seven six zero zero told the tower for us, and the tower spoke to us with its light. That's how a real pilot does it",
   "ejercicio.radio.bienSinLaVerde":
     "We're on the ground. Without a radio, the runway is ours when the tower shows the steady green: next time, we wait for it and go round again",
+  "ejercicio.fallo-de-radio.antesSinRadar":
+    "Today we practise losing the radio. As we climb it will go quiet, on purpose. That's fine: we set the no-radio number on the transponder, we fly back into the circuit and watch the tower, which sees us coming and will talk to us with lights",
+  "ejercicio.radio.calladaSinRadar":
+    "The radio has gone quiet: we can't hear the tower, and it can't hear us. That's fine: I set seven six zero zero, as we always do without a radio, for anyone who has us on their screen. The tower can tell because we don't answer and it sees us coming back. We stay in the circuit, watching the tower",
+  "ejercicio.radio.bienSinRadar":
+    "We landed without a radio! The tower could tell because we weren't answering, saw us coming, and spoke to us with its light. And seven six zero zero was there for anyone who could see it. That's how a real pilot does it",
   "palabra.solta": "Let go!",
   "ejercicio.rumbo.antes": "Follow the river: the sun has just set. Look how the water shines",
   "ejercicio.rumbo.anochece": "It's night now and the river is getting dark. Keep the arrow still on the mark",

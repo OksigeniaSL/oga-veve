@@ -96,7 +96,7 @@ import {
   MANDOS_AL_CENTRO,
   type PosicionDeLosMandos,
 } from "./world/superficies-de-mando";
-import { conV1, seOfrece, type Ejercicio } from "./flight/ejercicios";
+import { conV1, segunElRadar, seOfrece, sinRadarPublicado, type Ejercicio } from "./flight/ejercicios";
 import { SE_DICE_HASTA, seSigueEnV1, yaSeSigue } from "./flight/lo-que-se-dice-al-despegar";
 import { LosOchentaNudos } from "./flight/los-ochenta-nudos";
 import { faseQueVeLaTorre, loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
@@ -1548,6 +1548,7 @@ import {
   cuantoAguanta,
   esDeLaListaDeDespegue,
   cuentaPorDondeSeSale,
+  esLaPresentacion,
   valeHastaElPasoSiguiente,
   esDelDescenso,
 } from "./audio/boca";
@@ -25514,8 +25515,9 @@ export class Game {
    * **Si la torre te lleva el turno de la pista**: en las lecciones con torre
    * y, con la radio callada, también en la vuelta al campo. Un 7600 en su
    * pantalla es un avión que vuelve a aterrizar sin radio, y la torre le hace
-   * sitio y le habla con la lámpara, con la misma regla de sus permisos. Ver
-   * el ADR 0014, enmienda H71.
+   * sitio y le habla con la lámpara, con la misma regla de sus permisos. Donde
+   * no tiene pantalla, lo es el que no contesta y al que ve volver. Ver el ADR
+   * 0014, enmiendas H71 y H91.
    */
   private get laTorreTeLleva(): boolean {
     return this.leccion.torre || this.radioCallada;
@@ -25718,7 +25720,7 @@ export class Game {
      * «interceptar» sale en el mismo fotograma que «a tope», y las dos se
      * dicen, en su orden. Lo que la retira es el cierre.
      */
-    BOCA.retirar((c) => c !== clave && valeHastaElPasoSiguiente(c) && !c?.endsWith(".antes"));
+    BOCA.retirar((c) => c !== clave && valeHastaElPasoSiguiente(c) && !esLaPresentacion(c));
     if (!this.instructor.sabeLoGrabado) this.apuntarCanto(`${clave}: espera a saber si está grabada`);
     const pedida = this.instructor.decirGrabada(t(clave), clave, peso, undefined, (que, porque) => {
       if (que === "se-cae" && porque === "sin-grabar") this.apuntarCanto(`${clave}: sin grabar, se calla`);
@@ -25912,10 +25914,15 @@ export class Game {
     return this.aircraft.motores > 2 ? (CON_MAS_DE_DOS[clave] ?? clave) : clave;
   }
 
+  /** La frase del fallo de radio para el campo de hoy. Ver `segunElRadar` en `flight/ejercicios.ts`. */
+  private segunElRadar(clave: TranslationKey): TranslationKey {
+    return segunElRadar(clave, oaciDe(this.scenario));
+  }
+
   private presentarElEjercicio(): void {
     const e = this.ejercicioDeHoy;
     if (!e) return;
-    const clave = this.segunLosMotores(`ejercicio.${e.id}.antes` as TranslationKey);
+    const clave = this.segunElRadar(this.segunLosMotores(`ejercicio.${e.id}.antes` as TranslationKey));
     this.hud.senal.mostrar(
       DIBUJO_DEL_EJERCICIO[e.id],
       this.rotulo(clave, "palabra.practica"),
@@ -26051,8 +26058,9 @@ export class Game {
    * suenan, ni se escribe nada en la tira. La instructora lo cuenta con calma
    * y marca el 7600, que se ve cifra a cifra en la tarjeta del transpondedor,
    * con las cifras en el hueco de la letra: un número se reconoce sin leer.
-   * La torre te sigue viendo, y desde que ve el código te habla con la
-   * lámpara: ver `encenderSinRadio`. Ver el ADR 0014, enmienda H71.
+   * La torre te sigue viendo, y desde que ve el código —o, si no tiene radar,
+   * desde que se da cuenta de que no contestas— te habla con la lámpara: ver
+   * `encenderSinRadio`. Ver el ADR 0014, enmiendas H71 y H91.
    */
   private seCallaLaRadio(): void {
     this.radioCallada = true;
@@ -26085,7 +26093,7 @@ export class Game {
           prioridad: IMPORTANTE,
         });
       });
-    this.frasesSinRadio.pedir("ejercicio.radio.callada", () => this.radioCallada);
+    this.frasesSinRadio.pedir(this.segunElRadar("ejercicio.radio.callada"), () => this.radioCallada);
   }
 
   /**
@@ -26134,9 +26142,9 @@ export class Game {
   /**
    * **La lámpara, para quien no tiene radio**, en cada paso del aire: la roja
    * si la torre te manda irte, la verde fija si te deja aterrizar, y los
-   * destellos mientras te cuenta en su circuito con el 7600 ya visto. La
-   * orden y el permiso son los de siempre; esto solo los enciende. Ver
-   * `luzParaQuienNoTieneRadio`.
+   * destellos mientras te cuenta en su circuito con el 7600 ya visto —o, donde
+   * no tiene radar, sabiendo ya que no contestas—. La orden y el permiso son
+   * los de siempre; esto solo los enciende. Ver `luzParaQuienNoTieneRadio`.
    */
   private encenderSinRadio(): void {
     const s = this.flight.state;
@@ -26150,6 +26158,11 @@ export class Game {
       teCuenta: enSuCircuito || this.enLaFinalDeLaTorre,
       enLaBaseOEnLaFinal: this.enLaBaseOEnLaFinalSinRadio,
       conElCodigo: this.codigoDesde === null ? null : this.relojDelJuego - this.codigoDesde - MARCADO_EN,
+      // El 7600 se empieza a marcar en el instante en que se calla. Ver `seCallaLaRadio`.
+      sinContestar:
+        this.codigoDesde !== null && sinRadarPublicado(oaciDe(this.scenario))
+          ? this.relojDelJuego - this.codigoDesde
+          : null,
       desdeQueToco: this.tocoSinRadioEn === null ? null : this.relojDelJuego - this.tocoSinRadioEn,
     });
     if (luz === "roja") this.luzDeTorre("roja", "alAire");
@@ -26946,7 +26959,7 @@ export class Game {
     const clave =
       this.practica?.ejercicio.id === "fallo-de-radio" && como === "vuelta"
         ? this.practica.tomoConLaVerde
-          ? "ejercicio.radio.bien"
+          ? this.segunElRadar("ejercicio.radio.bien")
           : "ejercicio.radio.bienSinLaVerde"
         : this.practica?.ejercicio.id === "despresurizacion" && como === "vuelta"
         ? CIERRE_DE_LA_DESPRESURIZACION
