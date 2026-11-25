@@ -233,6 +233,7 @@ import {
   escalaDelCircuitoDe,
   formaDelCircuito,
   loQueQuedaDeCircuito,
+  porDondeSigues,
   manoPublicada,
   verticesDelCircuito,
   type Circuito,
@@ -716,6 +717,9 @@ const EXPLICACION_DEL_RA: Readonly<Record<Resolucion["orden"], TranslationKey>> 
   levelOff: "vuelo.ra.nivela",
   monitor: "vuelo.ra.vigila",
 };
+
+/** Fuera del circuito, lo que se da por que sigues derecho, s. Ver `porDondeSigoVolando`. */
+const PREVER_POR_DERECHO = 120;
 
 /**
  * **Las fases en que estás encima de la pista**, con las ruedas en el suelo:
@@ -16771,6 +16775,7 @@ export class Game {
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
       prioridad: this.conPrioridad,
+      porDondeVuela: s.onGround ? null : () => this.porDondeSigoVolando(),
       enTierra: s.onGround ? this.tuSitioEnTierra() : null,
       saleDeLaPista: aterrizandoAqui
         ? {
@@ -16779,6 +16784,31 @@ export class Game {
           }
         : null,
     };
+  }
+
+  /**
+   * **Por dónde sigues en el aire**, visto desde el tráfico: lo que te queda
+   * de tu circuito hasta el umbral si lo vuelas, y si no, por derecho. Ver
+   * `QuienJuega.porDondeVuela`.
+   */
+  private porDondeSigoVolando(): { x: number; y: number; z: number }[] {
+    const s = this.flight.state;
+    const { x, y, z } = s.position;
+    const velocidad = Math.max(15, s.groundSpeed);
+    const c = this.circuitoDeLaTorre;
+    const campo = this.elCampo();
+    if (c && campo.id === c.campo) {
+      const [ux, uz] = umbralEnUso(campo);
+      const umbral = { x: ux, y: this.cotaDelCampo(campo), z: uz };
+      const yo = { x, y, z, rumbo: s.heading };
+      const sigue = porDondeSigues(c.vertices, umbral, yo, velocidad, c.escala);
+      if (sigue) return sigue;
+    }
+    const lejos = velocidad * PREVER_POR_DERECHO;
+    return [
+      { x, y, z },
+      { x: x + Math.sin(s.heading) * lejos, y, z: z - Math.cos(s.heading) * lejos },
+    ];
   }
 
   /**
