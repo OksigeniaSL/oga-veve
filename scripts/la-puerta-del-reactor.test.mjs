@@ -60,6 +60,57 @@ describe("el arco a final del JAZ 90 en el banco", () => {
 });
 
 /*
+ * **Y el radio del viraje se mide virando** (H99). El banco lo aprendía con el
+ * alerón en su tope, que en el modelo completo es entrando y saliendo del
+ * viraje, y al JAZ 50 en el circuito de Cuatro Vientos —227 m, por debajo de
+ * las nubes de casa— le salía de 545 a 1.974 m donde vira en 400: empezaba la
+ * final en la base, la hacía con seis grados de alabeo y llegaba a la puerta
+ * fuera del eje. El de antes es ese mismo texto midiendo como medía.
+ */
+describe("el JAZ 50 en el circuito corto de Cuatro Vientos", () => {
+  const VIENTOS = [
+    [0, 0],
+    [8, 60],
+    [12, -71],
+  ];
+  // Cada vuelo con su piloto: lo aprendido en uno no pasa al siguiente.
+  const fueraDelEje = (texto) =>
+    VIENTOS.flatMap(([viento, vientoDe]) =>
+      [1, 2, 3, 4, 5, 6].map(
+        (semilla) =>
+          vuelaElArco({
+            avion: "jaz-50",
+            piloto: elPilotoDelBanco(texto),
+            semilla,
+            altura: 227,
+            enLaBase: 227,
+            mano: semilla % 2 ? "izquierda" : "derecha",
+            viento,
+            vientoDe,
+          }).puerta,
+      ),
+    ).filter((p) => !p || Math.abs(p.eje) > p.tolEje).length;
+
+  it("pasa la puerta en el eje", () => {
+    // Medido, en Tukã: ninguna de 40 fuera, con 12 m de peor. En Taguató, lo mismo.
+    expect(fueraDelEje(banco)).toBe(0);
+  });
+
+  it("y midiendo con el alerón en su tope no: la mesa ve el fallo", () => {
+    const cambios = [
+      ["const seMide = SENCILLO ? alTope && alTopeAntes : aFondo && asentada;", "const seMide = alTope && alTopeAntes;"],
+      ["const aLaBase = SENCILLO\n        ? 1", "const aLaBase = true\n        ? 1"],
+      ["const MARGEN_DEL_VIRAJE = SENCILLO ? 1 : 2;", "const MARGEN_DEL_VIRAJE = 1;"],
+    ];
+    const comoMedia = cambios.reduce((t, [a, b]) => {
+      if (!t.includes(a)) throw new Error(`el banco ya no dice «${a}»`);
+      return t.replace(a, b);
+    }, banco);
+    expect(fueraDelEje(comoMedia)).toBeGreaterThan(3);
+  });
+});
+
+/*
  * **Y desde la altitud que publica el AIP, la final es la misma** (ADR 0027,
  * enmienda H92). El circuito se vuela más alto en el viento en cola y se baja
  * por la línea que se dibuja, así que a la base se llega como siempre. Sin

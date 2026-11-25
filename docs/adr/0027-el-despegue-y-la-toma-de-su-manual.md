@@ -10859,7 +10859,8 @@ el resto, 125 y 2.479. Son 599 ficheros y 12.129 pruebas en verde.
   a nivel y con todos los flaps, el avión va a 69–72 nudos en vez de 77–80, y el banco, que
   aprende su radio de los instantes con el alerón a fondo, lo aprende al entrar y al salir
   del viraje y pide luego seis grados de alabeo en la final (`medirElViraje`). Al JAZ 60,
-  al 40 y al 20 no les pasa. Sin tocar: cambia cómo vira el banco en todos los campos.
+  al 40 y al 20 no les pasa. Hecho en la H99 (ADR 0025): el radio se mide con el ala
+  asentada, y el viraje a final se planea con la mitad de lo que el avión sostiene.
 - **El viento en cola del circuito norte de Los Rodeos**, «mínimo 1.000 ft AGL»: el juego
   pasa, en su punto peor, a 541–925 ft del suelo de debajo por la 12 (toda la flota, por
   el norte) y a 659–922 por la 30 (los reactores). No se ha forzado: es un mínimo de todo el

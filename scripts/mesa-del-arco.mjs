@@ -289,7 +289,7 @@ export function vuelaElArco(p) {
     SENDA,
     c,
     avionPorId: aircraftById,
-    LA_FLOTA: flota.FLEET,
+    LA_FLOTA: flota.AIRCRAFT,
     propulsionDe,
     alabeoAFondo,
     LOS_PELDANOS: peldanos.TIERS,
