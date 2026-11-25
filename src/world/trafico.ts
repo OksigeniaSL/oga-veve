@@ -2036,9 +2036,10 @@ export interface TuSalida {
   readonly sube: number;
 }
 
-/** Quien no deja darte la pista todavía, y si es porque llega o porque vuela por delante. */
+/** Quien no deja darte la pista todavía. Ver `estorbanTuSalida`. */
 export interface QuienEstorbaTuSalida {
   readonly matricula: string;
+  /** Si viene a aterrizar, o vuelve a hacerlo porque se fue al aire; si no, acaba de salir. */
   readonly llega: boolean;
 }
 
@@ -4739,7 +4740,8 @@ export function crearTrafico(
           return !!yo && !!el && seEncuentran(yo, el, APARTADO_AL_SALIR);
         });
         if (!choca) continue;
-        estorban.push({ matricula, llega: false });
+        // El que se fue al aire vuelve a aterrizar: es por eso por lo que se espera.
+        estorban.push({ matricula, llega: dandoLaVuelta(b) });
         break;
       }
     }
