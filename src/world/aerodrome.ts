@@ -215,6 +215,15 @@ export interface Aerodrome {
     readonly ref?: string | null;
     readonly widthM: number | null;
     readonly path: readonly Punto[];
+    /**
+     * **Si no es más que una raya pintada en la losa** (H97): las calles de una plataforma que no tienen asfalto
+     * ni luces propias, como la U1, la U2 y la U3 de la aviación general de Tenerife Sur, y las líneas por las que
+     * se entra y se sale de sus puestos. Se rueda por ellas y se pinta su eje; la losa es la de la plataforma, y
+     * no llevan balizas azules: ahí su carta da «balizas reflectantes en el lado oeste» (AD 2-GCTS PDC 1.1).
+     */
+    readonly soloPintada?: boolean;
+    /** De dónde sale, si se puso a mano. Con `manual`, la extracción la conserva. */
+    readonly fuente?: string;
   }[];
   readonly aprons: readonly {
     readonly polygon: readonly Punto[];
@@ -366,6 +375,19 @@ export interface Aerodrome {
      * la ficha. Ver `porLaPrimeraPuerta` en `rodaje.ts`.
      */
     readonly primeraPuerta?: { readonly calle: string; readonly puertas: readonly string[] };
+    /** De dónde sale qué puestos son de aviación general, si no es de la columna de la tabla (H97). */
+    readonly general?: string;
+    /**
+     * **De qué puestos sale quien se va por sus medios**, sin tractor, donde la carta da casi todos de salida en
+     * retroceso y no publica plataforma de aviación general (H97): en La Palma, el 12 y el 14. Ver `dePorSusMedios`.
+     */
+    readonly porSusMedios?: { readonly puestos: readonly string[]; readonly fuente: string };
+    /**
+     * **Los puestos de al lado en los que no se maniobra a la vez** (H97): «simultaneous arrival/departure
+     * manoeuvres from adjacent stands J1 and G2 (…) are incompatible» (AD 2-GCTS, casilla 20.3.2). Ver
+     * `nuncaALaVezCon`.
+     */
+    readonly nuncaALaVez?: { readonly parejas: readonly (readonly [string, string])[]; readonly fuente: string };
   };
   /**
    * Las ayudas **visuales** de OpenStreetMap: PAPI, VASI, luces de aproximación.
@@ -1252,6 +1274,8 @@ export function createAerodrome(
    */
   const deHierba = !esDura(principal?.surface);
   for (const calle of aero.taxiways) {
+    // La que es solo una raya en la losa no tiene asfalto suyo que tender.
+    if (calle.soloPintada) continue;
     for (const trozo of cortarEnLaPista(calle.path)) {
       anotar(
         deHierba ? "hierba-segada" : "rodadura",

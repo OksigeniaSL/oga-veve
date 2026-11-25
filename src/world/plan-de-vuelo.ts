@@ -75,7 +75,7 @@ import {
   rumboDeLaPintada,
   SIGUE_LA_RAYA,
 } from "./remolque";
-import { admite, aproarDe, cumpleElAproar, delAipEn, llegaPorDe, puestoEn, saleDeFrente, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
+import { admite, aproarDe, cumpleElAproar, delAipEn, dePorSusMedios, llegaPorDe, puestoEn, saleDeFrente, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
 import { empujaSobrePavimento, fueraDelPavimento, ruedasEn } from "./ruedas-en-el-empuje";
 import { YA_EN_SU_SITIO } from "../flight/senalero";
@@ -2637,6 +2637,12 @@ export class PlanDeVuelo {
     const enElAsfalto = this.puestosEnElAsfalto();
     // Donde la carta dice cuáles son de aviación general, a esos (H85); si no, el tercio más apartado de todos.
     const generales = enElAsfalto.filter((p) => p.aip?.uso === "general");
+    /*
+     * Y donde no lo dice y trae de cuáles se sale sin tractor, a uno de esos, el que menos se ruede (H97): en
+     * La Palma, del 11 y del 16, que son de retroceso, la avioneta salía por sus medios.
+     */
+    const autonomos = generales.length ? [] : dePorSusMedios(this.aero, enElAsfalto, this.avion.wingSpan);
+    if (autonomos.length) return (this.candidatosGuardados = [...autonomos]);
     const puestos = generales.length ? generales : enElAsfalto;
     if (!puestos.length) return [];
     /*
@@ -2739,7 +2745,9 @@ export class PlanDeVuelo {
        */
       // Los de la plataforma de carga y aviación general no son para el pasaje, si hay otros (H85).
       const enElAsfalto = this.puestosEnElAsfalto();
-      const comerciales = enElAsfalto.filter((p) => !p.aip?.uso);
+      // Y el de línea que no sale empujado, a los de salir por sus medios, donde la ficha los trae (H97).
+      const autonomos = vaALaPasarela(this.avion) ? [] : dePorSusMedios(this.aero, enElAsfalto, this.avion.wingSpan);
+      const comerciales = autonomos.length ? autonomos : enElAsfalto.filter((p) => !p.aip?.uso);
       const caben = (comerciales.length ? comerciales : enElAsfalto).filter(
         (p) => (p.aip?.max != null && admite(p.aip, this.avion.wingSpan)) || this.cabeDeLinea(p.xy),
       );
@@ -3146,12 +3154,41 @@ export class PlanDeVuelo {
   private rutasHaciaElAproar(puesto: Punto, esperas: readonly Punto[], ocupados?: Ocupados): (Ruta | null)[] {
     const rutas: (Ruta | null)[] = esperas.map(() => null);
     if (!this.deContacto || !vaALaPasarela(this.avion)) return rutas;
+    const aproar = aproarDe(delAipEn(this.aero, puesto[0], -puesto[1]), this.pista.heading);
+    if (!aproar || !this.seEmpujaDe(puesto[0], -puesto[1], edificiosDePasarela(this.aero))) return rutas;
+    const haciaEl = this.rutasHacia(aproar, puesto, esperas, ocupados);
+    /*
+     * **Y si hacia él no le queda más puerta que una por la que no cabe, hacia el otro lado y por otra** (H97). La
+     * casilla 20.3.3 de Tenerife Sur no deja salir por la D1 a la 07 a los de letra E, y del R45 y del R47, con
+     * el morro a la 07, no hay otra por delante; la 20.3.2.1 exceptúa el APROAR del umbral en uso «when there are
+     * operational or safety reasons», y a los de letra F del S41 los saca por la D2. Así los dos grandes salen
+     * empujados hacia la 25 y bajan por la primera puerta de ese lado.
+     */
+    const estrechas = this.puertasEstrechas();
+    const porUnaEstrecha = (r: Ruta | null): boolean => !!r && r.letras.some((l) => estrechas.includes(l));
+    if (!estrechas.length || !haciaEl.some(porUnaEstrecha)) return haciaEl;
+    const alOtroLado = this.rutasHacia(aproar.map((a) => a + Math.PI), puesto, esperas, ocupados);
+    return haciaEl.map((r, k) => {
+      const otra = alOtroLado[k];
+      return porUnaEstrecha(r) && otra && !porUnaEstrecha(otra) && !(otra.ocupada && !r!.ocupada) ? otra : r;
+    });
+  }
+
+  /** Las puertas de la plataforma por las que el AIP no deja pasar a este avión. Ver `rutasHaciaElAproar`. */
+  private puertasEstrechas(): readonly string[] {
+    const puertas = this.aero.aipPuestos?.primeraPuerta?.puertas ?? [];
+    return (this.aero.restriccionesDeRodaje ?? [])
+      .filter((r) => r.calle && puertas.includes(r.calle) && this.avion.wingSpan > r.masDeM)
+      .map((r) => r.calle!);
+  }
+
+  /** Las de un puesto con el morro, al acabar el empuje, hacia alguno de estos rumbos: ver `rutasHaciaElAproar`. */
+  private rutasHacia(aproar: readonly number[], puesto: Punto, esperas: readonly Punto[], ocupados?: Ocupados): (Ruta | null)[] {
+    const rutas: (Ruta | null)[] = esperas.map(() => null);
     const x = puesto[0];
     const z = -puesto[1];
     const aip = delAipEn(this.aero, x, z);
-    const aproar = aproarDe(aip, this.pista.heading);
     const edificios = edificiosDePasarela(this.aero);
-    if (!aproar || !this.seEmpujaDe(x, z, edificios)) return rutas;
     const sentido = aproar.map(enElGrafo);
     const alEdificio = rumboAlEdificio(x, z, edificios);
     const pared = alEdificio === null ? null : enElGrafo(alEdificio + Math.PI);

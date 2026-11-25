@@ -126,7 +126,7 @@ const APROAR_DE_LA_CASILLA = {
     sur: "E",
     puertasLibres: ["D1", "D2", "D3", "D4", "D5", "D6"],
     fuente:
-      "AIP España AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26): «Pushback is obligatory in front stands and shall be performed such that the aircraft remains nosing to the threshold in use and leaving apron gates \"D\" free», y «Pushbacks on parking stands R19, G20, AG21, and J22 shall be performed nosing to THR 25», que son los que la tabla da al E.",
+      "AIP España AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26): «Pushback is obligatory in front stands and shall be performed such that the aircraft remains nosing to the threshold in use and leaving apron gates \"D\" free», y «Pushbacks on parking stands R19, G20, AG21, and J22 shall be performed nosing to THR 25», que son los que la tabla da al E. Salvo que «there are operational or safety reasons for push-backs without nosing to the threshold in use or leaving apron gates D free».",
   },
 };
 
@@ -146,6 +146,68 @@ const RODAJE_DE_LA_CASILLA = {
     deFrente: { desde: "E49", hasta: "E70", salePor: ["INNER"], llegaPor: { norte: ["T"], sur: ["T"] } },
     fuente:
       "AIP España AD 2-GCTS, casilla 20.3.2 (AIRAC AMDT 10/26, WEF 29-OCT-26): «After push-back or autonomous departure, aircraft shall proceed to the threshold in use through the first available apron gate, unless there are operational or safety reasons to the contrary»; de los de salida autónoma, «Departure shall be performed nosing to the threshold in use»; y al llegar, «from the appropriate apron gate for PRKG R19 to G48, and from the parking stand centre line for PRKG E49 to E70».",
+  },
+};
+
+/**
+ * **La plataforma de aviación general cuyos puestos se cruzan** (H97), por la carta que la dibuja. En Tenerife
+ * Sur, AD 2-GCTS PDC 1.1 (WEF 11-JUN-26): «GA APN», con tres calles, la U1, la U2 y la U3 —«22 MAX WINGSPAN»—,
+ * y cinco puestos entre ellas, del AG1 al AG5, que la PDC 1.3 da de salida autónoma y de aviación general, con
+ * su envergadura.
+ *
+ * - **Por dónde se entra y por dónde se sale**, de dónde está su parada: la rueda de morro para más cerca de una
+ *   de las dos calles —a 17 m de la U3 y 35 de la U2 en el AG4— y el avión queda detrás, hacia la otra, así que se
+ *   entra por la lejana y se sale hacia delante por la cercana. En la ortofoto hay una avioneta en el AG1, entre
+ *   la U1 y su parada, con el morro a la U2.
+ * - **Las líneas**: OpenStreetMap da dos por puesto, una de cada calle, y las llama «AG4» y «AG4 (U2)»: la que
+ *   acaba en la parada es la de salir, y la otra, la de entrar, que se queda donde empieza el avión. Aquí son un
+ *   solo puesto, con la de entrar hasta la parada. La de salir va en la ficha como raya de la calle a la que sale
+ *   (`taxiways`, `soloPintada`), y los trozos en curva de las de entrar, también.
+ * - La calle de plataforma a la que bajan las tres es la INNER.
+ */
+const DE_PASO = {
+  GCTS: {
+    uso: "general",
+    plataforma: "INNER",
+    fuente:
+      "AIP España AD 2-GCTS PDC 1.1 (WEF 11-JUN-26), «GA APN», con las calles U1, U2 y U3, y PDC 1.3 (WEF 16-APR-26), del AG1 al AG5, «Aviación General»; a qué calle se entra y por cuál se sale, de dónde está su parada y de la ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0; foto de 2024-02).",
+    puestos: {
+      AG1: { entra: "U1", sale: "U2" },
+      AG2: { entra: "U1", sale: "U2" },
+      AG3: { entra: "U2", sale: "U3" },
+      AG4: { entra: "U2", sale: "U3" },
+      AG5: { entra: "U2", sale: "U3" },
+    },
+  },
+};
+
+/**
+ * **Los puestos de los que no se maniobra a la vez** (H97): «Simultaneous arrival/departure manoeuvres from
+ * adjacent stands J1 and G2, G9 and G10 and G10 and H37 are incompatible» (AD 2-GCTS, casilla 20.3.2.1, A1; y al
+ * llegar, la 20.3.2.2). No es de aparcar, que eso va en las observaciones de la tabla: es de moverse.
+ */
+const NUNCA_A_LA_VEZ = {
+  GCTS: {
+    parejas: [
+      ["J1", "G2"],
+      ["G9", "G10"],
+      ["G10", "H37"],
+    ],
+    fuente:
+      "AIP España AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26): «Simultaneous arrival/departure manoeuvres from adjacent stands J1 and G2, G9 and G10 and G10 and H37 are incompatible.» Y la 20.3.2.2, al llegar.",
+  },
+};
+
+/**
+ * **De qué puestos sale el que va por sus medios, donde la carta no da plataforma de aviación general y casi
+ * todos son de salida en retroceso** (H97). En La Palma, AD 2-GCLA PDC 1.2 (WEF 15-MAY-25): catorce «R» y, de
+ * avión, dos «A», el 12 y el 14, que la PDC 1.1 dibuja de paso, entrando de la R y saliendo a ella.
+ */
+const POR_SUS_MEDIOS = {
+  GCLA: {
+    puestos: ["12", "14"],
+    fuente:
+      "AIP España AD 2-GCLA PDC 1.2 (WEF 15-MAY-25): salida «A» en el 12, el 14 y los de helicóptero, y «R», en retroceso, en los demás; ni las PDC ni el AD 2 (AIRAC AMDT 09/26, WEF 01-OCT-26) dicen dónde aparca la aviación general.",
   },
 };
 
@@ -330,6 +392,16 @@ function filasDe(texto) {
       if (resto.length && (NADA.test(resto[0]) || ES_APROAR.test(resto[0]))) {
         const t = resto.shift();
         aproar = NADA.test(t) ? null : t;
+      }
+      /*
+       * «(3) Max span» en el renglón de arriba y «15 m» en el de debajo: la celda partida de los de aviación
+       * general de Tenerife Sur (H97). Su columna, en el renglón del puesto, queda en blanco.
+       */
+      const arriba = /^\s*(\(\d+\)) Max span\s*$/.exec(lineas[n - 1] ?? "");
+      const metros = /^\s*(\d+(?:\.\d+)? m)\s*$/.exec(debajo);
+      if (max === null && arriba && metros) {
+        max = metros[1];
+        llamada = arriba[1];
       }
       const obs = [llamada, resto.join(" ").replace(/^[–—-]$/, "").trim()].filter(Boolean).join(" ");
       filas.push({
@@ -567,6 +639,26 @@ function lineaEntreIncompatibles(xy, obs, conLinea) {
   return antes.length ? [...antes, xy] : null;
 }
 
+/** Lo que puede quedar de una calle la punta de una línea que nace en ella, m. */
+const JUNTO_A_LA_CALLE = 3;
+
+/**
+ * **La línea por la que se entra a un puesto que se cruza** (H97, `DE_PASO`): la que OpenStreetMap trae de la calle
+ * `entra`, alargada hasta la parada, desde donde deja de torcer —lo de antes es curva, y va en la ficha como raya de
+ * la calle—. Si no la trae, que es volver a juntar una ficha ya hecha, `null`: se queda la que tiene.
+ */
+function lineaDePaso(ficha, p, ref, entra) {
+  const calles = (ficha.taxiways ?? []).filter((t) => t.ref === entra);
+  const suya = (ficha.parkingPositions ?? []).find(
+    (q) =>
+      q.ref?.startsWith(`${ref} (`) &&
+      q.entrada?.length > 1 &&
+      calles.some((t) => sobreLaLinea(t.path, q.entrada[0]).d <= JUNTO_A_LA_CALLE),
+  );
+  if (!suya) return null;
+  return [...(suya.entrada.length > 2 ? suya.entrada.slice(-1) : suya.entrada), p.xy];
+}
+
 async function juntar(id) {
   const ruta = join(SALIDA, `${id.toLowerCase()}.aero.json`);
   const texto = await readFile(ruta, "utf8");
@@ -578,9 +670,16 @@ async function juntar(id) {
   const sueltos = [];
   const puestos = [];
   const { lista, cambiados, repetidos } = casar(ficha.parkingPositions, aip, proyectar);
+  const cabos = [];
   for (const { p, a, linea: suLinea, copia } of lista) {
     if (copia) {
       cuenta.copias++;
+      continue;
+    }
+    // El cabo de la línea de uno que se cruza, que OpenStreetMap da como otro puesto. Ver `DE_PASO`.
+    const deCual = /^(\S+) \((\S+)\)$/.exec(p.ref ?? "");
+    if (!a && deCual && DE_PASO[id]?.puestos[deCual[1]]) {
+      cabos.push(p.ref);
       continue;
     }
     /*
@@ -667,6 +766,16 @@ async function juntar(id) {
       nuevo.aip.salePor = deFrente.salePor;
       nuevo.aip.llegaPor = deFrente.llegaPor;
     }
+    // Y los de la plataforma de aviación general, que se cruzan (H97).
+    const dePaso = DE_PASO[id]?.puestos[a.ref];
+    if (dePaso) {
+      const entrando = [DE_PASO[id].plataforma, dePaso.entra];
+      nuevo.aip.uso = DE_PASO[id].uso;
+      nuevo.aip.salePor = [dePaso.sale, DE_PASO[id].plataforma];
+      nuevo.aip.llegaPor = { norte: entrando, sur: entrando };
+      const linea = lineaDePaso(ficha, p, a.ref, dePaso.entra);
+      if (linea) nuevo.entrada = linea;
+    }
     puestos.push(nuevo);
   }
   // Dos puestos con el mismo `ref` en el mismo punto: el del centro de su línea y el de
@@ -708,6 +817,9 @@ async function juntar(id) {
           primeraPuerta: RODAJE_DE_LA_CASILLA[id].primeraPuerta,
         }
       : {}),
+    ...(DE_PASO[id] ? { general: DE_PASO[id].fuente } : {}),
+    ...(NUNCA_A_LA_VEZ[id] ? { nuncaALaVez: NUNCA_A_LA_VEZ[id] } : {}),
+    ...(POR_SUS_MEDIOS[id] ? { porSusMedios: POR_SUS_MEDIOS[id] } : {}),
     ...fuenteDeLasPasarelas(id),
   };
   // Lo del AIP, al final de cada puesto: la ficha sale igual se junte las veces que se junte.
@@ -717,6 +829,7 @@ async function juntar(id) {
     `${id}: ${cuenta.casan} de ${cuenta.puestos} casan con el AIP; ${cuenta.movidos} a su punto publicado` +
       ` (${cuenta.sinLinea} lejos y fuera de su raya, sin mover), ${cuenta.copias} copias quitadas; sin AIP: ${cuenta.sinAip.join(" ") || "ninguno"}${CONTACTO[id] && cuenta.sinAip.length ? " (no son de contacto)" : ""}`,
   );
+  if (cabos.length) console.log(`  cabos de la línea de un puesto que se cruza, en él: ${cabos.join(", ")}`);
   if (cambiados.length) console.log(`  con otro nombre en la carta: ${cambiados.join(", ")}`);
   if (repetidos.length) console.log(`  con la línea de su copia sin nombre: ${repetidos.join(", ")}`);
   if (sueltos.length) console.log(`  sin nombre y sin línea, junto a uno de la carta, quitados: ${sueltos.join(" · ")}`);

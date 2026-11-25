@@ -74,7 +74,8 @@ export interface DelAip {
   /**
    * **Si la carta lo da en la plataforma de carga y aviación general** (H85), de qué es: los que dan su
    * mayor avión por envergadura —«24 m», «15 m»—, de las avionetas; los que lo dan por un tipo —B767,
-   * A321, A320 y CL-600—, de carga y ambulancia. Ahí no va el pasaje.
+   * A321, A320 y CL-600—, de carga y ambulancia. Ahí no va el pasaje. Y en Tenerife Sur, los cinco que su
+   * tabla da de «Aviación General», del AG1 al AG5 (H97).
    */
   readonly uso?: "general" | "carga";
   /** Y por cuáles se llega, con la pista al norte y al sur. */
@@ -221,6 +222,39 @@ export function seSaleEmpujado(aip: DelAip | null | undefined): boolean {
  */
 export function valeParaElEmpuje(aip: DelAip | null | undefined, envergadura: number): boolean {
   return !aip || (tienePasarela(aip) !== false && seSaleEmpujado(aip) && admite(aip, envergadura));
+}
+
+/**
+ * **De estos puestos, los de salir por sus medios** (H97), donde la ficha los trae (`aipPuestos.porSusMedios`):
+ * en La Palma, el 12 y el 14, que son los dos de salida autónoma; de los otros catorce se sale en retroceso, con
+ * tractor, y la avioneta no lo lleva. Los que admiten esta envergadura; ninguno, si la ficha no los trae.
+ */
+export function dePorSusMedios<P extends { readonly ref?: string | null; readonly aip?: DelAip }>(
+  aero: Pick<Aerodrome, "aipPuestos">,
+  puestos: readonly P[],
+  envergadura: number,
+): readonly P[] {
+  const refs = aero.aipPuestos?.porSusMedios?.puestos;
+  if (!refs) return [];
+  return puestos.filter((p) => p.ref != null && refs.includes(p.ref) && admite(p.aip, envergadura));
+}
+
+/**
+ * **Los puestos en los que no se puede maniobrar mientras se maniobra en este** (H97, `aipPuestos.nuncaALaVez`),
+ * por su punto, en los ejes de la ficha. Ninguno, si el AIP no lo dice del suyo.
+ */
+export function nuncaALaVezCon(
+  aero: Pick<Aerodrome, "parkingPositions" | "aipPuestos"> | null | undefined,
+  x: number,
+  z: number,
+): readonly Punto[] {
+  const parejas = aero?.aipPuestos?.nuncaALaVez?.parejas;
+  const puestos = aero?.parkingPositions;
+  if (!parejas || !puestos) return [];
+  const suyo = puestos.find((p) => Math.hypot(p.xy[0] - x, p.xy[1] + z) < 5)?.ref;
+  if (!suyo) return [];
+  const otros = parejas.flatMap(([a, b]) => (a === suyo ? [b] : b === suyo ? [a] : []));
+  return puestos.filter((p) => p.ref != null && otros.includes(p.ref)).map((p) => p.xy);
 }
 
 /**

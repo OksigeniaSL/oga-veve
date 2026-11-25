@@ -250,6 +250,7 @@ import {
   crearTrafico,
   tiposDelCampo,
   type EnTierra,
+  type QuienManiobra,
   type QuienJuega,
   type TuSalida,
   type Trafico,
@@ -416,6 +417,12 @@ const HORA_DEL_PASAJE = 15;
  * sería un zumbido. Ver `girarElObs`.
  */
 const CLIC_DE_LA_RUEDA = 0.08;
+
+/**
+ * **Lo más que se espera a que acabe el que maniobra en el puesto de al lado**, s (H97): tres minutos, que es
+ * un empuje con su arranque y su saludo, y otro tanto. Ver `pedirElRemolque`.
+ */
+const TOPE_DEL_DE_AL_LADO = 180;
 
 /** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
 /** A cuántos metros del umbral empieza la lección de aterrizar. */
@@ -16958,7 +16965,16 @@ export class Game {
        * que no esté ya dentro. Ver `repartirLosTramos` en `world/trafico.ts`.
        */
       ruta: this.plan?.rutaReservada() ?? [],
+      ...this.tuManiobraEnElPuesto(),
     };
+  }
+
+  /** Y de qué puesto te saca el tractor, si lo has pedido o ya te empuja (H97). Ver `maniobra` en `EnTierra`. */
+  private tuManiobraEnElPuesto(): { readonly maniobra?: { readonly x: number; readonly z: number } } {
+    const r = this.remolque;
+    if (!r || r.libre || (r.fase === "enganchado" && this.paraEmpujar === null && this.esperaAlDeAlLado === null)) return {};
+    const puesto = this.puestoDelRemolque();
+    return puesto ? { maniobra: puesto } : {};
   }
 
   /**
@@ -18680,7 +18696,17 @@ export class Game {
    */
   private decirQueDasPaso(): void {
     const a = this.plan?.dandoPasoA;
-    if (!a || this.pasoDadoA.has(a.matricula)) return;
+    if (a) this.decirQueLeDasPaso(a);
+  }
+
+  /** Lo mismo, a quien sea: ver `decirQueDasPaso`, y `pedirElRemolque`, donde se espera en el puesto. */
+  private decirQueLeDasPaso(a: {
+    readonly matricula: string;
+    readonly sale: boolean;
+    readonly recula?: boolean;
+    readonly empuja?: boolean;
+  }): void {
+    if (this.pasoDadoA.has(a.matricula)) return;
     /*
      * El que recula para dejarte la calle no pasa él: se aparta y pasas tú.
      * «Lo dejamos pasar» no sería verdad. Ver `recula` en `world/trafico.ts`.
@@ -24094,6 +24120,7 @@ export class Game {
     this.remolque = null;
     this.remolquePorMirar = false;
     this.paraEmpujar = null;
+    this.esperaAlDeAlLado = null;
     this.remolqueContado = "";
     this.empujeAutorizado = false;
   }
@@ -24117,8 +24144,38 @@ export class Game {
       this.avisar("error");
       return;
     }
+    /*
+     * **Y si en el puesto de al lado maniobra otro y no se puede a la vez** (H97), la torre te
+     * retiene el empuje hasta que acabe: se oye que se ha pedido, se dice a quién se espera y el
+     * tractor echa a andar solo, sin volver a pedirlo. «Simultaneous arrival/departure manoeuvres
+     * from adjacent stands J1 and G2, G9 and G10 and G10 and H37 are incompatible» (AD 2-GCTS,
+     * casilla 20.3.2.1). Al que entra no hay frase grabada que lo diga: se ve entrar.
+     */
+    const otro = this.quienManiobraAlLado();
+    if (otro) {
+      if (this.esperaAlDeAlLado !== null) return;
+      this.esperaAlDeAlLado = 0;
+      this.avisar("attention");
+      if (otro.sale) this.decirQueLeDasPaso({ ...otro, empuja: true });
+      return;
+    }
     this.paraEmpujar = BALIZA_ANTES_DE_EMPUJAR;
   }
+
+  /** Quién maniobra en un puesto en el que no se puede a la vez que en el tuyo, con el tractor enganchado. Ver `maniobraAlLadoDe`. */
+  private quienManiobraAlLado(): QuienManiobra | null {
+    const puesto = this.puestoDelRemolque();
+    return (puesto && this.trafico?.maniobraAlLadoDe(puesto)) ?? null;
+  }
+
+  /** El punto del puesto del que saca el tractor: donde está la rueda de morro antes de empujar. */
+  private puestoDelRemolque(): { readonly x: number; readonly z: number } | null {
+    const p = this.remolque?.empuje.poses[0];
+    return p ? ruedaDeMorroEn(p, p.rumbo, morroDe(this.aircraft)) : null;
+  }
+
+  /** Lo que llevas esperando, s, a que acabe el que maniobra al lado; `null` si no esperas. Ver `pedirElRemolque`. */
+  private esperaAlDeAlLado: number | null = null;
 
   /** **El interruptor de la baliza**, a mano: el botón, la tecla o la tarjeta del puesto. */
   private moverLaBaliza(): void {
@@ -24393,6 +24450,18 @@ export class Game {
     // Lo de quien juega: el tractor echa a andar al rato de pedirlo, y espera a sus motores.
     // Y si se apaga la baliza antes de que eche a andar, no empuja: vuelve a pedirla.
     if (this.paraEmpujar !== null && !this.baliza.encendida) this.paraEmpujar = null;
+    /*
+     * El que esperaba al de al lado: en cuanto acaba, su permiso. Con un tope, que una espera entre dos
+     * no puede quedarse sin salida: lo que dura un empuje largo con el saludo, y otro tanto.
+     */
+    if (this.esperaAlDeAlLado !== null) {
+      this.esperaAlDeAlLado += dt;
+      if (!this.baliza.encendida || r.fase !== "enganchado") this.esperaAlDeAlLado = null;
+      else if (this.esperaAlDeAlLado > TOPE_DEL_DE_AL_LADO || !this.quienManiobraAlLado()) {
+        this.esperaAlDeAlLado = null;
+        this.paraEmpujar = BALIZA_ANTES_DE_EMPUJAR;
+      }
+    }
     if (this.paraEmpujar !== null) {
       this.paraEmpujar -= dt;
       if (this.paraEmpujar <= 0) {

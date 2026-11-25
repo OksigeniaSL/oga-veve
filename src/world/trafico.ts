@@ -644,6 +644,15 @@ const BALIZA_ANTES = 3;
 const MIRA_ANTES_DE_EMPUJAR = 120;
 
 /**
+ * **Los últimos metros de una llegada, los de entrar en el puesto**, m: de la calle de plataforma a la parada, con
+ * lo que se tarda en torcer. Ver `quienManiobraEn`.
+ */
+const ENTRANDO_EN_SU_PUESTO = 150;
+
+/** Lo cerca que está de un puesto el punto que es ese puesto, m. */
+const EN_ESE_PUESTO = 6;
+
+/**
  * **Qué tráfico opera en este campo**, por su código OACI, y en qué
  * proporción. Lo que no está en la lista va por lo que da su pista.
  *
@@ -2106,6 +2115,18 @@ export interface EnTierra {
    * `repartirLosTramos`.
    */
   readonly ruta?: readonly EnElPlano[];
+  /**
+   * **El puesto del que le están sacando con el tractor**, si lo ha pedido o ya le empujan, hasta que el avión es
+   * suyo (H97). De los que el AIP no deja maniobrar a la vez, nadie empieza mientras tanto: ver `sinNadieAlLado`.
+   */
+  readonly maniobra?: EnElPlano;
+}
+
+/** Uno del tráfico que maniobra en un puesto de al lado. Ver `Trafico.maniobraAlLadoDe`. */
+export interface QuienManiobra {
+  readonly matricula: string;
+  /** Si sale, empujado; si no, entra. */
+  readonly sale: boolean;
 }
 
 /**
@@ -2385,6 +2406,12 @@ export interface Trafico {
    * `paradaPorElTramo` en `plan-de-vuelo.ts`.
    */
   tramosQueTienen(): readonly QuienTieneElTramo[];
+  /**
+   * **Quién maniobra en un puesto de al lado en el que no se puede a la vez que en este** (H97): empujado por su
+   * tractor, o entrando. `null` si nadie, o si el AIP no lo dice de ese puesto. Con eso la torre te retiene el
+   * empuje: ver `pedirElRemolque` en `game.ts`.
+   */
+  maniobraAlLadoDe(puesto: EnElPlano): QuienManiobra | null;
   /**
    * **Los que esperan fuera de tu raya a que pases**: los que iban a meterse
    * de frente en una calle que tu raya recorre y la torre ha parado. Ver
@@ -3813,6 +3840,66 @@ export function crearTrafico(
     return d;
   };
 
+  /** El puesto del que sale empujado: el punto en el que está su rueda de morro. */
+  const puestoDelEmpuje = (q: Volando): EnElPlano | null => {
+    const p = q.remolque?.empuje.poses[0];
+    return p ? ruedaDeMorroEn(p, p.rumbo, MORRO_DEL_TRAFICO[q.tipo.id]) : null;
+  };
+
+  /** Los puestos en los que no se maniobra a la vez que en este (H97), por su punto: se pregunta en cada fotograma. */
+  const alLadoDe = new Map<string, readonly EnElPlano[]>();
+  const deAlLado = (puesto: EnElPlano | null): readonly EnElPlano[] => {
+    if (!puesto) return [];
+    const clave = `${puesto.x.toFixed(0)},${puesto.z.toFixed(0)}`;
+    let hecho = alLadoDe.get(clave);
+    if (!hecho) {
+      const suelo = opciones.tierra?.()?.suelo;
+      if (!suelo) return [];
+      alLadoDe.set(clave, (hecho = suelo.nuncaALaVezCon(puesto)));
+    }
+    return hecho;
+  };
+
+  /** Quién del tráfico maniobra en uno de esos puestos: le empujan de él, o está entrando. */
+  const quienManiobraEn = (sitios: readonly EnElPlano[], salvo: Volando | null): QuienManiobra | null => {
+    if (!sitios.length) return null;
+    const enUno = (p: EnElPlano, cerca: number) => sitios.some((s) => Math.hypot(p.x - s.x, p.z - s.z) < cerca);
+    for (const [matricula, b] of aviones) {
+      if (b === salvo) continue;
+      const deDonde = empujando(b) ? puestoDelEmpuje(b) : null;
+      if (deDonde && enUno(deDonde, EN_ESE_PUESTO)) return { matricula, sale: true };
+      const c = b.caminos;
+      if (!c || b.marca.camino !== c.llegada || !porLasCalles(b)) continue;
+      const queda = largoDe(c.llegada) - b.recorrido;
+      const fin = c.llegada[c.llegada.length - 1];
+      // El camino acaba con la rueda de morro en el punto del puesto, y el centro por detrás.
+      if (fin && queda > 0.5 && queda < ENTRANDO_EN_SU_PUESTO && enUno(fin, EN_ESE_PUESTO + MORRO_DEL_TRAFICO[b.tipo.id].rueda))
+        return { matricula, sale: false };
+    }
+    return null;
+  };
+
+  /**
+   * **Si en los puestos de al lado en los que no se puede a la vez no maniobra nadie** (H97): ni otro del tráfico,
+   * ni tú, empujado o entrando. «Simultaneous arrival/departure manoeuvres from adjacent stands (…) are
+   * incompatible»: el otro espera su permiso. Es lo que no ve la zona que barre: las alas no llegan a tocarse, y
+   * aun así no se hace.
+   */
+  const sinNadieAlLado = (q: Volando, tu: EnTierra | null): boolean => {
+    const sitios = deAlLado(puestoDelEmpuje(q));
+    if (!sitios.length) return true;
+    if (quienManiobraEn(sitios, q)) return false;
+    if (!tu) return true;
+    const fin = tu.ruta?.[tu.ruta.length - 1];
+    return !sitios.some(
+      (s) =>
+        (tu.maniobra && Math.hypot(tu.maniobra.x - s.x, tu.maniobra.z - s.z) < EN_ESE_PUESTO) ||
+        (fin &&
+          Math.hypot(fin.x - s.x, fin.z - s.z) < EN_ESE_PUESTO &&
+          Math.hypot(tu.x - s.x, tu.z - s.z) < ENTRANDO_EN_SU_PUESTO),
+    );
+  };
+
   /**
    * **Si la calle está libre para empujar**: nadie en lo que va a barrer, ni a
    * punto de pasar por ello. Es lo que mira el control de tierra antes de decir
@@ -3834,6 +3921,7 @@ export function crearTrafico(
    * deja a nadie esperando al otro.
    */
   const calleLibreParaEmpujar = (q: Volando, tu: EnTierra | null): boolean => {
+    if (!sinNadieAlLado(q, tu)) return false;
     const zona = zonaDelEmpuje(q);
     if (tu) {
       if (aLaLinea(tu, zona) < tu.separacion) return false;
@@ -5562,6 +5650,9 @@ export function crearTrafico(
     },
     tramosQueTienen() {
       return losQueTienen;
+    },
+    maniobraAlLadoDe(puesto) {
+      return quienManiobraEn(deAlLado(puesto), null);
     },
     quienDejaLaPistaPorSuRaya,
     teCedenElPaso() {

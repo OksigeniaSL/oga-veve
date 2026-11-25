@@ -1547,7 +1547,7 @@
       -752.4
     ]
   ],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCLA, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCLA/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCLA PDC 1.2","wef":"15-MAY-25"}],"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-07","leido":"2026-11-24"}},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCLA, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCLA/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCLA PDC 1.2","wef":"15-MAY-25"}],"porSusMedios":{"puestos":["12","14"],"fuente":"AIP España AD 2-GCLA PDC 1.2 (WEF 15-MAY-25): salida «A» en el 12, el 14 y los de helicóptero, y «R», en retroceso, en los demás; ni las PDC ni el AD 2 (AIRAC AMDT 09/26, WEF 01-OCT-26) dicen dónde aparca la aviación general."},"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-07","leido":"2026-11-24"}},
   "parkingPositions": [
     {
       "ref": "H2",

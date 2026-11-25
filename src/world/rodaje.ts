@@ -83,6 +83,11 @@ export interface Tramo {
    * `Aerodrome.restriccionesDeRodaje`.
    */
   readonly estrecho?: boolean;
+  /**
+   * Si es una raya pintada en la losa y nada más (`Aerodrome.taxiways`, H97): solo se engancha a ella quien
+   * está encima. Ver `SOBRE_LA_RAYA`.
+   */
+  readonly soloPintada?: boolean;
 }
 
 export interface Grafo {
@@ -330,6 +335,7 @@ export function construirGrafo(
         ref: c.ref ?? null,
         path: [...c.path] as Punto[],
         pista: false,
+        soloPintada: !!c.soloPintada,
       })),
     ...aero.runways
       .filter((p) => p.centerline.length > 1)
@@ -338,6 +344,7 @@ export function construirGrafo(
         // **Partida en trozos**, y no de punta a punta. Ver `PASO_DE_PISTA`.
         path: densificar([...p.centerline] as Punto[], PASO_DE_PISTA),
         pista: true,
+        soloPintada: false,
       })),
   ];
 
@@ -522,6 +529,7 @@ export function construirGrafo(
     ref: string | null;
     path: readonly Punto[];
     pista: boolean;
+    soloPintada: boolean;
   }[] = [];
   for (const calle of crudas) {
     let trozo: Punto[] = [];
@@ -541,12 +549,12 @@ export function construirGrafo(
        */
       const corta = calle.pista || (usos.get(clave(p)) ?? 0) > 1;
       if (i > 0 && i < calle.path.length - 1 && corta) {
-        trozos.push({ ref: calle.ref, path: trozo, pista: calle.pista });
+        trozos.push({ ref: calle.ref, path: trozo, pista: calle.pista, soloPintada: calle.soloPintada });
         trozo = [p];
       }
     }
     if (trozo.length > 1)
-      trozos.push({ ref: calle.ref, path: trozo, pista: calle.pista });
+      trozos.push({ ref: calle.ref, path: trozo, pista: calle.pista, soloPintada: calle.soloPintada });
   }
 
   // ── Soldar los nudos ─────────────────────────────────────────────────────
@@ -619,6 +627,7 @@ export function construirGrafo(
       pista: !!t.pista,
       estrecho,
       coste: estrecho ? base * PENALIZACION_ESTRECHO : base,
+      ...(t.soloPintada ? { soloPintada: true } : {}),
     });
   }
 
@@ -1046,6 +1055,13 @@ interface Enganche {
 /** Cuántos enganches se prueban por punta, de los más cercanos. */
 const ENGANCHES = 6;
 
+/**
+ * **A cuánto de una raya que solo está pintada en la losa se está encima de ella**, m: media calle. Las de la
+ * aviación general de Tenerife Sur son de sus cinco puestos, y acaban en ellos; a los de al lado —el G48, el R47,
+ * los dos que no están en la carta— la U3 les queda más cerca que la calle de plataforma, y salían por ella (H97).
+ */
+const SOBRE_LA_RAYA = ANCHO_RODADURA / 2;
+
 /** Cada cuánto se mira que la recta del enganche vaya por pavimento, m. */
 const MUESTRA = 2;
 
@@ -1163,7 +1179,7 @@ function buscarEnganches(
         mejor = { tramo: k, punto: q, desdeA: recorrido + u * l, salto: d };
       recorrido += l;
     }
-    if (mejor && mejor.salto <= maxSalto) todos.push(mejor);
+    if (mejor && mejor.salto <= (t.soloPintada ? Math.min(maxSalto, SOBRE_LA_RAYA) : maxSalto)) todos.push(mejor);
   });
   todos.sort((x, y) => x.salto - y.salto);
   const buenos: Enganche[] = [];

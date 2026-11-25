@@ -94,6 +94,15 @@ mira el avión en el puesto (`aip.morro`); por dónde se sale y se llega, `aip.s
 lo dice la casilla 20.5 del AD 2, y `aipPuestos.callesDePlataforma` son las calles que solo se toman
 si la ruta las nombra (ADR 0025, enmienda H85).
 
+**La aviación general de Tenerife Sur** (`DE_PASO` en el guion) son cinco puestos que se cruzan, del AG1
+al AG5, entre tres calles, la U1, la U2 y la U3: `aip.uso` dice que son de avionetas, y `salePor` y
+`llegaPor`, por cuál se entra y por cuál se sale. OpenStreetMap trae dos líneas por puesto, como si
+fueran otros —«AG4» y «AG4 (U2)»—; `juntar` deja uno con la de entrar. Las calles y las líneas de salir
+van en `taxiways`, marcadas `manual` y `soloPintada`: son una raya en la losa, sin asfalto ni luces
+suyas, y solo se engancha a ellas quien está encima. En La Palma, `aipPuestos.porSusMedios` son los dos
+puestos de salida autónoma, de los que sale quien no lleva tractor; y en Tenerife Sur,
+`aipPuestos.nuncaALaVez`, las parejas de puestos en los que no se maniobra a la vez (enmienda H97).
+
 ### Qué puestos tienen pasarela, donde la carta no lo dice
 
 Las cartas de Tenerife Sur, La Palma, Lanzarote y Fuerteventura no dicen cuáles
@@ -116,7 +125,7 @@ restrictions»), con la frase y la enmienda: a partir de cuántos metros de
 envergadura no se rueda por una calle (`calle`, su letra) o por una línea
 (`por`, en los metros de la ficha). Va escrito a mano, como
 `salidasPorInterseccion`, y se conserva al volver a extraer. Lo llevan
-Lanzarote (ADR 0025, enmienda H79) y Fuerteventura (H85).
+Lanzarote (ADR 0025, enmienda H79), Fuerteventura (H85) y Tenerife Sur (H88, H97).
 
 ### Las plataformas que OpenStreetMap dibuja a medias
 
@@ -135,8 +144,8 @@ puestos del AIP dibuja la plataforma seguida, lo que falta va escrito a mano en
 `plataformasDeducidas`, con la carta y de dónde sale su contorno: los ejes de
 las calles de plataforma y los puestos. El juego las junta con las de
 OpenStreetMap (`plataformas-cosidas.ts`) y la extracción las conserva. Las llevan
-Barajas, Los Rodeos y Tenerife Sur, y Pettirossi el abocinado de un cruce (ADR
-0025, enmienda H81).
+Barajas, Los Rodeos y Tenerife Sur, Pettirossi el abocinado de un cruce (ADR
+0025, enmienda H81) y Fuerteventura el asfalto entre la T y la plataforma (H97).
 
 ## La rejilla del pavimento, horneada
 

@@ -20,7 +20,7 @@
  * mundo y ya está. Quien los recorre es `trafico.ts`.
  */
 
-import { admite, aproarDe, cumpleElAproar, delAipEn, llegaPorDe, puestoEn, saleDeFrente, tienePasarela, valeParaElEmpuje } from "./puestos-del-aip";
+import { admite, aproarDe, cumpleElAproar, delAipEn, dePorSusMedios, llegaPorDe, nuncaALaVezCon, puestoEn, saleDeFrente, tienePasarela, valeParaElEmpuje } from "./puestos-del-aip";
 import { aLaPolilinea, enElPavimentoDe, type Aerodrome, type Punto } from "./aerodrome";
 import {
   edificiosDePasarela,
@@ -168,6 +168,11 @@ export interface SueloDelTrafico {
    * la vez por ella. Ver `Momento.calleOcupada` en `flight/radio.ts`.
    */
   unaSolaCalle(): boolean;
+  /**
+   * **Los puestos en los que no se maniobra mientras se maniobra en el que hay ahí** (H97), en el mundo.
+   * Ver `nuncaALaVezCon` en `puestos-del-aip.ts`.
+   */
+  nuncaALaVezCon(puesto: EnElPlano): readonly EnElPlano[];
 }
 
 /**
@@ -672,12 +677,19 @@ export function sueloDelTrafico(
    * veintisiete metros de ala, salía del 60, que es de quince.
    */
   const hayGeneral = delPavimento.some((p) => p.aip?.uso === "general");
+  /*
+   * Y la avioneta y el bimotor, donde no la da y la ficha trae de qué puestos se sale sin tractor, a esos
+   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios.
+   */
+  const hayPorSusMedios = !hayGeneral && !!aero.aipPuestos?.porSusMedios;
   const porAla = new Map<number, readonly Punto[]>();
   const suyosPorAla = (ala: number | undefined): readonly Punto[] => {
-    if (ala === undefined || !hayGeneral) return puestos;
+    if (ala === undefined || (!hayGeneral && !(hayPorSusMedios && ala < ALA_DE_LETRA_B))) return puestos;
     let lista = porAla.get(ala);
     if (!lista) {
-      const suyos = delPavimento.filter((p) => admite(p.aip, ala) && p.aip?.uso === (ala < ALA_DE_LETRA_B ? "general" : undefined));
+      const suyos = hayGeneral
+        ? delPavimento.filter((p) => admite(p.aip, ala) && p.aip?.uso === (ala < ALA_DE_LETRA_B ? "general" : undefined))
+        : dePorSusMedios(aero, delPavimento, ala);
       porAla.set(ala, (lista = suyos.length ? suyos.map((p) => p.xy) : puestos));
     }
     return lista;
@@ -1159,9 +1171,7 @@ export function sueloDelTrafico(
         desdeLaCalle: true,
         llegaPorSuRaya: { haciaAtras: [a[0] - b[0], a[1] - b[1]], mide },
       });
-      // Menos la raya, que está pintada en el pavimento aunque el dibujo le deje una rendija (H95): entre la T
-      // de Fuerteventura y su plataforma, once metros, y por ella no se llegaba a ninguno del 31 al 47.
-      publicadas.set(clave, (hecha = r && porElAsfalto(r.puntos.slice(0, -1)) ? r : null));
+      publicadas.set(clave, (hecha = r && porElAsfalto(r.puntos) ? r : null));
     }
     return hecha;
   };
@@ -1512,6 +1522,10 @@ export function sueloDelTrafico(
       };
       const hecha = buscar(false) ?? buscar(true);
       return hecha ? conSuRueda(hecha) : hecha;
+    },
+
+    nuncaALaVezCon(puesto) {
+      return nuncaALaVezCon(aero, puesto.x, puesto.z).map(alMundo);
     },
 
     unaSolaCalle() {
