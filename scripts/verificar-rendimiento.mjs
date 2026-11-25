@@ -328,8 +328,9 @@ for (const escenario of ESCENARIOS) {
      * **En el aire, con el motor en marcha** (H99): se medía un avión que
      * planeaba —y «en crucero», uno con el automático guardando la altura sin
      * motor hasta perder la velocidad—. Los relojes, el sonido y las hélices que
-     * no giran también son coste. «lejos» es el puesto: reinicia y lo apaga, así
-     * que se pone en cada sitio. El helicóptero del faro no pasa por aquí.
+     * no giran también son coste. «lejos», que es el ejercicio de la tormenta
+     * recién empezado, se queda como lo deja el juego; y como reiniciar apaga,
+     * se pone en cada sitio. El helicóptero del faro no pasa por aquí.
      */
     if (sitio !== "puesto" && sitio !== "lejos" && MISION !== "teno") {
       await ponerEnMarcha(page);

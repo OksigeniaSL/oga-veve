@@ -288,11 +288,11 @@ try {
      * misma altura, a una milla y pico, y se espera a que la pida. Tan cerca
      * porque el avión colocado sube o baja solo: a dos millas, con el
      * automático subiendo a la ventanilla, en quince segundos ya se ha
-     * apartado más de lo que pide el RA y con razón no lo da. En el
-     * reactor tiene que salir entera —el cuadrado rojo en la carta y en la
-     * pantalla de la cabina, la franja en el variómetro, la tarjeta— y la
-     * carta ya no dice TA ONLY; en el turbohélice, nada de eso: su TCAS I solo
-     * avisa. Ver `flight/tcas.ts`.
+     * apartado más de lo que pide el RA y con razón no lo da. En los que
+     * llevan TCAS II —el reactor, y el JAZ 60 desde que es un 1900D— tiene que
+     * salir entera —el cuadrado rojo en la carta y en la pantalla de la cabina,
+     * la franja en el variómetro, la tarjeta— y la carta ya no dice TA ONLY; en
+     * uno de TCAS I, nada de eso: solo avisa. Ver `flight/tcas.ts`.
      */
     {
       const colocarDeFrente = (pie) => {
@@ -360,7 +360,9 @@ try {
         if (FOTOS) await page.screenshot({ path: `${FOTOS}/${avion}-ra-cabina.png` });
         await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
       }
-      const conRa = avion === "jaz-90";
+      // Por lo que lleva, no por cuál es: el JAZ 60 pasó al TCAS II con su ficha del 1900D.
+      const conRa =
+        (await page.evaluate(() => globalThis.__oga.juegoParaTrazas().aircraft.tcas)) === "TCAS II";
       comprobar(
         conRa
           ? `${avion}: de frente, el RA entero —orden, cuadrado, franja y tarjeta— y sin TA ONLY`
