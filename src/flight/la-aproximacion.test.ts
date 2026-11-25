@@ -293,7 +293,7 @@ describe("el circuito, solo si se vuelve a este campo", () => {
   }
 
   /*
-   * **Y el techo sube con la altitud publicada** (ADR 0014, enmienda H92): el
+   * **Y el techo sube con la altitud publicada** (ADR 0027, enmienda H92): el
    * reactor de Asunción vuela a 466 m, y con los quinientos a secas pasarse
    * treinta y cinco metros era quedarse sin hilo.
    */

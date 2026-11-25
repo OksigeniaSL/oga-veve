@@ -463,7 +463,7 @@ export interface LoPublicado {
  * Cinco campos del juego la publican, los cinco sobre el nivel del mar: los
  * convencionales de Asunción a 1.500 pies y sus reactores a 1.800, Encarnación
  * a 2.100, Pedro Juan Caballero a 3.000, Mariscal Estigarribia a 1.700 y Cuatro
- * Vientos a 3.000 (ADR 0014, enmienda H92). Entonces los tramos a nivel se
+ * Vientos a 3.000 (ADR 0027, enmienda H92). Entonces los tramos a nivel se
  * vuelan ahí, y lo que marca el altímetro es lo que dice la carta. El terreno
  * sigue mandando por abajo: nunca a menos de `SOBRE_EL_TERRENO` del pasillo.
  *

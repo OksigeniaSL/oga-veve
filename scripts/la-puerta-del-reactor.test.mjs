@@ -60,7 +60,7 @@ describe("el arco a final del JAZ 90 en el banco", () => {
 });
 
 /*
- * **Y desde la altitud que publica el AIP, la final es la misma** (ADR 0014,
+ * **Y desde la altitud que publica el AIP, la final es la misma** (ADR 0027,
  * enmienda H92). El circuito se vuela más alto en el viento en cola y se baja
  * por la línea que se dibuja, así que a la base se llega como siempre. Sin
  * bajar hasta la esquina, el JAZ 110 empezaba la final cuarenta metros alto.

@@ -324,7 +324,7 @@ describe("ningún circuito se mete en el monte", () => {
 
 /**
  * **A la altitud que publica el AIP**, en los cinco campos que la publican, y
- * sin tocar la base ni la final (ADR 0014, enmienda H92).
+ * sin tocar la base ni la final (ADR 0027, enmienda H92).
  */
 describe("el circuito, a la altitud publicada", () => {
   const CON_ALTITUD = CON_RELIEVE.filter((e) => e.altitudDelCircuito !== undefined);

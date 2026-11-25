@@ -1179,6 +1179,22 @@ export function trazar(
    */
   const pendiente = pendienteDeFrustrada(subeAlAire, vuela);
   /*
+   * **Hasta la altura del viento en cola**, si le da antes del giro: con la
+   * altitud publicada, el final de la subida del dibujo va más bajo que ella
+   * —ver `verticesDelCircuito`—, y la frustrada se nivelaba ahí para volver a
+   * subir en el cruzado. Donde no se publica, las dos son la misma.
+   */
+  const arribaAlAire: Sitio = {
+    ...arriba,
+    y: Math.max(
+      arriba.y,
+      Math.min(
+        lejos.y,
+        decision.y + pendiente * Math.hypot(arriba.x - decision.x, arriba.z - decision.z),
+      ),
+    ),
+  };
+  /*
    * **Y acaba donde empieza la vuelta siguiente**, en `lejos`, que es el
    * primer punto de `llegada`: ahí se engancha otra vuelta al circuito, con
    * permiso o sin él. Acababa en la esquina de la base y se retiraba en el
@@ -1190,7 +1206,7 @@ export function trazar(
     ...cola,
     entrada,
     decision,
-    ...subidaHasta(decision, arriba, pendiente),
+    ...subidaHasta(decision, arribaAlAire, pendiente),
     lejos,
   ];
   const decide = largoDelCamino([...cola, entrada, decision]);
@@ -1204,7 +1220,7 @@ export function trazar(
    * todavía no se veía; empezaba en la punta de la pista y a ras de suelo, y
    * el que aparecía con su orden salía rodando del asfalto hacia arriba.
    */
-  const alAire = [decision, ...subidaHasta(decision, arriba, pendiente), lejos];
+  const alAire = [decision, ...subidaHasta(decision, arribaAlAire, pendiente), lejos];
   // La toma, de donde se cuenta hacia atrás: es el único punto del circuito
   // que está donde está y no admite discusión.
   let enLaToma = largoDelCamino([...cola, entrada, aterriza]);
