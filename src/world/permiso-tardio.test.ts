@@ -29,6 +29,7 @@ import { sueloDelTrafico } from "./suelo-del-trafico";
 import {
   crearTrafico,
   LIBRE_ANTES_DEL_UMBRAL,
+  LIBRE_ANTES_EL_TRAFICO,
   tiposDelCampo,
   type QuienJuega,
   type Sitio,
@@ -118,7 +119,7 @@ describe("el que llega a la decisión contigo en la pista", () => {
     k.seas(subiendo(2500));
     k.paso();
     expect(k.dentro()).toMatchObject({ camino: "llegada", continua: false, conPermiso: true });
-    expect(k.alUmbral()).toBeGreaterThan(LIBRE_ANTES_DEL_UMBRAL);
+    expect(k.alUmbral()).toBeGreaterThan(LIBRE_ANTES_EL_TRAFICO);
     k.seas({});
     k.hasta(() => k.dentro().recorrido > k.dentro().toca! + 50);
     expect(k.sitio().y - COTA).toBeLessThan(5);
@@ -153,19 +154,19 @@ describe("el que llega a la decisión contigo en la pista", () => {
     k.seas({ enLaPista: true });
     k.paso();
     expect(k.idos).toEqual([EC]);
-    expect(k.alUmbral()).toBeGreaterThan(LIBRE_ANTES_DEL_UMBRAL);
+    expect(k.alUmbral()).toBeGreaterThan(LIBRE_ANTES_EL_TRAFICO);
   });
 
-  it("y quien va siempre a punto de irse no le lleva hasta el umbral: a cinco segundos, al aire", () => {
+  it("y quien va siempre a punto de irse no le lleva hasta el umbral: a tres segundos, al aire", () => {
     const k = enLaDecision();
     k.seas(corriendo(0.5, 2400));
     k.hasta(() => k.idos.length > 0);
     expect(k.idos).toEqual([EC]);
-    expect(k.alUmbral()).toBeLessThan(LIBRE_ANTES_DEL_UMBRAL + 2);
-    expect(k.alUmbral()).toBeGreaterThan(LIBRE_ANTES_DEL_UMBRAL - 1);
+    expect(k.alUmbral()).toBeLessThan(LIBRE_ANTES_EL_TRAFICO + 2);
+    expect(k.alUmbral()).toBeGreaterThan(LIBRE_ANTES_EL_TRAFICO - 1);
     // Y sube desde donde está, sin saltar ni tocar la pista.
     const antes = k.sitio();
-    expect(antes.y - COTA).toBeGreaterThan(8);
+    expect(antes.y - COTA).toBeGreaterThan(5);
     k.hasta(() => false, 10);
     expect(k.sitio().y).toBeGreaterThan(antes.y);
     expect(k.dentro()).toMatchObject({ camino: "otro", continua: false, conPermiso: false });
@@ -183,6 +184,17 @@ describe("el que llega a la decisión contigo en la pista", () => {
     });
     k.hasta(() => k.dentro().conPermiso);
     expect(k.dentro()).toMatchObject({ conPermiso: true, continua: false });
+  });
+});
+
+describe("y la verde, con uno a punto de decidir", () => {
+  it("se te da si al umbral ya habrás pasado el final, y si no, no", () => {
+    const k = enLaDecision();
+    const sale = { enElAire: 3, conLaPista: false, velocidad: 60, sube: 8 };
+    k.seas({ sale: { ...sale, carrera: 2300 } });
+    expect(k.trafico.estorbanTuSalida()).toEqual([]);
+    k.seas({ sale: { ...sale, carrera: 1000 } });
+    expect(k.trafico.estorbanTuSalida()).toEqual([{ matricula: EC, llega: true }]);
   });
 });
 
@@ -299,6 +311,9 @@ describe("la frustrada del guion, con alguien saliendo por delante, no se manda"
     expect(k.trafico.todaviaNo(EC, "torre.goAround")).toBe(false);
     k.seas(subiendo(1500));
     expect(k.trafico.todaviaNo(EC, "torre.goAround")).toBe(true);
+    // Contigo en la pista, sí: eso es irse por la pista ocupada.
+    k.seas(corriendo(20, 1000));
+    expect(k.trafico.todaviaNo(EC, "torre.goAround")).toBe(false);
     k.seas({});
     expect(k.trafico.todaviaNo(EC, "torre.goAround")).toBe(false);
   });
@@ -416,11 +431,19 @@ describe("y quien juega, con uno en la pista que la está dejando", () => {
       l.paso();
     }
     expect(l.pasos[1]).toMatch(/^al aire a 3[01]/);
+    expect(l.e.segundos!).toBeGreaterThan(LIBRE_ANTES_DEL_UMBRAL);
   });
 
   it("y sin saber a cuánto vienes, lo de antes: al aire en la decisión", () => {
     const k = enTuFinal();
     Object.assign(k.e, { alto: 59, segundos: null, libreDentroDe: 1 });
+    k.paso();
+    expect(k.pasos).toEqual(["sigue", "al aire a 59"]);
+  });
+
+  it("y sin radio, que no hay quien te lo diga, también: la pista es tuya con la verde fija", () => {
+    const k = enTuFinal({ sinRadio: () => true });
+    Object.assign(k.e, { alto: 59, segundos: 15, libreDentroDe: 1 });
     k.paso();
     expect(k.pasos).toEqual(["sigue", "al aire a 59"]);
   });

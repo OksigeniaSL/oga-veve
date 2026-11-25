@@ -1940,14 +1940,15 @@ const APARTADOS_AL_GIRAR = APARTADOS_EN_ALTURA + 30;
 const ESPERAN_POR_TI = 300;
 
 /**
- * **Con cuánto tiene que estar libre la pista antes de que quien llega cruce
- * el umbral**, s, para que pueda seguir con ella ocupada. Es lo que hace falta
- * para irse al aire sin cruzarlo: quien a cinco segundos no la tiene libre se
- * va, y lo que se ha contado mal se ve antes de llegar. Vale para el tráfico y
- * para quien juega. Ver `sigueHastaElUmbral` y `quedaLibreATiempo` en
- * `flight/turno-de-pista.ts`.
+ * **Con cuánto tiene que estar libre la pista antes de que cruces el umbral**, s,
+ * para que puedas seguir con ella ocupada. Es lo que hace falta para oír que hay
+ * que irse y hacerlo sin cruzarlo: a cinco segundos, o está libre o te vas. Ver
+ * `quedaLibreATiempo` en `flight/turno-de-pista.ts`.
  */
 export const LIBRE_ANTES_DEL_UMBRAL = 5;
+
+/** Y el tráfico, que no tarda en decidir, s. Ver `sigueHastaElUmbral`. */
+export const LIBRE_ANTES_EL_TRAFICO = 3;
 
 /** Cada cuántos metros se cuenta lo que le falta a uno para dejar la pista. */
 const CADA_AL_DEJARLA = 25;
@@ -4074,6 +4075,12 @@ export function crearTrafico(
     return s < NO_SE_CUENTA_MAS ? s : Infinity;
   };
 
+  /** Lo que te falta, saliendo, para pasar el final de la pista, s. */
+  const pasasElFinal = (sale: TuSalida): number =>
+    sale.enElAire +
+    Math.max(0, runway.length - sale.carrera) /
+      Math.max(15, sale.velocidad * FRENAS_EN_EL_CIRCUITO[1]!);
+
   /**
    * **Y lo que te falta a ti**, si sales: hasta tener las ruedas en el aire y
    * de ahí al final de la pista; o si acabas de irte al aire, hasta pasarlo.
@@ -4084,13 +4091,7 @@ export function crearTrafico(
   const loQueTeFaltaParaDejarla = (): number => {
     const tu = opciones.quienJuega?.();
     if (!tu) return 0;
-    const sale = tu.sale;
-    if (sale?.conLaPista)
-      return (
-        sale.enElAire +
-        Math.max(0, runway.length - sale.carrera) /
-          Math.max(15, sale.velocidad * FRENAS_EN_EL_CIRCUITO[1]!)
-      );
+    if (tu.sale?.conLaPista) return pasasElFinal(tu.sale);
     if (tu.enLaPista) return Infinity;
     const camino = tu.alUmbral == null ? tu.porDondeVuela?.() : null;
     const [aqui, luego] = [camino?.[0], camino?.[1]];
@@ -4136,8 +4137,8 @@ export function crearTrafico(
   const sigueHastaElUmbral = (quien: Volando, c: Caminos): boolean => {
     const alUmbral = (c.umbral - quien.recorrido) / Math.max(1, quien.marca.velocidad);
     return (
-      alUmbral > LIBRE_ANTES_DEL_UMBRAL &&
-      libreDentroDe(quien, alUmbral) + LIBRE_ANTES_DEL_UMBRAL <= alUmbral
+      alUmbral > LIBRE_ANTES_EL_TRAFICO &&
+      libreDentroDe(quien, alUmbral) + LIBRE_ANTES_EL_TRAFICO <= alUmbral
     );
   };
 
@@ -4855,7 +4856,7 @@ export function crearTrafico(
    * **Quién no deja darte la pista todavía** (H94). Dos cosas:
    *
    * - **El que ya ha girado a la base y llegaría a la decisión contigo en
-   *   tierra.** Se te daba la verde con él a treinta segundos de decidir —no
+   *   tierra** y al umbral sin que hayas pasado el final. Se te daba la verde con él a treinta segundos de decidir —no
    *   había cantado final, y con la roja puesta no podía—, se iba al aire por
    *   ti y subía por encima de tu despegue: en Los Rodeos, 39 de 600 vuelos, a
    *   diez metros en planta. Una torre no le da la pista a una salida si la
@@ -4878,7 +4879,13 @@ export function crearTrafico(
         if ((b.recorrido < c.base - 0.5 && !b.tresSesenta) || b.recorrido >= c.toca) continue;
         const vuelta = b.tresSesenta ? largoDelTresSesenta(b.tresSesenta) - b.tresSesenta.hecho : 0;
         const aDecidir = (c.decide - b.recorrido + vuelta) / b.marca.velocidad;
-        if (aDecidir < sale.enElAire + MARGEN_AL_SALIR) estorban.push({ matricula, llega: true });
+        // O a la decisión todavía corres, y al umbral ya la habrás dejado: sigue él.
+        const alUmbral = aDecidir + (c.umbral - c.decide) / b.marca.velocidad;
+        if (
+          aDecidir < sale.enElAire + MARGEN_AL_SALIR &&
+          alUmbral < pasasElFinal(sale) + LIBRE_ANTES_EL_TRAFICO + MARGEN_AL_SALIR
+        )
+          estorban.push({ matricula, llega: true });
         continue;
       }
       if (b.grupo.position.y - cota < EN_EL_AIRE || porTierra(b)) continue;
@@ -5515,7 +5522,7 @@ export function crearTrafico(
           if (!pistaOcupadaPorOtro(matricula) && alLlegarSinPermiso?.(matricula)) {
             quien.marca = { ...quien.marca, camino: c.llegada };
             quien.conPermiso = true;
-          } else if (sigueHastaElUmbral(quien, c)) {
+          } else if (pistaOcupadaPorOtro(matricula) && sigueHastaElUmbral(quien, c)) {
             // Al umbral va a estar libre: sigue, y el permiso por debajo.
             quien.marca = { ...quien.marca, camino: c.llegada };
             quien.continua = true;
@@ -5671,14 +5678,20 @@ export function crearTrafico(
       }
       if (!quien) return noCabeTodavia(matricula, clave);
       /*
-       * **Y la frustrada del guion, con alguien saliendo por delante, no se
-       * manda** (H96): la torre no sube a uno por encima de una salida sin que
-       * le haga falta. Con la pista libre, aterriza: ver `autorizarAlLlegar` en
+       * **Y la frustrada del guion, con la pista ya libre y alguien subiendo por
+       * delante, no se manda** (H96): la torre no sube a uno por encima de una
+       * salida sin que le haga falta. Aterriza: ver `autorizarAlLlegar` en
        * `flight/radio.ts`.
        */
       if (clave === "torre.goAround") {
         const aqui = porElCamino(quien.marca.camino, quien.recorrido)?.sitio;
-        return !!aqui && llegando(quien) && saleAlguienPorDebajo(quien, aqui);
+        return (
+          !!aqui &&
+          llegando(quien) &&
+          !pistaOcupadaPorOtro(matricula) &&
+          !opciones.quienJuega?.()?.sale?.conLaPista &&
+          saleAlguienPorDebajo(quien, aqui)
+        );
       }
       // Viento en cola y final, cuando haya vuelto al circuito. Ver `sinSaltar`.
       if ((clave === "otro.enCola" || clave === "otro.final") && dandoLaVuelta(quien))

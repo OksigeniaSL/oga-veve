@@ -6963,6 +6963,7 @@ export class Game {
     // Y el que tapa tu salida: ver `flight/salida-tapada.ts`.
     afis: () => this.esAfisAqui(),
     tuLlegada: () => this.tuLlegadaParaLaTorre(),
+    sinRadio: () => this.radioCallada,
     rumbo: () => this.flight.state.heading,
     darteUnaVuelta: (por) => this.pedirteUnaVuelta(por),
     acabarTuVuelta: (dada) => this.acabarTuVuelta(dada),

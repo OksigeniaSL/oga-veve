@@ -5753,6 +5753,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const fz = -Math.cos(rumbo);
         const cota = o.cotaDePistaDeAhora?.(p.x, p.z) ?? 0;
         const orden = !!o.ordenDeFrustrar?.();
+        /*
+         * Con alguien en ella se puede seguir por debajo de la decisión si al
+         * umbral va a estar libre (H96); lo que no puede ser es llegar a él. A
+         * menos de cuatro segundos, o está libre o hay orden de irse. Ver
+         * `LIBRE_ANTES_DEL_UMBRAL` en `src/world/trafico.ts`.
+         */
+        const tuAlong = (s.position.x - p.x) * fx + (s.position.z - p.z) * fz;
+        const alUmbral =
+          (-p.length / 2 + (p.desplazado ?? 0) - tuAlong) / Math.max(15, Math.hypot(s.velocity.x, s.velocity.z));
         for (const a of o.trafico?.() ?? []) {
           if (a.y - cota > 15) continue;
           const along = (a.x - p.x) * fx + (a.z - p.z) * fz;
@@ -5763,7 +5772,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             (d) => d.matricula === a.matricula,
           );
           const como = `${a.matricula} a ${Math.round(along + p.length / 2)} m del umbral y ${Math.round(across)} m del eje (${a.enLaPista ? "en la pista para el juego" : "fuera para el juego"}${dentroDe ? `, ${dentroDe.camino} ${dentroDe.recorrido}/${dentroDe.espera}/${dentroDe.toca}/${dentroDe.fuera}` : ""})`;
-          if (dentro && !orden) {
+          if (dentro && !orden && alUmbral < 4) {
             enTuPistaSinOrden++;
             enTuPistaSinOrdenDonde ??= `${t.toFixed(0)} s a ${Math.round(alto(s))} m: ${como}`;
           } else if (!dentro && Math.abs(across) < 400)
@@ -10310,21 +10319,21 @@ else
   });
 
 /*
- * **Y con alguien en tu pista a la altura de decisión, la torre te manda al
- * aire.** Sin la pista libre no hay permiso, y el que se dio se anula con su
+ * **Y con alguien en tu pista que no la va a dejar a tiempo, la torre te manda
+ * al aire** antes del umbral. Sin la pista libre no hay permiso, y el que se dio se anula con su
  * orden. Gran Canaria, de noche, con el JAZ 120: «tengo un avión en la pista
  * y nadie me dice que frustre, ya lo hago yo». Ver `paso` en
  * `flight/turno-de-pista.ts`.
  */
 comprobar(
-  "y con alguien en tu pista a la decisión, te mandan al aire",
+  "y con alguien en tu pista, te mandan al aire antes del umbral",
   (vuelo.enTuPistaSinOrden ?? 0) === 0 &&
     (process.env.OGA_PISTA_OCUPADA !== "1" ||
       (!!vuelo.pistaOcupadaPuesta && (vuelo.frustradasPorLaPista ?? 0) > 0)),
   [
     vuelo.enTuPistaSinOrden
       ? `${vuelo.enTuPistaSinOrden} muestras sin orden, la primera a los ${vuelo.enTuPistaSinOrdenDonde}`
-      : "nadie en tu pista por debajo de la decisión sin orden de irse",
+      : "nadie en tu pista a cuatro segundos del umbral sin orden de irse",
     vuelo.alCostadoDeTuPista ? `al costado: ${vuelo.alCostadoDeTuPista}` : null,
     process.env.OGA_PISTA_OCUPADA === "1"
       ? vuelo.pistaOcupadaPuesta

@@ -239,6 +239,11 @@ export interface AlrededorDelTurno {
    * tapa tu salida. Sin esto, no se mira. Ver `flight/salida-tapada.ts`.
    */
   tuLlegada?(): TuLlegadaALaPista | null;
+  /**
+   * **Si te quedaste sin radio**: entonces no hay quien te diga que sigas, y la
+   * pista es tuya con la verde fija. Sin esto, no. Ver `quedaLibreATiempo`.
+   */
+  sinRadio?(): boolean;
   /** Tu rumbo, rad: para saber si la vuelta que se te pidió está dada. */
   rumbo?(): number;
   /**
@@ -880,8 +885,9 @@ export class TurnoDePista {
     return null;
   }
 
-  /** Los segundos que te faltan para el umbral, si vuelas la final; si no, `null`. */
+  /** Los segundos que te faltan para el umbral, si vuelas la final y te pueden hablar; si no, `null`. */
   private get alUmbralEnFinal(): number | null {
+    if (this.de.sinRadio?.()) return null;
     const llegada = this.de.tuLlegada?.() ?? null;
     return llegada?.donde === "final" ? llegada.segundos : null;
   }
