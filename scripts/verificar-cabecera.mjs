@@ -19,6 +19,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const ESCENARIO = process.argv[2] ?? "gran-canaria";
@@ -58,7 +59,7 @@ try {
     timeout: 90000,
   });
   await page.waitForTimeout(12000);
-  await page.keyboard.press("i");
+  await ponerEnMarcha(page);
   await page.waitForTimeout(1500);
 
   /**
@@ -67,7 +68,7 @@ try {
    * por la senda hasta que la torre lo manda al aire —y entonces se va— o
    * hasta los cuarenta metros. Devuelve lo que se dijo por el camino.
    */
-  const vuelo = (viento, sinMotor) =>
+  const volar = (viento, sinMotor) =>
     page.evaluate(
       async ({ viento, sinMotor, id }) => {
         const o = globalThis.__oga;
@@ -187,6 +188,12 @@ try {
       },
       { viento, sinMotor, id: ESCENARIO },
     );
+  /** El mismo vuelo, con el motor vigilado: los dos primeros van con él. */
+  const vuelo = async (viento, sinMotor) => {
+    await vigilarElMotor(page);
+    const v = await volar(viento, sinMotor);
+    return { ...v, motor: await loDelMotor(page) };
+  };
 
   const contar = (nombre, v) => {
     if (!process.env.OGA_TRAZA) return;
@@ -212,6 +219,7 @@ try {
   // La 03 de Gando con cinco nudos de cara: por la 21, cinco de cola.
   const flojo = await vuelo({ de: 30, kt: 5 }, false);
   contar("viento flojo", flojo);
+  comprobar(`${EN_MARCHA}: con viento flojo`, flojo.motor.ok, flojo.motor.detalle);
   const conFraseologia = TRAMO === "taguato" || TRAMO === "taguato-ruvicha";
   comprobar(
     "por la otra punta, lejos: la pista en uso",
@@ -238,6 +246,7 @@ try {
   // Dieciocho nudos de cara en la de uso son dieciocho de cola en la otra.
   const fuerte = await vuelo({ de: 30, kt: 18 }, false);
   contar("viento fuerte", fuerte);
+  comprobar(`${EN_MARCHA}: con viento fuerte`, fuerte.motor.ok, fuerte.motor.detalle);
   comprobar(
     "con viento de cola de más, el porqué es el viento",
     fuerte.mandado &&

@@ -13,6 +13,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { arrancarConLaLlave, comoEstaElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const ESCENARIO = process.argv[2] ?? "guarani";
@@ -81,13 +82,28 @@ try {
     const elegido = leer();
     return { vueltas, elegido };
   });
-  // La llave, dos veces: se arranca y se apaga en el puesto.
-  await page.keyboard.press("i");
+  /*
+   * La llave: se arranca, se apaga y se vuelve a arrancar. Como quien juega,
+   * que en un puesto de pasarela es la baliza, pedir el tractor y arrancar
+   * empujando —ver el ADR 0025—. En el de Guaraní sale por sus medios y con la
+   * llave basta; en Gran Canaria, sin la baliza no responde, y con las tres
+   * pulsaciones de antes el motor seguía parado de principio a fin. Por eso se
+   * mira cada vez que hizo lo que se le pidió.
+   */
+  const arranque = await arrancarConLaLlave(page);
   await page.waitForTimeout(1500);
-  await page.keyboard.press("i");
+  await page.keyboard.press("KeyI");
   await page.waitForTimeout(1500);
-  await page.keyboard.press("i");
+  const apagado = await comoEstaElMotor(page);
+  await page.keyboard.press("KeyI");
   await page.waitForTimeout(1500);
+  const otraVez = await comoEstaElMotor(page);
+  comprobar(
+    "la llave arranca, apaga y vuelve a arrancar",
+    arranque !== null && !apagado.motor && otraVez.motor,
+    `${arranque ?? "no arrancó"} · apagado: ${apagado.motor ? "SIGUE EN MARCHA" : "sí"} · otra vez: ${otraVez.motor ? "en marcha" : "NO"}` +
+      (otraVez.tractor ? ` · el tractor, ${otraVez.tractor}` : ""),
+  );
   const despues = await page.evaluate(() => {
     const o = globalThis.__oga;
     return {

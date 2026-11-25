@@ -34,6 +34,7 @@
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { mkdirSync } from "node:fs";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const CAPTURAS = process.argv[2] ?? "/tmp/lo-nombrado";
@@ -93,7 +94,8 @@ try {
       );
       await page.waitForFunction(() => !!globalThis.__oga?.estado, null, { timeout: 120000 });
       await page.waitForTimeout(8000);
-      await page.keyboard.press("i");
+      await ponerEnMarcha(page);
+      await vigilarElMotor(page);
       await page.waitForTimeout(2000);
 
       const renderer = await page.evaluate(() => {
@@ -312,6 +314,8 @@ try {
         noSeVeia.every((c) => /Papi$|Senda$/.test(c)),
         noSeVeia.join(", ") || "nada",
       );
+      const motor = await loDelMotor(page);
+      comprobar(`${tramo} · ${EN_MARCHA}`, motor.ok, motor.detalle);
       comprobar(`${tramo} · sin errores en la página`, errores.length === 0, errores.join(" | "));
     } finally {
       await page.close();

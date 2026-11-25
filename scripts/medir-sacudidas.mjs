@@ -24,6 +24,7 @@
  */
 import { createServer } from "vite";
 import { chromium } from "playwright";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const AVION = process.argv[2] ?? "jaz-120";
@@ -114,7 +115,8 @@ try {
     return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "sin nombre";
   });
   console.log(`  ${tarjeta}`);
-  await page.keyboard.press("i");
+  await ponerEnMarcha(page);
+  await vigilarElMotor(page);
 
   const enTierra = process.env.OGA_SUELO === "1";
   const puesto = enTierra
@@ -363,6 +365,12 @@ try {
   if (process.env.OGA_VOLCAR) {
     const { writeFileSync } = await import("node:fs");
     writeFileSync(process.env.OGA_VOLCAR, JSON.stringify(serie));
+  }
+  // En tierra (`OGA_SUELO=1`) no hay vuelo que vigilar.
+  const motor = await loDelMotor(page);
+  if (!enTierra) {
+    console.log(`  ${motor.ok ? "✓" : "✗"} ${EN_MARCHA} — ${motor.detalle}`);
+    if (!motor.ok) process.exitCode = 1;
   }
   if (errores.length) console.log(`  errores: ${errores.join(" · ")}`);
 } finally {
