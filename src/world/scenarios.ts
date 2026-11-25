@@ -2318,6 +2318,11 @@ export const ENCARNACION: Scenario = {
   // verdaderos y la cabecera pone 02.
   magneticVariation: 8,
   aerodrome: conPlataformasCosidas(SGEN as unknown as Aerodrome),
+  // Por el este, por las dos cabeceras: «entrada al circuito de tránsito de
+  // aeródromo solamente por el sector "este"» (AIP Paraguay, AD 2.5-16, la
+  // carta de aproximación visual del 9 de julio de 2026). Las salidas de la
+  // 20 por el oeste se coordinan con Posadas.
+  circuitoPublicado: { "02": "derecha", "20": "izquierda" },
   /**
    * **Y Encarnación deja de ser un campo suelto.**
    *
