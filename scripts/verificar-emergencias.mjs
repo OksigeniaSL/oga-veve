@@ -106,7 +106,10 @@
  * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro|radio|reventon|toma|ave>
  *        [escenario] [avion] [tramo]`
  *
- * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien.
+ * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien. Con
+ * `OGA_TRAZA_FINA=fichero`, además, la final cada medio segundo del reloj del
+ * juego —el desvío, la traza y el rumbo, lo que pide y lo que hace el alabeo,
+ * el pie, el gas y lo que da el motor, y el aire—, en columnas (H99).
  */
 import { writeFileSync } from "node:fs";
 import { chromium } from "playwright";
@@ -304,8 +307,11 @@ try {
   await page.waitForTimeout(12000);
 
   const r = await page.evaluate(
-    async ({ modo, tope, sinTren, pistaOcupada, parar, meteTren, deja, deNoche }) => {
+    async ({ modo, tope, sinTren, pistaOcupada, parar, meteTren, deja, deNoche, avionId, peldano }) => {
       const o = globalThis.__oga;
+      const { aircraftById } = await import("/src/flight/aircraft.ts");
+      const { alabeoAFondo } = await import("/src/flight/mano.ts");
+      const { TIERS } = await import("/src/flight/tiers.ts");
       const espera = (ms) => new Promise((res) => setTimeout(res, ms));
       /*
        * **Otra vez desde el principio**, como el botón del final: el mundo ya
@@ -395,6 +401,8 @@ try {
       let deActitud = 0;
       let dePedal = 0;
       let deGas = 0.5;
+      /** El alabeo que pide el rumbo ahora mismo, para la traza. */
+      let quiereAlabeo = 0;
       let tramo = modo === "planeo" ? "planeo" : modo === "despres" ? "crucero" : "carrera";
       let paso = 0;
       let tocoEn = null;
@@ -535,7 +543,54 @@ try {
       const alabear = (s, rumbo, tope) => {
         const e = error(rumbo, s.heading);
         const quiere = acota(e * 1.4, -tope, tope);
+        quiereAlabeo = quiere;
         return acota((quiere - o.actitud().alabeo) * 1.6 - s.rollRate * 0.3, -0.6, 0.6);
+      };
+      /*
+       * **Y en la final, la mano firme, que es un tiempo y no un número** (H99).
+       *
+       * Con 1,6 de alerón por radián que falta, la inclinación que falta se
+       * cierra a 1,6 veces lo que rueda cada avión por unidad de alerón. La
+       * avioneta, con las ayudas de Taguató, rueda 43° por segundo y con 1,6
+       * trae el ala en ocho décimas; el JAZ 90 rueda 12 y tarda tres segundos,
+       * los mismos que una racha de Gando en ladearlo otra vez. Volado allí con
+       * un motor parado y la traza de cada medio segundo: a 1,5 km del umbral
+       * el avión iba siete grados a un lado con el piloto pidiendo diez al
+       * otro, y pasó siete segundos seguidos con el ala de seis a diecinueve
+       * grados por detrás de la pedida. Se fue a 57 m del eje a un lado y a 25
+       * al otro, y tocó a 22. El lazo de fuera corregía bien, pero lo que
+       * pedía llegaba cuatro segundos tarde. Es lo mismo que en el banco del
+       * vuelo entero (#192, H34g).
+       *
+       * Y con un motor parado hay además quien lo empuja sin racha ninguna: el
+       * gas. Sube y baja cada cuarenta segundos —el motor tarda cinco en dar lo
+       * que se le pide—, cada vaivén es guiñada hacia un lado, el pie va
+       * detrás, y el derrape ladea el avión uno o dos grados que la mano floja
+       * dejaba ahí. En la mesa, sin rachas, ±14 m; con los dos motores, nada.
+       *
+       * Así que el ala se trae en el mismo tiempo en todos, seis décimas, con
+       * lo que rueda cada uno a la velocidad que va y con la amortiguación de
+       * su peldaño; y nunca con menos de 1,6, que es lo que había.
+       */
+      const RITMO_DE_LA_MANO = 1.72;
+      const laMano = (() => {
+        const este = aircraftById(avionId);
+        const clp = Math.abs(este.aero.clP);
+        const extra = TIERS.find((x) => x.id === peldano)?.assists.extraDamping ?? 0;
+        const amortiguado = clp / (clp + 0.5 * extra);
+        return (v) => Math.max(1.6, RITMO_DE_LA_MANO / (alabeoAFondo(este, v) * amortiguado));
+      })();
+      /*
+       * Y lo de fuera, al paso de la mano: el rumbo pide más inclinación y se
+       * mira seis segundos por delante, no ochocientos metros, que al JAZ 90 le
+       * son doce y a la avioneta veinticinco.
+       */
+      const GANANCIA_DEL_RUMBO = 2.5;
+      const SEGUNDOS_DE_MIRADA = 6;
+      const alabearEnLaFinal = (s, rumbo, tope) => {
+        const quiere = acota(error(rumbo, s.heading) * GANANCIA_DEL_RUMBO, -tope, tope);
+        quiereAlabeo = quiere;
+        return acota((quiere - o.actitud().alabeo) * laMano(s.airspeed) - s.rollRate * 0.3, -0.8, 0.8);
       };
       const pedal = (s, dt) => {
         dePedal = acota(dePedal + 2 * s.beta * dt, -1, 1);
@@ -1024,17 +1079,18 @@ try {
            * hace un piloto es llevar **la traza** al eje y mirar más cerca
            * cuanto más cerca está.
            */
-          const adelante = Math.max(800, Math.min(2500, u * 0.6));
+          const adelante = Math.max(
+            SEGUNDOS_DE_MIRADA * Math.hypot(s.velocity.x, s.velocity.z),
+            Math.min(2500, u * 0.6),
+          );
           const lead = aMundo(Math.min(p.a + adelante, pista.length), 0);
           const deriva =
             Math.hypot(s.velocity.x, s.velocity.z) > 5
               ? error(Math.atan2(s.velocity.x, -s.velocity.z), s.heading)
               : 0;
-          c.aileron = alabear(
-            s,
-            s.onGround ? h : rumboA(s, lead.x, lead.z) - deriva,
-            (18 * Math.PI) / 180,
-          );
+          c.aileron = s.onGround
+            ? alabear(s, h, (18 * Math.PI) / 180)
+            : alabearEnLaFinal(s, rumboA(s, lead.x, lead.z) - deriva, (18 * Math.PI) / 180);
           if (s.onGround) {
             if (tocoEn === null)
               tocoEn = {
@@ -1257,7 +1313,45 @@ try {
           bajo = Math.min(bajo, sobre);
         }
       };
-      o.pilotar(piloto);
+      /*
+       * **La final, cada medio segundo** (H99): lo que pide cada lazo y lo que
+       * hace el avión, con el aire que lo mueve. Con la traza de cada dos
+       * segundos de pared —ocho de vuelo— no se ve qué lazo se mece.
+       */
+      const fina = [];
+      let finaEn = -Infinity;
+      const pilotoConTraza = (c) => {
+        piloto(c);
+        if (tramo !== "final" && tramo !== "subida") return;
+        const ahora = o.reloj();
+        if (ahora - finaEn < 0.5) return;
+        finaEn = ahora;
+        const s = o.estado();
+        const j = o.juegoParaTrazas();
+        const p = enPista(s.position.x, s.position.z);
+        const g = (x) => (x * 180) / Math.PI;
+        const adelante = Math.max(
+          SEGUNDOS_DE_MIRADA * Math.hypot(s.velocity.x, s.velocity.z),
+          Math.min(2500, -p.a * 0.6),
+        );
+        const lead = aMundo(Math.min(p.a + adelante, pista.length), 0);
+        const aire = j.vientoAqui?.aire ?? { x: 0, z: 0 };
+        const racha = j.rachaAhora ?? { x: 0, z: 0 };
+        fina.push(
+          [
+            ahora, tramo === "final" ? 1 : 0, p.a, p.c, s.position.y - cota,
+            g(error(Math.atan2(s.velocity.x, -s.velocity.z), h)), g(error(s.heading, h)), g(error(rumboA(s, lead.x, lead.z), h)),
+            g(o.actitud().alabeo), g(quiereAlabeo), c.aileron, g(s.rollRate), g(s.yawRate), g(s.beta),
+            c.rudder, dePedal, c.throttle, j.flight.gasDelMotor?.() ?? -1,
+            s.airspeed, s.verticalSpeed, g(o.actitud().cabeceo), c.elevator,
+            racha.x * tx + racha.z * tz, racha.x * fx + racha.z * fz, j.subeElAireAhora ?? 0,
+            aire.x * tx + aire.z * tz, aire.x * fx + aire.z * fz,
+            g(j.rafagas?.ahora?.alabeo ?? 0), j.controles?.aileron ?? 0, s.onGround ? 1 : 0, c.flaps ?? -1,
+            g(s.alpha ?? 0), j.movimientoDelAire ?? -1,
+          ].map((x) => (typeof x === "number" ? Number(x.toFixed(4)) : x)).join(" "),
+        );
+      };
+      o.pilotar(pilotoConTraza);
       /** En la despresurización: bajando con el piloto del descenso, y después. */
       let bajandoDeEmergencia = false;
 
@@ -1299,7 +1393,7 @@ try {
             o.pedirTren(false);
             lenta = 0;
             tramo = "final";
-            o.pilotar(piloto);
+            o.pilotar(pilotoConTraza);
           }
         }
         if (o.percance()) break;
@@ -1329,6 +1423,12 @@ try {
       const todo = o.dichoTodo();
       return {
         traza,
+        fina,
+        paraLaMesa: {
+          masa: o.juegoParaTrazas().flight.masaAhora?.() ?? null,
+          vref, vfe, v2: vel.v2, cota, largo: pista.length, rumbo: h,
+          aire: o.juegoParaTrazas().flight.aireDelDia?.() ?? null,
+        },
         ejercicio: o.ejercicio(),
         velocidades: vel,
         tocoEn,
@@ -1379,9 +1479,16 @@ try {
         descartadas: o.descartadas(),
       };
     },
-    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA, parar: PARAR, meteTren: METE_TREN, deja: DEJA, deNoche: DE_NOCHE },
+    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA, parar: PARAR, meteTren: METE_TREN, deja: DEJA, deNoche: DE_NOCHE, avionId: AVION, peldano: TRAMO },
   );
 
+  if (process.env.OGA_TRAZA_FINA)
+    writeFileSync(
+      process.env.OGA_TRAZA_FINA,
+      `# ${JSON.stringify(r.paraLaMesa)}\n` +
+        "t final a c alto traza rumbo pideRumbo alabeo quiere aleron p r beta pedal dePedal gas da ias vs cab elev rxL rxA ry vxL vxA rAlab aleronFin suelo flaps alfa mov\n" +
+        `${r.fina.join("\n")}\n`,
+    );
   const dice = (lista, trozo) => lista.some((k) => String(k).includes(trozo));
   // Lo pedido, suene o no: lo que dijo la instructora y lo que se calló sin grabar.
   const pedido = [...r.todoInstructor, ...r.todoCantado];

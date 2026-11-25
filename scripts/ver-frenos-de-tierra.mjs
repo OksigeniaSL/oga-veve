@@ -27,11 +27,17 @@
  * al tocar y al despegar: lo más que salta de un fotograma al siguiente, que
  * es lo que dice si se acerca con suavidad o de un tirón.
  *
+ * **Con los motores en marcha** (H99): salía del puesto sin arrancarlos, y la
+ * final, la toma y el despegue «con gas a fondo» eran un planeo. Los pone en
+ * marcha después de lo del puesto y falla si se paran volando. Con
+ * `OGA_MOTOR_PARADO=1`, la prueba de que lo ve.
+ *
  * Uso: `node scripts/ver-frenos-de-tierra.mjs [carpeta] [jaz-90 jaz-120]`
  */
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const CARPETA = process.argv[2] ?? "frenos-de-tierra";
@@ -246,6 +252,7 @@ const lineaDeCamara = (c) =>
     ? ` · detrás ${c.desde.z.toFixed(0)} → ${c.hasta.z.toFixed(0)} m, arriba ${c.desde.y.toFixed(0)} → ${c.hasta.y.toFixed(0)} m`
     : "");
 
+let mal = 0;
 try {
   for (const id of PEDIDOS.length ? PEDIDOS : REACTORES) {
     const page = await navegador.newPage({ viewport: { width: 1280, height: ALTO } });
@@ -301,6 +308,9 @@ try {
       );
     }
     await page.evaluate(() => globalThis.__oga.ponerPalancaDeAerofrenos("recogida"));
+
+    await ponerEnMarcha(page);
+    await vigilarElMotor(page);
 
     // ── En final, los flaps desde encima del ala ──────────────────────────
     const ala = (await page.evaluate(() => globalThis.__oga.ponerVista("pasaje-ala-izquierda"))) ===
@@ -394,6 +404,9 @@ try {
       `    la cámara al despegar: ${lineaDeCamara(despegue)} · ${alto.sobre.toFixed(0)} m sobre el suelo al final`,
     );
     await page.screenshot({ path: `${CARPETA}/${id}-despegue-chase.png` });
+    const motor = await loDelMotor(page, { prueba: true });
+    if (!motor.ok) mal++;
+    console.log(`  ${motor.ok ? "✓" : "✗"} ${EN_MARCHA}  —  ${motor.detalle}`);
     await page.close();
   }
   console.log(`\n  capturas en ${CARPETA}/`);
@@ -401,3 +414,4 @@ try {
   await navegador.close();
   await server.close();
 }
+process.exit(mal ? 1 : 0);

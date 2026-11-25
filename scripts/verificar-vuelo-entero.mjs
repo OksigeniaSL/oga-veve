@@ -5063,7 +5063,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /**
    * **Lo que de verdad tira de lado este avión virando a fondo**, m/s²: la
    * velocidad por el ritmo de viraje, medida en los virajes del circuito con
-   * el alerón en su tope. Ver `elArcoHastaElEje`.
+   * **la inclinación pedida en su tope y el ala ya asentada**. Ver
+   * `elArcoHastaElEje`.
    *
    * Hace falta medirlo porque no es el de la cuenta: con treinta grados
    * pedidos, el modelo completo sostiene veinticuatro o veinticinco —la
@@ -5071,6 +5072,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * pide algo de alerón para no enderezarse—, y en Guyrami el viraje no es un
    * alabeo sino un ritmo que crece con la velocidad. Empieza con la cuenta
    * de veinticinco grados y aprende en cuanto vira.
+   *
+   * **Y con el ala asentada, no con el alerón en su tope** (H99). En el modelo
+   * completo el alerón solo llega a su tope entrando y saliendo del viraje, con
+   * el ala a medio camino: asentado en veinticuatro grados no le queda ni la
+   * mitad. Se aprendía de los instantes en que el avión todavía no viraba, y
+   * salía un radio de más y al azar: el JAZ 50, que vira en unos 400 m, lo
+   * aprendía de 545 a 1.974 según la tirada —el JAZ 110, de 3.560 a 8.449 los
+   * 1.330 suyos—. En el circuito de Cuatro Vientos, a 227 m y setenta nudos,
+   * empezaba la final nada más entrar en la base, pedía seis grados de alabeo
+   * todo el arco y llegaba a la puerta fuera del eje en 16 de 40 finales de la
+   * mesa en Tukã y 5 de 40 en Taguató, hasta a 274 m.
+   *
+   * **En Guyrami se queda como estaba**: allí el alerón ya es la inclinación, y
+   * con el ala asentada sigue en su tope todo el viraje. Con el tope de un
+   * tercio de los de hélice cuenta desde quince grados, que es un radio de más
+   * y del lado seguro; la mesa no vuela ese modelo, y sin medirlo no se toca.
    */
   let deLadoAFondo = 9.81 * Math.tan((25 * Math.PI) / 180);
   /**
@@ -5079,25 +5096,63 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * de lado. Del radio se toma el mayor de los dos, que es el del lado seguro.
    */
   let giroAFondo = 0.08;
+  /** Con cuánto se da el ala por asentada, rad/s: cuatro grados por segundo. */
+  const ALA_ASENTADA = (4 * Math.PI) / 180;
   let trayectoriaAntes = null;
+  let alabeoAntes = null;
   let alTopeAntes = false;
+  /** Cuántas veces se ha medido, para el informe: un radio sin medidas es el de la cuenta. */
+  let medidasDelViraje = 0;
   const medirElViraje = (s, paso) => {
     const v = Math.hypot(s.velocity.x, s.velocity.z);
     const tray = Math.atan2(s.velocity.x, -s.velocity.z);
+    const alabeo = o.actitud?.().alabeo ?? 0;
+    const aFondo =
+      !s.onGround &&
+      alabeoPedido !== null &&
+      Math.abs(alabeoPedido) >= topeDeInclinacion - 0.01 &&
+      alabeo * alabeoPedido > 0 &&
+      Math.abs(alabeo) > 0.6 * topeDeInclinacion;
+    const asentada =
+      alabeoAntes !== null && paso > 0 && Math.abs(alabeo - alabeoAntes) / paso < ALA_ASENTADA;
     const alTope = !s.onGround && Math.abs(c.aileron) >= topeDeAleronEnVuelo - 0.01;
-    if (alTope && alTopeAntes && trayectoriaAntes !== null && paso > 0.05 && v > 20) {
-      const giro = Math.abs(error(tray, trayectoriaAntes)) / paso;
+    const seMide = SENCILLO ? alTope && alTopeAntes : aFondo && asentada;
+    if (seMide && trayectoriaAntes !== null && paso > 0.05 && v > 20) {
+      /*
+       * Y a los treinta grados de la base, que es donde se usa: los virajes
+       * de antes se vuelan a veinticinco, y sostienen la misma parte de ellos.
+       */
+      const aLaBase = SENCILLO
+        ? 1
+        : Math.tan(TOPE_DE_INCLINACION_EN_LA_BASE) / Math.tan(Math.abs(alabeoPedido));
+      const giro = (Math.abs(error(tray, trayectoriaAntes)) / paso) * aLaBase;
       // Despacio hacia lo medido: un viraje entero son decenas de muestras.
       deLadoAFondo += (giro * v - deLadoAFondo) * 0.15;
       giroAFondo += (giro - giroAFondo) * 0.15;
+      medidasDelViraje++;
     }
     trayectoriaAntes = tray;
+    alabeoAntes = alabeo;
     alTopeAntes = alTope;
   };
   /**
+   * **El viraje a final se planea con la mitad de lo que el avión sostiene**
+   * (H99), y es un margen dicho y no uno que salga de medir mal: el radio
+   * aprendido con el alerón en su tope era, de media, el doble del de verdad, y
+   * los reactores vivían de ese doble. Con el de verdad a secas, el JAZ 90
+   * llegaba a la puerta fuera del eje en 4 de 20 finales de la mesa en Taguató y
+   * en 9 de 20 en Tukã: sin sitio para la captura. Con el doble, los siete
+   * aviones quedan como estaban, y el JAZ 50 en el circuito de 227 m pasa de
+   * 10 de 25 fuera a ninguna. Es un arco de doce a quince grados, el de una
+   * base bien volada: quedan otros tantos para apretar si hace falta. En
+   * Guyrami, sin él: el radio de allí ya lo lleva puesto.
+   */
+  const MARGEN_DEL_VIRAJE = SENCILLO ? 1 : 2;
+  /**
    * **El arco que queda hasta el eje de la final**: cuánto se acerca al eje
    * virando a fondo desde aquí hasta quedar alineado, `R·(1−cos θ)`, y lo que
-   * falta de verdad. Con el radio medido. `null` si no se va hacia el eje.
+   * falta de verdad. Con el radio medido y su margen. `null` si no se va hacia
+   * el eje.
    */
   const elArcoHastaElEje = (s) => {
     const r = pistaAhora();
@@ -5107,10 +5162,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const deLado = s.velocity.x * Math.cos(hp) + s.velocity.z * Math.sin(hp);
     const theta = Math.abs(error(Math.atan2(s.velocity.x, -s.velocity.z), hp));
     const v = Math.hypot(s.velocity.x, s.velocity.z);
-    const radio = Math.max(
-      (v * v) / Math.max(1, deLadoAFondo),
-      v / Math.max(0.01, giroAFondo),
-    );
+    const radio =
+      MARGEN_DEL_VIRAJE *
+      Math.max((v * v) / Math.max(1, deLadoAFondo), v / Math.max(0.01, giroAFondo));
     return {
       hacia: e * deLado < 0,
       theta,
@@ -8477,6 +8531,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * corrección de deriva de verdad, no cuenta como «cruzado».
            */
           rumbo: +((Math.abs(error(trayectoria, hp)) * 180) / Math.PI).toFixed(1),
+          // Con qué radio se planeó el viraje a final, y de cuántas medidas sale. Ver `medirElViraje`.
+          radio: Math.round(elArcoHastaElEje(s).radio / MARGEN_DEL_VIRAJE),
+          medidas: medidasDelViraje,
           baja: +(
             bajadaReciente.reduce((a, b) => a + b.baja, 0) /
             Math.max(1, bajadaReciente.length)
@@ -11187,6 +11244,7 @@ comprobarSiVolo(
     !!p && fallos.length === 0,
     p
       ? `${p.pies} ft${p.empezoPorDebajo ? " (la final empezó por debajo)" : ""} · ${p.nudos} kt (Vref ${p.vref}) · flaps ${p.flaps} · senda ${p.senda} m · eje ${p.eje} m · ${p.rumbo}° · bajando ${p.baja} m/s` +
+          ` · vira en ${p.radio} m (${p.medidas} medidas)` +
           (fallos.length ? ` · ✗ ${fallos.join(", ")}` : "")
       : "no pasó por la puerta",
     "«que vuele como un piloto de verdad: final estabilizada a mil pies»",

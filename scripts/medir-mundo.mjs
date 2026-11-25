@@ -33,6 +33,13 @@
  * - **Cada carga en un contexto nuevo**, sin caché: es la primera visita, que
  *   es la que se sufre.
  *
+ * - **Con el motor parado, y a propósito** (H99): esto no mide ningún vuelo.
+ *   Compara lo que cuesta cargar y pintar dos compilaciones, con el avión
+ *   puesto dos segundos delante de lo que se mira y sin piloto, y la de antes y
+ *   la de después lo llevan igual de parado; con él en marcha las dos
+ *   sumarían lo mismo. El motor vigilado de `motor-del-banco.mjs` además pide
+ *   el `/src` del servidor de desarrollo, que en una compilación no está.
+ *
  * ## Qué sale
  *
  * - arranque: hasta el juego creado, y hasta que llegan las fotos que se piden
