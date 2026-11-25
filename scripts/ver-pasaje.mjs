@@ -18,6 +18,7 @@
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const FOTOS = process.argv[2] ?? "capturas-pasaje";
@@ -69,7 +70,8 @@ try {
     return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "sin nombre";
   });
   console.log(`  ${tarjeta}`);
-  await page.keyboard.press("i");
+  await ponerEnMarcha(page);
+  await vigilarElMotor(page);
   await page.waitForTimeout(600);
 
   // En crucero, con el Teide a `TEIDE_A` grados a la derecha del morro y a
@@ -342,8 +344,10 @@ try {
   }
   if (process.env.OGA_SOLO_PARED) {
     if (errores.length) console.log(`  errores: ${errores.join(" · ")}`);
+    const motor = await loDelMotor(page);
+    console.log(`  ${motor.ok ? "✓" : "✗"} ${EN_MARCHA} — ${motor.detalle}`);
     await page.close();
-    process.exitCode = 0;
+    process.exitCode = motor.ok ? 0 : 1;
   } else {
 
   // Y lo que señala la comandante, desde detrás: se espera a que lo diga.
@@ -372,6 +376,9 @@ try {
     await page.screenshot({ path: `${FOTOS}/${AVION}-pasaje-al-senalar.png` });
   }
   if (errores.length) console.log(`  errores: ${errores.join(" · ")}`);
+  const motor = await loDelMotor(page);
+  console.log(`  ${motor.ok ? "✓" : "✗"} ${EN_MARCHA} — ${motor.detalle}`);
+  if (!motor.ok) process.exitCode = 1;
   await page.close();
   }
 } finally {

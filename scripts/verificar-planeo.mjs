@@ -22,6 +22,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { ponerEnMarcha } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const ESCENARIO = process.argv[2] ?? "gran-canaria";
@@ -62,8 +63,13 @@ try {
     timeout: 90000,
   });
   await page.waitForTimeout(12000);
-  // Con el motor en marcha: si no, el plan devuelve el avión a su puesto.
-  await page.keyboard.press("i");
+  /*
+   * Con el motor en marcha: si no, el plan devuelve el avión a su puesto. Y si
+   * no, lo que se mide no es que se pare: con el JAZ 90 en Gran Canaria la
+   * llave no arrancaba —se sale empujado—, el banco quitaba el combustible a un
+   * motor ya parado y lo daba por bueno.
+   */
+  await ponerEnMarcha(page);
   await page.waitForTimeout(1500);
 
   const r = await page.evaluate(async (lejos) => {
@@ -127,9 +133,11 @@ try {
       c.throttle = 1;
       c.elevator = 0;
     });
+    const enMarchaAntes = o.controles().engineOn;
     o.ponerCombustible(0.5);
     for (let i = 0; i < 60 && !o.sinMotor(); i++) await espera(100);
     const alPararse = {
+      enMarchaAntes,
       sinMotor: o.sinMotor(),
       motor: o.controles().engineOn,
       ruta: o.rutaDelVuelo(),
@@ -262,9 +270,9 @@ try {
   const dice = (lista, trozo) => lista.some((k) => String(k).includes(trozo));
   const nudos = (v) => Math.round(v * 1.943844);
   comprobar(
-    "se para el motor y empieza el vuelo sin motor",
-    r.alPararse.sinMotor && !r.alPararse.motor,
-    `sinMotor ${r.alPararse.sinMotor} · motor ${r.alPararse.motor}`,
+    "se para el motor, que iba en marcha, y empieza el vuelo sin motor",
+    r.alPararse.enMarchaAntes && r.alPararse.sinMotor && !r.alPararse.motor,
+    `antes ${r.alPararse.enMarchaAntes ? "en marcha" : "YA PARADO"} · sinMotor ${r.alPararse.sinMotor} · motor ${r.alPararse.motor}`,
   );
   comprobar(
     "la flecha va a la pista a la que se llega",

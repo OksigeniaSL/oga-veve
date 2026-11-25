@@ -34,6 +34,7 @@
 
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const AVION = process.argv[2] ?? "jaz-90";
@@ -88,7 +89,8 @@ try {
     );
     await page.waitForFunction(() => !!globalThis.__oga?.estado, null, { timeout: 120000 });
     await page.waitForTimeout(8000);
-    await page.keyboard.press("i");
+    await ponerEnMarcha(page);
+    await vigilarElMotor(page);
     await page.waitForTimeout(2000);
     vuelo = await page.evaluate(
       async ([veces, tope, lentoDesde]) => {
@@ -109,12 +111,6 @@ try {
         const alto = suelo + 900 * 0.3048;
         const rumbo = rumboHacia(f0.x, f0.z, f1.x, f1.z);
         o.colocar(f0.x, alto, f0.z, trueFromIndicated(190 / 1.94384, alto, j.flight.aireDelDia()), rumbo);
-        /*
-         * Y con los motores en marcha, que la «i» de arriba no siempre los arranca: con un
-         * reactor en un puesto de contacto lo primero que pide es el tractor (ADR 0025), y
-         * colocar el avión a mano lo suelta con los motores todavía parados.
-         */
-        o.controles().engineOn = true;
         await espera(300);
         o.pedirTren(false);
         o.pedirFlaps(0);
@@ -251,6 +247,8 @@ try {
       },
       [VECES, TOPE, LENTO_DESDE],
     );
+    const motor = await loDelMotor(page);
+    comprobar(EN_MARCHA, motor.ok, motor.detalle);
   } finally {
     if (errores.length) comprobar("sin errores en la página", false, errores.slice(0, 3).join(" | "));
     await page.close();

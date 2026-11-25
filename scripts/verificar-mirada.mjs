@@ -38,6 +38,7 @@
 import { mkdirSync } from "node:fs";
 import { chromium, devices } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
@@ -115,7 +116,8 @@ async function abrir(ctx, quien) {
       const dbg = gl.getExtension("WEBGL_debug_renderer_info");
       return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "sin nombre";
     });
-  await page.keyboard.press("i");
+  await ponerEnMarcha(page);
+  await vigilarElMotor(page);
   await page.waitForTimeout(600);
   const donde = await page.evaluate(async () => {
     const o = globalThis.__oga;
@@ -342,6 +344,8 @@ async function enElPortatil() {
     }
 
     if (MEDIR) await medir(page);
+    const motor = await loDelMotor(page);
+    comprobar(`portátil: ${EN_MARCHA}`, motor.ok, motor.detalle);
     comprobar("portátil: sin errores en la página", errores.length === 0, errores.join(" · "));
   } finally {
     await ctx.close();
@@ -566,6 +570,8 @@ async function enElTelefono() {
         "telefono-pasaje-mirando.png",
       );
     }
+    const motor = await loDelMotor(page);
+    comprobar(`teléfono: ${EN_MARCHA}`, motor.ok, motor.detalle);
     comprobar("teléfono: sin errores en la página", errores.length === 0, errores.join(" · "));
   } finally {
     await ctx.close();

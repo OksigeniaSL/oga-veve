@@ -31,6 +31,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const PARTE = process.argv[2] ?? "todo";
@@ -170,7 +171,8 @@ try {
     console.log("\n── El vuelo: El Hierro a La Gomera con el JAZ 60, con una moderada y una ligera ──");
     const { page, errores } = await abrir("el-hierro", "la-gomera", "tuka");
     try {
-      await page.keyboard.press("i");
+      await ponerEnMarcha(page);
+      await vigilarElMotor(page);
       await page.waitForTimeout(800);
       /*
        * Separadas lo bastante para que la primera pase antes de que se anuncie
@@ -286,6 +288,8 @@ try {
         o.pilotar(null);
         return { turb: o.turbulencia(), megafonia: o.megafonia(), umbral: globalThis.__umbral };
       });
+      const motor = await loDelMotor(page);
+      comprobar(EN_MARCHA, motor.ok, motor.detalle);
       const { SACUDE } = fin.umbral;
       // El cartel, siempre que sacude lo que lo enciende, en el aire y con el mando en automático.
       const apagadoConBaches = muestras.filter(

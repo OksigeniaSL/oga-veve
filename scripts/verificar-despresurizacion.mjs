@@ -20,6 +20,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const ESCENARIO = process.argv[2] ?? "pettirossi";
@@ -58,7 +59,8 @@ try {
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, { timeout: 90000 });
   await page.waitForTimeout(12000);
-  await page.keyboard.press("i");
+  await ponerEnMarcha(page);
+  await vigilarElMotor(page);
   await page.waitForTimeout(1500);
 
   const r = await page.evaluate(async ([crucero, verdadera]) => {
@@ -142,6 +144,8 @@ try {
     };
   }, [ALTO, VERDADERA]);
 
+  const motor = await loDelMotor(page);
+  comprobar(EN_MARCHA, motor.ok, motor.detalle);
   const d = r.ahora.descenso;
   /*
    * Lo dicho entero y, para la instructora, también lo que empezó a sonar: el

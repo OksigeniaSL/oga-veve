@@ -23,6 +23,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const AVIONES = (process.argv[2] ?? "jaz-120,jaz-20").split(",");
@@ -60,7 +61,8 @@ try {
       );
       await page.waitForFunction(() => !!globalThis.__oga?.estado, null, { timeout: 90000 });
       await page.waitForTimeout(8000);
-      await page.keyboard.press("i");
+      await ponerEnMarcha(page);
+      await vigilarElMotor(page);
       await page.waitForTimeout(500);
 
       /** Coloca el avión y lo deja limpio, con el gas de esa velocidad. */
@@ -184,6 +186,8 @@ try {
           }
         }
       }
+      const motor = await loDelMotor(page);
+      comprobar(`${avion}: ${EN_MARCHA}`, motor.ok, motor.detalle);
       if (errores.length) comprobar(`${avion}: sin errores en la página`, false, errores.slice(0, 3).join(" | "));
     } finally {
       await page.close();
