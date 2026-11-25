@@ -1181,7 +1181,7 @@ try {
                 enLaPista: (o.trafico?.() ?? []).filter((a) => a.enLaPista).map((a) => a.matricula),
                 trafico: (o.traficoPorDentro?.() ?? []).map(
                   (a) =>
-                    `${a.matricula} ${a.tipo} ${a.camino} ${Math.round(a.recorrido)} m, ${Math.round(a.alto)} m de alto${a.conPermiso ? ", con permiso" : ""}${a.quieto > 1 ? `, parado ${Math.round(a.quieto)} s` : ""}`,
+                    `${a.matricula} ${a.tipo} ${a.camino} ${Math.round(a.recorrido)} m (raya ${a.espera ?? "—"}, corre hasta ${a.despega ?? "—"}), ${Math.round(a.alto)} m de alto${a.conPermiso ? ", con permiso" : ""}${a.quieto > 1 ? `, parado ${Math.round(a.quieto)} s` : ""}`,
                 ),
                 permiso: o.sendaYPermiso?.() ?? null,
                 enLaFinalDeLaTorre: o.enLaFinalDeLaTorre?.() ?? null,
