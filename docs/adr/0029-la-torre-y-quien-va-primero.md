@@ -2811,3 +2811,143 @@ alinearse sigue con él.
 
 Con la regla: 0 de 48 al aire y ninguna salida en la pista en el minuto de antes
 de la final; y las 35 pruebas de tráfico y turno de pista, 494 en verde.
+
+## Enmienda H93 (25-11-2026): la vuelta de espera, por donde no pasa nadie
+
+### El caso
+
+En la ronda de cierre de la tanda 26, dos de cinco vuelos enteros desde Los
+Rodeos dieron rojo en «y ningún tráfico viene de frente»: una avioneta que
+esperaba turno, en su vuelta de espera, con el rumbo contrario al del JAZ 50 y
+al del JAZ 90 en su viento en cola. En los 57 vuelos de las rondas anteriores no
+había salido.
+
+No lo trajo ningún cambio: estaba desde antes. Una mesa sin navegador
+—la frecuencia, el turno, el tráfico con sus calles y el relieve de verdad, y
+quien juega despegando cuando le dejan y dando su circuito con los virajes de
+su avión, hasta 300 m a un lado u otro de la línea—, 600 vuelos en Los Rodeos
+por versión (las dos cabeceras; JAZ 20, 50, 60, 90 y 120; 60 semillas):
+
+| | rojo con el criterio del banco | a menos de 300 m y 150 de altura, en su vuelta |
+|---|---|---|
+| 809545a4 (tanda 24) | 18 | 9 |
+| 477c30ff (tanda 25) | 20 | 11 |
+| 33ad3c06 (tanda 26) | 20 | 11 |
+
+El JAZ 90 y el JAZ 120 por la 12, que son los que más, uno de cada once vuelos.
+La regla de H81 (`llegaAntesDeQueSalga` con `alineado`) no lo mueve.
+
+### Por qué
+
+La vuelta se daba siempre en la esquina de la base, hacia fuera del circuito, a
+tres grados por segundo y sin mirar a nadie:
+
+- **Fuera del viento en cola de uno está el del otro.** La avioneta lo lleva a
+  1.000 m del eje y su vuelta, de 764 m de radio, se abría hasta 2.528. El JAZ
+  50 vuela el suyo a 1.800, el JAZ 90 a 2.460. En Los Rodeos, además, el terreno
+  sube los circuitos bajos y van todos a alturas parecidas: 52 m entre la
+  avioneta y el JAZ 90.
+- **Y la esquina de uno está en la base del otro.** Lo peor no era la avioneta:
+  era el turbohélice, dando su vuelta en su esquina, por donde el JAZ 90 corta
+  la suya. A 40 m y a su altura. Eso el banco no lo veía nunca, porque no va de
+  frente.
+
+En nueve de los once, el que espera va **detrás** de ti en la fila. Está bien
+que espere; lo que estaba mal es por dónde.
+
+Y el criterio del banco señalaba a otros: alarga un minuto en línea recta el
+rumbo de uno que está virando. Ninguno de los 20 rojos es uno de los once: los
+que salían rojos pasaron a entre 340 m y 1,9 km, y los que pasaron cerca no iban
+de frente.
+
+### Lo real
+
+- **OACI, Doc 4444 (PANS-ATM), 12.3.4.17**, «Delaying aircraft»: «CIRCLE THE
+  AERODROME; ORBIT (RIGHT, or LEFT) [FROM PRESENT POSITION]; MAKE ANOTHER
+  CIRCUIT». **FAA, JO 7110.65, 3-8-1**: «EXTEND DOWNWIND», «MAKE SHORT APPROACH»,
+  «MAKE LEFT/RIGHT THREE-SIXTY». Hacia dónde se vira lo dice la torre, y las dos
+  manos valen.
+- **SERA.3225 b) y c)** (OACI, Anexo 2, 3.2.5): seguir la corriente de tránsito
+  de los demás o mantenerse apartado de ella, y virar a la izquierda salvo que el
+  control diga otra cosa.
+- **CAA de Nueva Zelanda, *Flight Instructor Guide*, «Circuit considerations»**:
+  la órbita es «a procedure used by ATC to improve separation from aircraft
+  ahead»; se da en el viento en cola y es «a 360-degree medium level turn,
+  outside the circuit pattern, which positions the aeroplane back into the
+  downwind leg, at about the same place, approximately one minute later». Y
+  avisa de esto: «a conflict with traffic approaching head-on is a real
+  possibility». En la base y en la final, no.
+- **FAA, AIM 4-3-5**: un tres sesenta en el circuito no se da sin decírselo
+  antes al controlador, o si lo manda él.
+
+Quien la hace es el que va detrás en la secuencia, a la orden de la torre.
+
+### Decisión
+
+- **Un viraje medio, treinta grados** (`ALABEO_DE_LA_VUELTA`), y no tres grados
+  por segundo, que es lo de una espera instrumental. La avioneta la da en 44 s y
+  abre 564 m, donde daba la vuelta en dos minutos y abría 1.528.
+- **La torre mira por dónde vas a pasar** (`vueltaSegura`), tú y los demás del
+  tráfico, durante todas las vueltas que le hagan falta. Hacia fuera si por ahí
+  no pasa nadie; si no, hacia la pista, sin acercarse a menos de 300 m de la
+  final; y si por los dos lados os encontráis, más amplia —25° o 20°—, que es lo
+  que cambia cuándo vuelve. A 600 m de ti, porque nadie vuela la línea clavada,
+  y a 300 de los demás; con 150 m de altura entre los dos no cuenta.
+- **Y al final del viento en cola, no solo en la esquina** (`leTocaEsperar`):
+  desde que pasa a la altura del umbral, si la de la esquina le va a llevar por
+  donde pasa alguien y la de ahí no. El que espera antes de la esquina no pierde
+  su sitio en la fila (`enLaFila`).
+- **Por dónde vas** lo dice el juego (`QuienJuega.porDondeVuela`): lo que te
+  queda de tu circuito con las esquinas viradas a tu velocidad, sin devolverte a
+  la línea si la llevas abierta (`porDondeSigues`), y si no estás en él, por
+  derecho.
+- **El banco mide de verdad lo que antes alargaba.** Las dos rectas se alargan
+  si los dos van derechos; de frente a menos de 300 m cuenta siempre; y hay una
+  comprobación nueva, «y nadie da su vuelta de espera por donde pasas»: a menos
+  de 300 m y 150 de altura, venga como venga.
+
+No se toca quién espera ni a quién: la fila y su separación son las mismas.
+
+### La prueba
+
+`src/world/vuelta-de-espera.test.ts`: la mesa, con 160 vuelos en Los Rodeos por
+la 12, y la cuenta ve el caso —sin saber la torre por dónde vuelas, sale—; y
+`porDondeSigues`, a solas.
+
+### Lo medido
+
+A menos de 300 m y 150 de altura, uno en su vuelta de espera, en la mesa con los
+virajes en arco:
+
+| | vuelos | antes | ahora |
+|---|---|---|---|
+| Los Rodeos, las dos cabeceras, cinco aviones | 600 | 12 | 0 |
+| Los Rodeos por la 12, JAZ 60 y 90, otras semillas | 160 | 14 | 0 |
+| Gando | 60 | 7 | 0 |
+| Cuatro Vientos | 60 | 8 | 0 |
+| Tenerife Sur | 60 | 2 | 0 |
+| La Palma | 60 | 2 | 0 |
+| Pettirossi | 60 | 1 | 0 |
+| Fuerteventura | 60 | 1 | 0 |
+| Lanzarote | 60 | 0 | 0 |
+
+Y entre dos del tráfico, uno en su vuelta, de 6 a 0 en los 600. Lo que esperan
+los demás, lo mismo: de 66,7 a 65,9 s por llegada, 659 y 654 tomas; en los otros
+campos, entre 16 s menos (Fuerteventura) y 8 más (La Palma).
+
+Con el criterio de antes, el banco seguiría dando 19 rojos de 600 sin que ninguno
+pase a menos de 480 m en su vuelta: por eso hacía falta cambiarlo también. Con el de ahora,
+ninguno en los 80 vuelos por la 30 en los que el de antes daba once.
+
+### Lo que queda
+
+- **Los bancos del navegador no se volaron**: los tenía la ronda de cierre.
+- **Barajas no está en la mesa**: su aeródromo no va con los demás escenarios.
+- **La verde con uno en la base.** En 46 de los 600 vuelos (54 con lo de ahora,
+  tres semillas más) alguien que no espera pasa a menos de 300 m, casi siempre en
+  la subida: la torre te da la pista con uno en la base que todavía no ha cantado
+  final, llega a la decisión contigo en ella, se va al aire y sube por encima de
+  tu despegue. No es de la vuelta de espera y es de antes; con vueltas más cortas
+  hay algo más de gente en la base. Pide su encargo.
+- **La vuelta que la torre te pide a ti** (`salida-tapada.ts`) sigue siendo de
+  tres grados por segundo y hacia fuera: no mira a los demás.
