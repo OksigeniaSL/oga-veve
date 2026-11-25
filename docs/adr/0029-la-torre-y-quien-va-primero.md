@@ -3126,10 +3126,12 @@ a 0.
 nueve en los otros y dos menos en Gando; la mediana, igual salvo en Pettirossi
 y Tenerife Sur, y el máximo, igual o hasta 37 s más en los demás (en Los Rodeos no
 se mueve). Es lo que se esperaba menos de la cuenta: de los 90 vuelos de los 600
-que ahora esperan más, en todos se daba la verde con uno girado que no iba a
-caber —en 28 pasaba encima; en los otros 62 el otro se iba al aire por ti, más
-alto—. A cambio, más de tres de cada cuatro de esas aproximaciones (174 → 39)
-acaban en el suelo, y los demás esperan menos, no más.
+que ahora esperan más, en 67 se daba la verde con uno girado a la base que
+llegaba a la decisión antes de que te fueras —en 28 de los 90 hubo encuentro; en
+los demás se iba al aire por ti, más alto— y en 15 con uno que se acababa de ir
+al aire volando por delante; los otros ocho esperan de 6 a 12 s más. A cambio,
+más de tres de cada cuatro de esas aproximaciones (174 → 39) acaban en el suelo,
+y los demás esperan menos, no más.
 
 En tu subida, con el que se aparta y con el que sale detrás, y entre dos del
 tráfico: de 13 parejas cerca a ninguna en Los Rodeos, y de 5 a ninguna en Gando.
