@@ -35,7 +35,7 @@ import {
   type RemedioDeTuSalida,
   type TuLlegadaALaPista,
 } from "./salida-tapada";
-import { TU, type QuienTapaTuSalida } from "../world/trafico";
+import { TU, type QuienEstorbaTuSalida, type QuienTapaTuSalida } from "../world/trafico";
 import {
   EMPIEZA_A_RODAR,
   laQueSeDice,
@@ -67,6 +67,12 @@ export interface DibujoDelTurno {
    * nadie. Ver `ocupanLaPista` en `world/trafico.ts`.
    */
   ocupanLaPista?(): string[];
+  /**
+   * Quién no deja darte la pista todavía: el que llegaría a la decisión
+   * contigo en ella, o el que vuela por delante. Sin esto, nadie. Ver
+   * `estorbanTuSalida` en `world/trafico.ts`.
+   */
+  estorbanTuSalida?(): readonly QuienEstorbaTuSalida[];
   /**
    * **Si el de esa matrícula está en el mundo.** Sin esto se da por que sí,
    * que es lo que hacía todo antes de mirarlo. Ver `retirarLosQueNoEstan`.
@@ -282,6 +288,16 @@ export type PorQueEsperas = "aterriza" | "despega" | "fila" | "estela";
  * 7.9.1).
  */
 export const PACIENCIA_EN_LA_FILA = 180;
+
+/**
+ * **Lo más que se espera en la roja por los que llegan**, s, sin contar lo que
+ * ya la ocupa (H94). Es un candado entre el dibujo y tu vuelo, y lleva su red:
+ * con el hueco de `huecoParaTuSalida` pasa una llegada y sales, así que tres
+ * minutos son más de lo que hace falta; pasados, la torre te da la pista, y al
+ * que llega lo manda al aire por el lado. Ver `alAirePorElLado` en
+ * `world/trafico.ts`.
+ */
+export const LO_QUE_SE_ESPERA_POR_QUIEN_LLEGA = 180;
 
 /**
  * **Lo más que la torre retiene a uno en su puesto, o fuera del circuito,
@@ -642,6 +658,8 @@ export class TurnoDePista {
         this.salenAntes.length > 0 ||
         // Y detrás de uno más grande, sus dos minutos de estela.
         this.esperaPorEstela !== null ||
+        // Y con uno en la base que llegaría a la decisión contigo en la pista.
+        this.estorbanTuSalida.length > 0 ||
         /*
          * **Y en una sola calle, el que ya está en ella va primero.** Espera
          * en la misma doble raya que vos, así que hasta que no entra en la
@@ -672,6 +690,7 @@ export class TurnoDePista {
     if (this.ocupadaEnElDibujo) piezas.push("dibujo");
     if (this.salenAntes.length > 0) piezas.push("fila");
     if (this.esperaPorEstela !== null) piezas.push("estela");
+    if (this.estorbanTuSalida.length > 0) piezas.push("llega");
     if (this.conCalleUnica && this.de.radio.alguienEnLaCalle && !this.teEsperanEnLaCalle)
       piezas.push("calle");
     return piezas;
@@ -760,6 +779,37 @@ export class TurnoDePista {
     return ultima.hace < espera ? ultima.matricula : null;
   }
 
+  /**
+   * **Los que no dejan darte la pista** (H94), vistos por última vez, y lo que
+   * llevas esperando por ellos, s. Se mira dos veces por segundo, parado en la
+   * doble raya. Ver `estorbanTuSalida` en `world/trafico.ts`.
+   */
+  private estorbos: readonly QuienEstorbaTuSalida[] = [];
+  private esperandoPorEllos = 0;
+  private mirarEstorbos = 0;
+
+  /** Los mismos, con la red de `LO_QUE_SE_ESPERA_POR_QUIEN_LLEGA`. */
+  private get estorbanTuSalida(): readonly QuienEstorbaTuSalida[] {
+    if (!this.conTorre || this.esperandoPorEllos > LO_QUE_SE_ESPERA_POR_QUIEN_LLEGA) return [];
+    return this.estorbos;
+  }
+
+  /** Quién estorba, en cada paso de la roja. */
+  private contarLosQueLlegan(dt: number, fase: string): void {
+    if (fase !== "esperando" || !this.conTorre) {
+      this.estorbos = [];
+      this.esperandoPorEllos = 0;
+      this.mirarEstorbos = 0;
+      return;
+    }
+    this.mirarEstorbos -= dt;
+    if (this.mirarEstorbos <= 0) {
+      this.mirarEstorbos = 0.5;
+      this.estorbos = this.de.trafico()?.estorbanTuSalida?.() ?? [];
+    }
+    if (this.estorbos.length) this.esperandoPorEllos += dt;
+  }
+
   /** Si hay alguien de la calle parado detrás de ti. Ver `pistaDeOtros`. */
   private get teEsperanEnLaCalle(): boolean {
     return (this.de.trafico()?.esperanPorTi?.().length ?? 0) > 0;
@@ -812,6 +862,9 @@ export class TurnoDePista {
     if (encima.length) return { porque: "despega", matricula: encima[0] ?? null };
     const estela = this.esperaPorEstela;
     if (estela) return { porque: "estela", matricula: estela };
+    // Y el que viene por la base, que todavía no ha cantado final.
+    const [estorba] = this.estorbanTuSalida;
+    if (estorba) return { porque: estorba.llega ? "aterriza" : "despega", matricula: estorba.matricula };
     return null;
   }
 
@@ -886,6 +939,7 @@ export class TurnoDePista {
   ): Transmision | null {
     this.reloj += dt;
     this.contarLaFila(dt, ahora.fase);
+    this.contarLosQueLlegan(dt, ahora.fase);
     this.soltarLoQueNoSuena(dt, ahora.fase);
     const momento: Momento = {
       ...ahora,

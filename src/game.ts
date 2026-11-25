@@ -249,6 +249,7 @@ import {
   tiposDelCampo,
   type EnTierra,
   type QuienJuega,
+  type TuSalida,
   type Trafico,
 } from "./world/trafico";
 import {
@@ -736,6 +737,35 @@ const ENCIMA_DE_LA_PISTA = new Set<string>([
   "aterrizado",
   "abandonando",
 ]);
+
+/**
+ * **Las fases en que vas a salir**, de la doble raya a irte al aire. Ver
+ * `tuSalidaParaLaTorre`.
+ */
+const VAS_A_SALIR = new Set<string>([
+  "esperando",
+  "autorizado",
+  "back-taxi",
+  "alineando",
+  "despegando",
+  "comprometido",
+]);
+
+/**
+ * **Lo que se tarda de la verde a dar gas**, s: soltar frenos, rodar de la doble
+ * raya al eje y enderezar; y, ya alineándose, lo que queda de eso. Es lo que
+ * cuenta la torre para saber si sales antes de que llegue el de la base. Ver
+ * `tuSalidaParaLaTorre`.
+ */
+const ENTRAS_Y_TE_ALINEAS = 30;
+const TE_ALINEAS = 10;
+
+/** A cuánto se remonta la pista de media, m/s, y lo que lleva la media vuelta, s. */
+const REMONTAS_A = 8;
+const DAS_LA_MEDIA_VUELTA = 25;
+
+/** Lo que se sube al irse, en tanto por uno de lo que se vuela: seis o siete grados. */
+const SUBES_AL_SALIR = 0.12;
 
 /**
  * **Las fases en que vuelves por tu salida de la pista**: de tocar a llegar a
@@ -1608,6 +1638,7 @@ import type { Fma } from "./ui/tablero";
 import { familiaDe, patasDe, peldanoDe } from "./ui/familia";
 import {
   distanciaDeAterrizaje,
+  distanciaDeDespegue,
   pistaNecesariaHoy,
   rodaduraDeFrenada,
   type DiaDeDespegue,
@@ -16795,6 +16826,7 @@ export class Game {
       velocidad,
       prioridad: this.conPrioridad,
       porDondeVuela: s.onGround ? null : () => this.porDondeSigoVolando(),
+      sale: this.tuSalidaParaLaTorre(fase),
       enTierra: s.onGround ? this.tuSitioEnTierra() : null,
       saleDeLaPista: aterrizandoAqui
         ? {
@@ -16804,6 +16836,64 @@ export class Game {
         : null,
     };
   }
+
+  /**
+   * **Tu salida, como la cuenta la torre**: cuánto tardas en estar en el aire,
+   * desde la doble raya o desde donde vayas, y cómo subes. Con eso no te da la
+   * pista si el que viene por la base llega antes a la decisión, ni deja girar
+   * a la base a uno que llegaría contigo en ella. Ver `TuSalida` en
+   * `world/trafico.ts`.
+   */
+  private tuSalidaParaLaTorre(fase: string): TuSalida | null {
+    const s = this.flight.state;
+    if (fase !== "esperando") this.giroEnLaRoja = undefined;
+    if (!s.onGround || !VAS_A_SALIR.has(fase)) return null;
+    const a = this.aircraft;
+    // La distancia de despegue se integra: una vez por avión y por peso.
+    if (this.carreraDeTuSalida?.avion !== a || this.carreraDeTuSalida.masa !== a.mass)
+      this.carreraDeTuSalida = { avion: a, masa: a.mass, metros: distanciaDeDespegue(a) };
+    const carrera = this.carreraDeTuSalida.metros;
+    const vr = Math.max(10, a.rotationSpeed);
+    if (!Number.isFinite(carrera)) return null;
+    const corriendo = fase === "despegando" || fase === "comprometido";
+    const { x, z, heading, length } = this.elCampo().escenario.runway;
+    /*
+     * Y lo que remontes, que es pista ocupada a paso de calle: en la roja, lo
+     * que vas a remontar con la verde, mirado una vez.
+     */
+    if (fase === "esperando" && this.giroEnLaRoja === undefined) {
+      const como = this.plan?.comoSeSaldraDesdeAqui();
+      this.giroEnLaRoja = como?.desde === "remonte" ? length / 2 - como.porDelante : null;
+    }
+    const giro =
+      fase === "esperando"
+        ? (this.giroEnLaRoja ?? null)
+        : corriendo || fase === "alineando"
+          ? null
+          : (this.plan?.dondeSeGira ?? null);
+    let remonta = 0;
+    if (giro !== null) {
+      const h = (heading * Math.PI) / 180;
+      const along = (s.position.x - x) * Math.sin(h) - (s.position.z - z) * Math.cos(h);
+      remonta = Math.abs(along - giro) / REMONTAS_A + DAS_LA_MEDIA_VUELTA;
+    }
+    const antes =
+      fase === "esperando" || fase === "autorizado" ? ENTRAS_Y_TE_ALINEAS : corriendo ? 0 : TE_ALINEAS;
+    const corre = ((2 * carrera) / vr) * Math.max(0, 1 - s.groundSpeed / vr);
+    return {
+      enElAire: antes + remonta + corre,
+      conLaPista: fase !== "esperando",
+      carrera,
+      velocidad: a.velocidadDeCircuito,
+      sube: a.velocidadDeCircuito * SUBES_AL_SALIR,
+    };
+  }
+
+  /** Dónde vas a dar la media vuelta, mirado en la roja: `undefined` es sin mirar. */
+  private giroEnLaRoja: number | null | undefined = undefined;
+
+  /** La distancia de despegue de ahora, guardada. Ver `tuSalidaParaLaTorre`. */
+  private carreraDeTuSalida: { avion: AircraftConfig; masa: number; metros: number } | null = null;
 
   /**
    * **Por dónde sigues en el aire**, visto desde el tráfico: lo que te queda
