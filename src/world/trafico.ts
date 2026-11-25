@@ -74,9 +74,11 @@ import {
   type LibreaDelTrafico,
 } from "./cuerpos-del-trafico";
 import {
+  BASE_A_FINAL,
   escalaDeCircuito,
   lineaDelCircuito,
   sendaDe,
+  radioDeViraje,
   verticesDelCircuito,
   type Mano,
   type Pista,
@@ -257,7 +259,8 @@ export interface Caminos {
   /**
    * Y hacia dónde queda **fuera del circuito** desde esa esquina, en el
    * plano: el lado contrario a la pista, que es hacia donde se da el tres
-   * sesenta de esperar turno sin meterse en la base de nadie.
+   * sesenta de esperar turno mientras por ahí no vengas tú. Ver
+   * `vueltaSegura`.
    */
   readonly haciaFuera: { readonly x: number; readonly z: number };
   /**
@@ -1771,11 +1774,75 @@ function detrasDe(b: Pick<EnLaFila, "ocupa">, velocidad: number): number {
 const COLCHON = 15;
 
 /**
- * **El régimen de viraje del tres sesenta**, rad/s: el estándar, tres grados
- * por segundo, que es el que se usa para esperar turno. La vuelta entera son
- * dos minutos, lo mismo que la separación: una vuelta, un hueco.
+ * **El alabeo de la vuelta de espera**, rad: treinta grados, el viraje medio.
+ *
+ * Una órbita en el circuito es «a 360-degree medium level turn, outside the
+ * circuit pattern, which positions the aeroplane back into the downwind leg, at
+ * about the same place, approximately one minute later» (CAA de Nueva Zelanda,
+ * *Flight Instructor Guide*, «Circuit considerations»). A tres grados por
+ * segundo, que es a lo que se vira en una espera instrumental, la avioneta
+ * tardaba dos minutos y abría kilómetro y medio: de su viento en cola al de un
+ * reactor, que pasa por ahí a su misma altura (H93). Así abre quinientos
+ * sesenta metros y vuelve en tres cuartos de minuto.
  */
-const VIRAJE_ESTANDAR = (3 * Math.PI) / 180;
+const ALABEO_DE_LA_VUELTA = Math.PI / 6;
+
+/**
+ * **Los alabeos con los que se puede dar**, rad, de más a menos: si la vuelta
+ * de siempre le deja cerca de ti, una más amplia acaba más tarde, y es lo que
+ * hace falta cuando los dos pasáis por el mismo sitio. Ver `vueltaSegura`.
+ */
+const ALABEOS_DE_LA_VUELTA = [ALABEO_DE_LA_VUELTA, (25 * Math.PI) / 180, (20 * Math.PI) / 180];
+
+/** Lo menos que deja entre la vuelta hacia dentro y la final, m. */
+const APARTADA_DE_LA_FINAL = 300;
+
+/**
+ * **Lo que se quiere entre la vuelta de espera y tú**, m: el doble de los
+ * trescientos que ya son pasar cerca, porque lo que se mira es por dónde
+ * sigues y nadie vuela la línea clavada. Ver `vueltaSegura`.
+ */
+const APARTADO_DE_TI = 600;
+
+/**
+ * Y entre ella y los demás del tráfico, m: de esos sí se sabe por dónde van.
+ */
+const APARTADO_DE_LOS_DEMAS = 300;
+
+/** Con esta altura entre los dos, m, ya no hay nada que apartar: quinientos pies. */
+const APARTADOS_EN_ALTURA = 150;
+
+/**
+ * **A qué se cuenta que sigues**, en tanto por uno de lo que vuelas ahora: el
+ * viento en cola se acaba frenando, y la esquina de la base cae cinco o diez
+ * segundos más tarde de lo que sale a la velocidad de ahora.
+ */
+const FRENAS_EN_EL_CIRCUITO = [1, 0.85];
+
+/** Dónde va a estar alguien dentro de tantos segundos, y a cuánto de él no se pasa. */
+interface VaAEstar {
+  readonly apartado: number;
+  readonly en: (dentroDe: number) => Sitio | null;
+}
+
+/** Desde qué altura sobre la pista se cuenta que uno del tráfico vuela, m. */
+const EN_EL_AIRE = 30;
+
+/** Cada cuánto se mira dónde vais a estar los dos, s. */
+const MIRA_LA_VUELTA = 2;
+
+/** Cuántas vueltas seguidas se miran, si le hacen falta varias: más allá no se sabe nada. */
+const VUELTAS_QUE_SE_MIRAN = 4;
+
+/** Y cuánto más allá de la vuelta, s: ya de camino a la base. */
+const TRAS_LA_VUELTA = 20;
+
+/**
+ * **Lo que se tarda de la altura del umbral a la esquina de la base**, s: lo
+ * mismo en todos los tipos, que el circuito se mide en tiempo. Es desde donde
+ * se puede dar la vuelta de espera, el final del viento en cola.
+ */
+const DESDE_EL_UMBRAL = BASE_A_FINAL / VUELA_A;
 
 /**
  * **Lo que se deja por encima del relieve dando la vuelta**, m. La esquina
@@ -1863,6 +1930,13 @@ export interface QuienJuega {
    * `prioridad-en-la-fila.test.ts`.
    */
   readonly prioridad?: boolean;
+  /**
+   * **Y por dónde sigue en el aire**, si vuela cerca de aquí: de donde está
+   * hasta el umbral, por su circuito, o por derecho si no lo vuela. Se pide
+   * solo cuando hace falta. Es lo que mira la torre antes de mandar a otro a
+   * dar una vuelta de espera por donde vas a pasar tú: ver `vueltaSegura`.
+   */
+  readonly porDondeVuela?: (() => readonly Sitio[] | null) | null;
   /**
    * **Y dónde está en el suelo**, si está en él: el tráfico que rueda le ve
    * como a un avión más de las calles. Ver `cedeA`.
@@ -1979,11 +2053,18 @@ interface Volando {
   /** Sus luces, colgadas de su grupo. Ver `luces-del-trafico.ts`. */
   luces: LucesDeUnAvion;
   /**
-   * **El tres sesenta que da en la esquina de la base, esperando turno**, si
-   * lo está dando. Mientras tanto su camino no avanza: está en la esquina,
-   * esperando, y lo que se ve es la vuelta. Ver `SEPARACION_ENTRE_LLEGADAS`.
+   * **El tres sesenta que da al final del viento en cola, esperando turno**,
+   * si lo está dando. Mientras tanto su camino no avanza: está donde lo
+   * empezó, esperando, y lo que se ve es la vuelta. Ver
+   * `SEPARACION_ENTRE_LLEGADAS` y `vueltaSegura`.
    */
   tresSesenta: TresSesenta | null;
+  /**
+   * **Si ya está en la fila de llegadas** antes de la esquina: el que esperó
+   * turno en el viento en cola no pierde su sitio al acabar la vuelta. Ver
+   * `vueltaSegura`.
+   */
+  enLaFila: boolean;
   /** Cuándo cruzó el umbral de aterrizar, s del reloj del tráfico. */
   cruzo: number | null;
   /**
@@ -2052,11 +2133,11 @@ interface TresSesenta {
   readonly cx: number;
   readonly cz: number;
   readonly radio: number;
-  /** El ángulo de la esquina visto desde el centro, rad. */
+  /** El ángulo de donde empieza visto desde el centro, rad. */
   readonly desde: number;
-  /** Hacia dónde gira: 1 o −1, según el lado de fuera. */
+  /** Hacia dónde gira: 1 o −1, según el lado al que se abre. */
   readonly sentido: 1 | -1;
-  /** La altura de la esquina, y lo que sube en medio para librar el relieve. */
+  /** La altura de donde empieza, y lo que sube en medio para librar el relieve. */
   readonly y: number;
   readonly sube: number;
   /** Metros que lleva dados de esta vuelta. */
@@ -2294,7 +2375,7 @@ export interface Trafico {
     tipo: TipoDeTrafico["id"];
     /** Si está encima de la pista. Ver `ocupanLaPista`. */
     enLaPista: boolean;
-    /** Si está dando la vuelta de espera en la esquina de la base. */
+    /** Si está dando la vuelta de espera, al final de su viento en cola. */
     esperandoTurno: boolean;
     /**
      * Rumbo verdadero, grados: hacia dónde apunta el morro. Lo que hace falta
@@ -3438,6 +3519,7 @@ export function crearTrafico(
       velocidad: c.marcas["otro.enCola"]?.velocidad ?? quien.marca.velocidad,
     };
     quien.recorrido = 0;
+    quien.enLaFila = false;
     // Hace lo que le mandaron: no es uno al que se ha dejado de nombrar.
     quien.olvidado = 0;
   };
@@ -3820,13 +3902,14 @@ export function crearTrafico(
 
   /**
    * Cuándo cruza el umbral, s del reloj del tráfico, **si ya está en la
-   * fila**: pasada la esquina de la base o esperando en ella. O cuándo lo
-   * cruzó, si fue hace poco: el siguiente cuenta su hueco desde ahí.
+   * fila**: pasada la esquina de la base, o esperando antes de ella o habiendo
+   * esperado ya. O cuándo lo cruzó, si fue hace poco: el siguiente cuenta su
+   * hueco desde ahí.
    */
   const horaDeUmbral = (quien: Volando): number | null => {
     const c = quien.caminos;
     const metros = metrosAlUmbral(quien);
-    if (c && metros !== null && (quien.tresSesenta || quien.recorrido >= c.base - 0.5))
+    if (c && metros !== null && (quien.enLaFila || quien.recorrido >= c.base - 0.5))
       return reloj + metros / quien.marca.velocidad;
     if (quien.cruzo !== null && reloj - quien.cruzo < 2 * SEPARACION_ENTRE_LLEGADAS)
       return quien.cruzo;
@@ -3933,11 +4016,11 @@ export function crearTrafico(
     return hora - natural;
   };
 
-  /** El retraso con que giraría a la base ahora, desde la esquina. */
-  const retrasoEnLaEsquina = (quien: Volando, c: Caminos): number =>
+  /** El retraso con que llegaría siguiendo ahora desde `metros` de su camino. */
+  const retrasoDesde = (quien: Volando, c: Caminos, metros: number): number =>
     retrasoPara(
       quien,
-      reloj + (c.toca - c.base) / quien.marca.velocidad,
+      reloj + (c.toca - metros) / quien.marca.velocidad,
       quien.marca.velocidad,
     );
 
@@ -4120,18 +4203,27 @@ export function crearTrafico(
   };
 
   /**
-   * **El tres sesenta de espera**, desde la esquina de la base y hacia
-   * fuera. A régimen estándar, así que la vuelta dura dos minutos sea quien
-   * sea; y si hacia fuera sube el relieve, se sube en medio de la vuelta y se
-   * baja otra vez a la esquina. Ver `SOBRE_EL_RELIEVE`.
+   * **El tres sesenta de espera**, desde `metros` de su camino —la esquina de
+   * la base, o antes— y hacia fuera del circuito, o hacia dentro. Un viraje
+   * medio a nivel: ver `ALABEO_DE_LA_VUELTA`. Y si por ahí sube el relieve, se
+   * sube en medio de la vuelta y se baja otra vez. Ver `SOBRE_EL_RELIEVE`.
    */
-  const tresSesentaDesde = (quien: Volando, c: Caminos): TresSesenta => {
+  const tresSesentaDesde = (
+    quien: Volando,
+    c: Caminos,
+    metros: number,
+    lado: "fuera" | "dentro",
+    alabeo = ALABEO_DE_LA_VUELTA,
+  ): TresSesenta => {
+    const donde = porElCamino(quien.marca.camino, metros)!.sitio;
+    // El viento en cola es una recta: su rumbo es el de sus últimos metros.
     const esquina = porElCamino(quien.marca.camino, c.base)!.sitio;
     const antes = porElCamino(quien.marca.camino, Math.max(0, c.base - 50))!.sitio;
-    const radio = quien.marca.velocidad / VIRAJE_ESTANDAR;
-    const cx = esquina.x + c.haciaFuera.x * radio;
-    const cz = esquina.z + c.haciaFuera.z * radio;
-    const desde = Math.atan2(esquina.z - cz, esquina.x - cx);
+    const radio = radioDeViraje(quien.marca.velocidad, alabeo);
+    const haciaAlli = lado === "fuera" ? radio : -radio;
+    const cx = donde.x + c.haciaFuera.x * haciaAlli;
+    const cz = donde.z + c.haciaFuera.z * haciaAlli;
+    const desde = Math.atan2(donde.z - cz, donde.x - cx);
     // El sentido que sigue el viento en cola: la vuelta no empieza con un tirón.
     const sigue =
       -Math.sin(desde) * (esquina.x - antes.x) + Math.cos(desde) * (esquina.z - antes.z);
@@ -4143,7 +4235,7 @@ export function crearTrafico(
         const giro = (k * Math.PI) / 6;
         const a = desde + sentido * giro;
         const suelo = alto(cx + radio * Math.cos(a), cz + radio * Math.sin(a));
-        const falta = suelo + SOBRE_EL_RELIEVE - esquina.y;
+        const falta = suelo + SOBRE_EL_RELIEVE - donde.y;
         if (falta > 0) sube = Math.max(sube, falta / Math.sin(giro / 2));
       }
     return {
@@ -4152,10 +4244,145 @@ export function crearTrafico(
       radio,
       desde,
       sentido,
-      y: esquina.y,
+      y: donde.y,
       sube: Math.min(sube, 2000),
       hecho: 0,
     };
+  };
+
+  /**
+   * **Dónde va a estar cada uno** dentro de unos segundos, y lo que hay que
+   * apartarse de él: tú, por donde sigues —a lo que vuelas y a lo que frenas al
+   * acabar el viento en cola—, y los demás del tráfico que vuelan, por su
+   * camino o por la vuelta que estén dando.
+   */
+  const dondeVanAEstar = (menos: Volando): VaAEstar[] => {
+    const van: VaAEstar[] = [];
+    const tu = opciones.quienJuega?.();
+    const camino = tu?.porDondeVuela?.();
+    if (tu && camino && camino.length > 1) {
+      const largo = largoDelCamino([...camino]);
+      for (const cuanto of FRENAS_EN_EL_CIRCUITO) {
+        const velocidad = (tu.velocidad ?? VUELA_A) * cuanto;
+        van.push({
+          apartado: APARTADO_DE_TI,
+          en: (dentroDe) =>
+            velocidad * dentroDe > largo
+              ? null
+              : (porElCamino(camino, velocidad * dentroDe)?.sitio ?? null),
+        });
+      }
+    }
+    for (const b of aviones.values()) {
+      if (b === menos || !b.caminos || b.grupo.position.y - cota < EN_EL_AIRE) continue;
+      const vuelta = b.tresSesenta;
+      const velocidad = b.marca.velocidad;
+      const queda = vuelta ? largoDelTresSesenta(vuelta) - vuelta.hecho : 0;
+      const largo = largoDe(b.marca.camino);
+      van.push({
+        apartado: APARTADO_DE_LOS_DEMAS,
+        en: (dentroDe) => {
+          const anda = velocidad * dentroDe;
+          if (vuelta && anda <= queda)
+            return enElTresSesenta({ ...vuelta, hecho: vuelta.hecho + anda }).sitio;
+          const metros = b.recorrido + anda - queda;
+          return metros > largo ? null : (porElCamino(b.marca.camino, metros)?.sitio ?? null);
+        },
+      });
+    }
+    return van;
+  };
+
+  /**
+   * **La holgura que deja esa vuelta**, empezándola dentro de `dentroDe`
+   * segundos en `metros` de su camino, con las que le hagan falta para esperar
+   * `retraso` segundos y siguiendo después: lo más cerca que pasa de alguien,
+   * en tanto por uno de lo que hay que apartarse de él. Con quinientos pies
+   * entre los dos no cuenta. `Infinity` si no vuela nadie.
+   *
+   * Todas las que le hagan falta, y no solo la primera: con tres minutos por
+   * esperar, la primera caía a tiempo y la segunda empezaba en la esquina justo
+   * cuando pasabas.
+   */
+  const holguraDe = (
+    quien: Volando,
+    vuelta: TresSesenta,
+    metros: number,
+    dentroDe: number,
+    retraso: number,
+    otros: readonly VaAEstar[],
+  ): number => {
+    if (!otros.length) return Infinity;
+    const velocidad = quien.marca.velocidad;
+    const una = largoDelTresSesenta(vuelta) / velocidad;
+    const dura = una * Math.max(1, Math.min(VUELTAS_QUE_SE_MIRAN, Math.ceil(retraso / una)));
+    let menor = Infinity;
+    for (let s = 0; s <= dura + TRAS_LA_VUELTA; s += MIRA_LA_VUELTA) {
+      const suyo =
+        s <= dura
+          ? enElTresSesenta({ ...vuelta, hecho: velocidad * (s % una) }).sitio
+          : porElCamino(quien.marca.camino, metros + velocidad * (s - dura))!.sitio;
+      for (const otro of otros) {
+        const el = otro.en(dentroDe + s);
+        if (!el || Math.abs(suyo.y - el.y) >= APARTADOS_EN_ALTURA) continue;
+        menor = Math.min(menor, Math.hypot(suyo.x - el.x, suyo.z - el.z) / otro.apartado);
+      }
+    }
+    return menor;
+  };
+
+  /**
+   * **La vuelta de espera por donde no pasa nadie**, y menos tú.
+   *
+   * Se daba siempre hacia fuera, que es lo de costumbre —«outside the circuit
+   * pattern»—, sin mirar a nadie. Pero fuera del viento en cola de una avioneta
+   * está el de un turbohélice, y fuera del suyo el de un reactor, todos a
+   * alturas parecidas: en Los Rodeos, con el JAZ 90 en su viento en cola, la
+   * avioneta que esperaba detrás de él en la fila abría la vuelta hasta su
+   * misma línea y la volaba al revés, y el turbohélice la daba encima de la
+   * base (H93: a cuarenta y seis metros y a la misma altura). La torre dice hacia qué
+   * lado —«ORBIT (RIGHT, or LEFT)» (OACI, Doc 4444, 12.3.4.17), «MAKE LEFT/RIGHT
+   * THREE-SIXTY» (FAA JO 7110.65, 3-8-1)—, y lo dice viendo a los demás: hacia
+   * fuera si por ahí no pasa nadie, y si pasas tú, hacia la pista, sin llegar a
+   * la final. Y si por los dos lados os encontráis, más amplia: lo que cambia
+   * es cuándo vuelve.
+   */
+  const vueltaSegura = (
+    quien: Volando,
+    c: Caminos,
+    metros: number,
+    retraso: number,
+    dentroDe = 0,
+  ): { vuelta: TresSesenta; holgura: number } => {
+    const otros = dondeVanAEstar(quien);
+    const hastaLaFinal = c.entra - c.base;
+    let mejor: { vuelta: TresSesenta; holgura: number } | null = null;
+    for (const alabeo of ALABEOS_DE_LA_VUELTA)
+      for (const lado of ["fuera", "dentro"] as const) {
+        const vuelta = tresSesentaDesde(quien, c, metros, lado, alabeo);
+        if (lado === "dentro" && hastaLaFinal - 2 * vuelta.radio < APARTADA_DE_LA_FINAL) continue;
+        const holgura = holguraDe(quien, vuelta, metros, dentroDe, retraso, otros);
+        if (holgura >= 1) return { vuelta, holgura };
+        if (!mejor || holgura > mejor.holgura) mejor = { vuelta, holgura };
+      }
+    return mejor!;
+  };
+
+  /**
+   * **Si le toca esperar turno aquí**, y cómo: en la esquina de la base, o
+   * antes —desde que pasa a la altura del umbral— si la vuelta de la esquina le
+   * va a llevar por donde pasa alguien y la de aquí no.
+   */
+  const leTocaEsperar = (quien: Volando, c: Caminos, metros: number): TresSesenta | null => {
+    const aqui = Math.min(metros, c.base);
+    const retraso = retrasoDesde(quien, c, aqui);
+    if (retraso <= 0) return null;
+    const vuelta = vueltaSegura(quien, c, aqui, retraso);
+    if (metros >= c.base) return vuelta.vuelta;
+    if (vuelta.holgura < 1) return null;
+    const hastaLaEsquina = (c.base - aqui) / quien.marca.velocidad;
+    const luego = vueltaSegura(quien, c, c.base, retraso, hastaLaEsquina);
+    return luego.holgura < 1 ? vuelta.vuelta : null;
   };
 
   /**
@@ -4257,6 +4484,7 @@ export function crearTrafico(
           avanza: true,
           luces,
           tresSesenta: null,
+          enLaFila: false,
           cruzo: null,
           cedido: 0,
           listoDesde: null,
@@ -4282,6 +4510,7 @@ export function crearTrafico(
       quien.recorrido = esta.metros;
       // Puesto en otro sitio, ya no está dando la vuelta de espera.
       quien.tresSesenta = null;
+      quien.enLaFila = false;
       quien.olvidado = 0;
       quien.quieto = 0;
       // Puesto en otra marca, se mueve: si le toca esperar, lo dirá el paso.
@@ -4316,15 +4545,22 @@ export function crearTrafico(
           empujar(quien, c, tope, tuEnTierra, dt);
         } else if (quien.tresSesenta) {
           /*
-           * **Dando la vuelta de espera, su camino no avanza**: está en la
-           * esquina, esperando. Al cerrar la vuelta mira otra vez si ya le
-           * cabe girar; si no, otra.
+           * **Dando la vuelta de espera, su camino no avanza**: está donde la
+           * empezó, esperando. Al cerrarla mira otra vez si ya le cabe seguir;
+           * si no, otra, y otra vez por el lado por el que no pases.
            */
           const vuelta = quien.tresSesenta;
           vuelta.hecho += quien.marca.velocidad * dt;
           const entera = largoDelTresSesenta(vuelta);
           if (vuelta.hecho >= entera) {
-            if (c && retrasoEnLaEsquina(quien, c) > 0) vuelta.hecho -= entera;
+            const retraso = c ? retrasoDesde(quien, c, antes) : 0;
+            const otra = c && retraso > 0 ? vueltaSegura(quien, c, antes, retraso) : null;
+            /*
+             * Y si no es la esquina y aquí ya no le cabe otra, sigue por el
+             * viento en cola: la esquina queda por delante.
+             */
+            if (c && otra && (antes >= c.base - 0.5 || otra.holgura >= 1))
+              quien.tresSesenta = { ...otra.vuelta, hecho: vuelta.hecho - entera };
             else {
               quien.recorrido = Math.min(antes + (vuelta.hecho - entera), tope);
               quien.tresSesenta = null;
@@ -4382,17 +4618,22 @@ export function crearTrafico(
           quien.recorrido = Math.min(antes + puede, tope);
           /*
            * **Y en la esquina de la base, si girando no le queda su hueco,
-           * espera turno.** Ver `SEPARACION_ENTRE_LLEGADAS`.
+           * espera turno**; o un poco antes, si en la esquina la vuelta le va
+           * a llevar por donde pasas. Ver `SEPARACION_ENTRE_LLEGADAS` y
+           * `leTocaEsperar`. Antes de la esquina basta con mirarlo una vez por
+           * segundo.
            */
-          if (
-            c &&
-            llegando(quien) &&
-            antes < c.base &&
-            quien.recorrido >= c.base &&
-            retrasoEnLaEsquina(quien, c) > 0
-          ) {
-            quien.recorrido = c.base;
-            quien.tresSesenta = tresSesentaDesde(quien, c);
+          if (c && llegando(quien) && antes < c.base) {
+            const mira =
+              quien.recorrido >= c.base ||
+              (Math.floor(reloj) !== Math.floor(reloj - dt) &&
+                quien.recorrido >= c.base - DESDE_EL_UMBRAL * quien.marca.velocidad);
+            const vuelta = mira ? leTocaEsperar(quien, c, quien.recorrido) : null;
+            if (vuelta) {
+              quien.recorrido = Math.min(quien.recorrido, c.base);
+              quien.tresSesenta = vuelta;
+              quien.enLaFila = true;
+            }
           }
         }
         const largo = largoDe(quien.marca.camino);

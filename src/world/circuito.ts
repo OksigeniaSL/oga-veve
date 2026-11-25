@@ -809,6 +809,124 @@ export function loQueQuedaDeCircuito(
   return mejor;
 }
 
+/**
+ * **Por dónde sigues**, hasta el umbral: de donde estás al final de tu tramo y
+ * de ahí por los que te quedan del circuito y la final, o `null` si andas
+ * lejos de él o vuelas al revés. Es lo que la torre ve venir de ti cuando
+ * manda esperar a otro: ver `vueltaSegura` en `trafico.ts`.
+ *
+ * Con las esquinas **viradas** a tu velocidad y a veinticinco grados —el dibujo
+ * es una quebrada y nadie la vuela por el vértice: un reactor lo corta por
+ * quinientos metros—, y sin devolverte a la línea: quien lleva el viento en
+ * cola trescientos metros por fuera lo acaba por fuera.
+ *
+ * `linea` es la que se vuela, con el punto en que se empieza a bajar en el
+ * viento en cola donde lo hay (`lineaDelCircuito`): quien va por ella a su
+ * altura llega a la esquina a la de la esquina, y quien la lleva cincuenta
+ * metros por encima, cincuenta por encima.
+ */
+export function porDondeSigues(
+  linea: readonly PuntoDeCircuito[],
+  umbral: PuntoDeCircuito,
+  yo: PuntoDeCircuito & { readonly rumbo: number },
+  velocidad: number,
+  escala = 1,
+): PuntoDeCircuito[] | null {
+  const quebrada = [...linea, umbral];
+  const ancho = 2 * EN_EL_CIRCUITO * escala;
+  let menor = ancho * ancho;
+  const mx = Math.sin(yo.rumbo);
+  const mz = -Math.cos(yo.rumbo);
+  let tramo = 0;
+  let pasado = false;
+  let alReves = false;
+  let fuera = { x: 0, z: 0 };
+  let porEncima = 0;
+  for (let i = 1; i < quebrada.length; i++) {
+    const a = quebrada[i - 1]!;
+    const b = quebrada[i]!;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const largo2 = dx * dx + dz * dz;
+    if (largo2 < 1) continue;
+    const u = ((yo.x - a.x) * dx + (yo.z - a.z) * dz) / largo2;
+    const t = Math.max(0, Math.min(1, u));
+    const ox = yo.x - (a.x + dx * t);
+    const oz = yo.z - (a.z + dz * t);
+    const d2 = ox * ox + oz * oz;
+    if (d2 >= menor) continue;
+    menor = d2;
+    tramo = i;
+    pasado = u > 1;
+    // Cien grados: en una esquina se lleva un rumbo entre los de los dos tramos.
+    alReves = mx * dx + mz * dz < -0.17 * Math.sqrt(largo2);
+    // Solo lo que te apartas de lado: lo que te pasaste de largo no se arrastra.
+    const largo = Math.sqrt(largo2);
+    const lado = (ox * -dz + oz * dx) / largo;
+    fuera = { x: (-dz / largo) * lado, z: (dx / largo) * lado };
+    porEncima = yo.y - (a.y + (b.y - a.y) * t);
+  }
+  if (tramo === 0 || alReves) return null;
+  const final = quebrada.length - 1;
+  // El viento en cola acaba en la esquina de la base, y son dos trozos si se baja en él.
+  const esquina = final - 2;
+  const primeroDeLaCola = linea.length > 5 ? esquina - 1 : esquina;
+  const enCola = tramo >= primeroDeLaCola && tramo <= esquina;
+  const sigue: PuntoDeCircuito[] = [{ x: yo.x, y: yo.y, z: yo.z }];
+  // Quien se pasó de la esquina no vuelve a ella: gira desde donde está.
+  for (let i = pasado && tramo < final ? tramo + 1 : tramo; i <= final; i++) {
+    const p = quebrada[i]!;
+    // Hasta la esquina de tu tramo, por donde lo llevas; y en el viento en cola, lo alto que lo llevas.
+    const porLaCola = enCola && i <= esquina;
+    const aquiMismo = porLaCola || (i === tramo && i < final - 1);
+    sigue.push({
+      x: p.x + (aquiMismo ? fuera.x : 0),
+      y: p.y + (porLaCola ? porEncima : 0),
+      z: p.z + (aquiMismo ? fuera.z : 0),
+    });
+  }
+  return conLasEsquinasViradas(sigue, radioDeViraje(velocidad));
+}
+
+/** La quebrada con cada esquina virada a `radio`, sin comerse más de media recta. */
+function conLasEsquinasViradas(
+  quebrada: readonly PuntoDeCircuito[],
+  radio: number,
+): PuntoDeCircuito[] {
+  const sale: PuntoDeCircuito[] = [quebrada[0]!];
+  for (let i = 1; i < quebrada.length - 1; i++) {
+    const a = quebrada[i - 1]!;
+    const b = quebrada[i]!;
+    const c = quebrada[i + 1]!;
+    const antes = Math.hypot(b.x - a.x, b.z - a.z);
+    const luego = Math.hypot(c.x - b.x, c.z - b.z);
+    if (antes < 1 || luego < 1) continue;
+    const cos =
+      ((b.x - a.x) * (c.x - b.x) + (b.z - a.z) * (c.z - b.z)) / (antes * luego);
+    const giro = Math.acos(Math.max(-1, Math.min(1, cos)));
+    // Donde solo cambia la altura no hay esquina que virar.
+    if (giro < 0.01) {
+      sale.push(b);
+      continue;
+    }
+    // Media recta como mucho; la primera, entera: es lo que te queda de tu tramo.
+    const t = Math.min(radio * Math.tan(giro / 2), i === 1 ? antes : antes / 2, luego / 2);
+    const entre = (p: PuntoDeCircuito, q: PuntoDeCircuito, u: number): PuntoDeCircuito => ({
+      x: p.x + (q.x - p.x) * u,
+      y: p.y + (q.y - p.y) * u,
+      z: p.z + (q.z - p.z) * u,
+    });
+    const entra = entre(b, a, t / antes);
+    const acaba = entre(b, c, t / luego);
+    for (let k = 0; k <= 6; k++) {
+      const u = k / 6;
+      sale.push(entre(entre(entra, b, u), entre(b, acaba, u), u));
+    }
+  }
+  sale.push(quebrada[quebrada.length - 1]!);
+  return sale;
+}
+
 export interface Circuito {
   readonly grupo: Group;
   /** Los cinco vértices, por si alguien —el banco— quiere medirlos. */
