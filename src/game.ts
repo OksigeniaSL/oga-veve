@@ -247,6 +247,7 @@ import { TOPE_DE_LA_VUELTA, type TuLlegadaALaPista } from "./flight/salida-tapad
 import { FLOTA, modeloPorId, type SiluetaDeAvion } from "./flight/flota";
 import { AERONAVES, seVuelaEn } from "./flight/aeronaves";
 import {
+  ALABEO_DE_LA_VUELTA,
   crearTrafico,
   tiposDelCampo,
   type EnTierra,
@@ -765,6 +766,9 @@ const TE_ALINEAS = 10;
 /** A cuánto se remonta la pista de media, m/s, y lo que lleva la media vuelta, s. */
 const REMONTAS_A = 8;
 const DAS_LA_MEDIA_VUELTA = 25;
+
+/** Desde cuánto se cuenta que subes, m/s: la torre te ve irte al aire. Ver `porDondeSigues`. */
+const SUBES = 1;
 
 /** Lo que se sube al irse, en tanto por uno de lo que se vuela: seis o siete grados. */
 const SUBES_AL_SALIR = 0.12;
@@ -6951,7 +6955,7 @@ export class Game {
     mandarteAlAire: (alto, sigue) =>
       this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
     mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
-    avisarteOcupada: () => this.decirQueLaPistaEstaOcupada(),
+    avisarteOcupada: (conPermiso) => this.decirQueLaPistaEstaOcupada(conPermiso),
     retirarteElPermiso: () => this.retirarElPermisoSinOir(),
     permisoSinOir: () => this.permisoSinOir,
     darteElPermisoYa: () => this.darElPermisoYa(),
@@ -16916,7 +16920,7 @@ export class Game {
       const yo = { x, y, z, rumbo: s.heading };
       // La línea que se vuela: donde la altura es la publicada se baja en el viento en cola.
       const linea = lineaDelCircuito(c.vertices, this.pistaDelCircuito(campo).senda);
-      const sigue = porDondeSigues(linea, umbral, yo, velocidad, c.escala);
+      const sigue = porDondeSigues(linea, umbral, yo, velocidad, c.escala, s.velocity.y > SUBES);
       if (sigue) return sigue;
     }
     const lejos = velocidad * PREVER_POR_DERECHO;
@@ -16984,12 +16988,15 @@ export class Game {
    * **Que la pista está ocupada, dicho por quien lo diría**: donde contesta
    * un AFIS, al llegar a final con alguien encima. Un AFIS no te para ni te
    * manda al aire; te dice lo que hay, en castellano en los cuatro peldaños
-   * y, de Taguató para arriba, en su fraseología. Donde hay torre no se dice
-   * nada: la torre te deja de número dos y la luz ya lo cuenta. Ver
+   * y, de Taguató para arriba, en su fraseología. Donde hay torre, la torre
+   * dice que sigas, y el permiso llega cuando la tengas libre. Ver
    * `avisarteOcupada` en `flight/turno-de-pista.ts`.
    */
-  private decirQueLaPistaEstaOcupada(): void {
-    if (!this.esAfisAqui()) return;
+  private decirQueLaPistaEstaOcupada(conPermiso: boolean): void {
+    if (!this.esAfisAqui()) {
+      if (!conPermiso) this.decirQueSigas();
+      return;
+    }
     const yo = this.miIndicativo;
     const clave = comoSeDiceAqui(
       "torre.afisOcupada",
@@ -16999,6 +17006,40 @@ export class Game {
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     if (conCifras) this.porRadioClave("torre.afisOccupied");
+  }
+
+  /**
+   * **«Continue approach»**: la torre, a quien entra en final con la pista
+   * todavía ocupada (H96). No es un permiso: es que siga bajando, y el permiso
+   * llega cuando la tenga libre —por debajo de la decisión, si hace falta, a la
+   * vista—. Doc 4444, 12.3.4.15 d; RD 1180/2018, anexo V, 1.4.16 d.
+   *
+   * En castellano en los dos peldaños de abajo y en fraseología en los de
+   * arriba, con su tira, y **solo con su grabación**: sin ella sería muda en el
+   * navegador de quien más juega, y lo que queda es lo que ya había, que la
+   * lámpara se enciende cuando la pista es tuya.
+   */
+  private decirQueSigas(): void {
+    if (!this.hayTorreQueHable() || this.radioCallada) return;
+    if (this.laAproximacion.mandanFrustrar) return;
+    const alto = this.flight.state.position.y - this.cotaDelCampo(this.elCampo());
+    if (alto < ALTURA_DE_DECISION) return;
+    const yo = this.miIndicativo;
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras) {
+      const montada = this.deTorre("torre.continueApproach", yo);
+      if (!montada || !this.instructor.vozDe(montada.clave, montada.relleno)) return;
+      this.porRadioClave("torre.continueApproach", "mando", undefined, true);
+      return;
+    }
+    const relleno = rellenoDe(yo);
+    const clave = comoSeDiceAqui(
+      "torre.continue",
+      hablaDe(this.elCampo().escenario.aerodrome?.id),
+    ) as TranslationKey;
+    if (this.instructor.vozDe(clave, relleno))
+      this.torre.decir(t(clave, { indicativo: yo.dicho }), clave, "mando", relleno);
   }
 
   /**
@@ -18731,13 +18772,22 @@ export class Game {
     const aIzquierdas = (this.circuitoDeLaTorre?.mano ?? "izquierda") === "izquierda";
     const derecha = aIzquierdas === haciaFuera;
     const dicho = this.avisoCon("vuelo.vueltaPorTuSalida", "palabra.vuelta");
-    this.hud.senal.mostrar(derecha ? "vuelta-derecha" : "vuelta-izquierda", dicho.rotulo, null, {
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    /*
+     * **Y con cuánto, donde hay cifras** (H96): el viraje medio, treinta grados,
+     * que es con el que la cuenta la torre y el que se mide en el horizonte. Ver
+     * `ALABEO_DE_LA_VUELTA` en `world/trafico.ts`.
+     */
+    const rotulo =
+      conCifras && dicho.rotulo
+        ? `${dicho.rotulo} · ${Math.round((ALABEO_DE_LA_VUELTA * 180) / Math.PI)}°`
+        : dicho.rotulo;
+    this.hud.senal.mostrar(derecha ? "vuelta-derecha" : "vuelta-izquierda", rotulo, null, {
       segundos: TOPE_DE_LA_VUELTA,
       prioridad: IMPORTANTE,
     });
     this.avisar("attention");
-    const conCifras =
-      this.tier.instruments === "numeric" || this.tier.instruments === "full";
     if (!conCifras) {
       if (laInstructoraLoExplica(this.tier.avisos))
         this.decirLoGrabado("vuelo.vueltaPorTuSalida", "mando");

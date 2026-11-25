@@ -985,7 +985,15 @@ export class Frecuencia {
     const pasos = GUIONES[a.guion];
     let i = a.paso;
     while (i < pasos.length && LLAMADAS_DE_LLEGADA.has(pasos[i]!.clave)) i++;
-    if (pasos[i]?.clave !== "torre.clearedLand") return null;
+    /*
+     * Menos si la de irse al aire espera porque alguien sale por delante: la
+     * torre no le sube por encima, y con la pista libre aterriza. Ver `todaviaNo`
+     * en `world/trafico.ts`.
+     */
+    if (pasos[i]?.clave === "torre.goAround" && this.todaviaNo(matricula, "torre.goAround")) {
+      a.guion = "llega";
+      i = GUIONES.llega.findIndex((p) => p.clave === "torre.clearedLand");
+    } else if (pasos[i]?.clave !== "torre.clearedLand") return null;
     a.paso = i;
     a.estrena = false;
     this.avanzar(a);
@@ -1005,6 +1013,17 @@ export class Frecuencia {
     this.canal = HUECO_DEL_CANAL;
     this.dicho = dice;
     return dice;
+  }
+
+  /**
+   * **Uno que aterrizó y ya dejó la pista, sin haber cantado todavía «pista
+   * libre»**: se da por dicho. La torre le ve fuera, y con quien juega por
+   * debajo de la decisión no espera a su llamada para darle el permiso. Ver
+   * `paso` en `flight/turno-de-pista.ts`.
+   */
+  dejoLaPista(matricula: string): void {
+    const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
+    if (a && GUIONES[a.guion][a.paso]?.clave === "otro.pistaLibre") this.avanzar(a);
   }
 
   /**

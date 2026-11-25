@@ -19,6 +19,7 @@ import {
   daLaPistaAOtro,
   esDeLaFrecuencia,
   esDeLaLampara,
+  esTuContinua,
   esTuFraseologiaDeAterrizar,
   esTuPermisoDeAterrizar,
 } from "../audio/torre";
@@ -35,7 +36,12 @@ import {
   type RemedioDeTuSalida,
   type TuLlegadaALaPista,
 } from "./salida-tapada";
-import { TU, type QuienEstorbaTuSalida, type QuienTapaTuSalida } from "../world/trafico";
+import {
+  LIBRE_ANTES_DEL_UMBRAL,
+  TU,
+  type QuienEstorbaTuSalida,
+  type QuienTapaTuSalida,
+} from "../world/trafico";
 import {
   EMPIEZA_A_RODAR,
   laQueSeDice,
@@ -67,6 +73,12 @@ export interface DibujoDelTurno {
    * nadie. Ver `ocupanLaPista` en `world/trafico.ts`.
    */
   ocupanLaPista?(): string[];
+  /**
+   * Lo que falta para que la pista te quede libre, s. Sin esto no se sabe, y a
+   * la decisión con alguien en ella se va uno al aire. Ver `libreDentroDe` en
+   * `world/trafico.ts` y `quedaLibreATiempo`.
+   */
+  libreDentroDe?(alUmbral: number): number;
   /**
    * Quién no deja darte la pista todavía: el que llegaría a la decisión
    * contigo en ella, o el que vuela por delante. Sin esto, nadie. Ver
@@ -167,12 +179,12 @@ export interface AlrededorDelTurno {
    */
   autorizarte(): void;
   /**
-   * **Y donde contesta un AFIS, que te diga que la pista está ocupada** si
-   * lo está al llegar a final. Un AFIS no te para: te dice lo que hay, y lo
-   * que hay es «pista ocupada». Opcional: una torre te deja en la roja sin
-   * más, y la roja ya lo dice.
+   * **Con la pista ocupada al llegar a final, lo que se te dice**: un AFIS, que
+   * está ocupada, que es lo que hay; una torre, que sigas, «continue approach»,
+   * y el permiso llega cuando la tengas libre (Doc 4444, 12.3.4.15 d).
+   * Opcional. `conPermiso`, si ya se te había dado y se ocupó después.
    */
-  avisarteOcupada?(): void;
+  avisarteOcupada?(conPermiso: boolean): void;
   /**
    * **Tu permiso para aterrizar se retiró sin haberse oído**: se dejó la
    * final con él todavía esperando turno en la boca. Sin «cleared to land»
@@ -868,6 +880,39 @@ export class TurnoDePista {
     return null;
   }
 
+  /** Los segundos que te faltan para el umbral, si vuelas la final; si no, `null`. */
+  private get alUmbralEnFinal(): number | null {
+    const llegada = this.de.tuLlegada?.() ?? null;
+    return llegada?.donde === "final" ? llegada.segundos : null;
+  }
+
+  /**
+   * **Si la pista te va a quedar libre antes del umbral** (H96), con el margen
+   * de `LIBRE_ANTES_DEL_UMBRAL`. Al llegar a la decisión con alguien en ella te
+   * mandaba al aire siempre, aunque la estuviera dejando. Una torre te dice que
+   * sigas y te da el permiso por debajo: se autoriza con seguridad razonable de
+   * que al cruzar el umbral el de delante la habrá dejado (OACI, Doc 4444,
+   * 7.10.2; AMC18 ATS.TR.210(a)(3)); y el AIP de España lo publica para Tenerife
+   * Sur y Barajas: «Even if the runway is temporarily occupied by other traffic,
+   * landing clearance may be issued» (AD 2-GCTS, 20.2). Se mira en cada paso,
+   * así que si deja de estar claro, al aire; y a esos segundos del umbral, o
+   * está libre, o al aire.
+   */
+  private get quedaLibreATiempo(): boolean {
+    const alUmbral = this.alUmbralEnFinal;
+    const falta = alUmbral === null ? undefined : this.de.trafico()?.libreDentroDe?.(alUmbral);
+    return alUmbral !== null && falta !== undefined && falta + LIBRE_ANTES_DEL_UMBRAL <= alUmbral;
+  }
+
+  /** Si el que iba delante ya aterrizó y dejó la pista, aunque no lo haya cantado. */
+  private yaLaDejo(matricula: string): boolean {
+    const trafico = this.de.trafico();
+    if (!trafico?.ocupanLaPista || !trafico.dibujado?.(matricula)) return false;
+    return (
+      trafico.enFinal(matricula) === null && !trafico.ocupanLaPista().includes(matricula)
+    );
+  }
+
   /** Si algún avión dibujado está encima de la pista. Ver `ocupanLaPista`. */
   private get ocupadaEnElDibujo(): boolean {
     return (this.de.trafico()?.ocupanLaPista?.().length ?? 0) > 0;
@@ -1425,6 +1470,8 @@ export class TurnoDePista {
         this.de.boca.retirar(esTuPermisoDeAterrizar);
         this.de.retirarteElPermiso?.();
       }
+      // Ni se te dice que sigas en una final que ya no existe.
+      if (this.enFinal) this.de.boca.retirar(esTuContinua);
       this.enFinal = false;
       this.aterrizajeSinAutorizar = false;
       this.numeroDos = null;
@@ -1448,9 +1495,13 @@ export class TurnoDePista {
        */
       const ocupada = (): boolean => this.ocupadaEnElDibujo;
       if (this.conTorre && !this.alAireEnEstaFinal && ocupada()) {
-        this.decirQueEstaOcupada();
+        this.decirQueEstaOcupada(true);
         const alto = this.de.alto();
-        if (alto < ALTURA_DE_DECISION && !this.de.mandanFrustrar?.()) {
+        if (
+          alto < ALTURA_DE_DECISION &&
+          !this.quedaLibreATiempo &&
+          !this.de.mandanFrustrar?.()
+        ) {
           this.alAireEnEstaFinal = true;
           this.de.mandarteAlAire(alto, ocupada);
           return;
@@ -1508,15 +1559,27 @@ export class TurnoDePista {
       return;
     }
     const alto = this.de.alto();
+    // «Continúe aproximación» a doscientos pies ya no dice nada: se decide.
+    if (alto < ALTURA_DE_DECISION && this.de.boca.esperaAlguna(esTuContinua))
+      this.de.boca.retirar(esTuContinua);
     if (this.numeroDos && this.de.radio.laTiene(this.numeroDos)) {
       this.decirQueEstaOcupada();
-      if (alto < ALTURA_DE_DECISION) {
-        const delante = this.numeroDos;
+      if (alto >= ALTURA_DE_DECISION) return;
+      const delante = this.numeroDos;
+      /*
+       * **Por debajo de la decisión, la torre mira la pista**: si la está
+       * dejando y al umbral va a estar libre, sigues —ver
+       * `quedaLibreATiempo`—; y si ya la dejó, no se espera a que lo cante.
+       */
+      if (this.alUmbralEnFinal !== null && this.yaLaDejo(delante))
+        this.de.radio.dejoLaPista(delante);
+      else if (this.quedaLibreATiempo) return;
+      if (this.de.radio.laTiene(delante)) {
         this.aterrizajeSinAutorizar = false;
         this.alAireEnEstaFinal = true;
         this.de.mandarteAlAire(alto, () => this.de.radio.laTiene(delante));
+        return;
       }
-      return;
     }
     /*
      * **Y la pista que se ve, además de la que se oye.** Lo de arriba mira
@@ -1530,7 +1593,7 @@ export class TurnoDePista {
     const ocupada = (): boolean => this.ocupadaEnElDibujo;
     if (ocupada()) {
       this.decirQueEstaOcupada();
-      if (alto < ALTURA_DE_DECISION) {
+      if (alto < ALTURA_DE_DECISION && !this.quedaLibreATiempo) {
         this.aterrizajeSinAutorizar = false;
         this.despejeSinDecir = null;
         this.alAireEnEstaFinal = true;
@@ -1558,6 +1621,7 @@ export class TurnoDePista {
       (despeje !== null && this.de.boca.espera(despeje)) ||
       this.de.boca.esperaAlguna(sueltaLaPista);
     if (todaviaNoEsTuya()) {
+      if (alto >= ALTURA_DE_DECISION) return;
       /*
        * **Y sin permiso a la altura de decisión, al aire.** Esperar a que se
        * oiga lo que suelta la pista tenía un fallo: la espera no miraba la
@@ -1568,14 +1632,25 @@ export class TurnoDePista {
        * torre de verdad no autoriza a quien ya está tocando: a la altura de
        * decisión, o la pista es tuya y lo sabes, o te vas. Y quien se va,
        * vuelve por el circuito y la tiene en la final siguiente.
+       *
+       * **Menos con la pista ya libre a la vista** (H96): por debajo de la
+       * decisión el permiso se da a la vista y sin voz, así que lo que queda por
+       * oír no le tapa a nadie el suyo. Lo que solo suelta la pista —el «pista
+       * libre» del que ya salió de ella— se retira, que detrás de tu verde
+       * contaría otra cosa; y lo que se le dice a otro para quitársela puede
+       * sonar todavía, mientras quepa antes del umbral.
        */
-      if (alto < ALTURA_DE_DECISION) {
+      const alUmbral = this.alUmbralEnFinal;
+      const porOir = despeje !== null && this.de.boca.espera(despeje);
+      if (alUmbral === null || (porOir && alUmbral <= LIBRE_ANTES_DEL_UMBRAL)) {
         this.aterrizajeSinAutorizar = false;
         this.despejeSinDecir = null;
         this.alAireEnEstaFinal = true;
         this.de.mandarteAlAire(alto, todaviaNoEsTuya);
+        return;
       }
-      return;
+      if (porOir) return;
+      this.de.boca.retirar(sueltaLaPista);
     }
     /*
      * **Y dando la vuelta que te pidieron, todavía no.** Es para que salga el
@@ -1607,13 +1682,13 @@ export class TurnoDePista {
   }
 
   /**
-   * **Que la pista está ocupada, dicho una vez por final** y solo donde lo
-   * dice alguien: un AFIS, que informa. Ver `avisarteOcupada`.
+   * **Que la pista está ocupada, dicho una vez por final**: un AFIS lo informa
+   * y una torre te dice que sigas. Ver `avisarteOcupada`.
    */
-  private decirQueEstaOcupada(): void {
+  private decirQueEstaOcupada(conPermiso = false): void {
     if (this.ocupadaDicha || this.de.privado()) return;
     this.ocupadaDicha = true;
-    this.de.avisarteOcupada?.();
+    this.de.avisarteOcupada?.(conPermiso);
   }
 
   /**
