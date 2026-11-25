@@ -654,14 +654,17 @@ export function grafoPorSusCalles(grafo: Grafo, suyas: readonly string[], todas:
   const clave = suyas.join("-");
   let hecho = delGrafo.get(clave);
   if (!hecho) {
-    hecho = {
-      ...grafo,
-      tramos: grafo.tramos.map((t) =>
-        t.ref !== null && todas.has(t.ref) && !suyas.includes(t.ref) && !t.estrecho
-          ? { ...t, estrecho: true, coste: (t.coste ?? t.largo) * PENALIZACION_ESTRECHO }
-          : t,
-      ),
-    };
+    const tramos = grafo.tramos.map((t) =>
+      t.ref !== null && todas.has(t.ref) && !suyas.includes(t.ref) && !t.estrecho
+        ? { ...t, estrecho: true, coste: (t.coste ?? t.largo) * PENALIZACION_ESTRECHO }
+        : t,
+    );
+    // Si no cambia ninguno, el mismo: lo que se guarda de un grafo, se guarda una vez.
+    hecho = tramos.every((t, k) => t === grafo.tramos[k]) ? grafo : { ...grafo, tramos };
+    // Y los enganches, que no miran lo que cuesta un tramo, los mismos.
+    let enganchados = ENGANCHES_GUARDADOS.get(grafo);
+    if (!enganchados) ENGANCHES_GUARDADOS.set(grafo, (enganchados = new Map()));
+    ENGANCHES_GUARDADOS.set(hecho, enganchados);
     delGrafo.set(clave, hecho);
   }
   return hecho;
@@ -2292,6 +2295,108 @@ function rodajesConSentido(
     };
   };
   return destinos.map(alDestino);
+}
+
+/** La calle por la que se rueda dentro de la plataforma y sus puertas a la paralela: `Aerodrome.aipPuestos.primeraPuerta`. */
+export interface PuertasDePlataforma {
+  readonly calle: string;
+  readonly puertas: readonly string[];
+}
+
+/** Dónde deja la calle de plataforma el camino a una puerta: el sitio, la puerta y hacia dónde sale. */
+interface RamalDePuerta {
+  readonly xy: Punto;
+  readonly puerta: string;
+  readonly sale: Punto;
+}
+
+/** Los de cada grafo, que no cambia una vez hecho. */
+const RAMALES_DE_PUERTA = new WeakMap<Grafo, WeakMap<PuertasDePlataforma, RamalDePuerta[]>>();
+
+/**
+ * Los ramales de las puertas: la punta de la puerta que toca la calle de plataforma, o la del chaflán
+ * —en OpenStreetMap, un tramo sin letra— que la une a ella. La puerta por la que este avión no cabe
+ * (`Tramo.estrecho`) no tiene: no está disponible.
+ */
+function ramalesDePuerta(grafo: Grafo, datos: PuertasDePlataforma): RamalDePuerta[] {
+  let suyos = RAMALES_DE_PUERTA.get(grafo);
+  if (!suyos) RAMALES_DE_PUERTA.set(grafo, (suyos = new WeakMap()));
+  const ya = suyos.get(datos);
+  if (ya) return ya;
+  const hechos: RamalDePuerta[] = [];
+  const tocaLaCalle = (nudo: number): boolean => (grafo.desde[nudo] ?? []).some((k) => grafo.tramos[k]!.ref === datos.calle);
+  const apunta = (nudo: number, tramo: Tramo, puerta: string): void => {
+    const sale = haciaDondeVa(tramo.a === nudo ? tramo.puntos : [...tramo.puntos].reverse(), COMO_LLEGA);
+    if (sale) hechos.push({ xy: grafo.nudos[nudo]!, puerta, sale });
+  };
+  for (const t of grafo.tramos) {
+    if (t.ref === null || !datos.puertas.includes(t.ref) || t.estrecho) continue;
+    for (const punta of [t.a, t.b]) {
+      if (tocaLaCalle(punta)) apunta(punta, t, t.ref);
+      for (const k of grafo.desde[punta] ?? []) {
+        const chaflan = grafo.tramos[k]!;
+        if (chaflan.ref !== null || chaflan.pista || chaflan.estrecho) continue;
+        const otra = chaflan.a === punta ? chaflan.b : chaflan.a;
+        if (tocaLaCalle(otra)) apunta(otra, chaflan, t.ref);
+      }
+    }
+  }
+  suyos.set(datos, hechos);
+  return hechos;
+}
+
+/**
+ * **La primera puerta que esta ruta se encuentra por delante** rodando por la calle de plataforma, antes
+ * de dejarla: la que toma, o la que se salta. A menos de `margen` metros de donde empieza a rodar por
+ * ella no cuenta, que ya no se puede tomar: el tractor deja el avión con el morro en su boca. `null` si
+ * no rueda por esa calle o no se encuentra ninguna.
+ */
+export function primeraPuertaDe(grafo: Grafo, ruta: Ruta, datos: PuertasDePlataforma, margen = RECTO_HASTA_EL_RAMAL): string | null {
+  const ramales = ramalesDePuerta(grafo, datos);
+  let metros = 0;
+  for (const paso of ruta.tramos) {
+    if (paso.ref !== null && datos.puertas.includes(paso.ref)) return null;
+    for (let i = 1; i < paso.puntos.length; i++)
+      metros += Math.hypot(paso.puntos[i]![0] - paso.puntos[i - 1]![0], paso.puntos[i]![1] - paso.puntos[i - 1]![1]);
+    const fin = paso.puntos[paso.puntos.length - 1]!;
+    const llega = haciaDondeVa(paso.puntos, Infinity);
+    if (metros < margen || !llega) continue;
+    const ramal = ramales.find(
+      (r) => Math.hypot(r.xy[0] - fin[0], r.xy[1] - fin[1]) <= SOLDADURA && punto(llega, r.sale) >= NO_SE_VUELVE,
+    );
+    if (ramal) return ramal.puerta;
+  }
+  return null;
+}
+
+/**
+ * **Estas rutas de salida, cada una por la primera puerta que se encuentra** (H95): el AIP de Tenerife Sur
+ * manda ir al umbral en uso «through the first available apron gate», y por metros dan casi lo mismo
+ * todas, que la paralela va al lado de la calle de plataforma: el buscador seguía por dentro hasta la
+ * última. `rehacer` traza las mismas rutas en el grafo con las demás puertas encarecidas
+ * (`grafoPorSusCalles`). Si por la primera hay un avión parado y por la otra no, por la otra: es
+ * «available», disponible. Sin el dato, como estaban.
+ */
+export function porLaPrimeraPuerta(
+  grafo: Grafo,
+  rutas: readonly (Ruta | null)[],
+  datos: PuertasDePlataforma | undefined,
+  rehacer: (grafo: Grafo) => readonly (Ruta | null)[],
+  margen?: number,
+): (Ruta | null)[] {
+  if (!datos) return [...rutas];
+  const todas = new Set(datos.puertas);
+  const porPuerta = new Map<string, readonly (Ruta | null)[]>();
+  return rutas.map((r, k) => {
+    const puerta = r && primeraPuertaDe(grafo, r, datos, margen);
+    if (!r || !puerta) return r;
+    if (r.letras.find((l) => todas.has(l)) === puerta) return r;
+    let otras = porPuerta.get(puerta);
+    if (!otras) porPuerta.set(puerta, (otras = rehacer(grafoPorSusCalles(grafo, [puerta], todas))));
+    const otra = otras[k];
+    if (!otra || otra.letras.find((l) => todas.has(l)) !== puerta || (otra.ocupada && !r.ocupada)) return r;
+    return otra;
+  });
 }
 
 /** Lo que tiene que medir un trozo recto de la calle para empujar por él, m. Ver `porLaRectaDeSuCalle`. */

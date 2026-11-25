@@ -9,7 +9,7 @@
  * los datos de cada aeródromo de verdad y cada tipo que opera en él.
  */
 import { describe, expect, it } from "vitest";
-import { enElPavimento, type Aerodrome } from "./aerodrome";
+import { aLaPolilinea, enElPavimento, type Aerodrome } from "./aerodrome";
 import { SCENARIOS } from "./scenarios";
 import { sueloDelTrafico, type EnElPlano } from "./suelo-del-trafico";
 import { enEjesDePista } from "./rumbo";
@@ -54,8 +54,11 @@ describe("el tráfico rueda por las calles, nunca por la hierba", () => {
     const aero = esc.aerodrome as Aerodrome;
     const ancho = aero.runways[0]?.widthM ?? 45;
     const suelo = sueloDelTrafico(aero, esc.runway, ancho);
+    // O sobre la raya pintada de un puesto, que es pavimento aunque el dibujo le deje una rendija: entre la T y
+    // la plataforma de Fuerteventura, once metros (H76, H95).
     const sobreElAsfalto = (p: EnElPlano) =>
-      enElPavimento(aero, [p.x, -p.z], HOLGURA);
+      enElPavimento(aero, [p.x, -p.z], HOLGURA) ||
+      (aero.parkingPositions ?? []).some((q) => q.entrada && aLaPolilinea([p.x, -p.z], q.entrada) < 1);
 
     it(`${esc.id}: el que aterriza sale por una calle y rueda por asfalto hasta un puesto`, () => {
       expect(suelo, esc.id).not.toBeNull();
