@@ -186,10 +186,11 @@ const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
 /**
  * Lo más que se espera a que acabe el ejercicio, en segundos de reloj. El de
- * la despresurización empieza a cien kilómetros, arriba: más rato.
+ * la despresurización empieza a cien kilómetros, arriba: más rato. Y en el de la
+ * radio cabe otra vuelta: si al ir a tomar hay alguien en la pista, uno se va.
  */
 const TOPE = Number(
-  process.env.OGA_TOPE ?? (MODO === "despres" ? 1800 : MODO === "radio" && process.env.OGA_PISTA_OCUPADA === "1" ? 2600 : 1200),
+  process.env.OGA_TOPE ?? (MODO === "despres" ? 1800 : MODO === "radio" ? 2600 : 1200),
 );
 
 const server = await createServer({
@@ -429,6 +430,8 @@ try {
       let ladoDeLasAlas = 1;
       let alasEn = null;
       let sinVerdeEnLaFinal = 0;
+      /** En cada final sin la verde: con qué luz, y quién estaba en la pista o en la final por delante. */
+      const sinVerdePor = [];
       let ocupadaPuesta = null;
       let rojaConAlguienEnLaPista = null;
       let lamparaVista = null;
@@ -1172,6 +1175,18 @@ try {
             }
             if (luz === "roja" || (luz !== "verde" && sobre < 60 && u > 0)) {
               if (luz !== "roja") sinVerdeEnLaFinal++;
+              sinVerdePor.push({
+                luz: luz ?? "apagada",
+                sobre: Math.round(sobre),
+                enLaPista: (o.trafico?.() ?? []).filter((a) => a.enLaPista).map((a) => a.matricula),
+                trafico: (o.traficoPorDentro?.() ?? []).map(
+                  (a) =>
+                    `${a.matricula} ${a.tipo} ${a.camino} ${Math.round(a.recorrido)} m, ${Math.round(a.alto)} m de alto${a.conPermiso ? ", con permiso" : ""}${a.quieto > 1 ? `, parado ${Math.round(a.quieto)} s` : ""}`,
+                ),
+                permiso: o.sendaYPermiso?.() ?? null,
+                enLaFinalDeLaTorre: o.enLaFinalDeLaTorre?.() ?? null,
+                noTeMira: o.noTeMira?.() ?? null,
+              });
               if (luz === "roja" || sinVerdeEnLaFinal <= 2) {
                 tramo = "circuito";
                 paso = 0;
@@ -1331,6 +1346,7 @@ try {
         dichoAlVolver,
         alasEn,
         sinVerdeEnLaFinal,
+        sinVerdePor,
         ocupadaPuesta,
         rojaConAlguienEnLaPista,
         lamparaVista,
@@ -1736,6 +1752,7 @@ try {
             `con la verde ${ej?.radio?.conLaVerde} · finales sin la verde ${r.sinVerdeEnLaFinal}`
         : `no llegó · lo más bajo ${Math.round(r.bajo)} m · finales sin la verde ${r.sinVerdeEnLaFinal}`,
     );
+    for (const f of r.sinVerdePor ?? []) console.log(`    final sin la verde: ${JSON.stringify(f)}`);
     comprobar(
       "sin llamada ni bomberos: sin radio no hay llamada, y nada se ha roto",
       !ej?.declarada && !ej?.bomberos,
