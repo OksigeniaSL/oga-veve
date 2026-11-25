@@ -572,6 +572,10 @@ export function noSePierde(
  * instructora, esperaba detrás y se caía sin sonar. Dicha unos segundos tarde
  * sigue siendo verdad. Ver `declararMayday` en `game.ts`.
  */
+export function respondeAUnaEmergencia(clave: string | undefined): boolean {
+  return !!clave && LA_EMERGENCIA.test(clave);
+}
+
 const LA_EMERGENCIA = /^torre\.(?:[a-z]+\.)?(?:mayday|panpan)(?:@|$)/;
 
 /**
@@ -584,7 +588,15 @@ const LA_EMERGENCIA = /^torre\.(?:[a-z]+\.)?(?:mayday|panpan)(?:@|$)/;
  * sonar —en 6 de 7 vuelos enteros del JAZ 90 en Los Rodeos, siempre a los
  * 21,3 s—, y con él el «el tractor arranca» de la instructora. Es un permiso de
  * la torre para ti: espera su turno como los demás.
+ *
+ * Y en el aire ya no vale: son del puesto y de antes de rodar. Como no caducan,
+ * lo que quedara por decir al despegar se decía volando. Lo retira el juego al
+ * irse al aire.
  */
+export function esDeAntesDeRodar(clave: string | undefined): boolean {
+  return !!clave && LA_RUTA.test(clave);
+}
+
 const LA_RUTA = /^torre\.(?:[a-z]+\.)?(?:destino|clearedTo|pushback)(?:@|$)/;
 
 /**

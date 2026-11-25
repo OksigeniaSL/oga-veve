@@ -74,6 +74,7 @@ import {
   DICE_LA_TORRE,
   DICE_UN_AFIS,
   enUnAfis,
+  esDeAntesDeRodar,
   esElAvisoDeAves,
   esLaInformacionDeTrafico,
   esTuPermisoDeAterrizar,
@@ -81,6 +82,7 @@ import {
   PISTA_DETRAS,
   PISTA_EN_MEDIO,
   PISTA_EN_USO_DELANTE,
+  respondeAUnaEmergencia,
 } from "./audio/torre";
 import {
   bandaSinMotor,
@@ -16229,6 +16231,8 @@ export class Game {
      * `seLePasoElMomento`.
      */
     BOCA.retirar((c) => seLePasoElMomento(c, this.faseDeAhora as Fase));
+    // Ni la ruta ni el empuje, que son del puesto, con el avión ya volando.
+    if (!this.flight.state.onGround) BOCA.retirar((c) => esDeAntesDeRodar(c));
     // Las llamadas de cabina que esperan su anuncio, y el «arrancá el motor»
     // que espera a los toboganes. Ver `atenderALasLlamadas`.
     this.atenderALasLlamadas();
@@ -25210,6 +25214,14 @@ export class Game {
       9,
       true,
     );
+    /*
+     * **Una respuesta, no dos**: la del combustible y la del motor que se para
+     * pueden pedirse en el mismo medio minuto, y con la primera sin sonar eran
+     * dos «roger MAYDAY» seguidos. Y la que se quedó vieja —un PAN-PAN que ya es
+     * MAYDAY— se retira.
+     */
+    if (BOCA.esperaAlguna((c) => c?.startsWith(montada.clave) === true)) return;
+    BOCA.retirar((c) => respondeAUnaEmergencia(c));
     this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
   }
 

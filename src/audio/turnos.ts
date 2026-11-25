@@ -32,6 +32,8 @@
  *    pero **pasa delante** de todo lo que espera; y lo que describe algo que
  *    sigue ahí —las aves, el tráfico— espera lo que haga falta y lo retira
  *    quien sabe que dejó de ser verdad.
+ *    - **Y de lo que es para ti, primero la respuesta a una emergencia**: ver
+ *      `PESO_DE_LA_EMERGENCIA`.
  * 4. **La instructora** (`normal`): lo que enseña ahora mismo.
  *    - **Y lo que explica un mando la primera vez que se usa** —los pedales,
  *      la palanca que se queda—, que es suyo y puede esperar a otro rato:
@@ -64,6 +66,7 @@
 
 import type { Urgencia } from "./boca";
 import { esUnaLlamada, llamadaAntesDe } from "./tonos-de-cabina";
+import { respondeAUnaEmergencia } from "./torre";
 
 /**
  * **Si esta frase es de la megafonía**: la comandante, la tripulación y lo que
@@ -108,6 +111,7 @@ export function pesoDe(clave: string | undefined, urgencia: Urgencia): number {
   if (urgencia !== "urgente" && esUnaLlamada(clave)) return PESO_DE_SU_LLAMADA;
   if (urgencia === "baja") return esDeLaMegafonia(clave) ? PESO_DE_LA_MEGAFONIA : PESO.baja;
   if (urgencia === "normal" && explicaUnMando(clave)) return PESO_DE_EXPLICAR_UN_MANDO;
+  if (urgencia === "mando" && respondeAUnaEmergencia(clave)) return PESO_DE_LA_EMERGENCIA;
   return PESO[urgencia];
 }
 
@@ -123,6 +127,17 @@ const PESO_DE_LA_MEGAFONIA = 1;
 
 /** Y lo que explica un mando: por debajo de lo que pasa ahora. Ver `explicaUnMando`. */
 const PESO_DE_EXPLICAR_UN_MANDO = 2;
+
+/**
+ * **La respuesta a una emergencia, delante de lo demás que es para ti**: «roger
+ * MAYDAY» es lo primero que dice una torre, y lo demás espera: «the distress
+ * communications have absolute priority over all other communications»
+ * (SERA.14095, que es el 5.3.2.4.1 del Anexo 10, vol. II, de la OACI); las de
+ * urgencia, sobre todas menos las de socorro. Pesaba lo que un permiso
+ * cualquiera y entre iguales la cola es una cola: en el planeo del JAZ 90, con
+ * la pista pedida antes, se decía al tocar o no se decía.
+ */
+const PESO_DE_LA_EMERGENCIA = 4.2;
 
 /**
  * **Y la voz que va detrás de su llamada, la siguiente**: por encima de lo

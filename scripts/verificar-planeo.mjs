@@ -79,6 +79,22 @@ try {
   await page
     .waitForFunction(() => (globalThis.__oga?.voz?.().pack ?? "listo") === "listo", null, { timeout: 120000 })
     .catch(() => {});
+  /*
+   * **Y con lo del puesto ya dicho**, como en un vuelo que lleva su rato: al
+   * ponerse en marcha la torre da la ruta, que no caduca, y el planeo, a cuatro
+   * veces, dura lo que cuatro frases. «Autorizado a Tenerife Norte» sonaba sin
+   * motor y el «roger MAYDAY» se quedaba en la cola.
+   */
+  await page
+    .waitForFunction(
+      () => {
+        const b = globalThis.__oga?.bocaAhora?.();
+        return !b || (!b.ocupada && b.espera.length === 0);
+      },
+      null,
+      { timeout: 60000 },
+    )
+    .catch(() => {});
   await page.waitForTimeout(1500);
 
   const r = await page.evaluate(async (lejos) => {
