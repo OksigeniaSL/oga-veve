@@ -495,8 +495,8 @@ try {
       /*
        * **Y sin radio, por el lado del circuito del campo** (H86), que es por
        * donde se vuelve mirando a la torre: en Gran Canaria es la derecha, que
-       * es por donde iba siempre el banco, pero en Asunción es la izquierda —
-       * «harán todos los virajes hacia la izquierda» (DINAC R 2, 3.2.5 c)—.
+       * es por donde iba siempre el banco, y en Asunción, el este que publica su
+       * carta, que por la 02 es la derecha y por la 20 la izquierda (H92).
        */
       const ladoDelCircuito =
         modo === "radio"

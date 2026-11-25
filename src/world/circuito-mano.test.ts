@@ -23,11 +23,14 @@
 import { describe, expect, it } from "vitest";
 import {
   alturaDelCircuito,
+  bajadaDelVientoEnCola,
   formaDelCircuito,
   holguraDelCircuito,
+  lineaDelCircuito,
   manoDelCircuito,
   pasilloDelCircuito,
   SOBRE_EL_TERRENO,
+  verticesDelCircuito,
 } from "./circuito";
 
 /** Una pista mirando al norte, centrada en el origen, a veinticinco metros. */
@@ -146,5 +149,55 @@ describe("la altura del circuito", () => {
     if (reactor.mano === "izquierda")
       expect(reactor.altura).toBeGreaterThanOrEqual(300 + SOBRE_EL_TERRENO);
     else expect(reactor.altura).toBe(alturaDelCircuito(escala));
+  });
+});
+
+/** La regla de la altitud publicada, sobre llano. Ver `formaDelCircuito`. */
+describe("la altitud publicada", () => {
+  const llano = () => COTA;
+  const costumbre = alturaDelCircuito(1);
+
+  it("es sobre el nivel del mar: la altura es lo que le queda al campo", () => {
+    const f = formaDelCircuito(PISTA, COTA, llano, 1, { altitud: COTA + 340 });
+    expect(f).toEqual({ mano: "izquierda", altura: 340, enLaBase: costumbre });
+    // En un campo cien metros más alto, la misma altitud son cien metros menos.
+    const alto = formaDelCircuito(PISTA, COTA + 100, () => COTA + 100, 1, { altitud: COTA + 340 });
+    expect(alto).toEqual({ mano: "izquierda", altura: 240 });
+  });
+
+  it("también por debajo de la de costumbre, y entonces la base es más tendida", () => {
+    expect(formaDelCircuito(PISTA, COTA, llano, 1, { altitud: COTA + 220 })).toEqual({
+      mano: "izquierda",
+      altura: 220,
+    });
+  });
+
+  it("pero el terreno manda por abajo", () => {
+    const monte = () => COTA + 120;
+    const f = formaDelCircuito(PISTA, COTA, monte, 1, { mano: "derecha", altitud: COTA + 220 });
+    expect(f).toEqual({ mano: "derecha", altura: 120 + SOBRE_EL_TERRENO });
+  });
+
+  it("y donde no cabe en la figura de este avión no se fuerza", () => {
+    // Del centro de la pista a la esquina de la base, 2.800 m: a tres grados, 147 m.
+    const justo = formaDelCircuito(PISTA, COTA, llano, 1, { altitud: COTA + costumbre + 146 });
+    expect(justo.altura).toBeCloseTo(costumbre + 146, 6);
+    const pasa = formaDelCircuito(PISTA, COTA, llano, 1, { altitud: COTA + costumbre + 148 });
+    expect(pasa).toEqual({ mano: "izquierda", altura: costumbre });
+  });
+
+  it("la línea lleva el punto en el que se empieza a bajar, y solo entonces", () => {
+    const deSiempre = verticesDelCircuito(PISTA, COTA);
+    expect(bajadaDelVientoEnCola(deSiempre)).toBeNull();
+    expect(lineaDelCircuito(deSiempre)).toBe(deSiempre);
+    const v = verticesDelCircuito(PISTA, COTA, "izquierda", 1, 340, costumbre);
+    const linea = lineaDelCircuito(v);
+    expect(linea).toHaveLength(6);
+    expect(linea[3]!.y).toBe(COTA + 340);
+    // A la altura del viento en cola hasta ahí, y a la de la base en la esquina.
+    expect(linea[2]!.y).toBe(COTA + 340);
+    expect(linea[4]!.y).toBe(COTA + costumbre);
+    // Y sobre la misma recta: por el suelo no se mueve nada.
+    expect(linea[3]!.x).toBeCloseTo(v[2]!.x, 6);
   });
 });

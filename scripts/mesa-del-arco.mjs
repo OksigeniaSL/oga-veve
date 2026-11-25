@@ -164,7 +164,7 @@ const DT = 1 / 60;
  *   `avion`, su id; `piloto`, el de `elPilotoDelBanco`; `semilla`, la de las
  *   rachas. Y lo que se quiera cambiar: `peldano`, `masa` (kg), `sigma` (σ_w,
  *   m/s), `constancia`, `sinRacha`, `viento` (nudos) y `vientoDe` (grados desde
- *   el eje), `mano` y `altura` del circuito; `dx` y `dy`, m, y `rumbo`, grados,
+ *   el eje), `mano`, `altura` y `enLaBase` del circuito; `dx` y `dy`, m, y `rumbo`, grados,
  *   de más en el viento en cola; `cadaCuantos` fotogramas vuela el automático;
  *   `conTraza`, diez veces por segundo.
  */
@@ -201,6 +201,7 @@ export function vuelaElArco(p) {
     p.mano ?? "izquierda",
     escala,
     p.altura ?? alturaDelCircuito(escala, pista.senda),
+    p.enLaBase,
   );
   const DE_BASE = a.approachSpeed + 15 * NUDO;
   {
@@ -224,7 +225,7 @@ export function vuelaElArco(p) {
     const i = indicadaDe(s, aire);
     return i > 10 ? (indicada * s.airspeed) / i : indicada;
   };
-  const y0 = v[3].y;
+  const y0 = v[2].y;
   const v0 =
     Math.max(DE_BASE, maniobraCon(a, 2 / 3)) / Math.sqrt(airDensity(y0, aire) / 1.225);
   m.reset({
@@ -335,7 +336,10 @@ export function vuelaElArco(p) {
         for (let k = aDonde; k < v.length - 1; k++)
           d += Math.hypot(v[k + 1].x - v[k].x, v[k + 1].z - v[k].z);
         d += Math.hypot(v[4].x, v[4].z) + 250;
-        const tope = aDonde >= 4 ? v[3].y : meta.y;
+        const tope =
+          aDonde >= 4
+            ? v[3].y
+            : Math.min(v[2].y, v[3].y + Math.hypot(v[3].x - s.position.x, v[3].z - s.position.z) * SENDA);
         const altoQueToca = Math.min(tope - CABECERA, d * SENDA + tren);
         const quiereIr = velocidadDelTramo(s);
         gasQueSostiene = Math.max(
