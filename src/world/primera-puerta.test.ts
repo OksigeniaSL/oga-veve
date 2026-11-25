@@ -90,6 +90,8 @@ describe("lo que lleva la ficha", () => {
     expect(rodaje).toMatch(/AD 2-GCTS, casilla 20\.3\.2 \(AIRAC AMDT 10\/26, WEF 29-OCT-26\).*through the first available apron gate.*nosing to the threshold in use.*from the parking stand centre line for PRKG E49 to E70/);
     expect(deFrente).toHaveLength(22);
     for (const p of puestos) {
+      // Los cinco de aviación general van por las suyas (H97): ver `flecos-de-las-plataformas.test.ts`.
+      if (p.aip?.uso === "general") continue;
       const suyo = deFrente.includes(p);
       expect(p.aip?.salePor, p.ref ?? "—").toEqual(suyo ? ["INNER"] : undefined);
       expect(p.aip?.llegaPor, p.ref ?? "—").toEqual(suyo ? { norte: ["T"], sur: ["T"] } : undefined);
@@ -123,13 +125,18 @@ describe("«through the first available apron gate»", () => {
           const nombre = `${p.ref} · ${a.id} · ${rumbo.toFixed(0)}°`;
           const { ruta } = saliendo(p.ref!, a, rumbo);
           // Hacia el umbral en uso; los cuatro que mandan al de la 25, hacia él, y de ahí por la D6.
-          const al25 = rumbo === la25 || ["R19", "G20", "AG21", "J22"].includes(p.ref!);
+          // Y los dos grandes del R45 y del R47, que por la 07 no tienen otra por delante que la D1 (H97).
+          const sinPuerta = a.wingSpan > 52 && ["R45", "R47"].includes(p.ref!);
+          const al25 = rumbo === la25 || sinPuerta || ["R19", "G20", "AG21", "J22"].includes(p.ref!);
           // De letra D, la D1: los dos grandes no caben (H88).
           const caben = PUERTAS.filter((d) => d !== "D1" || a.wingSpan <= 52);
           const cruce = ruta.vuelveEn === undefined ? ruta.puntos[1]! : ruta.puntos[ruta.vuelveEn]!;
           const toca = laPrimera(alo(cruce), al25 ? 1 : -1, 32, caben);
-          // A los dos grandes, del R42, el R45, el R47 y el S41 por la 07 no les queda ninguna: la D1 no les cabe. Van por donde iban.
-          if (toca === undefined) expect([a.wingSpan > 52, rumbo, "R42 R45 R47 S41".includes(p.ref!)], nombre).toEqual([true, la07, true]);
+          // A los dos grandes, del R42 y el S41 por la 07 no les queda ninguna a más de treinta y dos metros: van por la D2, que tienen en la boca.
+          if (toca === undefined) {
+            expect([a.wingSpan > 52, rumbo, "R42 S41".includes(p.ref!)], nombre).toEqual([true, la07, true]);
+            expect(puertaDe(ruta.letras), nombre).toBe("D2");
+          }
           else expect(puertaDe(ruta.letras), nombre).toBe(toca);
           miradas++;
           if (toca !== (al25 ? "D6" : "D1")) siguiente++;
@@ -151,6 +158,8 @@ describe("«through the first available apron gate»", () => {
     ["J1", "jaz-90", "25", "D6", 1965],
     ["R19", "jaz-90", "07", "D6", 2208],
     ["J5", "jaz-110", "07", "D3", 1757],
+    ["R47", "jaz-110", "07", "D2", 1307],
+    ["R45", "jaz-120", "07", "D3", 1829],
   ])("el %s con el %s por la %s, por la %s", (ref, id, pista, puerta, metros) => {
     const { ruta } = saliendo(ref, avion(id), pista === "07" ? la07 : la25);
     expect(puertaDe(ruta.letras)).toBe(puerta);
@@ -225,9 +234,9 @@ describe("la segunda línea, del E49 al E70", () => {
   }, 60_000);
 
   it.each([
-    ["jaz-20", "07", "E63", 352],
-    ["jaz-20", "25", "E49", 397],
-    ["jaz-60", "07", "E68", 677],
+    ["jaz-50", "07", "E63", 352],
+    ["jaz-50", "25", "E49", 397],
+    ["jaz-60", "07", "E69", 637],
     ["jaz-60", "25", "E49", 631],
   ])("el %s por la %s sale del %s, rodando %s m", (id, pista, ref, metros) => {
     const rumbo = pista === "07" ? la07 : la25;
@@ -258,9 +267,9 @@ describe("la segunda línea, del E49 al E70", () => {
   };
 
   it("se llega a ella de la T, por la raya del puesto: quien juega y el tráfico", () => {
-    // Quien juega, desde cada salida de pista.
+    // Quien juega, desde cada salida de pista; las avionetas van a la suya (H97).
     let llegadas = 0;
-    for (const id of ["jaz-20", "jaz-60"])
+    for (const id of ["jaz-50", "jaz-60"])
       for (const rumbo of [la07, la25]) {
         const plan = new PlanDeVuelo(aero, { ...campo.runway, heading: rumbo }, () => 600, avion(id));
         plan.reiniciar();
@@ -280,7 +289,7 @@ describe("la segunda línea, del E49 al E70", () => {
       }
     expect(llegadas).toBeGreaterThan(10);
     for (const heading of [la07, la25])
-      for (const t of [TIPOS.avioneta, TIPOS.bimotor, TIPOS.turbohelice]) {
+      for (const t of [TIPOS.turbohelice]) {
         const suelo = sueloDelTrafico(aero, { ...campo.runway, heading }, 45)!;
         const { camino } = suelo.llegada(t.toca + t.frena, undefined, undefined, undefined, undefined, undefined, t.envergadura)!;
         const fin = camino.at(-1)!;
@@ -292,7 +301,7 @@ describe("la segunda línea, del E49 al E70", () => {
 
   it("y el tráfico sale de ella por delante", () => {
     for (const heading of [la07, la25])
-      for (const t of [TIPOS.avioneta, TIPOS.bimotor, TIPOS.turbohelice]) {
+      for (const t of [TIPOS.turbohelice]) {
         const suelo = sueloDelTrafico(aero, { ...campo.runway, heading }, 45)!;
         const { camino } = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(t), undefined, undefined, undefined, t.envergadura)!;
         const [a, b, c] = camino;
