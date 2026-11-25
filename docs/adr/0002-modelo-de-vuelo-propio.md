@@ -1512,6 +1512,12 @@ limpia y los flaps fuera subía un poco en cada cambio. El JAZ 20 de ese banco
 no se ha vuelto a volar con la versión que queda (con la primera, sus 40
 pasaban).
 
+**Añadido el 25-11-2026 (H90)**: esas tiradas del JAZ 120 fueron **con los motores parados**. Desde el 10-11 sale
+empujado de su puesto en Pettirossi, la llave no arranca hasta la baliza y el tractor, y el banco no lo miraba (ADR 0025,
+H90): el 79 de 80, tocando el suelo en la final, y el 40 de 40 son de un planeo. Con los motores en marcha y vigilados, la
+versión que queda da 82 de 82, los dos aviones; la primera versión de `comoIba` no se ha vuelto a volar. La mesa no pasa
+por la llave y no cambia.
+
 ## Nota H38g (20-11-2026): el reactor del modelo sencillo, arriba, llega a su indicada y baja lo que planea
 
 ### Lo que pasaba

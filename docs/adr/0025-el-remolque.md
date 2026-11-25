@@ -3007,6 +3007,23 @@ G9 y el G10, y el G10 y el H37: el tráfico y quien juega no se esperan por eso.
 
 **El R40 y el H47** están pintados y no están en la carta: sin salida publicada no llevan APROAR ni tractor.
 
+## Enmienda (25-11-2026, H90): los bancos que arrancaban con la tecla medían un planeo
+
+**La llave que en un puesto de pasarela no arranca** hasta la baliza y el tractor se la encontraron también los bancos. Doce
+arrancaban con la tecla y seguían sin mirar; y colocar el avión en el aire quita el tractor, pero el motor se queda como
+estaba. Con un reactor en el 3 o el 6 de Pettirossi, el T12 de Gran Canaria o el 24 de Los Rodeos, que es donde nacen,
+`engineOn` era falso y el N1 cero mientras medían. Así estaban, con lo que traen por defecto, `verificar-crucero`,
+`verificar-cambio-de-peldano` con el JAZ 120, `verificar-despresurizacion`, `medir-sacudidas`, `verificar-mirada`,
+`ver-pasaje` y `verificar-planeo`, que además salía en rojo, 6 de 9: quitaba el combustible a un motor ya parado. No lo estaban
+`verificar-lo-nombrado` y `verificar-turbulencia`, que van con el JAZ 60; `verificar-combustible`, que sale del 1 de
+Guaraní por sus medios; ni `verificar-cabecera` y `verificar-escalones`, que ya lo ponían en marcha a mano en el aire.
+
+**El motor de los bancos**, en `scripts/motor-del-banco.mjs` y de una sola manera: a mano donde solo hace falta tenerlo en
+marcha; con las teclas de quien juega —la baliza, la llave del tractor y, empujando, la llave— en el que mira la llave, que
+es el del combustible; y vigilado cada quinto de segundo en el aire, con una comprobación que falla si se paró o si no se
+llegó a volar. A mano lleva una tecla que no hace nada: la «i» era también el primer gesto de la página, el que despierta el
+audio y baja el pack de voz.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
