@@ -14,6 +14,7 @@
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5611);
@@ -62,6 +63,9 @@ async function probar(mando, tramo) {
     });
     console.log(`  tarjeta: ${tarjeta}`);
   }
+  // En marcha: este banco ponía el gas sin haber arrancado, y el viraje lo medía planeando.
+  await ponerEnMarcha(page);
+  await vigilarElMotor(page);
   // Nueve kilómetros al norte (el norte es −z), a seiscientos metros y de espaldas al campo.
   await page.evaluate(() => {
     const o = globalThis.__oga;
@@ -143,6 +147,8 @@ async function probar(mando, tramo) {
     `${grados(vuelto.aguja?.relativo ?? 0)}° del morro`);
   comprobar(`${mando}: y la tarjeta vuelve a ser la de cambiar de destino`,
     !vuelto.perdido.perdido && !vuelto.perdido.virando && vuelto.etiqueta === "Cambiar de destino", vuelto.etiqueta);
+  const motor = await loDelMotor(page);
+  comprobar(`${mando}: ${EN_MARCHA}`, motor.ok, motor.detalle);
   comprobar(`${mando}: sin errores en la página`, errores.length === 0, errores.join(" | "));
   await contexto.close();
 }
