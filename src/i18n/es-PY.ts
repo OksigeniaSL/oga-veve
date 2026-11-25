@@ -458,8 +458,7 @@ export const ES_PY = {
    * **Y a quien llega con la pista todavía ocupada** (H96): que siga, y el
    * permiso llega cuando la tenga libre. «Continúe aproximación [prepare
    * posible motor y al aire]» en el RD 1180/2018, anexo V, 1.4.16 d; «continue
-   * approach» en el Doc 4444, 12.3.4.15 d. Espera su toma: ver
-   * `ESPERAN_SU_TOMA` en `audio/torre.ts`.
+   * approach» en el Doc 4444, 12.3.4.15 d.
    */
   "torre.continue": "{indicativo}, continúe aproximación",
   /* Y la verde a un avión **en el aire**, que en las señales de luz de verdad

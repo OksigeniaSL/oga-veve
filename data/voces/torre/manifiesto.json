@@ -371,6 +371,14 @@
       "ms": 954,
       "h": "88e1164763"
     },
+    "torre.solo.continueApproach": {
+      "ms": 1089,
+      "h": "0b75331721"
+    },
+    "torre.solo.continueAproximacion": {
+      "ms": 1554,
+      "h": "257c600484"
+    },
     "torre.solo.departingTraffic": {
       "ms": 1184,
       "h": "8e116ae613"
@@ -2134,6 +2142,28 @@
       "{p1}",
       "{p2}",
       "lado.es.central"
+    ],
+    "torre.solo.continueAproximacion": [
+      "torre.solo.continueAproximacion"
+    ],
+    "torre.solo.continueApproach": [
+      "torre.solo.continueApproach"
+    ],
+    "torre.continue": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.continueAproximacion"
+    ],
+    "torre.continueApproach": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.continueApproach"
     ]
   }
 }

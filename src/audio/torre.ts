@@ -74,8 +74,7 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
   /*
    * **Y a quien entra en final con la pista todavía ocupada: que siga**, que el
    * permiso llega cuando la tenga libre (Doc 4444, 12.3.4.15 d; en español, RD
-   * 1180/2018, anexo V, 1.4.16 d). Antes no se le decía nada. Espera su toma
-   * —ver `ESPERAN_SU_TOMA`— y hasta entonces no se dice. Ver
+   * 1180/2018, anexo V, 1.4.16 d). Antes no se le decía nada. Ver
    * `decirQueLaPistaEstaOcupada` en `game.ts`.
    */
   "continue approach": "torre.continueApproach",
@@ -303,13 +302,10 @@ export const EN_UN_AFIS: Readonly<Record<string, string | null>> = {
  * aprueba el control en el ejercicio de la tormenta.
  *
  * La de la lámpara en castellano, «regreso por pista» (H41i), los destellos
- * verdes de quien remonta, se grabó el 21-11-2026 con las dos voces de torre.
+ * verdes de quien remonta, se grabó el 21-11-2026 con las dos voces de torre; y
+ * «continúe aproximación» y «continue approach» (H96), el 25-11-2026.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
-  // H96: «continúe aproximación» y «continue approach», en las dos torres.
-  "torre.continue",
-  "torre.continueApproach",
-]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * Lo que dice un AFIS en vez de esta orden de torre, o `null` si no dice

@@ -3255,7 +3255,7 @@ que nadie le espere.
 - **Y la torre te dice que sigas**, una vez por final, si está ocupada al entrar:
   «continúe aproximación» en los dos peldaños de abajo y «continue approach» en los
   de arriba, por la puerta por la que un AFIS dice «pista ocupada». Antes no decía
-  nada. Esperan su toma (`ESPERAN_SU_TOMA`) y no se piden sin ella.
+  nada. Se grabaron el mismo día, con las dos voces de torre.
 - **La verde** no espera a quien decide contigo corriendo si al umbral ya habrás
   pasado el final (`estorbanTuSalida`).
 
@@ -3354,8 +3354,6 @@ salida de los 590 m por la 12 retrocede 128 m, y antes no llegaba a aterrizar.
 ### Lo que queda
 
 - **Los bancos del navegador no se volaron**: no hay turno.
-- **Las cuatro tomas** de «continúe aproximación» y «continue approach», con cada
-  torre. Hasta entonces no se dice nada, como antes.
 - **El permiso «detrás de»** de Tenerife Sur y Barajas, con la pista ocupada y de día:
   pide una frase nueva por tipo de avión, «behind landing…, cleared to land».
 - **Con quien juega ya en el aire y todavía sobre la pista**, quien llega decide como

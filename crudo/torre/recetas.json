@@ -1448,5 +1448,27 @@
     "{p1}",
     "{p2}",
     "lado.es.central"
+  ],
+  "torre.solo.continueAproximacion": [
+    "torre.solo.continueAproximacion"
+  ],
+  "torre.solo.continueApproach": [
+    "torre.solo.continueApproach"
+  ],
+  "torre.continue": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.continueAproximacion"
+  ],
+  "torre.continueApproach": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.continueApproach"
   ]
 }
