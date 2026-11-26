@@ -129,6 +129,11 @@ export interface DibujoDelTurno {
    */
   puedeSalirSinEsperarte?(matricula: string): boolean;
   /**
+   * Que los que llegan le cedan el turno a ese que sale. Sin esto, nadie cede.
+   * Ver `cederleElTurno` en `world/trafico.ts`.
+   */
+  cederleElTurno?(matricula: string | null): void;
+  /**
    * Y si el que sale se habría ido —remonte incluido— antes de que llegues.
    * Sin esto, sí: lo de antes. Ver `seVaAntesQueTu` en `world/trafico.ts`.
    */
@@ -1279,6 +1284,20 @@ export class TurnoDePista {
       .tapanTuSalida()
       .filter((q) => this.de.radio.indicativoDe(q.matricula) !== null);
     const llegada = this.de.tuLlegada?.() ?? null;
+    /*
+     * **Y sin radio, los que llegan ceden el turno al que ya te mandó al aire**
+     * (H102). Se le da la pista en cuanto queda libre (H100), pero en
+     * Encarnación remontarla le lleva más de cinco minutos y con alguien
+     * llegando cada pocos nunca quedaba un hueco así: esperaba en su raya hasta
+     * que volvías, y la lámpara te daba otra roja por él. A quien no oye no se le
+     * puede pedir nada, y al que oye sí: «aircraft which are in contact with the
+     * controller may be instructed by the controller to give way» (OACI, Doc
+     * 4444, 7.7.3.1). Ver `suTurnoDeSalir` en `world/trafico.ts`.
+     */
+    if (this.de.sinRadio?.() && !this.enTierra) {
+      const cede = tapan.find((q) => this.alAirePorEnEstaLlegada.has(q.matricula));
+      if (cede) trafico.cederleElTurno?.(cede.matricula);
+    }
     if (this.tapada) {
       this.seguirConTuSalida(dt, tapan, llegada);
       return;
