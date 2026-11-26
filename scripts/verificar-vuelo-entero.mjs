@@ -4836,6 +4836,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let tiempoDeRodajeVuelta = 0;
   let despego = 0;
   let toco = 0;
+  /**
+   * **Qué tapó la celebración de los sellos**, rodando despacio después de tocar con alguno por celebrar: los
+   * segundos con la boca ocupada (por frase), con una tarjeta que importa (por dibujo) y libres. Un «ninguno
+   * celebrado» no decía si no hubo un momento libre o si lo hubo y no se aprovechó (La Palma, ronda de la tanda
+   * 29). Ver `celebrarLosSellosSiToca` en `game.ts`.
+   */
+  const tapaSellos = { t: null, despacio: 0, libre: 0, hueco: 0, huecoMasLargo: 0, voz: {}, tarjeta: {} };
   /** La velocidad indicada y el gas al tocar, y la de referencia, m/s. */
   let alTocar = null;
   /**
@@ -7019,6 +7026,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m umbral ${alUmbral(s).toFixed(0)}m coche ${alCocheAhora < 0 ? "—" : `${alCocheAhora.toFixed(0)}/${ladoDelCoche.toFixed(0)}`} v${aDonde} suelo ${s.heightAboveGround.toFixed(0)}m en ${s.position.x.toFixed(0)},${s.position.z.toFixed(0)} ${tarjeta.dibujo || "—"}`,
       );
     }
+    // Lo que tapa los sellos, a la velocidad a la que se celebran. Ver `tapaSellos`.
+    if (toco > 0 && i % 5 === 0 && s.onGround && s.groundSpeed < 15) {
+      const dtTapa = tapaSellos.t === null ? 0 : t - tapaSellos.t;
+      tapaSellos.t = t;
+      if ((o.sellos?.()?.porCelebrar ?? []).length) {
+        const b = o.bocaAhora?.();
+        const voz = b?.ocupada ? b.ultima || "?" : b?.espera?.length ? `en cola ${b.espera[0]}` : "";
+        const tar = tarjeta && tarjeta.prioridad > 0 && tarjeta.queda > 0 ? tarjeta.dibujo || "?" : "";
+        tapaSellos.despacio += dtTapa;
+        if (voz) tapaSellos.voz[voz] = (tapaSellos.voz[voz] ?? 0) + dtTapa;
+        if (tar) tapaSellos.tarjeta[tar] = (tapaSellos.tarjeta[tar] ?? 0) + dtTapa;
+        if (!voz && !tar) {
+          tapaSellos.libre += dtTapa;
+          tapaSellos.hueco += dtTapa;
+          tapaSellos.huecoMasLargo = Math.max(tapaSellos.huecoMasLargo, tapaSellos.hueco);
+        } else tapaSellos.hueco = 0;
+      }
+    } else tapaSellos.t = null;
 
     if (enElDestino && i % 20 === 0) {
       const p = pistaAhora();
@@ -9363,6 +9388,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     donde,
     gafas: o.gafas?.() ?? null,
     sellos: o.sellos?.() ?? null,
+    tapaSellos,
     segundos: +t.toFixed(1),
     // Y hasta dónde llegaba el presupuesto, que crece con la segunda frustrada: ver `tope`.
     tope: tope(),
@@ -11767,6 +11793,22 @@ if (vuelo.toco > 0) {
  * maniobra. Lo que se mira es el camino entero: la regla, el guardado y la
  * tarjeta en su momento. Ver `flight/sellos.ts` y `celebrarLosSellosSiToca`.
  */
+/** Lo que tapó los sellos rodando despacio, para el detalle: ver `tapaSellos`. */
+function loQueTapoLosSellos(tapa) {
+  if (!tapa || tapa.despacio <= 0) return "";
+  const lista = (por) =>
+    Object.entries(por)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([k, v]) => `${k} ${v.toFixed(0)} s`)
+      .join(", ");
+  return (
+    ` · rodando despacio con sellos por celebrar ${tapa.despacio.toFixed(0)} s: libres ${tapa.libre.toFixed(1)} s` +
+    ` (el hueco más largo, ${tapa.huecoMasLargo.toFixed(1)} s)` +
+    (Object.keys(tapa.voz).length ? ` · con voz: ${lista(tapa.voz)}` : "") +
+    (Object.keys(tapa.tarjeta).length ? ` · con tarjeta: ${lista(tapa.tarjeta)}` : "")
+  );
+}
 if (vuelo.toco > 0) {
   const sellos = vuelo.sellos;
   const celebrados = sellos?.celebrados ?? [];
@@ -11782,8 +11824,8 @@ if (vuelo.toco > 0) {
     celebrados.length
       ? celebrados
           .map((c) => `${c.sello} ${c.enTierra ? "en tierra" : "EN EL AIRE"} a ${c.porElSuelo.toFixed(1)} m/s`)
-          .join(" · ")
-      : `ninguno celebrado; por celebrar: ${sellos?.porCelebrar?.join(", ") || "ninguno"}`,
+          .join(" · ") + loQueTapoLosSellos(vuelo.tapaSellos)
+      : `ninguno celebrado; por celebrar: ${sellos?.porCelebrar?.join(", ") || "ninguno"}` + loQueTapoLosSellos(vuelo.tapaSellos),
     "una tarjeta y una voz en mitad de una maniobra enseñan que volar es el trámite entre premios",
   );
 }
