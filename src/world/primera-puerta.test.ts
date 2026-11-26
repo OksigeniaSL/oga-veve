@@ -131,7 +131,8 @@ describe("«through the first available apron gate»", () => {
           // De letra D, la D1: los dos grandes no caben (H88).
           const caben = PUERTAS.filter((d) => d !== "D1" || a.wingSpan <= 52);
           const cruce = ruta.vuelveEn === undefined ? ruta.puntos[1]! : ruta.puntos[ruta.vuelveEn]!;
-          const toca = laPrimera(alo(cruce), al25 ? 1 : -1, 32, caben);
+          // Empujado más allá del cruce, el tractor lo deja a treinta y dos justos del ramal, medidos por la calle y no por la pista (H103).
+          const toca = laPrimera(alo(cruce), al25 ? 1 : -1, ruta.vuelveEn === undefined ? 32 : 31, caben);
           // A los dos grandes, del R42 y el S41 por la 07 no les queda ninguna a más de treinta y dos metros: van por la D2, que tienen en la boca.
           if (toca === undefined) {
             expect([a.wingSpan > 52, rumbo, "R42 S41".includes(p.ref!)], nombre).toEqual([true, la07, true]);

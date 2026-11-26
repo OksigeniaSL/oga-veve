@@ -1,9 +1,8 @@
 /**
  * **Los Rodeos, quien se va por sus medios** (ADR 0025, enmienda H103): de los quince puestos de la ficha, el AIP da
  * el 17 y el 19 de salida autónoma, de AT72, y los saca por la F hasta el F1 (AD 2-GCXO PDC 1.2 y casilla 20.1.2). Ahí
- * van las avionetas y los dos turbohélices de quien juega, y la avioneta, el bimotor y el turbohélice del tráfico, que
- * salían por sus medios del 15, del 25 y del 26, que son de retroceso. Y en La Palma, el turbohélice del tráfico, que
- * se había quedado en el 5 y el 16.
+ * van las avionetas y los dos turbohélices de quien juega, y la avioneta y el bimotor del tráfico, que salían por sus
+ * medios del 15 y del 26, que son de retroceso.
  */
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT } from "../flight/aircraft";
@@ -111,10 +110,10 @@ describe("Los Rodeos, quien se va por sus medios", async () => {
       }
   });
 
-  it("la avioneta, el bimotor y el turbohélice del tráfico salen de uno de los dos y llegan a uno de los dos, por la F; con los dos cogidos, a otro", () => {
+  it("la avioneta y el bimotor del tráfico salen de uno de los dos y llegan a uno de los dos, por la F; con los dos cogidos, a otro", () => {
     for (const heading of cabeceras(campo)) {
       const suelo = sueloDelTrafico(aero, { ...campo.runway, heading }, aero.runways[0]?.widthM ?? 45)!;
-      for (const t of [TIPOS.avioneta, TIPOS.bimotor, TIPOS.turbohelice]) {
+      for (const t of [TIPOS.avioneta, TIPOS.bimotor]) {
         const caso = `${t.id} ${heading.toFixed(0)}`;
         const sale = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(t), undefined, undefined, undefined, t.envergadura)!;
         expect(["17", "19"], caso).toContain(puestoDe(aero, sale.camino[0]!));
@@ -132,22 +131,6 @@ describe("Los Rodeos, quien se va por sus medios", async () => {
         const otra = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(t), undefined, { semiala: t.envergadura / 2, ocupados }, undefined, t.envergadura)!;
         expect(["17", "19"], caso).not.toContain(puestoDe(aero, otra.camino[0]!));
       }
-    }
-  });
-});
-
-describe("La Palma, el turbohélice del tráfico", async () => {
-  const campo = await delCampo("GCLA");
-  const aero = campo.aerodrome!;
-
-  it("sale del 12 o del 14, los de salida autónoma, y llega a uno de los dos: el 5 y el 16 son de retroceso", () => {
-    for (const heading of cabeceras(campo)) {
-      const suelo = sueloDelTrafico(aero, { ...campo.runway, heading }, aero.runways[0]?.widthM ?? 45)!;
-      const t = TIPOS.turbohelice;
-      const sale = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(t), undefined, undefined, undefined, t.envergadura)!;
-      expect(["12", "14"], heading.toFixed(0)).toContain(puestoDe(aero, sale.camino[0]!));
-      const llega = suelo.llegada(t.toca + t.frena, undefined, undefined, undefined, undefined, undefined, t.envergadura)!;
-      expect(["12", "14"], heading.toFixed(0)).toContain(puestoDe(aero, llega.camino.at(-1)!));
     }
   });
 });

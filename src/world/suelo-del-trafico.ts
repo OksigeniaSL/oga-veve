@@ -679,15 +679,14 @@ export function sueloDelTrafico(
   const hayGeneral = delPavimento.some((p) => p.aip?.uso === "general");
   /*
    * Y la avioneta y el bimotor, donde no la da y la ficha trae de qué puestos se sale sin tractor, a esos
-   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios. **Y el turbohélice también** (H103),
-   * que en el tráfico embarca a pie y sale sin tractor (`pasarelaDelTrafico`): se quedó fuera por el ala, y en La
-   * Palma salía por sus medios del 5 y del 16, que son «R», y el aeropuerto no da el power-back sin pedirlo antes
-   * por escrito (AD 2-GCLA, casilla 20.1.3.1). Aquí solo llega quien no lleva pasarela: ver `puestosPara`.
+   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios. El turbohélice no, todavía (H103):
+   * en La Palma el 12 es incompatible con el 10, el 11, el 13, el 14 y el 15 (AD 2-GCLA PDC 1.2), y el tráfico
+   * no lo sabe; con el ATR en el 12, el coche que lleva al JAZ 110 al 11 le pasaba por debajo del ala.
    */
   const hayPorSusMedios = !hayGeneral && !!aero.aipPuestos?.porSusMedios;
   const porAla = new Map<number, readonly Punto[]>();
   const suyosPorAla = (ala: number | undefined): readonly Punto[] => {
-    if (ala === undefined || (!hayGeneral && !hayPorSusMedios)) return puestos;
+    if (ala === undefined || (!hayGeneral && !(hayPorSusMedios && ala < ALA_DE_LETRA_B))) return puestos;
     let lista = porAla.get(ala);
     if (!lista) {
       const suyos = hayGeneral
