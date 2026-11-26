@@ -27,11 +27,11 @@ import { ALTURA_DE_DECISION, type PorQueMandaron } from "./minimos";
 import { separacionDeSalida, type CategoriaDeEstela } from "./estela";
 import {
   giradoEntre,
+  noLaEstaDando,
   RED_DE_LA_SALIDA,
   remedioParaTuSalida,
   seVaAntes,
   TOPE_DE_LA_VUELTA,
-  VUELTA_DESDE_EN_FINAL,
   VUELTA_HECHA,
   type RemedioDeTuSalida,
   type TuLlegadaALaPista,
@@ -513,6 +513,8 @@ export class TurnoDePista {
     lleva: number;
     /** Si al pedirla se cayó tu permiso, dado o pedido: se vuelve a pedir al acabar. */
     readonly quitoElPermiso: boolean;
+    /** Los segundos que te faltaban para el umbral al pedirla. Ver `noLaEstaDando`. */
+    readonly alPedirla: number;
   } | null = null;
 
   /**
@@ -1295,6 +1297,7 @@ export class TurnoDePista {
           rumbo: this.de.rumbo?.() ?? null,
           lleva: 0,
           quitoElPermiso,
+          alPedirla: llegada.segundos,
         };
         this.porTuSalida.vueltas++;
         /*
@@ -1308,7 +1311,15 @@ export class TurnoDePista {
         return;
       }
       if (remedio === "alAire" && this.de.mandarteAlAirePorTuSalida && !this.de.mandanFrustrar?.()) {
-        this.tapada = { por: q.matricula, como: "alAire", girado: 0, rumbo: null, lleva: 0, quitoElPermiso: true };
+        this.tapada = {
+          por: q.matricula,
+          como: "alAire",
+          girado: 0,
+          rumbo: null,
+          lleva: 0,
+          quitoElPermiso: true,
+          alPedirla: llegada.segundos,
+        };
         this.porTuSalida.alAire++;
         this.aterrizajeSinAutorizar = false;
         this.despejeSinDecir = null;
@@ -1348,13 +1359,10 @@ export class TurnoDePista {
       /*
        * **Y quien no la da y sigue hacia la pista**, ya en la final corta,
        * ya no la va a dar: se deja de esperar y se mira otra vez, que desde
-       * ahí lo que queda es irse al aire. Sin esto la vuelta pedida tapaba
-       * lo de después hasta tocar.
+       * ahí lo que queda es el permiso o irse al aire. Sin esto la vuelta
+       * pedida tapaba lo de después hasta tocar. Ver `noLaEstaDando`.
        */
-      const sinDarla =
-        llegada?.donde === "final" &&
-        llegada.segundos < VUELTA_DESDE_EN_FINAL &&
-        t.girado < VUELTA_HECHA / 4;
+      const sinDarla = noLaEstaDando(llegada, t.girado, t.alPedirla);
       // Y sin radio desde que se pidió, no se espera a que la dé quien no la oyó.
       if (dada || sinDarla || t.lleva > TOPE_DE_LA_VUELTA || this.de.sinRadio?.()) {
         this.vueltasEnEstaLlegada++;
