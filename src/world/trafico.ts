@@ -4567,9 +4567,10 @@ export function crearTrafico(
    * delante.
    *
    * En Encarnación, remontar la pista le lleva más de cinco minutos, y con
-   * alguien llegando cada pocos siempre había uno a punto de aterrizar dentro de
+   * alguien llegando cada pocos a menudo había uno a punto de aterrizar dentro de
    * su remontada: no se le daba (OACI, Doc 4444, 7.9.3.1), y la lámpara te daba
-   * la roja por él otra vez. Con quien no oye, quien cede es el tráfico que sí:
+   * la roja por él otra vez. Medido, trece de cada setenta y ocho esperaban así
+   * de tres a cinco minutos. Con quien no oye, quien cede es el tráfico que sí:
    * «aircraft which are in contact with the controller may be instructed by the
    * controller to give way so as to remove as soon as possible the hazard
    * introduced by such unauthorized operation. In no case shall permission to

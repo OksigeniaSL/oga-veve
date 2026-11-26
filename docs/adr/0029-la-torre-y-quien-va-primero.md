@@ -3941,6 +3941,17 @@ de siempre (Estigarribia y Pedro Juan); la roja media, 48,8 s; las frustradas, 1
 principio, los 1.760 vuelos de los once campos con torre de H98 y H100, iguales uno a uno: finales
 sin señal, 0; rojas, 2, las dos en Encarnación, y ninguna por tu salida.
 
+El vitest entero, en seis partes de 2 GB: 608 ficheros y 12.285 pruebas, en verde, con las
+saltadas de siempre, y sin tocar ninguna de las de antes; la nueva, también en `--pool=forks`.
+
+**Del navegador, una tirada de cada**, en el puerto 5692: `verificar-emergencias.mjs radio encarnacion
+jaz-20 taguato`, 15 de 15, y con `taguato-ruvicha`, 15 de 15, los dos «destellos → verde», sin roja y
+sin nadie rodando al callarse la radio: no se dio el caso de la cesión, y no se rompe nada.
+`OGA_FILA_DE_SALIDA=1 verificar-vuelo-entero.mjs la-palma guyrami 12 jaz-20`, 63 de 65: no se celebra
+en tierra, como en la tirada de la tanda 28, y la verde te llega con EC-TPZ, que esperaba antes que
+tú, todavía en su raya. Con radio lo de aquí no cambia nada —los 2.820 vuelos son los mismos—, así
+que no viene de esto; no se ha mirado más.
+
 **Lo 2, probado y sin entrar.** Con radio, los mismos 2.820 vuelos, y antes → con la salida que tiene
 la pista en el turno de los que llegan y la cadencia (entre paréntesis, sin la cadencia):
 

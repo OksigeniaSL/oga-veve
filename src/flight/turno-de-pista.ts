@@ -1287,9 +1287,9 @@ export class TurnoDePista {
     /*
      * **Y sin radio, los que llegan ceden el turno al que ya te mandó al aire**
      * (H102). Se le da la pista en cuanto queda libre (H100), pero en
-     * Encarnación remontarla le lleva más de cinco minutos y con alguien
-     * llegando cada pocos nunca quedaba un hueco así: esperaba en su raya hasta
-     * que volvías, y la lámpara te daba otra roja por él. A quien no oye no se le
+     * Encarnación remontarla le lleva más de cinco minutos, y con alguien
+     * llegando cada pocos a menudo no quedaba un hueco así: esperaba en su raya
+     * hasta que volvías, y la lámpara te daba otra roja por él. A quien no oye no se le
      * puede pedir nada, y al que oye sí: «aircraft which are in contact with the
      * controller may be instructed by the controller to give way» (OACI, Doc
      * 4444, 7.7.3.1). Ver `suTurnoDeSalir` en `world/trafico.ts`.
