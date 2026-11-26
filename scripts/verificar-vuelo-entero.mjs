@@ -4746,13 +4746,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let pidioFreno = false;
   let tiempoDeRodajeIda = 0;
   /**
-   * **Y de eso, el rato parado detrás de uno de tu cola**, que es tráfico y
-   * no rodaje. Ver «el rodaje de ida no aburre».
+   * **Y de eso, el rato perdido por tráfico**, con su motivo, que no es
+   * rodaje. Ver «el rodaje de ida no aburre».
    */
-  let paradoEnLaCola = 0;
+  let perdidoPorTrafico = 0;
+  const porQuienSePerdio = new Map();
+  let detrasDesde = null;
+  /**
+   * **El rodaje de ida, cada dos segundos**: lo que se rueda, lo que pide el
+   * juego, detrás de quién se va y dónde se corta la raya. Solo se enseña si
+   * el rodaje sale en rojo. «Tardó de más» no dice si fue la calle, el coche
+   * del banco o el tráfico, y sin esto hay que volar otra vez para saberlo.
+   */
+  const trazaIda = [];
+  const vocesEnFinal = [];
+  /*
+   * **Y la vuelta que te pide la torre por tu salida, cuándo empieza y cuándo
+   * acaba**, con la fase y la altura. Mientras dura, la torre no te autoriza:
+   * en Pettirossi sonó «orbit», el piloto del banco siguió su circuito, se oyó
+   * «continúe aproximación» y se tocó sin permiso y sin orden de irse.
+   */
+  const vueltaPedida = [];
+  let dandoLaVueltaAntes = false;
+  const trazaRoja = [];
   let tiempoDeRodajeVuelta = 0;
   let despego = 0;
   let toco = 0;
+  /** La velocidad indicada y el gas al tocar, y la de referencia, m/s. */
+  let alTocar = null;
   /**
    * **La puerta de la final estabilizada**, en ruedas sobre la pista.
    *
@@ -5464,11 +5485,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /**
    * Cuánto se tolera en tierra sin moverse ni cambiar de fase, s de juego.
    *
-   * Cinco minutos: la espera legítima más larga en tierra es la roja, que
-   * tiene ciento setenta segundos —ver «ninguna roja dura más de lo que dura
-   * de verdad»—, y la de los toboganes en el puesto, sesenta.
+   * Cinco minutos: la espera legítima más larga en tierra es la roja, que sin
+   * nadie delante tiene ciento setenta segundos —ver «ninguna roja dura más
+   * de lo que dura de verdad»—, y la de los toboganes en el puesto, sesenta.
+   *
+   * **Con fila, lo que la fila añade a la roja se añade aquí**: noventa por
+   * cada uno de delante y los dos minutos de estela. Con cinco minutos justos
+   * el vuelo se cortaba a los 300 s en una roja que se permite de 380, y en
+   * La Palma a la vez que al de delante le daban el despegue: no se llegaba a
+   * saber cuánto dura.
    */
   const ATASCADO = 300;
+  const atascadoCon = () => ATASCADO + 90 * fila.maxDelante + (fila.estela ? 120 : 0);
   const TOPE_DE_PARED = () => (tope() + 600) * 1000;
   let seQuedoSinPared = false;
   /** Por qué se cortó: `reloj`, `atascado` o `pared`. */
@@ -5618,7 +5646,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       Math.hypot(s.position.x - quietoDesde.x, s.position.z - quietoDesde.z) > 2
     )
       quietoDesde = { t, x: s.position.x, z: s.position.z, fase };
-    else if (t - quietoDesde.t > ATASCADO) {
+    else if (t - quietoDesde.t > atascadoCon()) {
       seQuedoSinPared = true;
       porQueSeCorto = "atascado";
       atascadoEn = { fase, etapa, segundos: Math.round(t - quietoDesde.t), t: Math.round(t) };
@@ -6054,6 +6082,58 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           if (dibujados === delante.length) fila.dibujada++;
         }
         rojaDesde ??= t;
+        /*
+         * Y quién la sostiene, cada cinco segundos: lo que la torre da por
+         * motivo, quién ocupa la pista y por dónde va cada uno de los que
+         * llegan. «Nadie en la pista» al final no dice quién la tuvo.
+         */
+        if (t - (trazaRoja.at(-1)?.t ?? -9) >= 5)
+          trazaRoja.push({
+            t: Math.round(t),
+            por: por ? `${por.porque}${por.matricula ? ` ${por.matricula}` : ""}` : "sin motivo",
+            // Y sin motivo dicho, lo que el plan da por razón de no mirarte.
+            mira: (() => {
+              const m = o.noTeMira?.();
+              if (!m) return "";
+              return `no te mira: ${m.por ?? "—"}${m.piezas?.length ? ` (${m.piezas.join(", ")})` : ""}${m.lista ? ", lista por leer" : ""}`;
+            })(),
+            ocupan: (o.ocupanLaPista?.() ?? []).map((x) => `${x.matricula} ${x.orden}`).join(", "),
+            llegan: (o.traficoPorDentro?.() ?? [])
+              .filter((q) => q.camino === "llegada")
+              .map((q) => {
+                const a = (o.trafico?.() ?? []).find((w) => w.matricula === q.matricula);
+                return `${q.matricula} ${Math.round(q.recorrido ?? 0)} m${a ? `, a ${Math.round(Math.hypot(a.x - s.position.x, a.z - s.position.z))} m de ti y ${Math.round(a.y - s.position.y)} m de altura${a.enLaPista ? ", en la pista" : ""}` : ""}`;
+              })
+              .join(" | "),
+            /*
+             * Y el que la sostiene, dónde va: en Estigarribia la sostenía
+             * «aterriza ZP-VYN» 175 s sin estar entre las llegadas de dentro
+             * ni encima de la pista, y no se sabía si volaba la final, rodaba
+             * o volvía por la pista.
+             */
+            quien: (() => {
+              const m = por?.matricula;
+              if (!m) return "";
+              const a = (o.trafico?.() ?? []).find((w) => w.matricula === m);
+              const q = (o.traficoPorDentro?.() ?? []).find((w) => w.matricula === m);
+              return (
+                (a
+                  ? `${m} a ${Math.round(Math.hypot(a.x - s.position.x, a.z - s.position.z))} m de ti y ${Math.round(a.y - s.position.y)} m de altura${a.enLaPista ? ", en la pista" : ""}`
+                  : `${m} no está en el tráfico`) +
+                (q
+                  ? ` · ${q.camino}, ${Math.round(q.recorrido ?? 0)} m de su camino, toca en ${Math.round(q.toca ?? -1)}, fuera en ${Math.round(q.fuera ?? -1)}`
+                  : " · no está por dentro")
+              );
+            })(),
+            salen: (o.traficoPorDentro?.() ?? [])
+              .filter((q) => q.camino === "salida")
+              .map(
+                (q) =>
+                  `${q.matricula} ${Math.round(q.recorrido ?? 0)} m de su camino, espera en ${Math.round(q.espera ?? -1)}, despega en ${Math.round(q.despega ?? -1)}` +
+                  `${q.quieto > 1 ? `, quieto ${Math.round(q.quieto)} s` : ""}${q.aguarda > 1 ? `, aguarda ${Math.round(q.aguarda)} s` : ""}`,
+              )
+              .join(" | "),
+          });
         if (t - rojaDesde > rojaMasLarga) {
           rojaMasLarga = t - rojaDesde;
           rojaMasLargaDonde = `a los ${Math.round(rojaDesde)} s: ${(o.ocupanLaPista?.() ?? []).map((x) => `${x.matricula} ${x.orden}`).join(", ") || "nadie en la pista"}`;
@@ -6185,7 +6265,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           esperandoPorAlguien = `${t.toFixed(0)} s: ${ocupan.map((x) => `${x.matricula} ${x.orden}`).join(", ")}`;
       }
       if ((o.pistaDeLosDemas?.() ?? []).length || (o.trafico?.() ?? []).some((a) => a.enLaPista)) ultimaConOtroEnLaPista = t;
+      {
+        const dando = !!o.porTuSalida?.()?.dandoLaVuelta;
+        if (dando !== dandoLaVueltaAntes) {
+          dandoLaVueltaAntes = dando;
+          vueltaPedida.push(`${t.toFixed(0)}s ${dando ? "empieza" : "acaba"} · ${fase} · ${Math.round(alto(s))} m${s.onGround ? " · en tierra" : ""}`);
+        }
+      }
       for (const x of nuevas) {
+        /*
+         * Y lo que suena bajando hacia la pista, con su altura y con quién la
+         * tenía: es lo que dice qué retrasó un permiso que salió tarde. Las
+         * cuarenta últimas. Ver «el permiso de aterrizar se oye antes de los
+         * 500 ft».
+         */
+        if (!s.onGround && (o.enLaFinalDeLaTorre?.() || fase === "final")) {
+          const deQuien = (o.pistaDeLosDemas?.() ?? []).map((a) => a.matricula ?? a).join(",");
+          vocesEnFinal.push(
+            `${t.toFixed(0)}s ${Math.round(alto(s))} m ${fase}${deQuien ? ` · pista de ${deQuien}` : ""} · ${x.replace(/^[\d.]+s /, "").replace(/@.*$/, "")}`,
+          );
+          if (vocesEnFinal.length > 40) vocesEnFinal.shift();
+        }
         /*
          * **Y tu número en la fila también es el porqué.** Con uno corriendo
          * su despegue y otro listo delante de ti, lo que dice una torre de
@@ -7112,13 +7212,55 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
       c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
       c.aileron = timon(s, ruta);
+      if (tiempoDeRodajeIda - (trazaIda.at(-1)?.t ?? -9) >= 2)
+        trazaIda.push({
+          t: +tiempoDeRodajeIda.toFixed(0),
+          v: +porElSuelo(s).toFixed(1),
+          quiere: +quiere.toFixed(1),
+          detras: o.detrasDeQuien?.() ?? null,
+          corta: o.paradaDeTuRaya?.() ?? null,
+          va: Math.round(o.rodajeAsi?.().recorrido ?? -1),
+          fase,
+          x: Math.round(s.position.x),
+          z: Math.round(s.position.z),
+        });
       /*
-       * Parado porque el juego pide cero, y lo pide por uno de tu cola que
-       * tienes delante en la raya: ver `detrasDeQuien` en
-       * `src/world/plan-de-vuelo.ts`.
+       * **El rato perdido por tráfico, con la cuenta del banco de despegue**
+       * —ver `perdidoPorTrafico` en `verificar-despegue.mjs`, con el porqué de
+       * cada caso—: parado detrás de uno de tu raya o dando paso al que viene
+       * de frente, el rato entero; rodando detrás de uno, lo que se tarda de
+       * más frente al paso medio que pide la ruta. Sin nadie delante, nada.
        */
-      if (porElSuelo(s) < 0.5 && quiere < 0.5 && o.detrasDeQuien?.() === "cola")
-        paradoEnLaCola += paso;
+      {
+        const recorrido = o.rodajeAsi?.().recorrido ?? null;
+        const delante = o.detrasDeQuien?.() ?? null;
+        const quien = delante === "cola" ? "de tu cola" : "parado";
+        const anotar = (motivo, segundos) => {
+          perdidoPorTrafico += segundos;
+          porQuienSePerdio.set(motivo, (porQuienSePerdio.get(motivo) ?? 0) + segundos);
+        };
+        if (porElSuelo(s) < 0.5) {
+          const corte = o.paradaDeTuRaya?.() ?? null;
+          const cortada = corte !== null && recorrido !== null && corte - recorrido < 30;
+          if (quiere < 0.5 && delante) anotar(`detrás de uno ${quien}`, paso);
+          else if (quiere < 0.5 && cortada) anotar("dando paso a uno que viene de frente", paso);
+        }
+        /*
+         * Rodando detrás, de segundo en segundo y no muestra a muestra: lo
+         * recorrido viene en metros enteros, y en una décima de segundo se
+         * avanza uno o ninguno.
+         */
+        if (delante && recorrido !== null && porElSuelo(s) >= 0.5) {
+          detrasDesde ??= { t: 0, m: recorrido };
+          detrasDesde.t += paso;
+          if (detrasDesde.t >= 1 && largoDeLaIda > 0 && idaComoPideElJuego > 0) {
+            const avance = Math.max(0, recorrido - detrasDesde.m);
+            const perdido = Math.max(0, detrasDesde.t - avance * (idaComoPideElJuego / largoDeLaIda));
+            if (perdido > 0) anotar(`rodando detrás de uno ${quien}`, perdido);
+            detrasDesde = null;
+          }
+        } else detrasDesde = null;
+      }
       if (fase === "esperando" || fase === "autorizado") etapa = "esperar";
     } else if (etapa === "esperar") {
       c.throttle = 0;
@@ -8759,6 +8901,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         );
       }
       if (s.onGround && s.onRunway) {
+        /*
+         * Y a qué iba por el aire al tocar, con el gas: el juego da la toma
+         * por rápida con su velocidad indicada, y en La Palma, con una salida
+         * delante, la dio por rápida con el gas a 0,6 y sin gafas.
+         */
+        if (!toco) alTocar = { ias: s.airspeed, gas: o.controles?.()?.throttle ?? null, vref: o.avion?.()?.aproximacion ?? null };
         toco = t;
         /*
          * **Dónde se tocó.** Es el número que da nombre a #147 y el banco no
@@ -9269,13 +9417,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     dijoToca,
     pidioFreno,
     ida: +tiempoDeRodajeIda.toFixed(0),
-    idaEnCola: +paradoEnLaCola.toFixed(0),
+    idaPorTrafico: +perdidoPorTrafico.toFixed(0),
+    idaPorQuien: [...porQuienSePerdio].map(([q, t]) => `${q} ${t.toFixed(0)} s`),
     idaMetros: Math.round(idaMetros),
     largoDeLaIda: Math.round(largoDeLaIda),
     idaComoPideElJuego: Math.round(idaComoPideElJuego),
+    trazaIda,
+    vocesEnFinal,
+    vueltaPedida,
+    trazaRoja,
     vuelta: +tiempoDeRodajeVuelta.toFixed(0),
     despego: +despego.toFixed(0),
     toco: +toco.toFixed(0),
+    alTocar,
     tocoDesviado: +tocoDesviado.toFixed(1),
     tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
     pistaParaTocar: Math.round(pistaParaTocar),
@@ -10923,7 +11077,8 @@ const topeDeIda = Math.round(
   ),
 );
 /*
- * **Y el rato parado detrás de uno de tu cola no es rodaje: se descuenta.**
+ * **Y el rato perdido por tráfico no es rodaje: se descuenta**, con la misma
+ * cuenta que el banco de despegue.
  *
  * De La Palma a El Hierro con el JAZ 60 esto salía en rojo, de 104 a 140 s
  * con su tope de 90, y no era el rodaje: la traza del coche enseñaba el avión
@@ -10934,14 +11089,14 @@ const topeDeIda = Math.round(
  * rodar despacio, no esperar a que despegue el de delante. Se descuenta y se
  * dice cuánto, para que un descuento enorme se vea.
  */
-const idaEnCola = vuelo.idaEnCola ?? 0;
-const idaRodando = vuelo.ida - idaEnCola;
+const idaPorTrafico = vuelo.idaPorTrafico ?? 0;
+const idaRodando = vuelo.ida - idaPorTrafico;
 comprobar(
   "el rodaje de ida no aburre",
   vuelo.ida > 0 && idaRodando <= topeDeIda,
   `${vuelo.ida} s del puesto al punto de espera` +
-    (idaEnCola > 0
-      ? `, ${idaEnCola} s de ellos parado detrás de uno de tu cola: ${idaRodando} s rodando`
+    (idaPorTrafico > 0
+      ? `, ${idaPorTrafico} s de ellos perdidos por tráfico (${(vuelo.idaPorQuien ?? []).join(", ")}): ${idaRodando} s rodando`
       : "") +
     ` · ${vuelo.largoDeLaIda} m trazados, ` +
     `${vuelo.idaMetros} m rodados, a ${(vuelo.idaMetros / Math.max(1, idaRodando)).toFixed(1)} m/s de media · tope ${topeDeIda} s`,
@@ -11431,7 +11586,12 @@ if (vuelo.toco > 0) {
         : "") +
       (vuelo.botes?.cuantos
         ? ` · ${vuelo.botes.cuantos} bote${vuelo.botes.cuantos === 1 ? "" : "s"}, el más largo de ${vuelo.botes.mas} s`
-        : " · sin botes"),
+        : " · sin botes") +
+      (vuelo.alTocar
+        ? ` · al tocar ${Math.round(vuelo.alTocar.ias * 1.94384)} kt de aire` +
+          (vuelo.alTocar.vref ? ` (Vref ${Math.round(vuelo.alTocar.vref * 1.94384)}, rápida desde ${Math.round(vuelo.alTocar.vref * 1.25 * 1.94384)})` : "") +
+          (vuelo.alTocar.gas !== null ? ` con el gas a ${vuelo.alTocar.gas.toFixed(2)}` : "")
+        : ""),
     "«quiero ser piloto con las gafas de sol»",
   );
 }
@@ -12218,6 +12378,29 @@ if (fallos) {
   if (vuelo.hitos?.length) {
     console.log("\n  por dónde fue el vuelo:");
     for (const h of vuelo.hitos) console.log(`    ${h}`);
+  }
+  if (idaRodando > topeDeIda && vuelo.trazaIda?.length) {
+    console.log(`\n  el rodaje de ida, que el juego pide en ${vuelo.idaComoPideElJuego} s:`);
+    for (const r of vuelo.trazaIda)
+      console.log(
+        `    ${r.t}s ${r.v} m/s, pide ${r.quiere}` +
+          (r.detras ? ` · detrás de ${r.detras}` : "") +
+          (r.corta !== null ? ` · la raya se corta a ${Math.round(r.corta)} m, va por ${r.va}` : "") +
+          ` · ${r.fase} en ${r.x},${r.z}`,
+      );
+  }
+  if ((vuelo.rojaMasLarga ?? 0) >= rojaPermitida && vuelo.trazaRoja?.length) {
+    console.log("\n  la roja, cada cinco segundos:");
+    for (const r of vuelo.trazaRoja)
+      console.log(`    ${r.t}s ${r.por}${r.ocupan ? ` · ocupan: ${r.ocupan}` : ""}${r.mira ? ` · ${r.mira}` : ""}${r.quien ? ` · ${r.quien}` : ""}${r.llegan ? ` · llegan: ${r.llegan}` : ""}${r.salen ? ` · salen: ${r.salen}` : ""}`);
+  }
+  if (vuelo.vocesEnFinal?.length) {
+    console.log("\n  lo que sonó bajando hacia la pista:");
+    for (const v of vuelo.vocesEnFinal) console.log(`    ${v}`);
+  }
+  if (vuelo.vueltaPedida?.length) {
+    console.log("\n  la vuelta que pidió la torre por tu salida:");
+    for (const v of vuelo.vueltaPedida) console.log(`    ${v}`);
   }
   console.log("\n  últimos instantes del vuelo:");
   for (const l of vuelo.linea) console.log(`    ${l}`);
