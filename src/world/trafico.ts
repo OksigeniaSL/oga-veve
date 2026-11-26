@@ -3523,7 +3523,7 @@ export function crearTrafico(
        * en la final. Una torre con un 7600 en el circuito le despeja el camino
        * (OACI, Doc 4444, 7.7.3.1: «aircraft which are in contact with the
        * controller may be instructed […] to give way»). Con su red,
-       * `RETENCION_MAXIMA`; al que ya rueda o espera en su doble raya se le da
+       * `RETENCION_SIN_RADIO`; al que ya rueda o espera en su doble raya se le da
        * la pista si se va antes que tú (`mirarTuSalida`), y si no, la roja.
        */
       const aTiempo =

@@ -3723,23 +3723,33 @@ El vitest entero, por partes: `src/world`, 204 ficheros y 4.537 pruebas; `src/fl
 `src/audio`, 38 y 874; el resto, 88 y 1.619. En verde, con las saltadas de siempre y sin tocar
 ninguna de las de antes; la nueva, también en `--pool=forks`.
 
+**Y la red de la retención, la larga, con quien juega sin radio** (`RETENCION_SIN_RADIO`, veinte
+minutos). El banco de la radio apunta ahora quién rodaba hacia tu salida al callarse la radio y quién
+salió a rodar después, y da por buena una roja solo si la explica alguien de lo primero o alguien en
+la pista. Con `taguato-ruvicha`, nadie rodaba al callarse; a los 406 y 410 s salieron ZP-GLL y
+ZP-BWL hacia la raya 78, sueltos por los siete minutos de `RETENCION_MAXIMA`, y la lámpara dio la
+roja por el primero en la final. De la primera final a la segunda, sin radio y con una roja, se pasa
+de los siete minutos; una torre con un 7600 en el circuito no deja salir a nadie hacia su calle, así
+que, retenido por quien juega sin radio y en el aire, la red es de veinte minutos —tres circuitos con
+sus rojas— y sigue siendo una red, por si no viene nunca. En la mesa, por tu salida: con la radio
+callada desde el principio, de 5 a 0 (las rojas de todo tipo, de 15 a 10); callándose a los 20 s, de
+41 a 39, y las 39 son de quien ya estaba en la calle al callarse. En los once campos sin radio, solo
+cambia Encarnación: rojas de 3 a 2, por tu salida de 1 a 0, tocar con la pista ocupada de 1 a 0. Con
+radio no cambia nada: la red larga solo se mira sin ella.
+
 ### Lo que queda
 
 - **Del navegador, una tirada**: `node scripts/verificar-emergencias.mjs radio encarnacion jaz-20
   taguato`, 14 de 15. Una roja y no dos —«destellos → roja → destellos → verde»—, en la primera
   final, con ZP-XPT esperando en la raya 78, ZP-GDB rodando detrás de él a 58 m de su camino y
   la pista vacía; en la segunda, la verde. Lo que pide esa comprobación, «sin roja», no lo da el
-  juego cuando el de la calle no se va a tiempo (H98). Queda por saber si ZP-GDB empezó a rodar
-  antes de callarse la radio o lo soltó la red: el banco no lo apunta. Sin volar, el mismo con
-  `taguato-ruvicha` y `OGA_FILA_DE_SALIDA=1 node scripts/verificar-vuelo-entero.mjs la-palma
-  guyrami 12 jaz-20`: no hubo turno.
+  juego cuando el de la calle no se va a tiempo (H98). El banco ya lo apunta y lo distingue, y la red
+  de los siete minutos ya no corre con quien juega sin radio en el aire (arriba).
 - **El remontante de Encarnación y el tráfico que llega.** Con quien juega sin radio y uno que le
   tapa la única calle, quien tiene que ceder es el tráfico que sí oye (7.7.3.1): mientras llega
   alguien cada pocos minutos, el de la raya no remonta nunca, y la lámpara da roja tras roja por él
   hasta la red de la salida. Pide que, por el que te mandó al aire, la torre retrase a los que
   llegan como lo hace por ti (`tuTurnoDeSalir`).
-- **La red de la retención con un 7600 dando vueltas**: cuenta desde que el de su puesto pidió rodar,
-  y no desde la última roja. Las cinco que quedan con la radio callada desde el principio son eso.
 - **La cadencia de la frecuencia** (arriba): el que llega listo a su doble raya espera el rato de
   una llamada cualquiera si no hay nadie detrás. El arreglo de 7.9.3.4 está probado y descartado
   por las parejas de La Palma y El Hierro; antes de volver a él hay que mirar esas seis.

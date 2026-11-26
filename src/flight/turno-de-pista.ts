@@ -340,6 +340,22 @@ export const LO_QUE_SE_ESPERA_POR_QUIEN_LLEGA = 180;
 export const RETENCION_MAXIMA = 420;
 
 /**
+ * **Y lo más que se retiene a uno por ti si vienes sin radio**, s.
+ *
+ * Sin radio no hay vuelta que pedirte ni «continúe» que decirte: la torre
+ * te espera con la lámpara, y en Encarnación, con su única calle, entre la
+ * subida, los destellos, el circuito y una roja por la pista ocupada, de la
+ * primera final a la segunda se pasa de los siete minutos. Soltar entonces al
+ * retenido es mandarlo a la doble raya de tu calle justo antes de que
+ * vuelvas, y la lámpara te da otra roja por él: medido en el banco de la
+ * radio, dos avionetas sueltas a los 406 y 410 s del fallo, y la roja en la
+ * final. Una torre de verdad no deja salir a nadie hacia tu calle con un 7600
+ * en el circuito. Pero sigue siendo un candado, y lleva su red: veinte
+ * minutos, tres circuitos con sus rojas, por si quien juega no viene nunca.
+ */
+export const RETENCION_SIN_RADIO = 1200;
+
+/**
  * **Lo más que la roja espera a que suene lo que le suelta la pista a otro**,
  * s parado en la doble raya (H48).
  *
@@ -584,7 +600,8 @@ export class TurnoDePista {
    * «hold position» al que sale, hasta que el que aterriza ha pasado, o le da
    * la pista antes si le da tiempo a irse —ver `tiempoParaIrse` en
    * `world/trafico.ts`—. Y con su red: nadie se queda retenido más de
-   * `RETENCION_MAXIMA`.
+   * `RETENCION_MAXIMA`, o de `RETENCION_SIN_RADIO` si es por ti y vienes sin
+   * radio.
    */
   private retenidos(dt: number): ReadonlySet<string> {
     const trafico = this.de.trafico();
@@ -625,7 +642,13 @@ export class TurnoDePista {
       const corre = !(porQuien === TU && this.enTierra);
       const lleva = (mismo ? antes.lleva : 0) + (corre ? dt : 0);
       this.retenidoDesde.set(m, { clave: toca.clave, porQuien, lleva });
-      if (lleva > RETENCION_MAXIMA) continue;
+      /*
+       * **Y por ti sin radio, en el aire, la red larga**: ver
+       * `RETENCION_SIN_RADIO`.
+       */
+      const tope =
+        porQuien === TU && !this.enTierra && this.de.sinRadio?.() ? RETENCION_SIN_RADIO : RETENCION_MAXIMA;
+      if (lleva > tope) continue;
       this.retencionMasLarga = Math.max(this.retencionMasLarga, lleva);
       retenidos.add(m);
     }

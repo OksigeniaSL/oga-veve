@@ -15,7 +15,12 @@ import { AIRCRAFT } from "../flight/aircraft";
 import { distanciaDeAterrizaje } from "../flight/carrera";
 import { Frecuencia } from "../flight/radio";
 import type { TuLlegadaALaPista } from "../flight/salida-tapada";
-import { TurnoDePista, type DibujoDelTurno } from "../flight/turno-de-pista";
+import {
+  RETENCION_MAXIMA,
+  RETENCION_SIN_RADIO,
+  TurnoDePista,
+  type DibujoDelTurno,
+} from "../flight/turno-de-pista";
 import type { Aerodrome } from "./aerodrome";
 import { TIEMPO_DE_CASA } from "./meteo";
 import { conViento, SCENARIOS } from "./scenarios";
@@ -151,5 +156,64 @@ describe("al que te mandó al aire por tu salida, la pista en cuanto quede libre
 
   it("y con ella libre, igual", () => {
     expect(trasLaRoja(false)).toBe(true);
+  });
+});
+
+describe("y al que la torre retiene por ti sin radio, no se le suelta a los siete minutos", () => {
+  /**
+   * Uno en su puesto, a punto de llamar para rodar, retenido porque su doble
+   * raya está en tu calle; tú en el aire, `segundos` dando vueltas. Devuelve
+   * lo más que estuvo retenido y si llegó a llamar para rodar.
+   */
+  const retenido = (sinRadio: boolean, segundos: number) => {
+    const radio = new Frecuencia(dados(11), "SGEN");
+    const m = radio.sacarARodar()!;
+    const dibujo: DibujoDelTurno = {
+      anuncia: () => {},
+      paso: () => [],
+      todaviaNo: () => false,
+      enFinal: () => null,
+      ocupanLaPista: () => [],
+      tapanTuSalida: () => [],
+      quienDejaLaPistaPorSuRaya: (x) => (x === m ? TU : null),
+    };
+    const turno = new TurnoDePista({
+      radio,
+      boca: { retirar: () => {}, espera: () => false, esperaAlguna: () => false },
+      trafico: () => dibujo,
+      torre: () => true,
+      privado: () => false,
+      alUmbral: () => 9000,
+      alto: () => 300,
+      enTierra: () => false,
+      decirAOtro: () => null,
+      sinRadio: () => sinRadio,
+      autorizarte: () => {},
+      mandarteAlAire: () => {},
+    });
+    let llamo = false;
+    for (let t = 0; t < segundos; t += PASO) {
+      turno.oir(PASO, EN_VUELO);
+      if (radio.loQueToca(m)?.primera !== true) llamo = true;
+    }
+    return { lleva: turno.retencionMasLarga, llamo };
+  };
+
+  it("con radio, la red de siempre: a los siete minutos se le suelta", () => {
+    const r = retenido(false, RETENCION_MAXIMA + 120);
+    expect(r.lleva).toBeLessThanOrEqual(RETENCION_MAXIMA + PASO);
+    expect(r.llamo).toBe(true);
+  });
+
+  it("sin radio, sigue en su puesto mientras das vueltas", () => {
+    const r = retenido(true, RETENCION_MAXIMA + 300);
+    expect(r.lleva).toBeGreaterThan(RETENCION_MAXIMA + 250);
+    expect(r.llamo).toBe(false);
+  });
+
+  it("y con su red, la larga: si no vienes nunca, sale", () => {
+    const r = retenido(true, RETENCION_SIN_RADIO + 120);
+    expect(r.lleva).toBeLessThanOrEqual(RETENCION_SIN_RADIO + PASO);
+    expect(r.llamo).toBe(true);
   });
 });
