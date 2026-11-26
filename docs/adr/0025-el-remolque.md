@@ -3462,16 +3462,20 @@ pidiendo que no diera la maniobra; ahora lo pregunta por el equipo que lleva cad
 
 ### Lo que queda
 
-- **Por volar**: `probar-arranque`, `verificar-quien-habla`, `verificar-rendimiento` y el vuelo entero del JAZ 50 en Cuatro Vientos; el
-  navegador lo tenía la ronda de cierre. Y la tirada entera en rojo con `OGA_MOTOR_PARADO=1`, de los seis:
+- **Volados en la ronda de cierre de la tanda 28**, sobre su copia congelada: `verificar-quien-habla`, 6 de 6, con la llave;
+  `verificar-rendimiento`, en verde, con el N1 de 26 a 100 en unas 370 muestras volando en Yvytu Rape, Pettirossi y Los Rodeos, y el
+  motor parado a propósito visto en los tres; `verificar-radar`, 21 de 21; y el vuelo entero del JAZ 50 en Cuatro Vientos, 61 de 61.
+  **`probar-arranque` salió 3 de 4, y el rojo era del banco**: pedía el motor parado al empezar en las dos lecciones, y «vuelta» sale
+  de la pista con él en marcha a propósito (`engineOn = !rodando` al reiniciar, en `game.ts`), que es como está un avión en la cabecera:
+  nadie arranca allí. Ahora, en la pista, mira que empiece en marcha, y pide la llave solo donde se empieza parado: 4 de 4.
+- **En rojo con `OGA_MOTOR_PARADO=1` solo se ha volado el radar**: 19 de 21, con los dos rojos que tocan, «MOTOR PARADO en 188 de 188
+  muestras volando» en el JAZ 90 y en 63 de 63 en el JAZ 60. Los demás, sin volar en rojo:
 
   ```bash
-  OGA_PUERTO=5692 node scripts/probar-arranque.mjs
-  OGA_PUERTO=5692 node scripts/verificar-quien-habla.mjs
-  OGA_PUERTO=5692 OGA_APRIETES=1 node scripts/verificar-rendimiento.mjs tenerife-norte
-  OGA_PUERTO=5692 node scripts/verificar-radar.mjs
-  OGA_PUERTO=5692 node scripts/verificar-vuelo-entero.mjs cuatro-vientos taguato 1 jaz-50
-  OGA_PUERTO=5692 OGA_MOTOR_PARADO=1 node scripts/…
+  OGA_PUERTO=5692 OGA_MOTOR_PARADO=1 node scripts/probar-arranque.mjs
+  OGA_PUERTO=5692 OGA_MOTOR_PARADO=1 node scripts/verificar-quien-habla.mjs
+  OGA_PUERTO=5692 OGA_MOTOR_PARADO=1 OGA_APRIETES=1 node scripts/verificar-rendimiento.mjs tenerife-norte
+  OGA_PUERTO=5692 OGA_MOTOR_PARADO=1 node scripts/verificar-vuelo-entero.mjs cuatro-vientos taguato 1 jaz-50
   ```
 
 - **El lazo del gas** de este piloto sigue yendo y viniendo con el reactor: con la mano firme no llega al eje, y se nota en la velocidad, ±3,5 nudos, y en lo que
