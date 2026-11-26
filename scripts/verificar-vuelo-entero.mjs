@@ -4601,6 +4601,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let rojaMasLarga = 0;
   let rojaMasLargaDonde = "";
   /**
+   * **Y lo que dura a reloj de pared lo que se habla mientras tanto.** El
+   * banco corre el juego a ×12 y las voces suenan a su paso: la frecuencia
+   * espera a que acabe la que suena, y cada segundo de voz se come doce de
+   * juego. En La Palma, la salida de delante esperaba canal 38 s de juego que
+   * eran 15 de pared (H100); en Tenerife Sur, una roja de 241 s con la pista
+   * libre desde los 145, esperando el «pista libre» del que acababa de
+   * aterrizar. Jugando, esa espera es lo que dura la voz. Así que la roja se
+   * cuenta como a ×1: lo de juego con la boca callada y lo de pared con ella
+   * ocupada. Ver `bocaAhora` en `src/dev/sondas.ts`.
+   */
+  let rojaMuestra = null;
+  let rojaVozJuego = 0;
+  let rojaVozPared = 0;
+  let rojaMasLargaJuego = 0;
+  let rojaMasLargaVoz = null;
+  /**
    * **Y la fila de salida.** «Nada, me dejaron salir a mí antes», en Tenerife
    * Sur: la torre dio la verde a quien juega con otro esperando su salida
    * desde antes. Se apuntan los que van delante mientras se espera en la roja
@@ -6129,7 +6145,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             document.querySelector('[data-hud="torre-fila"]')?.childElementCount ?? 0;
           if (dibujados === delante.length) fila.dibujada++;
         }
-        rojaDesde ??= t;
+        if (rojaDesde === null) {
+          rojaDesde = t;
+          rojaVozJuego = 0;
+          rojaVozPared = 0;
+          rojaMuestra = null;
+        }
+        {
+          const pared = performance.now() / 1000;
+          if (rojaMuestra && o.bocaAhora?.()?.ocupada) {
+            rojaVozJuego += Math.max(0, t - rojaMuestra.t);
+            rojaVozPared += Math.max(0, pared - rojaMuestra.pared);
+          }
+          rojaMuestra = { t, pared };
+        }
         /*
          * Y quién la sostiene, cada cinco segundos: lo que la torre da por
          * motivo, quién ocupa la pista y por dónde va cada uno de los que
@@ -6182,8 +6211,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               )
               .join(" | "),
           });
-        if (t - rojaDesde > rojaMasLarga) {
-          rojaMasLarga = t - rojaDesde;
+        const aUnoPorUno = t - rojaDesde - rojaVozJuego + rojaVozPared;
+        if (aUnoPorUno > rojaMasLarga) {
+          rojaMasLarga = aUnoPorUno;
+          rojaMasLargaJuego = t - rojaDesde;
+          rojaMasLargaVoz = { juego: rojaVozJuego, pared: rojaVozPared };
           rojaMasLargaDonde = `a los ${Math.round(rojaDesde)} s: ${(o.ocupanLaPista?.() ?? []).map((x) => `${x.matricula} ${x.orden}`).join(", ") || "nadie en la pista"}`;
         }
       } else rojaDesde = null;
@@ -9274,6 +9306,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     esperandoPorAlguien,
     rojaMasLarga,
     rojaMasLargaDonde,
+    rojaMasLargaJuego,
+    rojaMasLargaVoz,
     fila: { ...fila, porDelante: [...fila.porDelante] },
     deFrente,
     deFrenteDonde,
@@ -10843,7 +10877,10 @@ comprobar(
   "y ninguna roja dura más de lo que dura de verdad",
   (vuelo.rojaMasLarga ?? 0) < rojaPermitida,
   (vuelo.rojaMasLarga
-    ? `la más larga, ${Math.round(vuelo.rojaMasLarga)} s ${vuelo.rojaMasLargaDonde}`
+    ? `la más larga, ${Math.round(vuelo.rojaMasLarga)} s a ×1 ${vuelo.rojaMasLargaDonde}` +
+      (vuelo.rojaMasLargaVoz?.juego > 0.5
+        ? ` (de juego ${Math.round(vuelo.rojaMasLargaJuego)} s, con ${Math.round(vuelo.rojaMasLargaVoz.juego)} s de voz sonando que fueron ${Math.round(vuelo.rojaMasLargaVoz.pared)} s de pared)`
+        : "")
     : "no hubo roja") + ` · se permiten ${rojaPermitida} s`,
   "«me tiene esperando por ese avión un buen rato, ¿me dejará salir?»: la roja no se apagaba nunca",
 );
