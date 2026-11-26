@@ -1396,6 +1396,47 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let frustrada = null;
   /** La palanca que pidió el banco en este fotograma, antes del tope de ángulo. Para la traza. */
   let palancaPedida = null;
+  /**
+   * **El gas de la recogida en Guyrami: si se va por encima de la Vref, se
+   * quita** (H101).
+   *
+   * La recogida sostenía el gas de la Vref —ver `recogida.gas`— viniera como
+   * viniera, y en ese modelo el gas es la velocidad y llega a ella con unos
+   * cinco segundos y medio de retraso: los tres o cuatro de la recogida se
+   * comen la mitad de lo que sobre. El JAZ 20 de La Palma la empezaba a 69
+   * nudos y tocaba a 68, con el listón de toma rápida de Guyrami en 67.
+   *
+   * Lo de verdad es quitar gas al recoger: «Since power normally is reduced to
+   * idle during the round out, the airspeed also gradually decreases», y «The
+   * round out and touchdown are normally made with the engine idling»
+   * (FAA-H-8083-3C, pp. 9-8 y 9-9). Y sin pasarse, que el mismo capítulo
+   * pone entre los errores «Prematurely reducing power to idle on round out
+   * resulting in hard landing» (p. 9-23). Medido en la mesa del modelo
+   * sencillo: al ralentí, de golpe o poco a poco, el JAZ 20 tocaba a 55–61
+   * nudos pero a 1,3–1,5 m/s en aire quieto y pasando de dos con rachas,
+   * donde con el gas de la Vref toca a 1,2; con la palanca de este banco
+   * —ocho décimas— el modelo no recoge al ralentí sin hundirse.
+   *
+   * Así que se quita **lo que sobra**: el gas de una velocidad tan por debajo
+   * de la Vref como el doble de lo que se va por encima. Con cinco nudos de
+   * más eso es casi el ralentí, y el gas vuelve al de la Vref a medida que la
+   * velocidad llega a ella, así que lo que baja al tocar no cambia. En la
+   * mesa, con esto y con el margen quitado en la final corta —ver
+   * `margenQueQueda`—, cuarenta finales con rachas por tanda: el JAZ 20 toca
+   * a 64,1–65,6 nudos (antes, 65,8–68,7), a 1,13–1,17 m/s de mediana y 1,75
+   * la peor (antes, 1,18–1,22 y 1,83), y a 260–268 m del umbral de mediana
+   * (antes, 284–291); la más corta de la flota, el JAZ 25 a 197 m, con la
+   * zona empezando a 150. Yendo por debajo de la Vref no se mete más: eso lo
+   * hace ya el pelo de gas del que se hunde, en `recoger`.
+   */
+  const gasDeLaRecogidaSencilla = (r, s) => {
+    const deMas = s.airspeed - r.vref;
+    if (!(deMas > 0) || typeof o.gasPara !== "function") return r.gas;
+    const g = o.gasPara(r.vref - 2 * deMas);
+    return typeof g === "number" && Number.isFinite(g)
+      ? Math.min(r.gas, Math.max(0, g))
+      : r.gas;
+  };
   const recoger = (mandos) => {
     if (!recogida) return;
     const s = o.estado();
@@ -1661,7 +1702,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const m = o.mandoParaSubir(quiere);
       if (typeof m === "number" && Number.isFinite(m)) {
         mandos.elevator = Math.max(-0.8, Math.min(0.8, m));
-        if (SENCILLO) mandos.throttle = Math.min(1, recogida.gas + 0.5 * Math.max(0, falta));
+        // Y sin lo que sobre de velocidad (H101): ver `gasDeLaRecogidaSencilla`.
+        if (SENCILLO)
+          mandos.throttle = Math.min(
+            1,
+            gasDeLaRecogidaSencilla(recogida, s) + 0.5 * Math.max(0, falta),
+          );
         recogida.ultimoMando = mandos.elevator;
         return;
       }
@@ -8296,8 +8342,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * del viento: la mitad de lo que sopla de cara y la racha **del parte**
        * —la `G` del METAR menos el viento medio—, no la que mide este banco en
        * su propio anemómetro, que es sobre todo su propio vaivén de gas y de
-       * senda. En Guyrami no: allí los cinco nudos se los come la recogida con
-       * el gas de la Vref sostenido. Ver `recogida.gas`.
+       * senda.
+       *
+       * **Y en Guyrami también** (H101). Ahí se dejaba el margen entero hasta
+       * la recogida, con la idea de que los cinco nudos se los comía ella con
+       * el gas de la Vref sostenido, y no se los come: en ese modelo el gas va
+       * hacia su velocidad con una constante de unos cinco segundos y medio, y
+       * los tres o cuatro de la recogida quitan la mitad. Y el listón de toma
+       * rápida de Guyrami no es la Vref y cuarto sino las 93 centésimas de la
+       * punta del modelo, si es menos —ver `CASI_A_TOPE` en
+       * `flight/aterrizaje.ts`—: en el JAZ 20, 67,3 nudos con la Vref en 64.
+       * Medido en la mesa del modelo sencillo con estas leyes, el JAZ 20
+       * cruzaba el umbral a 69 y tocaba a 66,5 en aire quieto y hasta a 68,7
+       * con rachas; en La Palma el juego le quitó las gafas en dos de seis
+       * vuelos por «rápido». Con el margen quitado aquí y el gas de la
+       * recogida de abajo (`gasDeLaRecogidaSencilla`), toca a 64,2 en aire
+       * quieto y a 65,6 como mucho con rachas. Ese modelo no tiene viento
+       * —ver `ponerViento` en `flight/arcade.ts`—, así que lo que queda
+       * encima en el umbral es solo la racha del parte.
        */
       const parte = o.meteo?.();
       const rachaDelParte =
@@ -8305,9 +8367,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           ? Math.max(0, parte.rachaKt - parte.vientoKt) * 0.514444
           : 0;
       const enElUmbral = Math.min(aditivo, deCara / 2 + rachaDelParte);
-      const margenQueQueda = CON_EL_AUTOMATICO
-        ? Math.max(0, Math.min(1, falta / SE_QUITA_EL_MARGEN_DESDE))
-        : 1;
+      const margenQueQueda = Math.max(0, Math.min(1, falta / SE_QUITA_EL_MARGEN_DESDE));
       const pedidaEnIndicada =
         deAproximacion + enElUmbral + (aditivo - enElUmbral) * margenQueQueda;
       const quiere = enVerdadera(s, pedidaEnIndicada);
@@ -8546,14 +8606,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * treinta pies, como el `RETARD` de los gases del juego, 240 m y
            * 5,2; cortando a los dos metros, 394 m y 4,1. Con el gas de la Vref
            * sostenido, de 438 a 453 m y a 1,2 m/s en los nueve, sin depender
-           * de dónde iba el escalón; y los cinco nudos de más se los come la
-           * recogida, que es como se cruza el umbral. Al tocar, el gas al
-           * ralentí —ver la etapa `frenar`—, y los frenos de tierra suben.
+           * de dónde iba el escalón. Al tocar, el gas al ralentí —ver la
+           * etapa `frenar`—, y los frenos de tierra suben.
+           *
+           * **Y los cinco nudos de más no se los comía la recogida** (H101):
+           * con el gas de la Vref quita la mitad, y el JAZ 20 tocaba a un
+           * nudo del listón de toma rápida de Guyrami. Ahora se quitan en la
+           * final corta, como en el modelo completo —ver `margenQueQueda`—, y
+           * lo que aún sobre al recoger lo quita el gas: ver
+           * `gasDeLaRecogidaSencilla`. Después del punto 254 el modelo
+           * aprendió a prestar subida a cambio de la velocidad que sobra
+           * —`loQuePresta` en `flight/arcade.ts`—, pero con la palanca de
+           * este banco el ralentí entero sigue hundiéndolo: medido allí.
            */
           gas:
             SENCILLO && typeof o.gasPara === "function"
               ? (o.gasPara(vref) ?? c.throttle)
               : c.throttle,
+          // La Vref de esta recogida, en verdadera: ver `gasDeLaRecogidaSencilla`.
+          vref,
         };
         empezoLaRecogida = {
           ruedas: +ruedas.toFixed(1),
@@ -8569,12 +8640,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * baja, y si la ley de la final lo sigue moviendo sobre la pista —la
          * senda ya no pide nada y lo va quitando— la palanca pierde mano a la
          * vez que el avión se hunde. La palanca la lleva `recoger`, que en
-         * Guyrami le suma un pelo de gas si una racha lo hunde de más. Y en un
-         * reactor, el gas que llevaba hasta los treinta pies: ver
-         * `RECOGIDA_DE_REACTOR`.
+         * Guyrami le suma un pelo de gas si una racha lo hunde de más, y le
+         * quita lo que sobre de velocidad (H101): ver
+         * `gasDeLaRecogidaSencilla`. Y en un reactor, el gas que llevaba hasta
+         * los treinta pies: ver `RECOGIDA_DE_REACTOR`.
          */
         c.throttle = SENCILLO
-          ? recogida.gas
+          ? gasDeLaRecogidaSencilla(recogida, s)
           : RECOGIDA_DE_REACTOR
             ? globalThis.__gasDelReactorEnLaRecogida({
                 gas: recogida.gas,
@@ -8906,7 +8978,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * por rápida con su velocidad indicada, y en La Palma, con una salida
          * delante, la dio por rápida con el gas a 0,6 y sin gafas.
          */
-        if (!toco) alTocar = { ias: s.airspeed, gas: o.controles?.()?.throttle ?? null, vref: o.avion?.()?.aproximacion ?? null };
+        /*
+         * Y lo más rápido que vuela el modelo de ahora, que en Guyrami pone el
+         * listón de toma rápida por debajo de la Vref y cuarto (H101): ver
+         * `listonDeToma`.
+         */
+        if (!toco)
+          alTocar = {
+            ias: s.airspeed,
+            gas: o.controles?.()?.throttle ?? null,
+            vref: o.avion?.()?.aproximacion ?? null,
+            vmax: o.velocidadMaxima?.() ?? null,
+          };
         toco = t;
         /*
          * **Dónde se tocó.** Es el número que da nombre a #147 y el banco no
@@ -11558,6 +11641,20 @@ comprobarSiVolo(
   "se aterrizaba y la pantalla no decía nada durante quince segundos",
 );
 
+/**
+ * **Desde qué velocidad da el juego la toma por rápida**, m/s: la Vref y
+ * cuarto, o las 93 centésimas de lo más rápido que vuela el modelo de ahora si
+ * es menos —`DEMASIADO_RAPIDO` y `CASI_A_TOPE` en `flight/aterrizaje.ts`, que
+ * no salen de allí y por eso van aquí con sus números—.
+ *
+ * El banco imprimía solo la primera, y en Guyrami manda la segunda: el JAZ 20
+ * tiene ahí su punta en 37 m/s, así que es rápida desde 67 nudos y no desde los
+ * 80 que decía la línea de las gafas. El banco tocaba a un nudo de ese listón
+ * sin que nada lo enseñara (H101).
+ */
+const listonDeToma = ({ vref, vmax }) =>
+  Math.min(vref * 1.25, Number.isFinite(vmax) && vmax > 0 ? vmax * 0.93 : Infinity);
+
 /*
  * **Y el primer aterrizaje bueno trae las gafas de sol.**
  *
@@ -11588,8 +11685,10 @@ if (vuelo.toco > 0) {
         ? ` · ${vuelo.botes.cuantos} bote${vuelo.botes.cuantos === 1 ? "" : "s"}, el más largo de ${vuelo.botes.mas} s`
         : " · sin botes") +
       (vuelo.alTocar
-        ? ` · al tocar ${Math.round(vuelo.alTocar.ias * 1.94384)} kt de aire` +
-          (vuelo.alTocar.vref ? ` (Vref ${Math.round(vuelo.alTocar.vref * 1.94384)}, rápida desde ${Math.round(vuelo.alTocar.vref * 1.25 * 1.94384)})` : "") +
+        ? ` · al tocar ${(vuelo.alTocar.ias * 1.94384).toFixed(1)} kt de aire` +
+          (vuelo.alTocar.vref
+            ? ` (Vref ${(vuelo.alTocar.vref * 1.94384).toFixed(1)}, rápida desde ${(listonDeToma(vuelo.alTocar) * 1.94384).toFixed(1)}, ${((listonDeToma(vuelo.alTocar) - vuelo.alTocar.ias) * 1.94384).toFixed(1)} por debajo)`
+            : "") +
           (vuelo.alTocar.gas !== null ? ` con el gas a ${vuelo.alTocar.gas.toFixed(2)}` : "")
         : ""),
     "«quiero ser piloto con las gafas de sol»",
