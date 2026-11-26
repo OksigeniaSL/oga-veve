@@ -11023,3 +11023,53 @@ Tres rojos, y ninguno en la toma:
 - **El ralentí entero en la recogida de Guyrami**, que es lo del manual, hunde el
   avión con la palanca de este banco. Para volarlo así habría que mirar `recoger` o
   `loQuePresta`, y no era este encargo.
+
+## Enmienda H101b (26-11-2026): en Taguató el piloto del banco perdía la velocidad al sacar los flaps de la base
+
+En la ronda de cierre de la tanda 28, `OGA_PISTA_OCUPADA=1 node scripts/verificar-vuelo-entero.mjs tenerife-norte
+taguato 1 jaz-20` salió en rojo por «y en un vuelo normal no suena el avisador de pérdida»: tras la frustrada de Los
+Rodeos, en la base del segundo circuito, sonó «stall» dos veces, a 49 nudos de indicada con la Vref en 64, los flaps a
+dos tercios y 1,15 g. **El aviso era el que tocaba**, y el juego estaba bien: a esa velocidad y con ese alabeo, el ala
+está donde dice el avisador. Lo que no estaba bien era el gas del banco.
+
+### Por qué
+
+Del viento en cola en adelante (`aDonde ≥ 3`), el gas del modelo completo partía de 0,55 y el resto lo buscaba a
+tientas un acumulador, `gasQueSostiene`, a 0,002 por metro por segundo de error y por segundo. Volado otra vez dos
+veces con la traza de la final (`OGA_TRAZA_FINAL=1`), en verde las dos: el viento en cola llegaba a 84 nudos donde
+tocaban 76, lo acumulado se iba abajo y el gas se quedaba en 0,08. Al sacar los flaps a dos tercios en la base, la
+resistencia subía de golpe, la velocidad caía a 60 y 62 nudos —por debajo de la Vref— y lo acumulado tardaba medio
+minuto en volver con el gas a fondo. La tirada roja fue la misma, y cayó once nudos más, a 49.
+
+### Lo que se cambia, en el banco
+
+- **El gas de nivel se le pregunta al modelo**: `gasPara(velocidad)` de la sonda, que es `gasPara` de `fdm.ts` con lo
+  que el avión lleva fuera, las mismas fuerzas que lo mueven. Es la pregunta que ya le hacía la recogida en Guyrami.
+  Un piloto, al sacar flaps, pone el gas de la velocidad con esos flaps, y no espera a perderla.
+- **Lo acumulado solo corrige lo que el nivel no cuenta** —la bajada del plan, el viraje—, y solo acumula a menos de
+  4 m/s, unos ocho nudos, de la buscada (`GAS_ACUMULA_CERCA`). Más lejos basta la ley proporcional, y acumular ahí era
+  lo que dejaba el gas sin recuperar al llegar.
+- La traza de la final dice el gas con sus dos partes: «gas 0,07 (nivel 0,25, acumulado 0,00)».
+
+En Guyrami, nada: allí el gas es la velocidad, y el banco ya volaba así.
+
+### Volado con el cambio
+
+Ocho vuelos enteros con el modelo completo, sobre la rama de la tanda, con la traza de la final. «Lo más lento» es lo
+más lento de la traza del viento en cola, la base y la final, en indicada; la toma, de la ronda de cierre (antes) y
+con el cambio (ahora).
+
+| Vuelo | Lo más lento | Toma antes | Toma ahora | Comprobaciones |
+|---|---|---|---|---|
+| JAZ 20, Taguató, frustrada en Los Rodeos, 1 | **67** (antes 62) | 218 m, 1,54 m/s | 253 m, 1,12 m/s | 60 de 60 |
+| JAZ 20, Taguató, frustrada en Los Rodeos, 2 | **67** (antes 60; 49 en la roja) | 234 m, 1,28 m/s | 246 m, 1,37 m/s | 60 de 60 |
+| JAZ 40, frustrada en Los Rodeos | 89 | 315 m, 1,24 m/s | 321 m, 1,02 m/s | 59 de 59 |
+| JAZ 50, Los Rodeos | 73 | 272 m, 1,35 m/s | 309 m, 1,45 m/s | 58 de 58 |
+| JAZ 90, Los Rodeos | 125 | 398 m, 1,06 m/s | 440 m, 0,93 m/s | 64 de 64 |
+| JAZ 50, Cuatro Vientos | 75 | 263 m, 0,84 m/s | 252 m, 1,41 m/s | 61 de 61 |
+| JAZ 60, Fuerteventura | 114 | 280 m, 1,35 m/s | 321 m, 1,47 m/s | 59 de 59 |
+| JAZ 20, Pettirossi | 71 | 248 m, 1,27 m/s | 261 m, 1,33 m/s | 59 de 59 |
+
+Con el JAZ 20 en Taguató, lo más lento queda tres nudos por encima de la Vref, que es donde tiene que estar: lo más
+lento de un circuito es la final corta, a la Vref y algo. Las tomas siguen en su zona y a uno o dos metros por
+segundo; lo que cambia de una tirada a otra es lo de siempre de una tirada a otra.

@@ -5060,6 +5060,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   };
   /** El gas que sostiene la velocidad del circuito. Ver la etapa «subir». */
   let gasQueSostiene = 0;
+  /**
+   * Lo cerca de la velocidad buscada que hay que ir para acumular gas, m/s:
+   * unos ocho nudos. Más lejos, la ley proporcional basta, y acumular ahí es
+   * lo que dejaba el gas sin recuperar al llegar. Ver la etapa «subir».
+   */
+  const GAS_ACUMULA_CERCA = 4;
   /** El pie que sostiene el viento cruzado en la carrera. Ver el timón de la etapa «despegar». */
   let timonDeLaCarrera = 0;
   /** El error de velocidad de la vuelta anterior, en final. Ver el gas de la final. */
@@ -8029,8 +8035,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * allí el gas es también subir, y acumulando gas para una velocidad que
        * el modelo sencillo no da, el JAZ 60 subía el viento en cola de La
        * Gomera cincuenta metros por encima del circuito.
+       *
+       * **Y el gas que la sostiene se le pregunta al modelo** (26-11), con lo
+       * que lleva fuera: `gasPara`, las mismas fuerzas que mueven el avión, y
+       * la misma pregunta que ya le hace la recogida en Guyrami. Lo
+       * acumulado solo corrige lo que el nivel no dice —la bajada del plan, el
+       * viraje—, y solo acumula cerca de la velocidad buscada. Antes se partía
+       * de 0,55 y el resto se buscaba a tientas, y a tientas llegaba tarde:
+       * con el JAZ 20 en Taguató, tras la frustrada de Los Rodeos, al viento
+       * en cola a 84 nudos donde tocaban 76, lo acumulado se iba abajo, el gas
+       * se quedaba en 0,08, y al sacar los flaps a dos tercios la velocidad
+       * caía a 61 nudos —por debajo de la Vref, 64— y tardaba medio minuto en
+       * volver con el gas a fondo. Una tirada de la ronda llegó a 49 nudos, y
+       * sonó «stall» dos veces en la base. Un piloto, al sacar flaps, pone el
+       * gas de la velocidad con esos flaps, y no espera a perderla.
        */
-      if (!SENCILLO && !subiendo && aDonde >= 3)
+      const gasDeNivel =
+        !SENCILLO && !subiendo && aDonde >= 3 && typeof o.gasPara === "function"
+          ? (o.gasPara(quiereIr) ?? 0.55)
+          : 0.55;
+      if (!SENCILLO && !subiendo && aDonde >= 3 && Math.abs(quiereIr - s.airspeed) < GAS_ACUMULA_CERCA)
         gasQueSostiene = Math.max(
           -0.5,
           Math.min(0.45, gasQueSostiene + (quiereIr - s.airspeed) * 0.002 * paso),
@@ -8050,7 +8074,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             quiereIr < VELOCIDAD_DE_CRUCERO ? 0 : 0.3,
             Math.min(
               1,
-              0.55 + (quiereIr - s.airspeed) * 0.04 + (!SENCILLO && aDonde >= 3 ? gasQueSostiene : 0),
+              gasDeNivel + (quiereIr - s.airspeed) * 0.04 + (!SENCILLO && aDonde >= 3 ? gasQueSostiene : 0),
             ),
           );
       configurar(s, c, aDonde);
@@ -8168,7 +8192,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             ` · toca ${(altoQueToca - alto(s)).toFixed(1)} plan ${(altoPedido - alto(s)).toFixed(1)} pide ${memoriaDeSenda ? memoriaDeSenda.ritmo.toFixed(1) : "-"}` +
             ` · eje ${desvio(s).toFixed(0)} por girar ${((a.theta * 180) / Math.PI).toFixed(0)}°` +
             ` · ${Math.round(o.velocidadDeCabina?.() ?? s.airspeed * 1.94384)} kt sube ${s.verticalSpeed.toFixed(1)}` +
-            ` · gas ${c.throttle.toFixed(2)} flaps ${(o.controles().flaps ?? 0).toFixed(2)}`,
+            ` · gas ${c.throttle.toFixed(2)} (nivel ${gasDeNivel.toFixed(2)}, acumulado ${gasQueSostiene.toFixed(2)})` +
+            ` flaps ${(o.controles().flaps ?? 0).toFixed(2)}`,
         );
       }
 
