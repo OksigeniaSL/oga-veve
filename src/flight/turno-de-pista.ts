@@ -528,6 +528,11 @@ export class TurnoDePista {
   private retrasoEnEstaLlegada = 0;
   /** Los que la torre ha dejado en su doble raya en esta llegada. Ver `retener`. */
   private readonly retenidosEnEstaLlegada = new Set<string>();
+  /**
+   * **Y por los que ya te mandó al aire en esta llegada** (H100): a ésos se les
+   * da la pista en cuanto queda libre, les dé tiempo o no. Ver `mirarTuSalida`.
+   */
+  private readonly alAirePorEnEstaLlegada = new Set<string>();
 
   /** A quién ya te contó un AFIS, y por quién propuso irse la instructora. */
   private readonly contadoDe = new Set<string>();
@@ -1251,12 +1256,27 @@ export class TurnoDePista {
       this.vueltasEnEstaLlegada = 0;
       this.retrasoEnEstaLlegada = 0;
       this.retenidosEnEstaLlegada.clear();
+      this.alAirePorEnEstaLlegada.clear();
     }
     if (!llegada) return;
     const quien = this.de.afis?.() ? "afis" : "torre";
     for (const q of tapan) {
       if (seVaAntes(llegada, q)) {
         if (fase !== "final") this.darleLaPista(q);
+        continue;
+      }
+      /*
+       * **Y al que ya te mandó al aire, la pista en cuanto quede libre**, le dé
+       * tiempo o no (H100). Se le daba mientras durara la orden de irte, que se
+       * levanta al subir: si en ese rato la pista no estaba libre, ya solo se
+       * le daba si se iba antes que tú, y con la remontada de cinco minutos de
+       * Encarnación eso no pasa nunca. «Sale él y vuelves por el circuito» es
+       * que salga mientras das la vuelta. Si a tu final todavía está en la
+       * pista, lo que toca es lo de la pista ocupada; y si sigue en su raya,
+       * otra vez lo de aquí.
+       */
+      if (fase !== "final" && this.alAirePorEnEstaLlegada.has(q.matricula)) {
+        this.darleLaPista(q);
         continue;
       }
       // Pasada la red, ya no se te retrasa más: se aterriza.
@@ -1321,6 +1341,7 @@ export class TurnoDePista {
           alPedirla: llegada.segundos,
         };
         this.porTuSalida.alAire++;
+        this.alAirePorEnEstaLlegada.add(q.matricula);
         this.aterrizajeSinAutorizar = false;
         this.despejeSinDecir = null;
         this.alAireEnEstaFinal = true;
@@ -1786,6 +1807,7 @@ export class TurnoDePista {
     this.vueltasEnEstaLlegada = 0;
     this.retrasoEnEstaLlegada = 0;
     this.retenidosEnEstaLlegada.clear();
+    this.alAirePorEnEstaLlegada.clear();
     this.contadoDe.clear();
     this.propuestoPor.clear();
     this.porTuSalida.vueltas = 0;

@@ -2067,6 +2067,15 @@ export interface QuienJuega {
    */
   readonly prioridad?: boolean;
   /**
+   * **Si se ha quedado sin radio** (H100): con el 7600 marcado, la torre le
+   * habla con la lámpara y nada más, y no le puede pedir una vuelta. Volando
+   * cerca de su campo cuenta como quien viene a aterrizar ya —«it shall be
+   * permitted to land if its actions indicate that it so desires», OACI, Doc
+   * 4444, 7.7.3.1—, y a la calle por la que dejará la pista no se deja rodar a
+   * nadie mientras tanto, le dé tiempo o no. Ver `quienDejaLaPistaPorSuRaya`.
+   */
+  readonly sinRadio?: boolean;
+  /**
    * **Y por dónde sigue en el aire**, si vuela cerca de aquí: de donde está
    * hasta el umbral, por su circuito, o por derecho si no lo vuela. Se pide
    * solo cuando hace falta. Es lo que mira la torre antes de mandar a otro a
@@ -3504,8 +3513,23 @@ export function crearTrafico(
        * llegaba a su doble raya y ya no se iba antes que tú. Ver
        * `pistaLibreEn` y `flight/salida-tapada.ts`.
        */
+      /*
+       * **Y sin radio, siempre** (H100). Dejarle rodar «porque le da tiempo»
+       * es una apuesta que, si sale mal, se arregla pidiéndote una vuelta, y a
+       * quien no oye no se le puede pedir. Y sin radio se te cuenta también
+       * cuando la torre no te ve en su circuito —recién despegado, subiendo
+       * tras la roja—: en Encarnación, con la única calle, en ese rato rodaba
+       * hacia ella quien luego no se iba a tiempo, y la lámpara te daba la roja
+       * en la final. Una torre con un 7600 en el circuito le despeja el camino
+       * (OACI, Doc 4444, 7.7.3.1: «aircraft which are in contact with the
+       * controller may be instructed […] to give way»). Con su red,
+       * `RETENCION_MAXIMA`; al que ya rueda o espera en su doble raya se le da
+       * la pista si se va antes que tú (`mirarTuSalida`), y si no, la roja.
+       */
       const aTiempo =
-        tu.enTierra || (llega !== null && llega < plazo + pistaLibreEn(matricula));
+        tu.enTierra ||
+        tu.sinRadio === true ||
+        (llega !== null && llega < plazo + pistaLibreEn(matricula));
       if (aTiempo && enElCamino(raya, tuSalida())) return TU;
     }
     /*
