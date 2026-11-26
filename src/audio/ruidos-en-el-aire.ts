@@ -335,6 +335,17 @@ export class RuidosEnElAire {
     this.juntas.connect(this.morro);
     this.juntas.connect(this.retardo).connect(this.principal);
     this.juntasFuente.start();
+    /*
+     * **Y las juntas solas, para el banco**: como llegan a las dos ruedas,
+     * antes de juntarse con los baches, que van por los mismos filtros. En el
+     * hormigón gastado, por debajo de unos 22 m/s, los baches pegan más que
+     * las juntas y caen al azar, y la capa entera no dice si suenan las
+     * juntas. Un nodo sin salida: no se procesa mientras nadie lo mide.
+     */
+    const juntasSolas = ctx.createGain();
+    this.morro.connect(juntasSolas);
+    this.principal.connect(juntasSolas);
+    this.anotar("juntas", juntasSolas);
 
     this.bachesFuente = ctx.createBufferSource();
     this.bachesFuente.buffer = chasquido;
