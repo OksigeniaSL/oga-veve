@@ -10875,3 +10875,151 @@ el resto, 125 y 2.479. Son 599 ficheros y 12.129 pruebas en verde.
   tres: el juego sigue con la suya, que es la que cabe en un vuelo.
 - **Los números de la carta de Asunción** valen para el tráfico y para quien juega, y no
   para la base de Ñu Guazú, que el juego no tiene.
+
+## Enmienda H101 (26-11-2026): en Guyrami el piloto del banco tocaba en el listón de toma rápida
+
+`verificar-vuelo-entero.mjs la-palma guyrami 12 jaz-20`, con el 035/10 de La Palma,
+perdía las gafas de sol en dos vuelos de seis: el juego daba la toma por «rápida». En
+uno tocó a 68 nudos de aire con el gas a 0,68, con la final volada a 71, la Vref en 64,
+y la recogida empezada a 7 m y a 69 nudos. Los que pasaban tocaron a 67.
+
+**El juego está bien.** Su listón es `min(Vref·1,25, punta·0,93)` (`DEMASIADO_RAPIDO` y
+`CASI_A_TOPE` en `flight/aterrizaje.ts`), y en Guyrami manda el segundo: la punta del
+JAZ 20 a ras de suelo es el 62 % de su crucero, 37,2 m/s, así que es rápida desde 67,3
+nudos (un poco más con la altura del campo) y no desde los 80 que imprimía la línea de
+las gafas, que solo contaba con la Vref. El banco volaba todos los campos de Guyrami a
+menos de un nudo de ese listón, sin que nada lo enseñara.
+
+### Por qué tocaba ahí
+
+- **El margen de la final no se quitaba en Guyrami.** En el modelo completo el banco lo
+  quita en los últimos 1.500 m (`SE_QUITA_EL_MARGEN_DESDE`) y cruza el umbral a la Vref,
+  que es como se cruza; en Guyrami no, con la idea de que los cinco nudos se los comía la
+  recogida con el gas de la Vref sostenido. No se los come: en ese modelo el gas es la
+  velocidad y llega a ella con una constante de 5,6 s (el ritmo de 0,18 en el aire de
+  `flight/arcade.ts`), y una recogida de tres o cuatro segundos quita la mitad.
+- **Y la ley de gas de la final de Guyrami va con banda**: solo quita gas por velocidad
+  cuando se pasa tres metros por segundo de la pedida, y dentro de la banda lleva la
+  senda. La final se volaba de 69 a 75 nudos.
+- **El viento no entra.** El modelo sencillo no tiene viento —`ponerViento` está vacío a
+  propósito—, así que en Guyrami lo que el banco ve de cara es cero y lo que se deja
+  encima en el umbral es solo la racha del parte. Por eso la mesa de abajo no cambia con
+  el viento de cara: con 0, 5 o 10 nudos el modelo vuela igual.
+
+### Lo que se cambia, en el banco
+
+- **El margen se quita en la final corta en todos los peldaños** (`margenQueQueda`).
+- **En la recogida de Guyrami, si se va por encima de la Vref, se quita gas**
+  (`gasDeLaRecogidaSencilla`): el de una velocidad tan por debajo de la Vref como el doble
+  de lo que sobra, y nunca más que el de la Vref. Con cinco nudos de más es casi el
+  ralentí, y vuelve al de la Vref a medida que la velocidad llega a ella. Es lo que pide
+  el manual —«Since power normally is reduced to idle during the round out, the airspeed
+  also gradually decreases» (FAA-H-8083-3C, p. 9-8); «The round out and touchdown are
+  normally made with the engine idling» (p. 9-9)— sin el error que el mismo capítulo
+  apunta: «Prematurely reducing power to idle on round out resulting in hard landing»
+  (p. 9-23). El pelo de gas del que se hunde, que ya estaba, es el «advance the throttle
+  slightly to prevent an excessive rate of sink» de la p. 9-9.
+- **La sonda `velocidadMaxima`** da lo más rápido que vuela el modelo de ahora —lo mismo
+  que recibe el juez de la toma—, y la línea de las gafas imprime con ella el listón de
+  verdad (`listonDeToma`), con un decimal y cuánto se tocó por debajo.
+
+El juego no se toca.
+
+### La mesa
+
+Una mesa del scratchpad (`mesa-guyrami.mjs`, a la manera de `mesa-de-la-recogida.mjs`,
+empaquetada con esbuild): el `ArcadeFlightModel` del juego con
+las rachas del juego, una final recta de 2,5 km en llano, la ley de gas y de senda de la
+final de Guyrami copiada con sus números, y `recoger` y el trozo que la empieza leídos
+tal cual del fichero del banco. Doscientas finales con σ_w = 1 m/s por cada una de dos
+entradas —a la Vref más seis nudos y más diez, las dos dentro de la banda— y una en aire
+quieto. El JAZ 20, con el listón en 67,3:
+
+| | Toca, kt | Rápidas · a menos de 2 kt del listón | Caída: mediana · p90 · peor | Metros: mediana · más corta |
+|---|---|---|---|---|
+| Antes, aire quieto | 66,5 | 0 · sí | 1,20 | 286 |
+| Antes, con rachas | 64,9–68,7 (mediana 66,6) | 63 de 400 · 399 de 400 | 1,21 · 1,46–1,52 · 1,97 | 295 · 213 |
+| Ahora, aire quieto | 64,1–64,2 | 0 · no | 1,20 | 259–261 |
+| Ahora, con rachas | 64,0–65,6 (mediana 64,3) | 0 · 5 de 400 | 1,18–1,21 · 1,48–1,52 · 2,11 | 256–259 · 186 |
+
+Lo que baja al tocar se queda como estaba en la mediana y en el p90; en la cola salen
+dos de cuatrocientas por encima de dos metros por segundo, la peor a 2,11, donde antes la
+peor era 1,97. Viene de quitar el margen y no del gas: quitando solo el margen sale una de
+cuatrocientas, a 2,02. Lo probable es que con los cinco nudos la recogida tuviera
+velocidad que gastar —lo que el modelo presta a la palanca mientras se va por encima de
+lo que sostiene el gas, `loQuePresta`— y una racha que baja en el último metro se
+encontrara más mano; no se ha instrumentado. Las tomas quedan más cerca del punto de
+toma, que está a 250 m, y ninguna antes de la zona.
+
+El JAZ 25 (listón 61,7, Vref 56,4), con cuarenta: de 57,3–59,9 a 56,3–57,1 nudos, la
+peor caída de 1,79 a 1,84 y la toma más corta de 228 a 197 m. En los demás manda la Vref
+y cuarto y el listón queda lejos; con el cambio tocan a la Vref, con la misma caída (en
+doscientas, el JAZ 40 de 1,84 a 1,85 la peor y el JAZ 50 de 1,82 a 1,81) y algo más
+cortos.
+
+Lo probado y no puesto:
+
+- **Solo quitar el margen**: en aire quieto, 64,2; con rachas, hasta 67,2, y de 4 a 10
+  de 40 a menos de dos nudos del listón. La banda de la ley de gas deja cruzar el umbral
+  hasta a 68.
+- **Solo el gas de la recogida**, con el margen hasta ella: 64,5 en aire quieto y hasta
+  66,3 con rachas.
+- **El ralentí**, de golpe al empezar la recogida, poco a poco con la altura que queda o
+  solo en la mitad de abajo: toca a 50–67 nudos, pero a 1,35–1,65 m/s en aire quieto
+  y con tomas de más de dos con rachas (de 1 a 3 de 40); con la palanca entera en vez
+  de las ocho décimas de `recoger`, a 1,2–1,3 en aire quieto y aún con 1 o 2 de 40 de
+  más de dos. El modelo presta subida a cambio de la velocidad que sobra
+  (`loQuePresta`), pero no tanta.
+- **Una vez o tres veces** lo que sobra, en vez del doble: con una, de 1 a 4 de 40 a
+  menos de dos nudos del listón; con tres, ninguna, pero con la peor caída a 1,94 y la
+  toma más corta del JAZ 25 a 172 m.
+- **Siempre un poco por debajo de la Vref**, de medio metro por segundo a dos, para que
+  la palanca tenga siempre velocidad que gastar: en doscientas, la cola no baja (la peor,
+  2,20 y 2,14 con medio y con uno) y con dos el JAZ 25 toca a 149 m, antes de la zona.
+
+### Volado
+
+`verificar-vuelo-entero.mjs` con el cambio, una tirada de cada, el 26-11-2026. La
+velocidad es la verdadera que juzga el juego, y el listón, el suyo con la punta del
+modelo a la altura del campo:
+
+| Vuelo | Toca, kt | Listón | Debajo | Caída | Metros | Gafas | Comprobaciones |
+|---|---|---|---|---|---|---|---|
+| `la-palma guyrami 12 jaz-20` | 65,4 | 67,7 | 2,3 | 0,97 | 310 | sí | 65 de 65 |
+| La misma con `OGA_FILA_DE_SALIDA=1` | 64,9 | 67,7 | 2,8 | 1,03 | 268 | sí | 62 de 63 |
+| `tenerife-norte guyrami 3 jaz-20` | 67,7 | 75,9 | 8,2 | 1,27 | 301 | sí | 63 de 63 |
+| `tenerife-norte guyrami 3 jaz-25` | 58,6 | 70,5 | 11,8 | 1,04 | 292 | sí | 63 de 63 |
+| `la-gomera guyrami 1 jaz-20 tenerife-norte` | 67,7 | 75,9 | 8,2 | 0,94 | 286 | sí | 76 de 76 |
+| `tenerife-sur guyrami 12 jaz-20` | 65,2 | 68,1 | 2,9 | 1,50 | 245 | sí | 63 de 64 |
+| `estigarribia guyrami 12 jaz-20` | 67,0 | 69,6 | 2,6 | 1,15 | 273 | sí | 62 de 63 |
+
+Antes, en La Palma, se tocaba a 67–68 con el mismo listón, y se perdían las gafas en
+dos de seis. En Los Rodeos la punta sube con los 630 m del campo y el listón se aleja.
+
+Tres rojos, y ninguno en la toma:
+
+- **Con la fila, en La Palma, los sellos no se celebran**: «ninguno celebrado; por
+  celebrar: veve, mainumby, manos-de-seda». Se celebran rodando o parados y con nadie
+  hablando (`esMomentoDeCelebrar`), y esta vez las gafas, que se celebran antes, sí
+  salieron. En los cinco vuelos con fila de antes del cambio pasó siempre, tres de
+  ellos con las gafas. Repetido una vez: 65 de 65, con ¡Veve! celebrado rodando a
+  14,9 m/s, y la toma a 64,7 nudos, 3,0 por debajo del listón, a 1,03 m/s y 295 m.
+- **En Tenerife Sur y en Estigarribia, una roja de la salida** de 241 y 228 s, a los
+  90 y a los 35 s del vuelo, antes de despegar, «nadie en la pista». Es lo de rodar,
+  no lo de tomar.
+
+### Lo que queda
+
+- **Con racha en el parte, en Guyrami.** El banco deja encima en el umbral la racha
+  entera (`enElUmbral`, la regla del reactor; para la avioneta la FAA pide la mitad), y
+  el gas de la recogida de ahora se la quita, porque cuenta desde la Vref. En aire
+  turbulento el manual pide lo contrario: «retard the throttle to idling position only
+  after the main wheels contact the landing surface» (p. 9-20). Y si se tocara con la
+  racha encima, el listón del JAZ 20 en Guyrami queda a unos 3,5 nudos de su Vref.
+  Ningún banco de hoy lleva racha en el parte, y no se ha medido.
+- **La banda de la ley de gas de la final de Guyrami**, tres metros por segundo por
+  encima de la pedida, es la que deja cruzar el umbral hasta seis nudos rápido. No se
+  ha tocado: en Guyrami esa ley lleva también la senda.
+- **El ralentí entero en la recogida de Guyrami**, que es lo del manual, hunde el
+  avión con la palanca de este banco. Para volarlo así habría que mirar `recoger` o
+  `loQuePresta`, y no era este encargo.
