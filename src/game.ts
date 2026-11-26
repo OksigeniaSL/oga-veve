@@ -16830,9 +16830,17 @@ export class Game {
     const porElCircuito =
       enLaFinal === null && !this.sinMotor ? this.tuCircuitoParaLaTorre() : null;
     const llegada = enLaFinal ?? porElCircuito ?? deRuta;
+    /*
+     * **Y sin radio, volando cerca de casa, vienes a aterrizar aunque la torre
+     * no te vea en su circuito** (H100): recién despegado, subiendo tras la
+     * roja o alargando, dejaba de contarte, y en ese rato soltaba hacia tu
+     * única calle a quien luego no se iba a tiempo. Un 7600 vuelve al campo, y
+     * a ése se le despeja el camino. Ver `QuienJuega.sinRadio`.
+     */
+    const sinRadioAqui = this.radioCallada && !this.haciaOtroCampo();
     const aterrizandoAqui = s.onGround
       ? VUELVES_POR_TU_SALIDA.has(fase)
-      : llegada !== null;
+      : llegada !== null || sinRadioAqui;
     return {
       alUmbral: enLaFinal,
       llegada,
@@ -16841,6 +16849,7 @@ export class Game {
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
       prioridad: this.conPrioridad,
+      sinRadio: sinRadioAqui && !s.onGround,
       porDondeVuela: s.onGround ? null : () => this.porDondeSigoVolando(),
       sale: this.tuSalidaParaLaTorre(fase),
       enTierra: s.onGround ? this.tuSitioEnTierra() : null,
