@@ -378,8 +378,9 @@ export interface Aerodrome {
     /** De dónde sale qué puestos son de aviación general, si no es de la columna de la tabla (H97). */
     readonly general?: string;
     /**
-     * **De qué puestos sale quien se va por sus medios**, sin tractor, donde la carta da casi todos de salida en
-     * retroceso y no publica plataforma de aviación general (H97): en La Palma, el 12 y el 14. Ver `dePorSusMedios`.
+     * **De qué puestos sale quien se va por sus medios**, sin tractor, donde de los puestos de la ficha casi todos
+     * son de salida en retroceso y ninguno es de aviación general (H97): en La Palma, el 12 y el 14; en Los Rodeos,
+     * el 17 y el 19, por la F (H103), que su aviación general no está en la ficha. Ver `dePorSusMedios`.
      */
     readonly porSusMedios?: { readonly puestos: readonly string[]; readonly fuente: string };
     /**

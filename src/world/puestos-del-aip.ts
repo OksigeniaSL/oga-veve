@@ -227,7 +227,8 @@ export function valeParaElEmpuje(aip: DelAip | null | undefined, envergadura: nu
 /**
  * **De estos puestos, los de salir por sus medios** (H97), donde la ficha los trae (`aipPuestos.porSusMedios`):
  * en La Palma, el 12 y el 14, que son los dos de salida autónoma; de los otros catorce se sale en retroceso, con
- * tractor, y la avioneta no lo lleva. Los que admiten esta envergadura; ninguno, si la ficha no los trae.
+ * tractor, y la avioneta no lo lleva. En Los Rodeos, el 17 y el 19 (H103). Los que admiten esta envergadura;
+ * ninguno, si la ficha no los trae.
  */
 export function dePorSusMedios<P extends { readonly ref?: string | null; readonly aip?: DelAip }>(
   aero: Pick<Aerodrome, "aipPuestos">,

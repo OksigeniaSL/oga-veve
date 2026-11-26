@@ -679,12 +679,15 @@ export function sueloDelTrafico(
   const hayGeneral = delPavimento.some((p) => p.aip?.uso === "general");
   /*
    * Y la avioneta y el bimotor, donde no la da y la ficha trae de qué puestos se sale sin tractor, a esos
-   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios.
+   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios. **Y el turbohélice también** (H103),
+   * que en el tráfico embarca a pie y sale sin tractor (`pasarelaDelTrafico`): se quedó fuera por el ala, y en La
+   * Palma salía por sus medios del 5 y del 16, que son «R», y el aeropuerto no da el power-back sin pedirlo antes
+   * por escrito (AD 2-GCLA, casilla 20.1.3.1). Aquí solo llega quien no lleva pasarela: ver `puestosPara`.
    */
   const hayPorSusMedios = !hayGeneral && !!aero.aipPuestos?.porSusMedios;
   const porAla = new Map<number, readonly Punto[]>();
   const suyosPorAla = (ala: number | undefined): readonly Punto[] => {
-    if (ala === undefined || (!hayGeneral && !(hayPorSusMedios && ala < ALA_DE_LETRA_B))) return puestos;
+    if (ala === undefined || (!hayGeneral && !hayPorSusMedios)) return puestos;
     let lista = porAla.get(ala);
     if (!lista) {
       const suyos = hayGeneral
@@ -1167,9 +1170,16 @@ export function sueloDelTrafico(
     if (hecha === undefined) {
       let mide = 0;
       for (let i = 1; i < entrada.length; i++) mide += Math.hypot(entrada[i]![0] - entrada[i - 1]![0], entrada[i]![1] - entrada[i - 1]![1]);
+      /*
+       * Y si su raya no da en la calle por detrás, enganchado a la última que nombra (H103), como quien juega
+       * (`llegaEn`): la del 19 de Los Rodeos sale de la punta de la F y se curva hasta la parada, y sin esto se
+       * llegaba a él por la R, recto entre el 15 y el 16.
+       */
+      const ultima = suyas.at(-1);
       const r = rodajeEntre(porEllas(aip?.salePor ? [...suyas, aip.salePor[0]!] : suyas), desde, fin, 400, undefined, {
         desdeLaCalle: true,
         llegaPorSuRaya: { haciaAtras: [a[0] - b[0], a[1] - b[1]], mide },
+        ...(ultima ? { llegaEn: (t: Tramo) => t.ref === ultima } : {}),
       });
       publicadas.set(clave, (hecha = r && porElAsfalto(r.puntos) ? r : null));
     }
