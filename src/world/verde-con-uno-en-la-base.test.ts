@@ -99,6 +99,26 @@ describe("la torre no te da la pista con uno en la base que llegaría antes de q
     expect(k.hasta(() => !k.sitio().esperandoTurno && k.dentro().recorrido > k.dentro().base!)).not.toBeNull();
   });
 
+  it("y el que da su vuelta por tu salida no te la quita, aunque tardes en irte más que su vuelta", () => {
+    const k = conUnoQueLlega();
+    // En la doble raya, con una remontada larga por delante: el siguiente eres tú.
+    k.seas({ sale: { ...SALE, enElAire: 300 } });
+    expect(k.hasta(() => k.sitio().esperandoTurno)).not.toBeNull();
+    // Mientras da la vuelta, la torre no te la niega por él: es por ti por quien espera.
+    const estorbos: string[] = [];
+    for (let t = 0; t < 120 && k.sitio().esperandoTurno; t += PASO) {
+      estorbos.push(...k.trafico.estorbanTuSalida().map((e) => `${t} s: ${e.matricula}`));
+      k.trafico.paso(PASO);
+    }
+    expect(estorbos).toEqual([]);
+    // Con la pista ya tuya, sigue dando vueltas mientras te vas; ido, baja.
+    k.seas({ enLaPista: true, sale: { ...SALE, enElAire: 300, conLaPista: true } });
+    k.hasta(() => false, 200);
+    expect(k.sitio().esperandoTurno).toBe(true);
+    k.seas({});
+    expect(k.hasta(() => !k.sitio().esperandoTurno && k.dentro().recorrido > k.dentro().base!)).not.toBeNull();
+  });
+
   it("y la red: pasados tres minutos la torre te la da igual, y dice por quién se espera", () => {
     const estorba = [{ matricula: EC, llega: true }];
     const dibujo: DibujoDelTurno = {

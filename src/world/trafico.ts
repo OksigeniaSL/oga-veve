@@ -5099,6 +5099,17 @@ export function crearTrafico(
       if (!c) continue;
       if (llegando(b) && !dandoLaVuelta(b)) {
         if ((b.recorrido < c.base - 0.5 && !b.tresSesenta) || b.recorrido >= c.toca) continue;
+        /*
+         * **Menos el que da su vuelta por ti**: el siguiente eres tú
+         * (`tuTurnoDeSalir`), y al cerrarla mira otra vez y, contigo todavía
+         * en la pista, da otra —con la pista tuya cuentas en su fila con lo
+         * que tardas en irte—. Contarlo aquí era un candado: él daba vueltas
+         * por tu salida y la torre no te la daba por él, hasta la red de
+         * `LO_QUE_SE_ESPERA_POR_QUIEN_LLEGA`. En Estigarribia, con la remontada
+         * hasta la cabecera, lo que tardas en irte es más que su vuelta, y
+         * fueron 228 s de roja. El que da vueltas por otro sí cuenta.
+         */
+        if (b.tresSesenta && tuTurnoDeSalir(b).length > 0) continue;
         const vuelta = b.tresSesenta ? largoDelTresSesenta(b.tresSesenta) - b.tresSesenta.hecho : 0;
         const aDecidir = (c.decide - b.recorrido + vuelta) / b.marca.velocidad;
         // O a la decisión todavía corres, y al umbral ya la habrás dejado: sigue él.

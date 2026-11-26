@@ -3753,6 +3753,43 @@ radio no cambia nada: la red larga solo se mira sin ella.
 - **La cadencia de la frecuencia** (arriba): el que llega listo a su doble raya espera el rato de
   una llamada cualquiera si no hay nadie detrás. El arreglo de 7.9.3.4 está probado y descartado
   por las parejas de La Palma y El Hierro; antes de volver a él hay que mirar esas seis.
-- **El banco a reloj ×12 mide la espera del canal en reloj de juego**, y la voz va con el de pared:
-  la comprobación de la roja de la fila se permite 380 s y esa espera se le come una parte que
-  jugando a ×1 no estaría.
+- ~~**El banco a reloj ×12 mide la espera del canal en reloj de juego**~~: hecho, ver la enmienda
+  siguiente.
+
+## Enmienda del 26-11-2026: la vuelta que da por tu salida no te la quita, y la roja a ×1
+
+Dos rojos de la ronda de la tanda 28, los dos en la doble raya y antes de despegar.
+
+**En Estigarribia, con Guyrami** (`verificar-vuelo-entero.mjs estigarribia guyrami 12 jaz-20`), una
+roja de 228 s con la pista vacía. La sostenía ZP-DXB, que daba su vuelta de espera en la esquina de
+la base, quieta en el metro 6.519 de su camino, durante tres minutos. Era un candado entre dos reglas:
+
+- la llegada daba la vuelta **por ti**: con nadie girado a la base, el siguiente en salir eres tú
+  (`tuTurnoDeSalir`), y al cerrar la vuelta mira otra vez y da otra si sigues ahí;
+- la torre no te daba la pista **por ella** (`estorbanTuSalida`, H94): contaba lo que le quedaba de
+  vuelta hasta la decisión y, con la remontada hasta la cabecera, lo que tardas en estar en el aire
+  es más que su vuelta entera. Nunca cabía.
+
+Lo soltaba la red de `LO_QUE_SE_ESPERA_POR_QUIEN_LLEGA`. Ahora el que da la vuelta por ti no cuenta
+entre los que estorban tu salida. Con la pista tuya entras en su fila con lo que tardas en irte
+(`laFila`), y al cerrar la vuelta da otra mientras sigas en la pista. El que da vueltas por otro sí
+cuenta, como antes. Prueba en `verde-con-uno-en-la-base.test.ts`, con una salida de 300 s y la
+vuelta entera; sin el cambio, no pasa.
+
+En la mesa con radio (la de H96 y H98 con los vuelos de frustrar y los directos, 3.660 vuelos en 14
+campos), antes y después:
+- a menos de 300 m de quien juega, 0 y 0;
+- parejas del tráfico, 2 y 2;
+- tocar con la pista ocupada y vuelos sin acabar, 0 y 0;
+- la roja media, de 43,1 a 40,6 s.
+
+Baja donde se remonta: El Hierro con el JAZ 60, de 97,5 a 83,9 s; La Gomera, de 82–84 a 73–74;
+Pedro Juan con el JAZ 60, de 39,5 a 24,5, y su p90 de 182,5 a 76,5.
+
+**En Tenerife Sur** (`tenerife-sur guyrami 12 jaz-20`), una roja de 241 s. El que acababa de
+aterrizar dejó la pista a los 235 s, y la torre siguió contándolo encima hasta los 331, esperando su
+«pista libre». Eso era la frecuencia esperando canal, de verdad, pero a reloj ×12: la voz que suena
+se come doce segundos de juego por cada uno suyo, y es lo que H100 dejó escrito para La Palma. El
+juego no cambia. Cambia el banco: la roja se cuenta como a ×1, con el reloj de juego mientras la boca
+calla y el de pared mientras suena (`bocaAhora`), y la línea dice las dos cosas.
+
