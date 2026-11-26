@@ -11002,7 +11002,8 @@ Tres rojos, y ninguno en la toma:
   celebrar: veve, mainumby, manos-de-seda». Se celebran rodando o parados y con nadie
   hablando (`esMomentoDeCelebrar`), y esta vez las gafas, que se celebran antes, sí
   salieron. En los cinco vuelos con fila de antes del cambio pasó siempre, tres de
-  ellos con las gafas; con una tirada no se sabe si es de esto, y no se ha repetido.
+  ellos con las gafas. Repetido una vez: 65 de 65, con ¡Veve! celebrado rodando a
+  14,9 m/s, y la toma a 64,7 nudos, 3,0 por debajo del listón, a 1,03 m/s y 295 m.
 - **En Tenerife Sur y en Estigarribia, una roja de la salida** de 241 y 228 s, a los
   90 y a los 35 s del vuelo, antes de despegar, «nadie en la pista». Es lo de rodar,
   no lo de tomar.
