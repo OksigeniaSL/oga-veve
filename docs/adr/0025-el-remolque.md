@@ -3486,6 +3486,143 @@ pidiendo que no diera la maniobra; ahora lo pregunta por el equipo que lleva cad
 - **Los que colocan el avión en el aire para una foto** siguen con el motor parado: carteles, paneles, ventanilla, estrellas, PAPI, la lluvia, el mar y el cielo y
   las luces de noche. Ninguno mide un vuelo.
 
+## Enmienda (26-11-2026, H103): Los Rodeos por sus medios, el R45 por la D2, y el turbohélice de La Palma, que se queda
+
+### El caso
+
+Lo que dejó escrito la H97. En Los Rodeos las avionetas y los dos turbohélices de quien juega, y la avioneta y el bimotor del
+tráfico, salían por sus medios del 15, del 25 y del 26, que son de retroceso. En La Palma el turbohélice del tráfico
+seguía saliendo así del 5 y del 16. El que entra en un puesto de pareja no esperaba al que empujan en el de al lado. Y los dos grandes
+del R45 de Tenerife Sur bajaban por la 07 por la D3, quinientos metros más que por la D2.
+
+### Lo que publica el AIP, leído el 26-11-2026
+
+Los AD 2 de Los Rodeos, La Palma y Tenerife Sur y las PDC de los dos primeros, bajados otra vez de ENAIRE.
+
+- **AD 2-GCXO PDC 1.2 (WEF 06-AUG-26)**: del 2 al 16 y del 20 al 27, más el 29, el 31 y el 33, «R»; **el 17 y el 19, «A» y de AT72**; del 28 al 38, «A» o «A-R»; y siete de aviación general, del AG1 al AG7, «A», de CN35, G150 y PA34.
+  La PDC 1.3, la observación (1): «Push-back exit (Power-back prior clearance)». La PDC 1.1 (WEF 29-OCT-26) dibuja dos plataformas de
+  aviación general, la APN GA 1 y la APN GA 2.
+- **AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26)**: C, «Manoeuvres in the autonomous exit parking positions to TWY R (PRKG 28, 30,
+  32 and 34), to TWY F (PRKG 17 and 19), to TWY Z (PRKG 35, 36, 37 and 38) and to TWY Y (PRKG AG1, AG2 and AG3)»; E, «Aircraft exiting
+  PRKG 17 and 19, following ATC clearance, enter TWY R via TWY F at F1 point»; H, el power-back, para turbohélices de hasta un AT72, con
+  permiso en el momento; I y J, de la GA 1 se sale por la Y, y de la GA 2, con tractor hasta la W. La 20.1.3 F: a los dos se entra con
+  el «FOLLOW ME» esperando en el F1. Y la 20.1.4: la F, hasta 28 m de envergadura.
+- **AD 2-GCLA, casilla 20.1.3.1 (AIRAC AMDT 09/26, WEF 01-OCT-26)**: el power-back pide permiso de la dirección del aeropuerto, por
+  escrito y con antelación. La PDC 1.2 (WEF 15-MAY-25), igual que en la H97: el 12, de B753, y el 14, de A339, son los «A».
+- **AD 2-GCTS, casilla 20.3.2.1 (AIRAC AMDT 10/26, WEF 29-OCT-26)**: A, el empuje «nosing to the threshold in use and leaving apron
+  gates "D" free», salvo «operational or safety reasons»; A1, con dos empujes a la vez hacia el mismo lado, «one aircraft (…) performs a
+  long pushback and the other performs a short pushback». El empuje largo es una maniobra publicada, y lo que pide es dejar libres las
+  puertas.
+
+**Lo de la H97 es cierto en lo que trae la ficha, y no en todo el campo.** De los quince puestos de Los Rodeos que hay en la ficha, el
+17 y el 19 son «A» y los otros trece «R», como en La Palma. Pero Los Rodeos sí publica dónde aparca la aviación general, y del 28 al 38
+deja salir por sus medios: nada de eso está en la ficha, que viene de OpenStreetMap y no los trae. Ver «Lo que queda».
+
+### Decisión
+
+1. **Los Rodeos, por sus medios del 17 y del 19** (`POR_SUS_MEDIOS`, la línea de la H97), y **por la F**: la casilla los saca a la R
+   por ella y en el F1, y a ellos se entra de ella. Va en la ficha como `salePor` y `llegaPor` de los dos, y la F como calle de
+   plataforma (`callesDePlataforma`), con lo que el plan y el tráfico ya hacían en Fuerteventura (H85). Sin eso, por la 30 el 19 salía
+   recto al sur, entre el 15 y el 16, que tienen el morro hacia él, y se llegaba a él por el mismo sitio.
+2. **El tráfico llega a su puesto enganchado a la calle que publica** (`publicadaHasta`, con `llegaEn`), como quien juega, si su raya
+   no da en la calle por detrás: la del 19 sale de la punta de la F y se curva hasta la parada. En los demás campos con calles
+   publicadas no cambia ninguna llegada.
+3. **El turbohélice del tráfico, todavía no** (`suyosPorAla`). Por qué sale del 5 y del 16: embarca a pie y en el tráfico sale sin
+   tractor (`pasarelaDelTrafico`), y la regla de la H97 deja los de por sus medios a quien tiene el ala por debajo de la letra B. Lo real
+   es el 12 o el 14, los «A», que lo admiten: salir por sus medios de un «R» es el power-back, que en La Palma se pide por escrito. Se
+   probó, y el vitest lo tumbó: con el ATR en el 12, el coche que lleva al JAZ 110 al 11 le pasaba a 15 m, por debajo del ala. Y es que
+   el 12 es incompatible con el 10, el 11, el 13, el 14 y el 15 (PDC 1.2), y el tráfico no sabe de incompatibles fuera de las tres
+   parejas de Tenerife Sur. Ver «Lo que queda». La regla es una para todos los campos, y en Los Rodeos el turbohélice del tráfico sigue
+   en el 25 y el 13.
+4. **El que entra en un puesto de pareja espera en la calle** a que acabe el empuje del de al lado: **hecho en la H98**
+   (`antesDelDeAlLado`, ADR 0029), con su prueba en `la-luz-que-no-sale.test.ts`. No se toca.
+5. **El ramal que se abre en curva suave es un ramal** (`pasandoElCruce`, `EL_RAMAL_SE_ABRE`). La D2 sale de la INNER ocho metros y
+   medio por detrás de donde la cruza la línea del R45, y su primer punto aún cae dentro del ancho de la calle: la regla de la H79
+   —empujar un poco más para dejar el ramal por delante— no la veía, y los dos grandes, con el morro a la 25 (H97), bajaban por la D3.
+   Ahora el tractor los deja en la INNER a cuarenta metros del cruce, con la D2 a treinta y dos por delante y la D1 a trescientos por
+   detrás, libres las dos, y bajan por ella.
+
+### Metros, antes y después
+
+**Quien juega en Los Rodeos** —el puesto, lo que se rueda hasta la primera doble raya y, de ahí, lo que queda hasta el eje—:
+
+| Avión | Por la 12 | Por la 30 |
+|---|---|---|
+| JAZ 20, 25 y 40 | 26, 135 m a la Z1 y 1.245 al eje → **19, 329 a la R4** y 1.244 | 15, 1.211 a la E4 y 745 → **19, 1.349** y 745 |
+| JAZ 50 | 25, 122 a la Z1 y 1.245 → **19, 329 a la R4** y 1.244 | 15, 1.211 → **19, 1.349** |
+| JAZ 60 | 25, 122 a la Z1 y 1.245 → **19, 329 a la R4** y 1.244 | 15, 2.104 a la E5 y 939 → **19, 2.242** y 939 |
+| JAZ 90, 110 y 120 | iguales: 24 y 25 | iguales: 12, 15 y 24 |
+
+Hasta el eje, 193 m más por la 12 y 138 por la 30: por la 12 el 26 quedaba más al oeste, hacia la cabecera, y por la 30 el 15 bajaba
+recto a la R; del 19 se va primero hacia el oeste, a la F, y se baja por ella al F1. Del 17 no sale nadie solo: el 19 se rueda menos por las dos cabeceras, y al 17 va el segundo.
+
+**El tráfico de Los Rodeos**, lo que se rueda hasta la doble raya al salir y del umbral al puesto al llegar (dejando de correr lo antes posible):
+
+| | Por la 12 | Por la 30 |
+|---|---|---|
+| Avioneta y bimotor, saliendo | 26, 1.033 → **19, 1.226** | 15, 2.304 → **19, 2.441** |
+| y llegando | 26, 877 → **19, 1.070** | 15, 1.453 → **19, 1.590** |
+| Turbohélice y reactor | iguales: 25 y 13; 24 y 13, empujado | iguales |
+
+Dejando de correr cada 150 m, cambian todas las llegadas de la avioneta y el bimotor, y todas al 19 por la F. Con el turbohélice a los
+suyos —lo que se probó y no entra—, el de La Palma salía del 12, 429 m, y del 14, 248, y llegaba al 14. **El R45 de Tenerife Sur por la 07**,
+el JAZ 110 y el JAZ 120: D3, 1.829 m → **D2, 1.307**.
+
+De las 418 filas de `puesto-de-salida-de-cada-campo.json` cambian diez, todas de Los Rodeos: el JAZ 20, 25, 40, 50 y 60 por las dos cabeceras.
+
+### El barrido, el plan y los demás campos
+
+- **Los empujes de contacto**, en Los Rodeos, La Palma, Gran Canaria, Lanzarote, Tenerife Sur, Barajas, Pettirossi y Fuerteventura, con los tres
+  reactores y por las dos cabeceras: 1.048, iguales uno a uno, y los 48 del plan. Lo que salía mal antes sigue igual, en Barajas.
+- **Los de retroceso sin pasarela**, en los seis campos que los tienen: iguales, salvo los dos del R45 por la 07, que empujan 121 m en vez de 109,
+  acaban con el morro a la 25 como en la H97, no sacan ninguna rueda del pavimento y ruedan 1.307 por la D2 en vez de 1.829 por la D3.
+- **El puesto de salida y la ruta** de quien juega, y la salida y la llegada del tráfico: en los otros diecisiete campos, ninguno cambia.
+
+### Lo medido
+
+- **La mesa**, antes —ef0f25e4— y después, con node y sin vitest: el puesto de salida y los metros de cada avión de quien juega y de cada tipo
+  del tráfico en los diecinueve campos y por las dos cabeceras, y las llegadas del tráfico dejando de correr cada 150 m: 2.188 casos, de los
+  que cambian los de Los Rodeos, y ninguno más; con el turbohélice a los suyos, también 22 de La Palma.
+- **Pruebas nuevas** (`salida-autonoma-de-los-rodeos.test.ts`, 8): la ficha, con su fuente, su calle y los trece «R»; las avionetas y los dos
+  turbohélices, del 19 por las dos cabeceras, por la F hasta el F1 y sin pisar fuera; los reactores, como antes; y la avioneta y el bimotor del
+  tráfico, saliendo y llegando por la F desde cada sitio en el que dejan de correr, y con los dos cogidos, a otro. Y en `primera-puerta.test.ts`,
+  el R45 de los dos grandes, empujado de cuarenta metros hacia el oeste y por la D2; su barrido de los 110 mide la primera puerta, tras un
+  empuje largo, con un metro de holgura, que el tractor lo deja a treinta y dos justos medidos por la calle. Cambian `flecos-de-las-plataformas`,
+  que daba La Palma por el único campo con ellos; `empuja-con-quien-juega-en-su-puesto`, cuyo JAZ 20 ya no está junto al 23; y el puesto de
+  salida de cada campo.
+- **Vitest, por partes** de 2 GB, con la máquina compartida: `src/world` en cuatro, 205 ficheros, 4.550 en verde y 3 saltadas; `src/flight`, de
+  tres partes, las dos primeras, 184 ficheros, 3.278 en verde, 14 saltadas y una pendiente, con un rojo que es de esto y se arregló:
+  `circuito-con-plan-a-otra-isla`, cuya cuenta de control —con la regla de antes la torre soltaba salidas delante— ya no veía el fallo
+  con la avioneta del tráfico saliendo del 19, y mira ahora cada minuto en vez de cada dos (2 de 2). Las pruebas nuevas, también en
+  `--pool=forks`. Dos rojos más salieron con el turbohélice a los suyos, y se fueron con él: `de-frente-en-la-calle` en La Palma y
+  `empuja-con-quien-juega-en-su-puesto`, este por el 19 (ver arriba). **Sin correr**: la tercera parte de `src/flight` (93 ficheros) se cortó a los
+  doce minutos por el tope de las dos horas, con el candado repartido con otra tanda entera de la máquina, y lo demás (126 ficheros, `src`
+  fuera de `world` y `flight` y las pruebas de `scripts`) no llegó a empezar.
+- **Navegador, no**: el vitest entero, con la máquina compartida, se comió el tiempo. Queda dicho abajo.
+
+### Lo que queda
+
+**La aviación general de Los Rodeos**: la GA 1, del AG1 al AG3, de salida autónoma por la Y, y la GA 2, del AG4 al AG7, con tractor hasta la W
+(casilla 20.1.2 I y J; la W, de 12 m hasta los AG, y la Y, de 17 m pasado el AG1). Ahí aparcan de verdad las avionetas, y no en el 19, que es
+de AT72. Pide poner los siete en la ficha desde la carta —sus coordenadas están en la PDC 1.2—, con sus líneas y sus calles, como los AG de
+Tenerife Sur (H97), y la noche, que la GA 2 la cierra salvo el N4 y el N5. Y del 28 al 38, los de salida autónoma a la R y a la Z, que la
+ficha tampoco trae.
+
+**El turbohélice del tráfico a los de salida autónoma**, en La Palma y en Los Rodeos: pide poner en la ficha las incompatibilidades de la
+PDC —«INCOMP. 10 (2), 11, 13, 14 (3), 15 (3)» en el 12 de La Palma— y que el tráfico no coja un puesto incompatible con el que tiene, o va a
+tener, otro, como hace la H97 con las tres parejas de Tenerife Sur. Con eso, el cambio es una línea en `suyosPorAla`.
+
+**El power-back** de los turbohélices, que Los Rodeos da en el momento (20.1.2 H): de los «R» de AT72 que trae la ficha, el 15, el 16, el 20 y el 21,
+un ATR puede salir de espaldas con sus motores. El juego no lo hace: el turbohélice de quien juega sale del 19 hacia delante.
+
+**En el navegador**, que son los que salen de otro puesto con esto: `OGA_PUERTO=5693 OGA_GPU=1 node scripts/verificar-vuelo-entero.mjs tenerife-norte
+guyrami 3 jaz-20` y `tenerife-norte taguato 1 jaz-50`, del 19 por la F; y `OGA_PUERTO=5693 OGA_GPU=1 OGA_ESCENARIO=tenerife-norte node
+scripts/ver-remolque-del-trafico.mjs carpeta`, con la avioneta y el bimotor del tráfico en el 19 y el 17. Y el R45 de los dos grandes, con
+`OGA_ESCENARIO=tenerife-sur OGA_AVION=jaz-110 OGA_PUESTO=R45 node scripts/ver-remolque-de-quien-juega.mjs carpeta`, por la 07: el empuje largo por la INNER.
+
+**El que entra con el de al lado empujando, siendo tú**: la H98 retiene al tráfico que llega; a quien juega, que entra por su raya, no lo
+para ni la torre ni el señalero mientras empujan al de al lado. Solo pasa en las tres parejas de Tenerife Sur.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
@@ -3502,7 +3639,8 @@ Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen lí
 
 **Qué puestos tienen pasarela**, en los cuatro campos cuyo AIP no lo dice, desde la H87. Las dos puntas de la plataforma de
 Tenerife Sur y su APROAR, desde la H88: ver su «Lo que queda». Por la primera puerta y la segunda línea por delante, y el tráfico al
-puesto al que menos se rueda, desde la H95; la aviación general, los de al lado de uno en uno y el asfalto de la T de Fuerteventura, desde la H97: ver el suyo.
+puesto al que menos se rueda, desde la H95; la aviación general, los de al lado de uno en uno y el asfalto de la T de Fuerteventura, desde la H97: ver el suyo. Los Rodeos por sus
+medios, del 17 y el 19 por la F, y el R45 por la D2, desde la H103; su aviación general, en el «Lo que queda» de la H103.
 
 **Fuerteventura**, con los puestos del AIP desde la H85: ver su «Lo que queda». El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
 tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H81.

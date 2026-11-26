@@ -131,7 +131,8 @@ describe("«through the first available apron gate»", () => {
           // De letra D, la D1: los dos grandes no caben (H88).
           const caben = PUERTAS.filter((d) => d !== "D1" || a.wingSpan <= 52);
           const cruce = ruta.vuelveEn === undefined ? ruta.puntos[1]! : ruta.puntos[ruta.vuelveEn]!;
-          const toca = laPrimera(alo(cruce), al25 ? 1 : -1, 32, caben);
+          // Empujado más allá del cruce, el tractor lo deja a treinta y dos justos del ramal, medidos por la calle y no por la pista (H103).
+          const toca = laPrimera(alo(cruce), al25 ? 1 : -1, ruta.vuelveEn === undefined ? 32 : 31, caben);
           // A los dos grandes, del R42 y el S41 por la 07 no les queda ninguna a más de treinta y dos metros: van por la D2, que tienen en la boca.
           if (toca === undefined) {
             expect([a.wingSpan > 52, rumbo, "R42 S41".includes(p.ref!)], nombre).toEqual([true, la07, true]);
@@ -159,11 +160,31 @@ describe("«through the first available apron gate»", () => {
     ["R19", "jaz-90", "07", "D6", 2208],
     ["J5", "jaz-110", "07", "D3", 1757],
     ["R47", "jaz-110", "07", "D2", 1307],
-    ["R45", "jaz-120", "07", "D3", 1829],
+    ["R45", "jaz-120", "07", "D2", 1307],
   ])("el %s con el %s por la %s, por la %s", (ref, id, pista, puerta, metros) => {
     const { ruta } = saliendo(ref, avion(id), pista === "07" ? la07 : la25);
     expect(puertaDe(ruta.letras)).toBe(puerta);
     expect(Math.abs(ruta.largo - metros)).toBeLessThan(8);
+  });
+
+  /*
+   * La D2 sale de la INNER en curva suave, ocho metros por detrás de donde la cruza la línea del R45: con el morro a la
+   * 25, la tenía en la boca y bajaba por la D3, quinientos metros más (H97). La casilla 20.3.2.1 da el empuje largo
+   * (A1) y pide dejar libres las puertas D (A): el tractor lo deja en la INNER con la D2 por delante, y la D1 lejos.
+   */
+  it("el R45 de los dos grandes por la 07: empujado más largo hacia el oeste, hasta dejar la D2 por delante, y por ella (H103)", () => {
+    for (const id of ["jaz-110", "jaz-120"]) {
+      const { ruta } = saliendo("R45", avion(id), la07);
+      expect(puertaDe(ruta.letras), id).toBe("D2");
+      expect(ruta.vuelveEn, id).toBeDefined();
+      const vuelta = ruta.puntos[ruta.vuelveEn!]!;
+      const cruce = ruta.puntos[1]!;
+      expect(aLaPolilinea(vuelta, inner[0]!.path), id).toBeLessThan(1);
+      // Hacia el oeste, por detrás del cruce: lo que le falta a la D2 para quedar a treinta y dos metros.
+      expect(alo(vuelta), id).toBeLessThan(alo(cruce));
+      expect(Math.hypot(vuelta[0] - cruce[0], vuelta[1] - cruce[1]), id).toBeGreaterThan(35);
+      expect(Math.hypot(vuelta[0] - cruce[0], vuelta[1] - cruce[1]), id).toBeLessThan(50);
+    }
   });
 
   it("y recalculando la raya donde lo deja el tractor, sigue por la suya: del J8, por la D2, y no por la D3, que le queda en la boca", () => {

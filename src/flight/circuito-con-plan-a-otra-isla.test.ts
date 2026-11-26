@@ -223,11 +223,15 @@ function llegar(esc: Scenario, semilla: number, antes: number, regla: Regla): Ll
   return salida;
 }
 
-/** Todas las llegadas: las dos cabeceras, ocho momentos y tres semillas. */
+/**
+ * Todas las llegadas: las dos cabeceras, dieciséis momentos y tres semillas. Eran ocho, cada dos minutos, y desde que
+ * la avioneta y el bimotor salen del 19 (H103), con doscientos metros más hasta la pista, ninguna salida caía ya en el
+ * minuto de antes de tu final y la cuenta de la regla de antes no veía el fallo: un minuto entre uno y otro.
+ */
 function todas(regla: Regla): { donde: string; l: Llegada }[] {
   const salen: { donde: string; l: Llegada }[] = [];
   for (const esc of cabeceras())
-    for (const antes of [120, 240, 360, 480, 600, 720, 840, 960])
+    for (const antes of [120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020])
       for (const semilla of [1, 2, 3])
         salen.push({
           donde: `${Math.round(esc.runway.heading)}° tras ${antes} s, semilla ${semilla}`,

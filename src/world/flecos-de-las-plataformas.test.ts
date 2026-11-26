@@ -238,14 +238,14 @@ describe("La Palma, quien se va por sus medios", async () => {
   const campo = await delCampo("GCLA");
   const aero = campo.aerodrome!;
 
-  it("la ficha trae los dos de salida autónoma que son de avión, con su fuente, y ningún otro campo los lleva", async () => {
+  it("la ficha trae los dos de salida autónoma que son de avión, con su fuente, y ningún otro campo los lleva más que Los Rodeos (H103)", async () => {
     const { puestos, fuente } = aero.aipPuestos!.porSusMedios!;
     expect(puestos).toEqual(["12", "14"]);
     expect(fuente).toMatch(/AD 2-GCLA PDC 1\.2 \(WEF 15-MAY-25\).*AD 2 \(AIRAC AMDT 09\/26, WEF 01-OCT-26\)/);
     for (const ref of puestos) expect(aero.parkingPositions!.find((p) => p.ref === ref)!.aip!.salida, ref).toBe("A");
     for (const e of SCENARIOS) {
       const otro = (await conSuAerodromo(e)).aerodrome;
-      if (otro && otro.id !== "GCLA") expect(dePorSusMedios(otro, otro.parkingPositions ?? [], 11), otro.id).toEqual([]);
+      if (otro && otro.id !== "GCLA" && otro.id !== "GCXO") expect(dePorSusMedios(otro, otro.parkingPositions ?? [], 11), otro.id).toEqual([]);
     }
   });
 

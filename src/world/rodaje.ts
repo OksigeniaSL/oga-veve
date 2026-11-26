@@ -2500,6 +2500,12 @@ const RECTO_HASTA_EL_RAMAL = 32;
  * para dejar al JAZ 90 en la calle, no son de más.
  */
 const RODANDO_VA = 7.5;
+/**
+ * **Lo que puede seguir un ramal dentro del ancho de su calle, pasado el cruce, y ser un ramal**, m (H103): una
+ * puerta que se abre en curva tarda unos metros en apartarse más de `EN_LA_MISMA_CALLE`; la D2 de Tenerife Sur,
+ * seis. Más allá, la ruta sigue por la calle y deja el cruce atrás.
+ */
+const EL_RAMAL_SE_ABRE = 10;
 const YA_SE_EMPUJA = 20;
 
 /** Cada cuánto se mira, hacia atrás del cruce, que la calle siga en la misma recta, y lo que se le deja torcer, m. */
@@ -2610,7 +2616,14 @@ export function pasandoElCruce(
       let j = 0;
       while (j + 1 < otra.puntos.length && deLado(otra.puntos[j + 1]!) <= EN_LA_MISMA_CALLE && porDetras(otra.puntos[j + 1]!) > 1) j++;
       const ramal = porDetras(otra.puntos[j]!);
-      const sigue = otra.puntos[j + 1];
+      /*
+       * Y el ramal que se abre en curva suave (H103): la D2 de Tenerife Sur sale de la calle de plataforma ocho metros
+       * por detrás de donde la cruza la línea del R45, y su primer punto aún cae dentro del ancho de la calle. Vale
+       * si deja la calle antes de `EL_RAMAL_SE_ABRE` por delante del cruce; si sigue por ella más allá, no es un ramal.
+       */
+      let s = j + 1;
+      while (s < otra.puntos.length && deLado(otra.puntos[s]!) <= EN_LA_MISMA_CALLE && porDetras(otra.puntos[s]!) > -EL_RAMAL_SE_ABRE) s++;
+      const sigue = otra.puntos[s];
       if (j === 0 || !sigue || deLado(sigue) <= EN_LA_MISMA_CALLE) return;
       const hasta = ramal + RECTO_HASTA_EL_RAMAL;
       if (hasta > llega) return;
