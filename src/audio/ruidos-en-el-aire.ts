@@ -39,6 +39,7 @@
  * acaba de pisar el morro. Un solo nodo de fuente y una línea de retardo.
  */
 
+import { CabezaDelBucle, sortearBucle } from "./cabeza-del-bucle";
 import { muestraDeHebilla, muestraDeLevantarse, type RuidoDeLaGente } from "./gente-del-pasaje";
 import type { Niveles, Suceso } from "./ruidos";
 
@@ -202,6 +203,9 @@ export class RuidosEnElAire {
   private readonly retardo: DelayNode;
   private readonly bachesFuente: AudioBufferSourceNode;
   private readonly baches: GainNode;
+  /** Por dónde van los dos bucles de la rodadura, para sortear a cada golpe. Ver `CabezaDelBucle`. */
+  private readonly cabezaDeJuntas: CabezaDelBucle;
+  private readonly cabezaDeBaches: CabezaDelBucle;
   private readonly golpeDeRueda: BiquadFilterNode;
   private readonly chasquidoDeRueda: BiquadFilterNode;
   private readonly ruedas: GainNode;
@@ -335,6 +339,7 @@ export class RuidosEnElAire {
     this.juntas.connect(this.morro);
     this.juntas.connect(this.retardo).connect(this.principal);
     this.juntasFuente.start();
+    this.cabezaDeJuntas = new CabezaDelBucle(ctx.currentTime, 0, chasquido.duration);
     /*
      * **Y las juntas solas, para el banco**: como llegan a las dos ruedas,
      * antes de juntarse con los baches, que van por los mismos filtros. En el
@@ -357,6 +362,7 @@ export class RuidosEnElAire {
     this.baches.connect(this.golpeDeRueda);
     this.baches.connect(this.chasquidoDeRueda);
     this.bachesFuente.start(0, 0.5);
+    this.cabezaDeBaches = new CabezaDelBucle(ctx.currentTime, 0.5, chasquido.duration);
 
     // ── El tren: el aire en las patas y el motor que lo mueve ───────────
     this.patas = this.ganancia(0);
@@ -505,23 +511,37 @@ export class RuidosEnElAire {
     this.fijar(this.baches.gain, r.baches * ESCALA.juntas, 0.08);
     this.enchufar("rodadura", r.juntas + r.baches, ahora);
     const largo = this.juntasFuente.buffer!.duration;
+    const acotar = (s: number): number => Math.min(largo, Math.max(0.02, s));
     /*
      * El compás de las juntas es el largo del bucle. Una losa hundida no
-     * avisa: en el firme gastado se tuerce un poco cada vez.
+     * avisa: en el firme gastado se tuerce un poco cada vez. **Cada vez**, a
+     * cada junta y no a cada fotograma (`CabezaDelBucle`).
      */
     if (r.cada > 0) {
-      const tuerce = 1 + r.irregular * 0.25 * (Math.random() - 0.5);
-      this.juntasFuente.loopEnd = Math.min(largo, Math.max(0.02, r.cada * tuerce));
-    }
+      const tuerce = r.irregular * 0.125;
+      const fin = sortearBucle(
+        this.cabezaDeJuntas,
+        ahora,
+        acotar(r.cada * (1 - tuerce)),
+        acotar(r.cada * (1 + tuerce)),
+        () => acotar(r.cada * (1 + r.irregular * 0.25 * (Math.random() - 0.5))),
+      );
+      if (fin !== null) this.juntasFuente.loopEnd = fin;
+    } else this.cabezaDeJuntas.avanzar(ahora);
     /*
-     * Y los baches no tienen compás: cada fotograma se sortea cuándo cae el
+     * Y los baches no tienen compás: al caer cada uno se sortea cuándo cae el
      * siguiente, entre un tercio y el doble y pico de la media.
      */
-    if (r.cadaBache > 0)
-      this.bachesFuente.loopEnd = Math.min(
-        largo,
-        Math.max(0.02, r.cadaBache * (0.35 + 1.3 * Math.random())),
+    if (r.cadaBache > 0) {
+      const fin = sortearBucle(
+        this.cabezaDeBaches,
+        ahora,
+        acotar(r.cadaBache * 0.35),
+        acotar(r.cadaBache * 1.65),
+        () => acotar(r.cadaBache * (0.35 + 1.3 * Math.random())),
       );
+      if (fin !== null) this.bachesFuente.loopEnd = fin;
+    } else this.cabezaDeBaches.avanzar(ahora);
 
     // El viento lo mueve `audio.ts`, que es donde están sus nodos.
 

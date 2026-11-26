@@ -3793,3 +3793,203 @@ se come doce segundos de juego por cada uno suyo, y es lo que H100 dejó escrito
 juego no cambia. Cambia el banco: la roja se cuenta como a ×1, con el reloj de juego mientras la boca
 calla y el de pared mientras suena (`bocaAhora`), y la línea dice las dos cosas.
 
+## Enmienda H102 (26-11-2026): sin radio, el tráfico que oye cede su turno al de tu única calle; y la salida que espera una llamada con la pista libre
+
+### El caso
+
+Lo que quedó de H100, con la mesa de H98 y H100 (fuera del repositorio, como aquéllas) y dos
+cosas más: quien juega obedece **cada** roja —la mesa solo se iba al aire en la primera, y en la
+segunda aterrizaba encima del que remontaba: los «tocar con la pista ocupada» de la mesa de
+H100 eran eso— y el que tapa tu calle se sigue hasta que entra en la pista, con los que aterrizan
+mientras.
+
+1. **El remontante de Encarnación.** Sin radio desde los 20 s de despegar, como en el banco; JAZ
+   20, las dos cabeceras, por la línea y alargando, 250 semillas: 1.000 vuelos. Hay 79 rojas por
+   tu salida en 74 vuelos, y de los 78 que tapaban la calle:
+   - 54 entran en la pista en cuanto te mandan al aire (H100), en menos de 30 s;
+   - 11 esperan de 48 a 74 s a que pase el final otro que remonta delante, más su estela (Doc
+     4444, 7.9.2 y 5.8.3.1): es lo que toca;
+   - y **13 esperan de 173 a 332 s**, porque viene alguien a aterrizar dentro de su remontada:
+     en los trece aterriza uno mientras, y en uno la lámpara da **otra roja por el mismo avión**.
+     En doce de los trece quien juega llega a su segunda final con él todavía en la raya o en la
+     pista, y las finales salen roja, roja y verde.
+
+   No es «roja tras roja hasta la red»: la red larga de H100 y la pista al que te mandó al aire ya
+   lo dejaron en esto. Pero lo que queda es eso mismo, más corto.
+
+2. **Las seis parejas de la cadencia.** Con el arreglo de H100 puesto otra vez —la pista al que
+   está listo en su raya, sin el rato de una llamada (7.9.3.4)—, las seis salen iguales que
+   entonces: tres en La Palma y tres en El Hierro. **Son dos sucesos**, cada uno repetido con tres
+   aviones de quien juega, porque el tráfico de una semilla es el mismo hasta que despegas:
+   - **La Palma, semilla 20, a los 231 s**: EC-GCN, un turbohélice que sale remontando desde su
+     raya, y EC-OZZ, un reactor que se va al aire; a 286 m y 56 de altura.
+   - **El Hierro, semilla 7, a los 198 s**: EC-WJB, que sale remontando, y EC-GXP, un turbohélice
+     que se va al aire; a 285 m y 23 de altura.
+
+   La traza dice lo mismo en los dos. Con la cadencia, a EC-GCN se le da «line up and wait» a los
+   31 s y la salida a los 72, todavía remontando, con EC-OZZ en el viento en cola: no ha girado a
+   la base y **no está en la fila**, así que la torre no lo cuenta (`llegaAntesDeQueSalga` mira la
+   fila). Y EC-OZZ, al girar a la base, **no cuenta a la salida que remonta**: la fila de los que
+   llegan es de llegadas y de quien juega, y del tráfico que sale no sabe nada. Baja, llega a la
+   decisión con EC-GCN en su carrera —remontar 530 m y dar la vuelta en la cabecera le lleva de
+   los 31 s a los 149, en que empieza a correr—, se va al aire por el lado (H94), sube paralelo y,
+   al virar al viento cruzado, se cruza con EC-GCN, que sube por el eje. Sin la cadencia pasaba lo
+   mismo hasta la decisión: EC-OZZ se iba al aire igual, con EC-GCN remontando delante; pero la
+   salida de EC-GCN esperaba el rato de una llamada, le llegaba **después** de la frustrada, a los
+   159 s, y subía detrás. En El
+   Hierro, EC-WJB recibe su «line up and wait» a los 57 s con EC-GXP en el viento en cola, y lo
+   mismo.
+
+   O sea: **la cadencia no mete las parejas; las destapa.** El rato de una llamada tapaba un
+   agujero: quien llega no cuenta en su turno al que ya tiene la pista para salir.
+
+### Lo real
+
+- **OACI, Doc 4444 (PANS-ATM), 16.ª ed.**, leído hoy en la copia de H96. **7.7.3.1**: «If an
+  aircraft enters an aerodrome traffic circuit without proper authorization, it shall be permitted
+  to land if its actions indicate that it so desires. If circumstances warrant, aircraft which are
+  in contact with the controller may be instructed by the controller to give way so as to remove as
+  soon as possible the hazard introduced by such unauthorized operation. In no case shall
+  permission to land be withheld indefinitely». **15.3.3 a)**: si el avión no indica que recibe, la
+  separación con los demás se mantiene contando con que, en visual, siga en visual y aterrice en el
+  aeródromo adecuado más próximo.
+- **7.7.1.2**: «Sufficient separation shall be effected between aircraft in flight in the traffic
+  circuit to allow the spacing of arriving and departing aircraft as outlined in 7.9.2, 7.10.1».
+  **7.8**: la prioridad es de quien aterriza o está «in the final stages of an approach»; quien va
+  por el viento en cola no lo está.
+- **7.9.1**: las salidas, en el orden en que están listas. **7.9.2**: no se empieza a despegar
+  hasta que la salida de delante ha pasado el final de la pista o virado, o los que aterrizaron la
+  han dejado. **7.9.3.1**: la autorización, con seguridad razonable de que eso se cumplirá al
+  empezar la carrera. **7.9.3.4**: «the take-off clearance shall be issued when the aircraft is
+  ready for take-off and at or approaching the departure runway, and the traffic situation
+  permits».
+- **7.10.1**: quien aterriza no cruza el umbral hasta que la salida de delante ha pasado el final
+  de la pista en uso o ha empezado a virar, o los que aterrizaron la han dejado. **7.10.2**: el
+  permiso, con seguridad razonable de que eso se cumplirá al cruzarlo.
+
+### Decisión
+
+**Lo 1. Sin radio, el que oye cede** (`cederleElTurno` y `suTurnoDeSalir` en `world/trafico.ts`;
+`mirarTuSalida` en `flight/turno-de-pista.ts`). Con quien juega sin radio y en el aire, la torre
+pide al tráfico que ceda su turno al que ya te mandó al aire por tu salida
+(`alAirePorEnEstaLlegada`, H100). Es lo mismo que `tuTurnoDeSalir` hace por ti en tu doble raya:
+
+- sale **detrás de los que ya han girado a la base**, que aterrizan y dejan la pista;
+- los que todavía no han girado **dan su vuelta de espera** hasta que haya pasado el final de la
+  pista, y **nadie se le mete delante**, aunque cupiera antes de su hora;
+- y en su autorización (`puedeSalirSinEsperarte`) no cuentan los que dan esa vuelta por él, que al
+  cerrarla dan otra mientras no se haya ido: contarlos era el candado de Estigarribia (enmienda
+  del 26-11).
+
+Dura hasta que se va, con su red: `CEDEN_COMO_MUCHO`, diez minutos —la remontada de Encarnación
+son cinco y medio, y la espera a los que ya bajaban, uno o dos—. **Con radio no cambia nada**: a
+quien oye se le pide una vuelta (H98). **Sin frases nuevas**: la vuelta de espera del tráfico es la
+de siempre.
+
+**Lo 2: la traza dice cómo, pero no entra.** Para que no salgan las parejas, quien llega y todavía
+no ha girado a la base tiene que contar en su turno a la salida que **ya tiene la pista** —encima de
+ella, remontando o alineada— hasta que pase su final, como cuenta la tuya (`tuTurnoDeSalir`) y ahora
+la cedida; y en la autorización de ésa no se cuentan los que dan su vuelta por ella, o es el candado
+de Estigarribia. Es 7.7.1.2: la separación entre llegadas y salidas se hace en el circuito. Con eso
+y la cadencia de 7.9.3.4, las dos parejas desaparecen, y de paso casi todas las idas al aire del
+tráfico. **Pero no es nada a peor**: la espera de los que llegan sube en nueve de los catorce campos
+—en Gando, de 64,5 a 95,0 s por llegada— y la roja de quien juega, en cuatro —en La Palma, la
+mediana de 56 a 83 s—. Lo de quien llega, sin la cadencia, igual: es eso lo que lo cuesta, no la
+cadencia. El tráfico cambia idas al aire por vueltas de espera, que la mesa cuenta como espera y a
+las idas al aire no. No se toca; las cifras, abajo.
+
+### La prueba
+
+`src/world/ceden-el-turno-sin-radio.test.ts`: la torre lo pide sin radio, tras la roja por el de
+tu única calle, y con radio no; y en Encarnación, con su tráfico y tres semillas, uno en la raya
+que remonta y otro en el viento en cola que aterrizaría dentro de su remontada. Sin cederle el
+turno, el que llega gira a la base y se va al aire, porque la frecuencia le da la pista al de la
+raya sin contarlo —es lo 2, abajo—; cediéndoselo, da su vuelta de espera, no se va al aire y el
+de la raya tiene la pista. Pasa en `--pool=threads` y en `--pool=forks`.
+
+### Lo medido
+
+**Encarnación sin radio**, la radio callada a los 20 s de despegar y quien juega obedeciendo cada
+roja; JAZ 20, las dos cabeceras, por la línea y alargando, 250 semillas: 1.000 vuelos.
+
+| | antes | ahora |
+|---|---|---|
+| rojas de todo tipo, en 1.111 y 1.099 finales | 111 | 99 |
+| rojas por tu salida (vuelos) | 79 (74) | 78 (74) |
+| la segunda roja por el mismo avión | 1 | 0 |
+| el de la calle entra en la pista tras la roja: hasta 5 s / 5–30 / 30–80 / más | 53 / 1 / 11 / 13 | 66 / 1 / 11 / 0 |
+| lo más que espera, s | 332 | 73,5 |
+| aterrizan mientras espera | 13 | 0 |
+
+Cambian 25 vuelos de los 1.000. **Los trece de la espera larga**: en doce las finales pasan de
+roja, roja y verde a roja y verde, y el vuelo acaba de 270 a 450 s antes; el decimotercero ya era
+roja y verde. Y doce en los que el de la calle ya entraba enseguida, en los que solo cambia el
+tráfico de detrás: el que iba a llegar durante la remontada espera fuera, o da su vuelta, en vez
+de entrar en el circuito y dar en él sus vueltas de espera. Los once de 48 a 74 s siguen igual:
+esperan a que pase el final otro que remonta delante, y su estela. Con la mesa de H100 tal cual
+—quien juega solo obedece la primera roja—, en 400 vuelos: rojas de 54 a 48, por tu salida de 39
+a 38, y aterrizar con él en la pista, que en esa mesa es desobedecer la segunda, de 6 a 3. Con la
+radio callada desde el principio, los 400 iguales uno a uno.
+
+**Nada a peor.** Con radio, los 2.820 vuelos de H96 y H98 —Los Rodeos, 600 con las dos cabeceras y
+cinco aviones; Gando, Tenerife Sur, Lanzarote, Fuerteventura, La Palma, Cuatro Vientos y
+Pettirossi, 60 cada uno; El Hierro, La Gomera, Pilar, Pedro Juan, Concepción y Estigarribia
+remontando, 300 cada uno— salen **iguales uno a uno**: a menos de 300 m y 150 de altura de quien
+juega, 0; en su vuelta, 0 (H93 y H94), y los 0 de 600 de Los Rodeos; entre dos del tráfico, las dos
+de siempre (Estigarribia y Pedro Juan); la roja media, 48,8 s; las frustradas, 186; las tomas,
+3.723; las salidas, 4.536; la espera de los que llegan, 72,8 s por llegada. Sin radio desde el
+principio, los 1.760 vuelos de los once campos con torre de H98 y H100, iguales uno a uno: finales
+sin señal, 0; rojas, 2, las dos en Encarnación, y ninguna por tu salida.
+
+El vitest entero, en seis partes de 2 GB: 608 ficheros y 12.285 pruebas, en verde, con las
+saltadas de siempre, y sin tocar ninguna de las de antes; la nueva, también en `--pool=forks`.
+
+**Del navegador, una tirada de cada**, en el puerto 5692: `verificar-emergencias.mjs radio encarnacion
+jaz-20 taguato`, 15 de 15, y con `taguato-ruvicha`, 15 de 15, los dos «destellos → verde», sin roja y
+sin nadie rodando al callarse la radio: no se dio el caso de la cesión, y no se rompe nada.
+`OGA_FILA_DE_SALIDA=1 verificar-vuelo-entero.mjs la-palma guyrami 12 jaz-20`, 63 de 65: no se celebra
+en tierra, como en la tirada de la tanda 28, y la verde te llega con EC-TPZ, que esperaba antes que
+tú, todavía en su raya. Con radio lo de aquí no cambia nada —los 2.820 vuelos son los mismos—, así
+que no viene de esto; no se ha mirado más.
+
+**Lo 2, probado y sin entrar.** Con radio, los mismos 2.820 vuelos, y antes → con la salida que tiene
+la pista en el turno de los que llegan y la cadencia (entre paréntesis, sin la cadencia):
+
+| | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s |
+|---|---|---|---|---|---|
+| Los Rodeos (600) | 40 → 0 (0) | 744 → 766 (766) | 680 → 666 (666) | 36,1 (7) → 37,4 (7) | 65,5 → 67,3 (67,3) |
+| Gando (60) | 6 → 0 (0) | 78 → 71 (71) | 93 → 90 (90) | 49,0 (24,5) → 37,1 (2) | 64,5 → 95,0 (95,0) |
+| Tenerife Sur (60) | 3 → 0 (0) | 70 → 71 (71) | 85 → 85 | 47,7 (36) → 44,1 (36) | 67,6 → 70,9 (70,9) |
+| Lanzarote (60) | 0 → 0 | 65 → 65 | 63 → 63 | 18,5 → 18,5 | 67,9 → 67,9 |
+| Fuerteventura (60) | 0 → 0 | 71 → 70 | 67 → 67 | 25,4 → 25,4 | 71,3 → 74,8 |
+| La Palma (60) | 18 → 0 (0) | 73 → 75 (78) | 102 → 114 (108) | 81,5 (56) → 84,9 (83) (92,3; 94,5) | 86,7 → 81,6 (94,2) |
+| Cuatro Vientos (60) | 0 → 0 | 63 → 63 | 69 → 69 | 17,3 → 17,3 | 64,6 → 66,6 |
+| Pettirossi (60) | 7 → 0 (0) | 69 → 79 (75) | 92 → 91 (91) | 39,9 (12) → 35,0 (2) (38,2; 12) | 45,5 → 53,0 (53,6) |
+| El Hierro, remontando (300) | 64 → 1 (1) | 437 → 478 (475) | 561 → 623 (548) | 86,3 → 63,0 (85,5) | 89,3 → 92,7 (91,5) |
+| La Gomera, remontando (300) | 6 → 0 (0) | 369 → 406 (368) | 527 → 570 (524) | 73,6 → 62,7 (71,7) | 97,0 → 92,3 (100,6) |
+| Pilar (300) | 2 → 1 (1) | 456 → 477 (456) | 576 → 654 (575) | 39,1 → 33,7 (38,3) | 56,3 → 61,3 (57,2) |
+| Pedro Juan (300) | 0 → 0 | 426 → 459 (426) | 561 → 613 (561) | 25,3 → 24,9 (25,3) | 69,7 → 59,9 (69,7) |
+| Concepción (300) | 13 → 0 (0) | 399 → 424 (396) | 520 → 547 (525) | 61,4 → 64,8 (62,7) | 73,5 → 68,7 (75,4) |
+| Estigarribia (300) | 27 → 27 (24) | 403 → 411 (391) | 540 → 580 (540) | 45,0 → 46,6 (43,6) | 72,1 → 72,9 (78,4) |
+| **los 2.820** | **186 → 29 (26)** | **3.723 → 3.915 (3.771)** | **4.536 → 4.832 (4.512)** | **48,8 → 45,0 (48,6)** | **72,8 → 73,1 (75,9)** |
+
+A menos de 300 m y 150 de altura de quien juega, 0 en todos; entre dos del tráfico, las dos de
+siempre, y las de La Palma y El Hierro, ninguna. Sin radio desde el principio, los once campos,
+iguales en lo que mira la mesa de H98. Y en Encarnación sin radio callada a los 20 s, las rojas por
+tu salida bajan de 78 a 38 en los 1.000 vuelos: con la cadencia, quien estaba listo se va antes de
+que te calles. En el conjunto, mejor; campo a campo, no: Gando espera treinta segundos más por
+llegada, y en La Palma la mitad de las veces quien juega espera la verde casi medio minuto más.
+
+### Lo que queda
+
+- **Lo 2**, con lo de arriba: si se da por bueno cambiar idas al aire por vueltas de espera —en
+  Gando, seis idas al aire en 60 vuelos por treinta segundos más de espera de cada llegada—, el
+  arreglo está medido y es corto: `lasQueSalen` en la fila de `retrasoPara`, con su red de diez
+  minutos por avión, y en `todaviaNo` y `puedeSalirSinEsperarte` sin los que esperan por quien ya
+  tiene la pista; y la cadencia de H100 encima. Antes de meterlo habría que ver por qué en Gando, sin
+  remontar, quien llega espera tanto más: el que espera alineado sin su salida cuenta con su carrera
+  entera, y puede que baste con contar solo al que ya tiene la salida.
+- **Sin la cesión, en Encarnación y sin nadie más, el que llega se va al aire** por el que remonta:
+  la prueba nueva lo enseña en sus tres semillas, y en el buscador salió en ocho de ocho casos. Es lo
+  2 visto desde el otro lado, y con radio pasa igual.
+

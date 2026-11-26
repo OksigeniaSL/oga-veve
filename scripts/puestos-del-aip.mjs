@@ -199,15 +199,33 @@ const NUNCA_A_LA_VEZ = {
 };
 
 /**
- * **De qué puestos sale el que va por sus medios, donde la carta no da plataforma de aviación general y casi
- * todos son de salida en retroceso** (H97). En La Palma, AD 2-GCLA PDC 1.2 (WEF 15-MAY-25): catorce «R» y, de
- * avión, dos «A», el 12 y el 14, que la PDC 1.1 dibuja de paso, entrando de la R y saliendo a ella.
+ * **De qué puestos sale el que va por sus medios, donde de los puestos de la ficha casi todos son de salida en
+ * retroceso y ninguno es de aviación general** (H97). En La Palma, AD 2-GCLA PDC 1.2 (WEF 15-MAY-25): catorce «R»
+ * y, de avión, dos «A», el 12 y el 14, que la PDC 1.1 dibuja de paso, entrando de la R y saliendo a ella; y la
+ * carta no da plataforma de aviación general.
+ *
+ * En Los Rodeos (H103), AD 2-GCXO PDC 1.2 (WEF 06-AUG-26): de los quince de la ficha, el 17 y el 19 son «A», de
+ * AT72, y los otros trece, «R»; y la casilla 20.1.2 los saca por la F. La carta sí da dos plataformas de aviación
+ * general, la GA 1 (AG1 a AG3, por sus medios a la Y) y la GA 2 (AG4 a AG7, con tractor a la W), y del 28 al 38
+ * deja salir por sus medios: nada de eso está en la ficha, que viene de OpenStreetMap y no los trae. Mientras no
+ * estén, el 17 y el 19 son los únicos de la ficha de los que se sale sin tractor.
+ *
+ * - **`calle`, por cuál se sale y se llega**, si la casilla lo dice: «Aircraft exiting PRKG 17 and 19 (…) enter
+ *   TWY R via TWY F at F1 point», y se entra en ellos de la F, con el «FOLLOW ME» esperando en el F1 (20.1.3 F).
+ *   Va a cada uno como `salePor` y `llegaPor`, y la calle a `callesDePlataforma`: sin ella, por la 30 el 19
+ *   salía recto hacia el sur, entre el 15 y el 16, que tienen el morro hacia él.
  */
 const POR_SUS_MEDIOS = {
   GCLA: {
     puestos: ["12", "14"],
     fuente:
       "AIP España AD 2-GCLA PDC 1.2 (WEF 15-MAY-25): salida «A» en el 12, el 14 y los de helicóptero, y «R», en retroceso, en los demás; ni las PDC ni el AD 2 (AIRAC AMDT 09/26, WEF 01-OCT-26) dicen dónde aparca la aviación general.",
+  },
+  GCXO: {
+    puestos: ["17", "19"],
+    calle: "F",
+    fuente:
+      "AIP España AD 2-GCXO PDC 1.2 (WEF 06-AUG-26): salida «A» en el 17 y el 19, de AT72, y «R», en retroceso, en los demás de la ficha; AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26), C y E: «autonomous exit parking positions (…) to TWY F (PRKG 17 and 19)», «Aircraft exiting PRKG 17 and 19 (…) enter TWY R via TWY F at F1 point». Las plataformas de aviación general (AG1 a AG7) y los de salida autónoma del 28 al 38 no están en la ficha.",
   },
 };
 
@@ -776,6 +794,12 @@ async function juntar(id) {
       const linea = lineaDePaso(ficha, p, a.ref, dePaso.entra);
       if (linea) nuevo.entrada = linea;
     }
+    // Y los de salir por sus medios cuya calle publica la casilla (H103).
+    const autonomo = POR_SUS_MEDIOS[id];
+    if (autonomo?.calle && autonomo.puestos.includes(a.ref)) {
+      nuevo.aip.salePor = [autonomo.calle];
+      nuevo.aip.llegaPor = { norte: [autonomo.calle], sur: [autonomo.calle] };
+    }
     puestos.push(nuevo);
   }
   // Dos puestos con el mismo `ref` en el mismo punto: el del centro de su línea y el de
@@ -819,7 +843,8 @@ async function juntar(id) {
       : {}),
     ...(DE_PASO[id] ? { general: DE_PASO[id].fuente } : {}),
     ...(NUNCA_A_LA_VEZ[id] ? { nuncaALaVez: NUNCA_A_LA_VEZ[id] } : {}),
-    ...(POR_SUS_MEDIOS[id] ? { porSusMedios: POR_SUS_MEDIOS[id] } : {}),
+    ...(POR_SUS_MEDIOS[id] ? { porSusMedios: { puestos: POR_SUS_MEDIOS[id].puestos, fuente: POR_SUS_MEDIOS[id].fuente } } : {}),
+    ...(POR_SUS_MEDIOS[id]?.calle && !RODAJE_DE_LA_CASILLA[id] ? { callesDePlataforma: [POR_SUS_MEDIOS[id].calle] } : {}),
     ...fuenteDeLasPasarelas(id),
   };
   // Lo del AIP, al final de cada puesto: la ficha sale igual se junte las veces que se junte.

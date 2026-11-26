@@ -117,9 +117,13 @@ describe("el reactor del tráfico de Los Rodeos, con quien juega en su puesto", 
    * noroeste. Con el rumbo del camino lo barría, y esperaba a que rodara (H51). Que el
    * tractor espere cuando lo que barre alcanza a alguien lo mira `trafico-empujado.test.ts`.
    */
-  it("y con el JAZ 20 aparcado junto al 23, empuja: sobre su raya pintada no barre su sitio", () => {
+  /*
+   * **Y con el JAZ 20 en su puesto, el 19 desde la H103**, el reactor va al 24, como sin nadie, y empuja: el JAZ 20 ya no
+   * sale del 26, junto al 23, sino del 19, que es de salida autónoma, al otro lado de la plataforma.
+   */
+  it("y con el JAZ 20 en el 19, al 24 y empuja", () => {
     const r = tractorDe("jaz-20", 60);
-    expect(r.puesto?.x).toBeCloseTo(-596, 0);
+    expect(r.puesto?.x).toBeCloseTo(-603.2, 0);
     expect(r.tractor, "el tractor sale").not.toBeNull();
   });
 });

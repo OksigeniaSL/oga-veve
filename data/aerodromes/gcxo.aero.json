@@ -2390,7 +2390,7 @@
     }
   ],
   "helipads": [],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCXO, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCXO/","leido":"2026-11-22","cartas":[{"carta":"AD 2-GCXO PDC 1.2","wef":"06-AUG-26"}]},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCXO, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCXO/","leido":"2026-11-22","cartas":[{"carta":"AD 2-GCXO PDC 1.2","wef":"06-AUG-26"}],"porSusMedios":{"puestos":["17","19"],"fuente":"AIP España AD 2-GCXO PDC 1.2 (WEF 06-AUG-26): salida «A» en el 17 y el 19, de AT72, y «R», en retroceso, en los demás de la ficha; AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26), C y E: «autonomous exit parking positions (…) to TWY F (PRKG 17 and 19)», «Aircraft exiting PRKG 17 and 19 (…) enter TWY R via TWY F at F1 point». Las plataformas de aviación general (AG1 a AG7) y los de salida autónoma del 28 al 38 no están en la ficha."},"callesDePlataforma":["F"]},
   "parkingPositions": [
     {
       "ref": "22",
@@ -2455,7 +2455,18 @@
         "salida": "A",
         "max": "AT72",
         "contacto": false,
-        "carta": "AD 2-GCXO PDC 1.2"
+        "carta": "AD 2-GCXO PDC 1.2",
+        "salePor": [
+          "F"
+        ],
+        "llegaPor": {
+          "norte": [
+            "F"
+          ],
+          "sur": [
+            "F"
+          ]
+        }
       }
     },
     {
@@ -2522,7 +2533,18 @@
         "salida": "A",
         "max": "AT72",
         "contacto": false,
-        "carta": "AD 2-GCXO PDC 1.2"
+        "carta": "AD 2-GCXO PDC 1.2",
+        "salePor": [
+          "F"
+        ],
+        "llegaPor": {
+          "norte": [
+            "F"
+          ],
+          "sur": [
+            "F"
+          ]
+        }
       }
     },
     {

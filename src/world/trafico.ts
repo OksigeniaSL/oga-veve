@@ -1783,6 +1783,11 @@ interface EnLaFila {
   enElAire?: number;
   /** Y para haber pasado el final de la pista, s. Ver `pasasElFinal`. */
   pasaElFinal?: number;
+  /**
+   * Si es la salida a la que los que llegan ceden el turno: nadie que no haya
+   * girado ya a la base se le mete delante. Ver `suTurnoDeSalir`.
+   */
+  cedido?: boolean;
 }
 
 /** Lo que se sabe de uno que llega para ponerlo en la fila, s. Ver `retrasoPara`. */
@@ -1969,6 +1974,18 @@ const APARTADOS_AL_GIRAR = APARTADOS_EN_ALTURA + 30;
  * aire por el lado. Ver `tuQueEsperas` y `laFila`.
  */
 const ESPERAN_POR_TI = 300;
+
+/**
+ * **Lo más que los que llegan le ceden el turno a una salida por ti**, s
+ * (H102). Ver `suTurnoDeSalir`.
+ *
+ * En Encarnación, remontar la pista desde la única calle lleva de 310 a 342 s,
+ * y esperar antes a que aterrice el que ya bajaba por la base, uno o dos
+ * minutos más. Diez minutos le dan para las dos cosas y para la estela de la
+ * salida de delante; pasados, los que llegan giran como siempre, que una
+ * cesión sin fin es un circuito parado.
+ */
+export const CEDEN_COMO_MUCHO = 600;
 
 /**
  * **Con cuánto tiene que estar libre la pista antes de que cruces el umbral**, s,
@@ -2563,6 +2580,16 @@ export interface Trafico {
    * esperarte. Ver `darleLaPista` en `flight/turno-de-pista.ts`.
    */
   puedeSalirSinEsperarte(matricula: string): boolean;
+  /**
+   * **Que los que llegan le cedan el turno a esa salida** (H102): los que no
+   * han girado todavía a la base dan su vuelta de espera hasta que haya pasado
+   * el final de la pista, y no se dejan entrar otros delante; los que ya bajan
+   * aterrizan antes. Es lo que la torre hace por ti cuando esperas en tu doble
+   * raya (`tuTurnoDeSalir`), y lo pide sin radio por el que tapa tu única
+   * calle. Dura hasta que se va, o `CEDEN_COMO_MUCHO`. Con `null`, nadie. Ver
+   * `mirarTuSalida` en `flight/turno-de-pista.ts`.
+   */
+  cederleElTurno(matricula: string | null): void;
   /**
    * **Si el que sale se habría ido antes de que llegues**: lo que le queda
    * hasta su doble raya, lo que remonte, entrar, alinearse, correr y pasar
@@ -4417,10 +4444,12 @@ export function crearTrafico(
     sin: Volando | null,
     /** Si cuentas tú. Sin ti, para darle la salida a uno mientras te retrasan. */
     contigo = true,
+    /** Sin los que dan su vuelta de espera: ver `suTurnoDeSalir`. */
+    sinLosQueEsperan = false,
   ): EnLaFila[] => {
     const fila: EnLaFila[] = [];
     for (const b of aviones.values()) {
-      if (b === sin) continue;
+      if (b === sin || (sinLosQueEsperan && b.tresSesenta)) continue;
       const hora = horaDeUmbral(b);
       const ocupa = b.caminos?.enTierra?.ocupa;
       if (hora !== null)
@@ -4525,6 +4554,79 @@ export function crearTrafico(
   };
 
   /**
+   * **A qué salida le ceden el turno los que llegan, y desde cuándo** (H102).
+   * Ver `suTurnoDeSalir`.
+   */
+  let cedenA: { matricula: string; desde: number } | null = null;
+
+  /**
+   * **Y lo mismo por uno del tráfico, si la torre se lo pide**: el que tapa tu
+   * única calle con quien juega sin radio (`cederleElTurno`). Sale detrás de los
+   * que ya han girado a la base —aterrizan y dejan la pista—, y los demás le
+   * esperan dando su vuelta hasta que haya pasado el final de ella, sin meterse
+   * delante.
+   *
+   * En Encarnación, remontar la pista le lleva más de cinco minutos, y con
+   * alguien llegando cada pocos a menudo había uno a punto de aterrizar dentro de
+   * su remontada: no se le daba (OACI, Doc 4444, 7.9.3.1), y la lámpara te daba
+   * la roja por él otra vez. Medido, trece de cada setenta y ocho esperaban así
+   * de tres a cinco minutos. Con quien no oye, quien cede es el tráfico que sí:
+   * «aircraft which are in contact with the controller may be instructed by the
+   * controller to give way so as to remove as soon as possible the hazard
+   * introduced by such unauthorized operation. In no case shall permission to
+   * land be withheld indefinitely» (7.7.3.1).
+   */
+  const suTurnoDeSalir = (sin: Volando | null): EnLaFila[] => {
+    if (!cedenA) return [];
+    const el = aviones.get(cedenA.matricula);
+    const c = el?.caminos;
+    const t = c?.enTierra;
+    // Ido, o fuera de su salida: se acabó.
+    if (
+      !el ||
+      !c ||
+      !t ||
+      el.marca.camino !== c.salida ||
+      (el.recorrido > c.espera + 0.5 && !encimaDeLaPista(el))
+    ) {
+      cedenA = null;
+      return [];
+    }
+    if (el === sin || reloj - cedenA.desde > CEDEN_COMO_MUCHO) return [];
+    // Lo que le queda hasta pasar el final de la pista, y de eso, en el aire.
+    const vuela = Math.max(0, runway.length - el.tipo.carrera) / velocidadDeDespegue(el.tipo);
+    let pasa: number;
+    if (el.recorrido < t.eje - 1)
+      pasa =
+        Math.max(0, c.espera - el.recorrido) / RUEDA_A +
+        hastaIrseDesdeLaRaya(el.tipo, c, Math.max(0, el.recorrido - c.espera));
+    else {
+      const falta = loQueLeFaltaParaDejarla(el);
+      pasa = Number.isFinite(falta)
+        ? falta + MARGEN_PARA_IRSE
+        : tiempoDeCarrera(el.tipo) + vuela + MARGEN_PARA_IRSE;
+    }
+    // Detrás de los que ya bajan por la base: aterrizan y la dejan.
+    let hora = reloj;
+    for (const b of aviones.values()) {
+      const cb = b.caminos;
+      if (b === sin || b === el || !cb || b.tresSesenta || b.recorrido < cb.base - 0.5) continue;
+      const suya = metrosAlUmbral(b) === null ? null : horaDeUmbral(b);
+      if (suya !== null) hora = Math.max(hora, suya + Math.max(DEJA_LA_PISTA, cb.enTierra?.ocupa ?? 0));
+    }
+    return [
+      {
+        hora,
+        velocidad: el.marca.velocidad,
+        sale: true,
+        enElAire: Math.max(0, pasa - vuela),
+        pasaElFinal: pasa,
+        cedido: true,
+      },
+    ];
+  };
+
+  /**
    * **Cuánto tiene que esperar** quien cruzaría el umbral a la hora
    * `natural` viniendo a `velocidad`, para que le quede su hueco con todos
    * los de la fila: detrás del que va delante, y delante del que viene detrás
@@ -4540,7 +4642,7 @@ export function crearTrafico(
   ): number => {
     let hora = natural;
     const hueco = huecoParaTuSalida(llega.trasDecidir);
-    for (const b of [...laFila(sin), ...tuTurnoDeSalir(sin)]) {
+    for (const b of [...laFila(sin), ...tuTurnoDeSalir(sin), ...suTurnoDeSalir(sin)]) {
       const detras = b.sale
         ? hastaQueSale(b, llega)
         : Math.max(detrasDe(b, velocidad) + colchon, hueco);
@@ -4548,10 +4650,15 @@ export function crearTrafico(
        * Y por delante de otro, con lo que él mismo va a tener la pista ocupada:
        * en Estigarribia son 2.953 m del umbral de la 01 a la única calle, y la
        * avioneta se metía delante de ti con los dos minutos de siempre (H98).
+       *
+       * Y delante de la salida a la que se cede el turno, nadie: cabría antes de
+       * su hora, pero entonces su hora se va detrás de él (H102).
        */
-      const delante = b.sale
-        ? 0
-        : detrasDe(llega, b.velocidad) + colchon + (b.prioridad ? PRIORIDAD : 0);
+      const delante = b.cedido
+        ? Infinity
+        : b.sale
+          ? 0
+          : detrasDe(llega, b.velocidad) + colchon + (b.prioridad ? PRIORIDAD : 0);
       if (hora < b.hora + detras && hora > b.hora - delante) hora = b.hora + detras;
     }
     return hora - natural;
@@ -4631,6 +4738,8 @@ export function crearTrafico(
     contigo = true,
     /** Si ya está alineado en la pista. */
     alineado = false,
+    /** Sin los que dan su vuelta de espera por él. Ver `suTurnoDeSalir`. */
+    sinLosQueEsperan = false,
   ): boolean => {
     const hastaElFinal =
       Math.max(0, runway.length - tipo.carrera) / velocidadDeDespegue(tipo);
@@ -4680,7 +4789,7 @@ export function crearTrafico(
      */
     const tuyo = tu ? (tu.alUmbral ?? vienes) : null;
     if (tuyo !== null && tuyo - (alineado ? 0 : antesDeTuPermiso(tu?.velocidad)) < hueco) return true;
-    return laFila(null, contigo).some(
+    return laFila(null, contigo, sinLosQueEsperan).some(
       (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,
     );
   };
@@ -5857,6 +5966,10 @@ export function crearTrafico(
       // Casi siempre nadie: sin lista nueva en cada fotograma.
       return seFueron ?? NADIE;
     },
+    cederleElTurno(matricula) {
+      if (matricula === null) cedenA = null;
+      else if (cedenA?.matricula !== matricula) cedenA = { matricula, desde: reloj };
+    },
     puedeSalirSinEsperarte(matricula) {
       const quien = aviones.get(matricula);
       const c = quien?.caminos;
@@ -5864,7 +5977,13 @@ export function crearTrafico(
       if (quien.recorrido < c.espera - 1) return false;
       if (pistaOcupadaPorOtro(matricula)) return false;
       const remonta = loQueTardaEnRemontar(quien, matricula);
-      if (llegaAntesDeQueSalga(quien.tipo, "torre.clearedTakeoff", remonta, false)) return false;
+      /*
+       * Y si es a quien se le cede el turno, sin los que dan su vuelta de espera:
+       * la dan por él, y al cerrarla dan otra mientras no se haya ido (H102).
+       */
+      const cedido = cedenA?.matricula === matricula && suTurnoDeSalir(null).length > 0;
+      if (llegaAntesDeQueSalga(quien.tipo, "torre.clearedTakeoff", remonta, false, false, cedido))
+        return false;
       return !(
         laUltimaSalida &&
         laUltimaSalida.matricula !== matricula &&

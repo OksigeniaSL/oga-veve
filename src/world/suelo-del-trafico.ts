@@ -679,7 +679,9 @@ export function sueloDelTrafico(
   const hayGeneral = delPavimento.some((p) => p.aip?.uso === "general");
   /*
    * Y la avioneta y el bimotor, donde no la da y la ficha trae de qué puestos se sale sin tractor, a esos
-   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios.
+   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios. El turbohélice no, todavía (H103):
+   * en La Palma el 12 es incompatible con el 10, el 11, el 13, el 14 y el 15 (AD 2-GCLA PDC 1.2), y el tráfico
+   * no lo sabe; con el ATR en el 12, el coche que lleva al JAZ 110 al 11 le pasaba por debajo del ala.
    */
   const hayPorSusMedios = !hayGeneral && !!aero.aipPuestos?.porSusMedios;
   const porAla = new Map<number, readonly Punto[]>();
@@ -1167,9 +1169,16 @@ export function sueloDelTrafico(
     if (hecha === undefined) {
       let mide = 0;
       for (let i = 1; i < entrada.length; i++) mide += Math.hypot(entrada[i]![0] - entrada[i - 1]![0], entrada[i]![1] - entrada[i - 1]![1]);
+      /*
+       * Y si su raya no da en la calle por detrás, enganchado a la última que nombra (H103), como quien juega
+       * (`llegaEn`): la del 19 de Los Rodeos sale de la punta de la F y se curva hasta la parada, y sin esto se
+       * llegaba a él por la R, recto entre el 15 y el 16.
+       */
+      const ultima = suyas.at(-1);
       const r = rodajeEntre(porEllas(aip?.salePor ? [...suyas, aip.salePor[0]!] : suyas), desde, fin, 400, undefined, {
         desdeLaCalle: true,
         llegaPorSuRaya: { haciaAtras: [a[0] - b[0], a[1] - b[1]], mide },
+        ...(ultima ? { llegaEn: (t: Tramo) => t.ref === ultima } : {}),
       });
       publicadas.set(clave, (hecha = r && porElAsfalto(r.puntos) ? r : null));
     }
