@@ -1420,14 +1420,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * Así que se quita **lo que sobra**: el gas de una velocidad tan por debajo
    * de la Vref como el doble de lo que se va por encima. Con cinco nudos de
    * más eso es casi el ralentí, y el gas vuelve al de la Vref a medida que la
-   * velocidad llega a ella, así que lo que baja al tocar no cambia. En la
-   * mesa, con esto y con el margen quitado en la final corta —ver
-   * `margenQueQueda`—, cuarenta finales con rachas por tanda: el JAZ 20 toca
-   * a 64,1–65,6 nudos (antes, 65,8–68,7), a 1,13–1,17 m/s de mediana y 1,75
-   * la peor (antes, 1,18–1,22 y 1,83), y a 260–268 m del umbral de mediana
-   * (antes, 284–291); la más corta de la flota, el JAZ 25 a 197 m, con la
-   * zona empezando a 150. Yendo por debajo de la Vref no se mete más: eso lo
-   * hace ya el pelo de gas del que se hunde, en `recoger`.
+   * velocidad llega a ella, así que el gas no cambia lo que baja al tocar. En
+   * la mesa, con esto y con el margen quitado en la final corta —ver
+   * `margenQueQueda`—, cuatrocientas finales con rachas: el JAZ 20 toca a
+   * 64,0–65,6 nudos (antes, 64,9–68,7, y 63 rápidas), a 1,2 m/s de mediana
+   * como antes, con dos por encima de dos —la peor, 2,11, y viene de quitar
+   * el margen, no de esto— donde antes la peor era 1,97; y a 256–259 m del
+   * umbral de mediana (antes, 295), la más corta a 186, con la zona
+   * empezando a 150. Ver la enmienda H101 del ADR 0027. Yendo por debajo de
+   * la Vref no se mete más: eso lo hace ya el pelo de gas del que se hunde,
+   * en `recoger`.
    */
   const gasDeLaRecogidaSencilla = (r, s) => {
     const deMas = s.airspeed - r.vref;
