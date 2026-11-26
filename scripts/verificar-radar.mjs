@@ -17,11 +17,16 @@
  * `OGA_GPU=1`, con la tarjeta de verdad (ver la memoria del proyecto: las de
  * SwiftShader no sirven para juzgar una imagen).
  *
+ * **Con los motores en marcha y a su altura** (H99): se colocaba a 14.000 y a
+ * 24.000 pies con ellos parados, y los doscientos segundos de arriba eran un
+ * planeo. Falla si se paran volando, y en lo de arriba, si baja de 20.000.
+ *
  * Uso: `node scripts/verificar-radar.mjs [carpeta-de-fotos]`
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { mkdir } from "node:fs/promises";
+import { EN_MARCHA, gasQueSostiene, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5373);
@@ -134,6 +139,8 @@ try {
       `fase ${enElPuesto.fase} · modo ${enElPuesto.modo} · escrito ${enElPuesto.escrito}`,
     );
     if (FOTOS) await fotoDeLaCarta(page, `${FOTOS}/${avion}-en-el-puesto-carta.png`);
+    await ponerEnMarcha(page);
+    await vigilarElMotor(page);
     for (const rumbo of RUMBOS) {
       /*
        * Al aire, al noroeste del campo y lejos de su circuito, a 14 000 ft:
@@ -166,6 +173,7 @@ try {
         },
         [rumbo, OCHO, OCHO.map((_, i) => millasDe(i) * MILLA), PIE],
       );
+      await gasQueSostiene(page);
       // Dos ciclos del TCAS y un repintado.
       await page.waitForTimeout(3000);
       /*
@@ -280,11 +288,11 @@ try {
      * misma altura, a una milla y pico, y se espera a que la pida. Tan cerca
      * porque el avión colocado sube o baja solo: a dos millas, con el
      * automático subiendo a la ventanilla, en quince segundos ya se ha
-     * apartado más de lo que pide el RA y con razón no lo da. En el
-     * reactor tiene que salir entera —el cuadrado rojo en la carta y en la
-     * pantalla de la cabina, la franja en el variómetro, la tarjeta— y la
-     * carta ya no dice TA ONLY; en el turbohélice, nada de eso: su TCAS I solo
-     * avisa. Ver `flight/tcas.ts`.
+     * apartado más de lo que pide el RA y con razón no lo da. En los que
+     * llevan TCAS II —el reactor, y el JAZ 60 desde que es un 1900D— tiene que
+     * salir entera —el cuadrado rojo en la carta y en la pantalla de la cabina,
+     * la franja en el variómetro, la tarjeta— y la carta ya no dice TA ONLY; en
+     * uno de TCAS I, nada de eso: solo avisa. Ver `flight/tcas.ts`.
      */
     {
       const colocarDeFrente = (pie) => {
@@ -352,7 +360,9 @@ try {
         if (FOTOS) await page.screenshot({ path: `${FOTOS}/${avion}-ra-cabina.png` });
         await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
       }
-      const conRa = avion === "jaz-90";
+      // Por lo que lleva, no por cuál es: el JAZ 60 pasó al TCAS II con su ficha del 1900D.
+      const conRa =
+        (await page.evaluate(() => globalThis.__oga.juegoParaTrazas().aircraft.tcas)) === "TCAS II";
       comprobar(
         conRa
           ? `${avion}: de frente, el RA entero —orden, cuadrado, franja y tarjeta— y sin TA ONLY`
@@ -393,7 +403,13 @@ try {
       const lejos = await page.evaluate(async (pie) => {
         const o = globalThis.__oga;
         const p = o.pista();
-        o.colocar(p.x - 40000, 24000 * pie, p.z - 20000, 120, (300 * Math.PI) / 180);
+        // A doscientos nudos indicados, limpio y con el automático en su nivel.
+        o.colocar(p.x - 40000, 24000 * pie, p.z - 20000, 150, (300 * Math.PI) / 180);
+        o.pedirTren(false);
+        o.pedirFlaps(0);
+        o.controles().throttle = o.juegoParaTrazas().flight.gasPara?.(150) ?? 0.6;
+        o.ponerVentanillaAlt?.(24000);
+        o.pilotoAutomatico?.(true);
         o.acelerar?.(8);
         const antes = o.habladasTotal();
         await new Promise((r) => setTimeout(r, 25000));
@@ -405,14 +421,17 @@ try {
           habladas: total - antes,
           deLosDemas: nuevas.filter((h) => /\s(?:otro|torre)\.[^@]*@fonetico\.(?:echo|zulu)/.test(h) && !/zulu-fonetico\.papa-fonetico\.alfa-fonetico\.romeo/.test(h)),
           reloj: o.reloj(),
+          pies: Math.round(o.estado().position.y / pie),
         };
       }, PIE);
       comprobar(
         `${avion} a 24 000 ft: la frecuencia del campo de salida no se oye`,
-        lejos.deLosDemas.length === 0 && /salida|control/.test(lejos.dependencia ?? ""),
-        `con ${lejos.dependencia} · ${lejos.habladas} frases en la boca · ${lejos.deLosDemas.length ? lejos.deLosDemas.join(" | ") : "ni una llamada de otro"}`,
+        lejos.deLosDemas.length === 0 && /salida|control/.test(lejos.dependencia ?? "") && lejos.pies > 20000,
+        `a ${lejos.pies} ft · con ${lejos.dependencia} · ${lejos.habladas} frases en la boca · ${lejos.deLosDemas.length ? lejos.deLosDemas.join(" | ") : "ni una llamada de otro"}`,
       );
     }
+    const motor = await loDelMotor(page, { prueba: true });
+    comprobar(`${avion}: ${EN_MARCHA}`, motor.ok, motor.detalle);
     comprobar(`${avion}: sin errores en la consola`, errores.length === 0, errores.join(" | ") || "ninguno");
     console.log(`  ${avion} · ${gpu}`);
     await page.close();

@@ -98,9 +98,16 @@ async function abrir(escenario, avion, metar = METAR) {
  * analizador ve cuarenta milisegundos cada vez, y una junta o una gota caen o
  * no caen dentro. Se promedia la potencia, no los decibelios.
  */
-async function oir(page, vista, segundos = 2.5) {
+/**
+ * Lo que suena en esa vista, de media en `segundos`, preguntando cada `cada`
+ * ms. Cada pregunta es el valor eficaz de los últimos 2048 muestreos —unos 43
+ * ms, ver `RuidosEnElAire.medir`—, así que preguntando cada 60 ms un golpe
+ * suelto entra o no según caiga: para lo que suena a golpes, cada 10 ms, que
+ * las ventanas se solapan y cada golpe entra entero.
+ */
+async function oir(page, vista, segundos = 2.5, cada = 60) {
   return page.evaluate(
-    async ({ vista, segundos }) => {
+    async ({ vista, segundos, cada }) => {
       const o = globalThis.__oga;
       o.ponerVista(vista);
       const espera = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -109,19 +116,29 @@ async function oir(page, vista, segundos = 2.5) {
       await espera(2500);
       const suma = {};
       let n = 0;
+      // Y la rodadura de cada pregunta, con lo que el juego le pide y la velocidad: ver las juntas de Pilar.
+      const serie = [];
       const fin = performance.now() + segundos * 1000;
       while (performance.now() < fin) {
-        const { medida } = o.ruidos();
+        const { medida, niveles: nv } = o.ruidos();
+        serie.push({
+          t: performance.now(),
+          med: medida.rodadura,
+          jun: medida.juntas ?? null,
+          juntas: nv?.rodadura?.juntas ?? null,
+          rumor: nv?.rodadura?.rumor ?? null,
+          gs: o.estado?.()?.groundSpeed ?? null,
+        });
         for (const [k, v] of Object.entries(medida))
           suma[k] = (suma[k] ?? 0) + (Number.isFinite(v) ? Math.pow(10, v / 10) : 0);
         n++;
-        await espera(60);
+        await espera(cada);
       }
       const media = {};
       for (const [k, v] of Object.entries(suma)) media[k] = v > 0 ? 10 * Math.log10(v / n) : -Infinity;
-      return { vista: o.vista(), media, niveles: o.ruidos().niveles };
+      return { vista: o.vista(), media, niveles: o.ruidos().niveles, serie };
     },
-    { vista, segundos },
+    { vista, segundos, cada },
   );
 }
 
@@ -449,8 +466,8 @@ try {
     comprobar("la reversa ruge desde fuera", rev.media.reversa > -45, db(rev.media.reversa));
     comprobar(
       "y la pista de Los Rodeos, de asfalto, no tiene juntas",
-      (rev.niveles?.rodadura.juntas ?? 1) === 0,
-      `juntas ${rev.niveles?.rodadura.juntas}`,
+      (rev.niveles?.rodadura.juntas ?? 1) === 0 && "juntas" in rev.media && !(rev.media.juntas > CALLA),
+      `pedidas ${rev.niveles?.rodadura.juntas}, medidas ${db(rev.media.juntas)}`,
     );
 
     // El toque: soltarlo a metro y medio, despacio, y que se pose.
@@ -486,13 +503,86 @@ try {
   {
     const { page, errores } = await abrir("pilar", "jaz-20", "METAR SGPI 021300Z 18005KT 9999 SCT040 25/15 Q1015");
     await colocar(page, { altura: 0, velocidad: 15, mandos: { throttle: 0.35, brakes: 0, flaps: 0 } });
-    const cabina = await oir(page, "cockpit", 2);
+    /*
+     * Cuatro compases y pico, y preguntando cada 10 ms: las juntas son golpes
+     * de unas décimas, uno cada 1,15 s a esta velocidad, y cada pregunta mide
+     * 43 ms. Con dos segundos y cada 60 ms, la media dependía de cuántas
+     * preguntas caían encima de un golpe: con el mismo sonido salió −50,0,
+     * −44,6 y −52,0 dB en tres rondas seguidas, y alargar solo la ventana no
+     * bastó (−51,5 y −46,0 en dos tiradas seguidas de la misma copia).
+     */
+    const cabina = await oir(page, "cockpit", 4.8, 10);
     const fuera = await oir(page, "chase", 2);
     for (const r of [cabina, fuera]) apuntar("losas de pilar", r);
+    /*
+     * **Y lo que hay debajo de esa media**, en una línea. La capa «rodadura»
+     * lleva las juntas, con su compás, y los baches, que no lo tienen: cada
+     * fotograma se sortea cuándo cae el siguiente (`ruidos-en-el-aire.ts`).
+     * La media de unos segundos depende de cuántos caigan, y con lo que pide
+     * el juego quieto —juntas 0,126–0,135, la misma velocidad— salió de −52,3
+     * a −42,3 dB. Aquí se ve cuántas preguntas cayeron en golpe, y lo que
+     * pedía el juego.
+     */
+    const sr = cabina.serie ?? [];
+    {
+      const med = sr.map((x) => x.med).filter(Number.isFinite).sort((a, b) => a - b);
+      const q = (f) => (med.length ? med[Math.min(med.length - 1, Math.floor(f * med.length))].toFixed(1) : "—");
+      const rango = (k) => {
+        const v = sr.map((x) => x[k]).filter((x) => typeof x === "number");
+        return v.length ? `${Math.min(...v).toFixed(3)}–${Math.max(...v).toFixed(3)}` : "—";
+      };
+      const dt = sr.length > 1 ? (sr.at(-1).t - sr[0].t) / (sr.length - 1) : 0;
+      console.log(
+        `  las juntas de Pilar, por dentro: ${sr.length} preguntas cada ${dt.toFixed(0)} ms · medida p10 ${q(0.1)} p50 ${q(0.5)} p90 ${q(0.9)} máx ${q(0.999)} dB · ` +
+          `por encima de −40: ${med.filter((v) => v > -40).length} · juntas ${rango("juntas")} · rumor ${rango("rumor")} · gs ${rango("gs")} m/s`,
+      );
+    }
+    /*
+     * **Y las juntas se miden solas** (26-11). La capa «rodadura» lleva las
+     * juntas y los baches por los mismos filtros, y en el hormigón gastado de
+     * Pilar, a 13 m/s, los baches pegan el doble que las juntas —0,27 contra
+     * 0,13 en la cabina: las juntas crecen con la velocidad y los baches no
+     * (`ruidos.ts`), y se igualan a unos 22 m/s— y caen al azar. La media de
+     * la capa medía sobre todo los baches: con lo mismo pedido por el juego
+     * salió de −52,3 a −42,3 dB en catorce tiradas, con el listón, −50, en
+     * medio, y en rojo cuatro de ellas, la última la segunda de la ronda de
+     * la tanda 28 (−51,1, después de −47,9 en la primera). Ahora el juego deja
+     * medir las juntas antes de que se junten con los baches (`juntas` en
+     * `RuidosEnElAire`), y se pide lo que dice la comprobación: que suenan, a
+     * su compás, y que la capa llega al oído.
+     *
+     * Un golpe es una subida por encima de veinte decibelios bajo el más
+     * fuerte; el de la rueda principal, que llega una batalla después del del
+     * morro, cuenta con él: entre dos golpes, al menos dos quintos del compás.
+     * El compás medido es la mediana de lo que hay entre golpes, para que una
+     * pregunta que llega tarde y se come uno no lo doble.
+     */
+    const pedido = cabina.niveles?.rodadura.cada ?? 0;
+    const golpes = [];
+    {
+      const tope = Math.max(...sr.map((x) => (Number.isFinite(x.jun) ? x.jun : -Infinity)));
+      let antes = false;
+      for (const x of sr) {
+        const suena = Number.isFinite(x.jun) && x.jun > tope - 20;
+        if (suena && !antes && (golpes.length === 0 || x.t - golpes.at(-1) > 400 * pedido)) golpes.push(x.t);
+        antes = suena;
+      }
+    }
+    const entre = golpes
+      .slice(1)
+      .map((t, i) => (t - golpes[i]) / 1000)
+      .sort((a, b) => a - b);
+    const compas = entre.length ? entre[Math.floor(entre.length / 2)] : NaN;
+    const oido = sr.length > 1 ? (sr.at(-1).t - sr[0].t) / 1000 : 0;
     comprobar(
       "sobre el hormigón de Pilar suenan las juntas",
-      cabina.media.rodadura > -50 && (cabina.niveles?.rodadura.juntas ?? 0) > 0,
-      `${db(cabina.media.rodadura)}, cada ${cabina.niveles?.rodadura.cada.toFixed(2)} s`,
+      pedido > 0 &&
+        (cabina.niveles?.rodadura.juntas ?? 0) > 0 &&
+        golpes.length >= 3 &&
+        Math.abs(compas / pedido - 1) < 0.15 &&
+        cabina.media.rodadura > -60,
+      `${golpes.length} golpes en ${oido.toFixed(1)} s, uno cada ${Number.isFinite(compas) ? compas.toFixed(2) : "—"} s ` +
+        `(el juego pide ${pedido.toFixed(2)}) · las juntas solas ${db(cabina.media.juntas)}, la capa entera ${db(cabina.media.rodadura)}`,
     );
     comprobar(
       "y la avioneta no tiene APU ni limpias ni aire que suene",

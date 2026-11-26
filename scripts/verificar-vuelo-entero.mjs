@@ -1396,6 +1396,49 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let frustrada = null;
   /** La palanca que pidió el banco en este fotograma, antes del tope de ángulo. Para la traza. */
   let palancaPedida = null;
+  /**
+   * **El gas de la recogida en Guyrami: si se va por encima de la Vref, se
+   * quita** (H101).
+   *
+   * La recogida sostenía el gas de la Vref —ver `recogida.gas`— viniera como
+   * viniera, y en ese modelo el gas es la velocidad y llega a ella con unos
+   * cinco segundos y medio de retraso: los tres o cuatro de la recogida se
+   * comen la mitad de lo que sobre. El JAZ 20 de La Palma la empezaba a 69
+   * nudos y tocaba a 68, con el listón de toma rápida de Guyrami en 67.
+   *
+   * Lo de verdad es quitar gas al recoger: «Since power normally is reduced to
+   * idle during the round out, the airspeed also gradually decreases», y «The
+   * round out and touchdown are normally made with the engine idling»
+   * (FAA-H-8083-3C, pp. 9-8 y 9-9). Y sin pasarse, que el mismo capítulo
+   * pone entre los errores «Prematurely reducing power to idle on round out
+   * resulting in hard landing» (p. 9-23). Medido en la mesa del modelo
+   * sencillo: al ralentí, de golpe o poco a poco, el JAZ 20 tocaba a 55–61
+   * nudos pero a 1,3–1,5 m/s en aire quieto y pasando de dos con rachas,
+   * donde con el gas de la Vref toca a 1,2; con la palanca de este banco
+   * —ocho décimas— el modelo no recoge al ralentí sin hundirse.
+   *
+   * Así que se quita **lo que sobra**: el gas de una velocidad tan por debajo
+   * de la Vref como el doble de lo que se va por encima. Con cinco nudos de
+   * más eso es casi el ralentí, y el gas vuelve al de la Vref a medida que la
+   * velocidad llega a ella, así que el gas no cambia lo que baja al tocar. En
+   * la mesa, con esto y con el margen quitado en la final corta —ver
+   * `margenQueQueda`—, cuatrocientas finales con rachas: el JAZ 20 toca a
+   * 64,0–65,6 nudos (antes, 64,9–68,7, y 63 rápidas), a 1,2 m/s de mediana
+   * como antes, con dos por encima de dos —la peor, 2,11, y viene de quitar
+   * el margen, no de esto— donde antes la peor era 1,97; y a 256–259 m del
+   * umbral de mediana (antes, 295), la más corta a 186, con la zona
+   * empezando a 150. Ver la enmienda H101 del ADR 0027. Yendo por debajo de
+   * la Vref no se mete más: eso lo hace ya el pelo de gas del que se hunde,
+   * en `recoger`.
+   */
+  const gasDeLaRecogidaSencilla = (r, s) => {
+    const deMas = s.airspeed - r.vref;
+    if (!(deMas > 0) || typeof o.gasPara !== "function") return r.gas;
+    const g = o.gasPara(r.vref - 2 * deMas);
+    return typeof g === "number" && Number.isFinite(g)
+      ? Math.min(r.gas, Math.max(0, g))
+      : r.gas;
+  };
   const recoger = (mandos) => {
     if (!recogida) return;
     const s = o.estado();
@@ -1661,7 +1704,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const m = o.mandoParaSubir(quiere);
       if (typeof m === "number" && Number.isFinite(m)) {
         mandos.elevator = Math.max(-0.8, Math.min(0.8, m));
-        if (SENCILLO) mandos.throttle = Math.min(1, recogida.gas + 0.5 * Math.max(0, falta));
+        // Y sin lo que sobre de velocidad (H101): ver `gasDeLaRecogidaSencilla`.
+        if (SENCILLO)
+          mandos.throttle = Math.min(
+            1,
+            gasDeLaRecogidaSencilla(recogida, s) + 0.5 * Math.max(0, falta),
+          );
         recogida.ultimoMando = mandos.elevator;
         return;
       }
@@ -4553,6 +4601,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let rojaMasLarga = 0;
   let rojaMasLargaDonde = "";
   /**
+   * **Y lo que dura a reloj de pared lo que se habla mientras tanto.** El
+   * banco corre el juego a ×12 y las voces suenan a su paso: la frecuencia
+   * espera a que acabe la que suena, y cada segundo de voz se come doce de
+   * juego. En La Palma, la salida de delante esperaba canal 38 s de juego que
+   * eran 15 de pared (H100); en Tenerife Sur, una roja de 241 s con la pista
+   * libre desde los 145, esperando el «pista libre» del que acababa de
+   * aterrizar. Jugando, esa espera es lo que dura la voz. Así que la roja se
+   * cuenta como a ×1: lo de juego con la boca callada y lo de pared con ella
+   * ocupada. Ver `bocaAhora` en `src/dev/sondas.ts`.
+   */
+  let rojaMuestra = null;
+  let rojaVozJuego = 0;
+  let rojaVozPared = 0;
+  let rojaMasLargaJuego = 0;
+  let rojaMasLargaVoz = null;
+  /**
    * **Y la fila de salida.** «Nada, me dejaron salir a mí antes», en Tenerife
    * Sur: la torre dio la verde a quien juega con otro esperando su salida
    * desde antes. Se apuntan los que van delante mientras se espera en la roja
@@ -4746,13 +4810,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let pidioFreno = false;
   let tiempoDeRodajeIda = 0;
   /**
-   * **Y de eso, el rato parado detrás de uno de tu cola**, que es tráfico y
-   * no rodaje. Ver «el rodaje de ida no aburre».
+   * **Y de eso, el rato perdido por tráfico**, con su motivo, que no es
+   * rodaje. Ver «el rodaje de ida no aburre».
    */
-  let paradoEnLaCola = 0;
+  let perdidoPorTrafico = 0;
+  const porQuienSePerdio = new Map();
+  let detrasDesde = null;
+  /**
+   * **El rodaje de ida, cada dos segundos**: lo que se rueda, lo que pide el
+   * juego, detrás de quién se va y dónde se corta la raya. Solo se enseña si
+   * el rodaje sale en rojo. «Tardó de más» no dice si fue la calle, el coche
+   * del banco o el tráfico, y sin esto hay que volar otra vez para saberlo.
+   */
+  const trazaIda = [];
+  const vocesEnFinal = [];
+  /*
+   * **Y la vuelta que te pide la torre por tu salida, cuándo empieza y cuándo
+   * acaba**, con la fase y la altura. Mientras dura, la torre no te autoriza:
+   * en Pettirossi sonó «orbit», el piloto del banco siguió su circuito, se oyó
+   * «continúe aproximación» y se tocó sin permiso y sin orden de irse.
+   */
+  const vueltaPedida = [];
+  let dandoLaVueltaAntes = false;
+  const trazaRoja = [];
   let tiempoDeRodajeVuelta = 0;
   let despego = 0;
   let toco = 0;
+  /** La velocidad indicada y el gas al tocar, y la de referencia, m/s. */
+  let alTocar = null;
   /**
    * **La puerta de la final estabilizada**, en ruedas sobre la pista.
    *
@@ -4975,6 +5060,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   };
   /** El gas que sostiene la velocidad del circuito. Ver la etapa «subir». */
   let gasQueSostiene = 0;
+  /**
+   * Lo cerca de la velocidad buscada que hay que ir para acumular gas, m/s:
+   * unos ocho nudos. Más lejos, la ley proporcional basta, y acumular ahí es
+   * lo que dejaba el gas sin recuperar al llegar. Ver la etapa «subir».
+   */
+  const GAS_ACUMULA_CERCA = 4;
   /** El pie que sostiene el viento cruzado en la carrera. Ver el timón de la etapa «despegar». */
   let timonDeLaCarrera = 0;
   /** El error de velocidad de la vuelta anterior, en final. Ver el gas de la final. */
@@ -5063,7 +5154,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /**
    * **Lo que de verdad tira de lado este avión virando a fondo**, m/s²: la
    * velocidad por el ritmo de viraje, medida en los virajes del circuito con
-   * el alerón en su tope. Ver `elArcoHastaElEje`.
+   * **la inclinación pedida en su tope y el ala ya asentada**. Ver
+   * `elArcoHastaElEje`.
    *
    * Hace falta medirlo porque no es el de la cuenta: con treinta grados
    * pedidos, el modelo completo sostiene veinticuatro o veinticinco —la
@@ -5071,6 +5163,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * pide algo de alerón para no enderezarse—, y en Guyrami el viraje no es un
    * alabeo sino un ritmo que crece con la velocidad. Empieza con la cuenta
    * de veinticinco grados y aprende en cuanto vira.
+   *
+   * **Y con el ala asentada, no con el alerón en su tope** (H99). En el modelo
+   * completo el alerón solo llega a su tope entrando y saliendo del viraje, con
+   * el ala a medio camino: asentado en veinticuatro grados no le queda ni la
+   * mitad. Se aprendía de los instantes en que el avión todavía no viraba, y
+   * salía un radio de más y al azar: el JAZ 50, que vira en unos 400 m, lo
+   * aprendía de 545 a 1.974 según la tirada —el JAZ 110, de 3.560 a 8.449 los
+   * 1.330 suyos—. En el circuito de Cuatro Vientos, a 227 m y setenta nudos,
+   * empezaba la final nada más entrar en la base, pedía seis grados de alabeo
+   * todo el arco y llegaba a la puerta fuera del eje en 16 de 40 finales de la
+   * mesa en Tukã y 5 de 40 en Taguató, hasta a 274 m.
+   *
+   * **En Guyrami se queda como estaba**: allí el alerón ya es la inclinación, y
+   * con el ala asentada sigue en su tope todo el viraje. Con el tope de un
+   * tercio de los de hélice cuenta desde quince grados, que es un radio de más
+   * y del lado seguro; la mesa no vuela ese modelo, y sin medirlo no se toca.
    */
   let deLadoAFondo = 9.81 * Math.tan((25 * Math.PI) / 180);
   /**
@@ -5079,25 +5187,63 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * de lado. Del radio se toma el mayor de los dos, que es el del lado seguro.
    */
   let giroAFondo = 0.08;
+  /** Con cuánto se da el ala por asentada, rad/s: cuatro grados por segundo. */
+  const ALA_ASENTADA = (4 * Math.PI) / 180;
   let trayectoriaAntes = null;
+  let alabeoAntes = null;
   let alTopeAntes = false;
+  /** Cuántas veces se ha medido, para el informe: un radio sin medidas es el de la cuenta. */
+  let medidasDelViraje = 0;
   const medirElViraje = (s, paso) => {
     const v = Math.hypot(s.velocity.x, s.velocity.z);
     const tray = Math.atan2(s.velocity.x, -s.velocity.z);
+    const alabeo = o.actitud?.().alabeo ?? 0;
+    const aFondo =
+      !s.onGround &&
+      alabeoPedido !== null &&
+      Math.abs(alabeoPedido) >= topeDeInclinacion - 0.01 &&
+      alabeo * alabeoPedido > 0 &&
+      Math.abs(alabeo) > 0.6 * topeDeInclinacion;
+    const asentada =
+      alabeoAntes !== null && paso > 0 && Math.abs(alabeo - alabeoAntes) / paso < ALA_ASENTADA;
     const alTope = !s.onGround && Math.abs(c.aileron) >= topeDeAleronEnVuelo - 0.01;
-    if (alTope && alTopeAntes && trayectoriaAntes !== null && paso > 0.05 && v > 20) {
-      const giro = Math.abs(error(tray, trayectoriaAntes)) / paso;
+    const seMide = SENCILLO ? alTope && alTopeAntes : aFondo && asentada;
+    if (seMide && trayectoriaAntes !== null && paso > 0.05 && v > 20) {
+      /*
+       * Y a los treinta grados de la base, que es donde se usa: los virajes
+       * de antes se vuelan a veinticinco, y sostienen la misma parte de ellos.
+       */
+      const aLaBase = SENCILLO
+        ? 1
+        : Math.tan(TOPE_DE_INCLINACION_EN_LA_BASE) / Math.tan(Math.abs(alabeoPedido));
+      const giro = (Math.abs(error(tray, trayectoriaAntes)) / paso) * aLaBase;
       // Despacio hacia lo medido: un viraje entero son decenas de muestras.
       deLadoAFondo += (giro * v - deLadoAFondo) * 0.15;
       giroAFondo += (giro - giroAFondo) * 0.15;
+      medidasDelViraje++;
     }
     trayectoriaAntes = tray;
+    alabeoAntes = alabeo;
     alTopeAntes = alTope;
   };
   /**
+   * **El viraje a final se planea con la mitad de lo que el avión sostiene**
+   * (H99), y es un margen dicho y no uno que salga de medir mal: el radio
+   * aprendido con el alerón en su tope era, de media, el doble del de verdad, y
+   * los reactores vivían de ese doble. Con el de verdad a secas, el JAZ 90
+   * llegaba a la puerta fuera del eje en 4 de 20 finales de la mesa en Taguató y
+   * en 9 de 20 en Tukã: sin sitio para la captura. Con el doble, los siete
+   * aviones quedan como estaban, y el JAZ 50 en el circuito de 227 m pasa de
+   * 10 de 25 fuera a ninguna. Es un arco de doce a quince grados, el de una
+   * base bien volada: quedan otros tantos para apretar si hace falta. En
+   * Guyrami, sin él: el radio de allí ya lo lleva puesto.
+   */
+  const MARGEN_DEL_VIRAJE = SENCILLO ? 1 : 2;
+  /**
    * **El arco que queda hasta el eje de la final**: cuánto se acerca al eje
    * virando a fondo desde aquí hasta quedar alineado, `R·(1−cos θ)`, y lo que
-   * falta de verdad. Con el radio medido. `null` si no se va hacia el eje.
+   * falta de verdad. Con el radio medido y su margen. `null` si no se va hacia
+   * el eje.
    */
   const elArcoHastaElEje = (s) => {
     const r = pistaAhora();
@@ -5107,10 +5253,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const deLado = s.velocity.x * Math.cos(hp) + s.velocity.z * Math.sin(hp);
     const theta = Math.abs(error(Math.atan2(s.velocity.x, -s.velocity.z), hp));
     const v = Math.hypot(s.velocity.x, s.velocity.z);
-    const radio = Math.max(
-      (v * v) / Math.max(1, deLadoAFondo),
-      v / Math.max(0.01, giroAFondo),
-    );
+    const radio =
+      MARGEN_DEL_VIRAJE *
+      Math.max((v * v) / Math.max(1, deLadoAFondo), v / Math.max(0.01, giroAFondo));
     return {
       hacia: e * deLado < 0,
       theta,
@@ -5410,11 +5555,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /**
    * Cuánto se tolera en tierra sin moverse ni cambiar de fase, s de juego.
    *
-   * Cinco minutos: la espera legítima más larga en tierra es la roja, que
-   * tiene ciento setenta segundos —ver «ninguna roja dura más de lo que dura
-   * de verdad»—, y la de los toboganes en el puesto, sesenta.
+   * Cinco minutos: la espera legítima más larga en tierra es la roja, que sin
+   * nadie delante tiene ciento setenta segundos —ver «ninguna roja dura más
+   * de lo que dura de verdad»—, y la de los toboganes en el puesto, sesenta.
+   *
+   * **Con fila, lo que la fila añade a la roja se añade aquí**: noventa por
+   * cada uno de delante y los dos minutos de estela. Con cinco minutos justos
+   * el vuelo se cortaba a los 300 s en una roja que se permite de 380, y en
+   * La Palma a la vez que al de delante le daban el despegue: no se llegaba a
+   * saber cuánto dura.
    */
   const ATASCADO = 300;
+  const atascadoCon = () => ATASCADO + 90 * fila.maxDelante + (fila.estela ? 120 : 0);
   const TOPE_DE_PARED = () => (tope() + 600) * 1000;
   let seQuedoSinPared = false;
   /** Por qué se cortó: `reloj`, `atascado` o `pared`. */
@@ -5564,7 +5716,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       Math.hypot(s.position.x - quietoDesde.x, s.position.z - quietoDesde.z) > 2
     )
       quietoDesde = { t, x: s.position.x, z: s.position.z, fase };
-    else if (t - quietoDesde.t > ATASCADO) {
+    else if (t - quietoDesde.t > atascadoCon()) {
       seQuedoSinPared = true;
       porQueSeCorto = "atascado";
       atascadoEn = { fase, etapa, segundos: Math.round(t - quietoDesde.t), t: Math.round(t) };
@@ -5999,9 +6151,77 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             document.querySelector('[data-hud="torre-fila"]')?.childElementCount ?? 0;
           if (dibujados === delante.length) fila.dibujada++;
         }
-        rojaDesde ??= t;
-        if (t - rojaDesde > rojaMasLarga) {
-          rojaMasLarga = t - rojaDesde;
+        if (rojaDesde === null) {
+          rojaDesde = t;
+          rojaVozJuego = 0;
+          rojaVozPared = 0;
+          rojaMuestra = null;
+        }
+        {
+          const pared = performance.now() / 1000;
+          if (rojaMuestra && o.bocaAhora?.()?.ocupada) {
+            rojaVozJuego += Math.max(0, t - rojaMuestra.t);
+            rojaVozPared += Math.max(0, pared - rojaMuestra.pared);
+          }
+          rojaMuestra = { t, pared };
+        }
+        /*
+         * Y quién la sostiene, cada cinco segundos: lo que la torre da por
+         * motivo, quién ocupa la pista y por dónde va cada uno de los que
+         * llegan. «Nadie en la pista» al final no dice quién la tuvo.
+         */
+        if (t - (trazaRoja.at(-1)?.t ?? -9) >= 5)
+          trazaRoja.push({
+            t: Math.round(t),
+            por: por ? `${por.porque}${por.matricula ? ` ${por.matricula}` : ""}` : "sin motivo",
+            // Y sin motivo dicho, lo que el plan da por razón de no mirarte.
+            mira: (() => {
+              const m = o.noTeMira?.();
+              if (!m) return "";
+              return `no te mira: ${m.por ?? "—"}${m.piezas?.length ? ` (${m.piezas.join(", ")})` : ""}${m.lista ? ", lista por leer" : ""}`;
+            })(),
+            ocupan: (o.ocupanLaPista?.() ?? []).map((x) => `${x.matricula} ${x.orden}`).join(", "),
+            llegan: (o.traficoPorDentro?.() ?? [])
+              .filter((q) => q.camino === "llegada")
+              .map((q) => {
+                const a = (o.trafico?.() ?? []).find((w) => w.matricula === q.matricula);
+                return `${q.matricula} ${Math.round(q.recorrido ?? 0)} m${a ? `, a ${Math.round(Math.hypot(a.x - s.position.x, a.z - s.position.z))} m de ti y ${Math.round(a.y - s.position.y)} m de altura${a.enLaPista ? ", en la pista" : ""}` : ""}`;
+              })
+              .join(" | "),
+            /*
+             * Y el que la sostiene, dónde va: en Estigarribia la sostenía
+             * «aterriza ZP-VYN» 175 s sin estar entre las llegadas de dentro
+             * ni encima de la pista, y no se sabía si volaba la final, rodaba
+             * o volvía por la pista.
+             */
+            quien: (() => {
+              const m = por?.matricula;
+              if (!m) return "";
+              const a = (o.trafico?.() ?? []).find((w) => w.matricula === m);
+              const q = (o.traficoPorDentro?.() ?? []).find((w) => w.matricula === m);
+              return (
+                (a
+                  ? `${m} a ${Math.round(Math.hypot(a.x - s.position.x, a.z - s.position.z))} m de ti y ${Math.round(a.y - s.position.y)} m de altura${a.enLaPista ? ", en la pista" : ""}`
+                  : `${m} no está en el tráfico`) +
+                (q
+                  ? ` · ${q.camino}, ${Math.round(q.recorrido ?? 0)} m de su camino, toca en ${Math.round(q.toca ?? -1)}, fuera en ${Math.round(q.fuera ?? -1)}`
+                  : " · no está por dentro")
+              );
+            })(),
+            salen: (o.traficoPorDentro?.() ?? [])
+              .filter((q) => q.camino === "salida")
+              .map(
+                (q) =>
+                  `${q.matricula} ${Math.round(q.recorrido ?? 0)} m de su camino, espera en ${Math.round(q.espera ?? -1)}, despega en ${Math.round(q.despega ?? -1)}` +
+                  `${q.quieto > 1 ? `, quieto ${Math.round(q.quieto)} s` : ""}${q.aguarda > 1 ? `, aguarda ${Math.round(q.aguarda)} s` : ""}`,
+              )
+              .join(" | "),
+          });
+        const aUnoPorUno = t - rojaDesde - rojaVozJuego + rojaVozPared;
+        if (aUnoPorUno > rojaMasLarga) {
+          rojaMasLarga = aUnoPorUno;
+          rojaMasLargaJuego = t - rojaDesde;
+          rojaMasLargaVoz = { juego: rojaVozJuego, pared: rojaVozPared };
           rojaMasLargaDonde = `a los ${Math.round(rojaDesde)} s: ${(o.ocupanLaPista?.() ?? []).map((x) => `${x.matricula} ${x.orden}`).join(", ") || "nadie en la pista"}`;
         }
       } else rojaDesde = null;
@@ -6131,7 +6351,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           esperandoPorAlguien = `${t.toFixed(0)} s: ${ocupan.map((x) => `${x.matricula} ${x.orden}`).join(", ")}`;
       }
       if ((o.pistaDeLosDemas?.() ?? []).length || (o.trafico?.() ?? []).some((a) => a.enLaPista)) ultimaConOtroEnLaPista = t;
+      {
+        const dando = !!o.porTuSalida?.()?.dandoLaVuelta;
+        if (dando !== dandoLaVueltaAntes) {
+          dandoLaVueltaAntes = dando;
+          vueltaPedida.push(`${t.toFixed(0)}s ${dando ? "empieza" : "acaba"} · ${fase} · ${Math.round(alto(s))} m${s.onGround ? " · en tierra" : ""}`);
+        }
+      }
       for (const x of nuevas) {
+        /*
+         * Y lo que suena bajando hacia la pista, con su altura y con quién la
+         * tenía: es lo que dice qué retrasó un permiso que salió tarde. Las
+         * cuarenta últimas. Ver «el permiso de aterrizar se oye antes de los
+         * 500 ft».
+         */
+        if (!s.onGround && (o.enLaFinalDeLaTorre?.() || fase === "final")) {
+          const deQuien = (o.pistaDeLosDemas?.() ?? []).map((a) => a.matricula ?? a).join(",");
+          vocesEnFinal.push(
+            `${t.toFixed(0)}s ${Math.round(alto(s))} m ${fase}${deQuien ? ` · pista de ${deQuien}` : ""} · ${x.replace(/^[\d.]+s /, "").replace(/@.*$/, "")}`,
+          );
+          if (vocesEnFinal.length > 40) vocesEnFinal.shift();
+        }
         /*
          * **Y tu número en la fila también es el porqué.** Con uno corriendo
          * su despegue y otro listo delante de ti, lo que dice una torre de
@@ -7058,13 +7298,55 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
       c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
       c.aileron = timon(s, ruta);
+      if (tiempoDeRodajeIda - (trazaIda.at(-1)?.t ?? -9) >= 2)
+        trazaIda.push({
+          t: +tiempoDeRodajeIda.toFixed(0),
+          v: +porElSuelo(s).toFixed(1),
+          quiere: +quiere.toFixed(1),
+          detras: o.detrasDeQuien?.() ?? null,
+          corta: o.paradaDeTuRaya?.() ?? null,
+          va: Math.round(o.rodajeAsi?.().recorrido ?? -1),
+          fase,
+          x: Math.round(s.position.x),
+          z: Math.round(s.position.z),
+        });
       /*
-       * Parado porque el juego pide cero, y lo pide por uno de tu cola que
-       * tienes delante en la raya: ver `detrasDeQuien` en
-       * `src/world/plan-de-vuelo.ts`.
+       * **El rato perdido por tráfico, con la cuenta del banco de despegue**
+       * —ver `perdidoPorTrafico` en `verificar-despegue.mjs`, con el porqué de
+       * cada caso—: parado detrás de uno de tu raya o dando paso al que viene
+       * de frente, el rato entero; rodando detrás de uno, lo que se tarda de
+       * más frente al paso medio que pide la ruta. Sin nadie delante, nada.
        */
-      if (porElSuelo(s) < 0.5 && quiere < 0.5 && o.detrasDeQuien?.() === "cola")
-        paradoEnLaCola += paso;
+      {
+        const recorrido = o.rodajeAsi?.().recorrido ?? null;
+        const delante = o.detrasDeQuien?.() ?? null;
+        const quien = delante === "cola" ? "de tu cola" : "parado";
+        const anotar = (motivo, segundos) => {
+          perdidoPorTrafico += segundos;
+          porQuienSePerdio.set(motivo, (porQuienSePerdio.get(motivo) ?? 0) + segundos);
+        };
+        if (porElSuelo(s) < 0.5) {
+          const corte = o.paradaDeTuRaya?.() ?? null;
+          const cortada = corte !== null && recorrido !== null && corte - recorrido < 30;
+          if (quiere < 0.5 && delante) anotar(`detrás de uno ${quien}`, paso);
+          else if (quiere < 0.5 && cortada) anotar("dando paso a uno que viene de frente", paso);
+        }
+        /*
+         * Rodando detrás, de segundo en segundo y no muestra a muestra: lo
+         * recorrido viene en metros enteros, y en una décima de segundo se
+         * avanza uno o ninguno.
+         */
+        if (delante && recorrido !== null && porElSuelo(s) >= 0.5) {
+          detrasDesde ??= { t: 0, m: recorrido };
+          detrasDesde.t += paso;
+          if (detrasDesde.t >= 1 && largoDeLaIda > 0 && idaComoPideElJuego > 0) {
+            const avance = Math.max(0, recorrido - detrasDesde.m);
+            const perdido = Math.max(0, detrasDesde.t - avance * (idaComoPideElJuego / largoDeLaIda));
+            if (perdido > 0) anotar(`rodando detrás de uno ${quien}`, perdido);
+            detrasDesde = null;
+          }
+        } else detrasDesde = null;
+      }
       if (fase === "esperando" || fase === "autorizado") etapa = "esperar";
     } else if (etapa === "esperar") {
       c.throttle = 0;
@@ -7753,8 +8035,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * allí el gas es también subir, y acumulando gas para una velocidad que
        * el modelo sencillo no da, el JAZ 60 subía el viento en cola de La
        * Gomera cincuenta metros por encima del circuito.
+       *
+       * **Y el gas que la sostiene se le pregunta al modelo** (26-11), con lo
+       * que lleva fuera: `gasPara`, las mismas fuerzas que mueven el avión, y
+       * la misma pregunta que ya le hace la recogida en Guyrami. Lo
+       * acumulado solo corrige lo que el nivel no dice —la bajada del plan, el
+       * viraje—, y solo acumula cerca de la velocidad buscada. Antes se partía
+       * de 0,55 y el resto se buscaba a tientas, y a tientas llegaba tarde:
+       * con el JAZ 20 en Taguató, tras la frustrada de Los Rodeos, al viento
+       * en cola a 84 nudos donde tocaban 76, lo acumulado se iba abajo, el gas
+       * se quedaba en 0,08, y al sacar los flaps a dos tercios la velocidad
+       * caía a 61 nudos —por debajo de la Vref, 64— y tardaba medio minuto en
+       * volver con el gas a fondo. Una tirada de la ronda llegó a 49 nudos, y
+       * sonó «stall» dos veces en la base. Un piloto, al sacar flaps, pone el
+       * gas de la velocidad con esos flaps, y no espera a perderla.
        */
-      if (!SENCILLO && !subiendo && aDonde >= 3)
+      const gasDeNivel =
+        !SENCILLO && !subiendo && aDonde >= 3 && typeof o.gasPara === "function"
+          ? (o.gasPara(quiereIr) ?? 0.55)
+          : 0.55;
+      if (!SENCILLO && !subiendo && aDonde >= 3 && Math.abs(quiereIr - s.airspeed) < GAS_ACUMULA_CERCA)
         gasQueSostiene = Math.max(
           -0.5,
           Math.min(0.45, gasQueSostiene + (quiereIr - s.airspeed) * 0.002 * paso),
@@ -7774,7 +8074,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             quiereIr < VELOCIDAD_DE_CRUCERO ? 0 : 0.3,
             Math.min(
               1,
-              0.55 + (quiereIr - s.airspeed) * 0.04 + (!SENCILLO && aDonde >= 3 ? gasQueSostiene : 0),
+              gasDeNivel + (quiereIr - s.airspeed) * 0.04 + (!SENCILLO && aDonde >= 3 ? gasQueSostiene : 0),
             ),
           );
       configurar(s, c, aDonde);
@@ -7892,7 +8192,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             ` · toca ${(altoQueToca - alto(s)).toFixed(1)} plan ${(altoPedido - alto(s)).toFixed(1)} pide ${memoriaDeSenda ? memoriaDeSenda.ritmo.toFixed(1) : "-"}` +
             ` · eje ${desvio(s).toFixed(0)} por girar ${((a.theta * 180) / Math.PI).toFixed(0)}°` +
             ` · ${Math.round(o.velocidadDeCabina?.() ?? s.airspeed * 1.94384)} kt sube ${s.verticalSpeed.toFixed(1)}` +
-            ` · gas ${c.throttle.toFixed(2)} flaps ${(o.controles().flaps ?? 0).toFixed(2)}`,
+            ` · gas ${c.throttle.toFixed(2)} (nivel ${gasDeNivel.toFixed(2)}, acumulado ${gasQueSostiene.toFixed(2)})` +
+            ` flaps ${(o.controles().flaps ?? 0).toFixed(2)}`,
         );
       }
 
@@ -8100,8 +8401,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * del viento: la mitad de lo que sopla de cara y la racha **del parte**
        * —la `G` del METAR menos el viento medio—, no la que mide este banco en
        * su propio anemómetro, que es sobre todo su propio vaivén de gas y de
-       * senda. En Guyrami no: allí los cinco nudos se los come la recogida con
-       * el gas de la Vref sostenido. Ver `recogida.gas`.
+       * senda.
+       *
+       * **Y en Guyrami también** (H101). Ahí se dejaba el margen entero hasta
+       * la recogida, con la idea de que los cinco nudos se los comía ella con
+       * el gas de la Vref sostenido, y no se los come: en ese modelo el gas va
+       * hacia su velocidad con una constante de unos cinco segundos y medio, y
+       * los tres o cuatro de la recogida quitan la mitad. Y el listón de toma
+       * rápida de Guyrami no es la Vref y cuarto sino las 93 centésimas de la
+       * punta del modelo, si es menos —ver `CASI_A_TOPE` en
+       * `flight/aterrizaje.ts`—: en el JAZ 20, 67,3 nudos con la Vref en 64.
+       * Medido en la mesa del modelo sencillo con estas leyes, el JAZ 20
+       * cruzaba el umbral a 69 y tocaba a 66,5 en aire quieto y hasta a 68,7
+       * con rachas; en La Palma el juego le quitó las gafas en dos de seis
+       * vuelos por «rápido». Con el margen quitado aquí y el gas de la
+       * recogida de abajo (`gasDeLaRecogidaSencilla`), toca a 64,2 en aire
+       * quieto y a 65,6 como mucho con rachas. Ese modelo no tiene viento
+       * —ver `ponerViento` en `flight/arcade.ts`—, así que lo que queda
+       * encima en el umbral es solo la racha del parte.
        */
       const parte = o.meteo?.();
       const rachaDelParte =
@@ -8109,9 +8426,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           ? Math.max(0, parte.rachaKt - parte.vientoKt) * 0.514444
           : 0;
       const enElUmbral = Math.min(aditivo, deCara / 2 + rachaDelParte);
-      const margenQueQueda = CON_EL_AUTOMATICO
-        ? Math.max(0, Math.min(1, falta / SE_QUITA_EL_MARGEN_DESDE))
-        : 1;
+      const margenQueQueda = Math.max(0, Math.min(1, falta / SE_QUITA_EL_MARGEN_DESDE));
       const pedidaEnIndicada =
         deAproximacion + enElUmbral + (aditivo - enElUmbral) * margenQueQueda;
       const quiere = enVerdadera(s, pedidaEnIndicada);
@@ -8350,14 +8665,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * treinta pies, como el `RETARD` de los gases del juego, 240 m y
            * 5,2; cortando a los dos metros, 394 m y 4,1. Con el gas de la Vref
            * sostenido, de 438 a 453 m y a 1,2 m/s en los nueve, sin depender
-           * de dónde iba el escalón; y los cinco nudos de más se los come la
-           * recogida, que es como se cruza el umbral. Al tocar, el gas al
-           * ralentí —ver la etapa `frenar`—, y los frenos de tierra suben.
+           * de dónde iba el escalón. Al tocar, el gas al ralentí —ver la
+           * etapa `frenar`—, y los frenos de tierra suben.
+           *
+           * **Y los cinco nudos de más no se los comía la recogida** (H101):
+           * con el gas de la Vref quita la mitad, y el JAZ 20 tocaba a un
+           * nudo del listón de toma rápida de Guyrami. Ahora se quitan en la
+           * final corta, como en el modelo completo —ver `margenQueQueda`—, y
+           * lo que aún sobre al recoger lo quita el gas: ver
+           * `gasDeLaRecogidaSencilla`. Después del punto 254 el modelo
+           * aprendió a prestar subida a cambio de la velocidad que sobra
+           * —`loQuePresta` en `flight/arcade.ts`—, pero con la palanca de
+           * este banco el ralentí entero sigue hundiéndolo: medido allí.
            */
           gas:
             SENCILLO && typeof o.gasPara === "function"
               ? (o.gasPara(vref) ?? c.throttle)
               : c.throttle,
+          // La Vref de esta recogida, en verdadera: ver `gasDeLaRecogidaSencilla`.
+          vref,
         };
         empezoLaRecogida = {
           ruedas: +ruedas.toFixed(1),
@@ -8373,12 +8699,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * baja, y si la ley de la final lo sigue moviendo sobre la pista —la
          * senda ya no pide nada y lo va quitando— la palanca pierde mano a la
          * vez que el avión se hunde. La palanca la lleva `recoger`, que en
-         * Guyrami le suma un pelo de gas si una racha lo hunde de más. Y en un
-         * reactor, el gas que llevaba hasta los treinta pies: ver
-         * `RECOGIDA_DE_REACTOR`.
+         * Guyrami le suma un pelo de gas si una racha lo hunde de más, y le
+         * quita lo que sobre de velocidad (H101): ver
+         * `gasDeLaRecogidaSencilla`. Y en un reactor, el gas que llevaba hasta
+         * los treinta pies: ver `RECOGIDA_DE_REACTOR`.
          */
         c.throttle = SENCILLO
-          ? recogida.gas
+          ? gasDeLaRecogidaSencilla(recogida, s)
           : RECOGIDA_DE_REACTOR
             ? globalThis.__gasDelReactorEnLaRecogida({
                 gas: recogida.gas,
@@ -8477,6 +8804,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * corrección de deriva de verdad, no cuenta como «cruzado».
            */
           rumbo: +((Math.abs(error(trayectoria, hp)) * 180) / Math.PI).toFixed(1),
+          // Con qué radio se planeó el viraje a final, y de cuántas medidas sale. Ver `medirElViraje`.
+          radio: Math.round(elArcoHastaElEje(s).radio / MARGEN_DEL_VIRAJE),
+          medidas: medidasDelViraje,
           baja: +(
             bajadaReciente.reduce((a, b) => a + b.baja, 0) /
             Math.max(1, bajadaReciente.length)
@@ -8702,6 +9032,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         );
       }
       if (s.onGround && s.onRunway) {
+        /*
+         * Y a qué iba por el aire al tocar, con el gas: el juego da la toma
+         * por rápida con su velocidad indicada, y en La Palma, con una salida
+         * delante, la dio por rápida con el gas a 0,6 y sin gafas.
+         */
+        /*
+         * Y lo más rápido que vuela el modelo de ahora, que en Guyrami pone el
+         * listón de toma rápida por debajo de la Vref y cuarto (H101): ver
+         * `listonDeToma`.
+         */
+        if (!toco)
+          alTocar = {
+            ias: s.airspeed,
+            gas: o.controles?.()?.throttle ?? null,
+            vref: o.avion?.()?.aproximacion ?? null,
+            vmax: o.velocidadMaxima?.() ?? null,
+          };
         toco = t;
         /*
          * **Dónde se tocó.** Es el número que da nombre a #147 y el banco no
@@ -8984,6 +9331,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     esperandoPorAlguien,
     rojaMasLarga,
     rojaMasLargaDonde,
+    rojaMasLargaJuego,
+    rojaMasLargaVoz,
     fila: { ...fila, porDelante: [...fila.porDelante] },
     deFrente,
     deFrenteDonde,
@@ -9212,13 +9561,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     dijoToca,
     pidioFreno,
     ida: +tiempoDeRodajeIda.toFixed(0),
-    idaEnCola: +paradoEnLaCola.toFixed(0),
+    idaPorTrafico: +perdidoPorTrafico.toFixed(0),
+    idaPorQuien: [...porQuienSePerdio].map(([q, t]) => `${q} ${t.toFixed(0)} s`),
     idaMetros: Math.round(idaMetros),
     largoDeLaIda: Math.round(largoDeLaIda),
     idaComoPideElJuego: Math.round(idaComoPideElJuego),
+    trazaIda,
+    vocesEnFinal,
+    vueltaPedida,
+    trazaRoja,
     vuelta: +tiempoDeRodajeVuelta.toFixed(0),
     despego: +despego.toFixed(0),
     toco: +toco.toFixed(0),
+    alTocar,
     tocoDesviado: +tocoDesviado.toFixed(1),
     tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
     pistaParaTocar: Math.round(pistaParaTocar),
@@ -10547,7 +10902,10 @@ comprobar(
   "y ninguna roja dura más de lo que dura de verdad",
   (vuelo.rojaMasLarga ?? 0) < rojaPermitida,
   (vuelo.rojaMasLarga
-    ? `la más larga, ${Math.round(vuelo.rojaMasLarga)} s ${vuelo.rojaMasLargaDonde}`
+    ? `la más larga, ${Math.round(vuelo.rojaMasLarga)} s a ×1 ${vuelo.rojaMasLargaDonde}` +
+      (vuelo.rojaMasLargaVoz?.juego > 0.5
+        ? ` (de juego ${Math.round(vuelo.rojaMasLargaJuego)} s, con ${Math.round(vuelo.rojaMasLargaVoz.juego)} s de voz sonando que fueron ${Math.round(vuelo.rojaMasLargaVoz.pared)} s de pared)`
+        : "")
     : "no hubo roja") + ` · se permiten ${rojaPermitida} s`,
   "«me tiene esperando por ese avión un buen rato, ¿me dejará salir?»: la roja no se apagaba nunca",
 );
@@ -10866,7 +11224,8 @@ const topeDeIda = Math.round(
   ),
 );
 /*
- * **Y el rato parado detrás de uno de tu cola no es rodaje: se descuenta.**
+ * **Y el rato perdido por tráfico no es rodaje: se descuenta**, con la misma
+ * cuenta que el banco de despegue.
  *
  * De La Palma a El Hierro con el JAZ 60 esto salía en rojo, de 104 a 140 s
  * con su tope de 90, y no era el rodaje: la traza del coche enseñaba el avión
@@ -10877,14 +11236,14 @@ const topeDeIda = Math.round(
  * rodar despacio, no esperar a que despegue el de delante. Se descuenta y se
  * dice cuánto, para que un descuento enorme se vea.
  */
-const idaEnCola = vuelo.idaEnCola ?? 0;
-const idaRodando = vuelo.ida - idaEnCola;
+const idaPorTrafico = vuelo.idaPorTrafico ?? 0;
+const idaRodando = vuelo.ida - idaPorTrafico;
 comprobar(
   "el rodaje de ida no aburre",
   vuelo.ida > 0 && idaRodando <= topeDeIda,
   `${vuelo.ida} s del puesto al punto de espera` +
-    (idaEnCola > 0
-      ? `, ${idaEnCola} s de ellos parado detrás de uno de tu cola: ${idaRodando} s rodando`
+    (idaPorTrafico > 0
+      ? `, ${idaPorTrafico} s de ellos perdidos por tráfico (${(vuelo.idaPorQuien ?? []).join(", ")}): ${idaRodando} s rodando`
       : "") +
     ` · ${vuelo.largoDeLaIda} m trazados, ` +
     `${vuelo.idaMetros} m rodados, a ${(vuelo.idaMetros / Math.max(1, idaRodando)).toFixed(1)} m/s de media · tope ${topeDeIda} s`,
@@ -11187,6 +11546,7 @@ comprobarSiVolo(
     !!p && fallos.length === 0,
     p
       ? `${p.pies} ft${p.empezoPorDebajo ? " (la final empezó por debajo)" : ""} · ${p.nudos} kt (Vref ${p.vref}) · flaps ${p.flaps} · senda ${p.senda} m · eje ${p.eje} m · ${p.rumbo}° · bajando ${p.baja} m/s` +
+          ` · vira en ${p.radio} m (${p.medidas} medidas)` +
           (fallos.length ? ` · ✗ ${fallos.join(", ")}` : "")
       : "no pasó por la puerta",
     "«que vuele como un piloto de verdad: final estabilizada a mil pies»",
@@ -11345,6 +11705,20 @@ comprobarSiVolo(
   "se aterrizaba y la pantalla no decía nada durante quince segundos",
 );
 
+/**
+ * **Desde qué velocidad da el juego la toma por rápida**, m/s: la Vref y
+ * cuarto, o las 93 centésimas de lo más rápido que vuela el modelo de ahora si
+ * es menos —`DEMASIADO_RAPIDO` y `CASI_A_TOPE` en `flight/aterrizaje.ts`, que
+ * no salen de allí y por eso van aquí con sus números—.
+ *
+ * El banco imprimía solo la primera, y en Guyrami manda la segunda: el JAZ 20
+ * tiene ahí su punta en 37 m/s, así que es rápida desde 67 nudos y no desde los
+ * 80 que decía la línea de las gafas. El banco tocaba a un nudo de ese listón
+ * sin que nada lo enseñara (H101).
+ */
+const listonDeToma = ({ vref, vmax }) =>
+  Math.min(vref * 1.25, Number.isFinite(vmax) && vmax > 0 ? vmax * 0.93 : Infinity);
+
 /*
  * **Y el primer aterrizaje bueno trae las gafas de sol.**
  *
@@ -11373,7 +11747,14 @@ if (vuelo.toco > 0) {
         : "") +
       (vuelo.botes?.cuantos
         ? ` · ${vuelo.botes.cuantos} bote${vuelo.botes.cuantos === 1 ? "" : "s"}, el más largo de ${vuelo.botes.mas} s`
-        : " · sin botes"),
+        : " · sin botes") +
+      (vuelo.alTocar
+        ? ` · al tocar ${(vuelo.alTocar.ias * 1.94384).toFixed(1)} kt de aire` +
+          (vuelo.alTocar.vref
+            ? ` (Vref ${(vuelo.alTocar.vref * 1.94384).toFixed(1)}, rápida desde ${(listonDeToma(vuelo.alTocar) * 1.94384).toFixed(1)}, ${((listonDeToma(vuelo.alTocar) - vuelo.alTocar.ias) * 1.94384).toFixed(1)} por debajo)`
+            : "") +
+          (vuelo.alTocar.gas !== null ? ` con el gas a ${vuelo.alTocar.gas.toFixed(2)}` : "")
+        : ""),
     "«quiero ser piloto con las gafas de sol»",
   );
 }
@@ -12160,6 +12541,29 @@ if (fallos) {
   if (vuelo.hitos?.length) {
     console.log("\n  por dónde fue el vuelo:");
     for (const h of vuelo.hitos) console.log(`    ${h}`);
+  }
+  if (idaRodando > topeDeIda && vuelo.trazaIda?.length) {
+    console.log(`\n  el rodaje de ida, que el juego pide en ${vuelo.idaComoPideElJuego} s:`);
+    for (const r of vuelo.trazaIda)
+      console.log(
+        `    ${r.t}s ${r.v} m/s, pide ${r.quiere}` +
+          (r.detras ? ` · detrás de ${r.detras}` : "") +
+          (r.corta !== null ? ` · la raya se corta a ${Math.round(r.corta)} m, va por ${r.va}` : "") +
+          ` · ${r.fase} en ${r.x},${r.z}`,
+      );
+  }
+  if ((vuelo.rojaMasLarga ?? 0) >= rojaPermitida && vuelo.trazaRoja?.length) {
+    console.log("\n  la roja, cada cinco segundos:");
+    for (const r of vuelo.trazaRoja)
+      console.log(`    ${r.t}s ${r.por}${r.ocupan ? ` · ocupan: ${r.ocupan}` : ""}${r.mira ? ` · ${r.mira}` : ""}${r.quien ? ` · ${r.quien}` : ""}${r.llegan ? ` · llegan: ${r.llegan}` : ""}${r.salen ? ` · salen: ${r.salen}` : ""}`);
+  }
+  if (vuelo.vocesEnFinal?.length) {
+    console.log("\n  lo que sonó bajando hacia la pista:");
+    for (const v of vuelo.vocesEnFinal) console.log(`    ${v}`);
+  }
+  if (vuelo.vueltaPedida?.length) {
+    console.log("\n  la vuelta que pidió la torre por tu salida:");
+    for (const v of vuelo.vueltaPedida) console.log(`    ${v}`);
   }
   console.log("\n  últimos instantes del vuelo:");
   for (const l of vuelo.linea) console.log(`    ${l}`);

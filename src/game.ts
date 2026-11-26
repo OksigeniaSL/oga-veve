@@ -13815,8 +13815,8 @@ export class Game {
 
   /**
    * **Lo que se te ha pedido en este campo por el que tapa tu salida**:
-   * vueltas, idas al aire, avisos de un AFIS y propuestas de irse, y si
-   * ahora mismo estás dando una vuelta. Para el banco. Ver
+   * vueltas, idas al aire, avisos de un AFIS y propuestas de irse, si
+   * ahora mismo estás dando una vuelta y quién te tapa. Para el banco. Ver
    * `flight/salida-tapada.ts`.
    */
   get porTuSalidaParaBanco(): {
@@ -13826,8 +13826,13 @@ export class Game {
     propuestas: number;
     retenidos: number;
     dandoLaVuelta: boolean;
+    tapadaPor: string | null;
   } {
-    return { ...this.turno.porTuSalida, dandoLaVuelta: this.turno.dandoLaVuelta };
+    return {
+      ...this.turno.porTuSalida,
+      dandoLaVuelta: this.turno.dandoLaVuelta,
+      tapadaPor: this.turno.tapadaPor,
+    };
   }
 
   /**
@@ -16830,9 +16835,17 @@ export class Game {
     const porElCircuito =
       enLaFinal === null && !this.sinMotor ? this.tuCircuitoParaLaTorre() : null;
     const llegada = enLaFinal ?? porElCircuito ?? deRuta;
+    /*
+     * **Y sin radio, volando cerca de casa, vienes a aterrizar aunque la torre
+     * no te vea en su circuito** (H100): recién despegado, subiendo tras la
+     * roja o alargando, dejaba de contarte, y en ese rato soltaba hacia tu
+     * única calle a quien luego no se iba a tiempo. Un 7600 vuelve al campo, y
+     * a ése se le despeja el camino. Ver `QuienJuega.sinRadio`.
+     */
+    const sinRadioAqui = this.radioCallada && !this.haciaOtroCampo();
     const aterrizandoAqui = s.onGround
       ? VUELVES_POR_TU_SALIDA.has(fase)
-      : llegada !== null;
+      : llegada !== null || sinRadioAqui;
     return {
       alUmbral: enLaFinal,
       llegada,
@@ -16841,6 +16854,7 @@ export class Game {
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
       prioridad: this.conPrioridad,
+      sinRadio: sinRadioAqui && !s.onGround,
       porDondeVuela: s.onGround ? null : () => this.porDondeSigoVolando(),
       sale: this.tuSalidaParaLaTorre(fase),
       enTierra: s.onGround ? this.tuSitioEnTierra() : null,
@@ -17121,9 +17135,19 @@ export class Game {
       vuelvesAqui: !this.haciaOtroCampo(),
       trasIrse: this.laFinalTrasIrse.yendose,
       vertical: s.verticalSpeed,
+      aSuAltura: !s.onGround && campo.id === c?.campo && enLaAltura,
+      reloj: this.relojDelJuego,
     });
-    if (!teCuenta || !queda || !ultimo) return null;
-    const metros = queda.metros + distanciaAlUmbral(campo, ultimo.x, ultimo.z);
+    if (!teCuenta || !ultimo) return null;
+    // Fuera de su franja y volviendo, en la base: es donde no se pide alabear para contestar.
+    if (!queda) this.tramoQueVeLaTorre = "base";
+    /*
+     * Alargándolo más allá de su franja te sigue viendo —ver `SIGUE_VIENDOTE`—,
+     * y lo que te queda es, como poco, lo que hay hasta el umbral.
+     */
+    const metros = queda
+      ? queda.metros + distanciaAlUmbral(campo, ultimo.x, ultimo.z)
+      : distanciaAlUmbral(campo, s.position.x, s.position.z);
     return metros / Math.max(15, s.groundSpeed);
   }
 

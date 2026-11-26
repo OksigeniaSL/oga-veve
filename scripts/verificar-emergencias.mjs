@@ -50,7 +50,9 @@
  *   la tiene a sesenta metros, se va y da otra vuelta, que es lo que se hace
  *   sin ella. Mira que ni la torre ni la frecuencia digan nada mientras dura
  *   el fallo, que la lámpara se vea grande y sin letras, y las luces en su
- *   orden. Con `OGA_PISTA_OCUPADA=1` sale uno a despegar cuando se va en la
+ *   orden: una roja solo vale si la explica quien ya estaba en la pista o ya
+ *   rodaba hacia tu salida al callarse la radio (H100). Con
+ *   `OGA_PISTA_OCUPADA=1` sale uno a despegar cuando se va en la
  *   final a punto de llegar a la decisión, entre 75 y 62 m: la torre tiene
  *   que poner la roja fija, y tras la otra vuelta, la verde. Vuela por el lado
  *   del circuito del campo. Con `OGA_HORA=22`, de noche: no se alabea, y los
@@ -106,7 +108,10 @@
  * Uso: `node scripts/verificar-emergencias.mjs <antes|despues|carrera|tren|planeo|despres|carga|morro|radio|reventon|toma|ave>
  *        [escenario] [avion] [tramo]`
  *
- * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien.
+ * Con `OGA_TRAZA=1` escribe la traza del vuelo aunque todo vaya bien. Con
+ * `OGA_TRAZA_FINA=fichero`, además, la final cada medio segundo del reloj del
+ * juego —el desvío, la traza y el rumbo, lo que pide y lo que hace el alabeo,
+ * el pie, el gas y lo que da el motor, y el aire—, en columnas (H99).
  */
 import { writeFileSync } from "node:fs";
 import { chromium } from "playwright";
@@ -304,8 +309,11 @@ try {
   await page.waitForTimeout(12000);
 
   const r = await page.evaluate(
-    async ({ modo, tope, sinTren, pistaOcupada, parar, meteTren, deja, deNoche }) => {
+    async ({ modo, tope, sinTren, pistaOcupada, parar, meteTren, deja, deNoche, avionId, peldano }) => {
       const o = globalThis.__oga;
+      const { aircraftById } = await import("/src/flight/aircraft.ts");
+      const { alabeoAFondo } = await import("/src/flight/mano.ts");
+      const { TIERS } = await import("/src/flight/tiers.ts");
       const espera = (ms) => new Promise((res) => setTimeout(res, ms));
       /*
        * **Otra vez desde el principio**, como el botón del final: el mundo ya
@@ -395,6 +403,8 @@ try {
       let deActitud = 0;
       let dePedal = 0;
       let deGas = 0.5;
+      /** El alabeo que pide el rumbo ahora mismo, para la traza. */
+      let quiereAlabeo = 0;
       let tramo = modo === "planeo" ? "planeo" : modo === "despres" ? "crucero" : "carrera";
       let paso = 0;
       let tocoEn = null;
@@ -425,6 +435,15 @@ try {
       let devueltaEn = null;
       let dichoAlCallarse = null;
       let dichoAlVolver = null;
+      /*
+       * **Y quién rodaba ya hacia su salida al callarse la radio**, y quién
+       * salió a rodar después (H100): sin radio, a la única calle de quien
+       * juega no se deja rodar a nadie; al que ya estaba se le da la pista si
+       * se va a tiempo, y si no, la roja es lo que toca (H98).
+       */
+      let rodabanAlCallarse = null;
+      const salenTrasCallarse = [];
+      let muestraDeSalidas = -1;
       let alasDesde = null;
       /** El lado al que alabea el banco ahora mismo, al contestar a los destellos. */
       let ladoDeLasAlas = 1;
@@ -535,7 +554,54 @@ try {
       const alabear = (s, rumbo, tope) => {
         const e = error(rumbo, s.heading);
         const quiere = acota(e * 1.4, -tope, tope);
+        quiereAlabeo = quiere;
         return acota((quiere - o.actitud().alabeo) * 1.6 - s.rollRate * 0.3, -0.6, 0.6);
+      };
+      /*
+       * **Y en la final, la mano firme, que es un tiempo y no un número** (H99).
+       *
+       * Con 1,6 de alerón por radián que falta, la inclinación que falta se
+       * cierra a 1,6 veces lo que rueda cada avión por unidad de alerón. La
+       * avioneta, con las ayudas de Taguató, rueda 43° por segundo y con 1,6
+       * trae el ala en ocho décimas; el JAZ 90 rueda 12 y tarda tres segundos,
+       * los mismos que una racha de Gando en ladearlo otra vez. Volado allí con
+       * un motor parado y la traza de cada medio segundo: a 1,5 km del umbral
+       * el avión iba siete grados a un lado con el piloto pidiendo diez al
+       * otro, y pasó siete segundos seguidos con el ala de seis a diecinueve
+       * grados por detrás de la pedida. Se fue a 57 m del eje a un lado y a 25
+       * al otro, y tocó a 22. El lazo de fuera corregía bien, pero lo que
+       * pedía llegaba cuatro segundos tarde. Es lo mismo que en el banco del
+       * vuelo entero (#192, H34g).
+       *
+       * Y con un motor parado hay además quien lo empuja sin racha ninguna: el
+       * gas. Sube y baja cada cuarenta segundos —el motor tarda cinco en dar lo
+       * que se le pide—, cada vaivén es guiñada hacia un lado, el pie va
+       * detrás, y el derrape ladea el avión uno o dos grados que la mano floja
+       * dejaba ahí. En la mesa, sin rachas, ±14 m; con los dos motores, nada.
+       *
+       * Así que el ala se trae en el mismo tiempo en todos, seis décimas, con
+       * lo que rueda cada uno a la velocidad que va y con la amortiguación de
+       * su peldaño; y nunca con menos de 1,6, que es lo que había.
+       */
+      const RITMO_DE_LA_MANO = 1.72;
+      const laMano = (() => {
+        const este = aircraftById(avionId);
+        const clp = Math.abs(este.aero.clP);
+        const extra = TIERS.find((x) => x.id === peldano)?.assists.extraDamping ?? 0;
+        const amortiguado = clp / (clp + 0.5 * extra);
+        return (v) => Math.max(1.6, RITMO_DE_LA_MANO / (alabeoAFondo(este, v) * amortiguado));
+      })();
+      /*
+       * Y lo de fuera, al paso de la mano: el rumbo pide más inclinación y se
+       * mira seis segundos por delante, no ochocientos metros, que al JAZ 90 le
+       * son doce y a la avioneta veinticinco.
+       */
+      const GANANCIA_DEL_RUMBO = 2.5;
+      const SEGUNDOS_DE_MIRADA = 6;
+      const alabearEnLaFinal = (s, rumbo, tope) => {
+        const quiere = acota(error(rumbo, s.heading) * GANANCIA_DEL_RUMBO, -tope, tope);
+        quiereAlabeo = quiere;
+        return acota((quiere - o.actitud().alabeo) * laMano(s.airspeed) - s.rollRate * 0.3, -0.8, 0.8);
       };
       const pedal = (s, dt) => {
         dePedal = acota(dePedal + 2 * s.beta * dt, -1, 1);
@@ -622,6 +688,22 @@ try {
             calladaEn = ahora;
             const d = o.dichoTodo();
             dichoAlCallarse = { torre: d.torre.length, otro: d.otro.length };
+            rodabanAlCallarse = (o.traficoPorDentro?.() ?? [])
+              .filter((a) => a.camino === "salida" && a.recorrido > 0)
+              .map((a) => a.matricula);
+          }
+          if (callada && rodabanAlCallarse && ahora - muestraDeSalidas >= 1) {
+            muestraDeSalidas = ahora;
+            for (const a of o.traficoPorDentro?.() ?? []) {
+              if (a.camino !== "salida" || a.recorrido <= 0 || rodabanAlCallarse.includes(a.matricula)) continue;
+              if (salenTrasCallarse.some((x) => x.matricula === a.matricula)) continue;
+              salenTrasCallarse.push({
+                matricula: a.matricula,
+                s: Math.round(ahora - calladaEn),
+                recorrido: Math.round(a.recorrido),
+                raya: a.espera,
+              });
+            }
           }
           if (!callada && calladaEn !== null && devueltaEn === null) {
             devueltaEn = ahora;
@@ -1024,17 +1106,18 @@ try {
            * hace un piloto es llevar **la traza** al eje y mirar más cerca
            * cuanto más cerca está.
            */
-          const adelante = Math.max(800, Math.min(2500, u * 0.6));
+          const adelante = Math.max(
+            SEGUNDOS_DE_MIRADA * Math.hypot(s.velocity.x, s.velocity.z),
+            Math.min(2500, u * 0.6),
+          );
           const lead = aMundo(Math.min(p.a + adelante, pista.length), 0);
           const deriva =
             Math.hypot(s.velocity.x, s.velocity.z) > 5
               ? error(Math.atan2(s.velocity.x, -s.velocity.z), s.heading)
               : 0;
-          c.aileron = alabear(
-            s,
-            s.onGround ? h : rumboA(s, lead.x, lead.z) - deriva,
-            (18 * Math.PI) / 180,
-          );
+          c.aileron = s.onGround
+            ? alabear(s, h, (18 * Math.PI) / 180)
+            : alabearEnLaFinal(s, rumboA(s, lead.x, lead.z) - deriva, (18 * Math.PI) / 180);
           if (s.onGround) {
             if (tocoEn === null)
               tocoEn = {
@@ -1186,6 +1269,7 @@ try {
                 permiso: o.sendaYPermiso?.() ?? null,
                 enLaFinalDeLaTorre: o.enLaFinalDeLaTorre?.() ?? null,
                 noTeMira: o.noTeMira?.() ?? null,
+                tapadaPor: o.porTuSalida?.()?.tapadaPor ?? null,
               });
               if (luz === "roja" || sinVerdeEnLaFinal <= 2) {
                 tramo = "circuito";
@@ -1257,7 +1341,45 @@ try {
           bajo = Math.min(bajo, sobre);
         }
       };
-      o.pilotar(piloto);
+      /*
+       * **La final, cada medio segundo** (H99): lo que pide cada lazo y lo que
+       * hace el avión, con el aire que lo mueve. Con la traza de cada dos
+       * segundos de pared —ocho de vuelo— no se ve qué lazo se mece.
+       */
+      const fina = [];
+      let finaEn = -Infinity;
+      const pilotoConTraza = (c) => {
+        piloto(c);
+        if (tramo !== "final" && tramo !== "subida") return;
+        const ahora = o.reloj();
+        if (ahora - finaEn < 0.5) return;
+        finaEn = ahora;
+        const s = o.estado();
+        const j = o.juegoParaTrazas();
+        const p = enPista(s.position.x, s.position.z);
+        const g = (x) => (x * 180) / Math.PI;
+        const adelante = Math.max(
+          SEGUNDOS_DE_MIRADA * Math.hypot(s.velocity.x, s.velocity.z),
+          Math.min(2500, -p.a * 0.6),
+        );
+        const lead = aMundo(Math.min(p.a + adelante, pista.length), 0);
+        const aire = j.vientoAqui?.aire ?? { x: 0, z: 0 };
+        const racha = j.rachaAhora ?? { x: 0, z: 0 };
+        fina.push(
+          [
+            ahora, tramo === "final" ? 1 : 0, p.a, p.c, s.position.y - cota,
+            g(error(Math.atan2(s.velocity.x, -s.velocity.z), h)), g(error(s.heading, h)), g(error(rumboA(s, lead.x, lead.z), h)),
+            g(o.actitud().alabeo), g(quiereAlabeo), c.aileron, g(s.rollRate), g(s.yawRate), g(s.beta),
+            c.rudder, dePedal, c.throttle, j.flight.gasDelMotor?.() ?? -1,
+            s.airspeed, s.verticalSpeed, g(o.actitud().cabeceo), c.elevator,
+            racha.x * tx + racha.z * tz, racha.x * fx + racha.z * fz, j.subeElAireAhora ?? 0,
+            aire.x * tx + aire.z * tz, aire.x * fx + aire.z * fz,
+            g(j.rafagas?.ahora?.alabeo ?? 0), j.controles?.aileron ?? 0, s.onGround ? 1 : 0, c.flaps ?? -1,
+            g(s.alpha ?? 0), j.movimientoDelAire ?? -1,
+          ].map((x) => (typeof x === "number" ? Number(x.toFixed(4)) : x)).join(" "),
+        );
+      };
+      o.pilotar(pilotoConTraza);
       /** En la despresurización: bajando con el piloto del descenso, y después. */
       let bajandoDeEmergencia = false;
 
@@ -1299,7 +1421,7 @@ try {
             o.pedirTren(false);
             lenta = 0;
             tramo = "final";
-            o.pilotar(piloto);
+            o.pilotar(pilotoConTraza);
           }
         }
         if (o.percance()) break;
@@ -1329,6 +1451,12 @@ try {
       const todo = o.dichoTodo();
       return {
         traza,
+        fina,
+        paraLaMesa: {
+          masa: o.juegoParaTrazas().flight.masaAhora?.() ?? null,
+          vref, vfe, v2: vel.v2, cota, largo: pista.length, rumbo: h,
+          aire: o.juegoParaTrazas().flight.aireDelDia?.() ?? null,
+        },
         ejercicio: o.ejercicio(),
         velocidades: vel,
         tocoEn,
@@ -1344,6 +1472,8 @@ try {
         calladaEn,
         devueltaEn,
         dichoAlVolver,
+        rodabanAlCallarse,
+        salenTrasCallarse,
         alasEn,
         sinVerdeEnLaFinal,
         sinVerdePor,
@@ -1379,9 +1509,16 @@ try {
         descartadas: o.descartadas(),
       };
     },
-    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA, parar: PARAR, meteTren: METE_TREN, deja: DEJA, deNoche: DE_NOCHE },
+    { modo: MODO, tope: TOPE, sinTren: SIN_TREN, pistaOcupada: PISTA_OCUPADA, parar: PARAR, meteTren: METE_TREN, deja: DEJA, deNoche: DE_NOCHE, avionId: AVION, peldano: TRAMO },
   );
 
+  if (process.env.OGA_TRAZA_FINA)
+    writeFileSync(
+      process.env.OGA_TRAZA_FINA,
+      `# ${JSON.stringify(r.paraLaMesa)}\n` +
+        "t final a c alto traza rumbo pideRumbo alabeo quiere aleron p r beta pedal dePedal gas da ias vs cab elev rxL rxA ry vxL vxA rAlab aleronFin suelo flaps alfa mov\n" +
+        `${r.fina.join("\n")}\n`,
+    );
   const dice = (lista, trozo) => lista.some((k) => String(k).includes(trozo));
   // Lo pedido, suene o no: lo que dijo la instructora y lo que se calló sin grabar.
   const pedido = [...r.todoInstructor, ...r.todoCantado];
@@ -1704,24 +1841,42 @@ try {
         ? `${r.lamparaVista.clase} · ${r.lamparaVista.ancho} px · ${r.lamparaVista.letras ? "con letras" : "sin letras"}`
         : "no se encendió",
     );
+    /*
+     * **Sin `OGA_PISTA_OCUPADA`, una roja solo si alguien la explica**, y
+     * alguien que ya estaba (H100): uno en la pista, o el que tapa tu única
+     * salida, que ya rodaba hacia ella al callarse la radio y no se iba a
+     * tiempo —la roja de la H98—. Si quien la sostiene salió a rodar después,
+     * la torre lo soltó hacia tu calle sabiendo que no oías: eso es el fallo.
+     */
+    const despues = new Set((r.salenTrasCallarse ?? []).map((x) => x.matricula));
+    const rojas = (r.sinVerdePor ?? []).filter((f) => f.luz === "roja");
+    const sinExplicar = rojas.filter((f) => {
+      const quien = [...f.enLaPista, f.tapadaPor].filter(Boolean);
+      return !quien.length || quien.some((m) => despues.has(m));
+    });
     const enOrden = PISTA_OCUPADA
       ? luces[0] === "destellos" &&
         luces.includes("roja") &&
         luces[luces.length - 1] === "verde" &&
         luces.indexOf("roja") < luces.lastIndexOf("verde")
-      : luces[0] === "destellos" && !luces.includes("roja") && luces[luces.length - 1] === "verde";
+      : luces[0] === "destellos" && luces[luces.length - 1] === "verde" && sinExplicar.length === 0;
     comprobar(
       PISTA_OCUPADA
         ? "las luces en su orden: destellos, la roja con alguien en la pista, y la verde tras otra vuelta"
-        : "las luces en su orden: destellos verdes en el circuito y la verde fija en la final, sin roja",
+        : "las luces en su orden: destellos verdes en el circuito y la verde fija en la final; la roja, solo por quien ya estaba al callarse la radio",
       enOrden && (!PISTA_OCUPADA || (r.rojaConAlguienEnLaPista?.length ?? 0) > 0),
       `${luces.join(" → ") || "ninguna"}` +
         (PISTA_OCUPADA
           ? ` · despegue puesto ${r.ocupadaPuesta ? `a ${r.ocupadaPuesta.u} m del umbral, ${r.ocupadaPuesta.sobre} m, con ${r.ocupadaPuesta.luz ?? "la lámpara apagada"}` : "no"} · ` +
             `en la pista con la roja: ${r.rojaConAlguienEnLaPista?.join(", ") || "nadie"}`
-          : "") +
+          : ` · rojas ${rojas.length}, sin explicar ${sinExplicar.length}`) +
         ` · ${(ej?.radio?.luces ?? []).map((l) => `${l.luz ?? "apagada"}@${Math.round(l.alto)}m`).join(" ")}`,
     );
+    if (r.rodabanAlCallarse)
+      console.log(
+        `    al callarse la radio rodaban: ${r.rodabanAlCallarse.join(", ") || "nadie"} · ` +
+          `salieron a rodar después: ${(r.salenTrasCallarse ?? []).map((x) => `${x.matricula} a los ${x.s} s (raya ${x.raya ?? "—"})`).join(", ") || "nadie"}`,
+      );
     /*
      * De noche, los faros: apagados, encendidos, apagados, encendidos,
      * apagados, y de vuelta a como iban. Dos destellos, y sin alabear.
@@ -1753,6 +1908,19 @@ try {
         : `no llegó · lo más bajo ${Math.round(r.bajo)} m · finales sin la verde ${r.sinVerdeEnLaFinal}`,
     );
     for (const f of r.sinVerdePor ?? []) console.log(`    final sin la verde: ${JSON.stringify(f)}`);
+    /*
+     * **Y a la decisión se llega con una señal**: con la pista libre y nadie
+     * delante con permiso, la verde. En Pettirossi se llegó con los destellos
+     * —la torre había pedido una vuelta que sin radio no se oye— (H98).
+     */
+    const sinSenal = (r.sinVerdePor ?? []).filter(
+      (f) => f.luz !== "roja" && !f.enLaPista.length && !f.trafico.some((x) => x.includes("con permiso")),
+    );
+    comprobar(
+      "y a ninguna decisión se llega sin señal con la pista libre",
+      sinSenal.length === 0,
+      sinSenal.length ? `${sinSenal.length}: ${sinSenal.map((f) => f.luz).join(" · ")}` : "ninguna",
+    );
     comprobar(
       "sin llamada ni bomberos: sin radio no hay llamada, y nada se ha roto",
       !ej?.declarada && !ej?.bomberos,

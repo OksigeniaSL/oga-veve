@@ -112,6 +112,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { EN_MARCHA, gasQueSostiene, loDelMotor, ponerEnMarcha, vigilarElMotor } from "./motor-del-banco.mjs";
 import { baseDe } from "./servidor.mjs";
 
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5281);
@@ -172,10 +173,13 @@ const navegador = await chromium.launch({
 });
 
 const filas = [];
+/** Cómo fue el motor en cada escenario, volando. Ver `motor-del-banco.mjs`. */
+const motores = [];
 /** Qué tarjeta contestó, para saber qué se ha medido. */
 let tarjeta = "";
 
 for (const escenario of ESCENARIOS) {
+  let vigilado = false;
   const page = await navegador.newPage({
     viewport: { width: 1280, height: 720 },
   });
@@ -320,6 +324,19 @@ for (const escenario of ESCENARIOS) {
     ...(MISION === "teno" ? ["teno"] : []),
   ]) {
     const deLaTormenta = ["lejos", "cerca", "sinNube", "dentro"].includes(sitio);
+    /*
+     * **En el aire, con el motor en marcha** (H99): se medía un avión que
+     * planeaba —y «en crucero», uno con el automático guardando la altura sin
+     * motor hasta perder la velocidad—. Los relojes, el sonido y las hélices que
+     * no giran también son coste. «lejos», que es el ejercicio de la tormenta
+     * recién empezado, se queda como lo deja el juego; y como reiniciar apaga,
+     * se pone en cada sitio. El helicóptero del faro no pasa por aquí.
+     */
+    if (sitio !== "puesto" && sitio !== "lejos" && MISION !== "teno") {
+      await ponerEnMarcha(page);
+      if (!vigilado) await vigilarElMotor(page);
+      vigilado = true;
+    }
     if (deLaTormenta) {
       if (!(await dondeLaTormenta(sitio))) {
         console.log(`  ✗ ${escenario}: sin tormenta que medir`);
@@ -384,6 +401,7 @@ for (const escenario of ESCENARIOS) {
         o.ponerVentanillaAlt?.((o.suelo(r.x, r.z) + 3000) / 0.3048);
         o.pilotoAutomatico?.(true);
       });
+      if (vigilado) await gasQueSostiene(page);
       // Lo que haya que bajar para ese sitio, que en crucero es lo que más.
       await page.waitForTimeout(8000);
     }
@@ -553,6 +571,7 @@ for (const escenario of ESCENARIOS) {
         if (o.tarjetaDelAvion().abierta) o.alternarTarjeta();
       });
   }
+  if (vigilado) motores.push({ escenario, ...(await loDelMotor(page, { prueba: true })) });
   await page.close();
 }
 
@@ -588,6 +607,10 @@ for (const f of filas) {
 }
 // Y las filas en crudo, para hacer tablas sin copiar a mano.
 if (process.env.OGA_JSON) (await import("node:fs")).writeFileSync(process.env.OGA_JSON, JSON.stringify(filas, null, 1));
+for (const m of motores) {
+  if (!m.ok) fallos++;
+  console.log(`  ${m.ok ? "✓" : "✗"} ${m.escenario.padEnd(15)} ${EN_MARCHA}  —  ${m.detalle}`);
+}
 console.log(
   `\n  Se exige a ×4 (tablet de gama media): mediana ≤ ${CUADRO_MAXIMO} ms.` +
     `  ${fallos ? `${fallos} por encima` : "todo dentro"}\n`,

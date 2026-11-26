@@ -3078,6 +3078,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * velocidad: ver `gas` en la recogida de `verificar-vuelo-entero.mjs`.
      */
     gasPara: (velocidad: number) => juego.flight.gasPara(velocidad),
+    /**
+     * Lo más rápido que vuela el modelo de ahora, m/s: lo mismo que recibe el
+     * juez de la toma para decidir si fue rápida —ver `CASI_A_TOPE` en
+     * `flight/aterrizaje.ts`—. En Guyrami pone el listón por debajo de la
+     * Vref y cuarto, y el banco de vuelo entero lo imprimía sin él (H101).
+     */
+    velocidadMaxima: () => juego.flight.velocidadMaxima(),
     /** Los pares puesto + espera que se consideraron, con sus metros. */
     pares: () => juego.plan?.paresVistos ?? [],
     /**

@@ -59,6 +59,20 @@
  * no viene bien: si se va, se felicita; si no, se ve lo que pasa. Ver
  * `proponenIrseAlAire` en `game.ts`.
  *
+ * ## Sin radio, a ti no se te pide nada
+ *
+ * La vuelta se pide con la voz, y quien no la oye no la da: la torre se la
+ * pedía igual, le quitaba el permiso y le dejaba llegar a la decisión sin verde
+ * ni roja (H98). Con la lámpara no hay «dé una vuelta»: hay verde, roja y
+ * destellos (SERA, apéndice 1, tabla AP 1-1). Lo que hace una torre es apartar a
+ * los que sí la oyen —«aircraft which are in contact with the controller may be
+ * instructed by the controller to give way […]. In no case shall permission to
+ * land be withheld indefinitely», OACI, Doc 4444, 7.7.3.1, de quien entra en el
+ * circuito sin hablar con ella—, y con quien está en la final delante de quien
+ * va a salir (7.8). Así que se retiene al que sale, y si su doble raya está en
+ * tu única salida, la roja fija: «ceda el paso a las otras aeronaves y siga en
+ * el circuito».
+ *
  * ## Y la red
  *
  * Es un candado entre la frecuencia, el dibujo y tu vuelo, y lleva la suya:
@@ -97,6 +111,22 @@ export const TOPE_DE_LA_VUELTA = 3 * LO_QUE_DURA_LA_VUELTA;
 export const VUELTA_DESDE_EN_FINAL = 90;
 
 /**
+ * **Lo que se acerca a la pista quien no da la vuelta**, s al umbral: lo que
+ * dura una vuelta entre pi, y quince de margen. Dando la vuelta uno no se
+ * acerca a la pista más que el diámetro de su círculo, dos veces el radio, y
+ * a tres grados por segundo eso son treinta y ocho segundos de vuelo, vaya a
+ * lo que vaya. Quien sigue su circuito sí se acerca, y mucho.
+ *
+ * Con lo girado solo no bastaba: se cuenta todo cambio de rumbo, y los
+ * virajes a la base y a la final son media vuelta. Quien no la daba llegaba a
+ * la final corta con más de un cuarto girado, y la vuelta seguía pedida hasta
+ * su tope: entretanto ni permiso ni orden de irse, y se tocaba sin permiso
+ * (en el banco del vuelo entero, en Pettirossi; y en El Hierro, en la mesa de
+ * `salida-tapada.test.ts` volada con los virajes del circuito, 2 de 2).
+ */
+export const SE_ACERCA_SIN_DARLA = LO_QUE_DURA_LA_VUELTA / Math.PI + 15;
+
+/**
  * **Lo menos que hay que ir sobre la pista para dar una vuelta**, m:
  * ciento cincuenta, quinientos pies. Por debajo no se vira en redondo cerca
  * del suelo: se va al aire.
@@ -122,6 +152,23 @@ export const VUELTAS_COMO_MUCHO = 2;
  * nunca.
  */
 export const RED_DE_LA_SALIDA = 420;
+
+/**
+ * **Si la vuelta pedida no se está dando**: ya en la final corta y, o sin
+ * haber girado ni un cuarto de vuelta, o bastante más cerca de la pista que
+ * cuando se pidió —ver `SE_ACERCA_SIN_DARLA`—. `alPedirla` son los segundos
+ * al umbral cuando se pidió. Quien no la da ya no la va a dar: se deja de
+ * esperar y se mira otra vez, y desde ahí lo que queda es el permiso o irse
+ * al aire.
+ */
+export function noLaEstaDando(
+  llegada: TuLlegadaALaPista | null,
+  girado: number,
+  alPedirla: number,
+): boolean {
+  if (llegada?.donde !== "final" || llegada.segundos >= VUELTA_DESDE_EN_FINAL) return false;
+  return girado < VUELTA_HECHA / 4 || llegada.segundos < alPedirla - SE_ACERCA_SIN_DARLA;
+}
 
 /** Lo que ve la torre de tu llegada. */
 export interface TuLlegadaALaPista {
@@ -209,10 +256,13 @@ export function remedioParaTuSalida(
   tapa: LoQueTardaEnIrse,
   quien: "torre" | "afis",
   vueltas: number,
+  /** Si se te puede pedir: con la radio callada, no. Ver la cabecera. */
+  teOyen = true,
 ): RemedioDeTuSalida | null {
   if (seVaAntes(llegada, tapa)) return null;
   if (quien === "afis") return "aviso";
   const cabeLaVuelta =
+    teOyen &&
     vueltas < VUELTAS_COMO_MUCHO &&
     llegada.alto >= ALTO_PARA_LA_VUELTA &&
     (llegada.donde === "circuito" || llegada.segundos >= VUELTA_DESDE_EN_FINAL);

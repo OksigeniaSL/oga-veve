@@ -29,6 +29,9 @@ import {
   ALTO_PARA_IRSE,
   ALTO_PARA_LA_VUELTA,
   giradoEntre,
+  noLaEstaDando,
+  SE_ACERCA_SIN_DARLA,
+  VUELTA_HECHA,
   leDaTiempo,
   remedioParaTuSalida,
   seVaAntes,
@@ -142,6 +145,23 @@ describe("la regla, con números", () => {
     expect(remedioParaTuSalida(final(30), tapa, "afis", 0)).toBe("aviso");
   });
 
+  it("la vuelta no se está dando en la final corta, sin un cuarto girado o mucho más cerca que al pedirla", () => {
+    const corta = final(VUELTA_DESDE_EN_FINAL - 10);
+    // Sin girar, no la da.
+    expect(noLaEstaDando(corta, 0, VUELTA_DESDE_EN_FINAL + 20)).toBe(true);
+    // Con la base y la final viradas, media vuelta, pero pedida en el viento en
+    // cola a cuatro minutos: se ha acercado, no la da.
+    expect(noLaEstaDando(corta, Math.PI, 240)).toBe(true);
+    // Dándola en la final se gira y no se acerca más que el círculo.
+    expect(noLaEstaDando(corta, Math.PI, VUELTA_DESDE_EN_FINAL - 10 + SE_ACERCA_SIN_DARLA - 1)).toBe(false);
+    // Lejos todavía, o por el circuito, no se mira.
+    expect(noLaEstaDando(final(VUELTA_DESDE_EN_FINAL + 10), 0, 240)).toBe(false);
+    expect(noLaEstaDando(circuito(60), 0, 240)).toBe(false);
+    expect(noLaEstaDando(null, 0, 240)).toBe(false);
+    // Y dada ya no hace falta mirarlo: `VUELTA_HECHA` va antes.
+    expect(VUELTA_HECHA).toBeGreaterThan(Math.PI);
+  });
+
   it("lo girado se cuenta por el camino corto, sin signo", () => {
     expect(giradoEntre(0.1, 0.3)).toBeCloseTo(0.2);
     expect(giradoEntre(0.3, 0.1)).toBeCloseTo(0.2);
@@ -170,6 +190,9 @@ const BAJANDO_POR_LA_RUTA = 240;
  * el que la torre le sigue viendo.
  */
 const VUELVE_A = EN_EL_CIRCUITO;
+
+/** Lo que dura la base volando el circuito, s: ver `viraElCircuito`. */
+const EN_LA_BASE = 40;
 
 function dados(semilla: number): () => number {
   let x = semilla >>> 0;
@@ -232,6 +255,8 @@ interface Medida {
   /** Las veces que te fuiste al aire, por lo que fuera, y cuándo tocaste. */
   frustradas: number;
   toco: number | null;
+  /** Si tocaste sin permiso para aterrizar: ni dado ni retirado y vuelto a dar. */
+  tocoSinPermiso: boolean;
   /** Lo que se oyó, para leerlo si falla. */
   oido: string[];
 }
@@ -276,6 +301,13 @@ function llegarConDosQueSalen(
    * entrar delante. Ver `QuienJuega.porElCircuito`.
    */
   filaDesdeElCircuito = true,
+  /**
+   * **Y si vienes virando como en el circuito**: del viento en cola a la base
+   * y de la base a la final, media vuelta. Con el rumbo fijo no se veía que lo
+   * girado sumaba esos virajes y la vuelta que no dabas seguía pedida hasta
+   * tocar, sin permiso. Ver `noLaEstaDando`.
+   */
+  viraElCircuito = false,
 ): Medida {
   const aero = esc.aerodrome as Aerodrome;
   const pista = esc.runway;
@@ -459,12 +491,16 @@ function llegarConDosQueSalen(
     permisoTardio: false,
     frustradas: 0,
     toco: null,
+    tocoSinPermiso: false,
     oido: [],
   };
   let t = 0;
+  /** Si tienes el permiso para aterrizar ahora. */
+  let autorizado = false;
   const apunta = (que: string) =>
     medida.oido.push(`${t.toFixed(0)} [${enTierra ? "suelo" : alAireHasta !== null ? "al aire" : dandoVuelta ? "vuelta" : restante.toFixed(0)}] ${que}`);
   const irseAlAire = (sigue: () => boolean) => {
+    autorizado = false;
     medida.frustradas++;
     alAireHasta = t;
     sigueLaOrden = sigue;
@@ -502,7 +538,11 @@ function llegarConDosQueSalen(
         );
       return null;
     },
+    retirarteElPermiso: () => {
+      autorizado = false;
+    },
     autorizarte: () => {
+      autorizado = true;
       if (alto < ALTURA_DE_DECISION && !trafico.ocupanLaPista().length) medida.permisoTardio = true;
     },
     mandarteAlAire: (_a, sigue) => {
@@ -618,7 +658,14 @@ function llegarConDosQueSalen(
         rumbo += ((3 * Math.PI) / 180) * PASO;
       } else {
         restante -= PASO;
-        rumbo = h;
+        // El viento en cola va al revés de la pista y la base, de través.
+        rumbo = !viraElCircuito
+          ? h
+          : restante > FINAL_DE_LA_TORRE + EN_LA_BASE
+            ? h + Math.PI
+            : restante > FINAL_DE_LA_TORRE
+              ? h + Math.PI / 2
+              : h;
       }
       const d = vAprox * Math.max(0, restante);
       const p = eje(umbral - d);
@@ -631,7 +678,8 @@ function llegarConDosQueSalen(
         v = vAprox;
         rumbo = h;
         medida.toco = t;
-        apunta("tocas");
+        medida.tocoSinPermiso = !autorizado;
+        apunta(autorizado ? "tocas" : "tocas sin permiso");
       }
     } else if (frenando) {
       const q = eje(umbral + Math.min(300, pista.length * 0.15) + al);
@@ -795,33 +843,40 @@ describe("con torre: te retrasa o te manda al aire, y el que sale sale", () => {
 });
 
 describe("y si no das la vuelta", () => {
-  it("El Hierro: te vas al aire —por tu salida o con la pista ocupada— o te llega el permiso tarde, y nunca dos en la pista", () => {
+  it("El Hierro: te vas al aire —por tu salida o con la pista ocupada— o te llega el permiso tarde, y nunca dos en la pista ni se toca sin permiso, tampoco virando el circuito", () => {
     const mal: string[] = [];
     let frustradas = 0;
     let tardios = 0;
     let vueltas = 0;
-    for (const esc of cabeceras(SCENARIOS.find((e) => e.id === "el-hierro")!))
-      for (const salen of SALEN_EN_EL_HIERRO)
-        for (const semilla of [1, 2, 3]) {
-          const m = llegarConDosQueSalen(esc, AIRCRAFT[0]!, salen, semilla, true, false, undefined, false, null, null, false);
-          const donde = `El Hierro ${Math.round(esc.runway.heading)}°, salen ${salen.join("/")} s antes, semilla ${semilla}`;
-          for (const f of loQueFalla(m)) mal.push(`${donde}: ${f}`);
-          frustradas += m.frustradas;
-          tardios += m.permisoTardio ? 1 : 0;
-          vueltas += m.vueltas;
-          /*
-           * Quien no da la vuelta y sigue, o se va al aire o aterriza con el
-           * de su salida retenido en su doble raya —quien está en final va
-           * primero, Doc 4444, 7.8— y deja la pista por otra salida, sin
-           * pasar a su lado: eso ya lo mira `loQueFalla`. O sigue con él
-           * corriendo, él se va antes de que llegue al umbral y el permiso le
-           * llega por debajo (H96).
-           */
-          if (m.vueltas && !m.frustradas && !m.retenidos && !m.permisoTardio)
-            mal.push(`${donde}: sin vuelta, sin irse al aire, sin retener a nadie y sin permiso tardío`);
-          if (m.alAireSinPistaOcupada) mal.push(`${donde}: al aire por tu salida sin que la tapara`);
-          if (m.contradicciones.length) mal.push(`${donde}: ${m.contradicciones.join("; ")}`);
-        }
+    for (const vira of [false, true])
+      for (const esc of cabeceras(SCENARIOS.find((e) => e.id === "el-hierro")!))
+        for (const salen of SALEN_EN_EL_HIERRO)
+          for (const semilla of [1, 2, 3]) {
+            const m = llegarConDosQueSalen(esc, AIRCRAFT[0]!, salen, semilla, true, false, undefined, false, null, null, false, vira);
+            const donde = `El Hierro ${Math.round(esc.runway.heading)}°${vira ? " virando el circuito" : ""}, salen ${salen.join("/")} s antes, semilla ${semilla}`;
+            for (const f of loQueFalla(m)) mal.push(`${donde}: ${f}`);
+            /*
+             * **Y nunca se toca sin permiso**: virando a la base y a la final, lo
+             * girado pasaba del cuarto de vuelta y la vuelta que no se daba
+             * seguía pedida hasta tocar, sin permiso ni orden de irse (2 de 2).
+             */
+            if (m.tocoSinPermiso) mal.push(`${donde}: tocaste sin permiso\n${m.oido.join("\n")}`);
+            frustradas += m.frustradas;
+            tardios += m.permisoTardio ? 1 : 0;
+            vueltas += m.vueltas;
+            /*
+             * Quien no da la vuelta y sigue, o se va al aire o aterriza con el
+             * de su salida retenido en su doble raya —quien está en final va
+             * primero, Doc 4444, 7.8— y deja la pista por otra salida, sin
+             * pasar a su lado: eso ya lo mira `loQueFalla`. O sigue con él
+             * corriendo, él se va antes de que llegue al umbral y el permiso le
+             * llega por debajo (H96).
+             */
+            if (m.vueltas && !m.frustradas && !m.retenidos && !m.permisoTardio)
+              mal.push(`${donde}: sin vuelta, sin irse al aire, sin retener a nadie y sin permiso tardío`);
+            if (m.alAireSinPistaOcupada) mal.push(`${donde}: al aire por tu salida sin que la tapara`);
+            if (m.contradicciones.length) mal.push(`${donde}: ${m.contradicciones.join("; ")}`);
+          }
     expect(mal).toEqual([]);
     // Se pidió la vuelta, no se dio, y la torre te mandó al aire o te dio el permiso tarde.
     expect(vueltas).toBeGreaterThan(0);
