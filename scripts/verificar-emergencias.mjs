@@ -50,7 +50,9 @@
  *   la tiene a sesenta metros, se va y da otra vuelta, que es lo que se hace
  *   sin ella. Mira que ni la torre ni la frecuencia digan nada mientras dura
  *   el fallo, que la lámpara se vea grande y sin letras, y las luces en su
- *   orden. Con `OGA_PISTA_OCUPADA=1` sale uno a despegar cuando se va en la
+ *   orden: una roja solo vale si la explica quien ya estaba en la pista o ya
+ *   rodaba hacia tu salida al callarse la radio (H100). Con
+ *   `OGA_PISTA_OCUPADA=1` sale uno a despegar cuando se va en la
  *   final a punto de llegar a la decisión, entre 75 y 62 m: la torre tiene
  *   que poner la roja fija, y tras la otra vuelta, la verde. Vuela por el lado
  *   del circuito del campo. Con `OGA_HORA=22`, de noche: no se alabea, y los
@@ -433,6 +435,15 @@ try {
       let devueltaEn = null;
       let dichoAlCallarse = null;
       let dichoAlVolver = null;
+      /*
+       * **Y quién rodaba ya hacia su salida al callarse la radio**, y quién
+       * salió a rodar después (H100): sin radio, a la única calle de quien
+       * juega no se deja rodar a nadie; al que ya estaba se le da la pista si
+       * se va a tiempo, y si no, la roja es lo que toca (H98).
+       */
+      let rodabanAlCallarse = null;
+      const salenTrasCallarse = [];
+      let muestraDeSalidas = -1;
       let alasDesde = null;
       /** El lado al que alabea el banco ahora mismo, al contestar a los destellos. */
       let ladoDeLasAlas = 1;
@@ -677,6 +688,22 @@ try {
             calladaEn = ahora;
             const d = o.dichoTodo();
             dichoAlCallarse = { torre: d.torre.length, otro: d.otro.length };
+            rodabanAlCallarse = (o.traficoPorDentro?.() ?? [])
+              .filter((a) => a.camino === "salida" && a.recorrido > 0)
+              .map((a) => a.matricula);
+          }
+          if (callada && rodabanAlCallarse && ahora - muestraDeSalidas >= 1) {
+            muestraDeSalidas = ahora;
+            for (const a of o.traficoPorDentro?.() ?? []) {
+              if (a.camino !== "salida" || a.recorrido <= 0 || rodabanAlCallarse.includes(a.matricula)) continue;
+              if (salenTrasCallarse.some((x) => x.matricula === a.matricula)) continue;
+              salenTrasCallarse.push({
+                matricula: a.matricula,
+                s: Math.round(ahora - calladaEn),
+                recorrido: Math.round(a.recorrido),
+                raya: a.espera,
+              });
+            }
           }
           if (!callada && calladaEn !== null && devueltaEn === null) {
             devueltaEn = ahora;
@@ -1242,6 +1269,7 @@ try {
                 permiso: o.sendaYPermiso?.() ?? null,
                 enLaFinalDeLaTorre: o.enLaFinalDeLaTorre?.() ?? null,
                 noTeMira: o.noTeMira?.() ?? null,
+                tapadaPor: o.porTuSalida?.()?.tapadaPor ?? null,
               });
               if (luz === "roja" || sinVerdeEnLaFinal <= 2) {
                 tramo = "circuito";
@@ -1444,6 +1472,8 @@ try {
         calladaEn,
         devueltaEn,
         dichoAlVolver,
+        rodabanAlCallarse,
+        salenTrasCallarse,
         alasEn,
         sinVerdeEnLaFinal,
         sinVerdePor,
@@ -1811,24 +1841,42 @@ try {
         ? `${r.lamparaVista.clase} · ${r.lamparaVista.ancho} px · ${r.lamparaVista.letras ? "con letras" : "sin letras"}`
         : "no se encendió",
     );
+    /*
+     * **Sin `OGA_PISTA_OCUPADA`, una roja solo si alguien la explica**, y
+     * alguien que ya estaba (H100): uno en la pista, o el que tapa tu única
+     * salida, que ya rodaba hacia ella al callarse la radio y no se iba a
+     * tiempo —la roja de la H98—. Si quien la sostiene salió a rodar después,
+     * la torre lo soltó hacia tu calle sabiendo que no oías: eso es el fallo.
+     */
+    const despues = new Set((r.salenTrasCallarse ?? []).map((x) => x.matricula));
+    const rojas = (r.sinVerdePor ?? []).filter((f) => f.luz === "roja");
+    const sinExplicar = rojas.filter((f) => {
+      const quien = [...f.enLaPista, f.tapadaPor].filter(Boolean);
+      return !quien.length || quien.some((m) => despues.has(m));
+    });
     const enOrden = PISTA_OCUPADA
       ? luces[0] === "destellos" &&
         luces.includes("roja") &&
         luces[luces.length - 1] === "verde" &&
         luces.indexOf("roja") < luces.lastIndexOf("verde")
-      : luces[0] === "destellos" && !luces.includes("roja") && luces[luces.length - 1] === "verde";
+      : luces[0] === "destellos" && luces[luces.length - 1] === "verde" && sinExplicar.length === 0;
     comprobar(
       PISTA_OCUPADA
         ? "las luces en su orden: destellos, la roja con alguien en la pista, y la verde tras otra vuelta"
-        : "las luces en su orden: destellos verdes en el circuito y la verde fija en la final, sin roja",
+        : "las luces en su orden: destellos verdes en el circuito y la verde fija en la final; la roja, solo por quien ya estaba al callarse la radio",
       enOrden && (!PISTA_OCUPADA || (r.rojaConAlguienEnLaPista?.length ?? 0) > 0),
       `${luces.join(" → ") || "ninguna"}` +
         (PISTA_OCUPADA
           ? ` · despegue puesto ${r.ocupadaPuesta ? `a ${r.ocupadaPuesta.u} m del umbral, ${r.ocupadaPuesta.sobre} m, con ${r.ocupadaPuesta.luz ?? "la lámpara apagada"}` : "no"} · ` +
             `en la pista con la roja: ${r.rojaConAlguienEnLaPista?.join(", ") || "nadie"}`
-          : "") +
+          : ` · rojas ${rojas.length}, sin explicar ${sinExplicar.length}`) +
         ` · ${(ej?.radio?.luces ?? []).map((l) => `${l.luz ?? "apagada"}@${Math.round(l.alto)}m`).join(" ")}`,
     );
+    if (r.rodabanAlCallarse)
+      console.log(
+        `    al callarse la radio rodaban: ${r.rodabanAlCallarse.join(", ") || "nadie"} · ` +
+          `salieron a rodar después: ${(r.salenTrasCallarse ?? []).map((x) => `${x.matricula} a los ${x.s} s (raya ${x.raya ?? "—"})`).join(", ") || "nadie"}`,
+      );
     /*
      * De noche, los faros: apagados, encendidos, apagados, encendidos,
      * apagados, y de vuelta a como iban. Dos destellos, y sin alabear.

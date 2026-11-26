@@ -567,6 +567,14 @@ export class TurnoDePista {
   }
 
   /**
+   * Quién tapa ahora tu salida, si alguien: con él se explica la roja que
+   * da la lámpara sin radio. Para el banco.
+   */
+  get tapadaPor(): string | null {
+    return this.tapada?.por ?? null;
+  }
+
+  /**
    * **A quién no deja moverse la torre todavía**, por la salida de la pista
    * de otro: el que va a salir, mientras uno que aterriza tiene que pasar por
    * su doble raya —tú o uno del tráfico—; y el que va a llegar, mientras uno

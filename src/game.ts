@@ -13815,8 +13815,8 @@ export class Game {
 
   /**
    * **Lo que se te ha pedido en este campo por el que tapa tu salida**:
-   * vueltas, idas al aire, avisos de un AFIS y propuestas de irse, y si
-   * ahora mismo estás dando una vuelta. Para el banco. Ver
+   * vueltas, idas al aire, avisos de un AFIS y propuestas de irse, si
+   * ahora mismo estás dando una vuelta y quién te tapa. Para el banco. Ver
    * `flight/salida-tapada.ts`.
    */
   get porTuSalidaParaBanco(): {
@@ -13826,8 +13826,13 @@ export class Game {
     propuestas: number;
     retenidos: number;
     dandoLaVuelta: boolean;
+    tapadaPor: string | null;
   } {
-    return { ...this.turno.porTuSalida, dandoLaVuelta: this.turno.dandoLaVuelta };
+    return {
+      ...this.turno.porTuSalida,
+      dandoLaVuelta: this.turno.dandoLaVuelta,
+      tapadaPor: this.turno.tapadaPor,
+    };
   }
 
   /**
