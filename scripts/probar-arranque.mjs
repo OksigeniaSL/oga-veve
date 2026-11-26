@@ -5,7 +5,9 @@
  * hubiera, sin mirar si había arrancado, y sin decir nada si no. Donde hay
  * tractor, la baliza, la llave para pedir el empuje y, empujando, la llave; y
  * el gas, cuando el tractor se ha ido. Sale en rojo si no arranca o si con el
- * gas a fondo no se mueve. En tierra no hay motor que vigilar volando.
+ * gas a fondo no se mueve. En tierra no hay motor que vigilar volando. La
+ * lección que sale de la pista empieza con él en marcha, y eso es lo que se
+ * mira allí.
  *
  * Uso: `node scripts/probar-arranque.mjs [despegue,vuelta] [escenario] [avion]`
  */
@@ -41,12 +43,27 @@ try {
     await page.waitForTimeout(3500);
 
     const antes = await comoEstaElMotor(page);
-    const pasos = await arrancarConLaLlave(page);
-    comprobar(
-      `${leccion}: el motor arranca con la llave`,
-      !antes.motor && pasos !== null,
-      `al empezar ${antes.motor ? "ya en marcha" : "parado"}, en «${antes.fase}» · ${pasos ?? "no arrancó"}`,
-    );
+    /*
+     * **En la pista se empieza con el motor en marcha**, que es como está un
+     * avión en la cabecera: nadie arranca allí. La lección «vuelta» sale de la
+     * pista, y el juego la pone en «despegando» con el motor encendido a
+     * propósito (`engineOn = !rodando` al reiniciar, en `game.ts`). Pedirle la
+     * llave ahí era pedirle al juego lo que no hace nadie, y salía en rojo.
+     */
+    if (/^(alineando|despegando)$/.test(antes.fase)) {
+      comprobar(
+        `${leccion}: en la pista se empieza con el motor en marcha`,
+        antes.motor,
+        `al empezar ${antes.motor ? "en marcha" : "parado"}, en «${antes.fase}»`,
+      );
+    } else {
+      const pasos = await arrancarConLaLlave(page);
+      comprobar(
+        `${leccion}: el motor arranca con la llave`,
+        !antes.motor && pasos !== null,
+        `al empezar ${antes.motor ? "ya en marcha" : "parado"}, en «${antes.fase}» · ${pasos ?? "no arrancó"}`,
+      );
+    }
     // El tractor lo deja en la calle y se va: hasta entonces el gas es suyo.
     for (let i = 0; i < 240 && (await comoEstaElMotor(page)).tractor; i++) await page.waitForTimeout(500);
 
