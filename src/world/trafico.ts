@@ -4572,6 +4572,19 @@ export function crearTrafico(
   const tuTurnoDeSalir = (sin: Volando | null): EnLaFila[] => {
     const sale = tuQueEsperas();
     if (!sale) return [];
+    /*
+     * **Y si eres tú el siguiente**: con otro listo en su doble raya desde
+     * antes que tú, la vuelta no es por ti (H107c). Se daba igual, y al de
+     * delante no le valía —para él el que la da sigue en la fila, a uno o dos
+     * minutos del umbral—: en Gando, EC-SHC daba vuelta tras vuelta por tu
+     * turno, EC-LIO no se alineaba, y a los tres minutos la paciencia de la
+     * fila te daba la verde antes que a él. Sin la vuelta, el que llega
+     * aterriza, el de delante sale detrás de él y tú detrás del de delante,
+     * en el orden en que estabais listos (Doc 4444, 7.9).
+     */
+    if (tuEsperasDesde !== null)
+      for (const q of aviones.values())
+        if (q !== sin && q.listoDesde !== null && q.listoDesde <= tuEsperasDesde) return [];
     for (const b of aviones.values()) {
       const c = b.caminos;
       if (b === sin || !c || b.tresSesenta || metrosAlUmbral(b) === null) continue;
