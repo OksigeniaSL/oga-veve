@@ -4587,3 +4587,235 @@ Encarnación sin radio, JAZ 20, las dos cabeceras, por la línea y alargando:
 - **La Palma sin radio**, la vuelta de EC-UKM a 298 m de tu base alargando (H104b).
 - Y lo de H104b que sigue igual: dos en su vuelta en la misma esquina, el que va por delante de ti y
   espera por ti, alargar el viento en cola para el tráfico.
+
+## Enmienda H107 (27-11-2026): Los Rodeos con la aviación general, la toma con la pista ocupada y las frustradas que subían
+
+### El caso
+
+H105 llevó las avionetas de Los Rodeos a la GA 1, en la punta oeste, y la mesa de los 600 vuelos con radio de H104 (JAZ 20,
+50, 60, 90 y 120, por la 12 y por la 30, semillas 1 a 60) dio dos cosas que trae H105 sola, sin nada de lo de H104: **un
+aterrizaje con la pista ocupada** —JAZ 20, viento de 300, semilla 6, con EC-GVY en ella— y **las frustradas del tráfico de 40 a
+61**. Las dos se miran con la traza, no razonando.
+
+### La toma con la pista ocupada
+
+La mesa con el código de main (5ecd16cb) sale igual vuelo a vuelo que la de H104c (600 de 600); semilla 6, por la 30:
+
+- **EC-CYD**, avioneta, toca a los 178 s, deja la pista por la salida de 1.180 m y rueda dos kilómetros por la paralela hacia la
+  GA 1, al AG2. A los 500 s sigue rodando por ella, a 2.580 m del umbral.
+- **EC-GVY**, avioneta, vuelve de dar otra vuelta: final a los 455, «cleared to land» de la torre a los 460 —con su ocupación
+  de pista contada, 88 s, cabía delante de ti— y toca a los 499,5. Va al AG1, al lado del AG2.
+- **A los 500,5, recién tocada, se le cambia la salida.** Su ruta al AG1 y la de EC-CYD al AG2 van de frente en los últimos
+  veinte metros, junto a los puestos (a 13,5 m y en sentido contrario); y como la paralela entera es el mismo trozo de calle
+  cerca de la ruta del otro, EC-CYD ya estaba dentro. En `repartirLosTramos`, el que corre por la pista pasaba siempre primero,
+  y con el otro dentro se le buscaba otra salida que no pasara por donde estaba (`rehacerLaLlegada`): la única era la del final
+  de la pista. **Boca de 10.169 a 11.566 m de su camino, 1.397 m más de pista, y ocupación de 88 a 158 s.** EC-CYD, mientras,
+  se para en la paralela a los 530 y espera a EC-GVY, que está dos kilómetros y medio por detrás.
+- **Quien juega**, JAZ 20, despegó a los 311,5 y vuelve: final a los 579. La torre le dice que la pista está ocupada a 154 m
+  y 44 s del umbral, y **le manda al aire a 59 m y 31 s, por EC-GVY**. En esta tabla la mesa no obedece la frustrada —solo con
+  `FRUSTRA=orden`—, así que toca a los 633 con EC-GVY rodando todavía a 2.555 m del umbral, a 11 m/s; la deja a los 652.
+
+Así que la torre sí lo vio, y mandó al aire; quien toca es quien juega, que en la mesa no obedece —y en el juego puede no
+obedecer—. Lo que no es de verdad es lo de EC-GVY: setenta segundos más corriendo por la pista para no cruzarse en la calle con
+uno que iba a estar aparcado mucho antes de que ella llegara. El que aterriza deja la pista por la primera salida que le sirve
+—«landing aircraft (…) shall vacate the runway», y el siguiente no cruza el umbral hasta que la ha dejado (OACI, Doc 4444,
+7.10.1)— y lo de la calle se resuelve en la calle. Con el tráfico solo, sin quien juega, pasa igual: en 30 semillas por la 30,
+EC-GVY en la 6 y EC-YAJ en la 29 dejan la pista a 2.812 m del principio de la pista, 153 s después de tocar; las demás, a 984 o
+1.613 m, en 83 a 85 s.
+
+### Por qué subían las frustradas
+
+La mesa con la traza de cada frustrada del tráfico —quién se va y quién tenía la pista en ese momento, y qué hacía—, antes de
+H105 (be0fe04a, con la ficha de entonces) y con H105. Salen las dos igual vuelo a vuelo que las del material (600 de 600 cada
+una). Cada caso sale cinco veces, una por avión de quien juega: el tráfico hace lo mismo hasta que tú cuentas.
+
+| quién se va · quién tenía la pista | antes de H105 | con H105 |
+|---|---|---|
+| avioneta · turbohélice alineado, sin despegar (por la 30, raya a 2.249 m) | 15 | 15 |
+| reactor · turbohélice alineado, sin despegar (por la 30) | 10 | 10 |
+| turbohélice · turbohélice alineado (por la 12) | 5 | 5 |
+| avioneta · avioneta en el aire, sin pasar el final (por la 30, del 19 → del AG3) | 5 | 5 |
+| avioneta · avioneta en el aire (por la 12, del 19) | 5 | — |
+| **turbohélice · avioneta alineada, sin despegar (por la 12, del AG1 por la E2)** | — | **11** |
+| **reactor · avioneta alineada, sin despegar (por la 12, del AG1 por la E2)** | — | **5** |
+| turbohélice · avioneta en el aire (por la 30, del AG3) | — | 5 |
+| turbohélice · turbohélice en el aire (por la 12) | — | 5 |
+| **total** | **40** | **61** |
+
+Lo nuevo es la avioneta alineada en la 12. Desde H105 sale del AG1 por la E2, en la cabecera misma: 405 m hasta su doble raya y
+sin remontar, contra los 1.226 del 19 de antes. Llega antes y la torre la alinea con la fila vacía. Semilla 20: EC-GCN llega a
+su doble raya a los 70 s y se la alinea a los 72; EC-OZZ, un turbohélice, va por el viento en cola, a 97 s del umbral, y la
+fila empieza en la esquina de la base, así que no cuenta. A los 96 gira a la base y entra en la fila: con él ahí la avioneta ya
+no tiene despegue —no pasaría el final de los 3.168 m antes de que él cruzara el umbral—, y él, al girar, no cuenta con la
+salida que tiene la pista. Baja hasta la decisión con EC-GCN alineada, 63 s parada en la cabecera, y a los 152,5 se va al aire.
+Con el tráfico solo, por la 12 y en 30 semillas, 8 de las 9 idas al aire son por una salida alineada que no despega, cinco de
+ellas avionetas de la GA 1.
+
+**No es una pista más ocupada de verdad: es un fallo de la torre**, que no alineaba a nadie sin mirar quién venía en final pero
+no veía al que venía por el viento en cola. Contigo sí lo miraba, por el circuito (`llegaAntesDeQueSalga`). Una torre de verdad ve
+al del viento en cola y no alinea a quien no se va a haber ido antes de que él cruce el umbral (Doc 4444, 7.10.1.2): la avioneta
+espera en su doble raya, fuera de la pista. Las salidas sí suben de verdad con H105 —de 659 a 688 en los 600 vuelos—, porque la
+avioneta llega a la 12 sin remontar; las frustradas, no tienen por qué.
+
+Lo demás de la tabla es la misma clase que ya había antes de H105 y que H104 quería arreglar sin conseguir que entrara: una salida
+a la que se dio la pista con la fila vacía y uno que gira a la base sin contar con ella. Por la 30 la avioneta sale del AG3
+rodando 3.213 m en vez de 2.441, y las horas se mueven: una que estaba (semilla 13 por la 12) se va y llegan dos (semilla 15 por
+la 30 y semilla 13 por la 12).
+
+### Decisión
+
+1. **El que corre por la pista solo pasa primero en un tramo de frente si no puede esperar fuera de ella** (`noEsperaFuera` en
+   `trafico.ts`): si el tramo empieza antes de haber dejado la pista —pasada la doble raya de su salida—. Solo entonces, y con el
+   otro dentro, se le busca otra salida. Si empieza después, deja la pista por la de siempre, espera fuera como cualquiera que
+   rueda y el tramo se reparte como entre dos que ruedan: pasa el que ya estaba dentro. La de `rehacerLaLlegada` por un avión
+   que espera en la doble raya de su salida (la «siga hasta la próxima» de Guaraní, H104c) no cambia: ésa sí le tapa la salida.
+2. **Medido y fuera: que «line up and wait» mire también a los del tráfico que vienen y todavía no han girado a la base** (`vieneDelTraficoAntesDe`
+   en `llegaAntesDeQueSalga`), con su hora natural de umbral, igual que contigo por el circuito. **Solo para alinearse.** Se probó
+   también para la salida directa, sin alinearse: las frustradas de Los Rodeos bajaban a 5, pero en la semilla 38 por la 12 una
+   avioneta retenida por EC-ASL, que en su final se iba al aire por guion, despegaba detrás de su frustrada y se le quedaba a 264 m
+   y 86 m por debajo: un encuentro a más. `seEchariaEncima` no mira tan lejos, y eso queda (ver «Lo que queda»). **Y solo
+   para el que no remonta**: el que entra a remontar ya cuenta su remonte en el hueco, y sin radio los que llegan le ceden el
+   turno (H102). Mirándolo también para él, el vitest entero vio caer las dos de Encarnación de `ceden-el-turno-sin-radio.test.ts`
+   —en la semilla 6 ya no se daba el caso—. Con él, en los 2.820, El Hierro bajaba de 64 frustradas a 4: queda para mirarlo
+   con esas pruebas (ver «Lo que queda»).
+
+**El 2 no entra**: con él, en `fila-de-salida.test.ts` (Tenerife Sur) cae «el que esperaba antes que tú sale antes, y la torre
+sabe tu número», y no ha dado tiempo a ver por qué. Queda en la historia tal como entraría, con su prueba
+(`alinearse-con-uno-en-el-viento-en-cola.test.ts`, vista fallar sin él: ocho idas al aire por una salida alineada), en bb5b7219,
+y se saca en 0a55c173. El juego lleva el 1.
+
+No entra nada de H104 (la salida que tiene la pista en el turno de los que llegan, ni la cadencia de la doble raya), ni lo de los
+puestos incompatibles, ni el remolque de avionetas.
+
+### Lo medido
+
+**Lo que entra, el arreglo 1**: en Los Rodeos con radio cambian 26 de los 600 vuelos, ninguna toma con la pista ocupada (de 1 a
+0), las frustradas igual, 61, la roja de quien juega de 36,1 (2) a 36,6 (2) y la espera por llegada de 65,9 a 66,9; en los 2.820,
+fuera de Los Rodeos cambian seis vuelos, dos en Lanzarote y cuatro en Estigarribia, y nada más. Sin radio y en Encarnación no se
+ha medido el 1 solo.
+
+Lo que sigue es **con los dos**, el 2 tal como queda en la historia.
+
+Con radio, Los Rodeos (los 600, con `FRUSTRA` sin poner y `H100=1`), con H105 → con los dos:
+
+| campo (vuelos) | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| Los Rodeos (600) | 61 → 20 | 747 → 787 | 688 → 682 | 36,1 (2) → 39,9 (9) | 65,9 → 63,6 | 0/0/0 | 1/0 → 0/0 |
+
+Antes de H105 eran 40 frustradas, 742 tomas, 659 salidas, la roja de quien juega en 35,8 s de media (mediana 2) y 63,1 s de espera
+por llegada: con los dos, 20, 787, 682, 39,9 (9) y 63,6. La mediana de la roja sube 7 s: es la salida del tráfico que ahora espera en
+su doble raya al del viento en cola, y tú detrás; avión a avión y por cabecera, la mediana de cada uno sube 3 s como mucho, o nada.
+
+Las frustradas, por quién tenía la pista, con los dos:
+
+| quién se va · quién tenía la pista | con H105 | con los dos |
+|---|---|---|
+| avioneta · turbohélice alineado, sin despegar (por la 30) | 15 | 5 |
+| reactor · turbohélice alineado, sin despegar (por la 30) | 10 | — |
+| turbohélice · turbohélice alineado (por la 12) | 5 | — |
+| turbohélice · avioneta alineada, sin despegar (por la 12, del AG1 por la E2) | 11 | — |
+| reactor · avioneta alineada, sin despegar (por la 12, del AG1 por la E2) | 5 | — |
+| avioneta · avioneta en el aire, sin pasar el final (por la 30, del AG3) | 5 | 5 |
+| turbohélice · avioneta en el aire (por la 30, del AG3) | 5 | 5 |
+| turbohélice · turbohélice en el aire (por la 12) | 5 | 5 |
+| **total** | **61** | **20** |
+
+Las veinte que quedan son todas la clase de H104: una salida con la pista dada y uno que gira a la base sin contar con ella.
+Son la mitad de las de antes de H105.
+
+Con radio, los 2.820 (antes, `todoA105` del material de H104c, con el código de main: sale igual vuelo a vuelo que la mesa de
+ahora en Los Rodeos, 600 de 600, y en El Hierro con el JAZ 20, 100 de 100):
+
+| campo (vuelos) | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| Los Rodeos (600) | 61 → 20 | 747 → 787 | 688 → 682 | 36,1 (2) → 39,9 (9) | 65,9 → 63,6 | 0/0/0 | 1/0 → 0/0 |
+| Gando (60) | 6 → 3 | 78 | 93 → 90 | 49,0 (24,5) → 55,0 (24,5) | 64,5 → 70,0 | 0/0/0 | 0/0 |
+| Tenerife Sur (60) | 3 | 70 | 85 | 47,7 (36) | 67,6 | 0/0/0 | 0/0 |
+| Lanzarote (60) | 0 | 65 | 63 → 61 | 18,5 (2) | 67,9 | 0/0/0 | 0/0 |
+| Fuerteventura (60) | 0 | 71 | 67 | 25,4 (2) | 71,3 | 0/0/0 | 0/0 |
+| La Palma (60) | 18 | 73 | 102 | 81,5 (56) | 86,7 | 0/0/0 | 0/0 |
+| Cuatro Vientos (60) | 0 | 63 | 69 | 17,3 (2) | 64,6 | 0/0/0 | 0/0 |
+| Pettirossi (60) | 7 → 3 | 69 → 74 | 92 → 90 | 39,9 (12) → 43,0 (17,5) | 45,5 → 46,9 | 0/0/0 | 0/0 |
+| El Hierro, remontando (300) | 64 | 437 | 561 | 86,3 (94) | 89,3 | 0/0/0 | 0/0 |
+| La Gomera, remontando (300) | 6 | 369 | 527 | 73,6 (52) | 97,0 | 0/0/0 | 0/0 |
+| Pilar (300) | 2 → 1 | 456 → 457 | 576 → 574 | 39,1 (35,5) | 56,3 → 56,2 | 0/0/0 | 0/0 |
+| Pedro Juan (300) | 0 | 426 | 561 → 557 | 25,3 (5) | 69,7 | 0/0/1 | 0/0 |
+| Concepción (300) | 13 | 399 | 520 | 61,4 (31) | 73,5 | 0/0/0 | 0/0 |
+| Estigarribia (300) | 27 | 403 → 405 | 540 → 542 | 45,0 (15,5) → 44,9 (15,5) | 72,1 → 72,2 | 0/0/1 | 0/0 |
+| **todos (2.820)** | **207 → 158** | **3.726 → 3.774** | **4.544 → 4.527** | **48,8 (23) → 49,8 (24,5)** | **72,9 → 72,5** | **0/0/2 → 0/0/2** | **1/0 → 0/0** |
+
+Cumple campo a campo lo pedido: ninguna toma con la pista ocupada, ningún encuentro a más, ninguna espera por llegada más de un
+10 % peor —Gando, de 64,5 a 70,0, un 8,5 %— y ninguna mediana de la roja más de 10 s peor —Pettirossi, de 12 a 17,5—. Cambian 87
+de los 2.820 vuelos: 62 en Los Rodeos y 25 en Gando, Lanzarote, Pettirossi, Pilar, Pedro Juan y Estigarribia; La Palma, El
+Hierro, La Gomera y Concepción salen iguales vuelo a vuelo.
+
+Sin radio, los 1.760 de H98 y H100 (`corre-luz.sh`, 20 semillas por campo, cabecera, largo y avión), main → con los dos:
+
+| campo (vuelos) | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| Gando (160) | 10 → 4 | 262 → 264 | 277 → 273 | 47,7 (8,5) → 50,8 (8,5) | 63,9 → 68,1 | 0/0/0 | 0/0 |
+| Tenerife Sur (160) | 4 | 190 → 198 | 225 → 226 | 34,5 (2) → 34,5 (2) | 77,4 → 73,4 | 0/1/3 | 0/0 |
+| Lanzarote (160) | 20 → 4 | 202 → 216 | 247 → 243 | 23,3 (2) → 29,4 (2) | 84,7 → 80,0 | 0/0/0 | 0/0 |
+| Fuerteventura (160) | 0 | 216 | 202 | 26,7 (2) | 81,4 | 0/0/0 | 0/0 |
+| La Palma (160) | 48 | 232 | 272 | 81,1 (56) | 82,0 | 0/0/0 | 0/0 |
+| Cuatro Vientos (160) | 16 → 2 | 220 → 228 | 204 → 200 | 26,4 (5,5) → 29,7 (11) | 93,2 → 89,5 | 0/2/4 → 0/2/2 | 0/0 |
+| Pettirossi (160) | 14 → 6 | 208 → 216 | 239 → 229 | 30,9 (2) → 32,4 (2) | 46,0 → 47,8 | 8/0/0 | 0/0 |
+| Encarnación (160) | 12 | 206 | 264 | 93,7 (40,5) | 61,9 | 0/0/4 | 0/0 |
+| El Hierro (160) | 36 | 204 | 274 | 85,1 (90,5) | 127,6 | 0/0/0 | 0/0 |
+| Guaraní (160) | 0 | 210 | 253 | 54,3 (13,5) | 91,0 | 14/1/0 | 0/0 |
+| Los Rodeos (160) | 26 → 16 | 205 → 216 | 222 → 224 | 35,2 (7,5) → 41,6 (15) | 75,5 → 79,1 | 0/0/0 | 0/0 |
+| **todos (1.760)** | **186 → 132** | **2.355 → 2.406** | **2.679 → 2.660** | **49,0 (11) → 50,8 (14)** | **81,5 → 81,2** | **22/4/11 → 22/4/9** | **0/0 → 0/0** |
+
+Cambian 98 de los 1.760. Las frustradas bajan de 186 a 132 y la espera por llegada se queda en 81,5 → 81,2, sin un encuentro a
+más; pero **no sale igual o mejor en todo**: la roja de quien juega sube en Los Rodeos (mediana de 7,5 a 15 s, media de 35,2 a
+41,6), en Cuatro Vientos (5,5 a 11) y de media en Lanzarote (23,3 a 29,4) y Gando (47,7 a 50,8), y la espera por llegada, en
+Gando de 63,9 a 68,1 (6,6 %), en Los Rodeos de 75,5 a 79,1 y en Pettirossi de 46,0 a 47,8. Por lo que se
+ha visto con radio en Los Rodeos, es la salida del tráfico que ahora espera en su doble raya a que aterrice el del viento en
+cola, con quien juega detrás; sin radio no se ha trazado. Todo dentro de lo que se pide a los de con radio —ni un 10 % más de espera ni 10 s más de mediana—, y escrito para que se decida.
+
+Encarnación sin radio, JAZ 20, callada a los 20 s y obedeciendo cada roja, las dos cabeceras, por la línea y alargando (los
+1.000 de H102): **iguales vuelo a vuelo, 1.000 de 1.000**. El de main sale igual que el «antes» de la tabla de H104c: 46
+frustradas, 1.413 tomas, 1.584 salidas, la roja en 90,0 s (54), 68,7 s por llegada y 0/6/22.
+
+**Pruebas nuevas** (la segunda, con el 2, en la historia), en `--pool=threads` y en `--pool=forks`, con lo que monta el juego —la frecuencia, el tráfico con sus calles y
+sus tipos, y el turno— sin quien juega, 30 semillas:
+
+- `deja-la-pista-con-otra-rodando.test.ts`: en Los Rodeos por la 30, que se vea el caso —EC-GVY toca en la semilla 6 con EC-CYD
+  rodando hacia la GA 1— y que ninguna avioneta ni bimotor que llega deje la pista pasados los 2.000 m ni tarde más de dos minutos.
+  Vista fallar sin el arreglo: EC-GVY en la 6 y EC-YAJ en la 29, a 2.812 m y 153 s.
+- `alinearse-con-uno-en-el-viento-en-cola.test.ts`: en Los Rodeos por la 12, que las avionetas de la GA 1 salgan —EC-GCN en la
+  semilla 20— y que nadie del tráfico se vaya al aire por una salida alineada que no despega. Vista fallar sin el arreglo: ocho:
+  cinco por avionetas de la GA 1 (tres de ellas, EC-OZZ en la semilla 20) y tres por un turbohélice y dos reactores.
+
+**Vitest, por partes de 2 GB**, en `--pool=threads`: `src/world` en cuatro, 209 ficheros, 4.563 en verde y 3 saltadas; `src/flight`,
+la primera de tres, 93 ficheros, 1.677 en verde, 14 saltadas y una pendiente. Todo eso con los dos arreglos. Después, las pruebas de `src/flight`
+que montan el tráfico o el turno: con los dos cae `fila-de-salida.test.ts`, y por eso el 2 sale. **Con el 1 solo**:
+`fila-de-salida`, `deja-la-pista-con-otra-rodando` (hilos y procesos) y `ceden-el-turno-sin-radio`, en verde, y `tsc`. Las
+partes segunda y tercera de `src/flight` y lo de fuera de `src/world` y `src/flight` **no se han corrido**: no dio el tiempo. Con la primera versión del arreglo 2 —sin la
+excepción del que remonta— la segunda parte de `src/world` vio caer las dos de Encarnación de `ceden-el-turno-sin-radio.test.ts`
+(ver «Decisión»); con la de ahora pasan.
+
+**Navegador**, con `OGA_GPU=1` y en el puerto 5692. `OGA_METAR="GCXO 270900Z 30012KT 9999 FEW025 17/12 Q1019" node
+scripts/verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-20`: **63 de 63 comprobaciones y 2 sin medir**; del AG1 a la
+doble raya de la 30, 2.033 m en 224 s, despega, vuelve y aparca en el AG1, a un metro de su punto, con el señalero delante. Se
+voló con los dos arreglos, el 2 todavía sin la excepción del que remonta. Y `node scripts/verificar-vuelo-entero.mjs tenerife-norte
+taguato 1 jaz-90`, con los dos arreglos: **63 de 63 comprobaciones y 3 sin medir**; 509 m del puesto a la doble raya
+en 68 s, y el vuelo acaba apagado en el puesto, con el señalero, a los 905 s. **Con el 1 solo, que es lo que entra, no se ha volado
+ninguno.**
+
+### Lo que queda
+
+- **El arreglo 2, fuera**: ver por qué cae `fila-de-salida.test.ts` con él —en Tenerife Sur, el que espera delante de ti en la
+  fila y la torre que ya no le alinea con uno en el viento en cola— y volver a medirlo. Con él las frustradas de Los Rodeos son
+  20; sin él siguen en 61, y de ellas dieciséis son la avioneta alineada en la 12.
+- **Lo que no mira `seEchariaEncima`**: una salida que despega detrás de uno que se va al aire por la misma subida. Con la
+  salida directa retenida por los del viento en cola, en la semilla 38 de Los Rodeos por la 12, 264 m. Hasta mirarlo, la
+  salida directa no se retiene por ellos.
+- **El que entra a remontar con uno en el viento en cola**: no se mira, para no deshacer la cesión de H102. Mirándolo, El
+  Hierro bajaba de 64 frustradas a 4 en los 2.820, y caían las dos de Encarnación de `ceden-el-turno-sin-radio.test.ts`, que
+  ya no encontraban su caso. Pide rehacer ese caso —y los tres de El Hierro de H104c— con la torre que ya no alinea.
+- **La clase de H104** —una salida con la pista dada y uno que gira a la base sin contar con ella— sigue: veinte de las
+  frustradas de Los Rodeos. Ver «Lo que queda» de H104c.
+- **Quien juega en la mesa con radio no obedece la frustrada** salvo con `FRUSTRA=orden`: «tocar ocupada» en esa tabla cuenta
+  también a quien la torre ya mandó al aire. Aquí la torre mandaba al aire a 59 m y 31 s del umbral; el fallo era la pista
+  ocupada, no la orden.
