@@ -390,6 +390,23 @@ export interface Aerodrome {
      * `nuncaALaVezCon`.
      */
     readonly nuncaALaVez?: { readonly parejas: readonly (readonly [string, string])[]; readonly fuente: string };
+    /**
+     * **Los puestos que no se usan a la vez** (H106): lo que dice la observación «INCOMP.» de cada uno en la tabla de
+     * la PDC —en La Palma, el 12, «INCOMP. 10 (2), 11, 13, 14 (3), 15 (3)»—. No es solo no maniobrar a la vez, como
+     * `nuncaALaVez`: con un avión en uno, el otro no se da. Las que una nota deja para un tipo, en `soloCon`: el avión
+     * que tiene que estar en `en`, por su designador de la OACI. Sale de `scripts/puestos-del-aip.mjs`. Ver
+     * `incompatiblesCon`.
+     */
+    readonly incompatibles?: {
+      readonly parejas: readonly (readonly [string, string])[];
+      readonly soloCon?: readonly {
+        readonly pareja: readonly [string, string];
+        readonly en: string;
+        readonly tipos: readonly string[];
+        readonly nota: string;
+      }[];
+      readonly fuente: string;
+    };
   };
   /**
    * Las ayudas **visuales** de OpenStreetMap: PAPI, VASI, luces de aproximación.

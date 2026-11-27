@@ -75,7 +75,7 @@ import {
   rumboDeLaPintada,
   SIGUE_LA_RAYA,
 } from "./remolque";
-import { admite, aproarDe, cumpleElAproar, deAviacionGeneral, delAipEn, dePorSusMedios, llegaPorDe, puestoEn, saleDeFrente, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
+import { admite, aproarDe, cumpleElAproar, deAviacionGeneral, delAipEn, dePorSusMedios, incompatiblesCon, llegaPorDe, puestoEn, saleDeFrente, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
 import { empujaSobrePavimento, fueraDelPavimento, ruedasEn } from "./ruedas-en-el-empuje";
 import { YA_EN_SU_SITIO } from "../flight/senalero";
@@ -2547,7 +2547,7 @@ export class PlanDeVuelo {
     enFirme: boolean,
   ): { ref: string | null; xy: Punto } | null {
     return this.puerta.pedir(enFirme, () => {
-      const puestos = this.puestosParaLlegar();
+      const puestos = this.sinIncompatiblesDelTrafico(this.puestosParaLlegar());
       if (!puestos.length) return null;
       let mejor: { ref: string | null; xy: Punto } | null = null;
       let corto = Infinity;
@@ -2800,6 +2800,20 @@ export class PlanDeVuelo {
     puestos: { ref: string | null; xy: Punto }[],
   ): { ref: string | null; xy: Punto }[] {
     const libres = this.conTusAlasLibres(puestos);
+    return libres.length ? libres : puestos;
+  }
+
+  /**
+   * **De estos puestos, los que la tabla de la PDC deja usar con el tráfico que hay** (H106): ninguno incompatible con
+   * uno que tiene, o va a tener, un avión del tráfico. En La Palma, con un ATR en el 12, al 11 y al 13 no se manda a
+   * nadie, que el señalero no te mete ahí. Si no queda ninguno, todos, como en `libresDelTrafico`.
+   */
+  private sinIncompatiblesDelTrafico<T extends { readonly xy: Punto }>(puestos: T[]): T[] {
+    const otros = this.puestosDelTrafico();
+    if (!otros.length || !this.aero.aipPuestos?.incompatibles) return puestos;
+    const libres = puestos.filter(
+      (p) => !incompatiblesCon(this.aero, p.xy[0], -p.xy[1]).some((q) => otros.some((o) => Math.hypot(o.xy[0] - q[0], o.xy[1] - q[1]) < 5)),
+    );
     return libres.length ? libres : puestos;
   }
 

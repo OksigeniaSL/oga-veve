@@ -3777,6 +3777,163 @@ y en las pruebas, no en el juego.
 **Del 28 al 38, los de salida autónoma a la R y a la Z** (casilla 20.1.2 C, F y G; PDC 1.2, observaciones (4), (5) y (6)): siguen sin
 estar en la ficha.
 
+## Enmienda (27-11-2026, H106): los puestos que no se usan a la vez, en la ficha y respetados
+
+### El caso
+
+Lo que dejaron escrito la H97 y la H103. La tabla de puestos de cada PDC dice cuáles no se usan a la vez —en La Palma, el 12,
+«INCOMP. 10 (2), 11, 13, 14 (3), 15 (3)»; en Los Rodeos, el AG7 con el N5—, y la ficha solo sabía de las tres parejas de Tenerife Sur
+que no se maniobran a la vez, que la H97 puso a mano de la casilla 20. Así que el turbohélice del tráfico de La Palma seguía saliendo del 5 y
+del 16, que son de retroceso, porque mandarlo a los suyos lo ponía junto a uno incompatible (H103); y el tráfico cogía un puesto al lado de
+otro que la tabla no deja usar con él, con tal de que las alas no se tocaran.
+
+### Lo que publica el AIP
+
+Las PDC que ya estaban extraídas (H60f, H85, H97, H103), leídas otra vez de los textos bajados de ENAIRE esos días, con sus notas.
+
+- **La observación «INCOMP.»**, en la tabla de características de los puestos de estacionamiento de ocho campos: Los Rodeos (PDC 1.2, WEF
+  06-AUG-26), La Palma (PDC 1.2, WEF 15-MAY-25), Tenerife Sur (PDC 1.3 y 1.4), El Hierro (PDC 1, WEF 11-JUN-26), Gran Canaria (PDC 1.3, WEF
+  09-JUL-26), Lanzarote (PDC 1, WEF 01-OCT-26), Barajas (PDC 1.3 a 1.7 y 2.3 a 2.6) y Fuerteventura (PDC 1.2 y 1.3, WEF 07-AUG-25). Casi
+  siempre es un puesto ancho sobre dos estrechos: el 3 de Los Rodeos, de B744, sobre el 2 y el 4, de B3XM; el R42 de Tenerife Sur, de
+  B77W, sobre el H39 y el H43.
+- **Sus notas**, que son las llamadas que lleva detrás. En La Palma, **(2)** «For an aircraft of the B757 family to enter PRKG 12, there can
+  be no aircraft parked on PRKG 10» y **(3)** «For an aircraft of the B757 family to exit PRKG 12 towards gates A or B, there can be no
+  aircraft parked on PRKG 14 or 15»: el 12 con el 10, el 14 y el 15, solo con un B757 en el 12; con el 11 y el 13 va sin nota, siempre.
+  La (1) es la guía de atraque, y la (4), que no se vira en tierra con un avión de ala fija al lado: es de los helicópteros del 13 y el 15. En
+  Barajas, el 574, «INCOMP. 573; y si hay un B762, B763 o B764 estacionado en PRKG 576: INCOMP. 576», y el 576 lo mismo al revés: el 574 con
+  el 576, solo con un 767 en el 576. Las demás llamadas de esas observaciones son de otra cosa —en Los Rodeos, el power-back y por dónde se
+  sale; en Tenerife Sur, el power-back; en Fuerteventura, la guía de atraque, las ambulancias y los helicópteros de rueda; en Barajas, el
+  APROAR por configuración, la salida con LVP y el 259 hacia el este— y no la limitan.
+- **La celda partida en dos o tres renglones**: en Fuerteventura del 18 al 23B —«400 Hz - A/C» en el de la fila e «INCOMP. 18B, 19B (2)»
+  debajo—, en el G6 y el J5 de Tenerife Sur, en los T de Barajas, del T6 al T21, y el 577, y en Gran Canaria (PDC 1.3 a 1.5, WEF 09-JUL-26,
+  bajadas otra vez de ENAIRE el 27-11-2026: la misma edición), del L01 al L08, del M01 al N12, del P58 al P66 y los T12, T12A y del T21 al
+  T23. La extracción leía solo el renglón de la fila, y esas cincuenta y cuatro observaciones no estaban en `aip/*.pdc.json`. En el P60
+  la carta escribe «NCOMP.». Y el T21B de Gran Canaria: «INCOMP. T21, T22, T23, LH01, (14) T20 Y // AND B748», donde la (14) es «Not
+  allowed: A306, B753, DC87»: con el T20, solo si hay un B748, que es lo único que se lee ahí.
+
+### Decisión
+
+1. **La extracción lee los renglones de debajo** (`filasDe`), hasta la fila siguiente: el que solo trae un «INCOMP.» en su columna es de
+   esa fila. Se volvieron a extraer Fuerteventura, Tenerife Sur, Barajas y Gran Canaria: cambian esas cincuenta y cuatro observaciones y
+   nada más, y la fecha de lectura se queda la que era, que las hojas son las mismas (`leidoDeAntes`). Los Rodeos, La Palma, Lanzarote y
+   El Hierro salen iguales.
+2. **Las parejas, en la ficha** (`aipPuestos.incompatibles`, `incompatiblesDe` en `scripts/puestos-del-aip.mjs`): de la observación de cada
+   puesto —«504-507-508» es una lista, no un tramo; «2. 4», el 2 y el 4—, cada pareja una vez, por su `ref` en la ficha. Si en alguna de
+   sus dos filas va sin nota que la limite, va siempre (`parejas`); si en todas va con ella, con la nota (`soloCon`: el puesto, los
+   designadores y su texto). Las notas que limitan están escritas en la receta con su cita (`NOTAS_QUE_LIMITAN`, `CONDICIONADAS`), como
+   el APROAR de la casilla; son cuatro: las dos de La Palma, la del 574 y el 576 de Barajas y la del T21B de Gran Canaria. Receta: `node scripts/puestos-del-aip.mjs juntar GCXO GCLA GCTS GCHI GCLP GCRR LEMD` y `poner GCFV`, que
+   salen igual se hagan las veces que se hagan; no toca más que la línea de `aipPuestos`. **No hay que hornear nada**: ni puestos ni
+   calles cambian, y el pavimento no los mira.
+3. **`nuncaALaVezCon` las devuelve todas**: las tres de la casilla de Tenerife Sur, como estaban, y las de la tabla, que si no se puede
+   estar a la vez en dos puestos, tampoco maniobrar. Y **`incompatiblesCon`, solo las de la tabla**: las tres de la casilla son de moverse,
+   no de estar, y con un avión en el G9 se aparca en el G10.
+4. **El tráfico no coge un puesto incompatible con uno que tiene, o va a tener, otro** (`candidatosPara`, `conUnoOcupado`), ni para salir
+   ni para llegar: los de los demás del tráfico, desde que se les asigna hasta que lo dejan, y el tuyo. Antes uno compatible de los que no
+   son suyos que uno suyo junto a otro; si ni así, como antes, que un puesto hace falta. Y lo mismo al ponerle a uno nuevo los caminos del
+   tipo (`caminosConSuPuesto`). **En el empuje**, ya lo hacía la H97 con `nuncaALaVezCon`: el tráfico no empuja con alguien maniobrando en uno
+   incompatible, ni entra en el suyo con otro empujando al lado (H98), y tu empuje espera igual (`maniobraAlLadoDe`).
+5. **Las que una nota deja para un tipo no van** (`soloCon`): ni el tráfico ni la flota de quien juega lleva designador de la OACI —van
+   por su envergadura—, y ninguno es un B757, un 767 ni un 747-8. Con el A320 del tráfico en el 12, el 10 se da, que es lo que dice la nota.
+6. **El turbohélice del tráfico de La Palma, todavía no** (`suyosPorAla`, la línea de la H103). Se puso, y salía del 12 por la 36 —429 m
+   hasta la doble raya, del 5 y 137 antes— y del 14 por la 18 —248, del 16 y 240—, y llegaba al 14 o al 12. Pero el vitest entero lo
+   volvió a tumbar donde la H103: `de-frente-en-la-calle`, en La Palma por la 36, el JAZ 110 vuelve al 11 y el coche del sígame pasa a
+   15,4 m del ATR, que sale del 12. Esa prueba no le da al tráfico tu puesto (`tuPuesto`), que el juego sí le da; dándoselo, La Palma
+   sigue fallando igual y cae un caso de Guaraní que pasaba. Así que no es solo lo que no sabía el tráfico, y no se sabe qué más:
+   hay que mirarlo con la traza de esa prueba antes de razonar otra. La línea se queda como estaba, y el turbohélice, en el 5 y el 16.
+7. **Quien juega no llega a un puesto incompatible con uno del tráfico** (`sinIncompatiblesDelTrafico` en `plan-de-vuelo.ts`): de los suyos,
+   los que la tabla deja usar con los puestos que tiene el tráfico; si no queda ninguno, todos, como con las alas. Y eso pasa: en La
+   Palma el JAZ 50 y el JAZ 60 solo tienen el 12, y el JAZ 110 y el JAZ 120, el 11. Ver «Lo que queda».
+
+### Metros, antes y después
+
+**Con el tráfico solo, y quien juega sin tráfico, no cambia nada**: lo de la tabla solo cuenta cuando hay alguien en un puesto. La mesa
+de la H105 —el puesto y los metros de cada avión de quien juega y de cada tipo del tráfico, en los diecinueve campos, por las dos
+cabeceras, saliendo y llegando desde cada sitio en el que dejan de correr— cambiaba en 22 casos con el turbohélice de La Palma a los
+suyos, todos de él (arriba), y en ninguno más; con lo que entra, en ninguno de los 2.188. De las 418 filas de
+`puesto-de-salida-de-cada-campo.json` no cambia ninguna.
+
+**Con alguien en un puesto incompatible con el suyo**, que es lo que cambia de verdad: en los campos con ellas, por las dos cabeceras y con
+los cuatro tipos, el puesto al que va cada uno saliendo y llegando solo, y otra vez con un avión en cada uno de los incompatibles de ese
+puesto que está en la ficha. 73 casos:
+
+| | Antes | Ahora |
+|---|---|---|
+| Acaba en uno incompatible con el ocupado | **24**: 15 en La Palma —la avioneta y el bimotor en el 12 con uno en el 11 o el 13, y en el 14 con uno en el 15; el turbohélice en el 15 con uno en el 14—, 5 en Gran Canaria —en el L07 con uno en el P64— y 4 en Barajas —en el 422 con uno en el 421, y en el 526 con uno en el 525— | **0** |
+| Los Rodeos, El Hierro, Fuerteventura | 0 | 0 |
+
+En La Palma ahora van al otro de los suyos —con uno en el 11 o el 13, al 14; con uno en el 15 o el 16, al 12—, y el turbohélice, con uno
+en el 14, al 12 en vez de al 15; en Gran Canaria, del L07
+al P66; en Barajas, del 422 al 329 y del 526 al 530. Tenerife Sur y Lanzarote no tienen ningún caso: el puesto de cada tipo no es de los
+que traen incompatibles. En Barajas, por la 18, la avioneta, el bimotor y el turbohélice con uno en el 519 no salen de ningún puesto de la
+ficha, antes y ahora: no es de esto, y queda sin mirar.
+
+### El barrido, el plan y los demás campos
+
+- **La mesa**, antes —4c96454d— y después, con node y sin vitest: el puesto de salida y los metros de cada avión de quien juega y de cada
+  tipo del tráfico en los diecinueve campos y por las dos cabeceras, y las llegadas del tráfico dejando de correr cada 150 m: 2.188 casos.
+  Con el turbohélice a los suyos cambiaban 22, todos de él; con lo que entra, **ninguno**.
+- **Los empujes de contacto**, en Los Rodeos, La Palma, Gran Canaria, Lanzarote, Tenerife Sur, Barajas, Pettirossi y Fuerteventura, con
+  los tres reactores y por las dos cabeceras: 1.048, iguales uno a uno —1.040 bien y 8 de lado, los de Barajas y Gran Canaria de siempre—,
+  y los 48 del plan.
+- **Los de retroceso sin pasarela**, en los seis campos que los tienen, con los tres reactores: iguales uno a uno, sin pisar fuera.
+
+### Lo medido
+
+- **La receta**: `extraer` de Los Rodeos, La Palma, Lanzarote y El Hierro sale igual que estaba; la de Fuerteventura, Tenerife Sur, Barajas y
+  Gran Canaria cambia las cincuenta y cuatro observaciones y nada más. Y `juntar` de los siete y `poner` de Fuerteventura, dos veces seguidas,
+  igual byte a byte: en las fichas solo cambia la línea de `aipPuestos`.
+- **Pruebas nuevas** (`incompatibles-de-la-pdc.test.ts`, 10): la ficha de los ocho campos, con su fuente, cada «INCOMP.» de las tablas en ella,
+  las de La Palma con su nota, las de los renglones de debajo y las tres que van con un tipo; `nuncaALaVezCon` con las tres de Tenerife Sur
+  como estaban; la avioneta y el bimotor de La Palma, con alguien en el 11 o el 13; el barrido de los ocho campos y los cuatro tipos con uno
+  en un incompatible del suyo; el reactor de La Palma, que no empuja del 5 contigo maniobrando en el 4A y empuja en cuanto acabas; y quien
+  juega, que no llega a uno incompatible con uno del tráfico si tiene otro. En `--pool=threads` y en `--pool=forks`.
+- **Vitest entero, por partes** de 2 GB, en `--pool=threads`, con el turbohélice a los suyos: `src/world` en cuatro, 208 ficheros, 4.569 en
+  verde, 3 saltadas y un rojo, el de `de-frente-en-la-calle` en La Palma (ver «Decisión», 6); `src/flight` en tres, 277 ficheros, 5.247 en
+  verde, 29 saltadas y una pendiente; y lo demás, 127 ficheros, 2.498 en verde. Quitado el turbohélice, otra vez las cinco que lo miran
+  —`de-frente-en-la-calle`, `flecos-de-las-plataformas`, `suelo-del-trafico`, `empuja-con-quien-juega-en-su-puesto` y la nueva—: 131 en verde.
+- **El tiempo de elegir**: el tráfico mira los incompatibles de cada puesto una vez por suelo (`incompatiblesDe`), y solo cuando hay alguien
+  en algún puesto.
+- **Navegador**, uno detrás de otro, con la Intel, ya sin el turbohélice:
+  `OGA_PUERTO=5693 OGA_GPU=1 OGA_ESCENARIO=la-palma node scripts/ver-remolque-del-trafico.mjs carpeta` —`OGA_ESCENARIO` es nuevo en ese
+  banco, que solo sabía de Los Rodeos—, con ANGLE sobre Mesa Intel Iris Xe: el reactor del tráfico sale del 5, con quien juega en el JAZ
+  90 en el 9; 22 s con el tractor, 36,9 m de culo y nada hacia delante, el tractor a 15,4 m por delante del centro, la calle reservada todo
+  el empuje, nada dentro de un edificio, y suelto rueda 42,8 m. En las fotos desde encima, el empuje acaba en la plataforma, lejos de los
+  edificios, sin tractor al soltarlo. No ve nada de esto: el 5 es incompatible con el 4A, y en el 4A no hay nadie.
+  Y `OGA_PUERTO=5693 OGA_GPU=1 OGA_FILA_DE_SALIDA=1 node scripts/verificar-vuelo-entero.mjs la-palma guyrami 12 jaz-20`: 65 de 65 y una sin
+  medir, la de las historias. El JAZ 20 sale del 12, espera en la fila detrás de EC-HAC con la espera de estela, despega, vuelve y aparca
+  en el 12, a un metro de su punto, con el señalero delante y sus bastones. Ese banco no dice su renderer; va con los mismos argumentos
+  de Chrome que el otro.
+
+### Lo que queda
+
+**Quien juega entrando por su raya con el de al lado empujando**: el plan ya no te manda a un puesto incompatible con uno del tráfico,
+pero si te dan uno de las tres parejas de la casilla de Tenerife Sur —que se pueden ocupar a la vez— y al de al lado lo empujan mientras
+llegas, tu raya no se corta: el señalero te mete con el tractor detrás. El sitio es `paradaPorElTramo` en `plan-de-vuelo.ts`, que ya corta
+la raya, pone la barra roja y para el coche del sígame por el tramo de otro: con un `maniobraAlLadoDe` del puesto al que vas, la parada a
+ciento cincuenta metros de él, como la del tráfico (H98, `ENTRANDO_EN_SU_PUESTO`), y el que ya está dentro de ellos, entra. Pide su
+prueba con un empuje del tráfico en el G9 y tú llegando al G10, y su banco.
+
+**El turbohélice del tráfico de La Palma, a los suyos**: la línea está escrita en `suyosPorAla`, y lo que la para es el caso de
+`de-frente-en-la-calle` (ver «Decisión», 6). Lo primero, `OGA_CASO="la-palma 359 EC-AAX 0"` con la traza de esa prueba: dónde está el ATR,
+de qué puesto sale, y si es el tráfico el que no sabe de tu puesto o es el coche el que pasa por donde no debe.
+
+**Cuando todos los tuyos son incompatibles con uno del tráfico**, quien juega va al suyo igual: en La Palma el JAZ 110 y el JAZ 120 solo
+tienen el 11, y el JAZ 50 y el JAZ 60, el 12. De verdad le darían otro —un remoto, como cuando no hay pasarela libre (H87)—, y eso pide
+que el plan sepa de qué otros puestos sale un avión de línea sin pasarela en ese campo.
+
+**El puesto del que sales**, que el plan elige al arrancar, no mira al tráfico: es el tráfico el que no coge uno incompatible con el tuyo
+(`tuPuesto`). Igual que antes con las alas.
+
+**Las que van con un tipo**: el día que un avión de la flota o del tráfico lleve designador de la OACI, `soloCon` dice con cuál vale cada
+una. Hasta entonces, ninguno es de esos tipos.
+
+**De maniobrar, solo empujando**: Barajas, AD 2-LEMD PDC 2, nota (2): «Simultaneous push-back strictly prohibited between PRKG 334 and
+336». No va en ninguna fila como «INCOMP.», y no es de no estar a la vez: es una pareja de `nuncaALaVez`, solo de empujes, que no es
+lo mismo que las de Tenerife Sur, en las que no se llega con el otro empujando. No está.
+
+**Los puestos que no están en la ficha**: los helipuertos de Fuerteventura, del H1 al H8, el N5 de Los Rodeos y el LH01 de Gran Canaria.
+Sus parejas están en la ficha, y no hacen nada mientras nadie aparque en ellos.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
@@ -3795,7 +3952,8 @@ Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen lí
 Tenerife Sur y su APROAR, desde la H88: ver su «Lo que queda». Por la primera puerta y la segunda línea por delante, y el tráfico al
 puesto al que menos se rueda, desde la H95; la aviación general, los de al lado de uno en uno y el asfalto de la T de Fuerteventura, desde la H97: ver el suyo. Los Rodeos por sus
 medios, del 17 y el 19 por la F, y el R45 por la D2, desde la H103; su aviación general, en la ficha desde la H105, con la GA 2
-todavía sin nadie: ver su «Lo que queda».
+todavía sin nadie: ver su «Lo que queda». Los puestos que no se usan a la vez, en la ficha y respetados por el tráfico desde la H106, con el
+turbohélice de La Palma todavía en el 5 y el 16 y quien juega entrando sin esperar al empuje de al lado: ver su «Lo que queda».
 
 **Fuerteventura**, con los puestos del AIP desde la H85: ver su «Lo que queda». El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
 tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H81.

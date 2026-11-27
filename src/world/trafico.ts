@@ -59,6 +59,7 @@ import { FACTOR_DE_ESCUELA, MARGEN_DE_CERTIFICACION } from "../flight/carrera";
 import {
   PASA_A_TU_LADO,
   puestoLibre,
+  conUnoOcupado,
   type EnElPlano,
   type OcupadosEnElMundo,
   type PasarelaDelTrafico,
@@ -3901,7 +3902,9 @@ export function crearTrafico(
     const deOtros = conTuPuesto(deLosDemas, tuyo, tipo)!;
     if (!deOtros.ocupados.length) return c;
     const p = puestoDe(c, marca.camino, marca.metros, tipo);
-    if (!p || puestoLibre(p.x, p.z, deOtros)) return c;
+    // Y que no sea uno que la tabla no deja usar a la vez que uno de ellos (H106).
+    const suelo = opciones.tierra?.()?.suelo;
+    if (!p || (puestoLibre(p.x, p.z, deOtros) && !conUnoOcupado(suelo?.incompatiblesCon(p) ?? [], deOtros))) return c;
     // `trazar` le añade el tuyo.
     const suyos = trazarAhora(tipo, undefined, deLosDemas);
     return suyos?.marcas[clave] ? suyos : c;
