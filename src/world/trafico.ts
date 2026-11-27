@@ -99,6 +99,7 @@ import {
   porDelanteDe,
   tramoDeFrente,
   type QuienTieneElTramo,
+  type TramoDeFrente,
 } from "./tramo-de-frente";
 import {
   ESPERA_ENTRE_VUELOS,
@@ -3277,6 +3278,29 @@ export function crearTrafico(
   };
 
   /**
+   * **Si el que corre por la pista no puede esperar fuera de ella** su tramo de
+   * frente con otro: si el tramo empieza antes de haber dejado la pista. Solo
+   * entonces pasa él primero, y si el otro ya está dentro se le busca otra
+   * salida (`rehacerLaLlegada`).
+   *
+   * Si empieza después —el otro le va a estar de frente en la calle, pasada la
+   * doble raya de su salida—, deja la pista por la salida de siempre, espera
+   * fuera de ella como cualquiera que rueda y el tramo se reparte como entre
+   * dos que ruedan. Se le daba el paso siempre: en Los Rodeos, por la 30, la
+   * avioneta que acababa de tocar se encontraba de frente, junto al AG1, la raya
+   * de la que iba delante al AG2, todavía rodando por la paralela dos
+   * kilómetros más allá; se le buscaba otra salida y la única que no pasaba por
+   * ella era la del final de la pista: 1.400 m más de pista y setenta segundos
+   * más encima de ella, con quien venía detrás ya en final (H107). La pista se deja por la primera
+   * salida que sirve, y lo de la calle se resuelve en la calle: «landing
+   * aircraft (…) shall vacate the runway» (OACI, Doc 4444, 7.10.1) antes de que
+   * el siguiente cruce el umbral.
+   */
+  const noEsperaFuera = (q: Volando, suyo: Pick<TramoDeFrente, "entra">): boolean =>
+    corriendoPorLaPista(q) &&
+    q.recorrido + suyo.entra - ANTES_DEL_TRAMO < (q.caminos?.fuera ?? Infinity);
+
+  /**
    * **Quién tiene cada tramo**, entre dos del tráfico que se lo cruzan de
    * frente: la matrícula del que pasa, por la pareja. Ver `repartirLosTramos`.
    */
@@ -3411,7 +3435,7 @@ export function crearTrafico(
         vistos.add(par);
         let pasa = tramoDe.get(par);
         if (pasa === undefined) {
-          const corre = corriendoPorLaPista(a) ? a : corriendoPorLaPista(b) ? b : null;
+          const corre = noEsperaFuera(a, deA) ? a : noEsperaFuera(b, deB) ? b : null;
           pasa =
             corre !== null
               ? corre === a
@@ -4789,9 +4813,43 @@ export function crearTrafico(
      */
     const tuyo = tu ? (tu.alUmbral ?? vienes) : null;
     if (tuyo !== null && tuyo - (alineado ? 0 : antesDeTuPermiso(tu?.velocidad)) < hueco) return true;
+    if (clave === "torre.lineUpWait" && remonta <= 0 && vieneDelTraficoAntesDe(hueco)) return true;
     return laFila(null, contigo, sinLosQueEsperan).some(
       (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,
     );
+  };
+
+  /**
+   * **Si uno del tráfico que viene a aterrizar cruzaría el umbral antes de
+   * `hueco` segundos**, aunque todavía no haya girado a la base y no esté en la
+   * fila. Es lo mismo que contigo por el circuito, más arriba, con los demás.
+   *
+   * Solo para «line up and wait». La fila empieza en la esquina de la base, y
+   * el que gira no cuenta con la salida que ya tiene la pista: la torre alineaba
+   * a uno sin nadie en la fila, con otro en el viento en cola a minuto y medio
+   * del umbral; en la base ése ya no le dejaba despegar —no habría pasado el
+   * final antes— ni lo contaba para esperar, bajaba hasta la decisión con el
+   * otro alineado y se iba al aire. En Los Rodeos por la 12, desde que la
+   * avioneta sale de la GA 1 por la E2 (H105), en la misma cabecera y sin
+   * remontar: alineada 63 s con un turbohélice en final, y al aire (H107). Una
+   * torre de verdad ve al del viento en cola y no alinea a quien no se va a
+   * haber ido antes de que cruce el umbral (OACI, Doc 4444, 7.10.1.2): espera
+   * en su doble raya, fuera de la pista, y sale detrás.
+   *
+   * La salida directa, sin alinearse a esperar, sigue como estaba: mirándolo
+   * también para ella, se retenía a uno por el que iba a irse al aire por guion y
+   * después despegaba detrás de su frustrada, a 264 m (H107). Y el que entra a
+   * remontar, también: ése ya cuenta su remonte en el hueco, y sin radio los que
+   * llegan le ceden el turno (H102); mirándolo, en Encarnación ya no se daba el
+   * caso de `ceden-el-turno-sin-radio.test.ts`.
+   */
+  const vieneDelTraficoAntesDe = (hueco: number): boolean => {
+    for (const b of aviones.values()) {
+      if (horaDeUmbral(b) !== null) continue;
+      const metros = metrosAlUmbral(b);
+      if (metros !== null && metros / Math.max(1, b.marca.velocidad) < hueco) return true;
+    }
+    return false;
   };
 
   /** Lo que se aparta un avión que aparece de los que ya se ven, m. */
