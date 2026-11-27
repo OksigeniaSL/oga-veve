@@ -5026,3 +5026,188 @@ guyrami 3 jaz-20`: **63 de 63 comprobaciones y 2 sin medir**; apagado en el pues
 - Lo de H107 sigue: lo que no mira `seEchariaEncima`, por lo que la salida directa no se retiene por los del viento en cola; el que
   entra a remontar, que no los mira; la clase de H104, las veinte frustradas de Los Rodeos que quedan; y quien juega en la mesa con
   radio, que no obedece la frustrada salvo con `FRUSTRA=orden`.
+
+## Enmienda H107c (27-11-2026): la verde para quien juega con otro listo delante en la fila, y la paciencia de la fila que se gastaba esperando lo mismo
+
+### El caso
+
+En la ronda de la tanda 31 cayó por primera vez, en el árbol c11dd7fb, «y en la fila de salida sale primero el que esperaba
+antes», con `OGA_FILA_DE_SALIDA=1 node scripts/verificar-vuelo-entero.mjs la-palma guyrami 12 jaz-20` (el 12 es el reloj, ×12;
+con viento de 035 la pista es la 01, y se remonta): el banco saca a rodar a EC-OMK al empezar, quien juega rueda detrás de él
+75 s, llega a su doble raya a los 152 y la torre le dice «número dos» a los 159; EC-GMO tiene la pista con «cleared to land» a
+los 208; a los 335, 183 s después de llegar, la verde es para quien juega, que remonta y sale, y EC-OMK sigue en su doble raya,
+a 137 m de su camino. La roja fue de 182 s de juego, **144 de ellos con voz sonando**.
+
+Y la misma clase —la verde con otro listo delante que todavía no ha entrado en la pista— ya estaba en la mesa con main: sin
+radio, 12 de los 1.760 (Encarnación, semillas 9 y 17; Guaraní, 11), y con radio, 9 de los 2.820 (Concepción, 11 y 12). Con
+H107b se les suma Gando, semilla 17: 16 y 12.
+
+### ¿Es de la tanda 31?
+
+No. La mesa de H104 con la fila del banco (`FILA=1`: uno de la frecuencia sale a rodar al empezar, con `sacarARodar`, y quien
+juega, JAZ 20, llega a su doble raya de 90 a 270 s después; en el banco, a los 152), en La Palma con viento de 035/10:
+
+| árbol | vuelos | con alguien listo delante al llegar | verde con él sin entrar |
+|---|---|---|---|
+| main, 4c96454d | 400 | 139 | 0 |
+| tanda 31, c11dd7fb (main + H106 + H107) | 80 | 25 | 0 |
+| tanda 32, dd4865b2 (+ H107b) | 400 | 139 | 0 |
+
+Los tres sacan los mismos vuelos byte a byte: H106 y H107 no cambian nada de La Palma. Lo que cambia es el banco, que **sortea
+su frecuencia en cada vuelo**: la misma orden, cuatro veces en una ronda, dio cuatro puestos a rodar distintos (EC-IWP, EC-WCK,
+EC-ZOK y EC-LNF). En las rondas que pasaron, al de delante le llegó su «backtrack» unos cuarenta segundos después de que llegaras;
+en la que cayó tocó un sorteo con EC-GMO llegando, y a ×12, donde cada segundo de voz son doce de juego (ADR 0014, «Del juego,
+la fila: no es la red»).
+
+### Por qué la torre retenía al primero
+
+Caso a caso, con la traza de `todaviaNo` y de `llegaAntesDeQueSalga` cada cinco segundos mientras quien juega espera:
+
+- **Encarnación, semillas 9 y 17 (sin radio).** ZP-JFX entra a remontar a los 358 y despega a los 600,5: 242 s con la pista
+  ocupada (en la 17, ZP-IRF, de los 349 a los 589). ZP-SCL espera en su doble raya desde los 361,5 por la pista ocupada en el
+  dibujo, y quien juega, que llega a los 379, por lo mismo («dibujo+fila»). A los 559, con la pista todavía ocupada, la paciencia
+  de la fila ha contado sus 180 s y saca a ZP-SCL de tu fila; al despegar ZP-JFX, los dos estáis libres a la vez y la verde es
+  tuya a los 629,5. ZP-SCL entra a los 677,5, cuando ya has despegado.
+- **Concepción, semilla 12 (con radio, por la 16).** Lo mismo: ZP-IHT remonta de los 491 a los 682, ZP-HVH y tú esperáis por él,
+  y la verde es tuya a los 700; ZP-HVH entra a los 748.
+- **Concepción, semilla 11 (por la 16 y por la 34), y Guaraní, semilla 11 (sin radio).** ZP-GHJ remonta hasta los 253,5 (229,5
+  por la 34; en Guaraní, hasta los 307), y después ZP-WCS espera **la estela** de ZP-GHJ: `llegaAntesDeQueSalga` ya no le pone
+  nada —ni fila, ni viento en cola, ni tú— y `todaviaNo` sigue diciendo que no hasta dos minutos después de su despegue. A quien
+  juega la mesa no le da su estela —con radio no la mira; sin radio le dice «M»—, así que su roja era solo la fila, y la paciencia,
+  que había contado el remonte que esperabais los dos, se acaba antes que la estela. En el juego el JAZ 20 es ligero y habría
+  esperado la misma estela; lo que no es de verdad es que la paciencia contara los noventa segundos de remonte.
+- **Gando, semilla 17 (con radio y sin radio).** La de «Lo que queda» de H107b: EC-SHC da su vuelta de espera por tu turno
+  (`tuTurnoDeSalir`), y para EC-LIO sigue en la fila, a 84–115 s del umbral según por dónde va de su vuelta, contra un hueco de
+  128 s. Tu roja es solo la fila, la paciencia cuenta, y a los 180 s sales tú.
+- **La Palma, el banco.** EC-OMK remonta, y con EC-GMO llegando no cabe —su «cleared to land» es a los 208—: lo mismo te tiene a
+  ti en la roja («frecuencia», después «dibujo»), y después, el canal ocupado. La paciencia contó las tres cosas.
+
+**No es la cuenta del remonte que se pasa por arriba** (H104d): en ninguno de estos casos el retenido lo está por su remonte
+contado de más. Son dos cosas: la paciencia contaba el rato en que el de delante y tú esperabais lo mismo —la pista ocupada, una
+estela, el canal—, y la vuelta de espera que se da por tu turno no le vale al de delante.
+
+**Y la segunda sale mucho más de lo que veían las mesas.** `fila-de-salida.test.ts` no le da a quien juega su salida (`sale`), y
+sin ella no hay vuelta por tu turno. Con la prueba de la fila tal cual pero con la salida contada como la cuenta el juego
+—`tuSalidaParaLaTorre`: entrar y alinearse, lo que remontes y tu carrera—, en 160 semillas por campo:
+
+| campo, viento, avión | con alguien delante | verde con él sin entrar | roja con alguien delante, mediana, s |
+|---|---|---|---|
+| Gando, 021/10, JAZ 20 | 96 | 27 → 0 | 210 → 234 |
+| Gando, 021/10, JAZ 60 | 96 | 28 → 0 | 182 → 188 |
+| Guaraní, 041/10, JAZ 20 | 20 | 6 → 0 | 341,5 → 387 |
+| Guaraní, 041/10, JAZ 60 | 22 | 6 → 0 | 236,5 → 311,5 |
+| Tenerife Sur, 069/10, JAZ 20 | 62 | 9 → 0 | 216 → 258,5 |
+| Tenerife Sur, 069/10, JAZ 60 | 62 | 3 → 0 | 128 → 174 |
+| Los Rodeos por la 12, 120/12, JAZ 20 | 79 | 21 → 0 | 190,5 → 229,5 |
+| Los Rodeos por la 12, 120/12, JAZ 60 | 79 | 22 → 0 | 145 → 166,5 |
+| Los Rodeos por la 30, 300/12, JAZ 20 | 59 | 1 → 0 | 238 |
+
+Concepción por la 16, La Palma, El Hierro y Pilar, con los dos aviones: 0 antes y 0 después, y la misma roja. Casi todos son la
+vuelta por tu turno: en Tenerife Sur, semilla 22, EC-BVU da su vuelta a 9.468 m de su camino de los 310 a los 370 con EC-GHW, un
+reactor, en su doble raya; en Los Rodeos por la 12, semilla 18, EC-CCD la da de los 160 a los 325 con EC-GXD delante. La roja
+de quien juega con alguien delante sube: es la del de delante, que ahora sale primero.
+
+### Decisión
+
+1. **La paciencia de la fila solo cuenta el rato en que lo único que te tiene en la roja es la fila, y con el canal libre**
+   (`contarLaFila` en `flight/turno-de-pista.ts`). Es la red del candado entre el dibujo y la frecuencia —si la frecuencia no le
+   da su salida al de delante pudiendo dársela—, y no tiene por qué gastarse mientras los dos esperáis por lo mismo: la pista
+   ocupada en el dibujo o en la frecuencia, una estela, uno que llega, lo que suelta la pista por sonar. Ni con el canal ocupado,
+   que es cuando la frecuencia no le puede decir nada a nadie. La calle única cuenta como fila: en una sola calle, el de delante
+   esperando en ella es la fila (`SOLO_LA_FILA`).
+2. **La vuelta de espera por tu turno, solo si eres el siguiente** (`tuTurnoDeSalir` en `world/trafico.ts`): con otro listo en su
+   doble raya desde antes que tú, no se da. El que llega aterriza, el de delante sale detrás de él y tú detrás del de delante, en
+   el orden en que estabais listos (Doc 4444, 7.9).
+
+Lo de H107b —que la salida de delante no cuente a los que dan la vuelta por tu turno— no se ha vuelto a probar ni se ha trazado
+por qué subían con ello las frustradas de Gando (de 3 a 6, EC-LIO alineado a los 446,5 y sin despegar hasta los 818). Con el 2
+ya no hay vuelta por tu turno con alguien delante, y el de delante no se alinea delante de uno que da una vuelta que no es por él.
+
+### Lo medido
+
+Las mesas y los criterios de H107 y H107b, con el código de dd4865b2 antes (la mesa de entonces, que sale igual vuelo a vuelo que
+`t-mio` y `s-mio` de H107b) y los dos arreglos después.
+
+Con radio, los 2.820 (`FRUSTRA` sin poner y `H100=1`). Cambian 12 vuelos, los 12 de la verde con otro delante:
+
+| campo (vuelos) | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| Los Rodeos (600) | 20 | 787 | 682 | 39,9 (9) | 63,6 | 0/0/0 | 0/0 |
+| Gando (60) | 3 | 78 → 77 | 90 → 93 | 55,0 (24,5) → 54,9 (24,5) | 70,0 → 69,5 | 0/0/0 | 0/0 |
+| Tenerife Sur (60) | 3 | 70 | 85 | 47,7 (36) | 67,6 | 0/0/0 | 0/0 |
+| Lanzarote (60) | 0 | 65 | 61 | 18,5 (2) | 67,9 | 0/0/0 | 0/0 |
+| Fuerteventura (60) | 0 | 71 | 67 | 25,4 (2) | 71,3 | 0/0/0 | 0/0 |
+| La Palma (60) | 18 | 73 | 102 | 81,5 (56) | 86,7 | 0/0/0 | 0/0 |
+| Cuatro Vientos (60) | 0 | 63 | 69 | 17,3 (2) | 64,6 | 0/0/0 | 0/0 |
+| Pettirossi (60) | 3 | 74 | 90 | 43,0 (17,5) | 46,9 | 0/0/0 | 0/0 |
+| El Hierro, remontando (300) | 64 | 437 | 561 | 86,3 (94) | 89,3 | 0/0/0 | 0/0 |
+| La Gomera, remontando (300) | 6 | 369 | 527 | 73,6 (52) | 97,0 | 0/0/0 | 0/0 |
+| Pilar (300) | 1 | 457 | 574 | 39,1 (35,5) | 56,2 | 0/0/0 | 0/0 |
+| Pedro Juan (300) | 0 | 426 | 557 | 25,3 (5) | 69,7 | 0/0/1 | 0/0 |
+| Concepción (300) | 13 | 399 → 401 | 520 | 61,4 (31) → 64,1 (31) | 73,5 → 76,1 | 0/0/0 | 0/0 |
+| Estigarribia (300) | 27 | 405 | 542 | 44,9 (15,5) | 72,2 | 0/0/1 | 0/0 |
+| **todos (2.820)** | **158** | **3.774 → 3.775** | **4.527 → 4.530** | **49,8 (24,5) → 50,1 (24,5)** | **72,5 → 72,8** | **0/0/2** | **0/0** |
+
+Sin radio, los 1.760 de H98 y H100 (`corre-luz.sh`). Cambian 16, los 16 de la verde con otro delante:
+
+| campo (vuelos) | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| Gando (160) | 4 | 264 | 273 → 275 | 50,8 (8,5) | 68,1 → 68,6 | 0/0/0 | 0/0 |
+| Tenerife Sur (160) | 4 | 198 | 226 | 34,5 (2) | 73,4 | 0/1/3 | 0/0 |
+| Lanzarote (160) | 4 | 216 | 243 | 29,4 (2) | 80,0 | 0/0/0 | 0/0 |
+| Fuerteventura (160) | 0 | 216 | 202 | 26,7 (2) | 81,4 | 0/0/0 | 0/0 |
+| La Palma (160) | 48 | 232 | 272 | 81,1 (56) | 82,0 | 0/0/0 | 0/0 |
+| Cuatro Vientos (160) | 2 | 228 | 202 | 28,3 (11) | 88,7 | 0/2/2 | 0/0 |
+| Pettirossi (160) | 6 | 216 | 229 | 32,4 (2) | 47,8 | 8/0/0 | 0/0 |
+| Encarnación (160) | 12 | 206 → 210 | 264 | 93,7 (40,5) → 107,2 (40,5) | 61,9 → 61,7 | 0/0/4 | 0/0 |
+| El Hierro (160) | 36 | 204 | 274 | 85,1 (90,5) | 127,6 | 0/0/0 | 0/0 |
+| Guaraní (160) | 0 | 210 | 253 | 54,3 (13,5) → 57,9 (13,5) | 91,0 → 94,7 | 14/1/0 | 0/0 |
+| Los Rodeos (160) | 16 | 216 | 224 | 41,6 (15) | 79,1 | 0/0/0 | 0/0 |
+| **todos (1.760)** | **132** | **2.406 → 2.410** | **2.662 → 2.664** | **50,7 (14) → 52,3 (14)** | **81,2 → 81,5** | **22/4/9** | **0/0** |
+
+Encarnación sin radio, los 1.000 de H102: cambian 34, los 34 de la verde con otro delante que había ahí (de 34 a 0). Frustradas
+46, tomas 1.413, salidas 1.584 → 1.585, la roja de 90,0 (54) a 99,4 (54), 68,7 s por llegada y 0/6/22: iguales salvo la roja
+media.
+
+Cumple campo a campo: ninguna toma con la pista ocupada, ningún encuentro a más, las frustradas iguales en todos los campos, la
+espera por llegada como mucho un 4,1 % peor en un campo —Guaraní sin radio, de 91,0 a 94,7; Concepción con radio, un 3,5 %— y la
+mediana de la roja de quien juega igual en todos. Lo que sube es la roja media donde la verde iba antes que el de delante: en
+Encarnación, en la semilla 9, de 250,5 a 520 s —ZP-SCL remonta antes que tú, cuatro minutos—, y en Guaraní,
+en la 11, de 182,5 a 326. Es lo que se espera de verdad detrás de uno que remonta.
+
+### Las pruebas
+
+Con lo que monta el juego —la frecuencia, el tráfico con sus calles y sus tipos, y el turno— y quien juega esperando en su doble
+raya con su salida contada como la cuenta el juego, **`paciencia-de-la-fila.test.ts`**, nueva:
+
+- **con el canal ocupado la paciencia no se gasta**: en Tenerife Sur, con alguien listo delante y 240 s de roja con el canal
+  ocupado, el de delante sigue en tu fila. Vista fallar sin el arreglo: en la semilla 4, a los 180 s EC-IJP ya no estaba;
+- **en Gando, Guaraní y Tenerife Sur, con alguien listo delante cuando llegas, la verde espera a que se vaya**, 60 semillas por
+  campo con el JAZ 20. Vista fallar sin el arreglo: en Gando, nueve (semillas 16, 20, 22, 29, 35, 38, 44, 46 y 48); en Guaraní, tres
+  (11, 37 y 43); en Tenerife Sur, dos (22 y 35).
+
+Las cuatro en verde con los arreglos, en `--pool=threads` y en `--pool=forks`, igual que `fila-de-salida.test.ts` y
+`alinearse-con-uno-en-el-viento-en-cola.test.ts`, sin tocar.
+
+**Vitest entero, una vez y con los dos arreglos**, por partes de 2 GB en `--pool=threads`: `src/world` en cuatro, 210 ficheros,
+4.573 en verde y 3 saltadas; `src/flight`, la primera y la segunda de tres, 186 ficheros, 3.573 en verde, 27 saltadas y una pendiente. Ninguna roja. **La
+tercera parte de `src/flight` y lo de fuera de `src/world` y `src/flight` no se han corrido**: no dio el tiempo.
+
+**Navegador**, con `OGA_GPU=1`, en el puerto 5692 y con los dos arreglos. `OGA_FILA_DE_SALIDA=1 node
+scripts/verificar-vuelo-entero.mjs la-palma guyrami 12 jaz-20`: **65 de 65 comprobaciones y 1 sin medir**, y el caso de la prueba
+se dio: EC-EKT, puesto a rodar, delante; «número dos» a los 162; EC-TXV cantando final a los 235; una roja de 478 s de juego, **398
+de ellos con voz sonando** (126 s a ×1), y EC-EKT salió primero. Con el código de antes la paciencia contaba esos 478 s
+enteros; el mismo sorteo no se ha volado con él. Vuelo entero, apagado en el puesto a los 1.292 s. Y `node scripts/verificar-vuelo-entero.mjs gran-canaria
+taguato 1 jaz-90`: **63 de 63 comprobaciones y 3 sin medir**, sin nadie delante en la fila y la roja más larga de 40 s.
+
+### Lo que queda
+
+- **La estela de quien juega en la mesa**: con radio no la mira y sin radio le dice «M» a cualquier avión. En Concepción y Guaraní
+  el JAZ 20 habría esperado la misma estela que el de delante. Las tablas de aquí no se han medido con ella.
+- **La roja detrás del que remonta una pista larga** puede pasar de lo que el banco permite: en Encarnación, 520 s. Es la de
+  verdad, y el banco no ha volado ese caso.
+- **La cuenta del remonte que se pasa por arriba** (H104d) no aparece en ninguno de estos casos; sigue en la lista.
+- **El vitest entero**: falta la tercera parte de `src/flight` y lo de fuera de `src/world` y `src/flight`.
+- Lo de H107b sigue: sin nadie detrás, el alineado espera su vez en la radio hasta 75 s; lo que no mira `seEchariaEncima`; el que
+  entra a remontar, que no mira a los del viento en cola; la clase de H104; y quien juega en la mesa con radio, que no obedece la
+  frustrada salvo con `FRUSTRA=orden`.
