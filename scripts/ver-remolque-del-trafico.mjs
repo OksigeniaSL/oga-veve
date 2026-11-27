@@ -15,8 +15,8 @@
  *
  * Y saca capturas desde una cámara puesta encima, con la tarjeta de verdad
  * (`OGA_GPU=1`). Uso: `node scripts/ver-remolque-del-trafico.mjs carpeta`, con
- * `OGA_PUERTO` y `OGA_PRISA` como los demás bancos, y con `OGA_AVION`, el avión de
- * quien juega.
+ * `OGA_PUERTO` y `OGA_PRISA` como los demás bancos, con `OGA_AVION`, el avión de
+ * quien juega, y con `OGA_ESCENARIO`, otro campo que Los Rodeos.
  *
  * **Quien juega, en el JAZ 90** (H51). Iba en el JAZ 20, y con el viento de siempre su
  * puesto de salida queda en lo que barre el empuje del 23, el puesto al que se va
@@ -46,6 +46,8 @@ const PRISA = process.env.OGA_PRISA ? Number(process.env.OGA_PRISA) : 4;
 // Una matrícula que en Los Rodeos le toca al reactor: ver `tipoDe` en `trafico.ts`.
 const MATRICULA = process.env.OGA_MATRICULA ?? "EC-PSH";
 const AVION = process.env.OGA_AVION ?? "jaz-90";
+// Y el campo, Los Rodeos si no se dice otro (H106: La Palma, con los puestos que no se usan a la vez).
+const ESCENARIO = process.env.OGA_ESCENARIO ?? "tenerife-norte";
 
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
@@ -89,7 +91,7 @@ try {
   const page = await navegador.newPage({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
   page.on("pageerror", (e) => fallos.push(`error de página: ${e.message}`));
   await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
-  await page.goto(`${BASE}/?escenario=tenerife-norte&hora=12&leccion=despegue&avion=${AVION}`);
+  await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&leccion=despegue&avion=${AVION}`);
   await page.waitForFunction(() => globalThis.__oga?.aeronave?.().deVerdad === true, null, { timeout: 120000 });
   const renderer = await page.evaluate(() => {
     const c = document.createElement("canvas").getContext("webgl2");
