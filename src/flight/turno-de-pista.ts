@@ -116,6 +116,11 @@ export interface DibujoDelTurno {
    * Ver `remonta` en `world/trafico.ts`.
    */
   remonta?(matricula: string): number;
+  /**
+   * Si el que sale ya espera listo en su doble raya. Sin esto, no. Ver
+   * `enSuRaya` en `world/trafico.ts`.
+   */
+  enSuRaya?(matricula: string): boolean;
   /** Los que esperan en una doble raya de tu salida. Ver `enTuSalida`. */
   enTuSalida?(): string[];
   /**
@@ -674,6 +679,8 @@ export class TurnoDePista {
     de.radio.remonta = (m) => (de.trafico()?.remonta?.(m) ?? 0) > 0;
     // Y si hay con qué decirle al retenido que espere: ver `RETENIDO`.
     de.radio.sabeRetener = (m) => de.sabeRetener?.(m) ?? false;
+    // Y si el que sale ya espera listo en su doble raya: ver `enSuRaya` en `flight/radio.ts`.
+    de.radio.enSuRaya = (m) => de.trafico()?.enSuRaya?.(m) ?? false;
   }
 
   /** Si estás en el suelo. Ver `AlrededorDelTurno.enTierra`. */

@@ -57,10 +57,10 @@ function dados(semilla: number): () => number {
   };
 }
 
-/** Los Rodeos con su relieve, en la cabecera que da ese viento. */
-export function elCampo(vientoDe: number) {
-  const base = SCENARIOS.find((e) => e.id === "tenerife-norte")!;
-  const esc = conViento(base, { ...TIEMPO_DE_CASA, vientoDe, vientoKt: 12 });
+/** Los Rodeos con su relieve, u otro campo, en la cabecera que da ese viento. */
+export function elCampo(vientoDe: number, id = "tenerife-norte", vientoKt = 12) {
+  const base = SCENARIOS.find((e) => e.id === id)!;
+  const esc = conViento(base, { ...TIEMPO_DE_CASA, vientoDe, vientoKt });
   const lejos = relieve(`${esc.id}-lejos`);
   const terreno = new Terrain({
     ...esc,
@@ -159,6 +159,13 @@ export interface ComoSeVuela {
   readonly queSales: boolean;
   /** Lo que de verdad tardas alineado en dar gas, s; la torre cuenta con veinticinco. */
   readonly alineado?: number;
+  /** Si vuelas sin radio, con el 7600: la torre no te puede decir nada. */
+  readonly sinRadio?: boolean;
+  /**
+   * Lo que alargas el viento en cola, m: la base y la final, otro tanto más
+   * lejos del umbral. La torre sigue viendo tu circuito de siempre.
+   */
+  readonly alargas?: number;
 }
 
 /** Lo que cuenta la torre que tardas alineado en dar gas, s. */
@@ -190,8 +197,12 @@ export function volar(k: Campo, avion: AircraftConfig, semilla: number, como: Co
   const umbral = { x: pista.x - Math.sin(h) * media, y: cota, z: pista.z + Math.cos(h) * media };
   const enCola = avion.velocidadDeCircuito;
   const enBase = avion.approachSpeed + 7.7;
+  // Alargando, la esquina de la base y la entrada en la final, más lejos por el eje.
+  const alargas = como.alargas ?? 0;
+  const masLejos = (p: Punto): Punto => ({ x: p.x - Math.sin(h) * alargas, z: p.z + Math.cos(h) * alargas });
+  const [b3, b4] = [masLejos(v3), { ...v4, ...masLejos(v4) }];
   const camino = virada(
-    [v0, v1, alLado(v2), alLado(v3), v4, umbral],
+    [v0, v1, alLado(v2), alLado(b3), b4, umbral],
     [0, radioDeViraje(enCola), radioDeViraje(enCola), radioDeViraje(enBase), radioDeViraje(enBase), 0],
   );
   const acum = [0];
@@ -207,10 +218,13 @@ export function volar(k: Campo, avion: AircraftConfig, semilla: number, como: Co
     });
     return acum[j]!;
   };
-  const sBase = masCerca(alLado(v3));
-  const sFinal = masCerca(v4);
+  const sBase = masCerca(alLado(b3));
+  const sFinal = masCerca(b4);
   const sube = avion.approachSpeed > 55 ? 12 : avion.approachSpeed > 40 ? 8 : 4.5;
-  const alFinal = v4.y - cota;
+  // Alargando, la final empieza más lejos y más baja: por la senda de tres grados.
+  const alFinal = alargas
+    ? Math.min(f.altura, Math.hypot(b4.x - umbral.x, b4.z - umbral.z) * Math.tan((3 * Math.PI) / 180) + 15)
+    : v4.y - cota;
 
   let fase = "rodando";
   let [x, z, rumbo, alto, v, s, vertical] = [v0.x, v0.z, h, 0, 0, 0, 0];
@@ -267,6 +281,7 @@ export function volar(k: Campo, avion: AircraftConfig, semilla: number, como: Co
       porElCircuito,
       enLaPista: !enElAire && ["alineando", "despegando", "aterrizado"].includes(fase),
       velocidad: Math.max(15, v),
+      ...(como.sinRadio ? { sinRadio: true } : {}),
       porDondeVuela:
         enElAire && como.dondeVuelas
           ? () => porDondeSigues(vs, umbral, { x, y: cota + alto, z, rumbo }, Math.max(15, v), escala)
@@ -283,6 +298,7 @@ export function volar(k: Campo, avion: AircraftConfig, semilla: number, como: Co
     afis: () => esAfis(aero),
     calleUnica: () => false,
     alUmbral: () => (alUmbral === null ? Infinity : alUmbral * Math.max(15, v)),
+    ...(como.sinRadio ? { sinRadio: () => true } : {}),
     alto: () => alto,
     enTierra: () => !enElAire,
     decirAOtro: () => null,
