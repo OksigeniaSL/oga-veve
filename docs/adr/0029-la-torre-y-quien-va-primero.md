@@ -4385,10 +4385,12 @@ antes de que el código entre: una prueba que no puede ver lo que mira no prueba
 
 ### Lo que queda
 
-- **La roja de 178 s en Guaraní** (`roja-de-verdad.test.ts`): ver de qué es y arreglarlo.
+- **La roja de 178 s en Guaraní** (`roja-de-verdad.test.ts`): ver de qué es y arreglarlo. Mirado en
+  H104c, abajo: es la de verdad.
 - **Rehacer las tres de `salida-tapada.test.ts`** en El Hierro para que vean su caso con lo 2 y la
   cadencia —en H41d hizo falta buscarlo en 192 tiradas—, correr el vitest entero y meter el código,
-  que está en 04b00f97 —revertido en 9abaf028— tal cual está medido aquí.
+  que está en 04b00f97 —revertido en 9abaf028— tal cual está medido aquí. Buscado en H104c, abajo,
+  en más de mil cuatrocientas tiradas: no sale ningún caso de verdad que ver.
 - **Dos en su vuelta en la misma esquina.** Cuando ninguna de las seis maneras de darla libra al otro,
   se da la que más se aparta (`leTocaEsperar`). De verdad, el segundo espera en otro sitio, alarga o
   se separa en altura; el modelo solo sabe dar el tres sesenta en la esquina. Lo de quinientos pies
@@ -4402,3 +4404,186 @@ antes de que el código entre: una prueba que no puede ver lo que mira no prueba
   11,7 % más con lo 2: no es de las mesas que se pedían, pero ahí está.
 - **La vuelta del otro, solo hasta que la cierra.** Lo que se probó para contar las que le quedan no
   entra (arriba); con dos en la misma esquina hace falta otra manera de esperar, no mejor cuenta.
+
+## Enmienda H104c (27-11-2026): la roja de Guaraní, que es la de verdad, y las tres de El Hierro, que ya no tienen caso que ver; la salida que tiene la pista en el turno de los que llegan sigue sin entrar
+
+### El caso
+
+H104b dejó el arreglo medido y fuera por el vitest entero: en `roja-de-verdad.test.ts`, en Guaraní,
+una roja de 178 s con un límite de 170, y tres pruebas de `salida-tapada.test.ts` en El Hierro que se
+quedaban sin su caso. Se vuelve a poner el código tal cual (04b00f97, revertido en 9abaf028) y se mira
+cada cosa con la traza.
+
+### La roja de Guaraní: es la de verdad
+
+La prueba de fuera de vitest, con la traza de cada medio segundo (quién tiene la pista en la frecuencia,
+qué pieza sujeta la roja y dónde va cada uno del tráfico), da la misma lista que la prueba: 178 s en la
+semilla 21, y detrás 157,5, 115, 113,5 y 109,5. Sin el código, la semilla 21 no tiene roja: 2,5 s.
+
+Semilla 21, por orden:
+
+- A los 178 s ZP-IKW, un reactor, tiene su salida: entra en la pista por la calle y la remonta un
+  kilómetro y medio a veinte nudos hasta la cabecera antes de correr. La pista es suya hasta que pasa
+  el final, a los 446 s.
+- ZP-HYQ, una avioneta que llega, **antes se iba al aire** por él: cantaba final a los 363 s y la torre
+  la mandaba al aire a los 379,5. Ahora espera su turno detrás de la salida que tiene la pista (lo 2):
+  canta el viento en cola a los 349 y la final a los 429.
+- Llegas a tu doble raya a los 431,4, dos segundos después de esa final. La roja es de la frecuencia:
+  ZP-HYQ en final.
+- A los 446,5, con ZP-IKW pasado el final, a ZP-HYQ se la autoriza a aterrizar. Toca a los 476, 44 s
+  después de que llegues.
+- Su salida, a 1.422 m de la toma, **la tapa ZP-GAJ**, un bimotor que espera en esa doble raya desde
+  los 374 s: sigue hasta la siguiente, a 2.289 m de la toma (`rehacerLaLlegada`, «siga hasta la
+  próxima»). Rueda esos 2,3 km a 17 m/s de media y deja la pista a los 607,5: 131 s después de tocar.
+- Con el «pista libre», la verde 2,5 s después: 178 s.
+
+Ninguno sobra. La avioneta va más despacio que el reactor en la final y en la pista, y la siguiente
+salida le queda 867 m más allá; mientras no deje la pista no sale nadie: «until all preceding landing
+aircraft are clear of the runway-in-use» (Doc 4444, 7.9.2). Los 170 s del límite eran lo de un
+reactor que canta final, frena y deja la pista, con diez segundos de su salida tapada; con una avioneta
+y la suya tapada en una pista de 3,4 km son más. **El límite pasa a
+185 s, con la cuenta escrita en la prueba.** Nada cambia en el código.
+
+### Las tres de El Hierro: no queda caso que ver
+
+Las tres miran lo mismo, de tres maneras: uno de la frecuencia rueda a una doble raya de tu salida, un
+tercero le ocupa la pista y, cuando queda libre, ya no le da tiempo a irse antes que tú. Con torre se
+pide una vuelta (o irse al aire); si no la das, o te vas al aire, o el de tu salida se queda retenido,
+o el permiso te llega por debajo de la decisión (H96); con un AFIS se te avisa y en la final se te
+propone irte. Cada prueba exige además que eso pase alguna vez —que el instrumento vea el caso—, y la
+de no dar la vuelta, que lo pedido fuera de verdad: una vuelta que no das y tras la que no pasa nada
+de eso no hacía falta.
+
+El barrido, con el código puesto y la prueba tal cual, fuera de vitest (el fichero de la prueba con su
+`llegarConDosQueSalen`, y un bucle al final):
+
+| qué | tiradas | vueltas o idas al aire pedidas | avisos · propuestas (AFIS) |
+|---|---|---|---|
+| 29 parejas de horas, de 700/670 a 140/110 s, semillas 1 a 3, las dos cabeceras, JAZ 20 y el más grande: con torre y con AFIS | 348 + 348 | 0 | 0 · 0 |
+| las 5 parejas de la prueba, semillas 4 a 21, con torre | 360 | 40, todas en la 152, con 500/470 y 360/330 y de la semilla 9 en adelante | — |
+| esas 2 parejas, semillas 9 a 21, sin dar la vuelta y con AFIS | 104 + 104 | 40, y ninguna lleva a nada: 0 idas al aire, 0 retenidos, 0 permisos tardíos | 40 · **0** |
+| las otras 3 parejas de la prueba, semillas 9, 10 y 13, sin dar la vuelta y con AFIS | 36 + 36 | 0 | 0 · 0 |
+| 10 parejas de 320/290 a 140/110, semillas 9, 10 y 13, en la 152: con torre, sin dar la vuelta y con AFIS | 60 · 60 · 60 | 6 con torre y 6 sin darla, todas con 320/290, y ninguna lleva a nada | 11 · 8, todas con 320/290 |
+
+Lo que queda, de la semilla 9 en adelante, es siempre lo mismo. 360/330, semilla 9, JAZ 20 por la
+152: EC-GCZ entra en la pista a los 28 s y la remonta 630 m; EC-JFX espera en la doble raya de tu
+salida. A los 153 s, con 236 s para tu toma, la torre cuenta que a EC-JFX le hacen falta 184 s más 53
+de esperar a EC-GCZ, 237, y te pide la vuelta: le falta un segundo. Pero a EC-JFX se le da la salida
+a los 170, 17 s después y no 53 —con la cadencia de H100, en cuanto la pista lo permite—, y de ahí a
+estar en el aire tarda 139 s: a los 309 pasa de los veinte metros. Sin dar la vuelta tocas a los 390,
+81 s después, con el permiso a su hora. La vuelta la pide la cuenta por arriba de lo que tarda en
+irse el que remonta (`loQueTardaEnIrse`: `MARGEN_PARA_IRSE` y lo que se le cuenta de remonte, carrera y
+espera), no un conflicto: es justo lo que la prueba de no dar la vuelta marca como «sin vuelta, sin
+irse al aire, sin retener a nadie y sin permiso tardío». Con el AFIS, con 500/470 y 360/330, lo mismo:
+se avisa, y en la final no hay nada que proponer.
+
+Con 320/290 el AFIS sí ve su caso, y es otro: los de la frecuencia salen uno detrás de otro por tu
+única salida, cada uno remontando sus 630 m, y en la final siempre hay uno que no se ha ido. Con el
+JAZ 20, en la semilla 9, se te propone irte cuatro veces seguidas —por EC-JFX, EC-SCL, EC-XBG y
+EC-TRQ— y tocas a los 951 s. La prueba del AFIS lo vería; la de no dar la vuelta, con esa misma hora y
+torre, sigue con la vuelta que no lleva a nada.
+
+Sin el código pasa igual en la otra cabecera: con 360/330 y las semillas 10 y 13, por la 332, la
+vuelta pedida tampoco lleva a nada. Por la 152, con el código de antes, sí: el de tu salida salía más
+tarde y el permiso te llegaba por debajo de la decisión; con la cadencia sale antes y llega a tiempo.
+
+**No se ha encontrado hora ni semilla con la que las tres vean su caso y lo pedido sea de verdad.** Con
+lo 2 y la cadencia, en El Hierro el conflicto que miran ya no se da con este montaje —es lo que se
+buscaba—, y lo único que queda es una vuelta que la torre pide de más. Meter una semilla de la 9 en
+adelante, con 320/290, haría pasar la de torre y la del AFIS, y fallar con razón la de no dar la
+vuelta («sin nada»); y lo que vería la de torre es esa vuelta que no hace falta. No se rebaja
+ninguna, y no se mete ninguna hora ni semilla.
+
+### Lo sin radio que subía
+
+En la mesa sin radio de los 1.760 vuelos de H98 y H100, que no era de las pedidas, subían dos cosas.
+No se ha arreglado ninguna.
+
+- **La espera por llegada, en Pettirossi de 46,0 a 50,7 s (10,1 %) y en Encarnación de 61,9 a 69,1
+  (11,7 %).** Con la traza de quién impone cada vuelta, corrida también en el antes (la mesa con el
+  código de antes y la traza sale igual vuelo a vuelo que la de H102: 320 de 320), segundos por
+  llegada:
+
+  | quién impone la vuelta | Pettirossi | Encarnación |
+  |---|---|---|
+  | quien juega | 32,5 → 27,9 | 38,2 → 43,8 |
+  | tu salida | 6,6 → 9,9 | 8,9 → 5,6 |
+  | otra llegada | 6,9 → 6,6 | 13,7 → 14,3 |
+  | otra llegada en su vuelta | — | 1,1 → 5,4 |
+  | una salida del tráfico que tiene la pista (lo 2) | 0 → 6,3 | 0 |
+  | **total** | **46,0 → 50,7** | **61,9 → 69,1** |
+  | frustradas | 14 → 0 | 12 → 0 |
+
+  En Pettirossi lo que más sube es lo 2, 6,3 s, y es lo de verdad: el que antes se iba al aire con
+  la salida delante ahora espera a que pase el final (7.10.1); la espera por tu salida sube 3,3 y la
+  de quien juega baja 4,6. Son 1.734 s más de espera en 254 llegadas, 124 por cada frustrada que se
+  va. En Encarnación no hay nada de lo 2: suben la espera detrás de quien juega y detrás de otra
+  llegada que da su vuelta —con más vueltas, más vueltas en cadena—, y baja la de tu salida. De dónde
+  sale lo de quien juega no se ha mirado, y no se puede decir si es de verdad.
+- **La Palma, la vuelta de otro a menos de 300 m de ti, de 0 a 2**: EC-UKM, semilla 7, alargando y con
+  tu base por su esquina (H104b). No se ha mirado más.
+
+### Decisión
+
+**Sigue sin entrar.** La roja de Guaraní es la de verdad y tiene su límite con la cuenta, pero las tres
+de El Hierro no vuelven a ver su caso con ninguna hora ni semilla de las barridas, y no se rebajan. El
+juego no cambia. El código, con el límite nuevo de `roja-de-verdad.test.ts`, queda en la historia tal
+como entraría (83ffdfe2, revertido en 2c6cfb4b), y es el mismo de 04b00f97 con lo de H105
+encima: la mesa con el worktree sale igual vuelo a vuelo que la de H104b en La Palma (60 de 60).
+
+Como no entra, no se ha corrido el vitest entero ni los tres bancos del navegador: eran para meterlo.
+Sí, con el código puesto, `roja-de-verdad.test.ts`, `vuelta-de-espera-sin-radio.test.ts` y
+`ceden-el-turno-sin-radio.test.ts`, en `--pool=threads` y en `--pool=forks`: 25 de 25 en los dos, con
+la de Guaraní en 178 s y por debajo de los 185.
+
+### Lo medido
+
+Sin cambios en el código desde H104b, las tablas son las suyas, salvo Los Rodeos: H105 le cambió la
+aviación general y se ha vuelto a correr, antes y con el código, con la mesa de H104 tal cual. Con
+radio, los 2.820 vuelos (antes → con el código):
+
+| campo (vuelos) | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| Los Rodeos (600) | 61 → 17 | 747 → 776 | 688 → 679 | 36,1 (2) → 37,0 (2) | 65,9 → 66,9 | 0/0/0 | 1/0 |
+| Gando (60) | 6 → 3 | 78 → 77 | 93 | 49,0 (24,5) → 48,7 (24,5) | 64,5 → 70,2 | 0/0/0 | 0/0 |
+| Tenerife Sur (60) | 3 → 0 | 70 → 71 | 85 | 47,7 (36) → 44,1 (36) | 67,6 → 70,9 | 0/0/0 | 0/0 |
+| Lanzarote (60) | 0 | 65 | 63 | 18,5 (2) | 67,9 | 0/0/0 | 0/0 |
+| Fuerteventura (60) | 0 | 71 → 70 | 67 | 25,4 (2) | 71,3 → 74,8 | 0/0/0 | 0/0 |
+| La Palma (60) | 18 → 0 | 73 → 79 | 102 → 109 | 81,5 (56) → 88,6 (92) | 86,7 → 80,6 | 0/0/0 | 0/0 |
+| Cuatro Vientos (60) | 0 | 63 | 69 | 17,3 (2) | 64,6 → 66,6 | 0/0/0 | 0/0 |
+| Pettirossi (60) | 7 → 0 | 69 → 80 | 92 → 93 | 39,9 (12) → 40,3 (12) | 45,5 → 49,7 | 0/0/0 | 0/0 |
+| El Hierro, remontando (300) | 64 → 1 | 437 → 513 | 561 → 617 | 86,3 (94) → 70,0 (68,5) | 89,3 → 85,5 | 0/0/0 | 0/0 |
+| La Gomera, remontando (300) | 6 → 0 | 369 → 406 | 527 → 570 | 73,6 (52) → 62,7 (40,5) | 97,0 → 92,3 | 0/0/0 | 0/0 |
+| Pilar (300) | 2 → 1 | 456 → 477 | 576 → 654 | 39,1 (35,5) → 33,7 (15) | 56,3 → 61,3 | 0/0/0 | 0/0 |
+| Pedro Juan (300) | 0 | 426 → 459 | 561 → 613 | 25,3 (5) → 24,9 (3) | 69,7 → 59,9 | 0/0/1 → 0/0/0 | 0/0 |
+| Concepción (300) | 13 → 0 | 399 → 424 | 520 → 547 | 61,4 (31) → 64,8 (35) | 73,5 → 68,7 | 0/0/0 | 0/0 |
+| Estigarribia (300) | 27 | 403 → 435 | 540 → 579 | 45,0 (15,5) → 50,3 (22,5) | 72,1 → 70,1 | 0/0/1 | 0/0 |
+| **todos (2.820)** | **207 → 49** | **3.726 → 3.995** | **4.544 → 4.838** | **48,8 (23) → 46,5 (20,5)** | **72,9 → 71,3** | **0/0/2 → 0/0/1** | **1/0 → 1/0** |
+
+En Los Rodeos, H105 sola sube las frustradas del tráfico de 40 a 61 y trae un aterrizaje con la pista
+ocupada en 600 vuelos (JAZ 20, viento de 300, semilla 6, con EC-GVY en ella), que sale igual con el
+código y sin él; con el código, las frustradas bajan a 17 y la espera por llegada sube un 1,5 %. Lo
+que no cumple de los criterios de H104 es la mediana de La Palma, que H104b ya dejó fuera: el resto,
+todo.
+
+Encarnación sin radio, JAZ 20, las dos cabeceras, por la línea y alargando:
+
+| | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | rojas a ti (por tu salida) |
+|---|---|---|---|---|---|---|---|
+| callada a los 20 s de despegar, obedeciendo cada roja (1.000) | 46 → 0 | 1.413 → 1.490 | 1.584 → 1.644 | 90,0 (54) → 83,6 (43,5) | 68,7 → 69,8 | 0/6/22 → 0/2/12 | 99 (78) → 76 (40) |
+| callada desde el principio (400) | 22 → 0 | 540 → 568 | 576 → 608 | 92,8 (58,5) → 87,7 (44,5) | 69,1 → 74,3 | 0/1/12 → 0/1/12 | 10 (0) → 7 (0) |
+
+### Lo que queda
+
+- **Lo que tarda en irse el que remonta, contado por arriba.** En El Hierro la torre pide vueltas que
+  no hacen falta: a EC-JFX se le contaban 237 s y se fue en 156. Es lo único que les queda de caso a
+  las tres pruebas de El Hierro, y no es de verdad; pasa también sin el código (por la 332, semillas 10
+  y 13). O se ajusta esa cuenta —`MARGEN_PARA_IRSE`, el remonte, la espera a la que tiene la pista— y
+  se vuelve a buscar el caso, o se monta de otra manera: con una llegada que aterrice delante de ti
+  mientras el de tu salida espera, que es el de H41d y que con lo 2 no ha salido en el barrido.
+- **Encarnación sin radio**, los 7,2 s de espera de más por llegada, que no son de la salida que tiene
+  la pista: vienen de esperar detrás de quien juega (+5,6) y de otra llegada en su vuelta (+4,3), y
+  falta ver por qué.
+- **La Palma sin radio**, la vuelta de EC-UKM a 298 m de tu base alargando (H104b).
+- Y lo de H104b que sigue igual: dos en su vuelta en la misma esquina, el que va por delante de ti y
+  espera por ti, alargar el viento en cola para el tráfico.
