@@ -5310,7 +5310,7 @@
       280.8
     ]
   ],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCRR, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCRR/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCRR PDC 1","wef":"01-OCT-26"}],"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-04","leido":"2026-11-24"}},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCRR, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCRR/","leido":"2026-11-24","cartas":[{"carta":"AD 2-GCRR PDC 1","wef":"01-OCT-26"}],"incompatibles":{"parejas":[["13A","13B"],["13A","13C"],["T3","T7"],["T4","T7"]],"fuente":"AIP España AD 2-GCRR PDC 1 (WEF 01-OCT-26): la observación «INCOMP.» de cada puesto de la tabla de características de los puestos de estacionamiento, y sus notas, que no limitan ninguna a un tipo. Leído el 2026-11-24."},"pasarelas":{"fuente":"Ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0), por su WMS; la fecha de cada foto, la de su capa de mosaico (OI.MosaicElement, 20 cm por píxel)","url":"https://www.ign.es/wms-inspire/pnoa-ma","foto":"2024-04","leido":"2026-11-24"}},
   "parkingPositions": [
     {
       "ref": "24",

@@ -199,6 +199,120 @@ const NUNCA_A_LA_VEZ = {
 };
 
 /**
+ * **Las notas de la tabla que dejan una incompatibilidad para un tipo** (H106): la observación «INCOMP.» de un puesto
+ * dice con cuáles no se usa a la vez, y la llamada que lleva detrás, en qué caso. Casi todas las llamadas de esas
+ * observaciones son de otra cosa —la guía de atraque, la pasarela, el power-back, por dónde se sale— y no la limitan;
+ * las que sí, aquí, con su texto. En La Palma, AD 2-GCLA PDC 1.2 (WEF 15-MAY-25): el 12 con el 10, y con el 14 y el
+ * 15, solo si en el 12 hay uno de la familia B757. `en`, el puesto en el que tiene que estar ese avión; `tipos`, sus
+ * designadores de la OACI (Doc 8643).
+ */
+const NOTAS_QUE_LIMITAN = {
+  GCLA: {
+    "(2)": {
+      en: "12",
+      tipos: ["B752", "B753"],
+      nota: "(2) «For an aircraft of the B757 family to enter PRKG 12, there can be no aircraft parked on PRKG 10.»",
+    },
+    "(3)": {
+      en: "12",
+      tipos: ["B752", "B753"],
+      nota: "(3) «For an aircraft of the B757 family to exit PRKG 12 towards gates A or B, there can be no aircraft parked on PRKG 14 or 15.»",
+    },
+  },
+};
+
+/**
+ * **Y la que la tabla escribe en la observación misma, partida en tres renglones** (H106), que no cabe en la regla de las
+ * llamadas: en Barajas, AD 2-LEMD PDC 2.5 (WEF 01-OCT-26), el 574, «INCOMP. 573; y si hay un B762, B763 o B764
+ * estacionado en PRKG 576: INCOMP. 576», y el 576, lo mismo al revés. Lo de antes del punto y coma lo lee la regla.
+ */
+const CONDICIONADAS = {
+  /*
+   * En Gran Canaria, AD 2-GCLP PDC 1.5 (WEF 09-JUL-26), el T21B: «INCOMP. T21, T22, T23, LH01, (14) T20 Y // AND B748», en dos
+   * renglones de la celda. Lo de después de «T20» no se lee como otra cosa que el T20 con un B748; la (14) es «Not allowed:
+   * A306, B753, DC87».
+   */
+  GCLP: [
+    {
+      entre: ["T20", "T21B"],
+      en: "T20",
+      tipos: ["B748"],
+      nota: "T21B: «INCOMP. T21, T22, T23, LH01, (14) T20 Y // AND B748»; (14) «Not allowed: A306, B753, DC87».",
+    },
+  ],
+  LEMD: [
+    {
+      entre: ["574", "576"],
+      en: "576",
+      tipos: ["B762", "B763", "B764"],
+      nota: "574: «INCOMP. 573; and if there is a B762, B763 or B764 parked in PRKG 576: INCOMP. 576»; 576: «INCOMP. 577; and if there is a B762, B763 or B764 parked: INCOMP. 574».",
+    },
+  ],
+};
+
+/**
+ * **Los puestos con los que la observación «INCOMP.» de uno dice que no se usa a la vez**, cada uno con las llamadas
+ * que lleva detrás: «INCOMP. 10 (2), 11, 13, 14 (3), 15 (3)». Los separa la coma, el espacio, el guion —«504-507-508»
+ * en Barajas, que es una lista y no un tramo: el 533 es «532-534» y el 534, «533-536»—, la «Y» y el punto —«2. 4» en el
+ * 3 de Los Rodeos—; lo de después de un punto y coma, o de la doble barra de la traducción, es otra frase (ver
+ * `CONDICIONADAS`), y lo de antes de «INCOMP.», de otra cosa. Las llamadas van con el puesto que tienen delante.
+ */
+function incompatiblesDeLaObservacion(obs) {
+  const m = /I?NCOMP\.?\s*(.*)$/.exec(obs ?? "");
+  if (!m) return [];
+  const lista = [];
+  for (const t of m[1].split(/;|\/\//)[0].match(/\(\d+\)|[A-Z]*\d+[A-Z]*|[A-Z]+/gi) ?? []) {
+    if (/^\(\d+\)$/.test(t)) lista.at(-1)?.llamadas.push(t);
+    else if (/\d/.test(t)) lista.push({ ref: t, llamadas: [] });
+  }
+  return lista;
+}
+
+/**
+ * **Las parejas de puestos que la tabla no deja usar a la vez** (H106), de las observaciones «INCOMP.» de cada puesto
+ * (`incompatiblesDeLaObservacion`) y sus notas. Una pareja sale de la fila de uno o de la del otro, o de las dos; si en
+ * alguna va sin una nota que la limite (`NOTAS_QUE_LIMITAN`), va siempre, y si en todas va con ella, solo en lo que
+ * dice la nota (`soloCon`). Por su `ref` en la ficha, si está en ella, y si no, como lo escribe la carta; ordenadas,
+ * para que la ficha salga igual se junte las veces que se junte. `null` si la carta no trae ninguna.
+ */
+function incompatiblesDe(id, aip, ficha) {
+  const enLaFicha = new Map((ficha?.parkingPositions ?? []).filter((p) => p.ref).map((p) => [refNormalizado(p.ref), p.ref]));
+  const comoEnLaFicha = (ref) => enLaFicha.get(refNormalizado(ref)) ?? ref;
+  const limitan = NOTAS_QUE_LIMITAN[id] ?? {};
+  const vistas = new Map();
+  for (const fila of aip.puestos) {
+    for (const { ref, llamadas } of incompatiblesDeLaObservacion(fila.obs)) {
+      if (refNormalizado(ref) === refNormalizado(fila.ref)) continue;
+      const pareja = [comoEnLaFicha(fila.ref), comoEnLaFicha(ref)].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+      const clave = pareja.map(refNormalizado).join("|");
+      const notas = llamadas.filter((l) => limitan[l]).map((l) => limitan[l]);
+      const antes = vistas.get(clave);
+      if (!antes) vistas.set(clave, { pareja, notas: notas.length ? notas : null });
+      else if (!notas.length) antes.notas = null;
+      else if (antes.notas) for (const n of notas) if (!antes.notas.includes(n)) antes.notas.push(n);
+    }
+  }
+  for (const c of CONDICIONADAS[id] ?? []) {
+    const pareja = c.entre.map(comoEnLaFicha);
+    vistas.set(pareja.map(refNormalizado).join("|"), { pareja, notas: [c] });
+  }
+  if (!vistas.size) return null;
+  const orden = (a, b) => a.pareja.join(" ").localeCompare(b.pareja.join(" "), "es", { numeric: true });
+  const todas = [...vistas.values()].sort(orden);
+  const soloCon = todas
+    .filter((v) => v.notas)
+    .map((v) => ({ pareja: v.pareja, en: comoEnLaFicha(v.notas[0].en), tipos: v.notas[0].tipos, nota: v.notas.map((n) => n.nota).join(" ") }));
+  const cartas = [...new Set(aip.puestos.filter((f) => /INCOMP/i.test(f.obs ?? "")).map((f) => f.carta))].map(
+    (c) => `${c} (WEF ${aip.cartas.find((x) => x.carta === c)?.wef ?? "?"})`,
+  );
+  return {
+    parejas: todas.filter((v) => !v.notas).map((v) => v.pareja),
+    ...(soloCon.length ? { soloCon } : {}),
+    fuente: `AIP España ${cartas.join(", ")}: la observación «INCOMP.» de cada puesto de la tabla de características de los puestos de estacionamiento, y sus notas${soloCon.length ? "" : ", que no limitan ninguna a un tipo"}. Leído el ${aip.leido}.`,
+  };
+}
+
+/**
  * **De qué puestos sale el que va por sus medios, donde de los puestos de la ficha casi todos son de salida en
  * retroceso y ninguno es de aviación general** (H97). En La Palma, AD 2-GCLA PDC 1.2 (WEF 15-MAY-25): catorce «R»
  * y, de avión, dos «A», el 12 y el 14, que la PDC 1.1 dibuja de paso, entrando de la R y saliendo a ella; y la
@@ -530,7 +644,17 @@ function filasDe(texto) {
         max = metros[1];
         llamada = arriba[1];
       }
-      const obs = [llamada, resto.join(" ").replace(/^[–—-]$/, "").trim()].filter(Boolean).join(" ");
+      /*
+       * «INCOMP. 18B, 19B (2)» en un renglón de debajo, solo en su columna, como en Fuerteventura del 18 al 23B, en el
+       * G6 y el J5 de Tenerife Sur, en los T de Barajas y en Gran Canaria (H106): la celda partida en dos o en tres, y
+       * lo de debajo, hasta la fila siguiente, es de esta. En el P60 de Gran Canaria la carta escribe «NCOMP.».
+       */
+      const debajoDeLaFila = [];
+      for (let k = n + 1; k < Math.min(lineas.length, n + 5) && lineas[k].trim() && !FILA.test(lineas[k]); k++) {
+        const suyo = /^\s{20,}(I?NCOMP\.?\s.*?)\s*$/.exec(lineas[k])?.[1];
+        if (suyo) debajoDeLaFila.push(suyo);
+      }
+      const obs = [llamada, resto.join(" ").replace(/^[–—-]$/, "").trim(), ...debajoDeLaFila].filter(Boolean).join(" ");
       filas.push({
         ref: m[1],
         lat: grados(m[3]),
@@ -555,6 +679,21 @@ function contactoDe(id, fila) {
   return null;
 }
 
+/**
+ * **El día en que se bajaron las cartas**: hoy, salvo que se vuelvan a extraer las mismas hojas, con su misma fecha
+ * (WEF), que es volver a leer lo que ya se bajó ese día (H106). Así la extracción sale igual se haga las veces que se haga.
+ */
+async function leidoDeAntes(id, cartas) {
+  const hoy = new Date().toISOString().slice(0, 10);
+  try {
+    const antes = JSON.parse(await readFile(join(AIP, `${id.toLowerCase()}.pdc.json`), "utf8"));
+    const igual = (c) => c.map((x) => `${x.carta}|${x.wef}`).join(",");
+    return igual(antes.cartas ?? []) === igual(cartas) ? antes.leido : hoy;
+  } catch {
+    return hoy;
+  }
+}
+
 async function extraer(id, textos) {
   const filas = [];
   for (const t of textos) filas.push(...filasDe(await readFile(t, "utf8")));
@@ -565,7 +704,7 @@ async function extraer(id, textos) {
     id,
     fuente: `AIP España (ENAIRE), AD 2-${id}, cartas PDC: características de los puestos de estacionamiento`,
     url: `https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/${id}/`,
-    leido: new Date().toISOString().slice(0, 10),
+    leido: await leidoDeAntes(id, cartas),
     cartas,
     contacto: CONTACTO[id] ?? null,
     puestos,
@@ -957,6 +1096,7 @@ async function juntar(id) {
     p.entradaDeducida = true;
     deducidas.push(p.ref);
   }
+  const incompatibles = incompatiblesDe(id, aip, { parkingPositions: finales });
   const meta = {
     fuente: aip.fuente,
     url: aip.url,
@@ -973,6 +1113,7 @@ async function juntar(id) {
     ...(DE_PASO[id] ? { general: DE_PASO[id].fuente } : {}),
     ...(general ? { general: general.fuente } : {}),
     ...(NUNCA_A_LA_VEZ[id] ? { nuncaALaVez: NUNCA_A_LA_VEZ[id] } : {}),
+    ...(incompatibles ? { incompatibles } : {}),
     ...(POR_SUS_MEDIOS[id] ? { porSusMedios: { puestos: POR_SUS_MEDIOS[id].puestos, fuente: POR_SUS_MEDIOS[id].fuente } } : {}),
     ...(POR_SUS_MEDIOS[id]?.calle && !RODAJE_DE_LA_CASILLA[id]
       ? { callesDePlataforma: [POR_SUS_MEDIOS[id].calle, ...Object.keys(general?.calles ?? {})] }
@@ -1103,6 +1244,7 @@ async function poner(id) {
     cartas: [...aip.cartas, { carta: regla.carta, wef: regla.wef }],
     rodaje: regla.rodaje,
     callesDePlataforma: regla.callesDePlataforma,
+    ...(incompatiblesDe(id, aip, { parkingPositions: puestos }) ? { incompatibles: incompatiblesDe(id, aip, { parkingPositions: puestos }) } : {}),
     ...fuenteDeLasPasarelas(id),
   };
   await writeFile(ruta, conLosPuestos(texto, puestos, meta));
