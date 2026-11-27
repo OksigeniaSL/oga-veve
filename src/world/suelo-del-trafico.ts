@@ -20,7 +20,7 @@
  * mundo y ya está. Quien los recorre es `trafico.ts`.
  */
 
-import { admite, aproarDe, cumpleElAproar, deAviacionGeneral, delAipEn, dePorSusMedios, llegaPorDe, nuncaALaVezCon, puestoEn, saleDeFrente, tienePasarela, valeParaElEmpuje } from "./puestos-del-aip";
+import { admite, aproarDe, cumpleElAproar, deAviacionGeneral, delAipEn, dePorSusMedios, incompatiblesCon, llegaPorDe, nuncaALaVezCon, puestoEn, saleDeFrente, tienePasarela, valeParaElEmpuje } from "./puestos-del-aip";
 import { aLaPolilinea, enElPavimentoDe, type Aerodrome, type Punto } from "./aerodrome";
 import {
   edificiosDePasarela,
@@ -173,6 +173,11 @@ export interface SueloDelTrafico {
    * Ver `nuncaALaVezCon` en `puestos-del-aip.ts`.
    */
   nuncaALaVezCon(puesto: EnElPlano): readonly EnElPlano[];
+  /**
+   * **Los puestos que no se usan a la vez que el que hay ahí** (H106), en el mundo: con un avión en uno, el otro no se
+   * coge. Ver `incompatiblesCon` en `puestos-del-aip.ts`.
+   */
+  incompatiblesCon(puesto: EnElPlano): readonly EnElPlano[];
 }
 
 /**
@@ -202,6 +207,16 @@ export function puestoLibre(x: number, z: number, deOtros: PuestosDeOtros | unde
   return deOtros.ocupados.every(
     (o) => Math.hypot(o.x - x, o.z - z) >= deOtros.semiala + o.semiala + MARGEN_EN_EL_PUESTO,
   );
+}
+
+/**
+ * **Si alguno de estos puestos ya es de otro** (H106): los incompatibles con el que se mira, contra los de otros
+ * del tráfico y el tuyo, que se tienen desde que se asignan. Uno está en un puesto si su rueda de morro queda a
+ * menos de lo que separa a dos puestos (`OTRO_PUESTO`).
+ */
+export function conUnoOcupado(sitios: readonly EnElPlano[], deOtros: PuestosDeOtros | undefined): boolean {
+  if (!deOtros || !sitios.length) return false;
+  return sitios.some((s) => deOtros.ocupados.some((o) => Math.hypot(o.x - s.x, o.z - s.z) < OTRO_PUESTO));
 }
 
 /**
@@ -680,9 +695,10 @@ export function sueloDelTrafico(
   const hayGeneral = delPavimento.some((p) => p.aip?.uso === "general");
   /*
    * Y la avioneta y el bimotor, donde no la da y la ficha trae de qué puestos se sale sin tractor, a esos
-   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios. El turbohélice no, todavía (H103):
-   * en La Palma el 12 es incompatible con el 10, el 11, el 13, el 14 y el 15 (AD 2-GCLA PDC 1.2), y el tráfico
-   * no lo sabe; con el ATR en el 12, el coche que lleva al JAZ 110 al 11 le pasaba por debajo del ala.
+   * (H97): en La Palma salían del 7, que es de retroceso, por sus medios. El turbohélice no, todavía (H103, H106):
+   * en La Palma el 12 no se usa a la vez que el 11 y el 13 (AD 2-GCLA PDC 1.2), y desde la H106 el tráfico no coge
+   * uno incompatible con uno ocupado (`conUnoOcupado`); pero con el ATR saliendo del 12, el coche que lleva al JAZ
+   * 110 al 11 le sigue pasando por debajo del ala en `de-frente-en-la-calle.test.ts`. Ver el ADR 0025, H106.
    */
   const hayPorSusMedios = !hayGeneral && !!aero.aipPuestos?.porSusMedios;
   const porAla = new Map<number, readonly Punto[]>();
@@ -729,6 +745,13 @@ export function sueloDelTrafico(
     deContacto.set(clave, lista);
     return lista;
   };
+  /** Los incompatibles de cada puesto (H106), en el mundo: se miran una vez. */
+  const incompatibles = new Map<Punto, readonly EnElPlano[]>();
+  const incompatiblesDe = (xy: Punto): readonly EnElPlano[] => {
+    let hecho = incompatibles.get(xy);
+    if (!hecho) incompatibles.set(xy, (hecho = incompatiblesCon(aero, xy[0], -xy[1]).map(alMundo)));
+    return hecho;
+  };
   /**
    * **Entre qué puestos elige**: los suyos —los de contacto si embarca por
    * pasarela— que no son de otro avión del tráfico; si todos lo son, cualquiera
@@ -744,10 +767,18 @@ export function sueloDelTrafico(
     const mejorNo = mejorNoDe(pasarela, ala);
     const deContactoDeVerdad = !!pasarela && suyos !== puestos;
     if (!deOtros?.ocupados.length) return { lista: suyos, deContacto: deContactoDeVerdad, mejorNo };
-    const libres = suyos.filter((xy) => puestoLibre(xy[0], -xy[1], deOtros));
-    if (libres.length) return { lista: libres, deContacto: deContactoDeVerdad, mejorNo };
-    const otros = puestos.filter((xy) => puestoLibre(xy[0], -xy[1], deOtros));
-    if (otros.length) return { lista: otros, deContacto: false, mejorNo };
+    /*
+     * **Y ni uno que la tabla no deja usar a la vez que uno ocupado** (H106): antes uno compatible de los que no son
+     * suyos que uno suyo junto a otro. Si ni así, como antes, sin mirarlo: un puesto hace falta.
+     */
+    const libre = (xy: Punto) => puestoLibre(xy[0], -xy[1], deOtros);
+    const compatible = (xy: Punto) => libre(xy) && !conUnoOcupado(incompatiblesDe(xy), deOtros);
+    for (const vale of [compatible, libre]) {
+      const libres = suyos.filter(vale);
+      if (libres.length) return { lista: libres, deContacto: deContactoDeVerdad, mejorNo };
+      const otros = puestos.filter(vale);
+      if (otros.length) return { lista: otros, deContacto: false, mejorNo };
+    }
     const distintos = puestos.filter((xy) => deOtros.ocupados.every((o) => Math.hypot(o.x - xy[0], o.z + xy[1]) > OTRO_PUESTO));
     return { lista: distintos.length ? distintos : puestos, deContacto: false, mejorNo };
   };
@@ -1536,6 +1567,9 @@ export function sueloDelTrafico(
 
     nuncaALaVezCon(puesto) {
       return nuncaALaVezCon(aero, puesto.x, puesto.z).map(alMundo);
+    },
+    incompatiblesCon(puesto) {
+      return incompatiblesCon(aero, puesto.x, puesto.z).map(alMundo);
     },
 
     unaSolaCalle() {

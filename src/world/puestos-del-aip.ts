@@ -256,22 +256,51 @@ export function dePorSusMedios<P extends { readonly ref?: string | null; readonl
   return puestos.filter((p) => p.ref != null && refs.includes(p.ref) && admite(p.aip, envergadura));
 }
 
+/** Los puestos de la ficha que hacen pareja con el que hay en (x, z), por su punto. */
+function deSusParejas(
+  aero: Pick<Aerodrome, "parkingPositions"> | null | undefined,
+  parejas: readonly (readonly [string, string])[],
+  x: number,
+  z: number,
+): readonly Punto[] {
+  const puestos = aero?.parkingPositions;
+  if (!parejas.length || !puestos) return [];
+  const suyo = puestos.find((p) => Math.hypot(p.xy[0] - x, p.xy[1] + z) < 5)?.ref;
+  if (!suyo) return [];
+  const otros = parejas.flatMap(([a, b]) => (a === suyo ? [b] : b === suyo ? [a] : []));
+  return puestos.filter((p) => p.ref != null && otros.includes(p.ref)).map((p) => p.xy);
+}
+
+/**
+ * **Los puestos que no se usan a la vez que el que hay en (x, z)** (H106, `aipPuestos.incompatibles`), por su punto,
+ * en los ejes de la ficha: con un avión en uno, el otro no se da, ni para salir ni para llegar. Ninguno, si la tabla
+ * no lo dice del suyo.
+ *
+ * Las que una nota deja para un tipo (`soloCon`) no van: la familia B757 en el 12 de La Palma, o un 767 en el 576 de
+ * Barajas, y ni el tráfico ni la flota de quien juega es de esos tipos —sus aviones van por su envergadura, y ninguno
+ * lleva designador de la OACI—. Con un A320 en el 12, el 10 se da, que es lo que dice la nota.
+ */
+export function incompatiblesCon(
+  aero: Pick<Aerodrome, "parkingPositions" | "aipPuestos"> | null | undefined,
+  x: number,
+  z: number,
+): readonly Punto[] {
+  return deSusParejas(aero, aero?.aipPuestos?.incompatibles?.parejas ?? [], x, z);
+}
+
 /**
  * **Los puestos en los que no se puede maniobrar mientras se maniobra en este** (H97, `aipPuestos.nuncaALaVez`),
- * por su punto, en los ejes de la ficha. Ninguno, si el AIP no lo dice del suyo.
+ * por su punto, en los ejes de la ficha. Ninguno, si el AIP no lo dice del suyo. Y los que no se usan a la vez
+ * (H106, `incompatiblesCon`): si no se puede estar a la vez en los dos, tampoco maniobrar.
  */
 export function nuncaALaVezCon(
   aero: Pick<Aerodrome, "parkingPositions" | "aipPuestos"> | null | undefined,
   x: number,
   z: number,
 ): readonly Punto[] {
-  const parejas = aero?.aipPuestos?.nuncaALaVez?.parejas;
-  const puestos = aero?.parkingPositions;
-  if (!parejas || !puestos) return [];
-  const suyo = puestos.find((p) => Math.hypot(p.xy[0] - x, p.xy[1] + z) < 5)?.ref;
-  if (!suyo) return [];
-  const otros = parejas.flatMap(([a, b]) => (a === suyo ? [b] : b === suyo ? [a] : []));
-  return puestos.filter((p) => p.ref != null && otros.includes(p.ref)).map((p) => p.xy);
+  const deManiobra = deSusParejas(aero, aero?.aipPuestos?.nuncaALaVez?.parejas ?? [], x, z);
+  const deLaTabla = incompatiblesCon(aero, x, z);
+  return deLaTabla.length ? [...deManiobra, ...deLaTabla.filter((p) => !deManiobra.includes(p))] : deManiobra;
 }
 
 /**
