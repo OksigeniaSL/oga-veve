@@ -32,14 +32,27 @@ const TORRE_TARDA = 2.2;
  * un reactor que acaba de cantar final en bajar, frenar y dejar la pista, con
  * el hueco de la radio encima.
  *
- * **Y diez segundos más** por el que llega y tiene su salida tapada por otro
+ * **Y lo que rueda de más el que llega y tiene su salida tapada** por otro
  * que espera en la doble raya de esa misma calle: sigue hasta la siguiente,
- * como se lo diría la torre, y ocupa la pista ese trozo más. Medido en Guaraní,
- * una de ciento veinte: 165 s. Antes pasaba por encima del que esperaba —a un
- * metro de su eje— y la roja salía más corta. Ver `rehacerLaLlegada` en
- * `world/trafico.ts`.
+ * como se lo diría la torre, y ocupa la pista ese trozo más. Antes pasaba por
+ * encima del que esperaba —a un metro de su eje— y la roja salía más corta.
+ * Ver `rehacerLaLlegada` en `world/trafico.ts`.
+ *
+ * Se contaban diez segundos más, medidos en Guaraní: 165 s. **Con una avioneta
+ * son más**, y es lo de verdad (H104c): en Guaraní, semilla 21, llegas a tu
+ * doble raya dos segundos después de que ZP-HYQ, una avioneta, cante final;
+ * la autorizan a aterrizar cuando el reactor que sale delante pasa el final de
+ * la pista, toca 44 s después de que llegues, y su salida —a 1.422 m de la
+ * toma— la tapa un bimotor que espera en esa doble raya: sigue hasta la
+ * siguiente, a 2.289 m, y deja la pista 131 s después de tocar, a 17 m/s de
+ * media. 178 s de roja, y ninguno sobra: la avioneta va más despacio que el
+ * reactor en la final y en la pista, y la siguiente salida le queda 867 m más
+ * allá. Mientras no la deje, nadie sale: «until all preceding landing
+ * aircraft are clear of the runway-in-use» (OACI, Doc 4444, 7.9.2).
+ * Antes de que la salida que tiene la pista contara en el turno de los que
+ * llegan, esa avioneta se iba al aire por el reactor, y no se la esperaba.
  */
-const LA_MAS_LARGA = 170;
+const LA_MAS_LARGA = 185;
 
 /**
  * **Y lo que remonta la pista el que aterriza delante**, donde la única salida
