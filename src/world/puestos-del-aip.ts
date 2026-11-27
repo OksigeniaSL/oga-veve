@@ -78,6 +78,12 @@ export interface DelAip {
    * tabla da de «Aviación General», del AG1 al AG5 (H97).
    */
   readonly uso?: "general" | "carga";
+  /**
+   * **Si de él se sale remolcado hasta una calle**, por su letra (H105): la GA 2 de Los Rodeos, del AG4 al AG7,
+   * «by towing to the centre line of TWY W» (AD 2-GCXO, casilla 20.1.2 J). El juego no remolca avionetas, así
+   * que a estos no se manda a nadie: ver `deAviacionGeneral`.
+   */
+  readonly conTractorHasta?: string;
   /** Y por cuáles se llega, con la pista al norte y al sur. */
   readonly llegaPor?: { readonly norte: readonly string[]; readonly sur: readonly string[] };
 }
@@ -222,6 +228,16 @@ export function seSaleEmpujado(aip: DelAip | null | undefined): boolean {
  */
 export function valeParaElEmpuje(aip: DelAip | null | undefined, envergadura: number): boolean {
   return !aip || (tienePasarela(aip) !== false && seSaleEmpujado(aip) && admite(aip, envergadura));
+}
+
+/**
+ * **Si es de los de aviación general a los que se manda a una avioneta** (H85, H97): de los que la carta da de
+ * aviación general, los que no piden tractor para salir (H105). Los de la GA 2 de Los Rodeos se dejan salir
+ * remolcados hasta la W, y el juego no remolca avionetas: la tuya y las del tráfico van a la GA 1, que sale por sus
+ * medios por la Y.
+ */
+export function deAviacionGeneral(aip: DelAip | null | undefined): boolean {
+  return aip?.uso === "general" && !aip.conTractorHasta;
 }
 
 /**

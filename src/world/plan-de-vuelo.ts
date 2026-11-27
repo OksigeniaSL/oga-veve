@@ -75,7 +75,7 @@ import {
   rumboDeLaPintada,
   SIGUE_LA_RAYA,
 } from "./remolque";
-import { admite, aproarDe, cumpleElAproar, delAipEn, dePorSusMedios, llegaPorDe, puestoEn, saleDeFrente, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
+import { admite, aproarDe, cumpleElAproar, deAviacionGeneral, delAipEn, dePorSusMedios, llegaPorDe, puestoEn, saleDeFrente, valeParaElEmpuje, type DelAip } from "./puestos-del-aip";
 import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
 import { empujaSobrePavimento, fueraDelPavimento, ruedasEn } from "./ruedas-en-el-empuje";
 import { YA_EN_SU_SITIO } from "../flight/senalero";
@@ -2611,7 +2611,8 @@ export class PlanDeVuelo {
      * mudarse de campo: guardado contra él, se tira solo.
      */
     if (this.asfaltoGuardado?.grafo !== this.grafo) {
-      const todos = puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo);
+      // Sin los que se dejan con tractor hasta una calle: el juego no remolca avionetas (H105, `conTractorHasta`).
+      const todos = puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo).filter((p) => !p.aip?.conTractorHasta);
       /*
        * **Y de esos, los que admiten este avión** según el AIP (H60f): el mayor que publica
        * cada puesto, por envergadura. Si no admite ninguno, todos, como antes: el avión tiene
@@ -2636,7 +2637,8 @@ export class PlanDeVuelo {
     if (this.candidatosGuardados) return this.candidatosGuardados;
     const enElAsfalto = this.puestosEnElAsfalto();
     // Donde la carta dice cuáles son de aviación general, a esos (H85); si no, el tercio más apartado de todos.
-    const generales = enElAsfalto.filter((p) => p.aip?.uso === "general");
+    // Los que piden tractor para salir, no (H105): ver `deAviacionGeneral`.
+    const generales = enElAsfalto.filter((p) => deAviacionGeneral(p.aip));
     /*
      * Y donde no lo dice y trae de cuáles se sale sin tractor, a uno de esos, el que menos se ruede (H97): en
      * La Palma, del 11 y del 16, que son de retroceso, la avioneta salía por sus medios.

@@ -207,8 +207,9 @@ const NUNCA_A_LA_VEZ = {
  * En Los Rodeos (H103), AD 2-GCXO PDC 1.2 (WEF 06-AUG-26): de los quince de la ficha, el 17 y el 19 son «A», de
  * AT72, y los otros trece, «R»; y la casilla 20.1.2 los saca por la F. La carta sí da dos plataformas de aviación
  * general, la GA 1 (AG1 a AG3, por sus medios a la Y) y la GA 2 (AG4 a AG7, con tractor a la W), y del 28 al 38
- * deja salir por sus medios: nada de eso está en la ficha, que viene de OpenStreetMap y no los trae. Mientras no
- * estén, el 17 y el 19 son los únicos de la ficha de los que se sale sin tractor.
+ * deja salir por sus medios: nada de eso estaba en la ficha, que viene de OpenStreetMap y no los trae. La aviación
+ * general está desde la H105 (`GENERAL_DE_LA_CARTA`), y a ella van las avionetas; del 17 y del 19 salen los
+ * turbohélices. Del 28 al 38, todavía no.
  *
  * - **`calle`, por cuál se sale y se llega**, si la casilla lo dice: «Aircraft exiting PRKG 17 and 19 (…) enter
  *   TWY R via TWY F at F1 point», y se entra en ellos de la F, con el «FOLLOW ME» esperando en el F1 (20.1.3 F).
@@ -225,9 +226,117 @@ const POR_SUS_MEDIOS = {
     puestos: ["17", "19"],
     calle: "F",
     fuente:
-      "AIP España AD 2-GCXO PDC 1.2 (WEF 06-AUG-26): salida «A» en el 17 y el 19, de AT72, y «R», en retroceso, en los demás de la ficha; AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26), C y E: «autonomous exit parking positions (…) to TWY F (PRKG 17 and 19)», «Aircraft exiting PRKG 17 and 19 (…) enter TWY R via TWY F at F1 point». Las plataformas de aviación general (AG1 a AG7) y los de salida autónoma del 28 al 38 no están en la ficha.",
+      "AIP España AD 2-GCXO PDC 1.2 (WEF 06-AUG-26): salida «A» en el 17 y el 19, de AT72, y «R», en retroceso, en los demás de la ficha; AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26), C y E: «autonomous exit parking positions (…) to TWY F (PRKG 17 and 19)», «Aircraft exiting PRKG 17 and 19 (…) enter TWY R via TWY F at F1 point». Los de salida autónoma del 28 al 38 no están en la ficha; la aviación general, del AG1 al AG7, está desde la H105 (`GENERAL_DE_LA_CARTA`).",
   },
 };
+
+/**
+ * **La aviación general que publica la carta y OpenStreetMap no trae** (H105). En Los Rodeos, AD 2-GCXO PDC 1.2
+ * (WEF 06-AUG-26): del AG1 al AG7, «A», con su punto y su mayor avión —CN35, G150 y PA34—; la PDC 1.1 (WEF
+ * 29-OCT-26) los reparte en dos plataformas, la APN GA 1 (AG1 a AG3) y la APN GA 2 (AG4 a AG7), con la Y y la W
+ * llegando a ellas de la R por el Y1 y el W1. Y la casilla 20.1.2 (AMDT 413/26, 26-NOV-26): C, «autonomous exit
+ * parking positions (…) to TWY Y (PRKG AG1, AG2 and AG3)»; I, de la GA 1 se sale por la Y; J, de la GA 2, «by
+ * towing to the centre line of TWY W».
+ *
+ * - **Los puestos**, en su punto publicado, que ya trae `aip/<id>.pdc.json`; se ponen en la ficha con `manual` y
+ *   se rehacen cada vez que se junta.
+ * - **Las líneas de la GA 1**, la raya blanca pintada en la losa, en la ortofoto PNOA de máxima actualidad (foto
+ *   de 2024), desde donde la Y llega a la plataforma, que es donde acaba la Y de OpenStreetMap, hasta la parada.
+ *   Del AG1 la raya sigue hacia el oeste y da una vuelta cerrada, de unos cinco metros de radio, para dejar el
+ *   avión mirando a la salida; esa vuelta no va, y la línea acaba en la parada por el camino corto.
+ * - **La GA 2 va sin línea y con `conTractorHasta`**: se sale de ella remolcado hasta el eje de la W, y el juego
+ *   no remolca avionetas; en la foto, las de la AG4 y la AG5 están con el morro hacia la calle, metidas de
+ *   espaldas. Están en la ficha y no se le dan a nadie. Ver el «Lo que queda» de la H105.
+ * - **La Y y la W**, que en OpenStreetMap son calles sin nombre: se les pone el suyo, cada una por el primer punto
+ *   de cada trozo. Son calles de plataforma (`callesDePlataforma`): solo rueda por ellas quien sale de un puesto
+ *   que las nombra. Y la raya de cada puesto de la GA 1 va también como raya de la Y (`soloPintada`), para que se
+ *   salga por ella: ver `conLasCalles`.
+ */
+const GENERAL_DE_LA_CARTA = {
+  GCXO: {
+    fuente:
+      "AIP España AD 2-GCXO PDC 1.2 (WEF 06-AUG-26), del AG1 al AG7, «A», con su punto; PDC 1.1 (WEF 29-OCT-26), la APN GA 1 (AG1 a AG3) y la APN GA 2 (AG4 a AG7), con la Y y la W; AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26), C, I y J: de la GA 1 se sale por sus medios por la Y, y de la GA 2, «by towing to the centre line of TWY W». Las líneas de la GA 1, la raya pintada en la ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0; foto de 2024, vista el 26-11-2026 a 20 cm por píxel); la Y y la W, las calles sin nombre de OpenStreetMap que llegan a ellas.",
+    calles: {
+      // Por el primer punto de cada trozo, tal como los trae la ficha de OpenStreetMap.
+      Y: [
+        [-1194, 574.8],
+        [-1205.3, 600],
+      ],
+      W: [
+        [-1025.4, 528.2],
+        [-1005.7, 581.6],
+      ],
+    },
+    puestos: {
+      AG1: { sale: "Y", entrada: [[-1192.7, 634.1], [-1194, 640], [-1196.5, 647.5]] },
+      AG2: { sale: "Y", entrada: [[-1192.7, 634.1], [-1190.5, 638.5], [-1186, 641], [-1180.5, 640.5]] },
+      AG3: {
+        sale: "Y",
+        entrada: [
+          [-1192.7, 634.1],
+          [-1189, 640],
+          [-1180, 645],
+          [-1170, 647.5],
+          [-1155, 646],
+          [-1140, 641],
+          [-1127, 634],
+          [-1120, 627],
+          [-1121.5, 619.5],
+        ],
+      },
+      AG4: { conTractorHasta: "W" },
+      AG5: { conTractorHasta: "W" },
+      AG6: { conTractorHasta: "W" },
+      AG7: { conTractorHasta: "W" },
+    },
+  },
+};
+
+/** De dónde sale la raya de un puesto de `GENERAL_DE_LA_CARTA` puesta como calle: por ella se reconoce al volver a juntar. */
+const fuenteDeLaRaya = (ref, calle) =>
+  `AIP España AD 2-GCXO PDC 1.1 (WEF 29-OCT-26), APN GA 1: la raya del ${ref}, de la ${calle} a la parada, pintada en la losa; trazada sobre la ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0; foto de 2024).`;
+
+/**
+ * **Las calles de la ficha con lo de `GENERAL_DE_LA_CARTA`**, en su texto: los trozos sin `ref` que empiezan en uno de
+ * sus puntos, con su nombre; y la raya de cada puesto de la GA 1 como raya de la calle por la que se sale, solo pintada
+ * (`soloPintada`), como las de la aviación general de Tenerife Sur (H97). Sin ella, el tráfico salía del AG3 en recto por
+ * la losa hasta la Y, pasando por encima del AG2: lo que no es calle no lo engancha, y la Y acaba en el borde de la losa.
+ * La lista se escribe entera, con el formato que ya tiene; las rayas de otra tirada se quitan antes.
+ */
+function conLasCalles(texto, ficha, calles, rayas) {
+  const cerca = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.05;
+  const deAntes = new Set(rayas.map((r) => r.fuente));
+  const nuevas = ficha.taxiways
+    .filter((c) => !(c.manual && deAntes.has(c.fuente)))
+    .map((c) => {
+      const suya = c.ref == null && Object.entries(calles).find(([, puntos]) => puntos.some((q) => cerca(q, c.path[0])));
+      return suya ? { ...c, ref: suya[0] } : c;
+    });
+  for (const [ref, puntos] of Object.entries(calles))
+    for (const q of puntos)
+      if (!nuevas.some((c) => c.ref === ref && cerca(q, c.path[0]))) throw new Error(`no está el trozo de la ${ref} que empieza en ${q}`);
+  const clave = '"taxiways": ';
+  const desde = texto.indexOf(clave);
+  if (desde < 0) throw new Error("la ficha no tiene taxiways");
+  const abre = desde + clave.length;
+  let nivel = 0;
+  let cierra = -1;
+  for (let i = abre, enCadena = false; i < texto.length; i++) {
+    const c = texto[i];
+    if (enCadena) {
+      if (c === "\\") i++;
+      else if (c === '"') enCadena = false;
+    } else if (c === '"') enCadena = true;
+    else if (c === "[") nivel++;
+    else if (c === "]" && --nivel === 0) {
+      cierra = i + 1;
+      break;
+    }
+  }
+  if (cierra < 0) throw new Error("la lista de taxiways no se cierra");
+  const lista = JSON.stringify([...nuevas, ...rayas], null, 2).replace(/\n/g, "\n  ");
+  return texto.slice(0, abre) + lista + texto.slice(cierra);
+}
 
 /**
  * **El campo cuyos puestos se ponen enteros de la carta** (H85), porque OpenStreetMap no trae
@@ -683,11 +792,14 @@ async function juntar(id) {
   const ficha = JSON.parse(texto);
   const aip = JSON.parse(await readFile(join(AIP, `${id.toLowerCase()}.pdc.json`), "utf8"));
   const proyectar = proyector(ficha.origin.lat, ficha.origin.lon);
-  const cuenta = { puestos: ficha.parkingPositions.length, casan: 0, movidos: 0, sinLinea: 0, copias: 0, sinAip: [] };
   const movidos = [];
   const sueltos = [];
   const puestos = [];
-  const { lista, cambiados, repetidos } = casar(ficha.parkingPositions, aip, proyectar);
+  // Los de la aviación general que la ficha no trae se rehacen cada vez (H105, `GENERAL_DE_LA_CARTA`).
+  const general = GENERAL_DE_LA_CARTA[id];
+  const deOsm = ficha.parkingPositions.filter((p) => !(p.manual && general?.puestos[p.ref]));
+  const cuenta = { puestos: deOsm.length, casan: 0, movidos: 0, sinLinea: 0, copias: 0, sinAip: [] };
+  const { lista, cambiados, repetidos } = casar(deOsm, aip, proyectar);
   const cabos = [];
   for (const { p, a, linea: suLinea, copia } of lista) {
     if (copia) {
@@ -816,6 +928,23 @@ async function juntar(id) {
     if (p.ref && p.aip) vistos.set(k, p);
     finales.push(p);
   }
+  // Y los de la aviación general de la carta, en su punto publicado (H105), con su raya como raya de la calle.
+  const rayas = [];
+  for (const a of general ? aip.puestos.filter((q) => general.puestos[q.ref]) : []) {
+    const xy = proyectar(a.lat, a.lon);
+    const { sale, entrada, conTractorHasta } = general.puestos[a.ref];
+    const suyo = { salida: a.salida, max: a.max, contacto: false, carta: a.carta, uso: "general" };
+    if (sale) {
+      suyo.salePor = [sale];
+      suyo.llegaPor = { norte: [sale], sur: [sale] };
+    }
+    if (conTractorHasta) suyo.conTractorHasta = conTractorHasta;
+    finales.push({ ref: a.ref, xy, ...(entrada ? { entrada: [...entrada, xy] } : {}), manual: true, aip: suyo });
+    if (sale && entrada) {
+      const raya = { ref: sale, kind: "taxilane", widthM: null, soloPintada: true, manual: true, fuente: fuenteDeLaRaya(a.ref, sale) };
+      rayas.push({ ...raya, path: [...entrada, xy] });
+    }
+  }
   // Y el ancho entre dos incompatibles, sin línea en OpenStreetMap, con una paralela a las suyas.
   const conLinea = new Map(finales.filter((p) => p.ref && p.entrada && p.aip && !p.aip.lejos).map((p) => [refNormalizado(p.ref), p]));
   const deducidas = [];
@@ -842,14 +971,18 @@ async function juntar(id) {
         }
       : {}),
     ...(DE_PASO[id] ? { general: DE_PASO[id].fuente } : {}),
+    ...(general ? { general: general.fuente } : {}),
     ...(NUNCA_A_LA_VEZ[id] ? { nuncaALaVez: NUNCA_A_LA_VEZ[id] } : {}),
     ...(POR_SUS_MEDIOS[id] ? { porSusMedios: { puestos: POR_SUS_MEDIOS[id].puestos, fuente: POR_SUS_MEDIOS[id].fuente } } : {}),
-    ...(POR_SUS_MEDIOS[id]?.calle && !RODAJE_DE_LA_CASILLA[id] ? { callesDePlataforma: [POR_SUS_MEDIOS[id].calle] } : {}),
+    ...(POR_SUS_MEDIOS[id]?.calle && !RODAJE_DE_LA_CASILLA[id]
+      ? { callesDePlataforma: [POR_SUS_MEDIOS[id].calle, ...Object.keys(general?.calles ?? {})] }
+      : {}),
     ...fuenteDeLasPasarelas(id),
   };
   // Lo del AIP, al final de cada puesto: la ficha sale igual se junte las veces que se junte.
   const ordenados = finales.map(({ aip: suyo, ...p }) => (suyo ? { ...p, aip: suyo } : p));
-  await writeFile(ruta, conLosPuestos(texto, ordenados, meta));
+  const conCalles = general ? conLasCalles(texto, ficha, general.calles, rayas) : texto;
+  await writeFile(ruta, conLosPuestos(conCalles, ordenados, meta));
   console.log(
     `${id}: ${cuenta.casan} de ${cuenta.puestos} casan con el AIP; ${cuenta.movidos} a su punto publicado` +
       ` (${cuenta.sinLinea} lejos y fuera de su raya, sin mover), ${cuenta.copias} copias quitadas; sin AIP: ${cuenta.sinAip.join(" ") || "ninguno"}${CONTACTO[id] && cuenta.sinAip.length ? " (no son de contacto)" : ""}`,

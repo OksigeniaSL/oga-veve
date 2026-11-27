@@ -380,7 +380,8 @@ export interface Aerodrome {
     /**
      * **De qué puestos sale quien se va por sus medios**, sin tractor, donde de los puestos de la ficha casi todos
      * son de salida en retroceso y ninguno es de aviación general (H97): en La Palma, el 12 y el 14; en Los Rodeos,
-     * el 17 y el 19, por la F (H103), que su aviación general no está en la ficha. Ver `dePorSusMedios`.
+     * el 17 y el 19, por la F (H103); su aviación general está en la ficha desde la H105, y a ella van las
+     * avionetas. Ver `dePorSusMedios`.
      */
     readonly porSusMedios?: { readonly puestos: readonly string[]; readonly fuente: string };
     /**
