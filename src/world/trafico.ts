@@ -59,6 +59,7 @@ import { FACTOR_DE_ESCUELA, MARGEN_DE_CERTIFICACION } from "../flight/carrera";
 import {
   PASA_A_TU_LADO,
   puestoLibre,
+  conUnoOcupado,
   type EnElPlano,
   type OcupadosEnElMundo,
   type PasarelaDelTrafico,
@@ -99,6 +100,7 @@ import {
   porDelanteDe,
   tramoDeFrente,
   type QuienTieneElTramo,
+  type TramoDeFrente,
 } from "./tramo-de-frente";
 import {
   ESPERA_ENTRE_VUELOS,
@@ -3277,6 +3279,29 @@ export function crearTrafico(
   };
 
   /**
+   * **Si el que corre por la pista no puede esperar fuera de ella** su tramo de
+   * frente con otro: si el tramo empieza antes de haber dejado la pista. Solo
+   * entonces pasa él primero, y si el otro ya está dentro se le busca otra
+   * salida (`rehacerLaLlegada`).
+   *
+   * Si empieza después —el otro le va a estar de frente en la calle, pasada la
+   * doble raya de su salida—, deja la pista por la salida de siempre, espera
+   * fuera de ella como cualquiera que rueda y el tramo se reparte como entre
+   * dos que ruedan. Se le daba el paso siempre: en Los Rodeos, por la 30, la
+   * avioneta que acababa de tocar se encontraba de frente, junto al AG1, la raya
+   * de la que iba delante al AG2, todavía rodando por la paralela dos
+   * kilómetros más allá; se le buscaba otra salida y la única que no pasaba por
+   * ella era la del final de la pista: 1.400 m más de pista y setenta segundos
+   * más encima de ella, con quien venía detrás ya en final (H107). La pista se deja por la primera
+   * salida que sirve, y lo de la calle se resuelve en la calle: «landing
+   * aircraft (…) shall vacate the runway» (OACI, Doc 4444, 7.10.1) antes de que
+   * el siguiente cruce el umbral.
+   */
+  const noEsperaFuera = (q: Volando, suyo: Pick<TramoDeFrente, "entra">): boolean =>
+    corriendoPorLaPista(q) &&
+    q.recorrido + suyo.entra - ANTES_DEL_TRAMO < (q.caminos?.fuera ?? Infinity);
+
+  /**
    * **Quién tiene cada tramo**, entre dos del tráfico que se lo cruzan de
    * frente: la matrícula del que pasa, por la pareja. Ver `repartirLosTramos`.
    */
@@ -3411,7 +3436,7 @@ export function crearTrafico(
         vistos.add(par);
         let pasa = tramoDe.get(par);
         if (pasa === undefined) {
-          const corre = corriendoPorLaPista(a) ? a : corriendoPorLaPista(b) ? b : null;
+          const corre = noEsperaFuera(a, deA) ? a : noEsperaFuera(b, deB) ? b : null;
           pasa =
             corre !== null
               ? corre === a
@@ -3901,7 +3926,9 @@ export function crearTrafico(
     const deOtros = conTuPuesto(deLosDemas, tuyo, tipo)!;
     if (!deOtros.ocupados.length) return c;
     const p = puestoDe(c, marca.camino, marca.metros, tipo);
-    if (!p || puestoLibre(p.x, p.z, deOtros)) return c;
+    // Y que no sea uno que la tabla no deja usar a la vez que uno de ellos (H106).
+    const suelo = opciones.tierra?.()?.suelo;
+    if (!p || (puestoLibre(p.x, p.z, deOtros) && !conUnoOcupado(suelo?.incompatiblesCon(p) ?? [], deOtros))) return c;
     // `trazar` le añade el tuyo.
     const suyos = trazarAhora(tipo, undefined, deLosDemas);
     return suyos?.marcas[clave] ? suyos : c;

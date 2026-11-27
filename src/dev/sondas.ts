@@ -275,6 +275,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       juego: juego.centradoDeAhora(),
       modelo: (juego.flight as { centradoAhora?: () => number }).centradoAhora?.() ?? null,
     }),
+    /**
+     * **Lo que va en las ruedas**, de 0 a 1, o `null` con el modelo sencillo,
+     * que no lo sabe. El banco del vuelo entero mide la frenada contra eso.
+     */
+    pesoEnLasRuedas: () => juego.flight.pesoEnLasRuedas?.() ?? null,
     /** Lo hecho con la lista de antes de despegar y la recogida. */
     listaDelDespegue: () => juego.flapsDelDespegueParaBanco,
     /** Lo que se le ha pedido al tren: la orden, no la posición. */

@@ -28,7 +28,7 @@
    "salida": "A",
    "max": "AN26",
    "aproar": null,
-   "obs": "(1) (2) (8)",
+   "obs": "(1) (2) (8) INCOMP. P58, P60, P62",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -40,7 +40,7 @@
    "salida": "A",
    "max": "AN26",
    "aproar": null,
-   "obs": "(1) (2) (8)",
+   "obs": "(1) (2) (8) INCOMP. P58, P60, P62",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -52,7 +52,7 @@
    "salida": "A",
    "max": "AN26",
    "aproar": null,
-   "obs": "(1) (2) (8)",
+   "obs": "(1) (2) (8) INCOMP. P60, P62, P64",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -64,7 +64,7 @@
    "salida": "A",
    "max": "AN26",
    "aproar": null,
-   "obs": "(1) (2) (8)",
+   "obs": "(1) (2) (8) INCOMP. P60, P62, P64",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -76,7 +76,7 @@
    "salida": "A",
    "max": "AN26",
    "aproar": null,
-   "obs": "(1) (2) (8)",
+   "obs": "(1) (2) (8) INCOMP. P62, P64, P66",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -88,7 +88,7 @@
    "salida": "A",
    "max": "AN26",
    "aproar": null,
-   "obs": "(1) (2) (8)",
+   "obs": "(1) (2) (8) INCOMP. P62, P64, P66",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -100,7 +100,7 @@
    "salida": "A",
    "max": "AN26",
    "aproar": null,
-   "obs": "(1) (2) (8)",
+   "obs": "(1) (2) (8) INCOMP. P64, P66",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -112,7 +112,7 @@
    "salida": "A",
    "max": "AN26",
    "aproar": null,
-   "obs": "(1) (2) (8)",
+   "obs": "(1) (2) (8) INCOMP. P64, P66",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -220,7 +220,7 @@
    "salida": "R",
    "max": "AT72",
    "aproar": null,
-   "obs": "(3) (15)",
+   "obs": "(3) (15) INCOMP. N02",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -232,7 +232,7 @@
    "salida": "R",
    "max": "AT72",
    "aproar": null,
-   "obs": "(3) (15)",
+   "obs": "(3) (15) INCOMP. N02",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -244,7 +244,7 @@
    "salida": "R",
    "max": "AT72",
    "aproar": null,
-   "obs": "(3)",
+   "obs": "(3) INCOMP. N02, N03",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -256,7 +256,7 @@
    "salida": "R",
    "max": "AT72",
    "aproar": null,
-   "obs": "(3)",
+   "obs": "(3) INCOMP. N03",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -268,7 +268,7 @@
    "salida": "R",
    "max": "B748",
    "aproar": null,
-   "obs": "(3) (4) (5) (12)",
+   "obs": "(3) (4) (5) (12) INCOMP. N11, N12",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": true
@@ -280,7 +280,7 @@
    "salida": "R",
    "max": "A388",
    "aproar": null,
-   "obs": "(3)",
+   "obs": "(3) INCOMP. M01, M02, M03",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -292,7 +292,7 @@
    "salida": "R",
    "max": "C17",
    "aproar": null,
-   "obs": "(3)",
+   "obs": "(3) INCOMP. M03, M04",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": false
@@ -304,7 +304,7 @@
    "salida": "R",
    "max": "A400",
    "aproar": null,
-   "obs": "(3) (4) (5) (13)",
+   "obs": "(3) (4) (5) (13) INCOMP. N01",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": true
@@ -316,7 +316,7 @@
    "salida": "R",
    "max": "B39M",
    "aproar": null,
-   "obs": "(3) (4) (5) (13)",
+   "obs": "(3) (4) (5) (13) INCOMP. N01",
    "carta": "AD 2-GCLP PDC 1.3",
    "wef": "09-JUL-26",
    "contacto": true
@@ -676,7 +676,7 @@
    "salida": "A",
    "max": "B739",
    "aproar": null,
-   "obs": "(7) (10) (20)",
+   "obs": "(7) (10) (20) INCOMP. L1, L2",
    "carta": "AD 2-GCLP PDC 1.4",
    "wef": "09-JUL-26",
    "contacto": false
@@ -688,7 +688,7 @@
    "salida": "A",
    "max": "C17",
    "aproar": null,
-   "obs": "(7) (10)",
+   "obs": "(7) (10) NCOMP. L1, L2, L3, L4",
    "carta": "AD 2-GCLP PDC 1.4",
    "wef": "09-JUL-26",
    "contacto": false
@@ -700,7 +700,7 @@
    "salida": "A",
    "max": "C17",
    "aproar": null,
-   "obs": "(7) (10)",
+   "obs": "(7) (10) INCOMP. L1, L2, L3, L4, L5, L6",
    "carta": "AD 2-GCLP PDC 1.4",
    "wef": "09-JUL-26",
    "contacto": false
@@ -712,7 +712,7 @@
    "salida": "A",
    "max": "C17",
    "aproar": null,
-   "obs": "(7) (10)",
+   "obs": "(7) (10) INCOMP. L3, L4, L5, L6, L7, L8",
    "carta": "AD 2-GCLP PDC 1.4",
    "wef": "09-JUL-26",
    "contacto": false
@@ -724,7 +724,7 @@
    "salida": "A",
    "max": "C17",
    "aproar": null,
-   "obs": "(7) (10)",
+   "obs": "(7) (10) INCOMP. L5, L6, L7, L8",
    "carta": "AD 2-GCLP PDC 1.4",
    "wef": "09-JUL-26",
    "contacto": false
@@ -868,7 +868,7 @@
    "salida": "R",
    "max": "B744",
    "aproar": null,
-   "obs": "(3) (4) (5) (12) (13) (16)",
+   "obs": "(3) (4) (5) (12) (13) (16) INCOMP. T12A",
    "carta": "AD 2-GCLP PDC 1.4",
    "wef": "09-JUL-26",
    "contacto": true
@@ -880,7 +880,7 @@
    "salida": "R",
    "max": "B744",
    "aproar": null,
-   "obs": "(3) (16)",
+   "obs": "(3) (16) INCOMP. T12",
    "carta": "AD 2-GCLP PDC 1.5",
    "wef": "09-JUL-26",
    "contacto": false
@@ -988,7 +988,7 @@
    "salida": "R",
    "max": "B744",
    "aproar": null,
-   "obs": "(3) (10)",
+   "obs": "(3) (10) INCOMP. T21B",
    "carta": "AD 2-GCLP PDC 1.5",
    "wef": "09-JUL-26",
    "contacto": false
@@ -1000,7 +1000,7 @@
    "salida": "R",
    "max": "A124",
    "aproar": null,
-   "obs": "(3) (10)",
+   "obs": "(3) (10) INCOMP. T21, T22, T23, LH01, (14) T20 Y // AND B748",
    "carta": "AD 2-GCLP PDC 1.5",
    "wef": "09-JUL-26",
    "contacto": false
@@ -1012,7 +1012,7 @@
    "salida": "R",
    "max": "C17",
    "aproar": null,
-   "obs": "(3) (10)",
+   "obs": "(3) (10) INCOMP. T21B, T23",
    "carta": "AD 2-GCLP PDC 1.5",
    "wef": "09-JUL-26",
    "contacto": false
@@ -1024,7 +1024,7 @@
    "salida": "A",
    "max": "GLF6",
    "aproar": null,
-   "obs": "(3) (10)",
+   "obs": "(3) (10) INCOMP. T21B, T22",
    "carta": "AD 2-GCLP PDC 1.5",
    "wef": "09-JUL-26",
    "contacto": false

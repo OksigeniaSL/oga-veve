@@ -985,6 +985,17 @@ export class CoefficientFlightModel implements FlightModel {
     return masaDe(this.aircraft);
   }
 
+  /**
+   * **Lo que va en las ruedas**, de 0 a 1: el peso menos lo que sostiene el
+   * aire, partido por el peso. Es sobre lo que muerde el freno —ver
+   * `resolveGround`—, y con viento de cara rodando a la misma rapidez sobre
+   * el suelo el ala sostiene más y las ruedas frenan menos. Lo mira el banco.
+   */
+  pesoEnLasRuedas(): number {
+    const peso = masaDe(this.aircraft) * GRAVITY;
+    return Math.max(0, peso - this.apoyoDelAire) / peso;
+  }
+
   ponerViento(x: number, z: number): void {
     this.vientoDelParte.x = x;
     this.vientoDelParte.z = z;

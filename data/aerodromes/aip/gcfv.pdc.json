@@ -118,7 +118,7 @@
    "salida": "R",
    "max": "B767",
    "aproar": "W",
-   "obs": "400 Hz - A/C",
+   "obs": "400 Hz - A/C INCOMP. 18B, 19B (2)",
    "carta": "AD 2-GCFV PDC 1.2",
    "wef": "07-AUG-25",
    "contacto": null
@@ -130,7 +130,7 @@
    "salida": "R",
    "max": "B757",
    "aproar": "W",
-   "obs": "400 Hz - A/C",
+   "obs": "400 Hz - A/C INCOMP. 18 (2)",
    "carta": "AD 2-GCFV PDC 1.2",
    "wef": "07-AUG-25",
    "contacto": null
@@ -142,7 +142,7 @@
    "salida": "R",
    "max": "B767",
    "aproar": "W",
-   "obs": "400 Hz - A/C",
+   "obs": "400 Hz - A/C INCOMP. 19B (2)",
    "carta": "AD 2-GCFV PDC 1.2",
    "wef": "07-AUG-25",
    "contacto": null
@@ -154,7 +154,7 @@
    "salida": "R",
    "max": "B747",
    "aproar": "W",
-   "obs": "400 Hz - A/C",
+   "obs": "400 Hz - A/C INCOMP. 18, 19 (2)",
    "carta": "AD 2-GCFV PDC 1.2",
    "wef": "07-AUG-25",
    "contacto": null
@@ -178,7 +178,7 @@
    "salida": "R",
    "max": "B763",
    "aproar": "W",
-   "obs": "400 Hz - A/C",
+   "obs": "400 Hz - A/C INCOMP. 21B, 21C (2)",
    "carta": "AD 2-GCFV PDC 1.2",
    "wef": "07-AUG-25",
    "contacto": null
@@ -214,7 +214,7 @@
    "salida": "R",
    "max": "B757",
    "aproar": "W",
-   "obs": "400 Hz - A/C",
+   "obs": "400 Hz - A/C INCOMP. 21C, 22B (2)",
    "carta": "AD 2-GCFV PDC 1.2",
    "wef": "07-AUG-25",
    "contacto": null
@@ -238,7 +238,7 @@
    "salida": "R",
    "max": "A321",
    "aproar": "W",
-   "obs": "400 Hz - A/C",
+   "obs": "400 Hz - A/C INCOMP. 23B (2)",
    "carta": "AD 2-GCFV PDC 1.2",
    "wef": "07-AUG-25",
    "contacto": null
@@ -250,7 +250,7 @@
    "salida": "R",
    "max": "B747",
    "aproar": "W",
-   "obs": "400 Hz - A/C",
+   "obs": "400 Hz - A/C INCOMP. 23, 24 (2)",
    "carta": "AD 2-GCFV PDC 1.2",
    "wef": "07-AUG-25",
    "contacto": null

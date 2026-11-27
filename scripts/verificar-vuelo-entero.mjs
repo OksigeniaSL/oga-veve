@@ -4930,6 +4930,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * rodaje. Si algún día vuelve a pararse en dos metros, se ve aquí.
    */
   let rodaduraMedida = 0;
+  // Lo que iba en las ruedas en la frenada, por metro: ver «y frenar le cuesta…».
+  let enLasRuedasPorMetro = 0;
+  let enLasRuedasMetros = 0;
   let antesDeFrenar = null;
   /*
    * **Y la velocidad respecto al suelo al tocar, que es la que frena.**
@@ -9115,10 +9118,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       } else if (s.onGround && botes.desde !== null) botes.desde = null;
       if (botes.desde !== null) botes.mas = Math.max(botes.mas, t - botes.desde);
       if (antesDeFrenar) {
-        rodaduraMedida += Math.hypot(
+        const dx = Math.hypot(
           s.position.x - antesDeFrenar.x,
           s.position.z - antesDeFrenar.z,
         );
+        rodaduraMedida += dx;
+        const enRuedas = o.pesoEnLasRuedas?.();
+        if (typeof enRuedas === "number" && s.onGround) {
+          enLasRuedasPorMetro += enRuedas * dx;
+          enLasRuedasMetros += dx;
+        }
       }
       antesDeFrenar = { x: s.position.x, z: s.position.z };
       c.throttle = 0;
@@ -9632,6 +9641,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     desplazadoAlTocar: Math.round(desplazadoAlTocar),
     tocoA: +tocoA.toFixed(0),
     rodaduraMedida: Math.round(rodaduraMedida),
+    enLasRuedas:
+      enLasRuedasMetros > 0 ? +(enLasRuedasPorMetro / enLasRuedasMetros).toFixed(3) : null,
     tocoSuelo: +tocoSuelo.toFixed(1),
     frenadaFotogramas,
     frenadaEnElAire,
@@ -11672,8 +11683,29 @@ comprobarSiVolo(
  * aviones frenan entre 0,31 y 0,33 g, que es lo que frena una avioneta en
  * asfalto seco.
  *
- * En g no hay nada que descontar: es la misma cifra con viento y sin él, y
- * sigue cazando lo que hay que cazar —«freno en la pista en 2 metros, eso no
+ * **Y en g sí hay algo que descontar con viento: lo que sostiene el ala.** El
+ * freno muerde sobre lo que va en las ruedas —el peso menos lo que sostiene el
+ * aire, ver `resolveGround` en `fdm.ts`—, y con viento de cara, a la misma
+ * rapidez sobre el suelo, el avión lleva más aire en el ala y menos peso en
+ * las ruedas. Se vio en la ronda de la tanda 30: el JAZ 25 por la 30 de Los
+ * Rodeos, con 12 kt de cara, frenó a 0,13 g, y sin viento a 0,27. El avión
+ * hacía lo que hace uno de verdad; la regla daba por hecho que no había
+ * viento. Y no solo con viento: el JAZ 25 es un biplano de cola baja que rueda
+ * con el ala a mucho ángulo, y recién tomado lleva en las ruedas el 9 % del
+ * peso con 12 kt de cara y el 19 % sin ellos —medido con la sonda, que da
+ * CL 1,08 a 30 m/s: lo de un biplano en tres puntos—. Al principio de su
+ * carrera lo frena el aire, no la rueda.
+ *
+ * Así que **por abajo, contra lo que apoya**: la deceleración partida por lo
+ * que iba en las ruedas, por metro —que es como pesa en la cuenta de los
+ * metros—, ha de pasar de 0,15. Es un mínimo honrado, porque el aire que
+ * frena va de regalo: si las ruedas no frenaran, con el avión apoyado no
+ * llegaría. **Y por arriba, la deceleración entera**, por debajo de 0,6 g,
+ * que es lo que no da ningún avión. Partir por lo que apoya no vale ahí: con
+ * el 9 % en las ruedas, la del aire saldría a 1,4 g. Con el modelo sencillo,
+ * que no sabe lo que apoya, las dos contra la entera, como antes.
+ *
+ * Y sigue cazando lo que hay que cazar —«freno en la pista en 2 metros, eso no
  * se lo cree nadie»—, que en g son cuatro o cinco.
  */
 if (vuelo.toco > 0 && vuelo.rodaduraMedida > 0 && vuelo.tocoSuelo > 0) {
@@ -11682,10 +11714,16 @@ if (vuelo.toco > 0 && vuelo.rodaduraMedida > 0 && vuelo.tocoSuelo > 0) {
       vuelo.dejoDeFrenarA * vuelo.dejoDeFrenarA) /
     (2 * vuelo.rodaduraMedida) /
     9.80665;
+  const enRuedas = vuelo.enLasRuedas;
+  const porLoQueApoya =
+    typeof enRuedas === "number" && enRuedas > 0.05 ? g / enRuedas : g;
   comprobarSiVolo(
     "y frenar le cuesta lo que frena un avión",
-    g > 0.15 && g < 0.6,
-    `${g.toFixed(2)} g · ${vuelo.rodaduraMedida} m desde ${vuelo.tocoSuelo} m/s de suelo` +
+    porLoQueApoya > 0.15 && g < 0.6,
+    (typeof enRuedas === "number"
+      ? `${g.toFixed(2)} g con el ${Math.round(100 * enRuedas)} % del peso en las ruedas: ${porLoQueApoya.toFixed(2)} g por lo que apoya`
+      : `${g.toFixed(2)} g (sin saber lo que apoya)`) +
+      ` · ${vuelo.rodaduraMedida} m desde ${vuelo.tocoSuelo} m/s de suelo` +
       ` (${vuelo.tocoA} de aire) hasta ${vuelo.dejoDeFrenarA}` +
       ` · en el aire el ${Math.round((100 * vuelo.frenadaEnElAire) / Math.max(1, vuelo.frenadaFotogramas))} % de la frenada`,
 

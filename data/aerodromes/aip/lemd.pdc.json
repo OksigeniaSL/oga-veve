@@ -2293,7 +2293,7 @@
    "salida": "R",
    "max": null,
    "aproar": "SW",
-   "obs": null,
+   "obs": "INCOMP. T6W",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2305,7 +2305,7 @@
    "salida": "R",
    "max": null,
    "aproar": "SW",
-   "obs": null,
+   "obs": "INCOMP T6 y T7 (1)",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2317,7 +2317,7 @@
    "salida": "R",
    "max": null,
    "aproar": "SW",
-   "obs": null,
+   "obs": "INCOMP. T6W",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2329,7 +2329,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T9W",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2341,7 +2341,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T9W",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2353,7 +2353,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T8-T9",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2365,7 +2365,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T11W",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2377,7 +2377,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T11W",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2389,7 +2389,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T10-T11",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2401,7 +2401,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T13W",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2413,7 +2413,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T13W",
    "carta": "AD 2-LEMD PDC 1.6",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2425,7 +2425,7 @@
    "salida": "R",
    "max": null,
    "aproar": "S",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T12-T13",
    "carta": "AD 2-LEMD PDC 1.7",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2509,7 +2509,7 @@
    "salida": "R",
    "max": null,
    "aproar": "SE",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T20W",
    "carta": "AD 2-LEMD PDC 1.7",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2521,7 +2521,7 @@
    "salida": "R",
    "max": null,
    "aproar": "SE",
-   "obs": "400 Hz-A/C",
+   "obs": "400 Hz-A/C INCOMP T20, T21",
    "carta": "AD 2-LEMD PDC 1.7",
    "wef": "29-OCT-26",
    "contacto": true
@@ -2533,7 +2533,7 @@
    "salida": "R",
    "max": null,
    "aproar": "SE",
-   "obs": "400 Hz-A/C (1)",
+   "obs": "400 Hz-A/C (1) INCOMP. T20W",
    "carta": "AD 2-LEMD PDC 1.7",
    "wef": "29-OCT-26",
    "contacto": true
@@ -4417,7 +4417,7 @@
    "salida": "R",
    "max": null,
    "aproar": "N",
-   "obs": "(1) 400 Hz-A/C",
+   "obs": "(1) 400 Hz-A/C INCOMP. 576-578",
    "carta": "AD 2-LEMD PDC 2.5",
    "wef": "01-OCT-26",
    "contacto": true
