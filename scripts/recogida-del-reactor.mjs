@@ -88,6 +88,26 @@ export function porLoQueAceleraElReactor(p) {
  * pasadas de 600 m, de 4 a 7; el morro al tocar, de 0,3° a 1,7° como poco.
  * Repartirlo desde donde empieza la recogida, y no desde los treinta pies,
  * quitaba más duras (20) pero flotaba más (12). Sin `altura`, como antes.
+ *
+ * **Y el punto, dentro de la zona de toma del juego** (H108). Los 1.500 pies
+ * son 457 m, y la zona que mira el juego —`finDeLaZonaDeToma` en
+ * `flight/toma-larga.ts`, la visada y doscientos metros sin pasar del primer
+ * tercio— acaba en 600 m en las pistas de 2.400 o más, pero en 500 en La
+ * Palma: el punto quedaba a 43 m del final de la zona, y el JAZ 110 tocó allí
+ * a 560 m, toma larga y sin gafas. Así que el punto se queda ciento cincuenta
+ * metros dentro de la zona —dos segundos del 787 por el suelo—: en las pistas
+ * de 2.400 m o más, 450 m, siete menos que antes; en La Palma, 350, cincuenta
+ * pasada la visada.
+ * Es lo que hace quien vuela ese avión ahí: el punto de toma sale de la pista
+ * que tiene delante, y la AC 91-79A lo dice de las dos maneras —el objetivo,
+ * unos mil pies; el típico, en el primer tercio y a veces más allá de esos
+ * mil—. En la mesa de la recogida (`recogida-del-banco.test.mjs`: el modelo,
+ * el automático, las rachas del juego, cien finales del JAZ 110 en La Palma
+ * con 035/10), las pasadas de la zona de 500 m bajan de 29 a 7 y las duras
+ * de 9 a 7; en Los Rodeos y Gran Canaria, con el JAZ 90, el 787 y el 747,
+ * ninguna pasada de más y ninguna dura de más que una. Lo que todavía flota
+ * pasada la zona se va al aire: ver `al-aire-por-larga.mjs`. Sin `zona`, el
+ * punto de antes.
  * @param {{
  *   pide: number,       // lo que pide el perfil, m/s, negativo bajando
  *   ruedas: number,     // m sobre la pista
@@ -95,11 +115,13 @@ export function porLoQueAceleraElReactor(p) {
  *   porElSuelo: number, // m/s
  *   caida: number,      // lo que bajaba la senda al empezar a recoger, m/s
  *   altura?: number,    // m de ruedas a los que empezó la recogida (H34f)
+ *   zona?: number,      // m pasado el umbral donde acaba la zona de toma del juego (H108)
  * }} p
  * @returns {number | null}
  */
 export function pideAlPuntoDeToma(p) {
-  const punto = 1500 * 0.3048;
+  // Los ciento cincuenta metros dentro de la zona, aquí porque esto viaja como texto.
+  const punto = Math.min(1500 * 0.3048, (p.zona ?? Infinity) - 150);
   const quedan = Math.max(0.5, (punto - p.pasado) / Math.max(1, p.porElSuelo));
   // Los cuatro pies por segundo de una toma firme, repetidos aquí porque esto viaja como texto.
   const firme = 4 * 0.3048;
