@@ -20,6 +20,7 @@ import {
   type Grafo,
   type Ocupados,
 } from "./rodaje";
+import { admite } from "./puestos-del-aip";
 import { enEjesDePista } from "./rumbo";
 import { SCENARIOS, type Scenario } from "./scenarios";
 import { sueloDelTrafico, type EnElPlano } from "./suelo-del-trafico";
@@ -202,11 +203,16 @@ describe("la raya verde rodea los aviones parados", () => {
     const ancho = aero.runways[0]?.widthM ?? 45;
     const grafo = construirGrafo(aero, SEMIALA);
     const salida = aero.runways[0]!.centerline[1] ?? aero.runways[0]!.centerline[0]!;
-    /** Las rutas de la pista a los puestos que pasan junto a `parado`, y cuántas lo rodean. */
+    /*
+     * Las rutas de la pista a los puestos que pasan junto a `parado`, y cuántas lo rodean. A los puestos que admiten un
+     * avión de las alas que mide esto, `SEMIALA`: desde la H105 la avioneta del tráfico aparca en el AG1, y la raya del
+     * AG3, que es de G150, nace a diecisiete metros de él. Ahí no va un avión de veintiocho metros de ala.
+     */
     const medir = (parado: Punto) => {
       let pasaban = 0;
       let rodean = 0;
       for (const puesto of aero.parkingPositions ?? []) {
+        if (!admite(puesto.aip, 2 * SEMIALA)) continue;
         if (Math.hypot(puesto.xy[0] - parado[0], puesto.xy[1] - parado[1]) < RADIO) continue;
         const antes = rodajeEntre(grafo, salida, puesto.xy, 600);
         if (!antes || !cerca(densa(antes.puntos), parado, RADIO / 2)) continue;

@@ -3,17 +3,18 @@
  * el 17 y el 19 de salida autónoma, de AT72, y los saca por la F hasta el F1 (AD 2-GCXO PDC 1.2 y casilla 20.1.2). Ahí
  * van las avionetas y los dos turbohélices de quien juega, y la avioneta y el bimotor del tráfico, que salían por sus
  * medios del 15 y del 26, que son de retroceso.
+ *
+ * Desde la H105 las avionetas, la tuya y las del tráfico, van a la aviación general, que ya está en la ficha: ver
+ * `aviacion-general-de-los-rodeos.test.ts`. Aquí quedan los dos turbohélices de quien juega.
  */
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT } from "../flight/aircraft";
 import { vaALaPasarela } from "../flight/velocidades-en-tierra";
-import { enElPavimentoDe, type Aerodrome, type Punto } from "./aerodrome";
+import { enElPavimentoDe, type Punto } from "./aerodrome";
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { dePorSusMedios } from "./puestos-del-aip";
 import type { Ruta } from "./rodaje";
 import { conSuAerodromo, SCENARIOS } from "./scenarios";
-import { sueloDelTrafico, type EnElPlano } from "./suelo-del-trafico";
-import { pistaQuePideConSuMargen, TIPOS } from "./trafico";
 
 const delCampo = async (id: string) => {
   for (const e of SCENARIOS) {
@@ -35,7 +36,6 @@ const puestoDeSalida = (c: Campo, plan: PlanDeVuelo) => {
   const [x, z] = plan.arranque()!;
   return c.aerodrome!.parkingPositions!.find((p) => Math.hypot(p.xy[0] - x, p.xy[1] + z) < 1)?.ref;
 };
-const puestoDe = (a: Aerodrome, q: EnElPlano) => a.parkingPositions!.find((p) => Math.hypot(p.xy[0] - q.x, p.xy[1] + q.z) < 2)?.ref;
 /** Los metros de una línea que caen fuera de lo que dice `dentro`, de medio en medio. */
 const fueraDe = (linea: readonly Punto[], dentro: (p: Punto) => boolean): number => {
   let fuera = 0;
@@ -58,12 +58,10 @@ const loMasCerca = (linea: readonly Punto[], p: Punto): number => {
   }
   return d;
 };
-const alPlano = (camino: readonly EnElPlano[]): Punto[] => camino.map((q) => [q.x, -q.z]);
 
 describe("Los Rodeos, quien se va por sus medios", async () => {
   const campo = await delCampo("GCXO");
   const aero = campo.aerodrome!;
-  const xy = (ref: string) => aero.parkingPositions!.find((p) => p.ref === ref)!.xy;
   const F1 = aero.holdingPositions.find((h) => h.ref === "F1")!.xy;
   const pavimento = enElPavimentoDe(aero);
 
@@ -71,21 +69,22 @@ describe("Los Rodeos, quien se va por sus medios", async () => {
     const { puestos, fuente } = aero.aipPuestos!.porSusMedios!;
     expect(puestos).toEqual(["17", "19"]);
     expect(fuente).toMatch(/AD 2-GCXO PDC 1\.2 \(WEF 06-AUG-26\).*casilla 20\.1\.2 \(AMDT 413\/26, 26-NOV-26\)/);
-    expect(aero.aipPuestos!.callesDePlataforma).toEqual(["F"]);
+    // La F, y la Y y la W de la aviación general (H105).
+    expect(aero.aipPuestos!.callesDePlataforma).toEqual(["F", "Y", "W"]);
     for (const ref of puestos) {
       const aip = aero.parkingPositions!.find((p) => p.ref === ref)!.aip!;
       expect([aip.salida, aip.max, aip.salePor, aip.llegaPor], ref).toEqual(["A", "AT72", ["F"], { norte: ["F"], sur: ["F"] }]);
     }
-    // Los demás de la ficha son de retroceso: de ahí no se sale por sus medios.
+    // Los demás de la plataforma comercial son de retroceso: de ahí no se sale por sus medios.
     for (const p of aero.parkingPositions!)
-      if (p.ref && !puestos.includes(p.ref)) expect(p.aip?.salida, p.ref).toBe("R");
+      if (p.ref && !puestos.includes(p.ref) && p.aip?.uso !== "general") expect(p.aip?.salida, p.ref).toBe("R");
     for (const e of SCENARIOS) {
       const otro = (await conSuAerodromo(e)).aerodrome;
       if (otro && otro.id !== "GCXO" && otro.id !== "GCLA") expect(dePorSusMedios(otro, otro.parkingPositions ?? [], 11), otro.id).toEqual([]);
     }
   });
 
-  it.each(["jaz-20", "jaz-25", "jaz-40", "jaz-50", "jaz-60"])("el %s sale del 19 por las dos cabeceras, por la F hasta el F1 y sin pisar fuera", (id) => {
+  it.each(["jaz-50", "jaz-60"])("el %s sale del 19 por las dos cabeceras, por la F hasta el F1 y sin pisar fuera", (id) => {
     for (const rumbo of cabeceras(campo)) {
       const plan = planDe(campo, id, rumbo);
       expect(plan.reiniciar()).toBe(true);
@@ -110,27 +109,4 @@ describe("Los Rodeos, quien se va por sus medios", async () => {
       }
   });
 
-  it("la avioneta y el bimotor del tráfico salen de uno de los dos y llegan a uno de los dos, por la F; con los dos cogidos, a otro", () => {
-    for (const heading of cabeceras(campo)) {
-      const suelo = sueloDelTrafico(aero, { ...campo.runway, heading }, aero.runways[0]?.widthM ?? 45)!;
-      for (const t of [TIPOS.avioneta, TIPOS.bimotor]) {
-        const caso = `${t.id} ${heading.toFixed(0)}`;
-        const sale = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(t), undefined, undefined, undefined, t.envergadura)!;
-        expect(["17", "19"], caso).toContain(puestoDe(aero, sale.camino[0]!));
-        expect(loMasCerca(alPlano(sale.camino), F1), caso).toBeLessThan(10);
-        expect(fueraDe(alPlano(sale.camino.slice(0, 12)), pavimento), caso).toBe(0);
-        // Por toda la pista que pide la llegada, dejando de correr cada 150 m.
-        for (let d = t.toca + t.frena; d < 3000; d += 150) {
-          const llega = suelo.llegada(d, undefined, undefined, undefined, undefined, undefined, t.envergadura);
-          if (!llega) continue;
-          expect(["17", "19"], `${caso} a ${d} m`).toContain(puestoDe(aero, llega.camino.at(-1)!));
-          // Por la F, y no recto por la plataforma entre el 15 y el 16, que tienen el morro hacia el 19.
-          expect(loMasCerca(alPlano(llega.camino), F1), `${caso} a ${d} m`).toBeLessThan(10);
-        }
-        const ocupados = ["17", "19"].map((ref) => ({ x: xy(ref)[0], z: -xy(ref)[1], semiala: t.envergadura / 2 }));
-        const otra = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(t), undefined, { semiala: t.envergadura / 2, ocupados }, undefined, t.envergadura)!;
-        expect(["17", "19"], caso).not.toContain(puestoDe(aero, otra.camino[0]!));
-      }
-    }
-  });
 });

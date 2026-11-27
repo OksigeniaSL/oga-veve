@@ -20,7 +20,7 @@
  * mundo y ya está. Quien los recorre es `trafico.ts`.
  */
 
-import { admite, aproarDe, cumpleElAproar, delAipEn, dePorSusMedios, llegaPorDe, nuncaALaVezCon, puestoEn, saleDeFrente, tienePasarela, valeParaElEmpuje } from "./puestos-del-aip";
+import { admite, aproarDe, cumpleElAproar, deAviacionGeneral, delAipEn, dePorSusMedios, llegaPorDe, nuncaALaVezCon, puestoEn, saleDeFrente, tienePasarela, valeParaElEmpuje } from "./puestos-del-aip";
 import { aLaPolilinea, enElPavimentoDe, type Aerodrome, type Punto } from "./aerodrome";
 import {
   edificiosDePasarela,
@@ -651,7 +651,8 @@ export function sueloDelTrafico(
   };
 
   // Solo los que tienen asfalto debajo, con la misma regla que el avión de quien juega. Ver `puestosEnElPavimento`.
-  const delPavimento = puestosEnElPavimento(aero.parkingPositions ?? [], aero, grafo);
+  // Y de los que se dejan con tractor hasta una calle, ninguno: el juego no remolca avionetas (H105, `conTractorHasta`).
+  const delPavimento = puestosEnElPavimento(aero.parkingPositions ?? [], aero, grafo).filter((p) => !p.aip?.conTractorHasta);
   const puestos = delPavimento.map((p) => p.xy);
   /*
    * **Los que el AIP no desmiente como de contacto con salida empujada** (H60f): sin
@@ -690,7 +691,7 @@ export function sueloDelTrafico(
     let lista = porAla.get(ala);
     if (!lista) {
       const suyos = hayGeneral
-        ? delPavimento.filter((p) => admite(p.aip, ala) && p.aip?.uso === (ala < ALA_DE_LETRA_B ? "general" : undefined))
+        ? delPavimento.filter((p) => admite(p.aip, ala) && (ala < ALA_DE_LETRA_B ? deAviacionGeneral(p.aip) : p.aip?.uso === undefined))
         : dePorSusMedios(aero, delPavimento, ala);
       porAla.set(ala, (lista = suyos.length ? suyos.map((p) => p.xy) : puestos));
     }

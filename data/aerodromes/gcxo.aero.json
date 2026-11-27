@@ -146,7 +146,7 @@
       ]
     },
     {
-      "ref": null,
+      "ref": "W",
       "kind": "taxiway",
       "widthM": null,
       "path": [
@@ -161,7 +161,7 @@
       ]
     },
     {
-      "ref": null,
+      "ref": "W",
       "kind": "taxiway",
       "widthM": null,
       "path": [
@@ -267,7 +267,7 @@
       ]
     },
     {
-      "ref": null,
+      "ref": "Y",
       "kind": "taxiway",
       "widthM": null,
       "path": [
@@ -282,7 +282,7 @@
       ]
     },
     {
-      "ref": null,
+      "ref": "Y",
       "kind": "taxiway",
       "widthM": null,
       "path": [
@@ -309,7 +309,7 @@
       ]
     },
     {
-      "ref": null,
+      "ref": "Y",
       "kind": "taxiway",
       "widthM": null,
       "path": [
@@ -387,7 +387,7 @@
       ]
     },
     {
-      "ref": null,
+      "ref": "W",
       "kind": "taxiway",
       "widthM": null,
       "path": [
@@ -414,7 +414,7 @@
       ]
     },
     {
-      "ref": null,
+      "ref": "W",
       "kind": "taxiway",
       "widthM": null,
       "path": [
@@ -1006,6 +1006,112 @@
         [
           -312.3,
           255
+        ]
+      ]
+    },
+    {
+      "ref": "Y",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCXO PDC 1.1 (WEF 29-OCT-26), APN GA 1: la raya del AG1, de la Y a la parada, pintada en la losa; trazada sobre la ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0; foto de 2024).",
+      "path": [
+        [
+          -1192.7,
+          634.1
+        ],
+        [
+          -1194,
+          640
+        ],
+        [
+          -1196.5,
+          647.5
+        ],
+        [
+          -1199,
+          654
+        ]
+      ]
+    },
+    {
+      "ref": "Y",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCXO PDC 1.1 (WEF 29-OCT-26), APN GA 1: la raya del AG2, de la Y a la parada, pintada en la losa; trazada sobre la ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0; foto de 2024).",
+      "path": [
+        [
+          -1192.7,
+          634.1
+        ],
+        [
+          -1190.5,
+          638.5
+        ],
+        [
+          -1186,
+          641
+        ],
+        [
+          -1180.5,
+          640.5
+        ],
+        [
+          -1158.8,
+          619.7
+        ]
+      ]
+    },
+    {
+      "ref": "Y",
+      "kind": "taxilane",
+      "widthM": null,
+      "soloPintada": true,
+      "manual": true,
+      "fuente": "AIP España AD 2-GCXO PDC 1.1 (WEF 29-OCT-26), APN GA 1: la raya del AG3, de la Y a la parada, pintada en la losa; trazada sobre la ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0; foto de 2024).",
+      "path": [
+        [
+          -1192.7,
+          634.1
+        ],
+        [
+          -1189,
+          640
+        ],
+        [
+          -1180,
+          645
+        ],
+        [
+          -1170,
+          647.5
+        ],
+        [
+          -1155,
+          646
+        ],
+        [
+          -1140,
+          641
+        ],
+        [
+          -1127,
+          634
+        ],
+        [
+          -1120,
+          627
+        ],
+        [
+          -1121.5,
+          619.5
+        ],
+        [
+          -1131.7,
+          608.9
         ]
       ]
     }
@@ -2390,7 +2496,7 @@
     }
   ],
   "helipads": [],
-  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCXO, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCXO/","leido":"2026-11-22","cartas":[{"carta":"AD 2-GCXO PDC 1.2","wef":"06-AUG-26"}],"porSusMedios":{"puestos":["17","19"],"fuente":"AIP España AD 2-GCXO PDC 1.2 (WEF 06-AUG-26): salida «A» en el 17 y el 19, de AT72, y «R», en retroceso, en los demás de la ficha; AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26), C y E: «autonomous exit parking positions (…) to TWY F (PRKG 17 and 19)», «Aircraft exiting PRKG 17 and 19 (…) enter TWY R via TWY F at F1 point». Las plataformas de aviación general (AG1 a AG7) y los de salida autónoma del 28 al 38 no están en la ficha."},"callesDePlataforma":["F"]},
+  "aipPuestos": {"fuente":"AIP España (ENAIRE), AD 2-GCXO, cartas PDC: características de los puestos de estacionamiento","url":"https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCXO/","leido":"2026-11-22","cartas":[{"carta":"AD 2-GCXO PDC 1.2","wef":"06-AUG-26"}],"general":"AIP España AD 2-GCXO PDC 1.2 (WEF 06-AUG-26), del AG1 al AG7, «A», con su punto; PDC 1.1 (WEF 29-OCT-26), la APN GA 1 (AG1 a AG3) y la APN GA 2 (AG4 a AG7), con la Y y la W; AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26), C, I y J: de la GA 1 se sale por sus medios por la Y, y de la GA 2, «by towing to the centre line of TWY W». Las líneas de la GA 1, la raya pintada en la ortofoto PNOA de máxima actualidad, Instituto Geográfico Nacional de España (CC BY 4.0; foto de 2024, vista el 26-11-2026 a 20 cm por píxel); la Y y la W, las calles sin nombre de OpenStreetMap que llegan a ellas.","porSusMedios":{"puestos":["17","19"],"fuente":"AIP España AD 2-GCXO PDC 1.2 (WEF 06-AUG-26): salida «A» en el 17 y el 19, de AT72, y «R», en retroceso, en los demás de la ficha; AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26), C y E: «autonomous exit parking positions (…) to TWY F (PRKG 17 and 19)», «Aircraft exiting PRKG 17 and 19 (…) enter TWY R via TWY F at F1 point». Los de salida autónoma del 28 al 38 no están en la ficha; la aviación general, del AG1 al AG7, está desde la H105 (`GENERAL_DE_LA_CARTA`)."},"callesDePlataforma":["F","Y","W"]},
   "parkingPositions": [
     {
       "ref": "22",
@@ -2905,6 +3011,230 @@
         "max": null,
         "contacto": false,
         "carta": null
+      }
+    },
+    {
+      "ref": "AG1",
+      "xy": [
+        -1199,
+        654
+      ],
+      "entrada": [
+        [
+          -1192.7,
+          634.1
+        ],
+        [
+          -1194,
+          640
+        ],
+        [
+          -1196.5,
+          647.5
+        ],
+        [
+          -1199,
+          654
+        ]
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "CN35",
+        "contacto": false,
+        "carta": "AD 2-GCXO PDC 1.2",
+        "uso": "general",
+        "salePor": [
+          "Y"
+        ],
+        "llegaPor": {
+          "norte": [
+            "Y"
+          ],
+          "sur": [
+            "Y"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "AG2",
+      "xy": [
+        -1158.8,
+        619.7
+      ],
+      "entrada": [
+        [
+          -1192.7,
+          634.1
+        ],
+        [
+          -1190.5,
+          638.5
+        ],
+        [
+          -1186,
+          641
+        ],
+        [
+          -1180.5,
+          640.5
+        ],
+        [
+          -1158.8,
+          619.7
+        ]
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "G150",
+        "contacto": false,
+        "carta": "AD 2-GCXO PDC 1.2",
+        "uso": "general",
+        "salePor": [
+          "Y"
+        ],
+        "llegaPor": {
+          "norte": [
+            "Y"
+          ],
+          "sur": [
+            "Y"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "AG3",
+      "xy": [
+        -1131.7,
+        608.9
+      ],
+      "entrada": [
+        [
+          -1192.7,
+          634.1
+        ],
+        [
+          -1189,
+          640
+        ],
+        [
+          -1180,
+          645
+        ],
+        [
+          -1170,
+          647.5
+        ],
+        [
+          -1155,
+          646
+        ],
+        [
+          -1140,
+          641
+        ],
+        [
+          -1127,
+          634
+        ],
+        [
+          -1120,
+          627
+        ],
+        [
+          -1121.5,
+          619.5
+        ],
+        [
+          -1131.7,
+          608.9
+        ]
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "G150",
+        "contacto": false,
+        "carta": "AD 2-GCXO PDC 1.2",
+        "uso": "general",
+        "salePor": [
+          "Y"
+        ],
+        "llegaPor": {
+          "norte": [
+            "Y"
+          ],
+          "sur": [
+            "Y"
+          ]
+        }
+      }
+    },
+    {
+      "ref": "AG4",
+      "xy": [
+        -1092.9,
+        626.2
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "PA34",
+        "contacto": false,
+        "carta": "AD 2-GCXO PDC 1.2",
+        "uso": "general",
+        "conTractorHasta": "W"
+      }
+    },
+    {
+      "ref": "AG5",
+      "xy": [
+        -1099.1,
+        609.2
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "PA34",
+        "contacto": false,
+        "carta": "AD 2-GCXO PDC 1.2",
+        "uso": "general",
+        "conTractorHasta": "W"
+      }
+    },
+    {
+      "ref": "AG6",
+      "xy": [
+        -1086.9,
+        593.4
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "PA34",
+        "contacto": false,
+        "carta": "AD 2-GCXO PDC 1.2",
+        "uso": "general",
+        "conTractorHasta": "W"
+      }
+    },
+    {
+      "ref": "AG7",
+      "xy": [
+        -1070.1,
+        586.9
+      ],
+      "manual": true,
+      "aip": {
+        "salida": "A",
+        "max": "PA34",
+        "contacto": false,
+        "carta": "AD 2-GCXO PDC 1.2",
+        "uso": "general",
+        "conTractorHasta": "W"
       }
     }
   ],
