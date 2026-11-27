@@ -242,7 +242,7 @@ const POR_SUS_MEDIOS = {
  *   se rehacen cada vez que se junta.
  * - **Las líneas de la GA 1**, la raya blanca pintada en la losa, en la ortofoto PNOA de máxima actualidad (foto
  *   de 2024), desde donde la Y llega a la plataforma, que es donde acaba la Y de OpenStreetMap, hasta la parada.
- *   Del AG1 la raya sigue hacia el oeste y da una vuelta cerrada, de unos cinco metros de radio, para dejar el
+ *   Del AG1 la raya sigue hacia el oeste y da una vuelta cerrada, de unos seis metros de radio, para dejar el
  *   avión mirando a la salida; esa vuelta no va, y la línea acaba en la parada por el camino corto.
  * - **La GA 2 va sin línea y con `conTractorHasta`**: se sale de ella remolcado hasta el eje de la W, y el juego
  *   no remolca avionetas; en la foto, las de la AG4 y la AG5 están con el morro hacia la calle, metidas de

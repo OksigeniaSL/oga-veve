@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { AIRCRAFT } from "../flight/aircraft";
 import { vaALaPasarela } from "../flight/velocidades-en-tierra";
 import pdc from "../../data/aerodromes/aip/gcxo.pdc.json";
-import { enElPavimentoDe, type Aerodrome, type Punto } from "./aerodrome";
+import { enElPavimentoDe, llevaRotulo, type Aerodrome, type Punto } from "./aerodrome";
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { admite, deAviacionGeneral } from "./puestos-del-aip";
 import type { Ruta } from "./rodaje";
@@ -175,6 +175,12 @@ describe("Los Rodeos, la aviación general", async () => {
         } else for (const a of [de, ...llegadas]) expect(AG, `${caso} ${a}`).not.toContain(a);
       }
     }
+  });
+
+  it("la raya de los puestos no lleva rótulo de calle: ninguna Y pintada en la losa de la GA 1", () => {
+    const y = aero.taxiways.filter((t) => t.ref === "Y");
+    expect(y.filter((t) => t.soloPintada).map(llevaRotulo)).toEqual([false, false, false]);
+    expect(y.filter((t) => !t.soloPintada).map(llevaRotulo)).toEqual([true, true, true]);
   });
 
   it("con la GA 1 cogida, la avioneta del tráfico no se va a la GA 2", () => {

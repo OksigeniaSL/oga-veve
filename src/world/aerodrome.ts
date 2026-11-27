@@ -1953,14 +1953,22 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
  * Así que las letras se hornean en un único atlas y cada cuadrado se queda con
  * su celda a base de UVs. Trece rótulos, una llamada.
  */
+/**
+ * **Si una calle lleva su letra pintada en el suelo** (`letreros`): la que tiene nombre corto. Y no la que es solo una
+ * raya en la losa (`soloPintada`): la raya de un puesto no lleva rótulo de calle. En la GA 1 de Los Rodeos la del AG3
+ * mide 105 m, y le salía una Y pintada a los cien, junto a la parada, que en la ortofoto no está (H105). Las de Tenerife
+ * Sur no llegan a los cien, que es donde se pinta la primera.
+ */
+export function llevaRotulo(c: Aerodrome["taxiways"][number]): boolean {
+  return typeof c.ref === "string" && c.ref.length > 0 && c.ref.length <= 3 && !c.soloPintada;
+}
+
 function letreros(
   aero: Aerodrome,
   altura: (p: Punto) => number,
   enLaPista: (p: Punto) => boolean,
 ): Mesh | null {
-  const conNombre = aero.taxiways.filter(
-    (c) => typeof c.ref === "string" && c.ref.length > 0 && c.ref.length <= 3,
-  );
+  const conNombre = aero.taxiways.filter(llevaRotulo);
   if (!conNombre.length) return null;
 
   const refs = [...new Set(conNombre.map((c) => c.ref as string))].sort();
