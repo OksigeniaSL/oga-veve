@@ -1859,19 +1859,6 @@ const APARTADO_DE_LOS_DEMAS = 300;
 const APARTADOS_EN_ALTURA = 150;
 
 /**
- * **Hasta dónde se cuenta que alargas el viento en cola sin radio**, s de
- * vuelo por derecho: lo mismo que el juego prevé de quien no vuela su
- * circuito (`PREVER_POR_DERECHO` en `game.ts`). Ver `dondeVanAEstar`.
- */
-const ALARGAS_POR_DERECHO = 120;
-
-/**
- * Lo que tiene que parecerse tu rumbo al contrario de la pista para contar que
- * vas por el viento en cola, en coseno: veinticinco grados.
- */
-const EN_COLA = 0.9;
-
-/**
  * **A qué se cuenta que sigues**, en tanto por uno de lo que vuelas ahora: el
  * viento en cola se acaba frenando, y la esquina de la base cae cinco o diez
  * segundos más tarde de lo que sale a la velocidad de ahora.
@@ -2593,13 +2580,6 @@ export interface Trafico {
    * esperarte. Ver `darleLaPista` en `flight/turno-de-pista.ts`.
    */
   puedeSalirSinEsperarte(matricula: string): boolean;
-  /**
-   * **Si ya espera listo en su doble raya**, parado en ella para salir: es lo
-   * que deja a la frecuencia darle la pista en cuanto el tráfico lo permite,
-   * sin la espera de una llamada cualquiera (H100). Ver `enSuRaya` en
-   * `flight/radio.ts`.
-   */
-  enSuRaya(matricula: string): boolean;
   /**
    * **Que los que llegan le cedan el turno a esa salida** (H102): los que no
    * han girado todavía a la base dan su vuelta de espera hasta que haya pasado
@@ -4613,7 +4593,19 @@ export function crearTrafico(
       return [];
     }
     if (el === sin || reloj - cedenA.desde > CEDEN_COMO_MUCHO) return [];
-    const { pasa, enElAire } = loQueLeQuedaParaPasarElFinal(el, c, t);
+    // Lo que le queda hasta pasar el final de la pista, y de eso, en el aire.
+    const vuela = Math.max(0, runway.length - el.tipo.carrera) / velocidadDeDespegue(el.tipo);
+    let pasa: number;
+    if (el.recorrido < t.eje - 1)
+      pasa =
+        Math.max(0, c.espera - el.recorrido) / RUEDA_A +
+        hastaIrseDesdeLaRaya(el.tipo, c, Math.max(0, el.recorrido - c.espera));
+    else {
+      const falta = loQueLeFaltaParaDejarla(el);
+      pasa = Number.isFinite(falta)
+        ? falta + MARGEN_PARA_IRSE
+        : tiempoDeCarrera(el.tipo) + vuela + MARGEN_PARA_IRSE;
+    }
     // Detrás de los que ya bajan por la base: aterrizan y la dejan.
     let hora = reloj;
     for (const b of aviones.values()) {
@@ -4627,68 +4619,11 @@ export function crearTrafico(
         hora,
         velocidad: el.marca.velocidad,
         sale: true,
-        enElAire,
+        enElAire: Math.max(0, pasa - vuela),
         pasaElFinal: pasa,
         cedido: true,
       },
     ];
-  };
-
-  /**
-   * Lo que le queda al que sale hasta pasar el final de la pista, y hasta estar
-   * en el aire, s. Con `MARGEN_PARA_IRSE`, o sin él: ver `lasQueSalen`.
-   */
-  const loQueLeQuedaParaPasarElFinal = (
-    el: Volando,
-    c: Caminos,
-    t: NonNullable<Caminos["enTierra"]>,
-    conMargen = true,
-  ): { pasa: number; enElAire: number } => {
-    const vuela = Math.max(0, runway.length - el.tipo.carrera) / velocidadDeDespegue(el.tipo);
-    let pasa: number;
-    if (el.recorrido < t.eje - 1)
-      pasa =
-        Math.max(0, c.espera - el.recorrido) / RUEDA_A +
-        hastaIrseDesdeLaRaya(el.tipo, c, Math.max(0, el.recorrido - c.espera));
-    else {
-      const falta = loQueLeFaltaParaDejarla(el);
-      pasa = Number.isFinite(falta)
-        ? falta + MARGEN_PARA_IRSE
-        : tiempoDeCarrera(el.tipo) + vuela + MARGEN_PARA_IRSE;
-    }
-    if (!conMargen) pasa -= MARGEN_PARA_IRSE;
-    return { pasa, enElAire: Math.max(0, pasa - vuela) };
-  };
-
-  /**
-   * **Y los del tráfico que ya tienen la pista para salir**, hasta que pasan su
-   * final: el que llega y todavía no ha girado a la base espera a que se haya ido
-   * (H102, «lo 2»: la separación entre llegadas y salidas se hace en el
-   * circuito, OACI, Doc 4444, 7.7.1.2).
-   *
-   * **Sin `MARGEN_PARA_IRSE`** (H104): el margen está para dejar rodar hacia la
-   * pista a uno que todavía no está en ella, y aquí ya la tiene. Con él, el que
-   * llega daba una vuelta entera de espera —de 77 a 93 s un reactor— por una
-   * salida a la que le faltaban de cinco a treinta segundos para irse: en Gando,
-   * treinta segundos más de espera por llegada sin que nadie se fuera al aire.
-   */
-  const conLaPistaDesde = new Map<string, number>();
-  const lasQueSalen = (sin: Volando | null): EnLaFila[] => {
-    const fila: EnLaFila[] = [];
-    for (const [m, el] of aviones) {
-      const c = el.caminos;
-      const t = c?.enTierra;
-      if (!c || !t || el.marca.camino !== c.salida || !encimaDeLaPista(el)) {
-        conLaPistaDesde.delete(m);
-        continue;
-      }
-      const desde = conLaPistaDesde.get(m) ?? reloj;
-      conLaPistaDesde.set(m, desde);
-      if (el === sin || cedenA?.matricula === m || reloj - desde > CEDEN_COMO_MUCHO) continue;
-      const { pasa, enElAire } = loQueLeQuedaParaPasarElFinal(el, c, t, false);
-      fila.push({ hora: reloj, velocidad: el.marca.velocidad, sale: true, enElAire, pasaElFinal: pasa });
-    }
-    return fila;
   };
 
   /**
@@ -4707,7 +4642,7 @@ export function crearTrafico(
   ): number => {
     let hora = natural;
     const hueco = huecoParaTuSalida(llega.trasDecidir);
-    for (const b of [...laFila(sin), ...tuTurnoDeSalir(sin), ...suTurnoDeSalir(sin), ...lasQueSalen(sin)]) {
+    for (const b of [...laFila(sin), ...tuTurnoDeSalir(sin), ...suTurnoDeSalir(sin)]) {
       const detras = b.sale
         ? hastaQueSale(b, llega)
         : Math.max(detrasDe(b, velocidad) + colchon, hueco);
@@ -4984,8 +4919,6 @@ export function crearTrafico(
    * acabar el viento en cola—, y los demás del tráfico que vuelan, por su
    * camino o por la vuelta que estén dando.
    */
-  /** Cuándo se movió cada uno por última vez, s del reloj del tráfico. Ver `dondeVanAEstar`. */
-  const movidoA = new WeakMap<Volando, number>();
   const dondeVanAEstar = (menos: Volando | null, contigo = true): VaAEstar[] => {
     const van: VaAEstar[] = [];
     const tu = contigo ? opciones.quienJuega?.() : null;
@@ -5002,33 +4935,6 @@ export function crearTrafico(
               : (porElCamino(camino, velocidad * dentroDe)?.sitio ?? null),
         });
       }
-      /*
-       * **Y sin radio, también por derecho por el viento en cola** (H104b): la
-       * torre no te puede decir dónde girar a la base, y tú puedes alargar para
-       * hacerte sitio. Contando solo con tu circuito de siempre, el que esperaba
-       * detrás de ti daba su vuelta en la esquina de su base —más afuera que la
-       * tuya, si es más grande— y alargando tres kilómetros pasabas por ella, a
-       * su misma altura (Encarnación, a 200–260 m).
-       */
-      const [a, b] = [camino[0]!, camino[1]!];
-      const ab = Math.hypot(b.x - a.x, b.z - a.z);
-      if (tu.sinRadio && ab > 1) {
-        const f = { x: (b.x - a.x) / ab, z: (b.z - a.z) / ab };
-        const enCola = f.x * Math.sin(rumboDeLaPista) - f.z * Math.cos(rumboDeLaPista) < -EN_COLA;
-        const velocidad = tu.velocidad ?? VUELA_A;
-        if (enCola)
-          van.push({
-            apartado: APARTADO_DE_TI,
-            en: (dentroDe) =>
-              dentroDe > ALARGAS_POR_DERECHO
-                ? null
-                : {
-                    x: a.x + f.x * velocidad * dentroDe,
-                    y: a.y,
-                    z: a.z + f.z * velocidad * dentroDe,
-                  },
-          });
-      }
     }
     for (const b of aviones.values()) {
       if (b === menos || !b.caminos || b.grupo.position.y - cota < EN_EL_AIRE) continue;
@@ -5036,20 +4942,10 @@ export function crearTrafico(
       const velocidad = b.marca.velocidad;
       const queda = vuelta ? largoDelTresSesenta(vuelta) - vuelta.hecho : 0;
       const largo = largoDe(b.marca.camino);
-      /*
-       * **Y desde donde está de verdad** (H104b): a mitad del paso, los que van
-       * detrás en el bucle todavía no se han movido, y se les veía donde estaban
-       * un paso antes. Con medio segundo de paso y el otro dando su vuelta a
-       * ochenta metros por segundo, son cuarenta metros: en La Palma, semilla
-       * 70, el que empezaba la suya contaba 306 m con el que ya la daba, y
-       * fueron 279. A sesenta pasos por segundo es un metro, pero la cuenta no
-       * puede depender del orden en que se mueven.
-       */
-      const atras = reloj - (movidoA.get(b) ?? reloj);
       van.push({
         apartado: APARTADO_DE_LOS_DEMAS,
         en: (dentroDe) => {
-          const anda = velocidad * (dentroDe + atras);
+          const anda = velocidad * dentroDe;
           if (vuelta && anda <= queda)
             return enElTresSesenta({ ...vuelta, hecho: vuelta.hecho + anda }).sitio;
           const metros = b.recorrido + anda - queda;
@@ -5750,7 +5646,6 @@ export function crearTrafico(
         repartirLosTramos(tuEnTierra);
       }
       for (const [matricula, quien] of aviones) {
-        movidoA.set(quien, reloj);
         const c = quien.caminos;
         const antes = quien.recorrido;
         const tope = quien.marca.tope ?? Infinity;
@@ -6075,9 +5970,6 @@ export function crearTrafico(
       if (matricula === null) cedenA = null;
       else if (cedenA?.matricula !== matricula) cedenA = { matricula, desde: reloj };
     },
-    enSuRaya(matricula) {
-      return (aviones.get(matricula)?.listoDesde ?? null) !== null;
-    },
     puedeSalirSinEsperarte(matricula) {
       const quien = aviones.get(matricula);
       const c = quien?.caminos;
@@ -6088,11 +5980,8 @@ export function crearTrafico(
       /*
        * Y si es a quien se le cede el turno, sin los que dan su vuelta de espera:
        * la dan por él, y al cerrarla dan otra mientras no se haya ido (H102).
-       * Lo mismo si ya tiene la pista: los que llegan la esperan en su turno
-       * (`lasQueSalen`), y contarlos aquí era el candado de Estigarribia.
        */
-      const cedido =
-        (cedenA?.matricula === matricula && suTurnoDeSalir(null).length > 0) || encimaDeLaPista(quien);
+      const cedido = cedenA?.matricula === matricula && suTurnoDeSalir(null).length > 0;
       if (llegaAntesDeQueSalga(quien.tipo, "torre.clearedTakeoff", remonta, false, false, cedido))
         return false;
       return !(
@@ -6145,8 +6034,6 @@ export function crearTrafico(
             loQueTardaEnRemontar(quien, matricula),
             true,
             clave === "torre.clearedTakeoff" && !!quien && encimaDeLaPista(quien),
-            // Sin los que dan su vuelta por él: ver `puedeSalirSinEsperarte`.
-            !!quien && encimaDeLaPista(quien),
           )
         )
           return true;

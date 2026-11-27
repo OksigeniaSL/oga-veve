@@ -101,11 +101,6 @@ describe("sin radio, la torre pide que le cedan el turno al que ya te mandó al 
  * puede dar la salida, y si el que llega da su vuelta de espera, aterriza o se
  * va al aire. `null` si en esa semilla no se da el caso. Quien juega no viene:
  * la cesión se pide a mano, que es lo que hace el turno sin radio.
- *
- * Hasta H104b el caso pedía también que el de la raya no pudiera salir todavía.
- * Con la pista al que espera listo en su raya (H100) y la salida que la tiene
- * en el turno de los que llegan, eso ya no se da en trescientas semillas: se le
- * da la pista antes de que llegue nadie dentro de su remontada.
  */
 function laRayaYElQueLlega(semilla: number, cede: boolean) {
   const esc = conViento(SCENARIOS.find((e) => e.id === "encarnacion")!, {
@@ -149,7 +144,8 @@ function laRayaYElQueLlega(semilla: number, cede: boolean) {
         d.camino === "salida" &&
         d.espera !== null &&
         Math.abs(d.recorrido - d.espera) < 1 &&
-        trafico.remonta(d.matricula) > 0,
+        trafico.remonta(d.matricula) > 0 &&
+        !trafico.puedeSalirSinEsperarte(d.matricula),
     );
     const llega = llegan.find(
       (d) =>
@@ -191,18 +187,16 @@ describe("en Encarnación, el que llega le cede el turno al de la única calle",
   /*
    * Semillas en las que se da el caso, buscadas con este mismo arnés: uno en la
    * raya que remonta y otro en el viento en cola que aterrizaría dentro de su
-   * remontada. Antes de H104b, en las tres el que llega se iba al aire si no se
-   * le pedía la cesión: la frecuencia le daba la pista al de la raya y el que
-   * llegaba no lo contaba.
+   * remontada.
    */
-  const SEMILLAS = [52, 54, 78] as const;
+  const SEMILLAS = [6, 64, 75] as const;
 
-  it("sin cederle el turno, el que llega ya no se va al aire: en cuanto el otro tiene la pista, la espera (H104b)", () => {
+  it("sin cederle el turno, el que llega gira a la base y se va al aire: la pista la tiene él", () => {
     for (const s of SEMILLAS) {
       const r = laRayaYElQueLlega(s, false);
       expect(r, `semilla ${s}`).not.toBeNull();
-      expect(r!.daLaVuelta, `semilla ${s}`).toBe(true);
-      expect(r!.alAire, `semilla ${s}`).toBe(false);
+      expect(r!.daLaVuelta, `semilla ${s}`).toBe(false);
+      expect(r!.alAire, `semilla ${s}`).toBe(true);
     }
   });
 
@@ -212,108 +206,6 @@ describe("en Encarnación, el que llega le cede el turno al de la única calle",
       expect(r!.daLaVuelta, `semilla ${s}`).toBe(true);
       expect(r!.alAire, `semilla ${s}`).toBe(false);
       expect(r!.puede, `semilla ${s}`).toBe(true);
-    }
-  });
-});
-
-/**
- * **Encarnación con su tráfico, y uno que ya remonta la pista para salir**
- * mientras otro viene por el viento en cola sin haber girado a la base, a menos
- * de dos minutos y medio del suelo. Se miran cuatro minutos: si el que sale se
- * va, y si el que llega da su vuelta de espera, aterriza o se va al aire. `null`
- * si en esa semilla no se da el caso. Quien juega no viene, y nadie cede nada.
- */
-function remontaYElQueLlega(semilla: number) {
-  const esc = conViento(SCENARIOS.find((e) => e.id === "encarnacion")!, {
-    ...TIEMPO_DE_CASA,
-    vientoDe: 12,
-    vientoKt: 10,
-  });
-  const aero = esc.aerodrome as Aerodrome;
-  const cota = aero.elevationM ?? 0;
-  const pista = esc.runway;
-  const calles = sueloDelTrafico(aero, pista, aero.runways[0]?.widthM ?? 45);
-  const trafico = crearTrafico(pista, cota, "ala-alta", "izquierda", 1, undefined, {
-    tipos: tiposDelCampo(aero.id, pista.length, false),
-    quienJuega: () => ({ alUmbral: null, llegada: null, enLaPista: false }),
-    tierra: () => (calles ? { suelo: calles, alto: () => cota } : null),
-  });
-  const turno = new TurnoDePista({
-    radio: new Frecuencia(dados(semilla), aero.id),
-    boca: { retirar: () => {}, espera: () => false, esperaAlguna: () => false },
-    trafico: () => trafico,
-    torre: () => true,
-    privado: () => false,
-    calleUnica: () => calles?.unaSolaCalle() ?? false,
-    alUmbral: () => Infinity,
-    alto: () => 300,
-    enTierra: () => false,
-    decirAOtro: () => null,
-    autorizarte: () => {},
-    mandarteAlAire: () => {},
-  });
-  const paso = () => {
-    turno.oir(PASO, EN_VUELO);
-    turno.paso("en-vuelo");
-  };
-  const elCaso = (): { sale: string; llega: string } | null => {
-    const dentro = trafico.porDentro();
-    const sale = dentro.find(
-      (d) =>
-        d.camino === "salida" &&
-        d.espera !== null &&
-        d.despega !== null &&
-        d.recorrido > d.espera + 1 &&
-        d.recorrido < d.despega - 600 &&
-        trafico.remonta(d.matricula) > 0,
-    );
-    if (!sale) return null;
-    const llega = dentro.find(
-      (d) =>
-        (d.camino === "llegada" || d.camino === "sinPermiso") &&
-        d.base !== null &&
-        d.toca !== null &&
-        d.recorrido < d.base - 200 &&
-        (d.toca - d.recorrido) / d.velocidad < 150 &&
-        !trafico.secuencia().find((q) => q.matricula === d.matricula)?.esperandoTurno,
-    );
-    return llega ? { sale: sale.matricula, llega: llega.matricula } : null;
-  };
-  let caso: { sale: string; llega: string } | null = null;
-  for (let t = 0; t < 2400 && !caso; t += PASO) {
-    paso();
-    caso = elCaso();
-  }
-  if (!caso) {
-    trafico.dispose();
-    return null;
-  }
-  let [seFue, alAire] = [false, false];
-  for (let t = 0; t < 240; t += PASO) {
-    paso();
-    const dentro = trafico.porDentro();
-    const s = dentro.find((d) => d.matricula === caso!.sale);
-    seFue ||= !s || s.camino !== "salida" || (s.despega !== null && s.recorrido >= s.despega);
-    alAire ||= dentro.find((d) => d.matricula === caso!.llega)?.camino === "otro";
-  }
-  trafico.dispose();
-  return { ...caso, seFue, alAire };
-}
-
-describe("en Encarnación, la salida que ya tiene la pista cuenta en el turno de los que llegan (H102, lo 2)", () => {
-  /*
-   * Buscadas con este mismo arnés. Hasta H104b, en las tres el que llegaba
-   * giraba a la base contando solo con los que llegan, bajaba con el otro
-   * remontando y se iba al aire en la decisión.
-   */
-  const SEMILLAS = [5, 6, 15] as const;
-
-  it("el que llega y todavía no ha girado a la base espera a que se vaya: nadie se va al aire", () => {
-    for (const s of SEMILLAS) {
-      const r = remontaYElQueLlega(s);
-      expect(r, `semilla ${s}`).not.toBeNull();
-      expect(r!.seFue, `semilla ${s}`).toBe(true);
-      expect(r!.alAire, `semilla ${s}`).toBe(false);
     }
   });
 });

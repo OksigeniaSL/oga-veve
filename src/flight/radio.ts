@@ -794,13 +794,6 @@ export class Frecuencia {
   sabeRetener: (matricula: string) => boolean = () => false;
 
   /**
-   * **Si ese avión ya espera listo en su doble raya**, para darle la pista sin
-   * la espera de una llamada cualquiera (H100). Lo pone el turno con el
-   * dibujo; sin él, nadie, y la frecuencia va a su ritmo. Ver `update`.
-   */
-  enSuRaya: (matricula: string) => boolean = () => false;
-
-  /**
    * **Te van a dar la pista: antes se le quita a quien la tenga.**
    *
    * Lo llama el juego en cuanto la pista pasa a ser tuya, y **antes** de que
@@ -1146,27 +1139,10 @@ export class Frecuencia {
         !!m.esperandoLaPista &&
         toca === "torre.clearedTakeoff" &&
         laPistaQueTiene(a.guion, a.paso) === "torre.lineUpWait";
-      /*
-       * **Y el que ya espera listo en su doble raya, también** (H100). Su
-       * siguiente orden llegaba a la hora de una llamada cualquiera, de treinta
-       * y cinco a setenta y cinco segundos después de su «hold short», y quien
-       * rodaba poco —en La Palma, ciento treinta y siete metros— se quedaba
-       * parado en la raya ese rato con la pista vacía y nadie llegando. La
-       * salida se da «when the aircraft is ready for take-off and at or
-       * approaching the departure runway, and the traffic situation permits»
-       * (OACI, Doc 4444, 7.9.3.4), y lo que permite el tráfico lo dice
-       * `todaviaNo`, más abajo. Ver `enSuRaya`.
-       */
-      const listoEnSuRaya =
-        DAN_LA_PISTA.has(toca) &&
-        toca !== "torre.clearedLand" &&
-        enLaCalle(a.guion, a.paso) &&
-        this.enSuRaya(a.indicativo.matricula);
       const apura =
         (deLaCalle && m.calleOcupada === "saliendo" && DAN_LA_PISTA.has(toca)) ||
         (primeroDeLaFila && DAN_LA_PISTA.has(toca)) ||
-        alineadoConFila ||
-        listoEnSuRaya;
+        alineadoConFila;
       if (a.falta > 0 && !apura) continue;
       /*
        * **Y en el punto de espera, también el que va a cantar final.** Con el
