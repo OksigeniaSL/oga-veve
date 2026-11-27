@@ -309,6 +309,10 @@ export type PorQueEsperas = "aterriza" | "despega" | "fila" | "estela";
  * paciencia de quien espera. Pasados, la torre te da la salida a ti, como
  * cambiaría el orden una de verdad con uno que no está listo (Doc 4444,
  * 7.9.1).
+ *
+ * Son tres minutos **de la fila sola**: lo que el de delante y tú esperáis
+ * por lo mismo —la pista ocupada, una estela, uno que llega, el canal
+ * ocupado— no cuenta (H107c). Ver `contarLaFila`.
  */
 export const PACIENCIA_EN_LA_FILA = 180;
 
