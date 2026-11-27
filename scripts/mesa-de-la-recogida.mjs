@@ -15,8 +15,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Vector3 } from "three";
 import { CoefficientFlightModel } from "../src/flight/fdm";
-import { aircraftById, propulsionDe } from "../src/flight/aircraft";
-import { TAGUATO } from "../src/flight/tiers";
+import { AIRCRAFT, aircraftById, propulsionDe } from "../src/flight/aircraft";
+import { TAGUATO, TIERS } from "../src/flight/tiers";
+import { alabeoAFondo } from "../src/flight/mano";
+import { finDeLaZonaDeToma } from "../src/flight/toma-larga";
 import { neutralControls } from "../src/flight/model";
 import { Rafagas } from "../src/flight/rafagas";
 import { airDensity, aireDelParte, indicadaDe } from "../src/flight/atmosphere";
@@ -62,7 +64,7 @@ export function laRecogidaDelBanco(texto, { antesDeH72 = false } = {}) {
   return new Function(
     "e",
     `
-    const { o, suyas, alto, alUmbral, porElSuelo, enVerdadera, SENDA, c, avionPorId } = e;
+    const { o, suyas, alto, alUmbral, porElSuelo, enVerdadera, SENDA, c, avionPorId, zonaDeTomaDeAhora } = e;
     const SENCILLO = false, CON_EL_AUTOMATICO = true, obedienteEnElBanco = false, vref = 0;
     ${constante(t, "RITMO_AL_TOCAR")}
     ${constante(t, "SEGUNDOS_DE_RECOGIDA")}
@@ -85,6 +87,43 @@ export function laRecogidaDelBanco(texto, { antesDeH72 = false } = {}) {
   );
 }
 
+/**
+ * **La mano del alerón en la final, la del banco** (H108): el tope del alerón
+ * de cada avión (`topeDeAleronEnVuelo`, H34f) y la ganancia de la final
+ * (`gananciaEnLaFinal`, H34g), leídos del banco como lo demás. La mesa llevaba
+ * los de la avioneta —0,35 y 4— para todos, y el JAZ 110 del banco va con 0,64:
+ * con ellos la mesa abría del eje al 787 lo que el banco no —en La Palma, a
+ * 15,3 m como mucho en cuarenta finales, y con la del banco a 9,6—. Y la
+ * mirada corta de la recogida, `MIRADA_AL_RECOGER`.
+ */
+export function laManoDelBanco(texto, id, peldano = "taguato") {
+  const tope = `${trozo(texto, "  const topeDeAleronEnVuelo = (() => {", "\n  })();\n")}\n  })();`;
+  const ganancia = `${trozo(texto, "  const gananciaEnLaFinal = (() => {", "\n  })();\n")}\n  })();`;
+  return new Function(
+    "e",
+    `
+    const { suyas, avionPorId, LA_FLOTA, propulsionDe, alabeoAFondo, LOS_PELDANOS, TAGUATO, peldano } = e;
+    ${constante(texto, "TOPE_DE_ALERON_EN_VUELO")}
+    ${constante(texto, "GANANCIA_DE_ALABEO_EN_FINAL")}
+    ${constante(texto, "MIRADA_AL_RECOGER")}
+    ${tope}
+    ${ganancia}
+    return { tope: topeDeAleronEnVuelo, ganancia: gananciaEnLaFinal, miradaAlRecoger: MIRADA_AL_RECOGER };`,
+  )({
+    suyas: { id },
+    avionPorId: aircraftById,
+    LA_FLOTA: AIRCRAFT,
+    propulsionDe,
+    alabeoAFondo,
+    LOS_PELDANOS: TIERS,
+    TAGUATO,
+    peldano,
+  });
+}
+
+/** La 12 de Los Rodeos, que es la que vuela la mesa si no se dice otra: m y °C. */
+const LOS_RODEOS = { cabecera: 628.5, otraPunta: 611.7, largo: 3168, grados: 21 };
+
 const NUDO = 0.514444;
 const SENDA = Math.tan((3 * Math.PI) / 180);
 const GRADO = Math.PI / 180;
@@ -101,15 +140,21 @@ const DT = 1 / 60;
  *   encima a la del avión (el motor, para separar causas); `sigma`, σ_w en m/s;
  *   `viento`, nudos; `sinRacha(recogiendo)`, si se le quita; `llana`, la pista
  *   sin cuesta; `gas`, otro del turbohélice; `gasDeLaFinal`, su `kp` y su
- *   `ki`; `conTraza`, fotograma a fotograma.
+ *   `ki`; `conTraza`, fotograma a fotograma; `campo`, otra pista
+ *   —`{ cabecera, otraPunta, largo, grados }`, m y °C— y `vientoDesde`, de
+ *   dónde sopla en grados a la derecha de su rumbo; `mano`, la del alerón
+ *   del banco en la final, de `laManoDelBanco` (H108).
  */
 export function vuelaLaFinal(p) {
   const ficha = aircraftById(p.avion);
   const a = p.ficha ? { ...ficha, ...p.ficha } : ficha;
-  const aire = aireDelParte(21, 628, 1013);
-  const CABECERA = 628.5;
-  const cae = p.llana ? 0 : (628.5 - 611.7) / 3168;
-  const cota = (x, z) => CABECERA - cae * Math.max(0, Math.min(3168, -z));
+  // El campo: la 12 de Los Rodeos si no se dice otro (H108).
+  const campo = p.campo ?? LOS_RODEOS;
+  const aire = aireDelParte(campo.grados, Math.round(campo.cabecera), 1013);
+  const CABECERA = campo.cabecera;
+  const LARGO = campo.largo;
+  const cae = p.llana ? 0 : (campo.cabecera - campo.otraPunta) / LARGO;
+  const cota = (x, z) => CABECERA - cae * Math.max(0, Math.min(LARGO, -z));
   const tren = a.gearHeight;
   const flaps = muescaDeAterrizaje(a);
   const suyas = {
@@ -139,7 +184,9 @@ export function vuelaLaFinal(p) {
     flapsDelEquilibrio: flaps,
   });
   const kt = (p.viento ?? 12) * NUDO;
-  m.ponerViento(Math.sin(71 * GRADO) * kt, Math.cos(71 * GRADO) * kt);
+  // De dónde sopla, en grados a la derecha del rumbo de la pista: el 040 contra la 12, si no.
+  const desde = p.vientoDesde ?? 71;
+  m.ponerViento(Math.sin(desde * GRADO) * kt, Math.cos(desde * GRADO) * kt);
   const rafagas = new Rafagas(p.semilla);
   const c = { throttle: 0, aileron: 0, elevator: 0, rudder: 0 };
   const mandos = neutralControls();
@@ -185,7 +232,9 @@ export function vuelaLaFinal(p) {
     __flotaElReactor: reactor.flotaElReactor,
     __morroQueFaltaAlPunto: reactor.morroQueFaltaAlPunto,
   });
-  const mano = p.recogida({ o, suyas, alto, alUmbral, porElSuelo, enVerdadera, SENDA, c, avionPorId });
+  // Dónde acaba la zona de toma, la del juego con lo que mide esta pista (H108).
+  const zonaDeTomaDeAhora = () => finDeLaZonaDeToma(LARGO);
+  const mano = p.recogida({ o, suyas, alto, alUmbral, porElSuelo, enVerdadera, SENDA, c, avionPorId, zonaDeTomaDeAhora });
   const mem = memoriaNueva();
   const giro = (x) => Math.atan2(Math.sin(x), Math.cos(x));
   let errorAntes = null;
@@ -257,6 +306,7 @@ export function vuelaLaFinal(p) {
           caida: -s.verticalSpeed,
           nudos: indicadaDe(s, aire) / NUDO,
           gas: c.throttle,
+          eje: s.position.x,
         };
       if (!mano.recogida) {
         if (!sinPerseguir && ruedas < 30 && falta > 0 && falta < 1000)
@@ -269,18 +319,21 @@ export function vuelaLaFinal(p) {
       }
       // El eje: hacia un punto suyo, por el suelo, con la mano de la final.
       const radio = (s.airspeed * s.airspeed) / (9.81 * Math.tan(30 * GRADO));
-      const mirada = Math.max(
+      // Y recogiendo, con la mano del banco, la mirada corta (H108): ver `MIRADA_AL_RECOGER`.
+      const alRecoger = p.mano && mano.recogida ? p.mano.miradaAlRecoger : 0;
+      const mirada = alRecoger > 0 ? Math.max(alRecoger, Math.abs(s.position.x) / Math.tan(30 * GRADO)) : Math.max(
         Math.max(120, Math.min(300, falta * 0.4)) * Math.max(1, s.airspeed / 33),
         Math.min(0.7 * radio, falta * 0.6),
         Math.abs(s.position.x) / Math.tan(30 * GRADO),
       );
       const trayectoria = Math.atan2(s.velocity.x, -s.velocity.z);
       const rumbo = Math.atan2(-s.position.x, mirada) - giro(trayectoria - s.heading);
-      const alabeo = Math.max(
-        -25 * GRADO,
-        Math.min(25 * GRADO, giro(rumbo - s.heading) * 1.5),
-      );
-      c.aileron = Math.max(-0.35, Math.min(0.35, (alabeo - bankAngleOf(s.orientation)) * 4));
+      // Con la mano del banco si se da (H108): los treinta grados de la final, su tope y su ganancia.
+      const inclinacion = (p.mano ? 30 : 25) * GRADO;
+      const alabeo = Math.max(-inclinacion, Math.min(inclinacion, giro(rumbo - s.heading) * 1.5));
+      const tope = p.mano?.tope ?? 0.35;
+      const ganancia = p.mano ? p.mano.ganancia(s.airspeed) : 4;
+      c.aileron = Math.max(-tope, Math.min(tope, (alabeo - bankAngleOf(s.orientation)) * ganancia));
     }
     mandos.throttle = c.throttle;
     mandos.aileron = c.aileron;
@@ -337,6 +390,15 @@ export function vuelaLaFinal(p) {
         falta: mano.recogida?.falta,
         sost: mano.recogida?.sostiene,
         floto: mano.recogida?.floto,
+        alPunto: mano.recogida?.alPunto,
+        mqf: mano.recogida?.morroQueFalta,
+        beta: (s.beta ?? 0) / GRADO,
+        ra: sopla.alabeo,
+        rx: sopla.x,
+        rumbo: giro(Math.atan2(s.velocity.x, -s.velocity.z) - s.heading) / GRADO,
+        x: s.position.x,
+        alab: bankAngleOf(s.orientation) / GRADO,
+        ail: mandos.aileron,
       });
     m.step(DT, mandos);
     reloj += DT;
@@ -359,7 +421,8 @@ export function mesa(p, semillas) {
     laMasDura: caidas[caidas.length - 1],
     caidaMediana: q(caidas, 0.5),
     caida90: q(caidas, 0.9),
-    largas: r.filter((x) => x.metros > 600).length,
+    // Pasadas de la zona de toma, la del juego en esa pista (H108); era seiscientos metros en todas.
+    largas: r.filter((x) => x.metros > finDeLaZonaDeToma((p.campo ?? LOS_RODEOS).largo)).length,
     cortas: r.filter((x) => x.metros < 150).length,
     metrosMediana: q(metros, 0.5),
     laMasLarga: metros[metros.length - 1],

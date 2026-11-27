@@ -79,6 +79,7 @@ import {
 } from "./recogida-del-reactor.mjs";
 import { elEjeDeLaCarrera } from "./el-eje-de-la-carrera.mjs";
 import { LEY_DEL_REACTOR, palancaDeLaFrustrada } from "./la-frustrada.mjs";
+import { alAirePorLarga } from "./al-aire-por-larga.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -263,6 +264,12 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+
+/*
+ * **La zona de toma, la del juego** (H108): ver «se toca en la zona de toma».
+ * Se carga del propio juego con el servidor de arriba, para que no haya dos.
+ */
+const { finDeLaZonaDeToma } = await server.ssrLoadModule("/src/flight/toma-larga.ts");
 
 /*
  * **Y la dirección se pregunta, no se supone.**
@@ -808,6 +815,13 @@ await page.addScriptTag({
 await page.addScriptTag({
   content: `globalThis.__palancaDeLaFrustrada = ${palancaDeLaFrustrada.toString()}; globalThis.__leyDelReactor = ${JSON.stringify(LEY_DEL_REACTOR)};`,
 });
+/*
+ * **Y si se va al aire por toma larga, desde su módulo** (H108), que lo ata a
+ * la regla del juego `recogida-del-banco.test.mjs`.
+ */
+await page.addScriptTag({
+  content: `globalThis.__alAirePorLarga = ${alAirePorLarga.toString()};`,
+});
 
 const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida]) => {
   const o = globalThis.__oga;
@@ -1188,6 +1202,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     "/src/flight/aircraft.ts"
   );
   const { alabeoAFondo } = await import("/src/flight/mano.ts");
+  // Y dónde acaba la zona de toma, la del juego (H108): ver `zonaDeTomaDeAhora`.
+  const { finDeLaZonaDeToma: zonaDelJuego } = await import("/src/flight/toma-larga.ts");
   // Y la amortiguación de más de cada peldaño, para la mano de la final: ver
   // `gananciaEnLaFinal`.
   const { TIERS: LOS_PELDANOS, TAGUATO } = await import("/src/flight/tiers.ts");
@@ -1493,6 +1509,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           caida: recogida.caida,
           // Y desde dónde recoge: a ras de suelo, como mucho una toma firme (H34f).
           altura: recogida.altura,
+          // Y el punto, dentro de la zona de toma del juego (H108).
+          zona: recogida.zona,
         });
       } catch {
         // Sin pista a la que medir: el perfil, como siempre.
@@ -2085,6 +2103,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * En casa es la misma; en el destino, la suya. Ver el argumento `destino`.
    */
   const pistaAhora = () => o.pistaDeAhora?.() ?? o.pista();
+  /**
+   * **Dónde acaba la zona de toma de la pista de ahora**, m pasado su umbral
+   * de aterrizaje (H108): la del juego, `finDeLaZonaDeToma`, con lo que esa
+   * pista mide para aterrizar. Es la que mira el juego para dar la toma por
+   * larga, y la que mira este banco en «se toca en la zona de toma».
+   */
+  const zonaDeTomaDeAhora = () => {
+    const r = pistaAhora();
+    return zonaDelJuego(r.length - (r.desplazado ?? 0));
+  };
   const finalAhora = (d) => o.puntoDeFinalDe?.(d) ?? o.puntoDeFinal(d);
   let pista = pistaAhora();
   let rumboPista = (pista.heading * Math.PI) / 180;
@@ -3671,6 +3699,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * enderezar; es lo que llevaba a los rápidos al otro lado. Ver `mirada`.
    */
   const ANGULO_DE_CAPTURA_EN_FINAL = (30 * Math.PI) / 180;
+  /**
+   * **Y recogiendo, el eje se mira a ciento veinte metros** (H108), el suelo
+   * de la mirada de la final sin estirarlo con la velocidad.
+   *
+   * Pasado el umbral, la mirada de la final es ese suelo por la velocidad
+   * entre treinta y tres: 222 m al JAZ 90 y 270 al 787, tres segundos y medio
+   * por delante. Eso es para no serpentear en una final de minutos; la
+   * recogida de un reactor dura seis o siete, y lo que una racha lo aparta en
+   * ella se corrige después de tocar. El JAZ 90 en Gran Canaria, con 025/20,
+   * iba a 4,5 m del eje a quinientos pies y tocó a 10,1, tras recoger desde
+   * 14,4 m y tocar a 0,2 m/s, que son seis segundos y medio en el aire. En la
+   * mesa, las que se abren lo hacen así: una racha de lado y otra de alabeo
+   * en la recogida —en Los Rodeos, el JAZ 90 a +4° con el alerón en su tope de
+   * 0,48 segundo y medio—, la corrección que llega tarde y el ala al otro lado
+   * al tocar. No es la deriva —con ese viento casi no hay que quitar, y el
+   * banco no la quita con el pie en el aire: el timón lo lleva la ayuda del
+   * juego—, es el tiempo. Un piloto en la recogida no deja que el avión
+   * se aparte de la raya: la corrige al momento y con poco. En la mesa de la
+   * recogida, con la mano de la final del banco (`laManoDelBanco`) y cien
+   * finales de cada reactor en Los Rodeos, Gran Canaria y La Palma, las tomas
+   * a más de nueve metros del eje bajan de 14 a 6 de 700, y las duras quedan
+   * igual (`recogida-del-banco.test.mjs`).
+   */
+  const MIRADA_AL_RECOGER = 120;
 
   /** Diferencia de rumbo, de −π a π. */
   const error = (a, b) => {
@@ -4567,6 +4619,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let frustradasPorTuSalida = 0;
   /** Y cuántas se fue porque el juego ya había dado la frustrada. */
   let frustradasPorElJuego = 0;
+  /** Y cuántas se fue por pasarse la zona de toma sin tocar (H108). */
+  let frustradasPorLaToma = 0;
   let yaTeLaDieron = false;
   /**
    * **Tus autorizaciones para aterrizar, con la fase en que sonaron.** Nada
@@ -5434,7 +5488,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const CIRCUITO_DE_MAS = 600;
   const frustradasHastaAhora = () =>
-    frustradasPorLaPista + frustradasPorTuSalida + frustradasPorElJuego;
+    frustradasPorLaPista + frustradasPorTuSalida + frustradasPorElJuego + frustradasPorLaToma;
   const tope = () => TOPE + (frustradasHastaAhora() >= 2 ? CIRCUITO_DE_MAS : 0);
   /*
    * Y el tiempo se lee del juego, no se cuenta por vueltas.
@@ -7213,6 +7267,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
     }
     /*
+     * **Y si se pasa la zona de toma sin tocar, al aire** (H108), con la
+     * regla del juego: ver `al-aire-por-larga.mjs`. Renunciar es ganar, y la
+     * toma buena es la de la vuelta siguiente. El obediente no: hace lo que le
+     * dicen, y esto se lo dice el juego.
+     */
+    if (etapa === "final" && !s.onGround && !obedienteEnElBanco) {
+      const r = pistaAhora();
+      const pasado = -alUmbral(s);
+      if (
+        globalThis.__alAirePorLarga({
+          ruedas: alto(s) - (suyas.tren ?? 0),
+          pasado,
+          zona: recogida?.zona ?? zonaDeTomaDeAhora(),
+          queda: r.length - (r.desplazado ?? 0) - pasado,
+        })
+      ) {
+        frustradasPorLaToma++;
+        rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
+        aDonde = 1;
+        etapa = "subir";
+        irseConFlaps(s);
+      }
+    }
+    /*
      * **Y una final que se deja es una final que no cuenta.** Al irse al aire
      * se olvidan la recogida y la puerta: lo que se mide es la final que
      * acabó tocando.
@@ -8601,6 +8679,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const p = o.avion?.()?.cabeceo;
         recogida = {
           altura: alturaDeRecogida,
+          // Dónde acaba la zona de toma, la del juego: ver `pideAlPuntoDeToma` (H108).
+          zona: zonaDeTomaDeAhora(),
           /*
            * Desde lo que baja, o desde la senda si baja más: quien llega
            * bajando de más —una racha, la senda cogida tarde— tiene que
@@ -8942,12 +9022,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const radio =
         (s.airspeed * s.airspeed) /
         (9.81 * Math.tan(TOPE_DE_INCLINACION_EN_LA_BASE));
-      const mirada = Math.max(
-        Math.max(120, Math.min(300, falta * 0.4)) *
-          Math.max(1, s.airspeed / 33),
-        Math.min(0.7 * radio, falta * 0.6),
-        Math.abs(desvio(s)) / Math.tan(ANGULO_DE_CAPTURA_EN_FINAL),
-      );
+      // Recogiendo, más cerca: ver `MIRADA_AL_RECOGER` (H108).
+      const mirada =
+        recogida && MIRADA_AL_RECOGER > 0
+          ? Math.max(MIRADA_AL_RECOGER, Math.abs(desvio(s)) / Math.tan(ANGULO_DE_CAPTURA_EN_FINAL))
+          : Math.max(
+              Math.max(120, Math.min(300, falta * 0.4)) *
+                Math.max(1, s.airspeed / 33),
+              Math.min(0.7 * radio, falta * 0.6),
+              Math.abs(desvio(s)) / Math.tan(ANGULO_DE_CAPTURA_EN_FINAL),
+            );
       const tx = r.x + fx * (along + mirada);
       const tz = r.z + fz * (along + mirada);
       c.aileron = alPuntoPorElSuelo(s, tx, tz);
@@ -9480,6 +9564,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     sinAnularAlDartela,
     frustradasPorLaPista,
     frustradasPorElJuego,
+    frustradasPorLaToma,
     ordenesDeIrse,
     entradasEnLaPista,
     laFinalDeAlli: { ...laFinalDeAlli, subidaMaxima: Math.round(laFinalDeAlli.subidaMaxima) },
@@ -11600,11 +11685,22 @@ comprobarSiVolo(
  * Tocar a ochocientos metros en Pilar o a dos mil en Guaraní es flotar sin
  * recogida; tocar a cuatro metros por segundo, lo mismo sin flotar —la senda
  * entera hasta el asfalto—. Uno y medio, con la recogida hecha.
+ *
+ * **Y la zona acaba donde la acaba el juego** (H108): `finDeLaZonaDeToma` de
+ * `flight/toma-larga.ts`, leída del juego y no copiada. El banco tenía la
+ * suya, el primer tercio sin pasar de seiscientos metros, y el juego la
+ * visada y doscientos: en La Palma, 600 contra 500. El JAZ 110 tocó allí a
+ * 560 m, el banco le dio la zona por buena y el juego la toma por larga, sin
+ * gafas. Una regla de medir que no ve lo que mide no vale. El principio sigue
+ * siendo del banco —ciento cincuenta metros, los quinientos pies con los que
+ * empieza la zona de toma en la AC 91-79A, o la décima parte en las cortas—,
+ * porque el juego no tiene otro que el umbral, y ese lo mira «y se toca
+ * pasado el umbral de aterrizaje».
  */
 {
   const lda = vuelo.pistaParaTocar || 0;
   const desde = Math.min(150, lda * 0.1);
-  const hasta = Math.min(600, lda / 3);
+  const hasta = finDeLaZonaDeToma(lda);
   const d = vuelo.tocoPasadoElUmbral;
   const r = vuelo.empezoLaRecogida;
   comprobarSiVolo(
@@ -11612,7 +11708,8 @@ comprobarSiVolo(
     vuelo.toco > 0 && d >= desde && d <= hasta,
     vuelo.toco
       ? `${d} m pasado el umbral · la zona, de ${Math.round(desde)} a ${Math.round(hasta)} m en ${lda} m de pista` +
-          (r ? ` · recogida a ${r.ruedas} m de ruedas, ${r.umbral} m del umbral, bajando ${r.caida} m/s a ${r.nudos} kt` : " · sin recogida")
+          (r ? ` · recogida a ${r.ruedas} m de ruedas, ${r.umbral} m del umbral, bajando ${r.caida} m/s a ${r.nudos} kt` : " · sin recogida") +
+          (vuelo.frustradasPorLaToma ? ` · antes, ${vuelo.frustradasPorLaToma} al aire por pasarse la zona` : "")
       : "no llegó a tocar",
     "aterriza largo: unos 800 m del umbral en Pilar y Ayolas, y unos 2.000 en Guaraní con el JAZ 90",
   );
