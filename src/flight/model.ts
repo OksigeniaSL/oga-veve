@@ -613,6 +613,12 @@ export interface FlightModel {
   /** Y el que tiene puesto, m: el banco mira con él la carga que se suelta. */
   centradoAhora?(): number;
   /**
+   * **Lo que va en las ruedas**, de 0 a 1: el peso menos lo que sostiene el
+   * aire. Solo lo sabe el modelo de coeficientes; el banco mide la frenada
+   * contra eso. Ver `pesoEnLasRuedas` en `fdm.ts`.
+   */
+  pesoEnLasRuedas?(): number;
+  /**
    * **Si la rueda de morro no ha salido**: el ejercicio del tren de morro
    * (#90). Solo lo hace el modelo de coeficientes, y solo con el avión que
    * lleva `morroSinRueda`. Ver el ADR 0014, enmienda H70.
