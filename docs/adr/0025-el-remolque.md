@@ -3602,7 +3602,7 @@ De las 418 filas de `puesto-de-salida-de-cada-campo.json` cambian diez, todas de
 
 ### Lo que queda
 
-**La aviación general de Los Rodeos**: la GA 1, del AG1 al AG3, de salida autónoma por la Y, y la GA 2, del AG4 al AG7, con tractor hasta la W
+**La aviación general de Los Rodeos** (hecho en la H105, salvo la GA 2): la GA 1, del AG1 al AG3, de salida autónoma por la Y, y la GA 2, del AG4 al AG7, con tractor hasta la W
 (casilla 20.1.2 I y J; la W, de 12 m hasta los AG, y la Y, de 17 m pasado el AG1). Ahí aparcan de verdad las avionetas, y no en el 19, que es
 de AT72. Pide poner los siete en la ficha desde la carta —sus coordenadas están en la PDC 1.2—, con sus líneas y sus calles, como los AG de
 Tenerife Sur (H97), y la noche, que la GA 2 la cierra salvo el N4 y el N5. Y del 28 al 38, los de salida autónoma a la R y a la Z, que la
@@ -3623,6 +3623,160 @@ scripts/ver-remolque-del-trafico.mjs carpeta`, con la avioneta y el bimotor del 
 **El que entra con el de al lado empujando, siendo tú**: la H98 retiene al tráfico que llega; a quien juega, que entra por su raya, no lo
 para ni la torre ni el señalero mientras empujan al de al lado. Solo pasa en las tres parejas de Tenerife Sur.
 
+## Enmienda (27-11-2026, H105): la aviación general de Los Rodeos, en la ficha, y las avionetas saliendo de ella
+
+### El caso
+
+Lo que dejó escrito la H103. Los Rodeos publica dónde aparca la aviación general y la ficha no lo traía, porque OpenStreetMap no
+tiene esos puestos; así que desde la H103 la avioneta de quien juega y la avioneta y el bimotor del tráfico salían del 19, que es de
+AT72, y llegaban a él. Menos malo que el 26 de antes, pero no lo real: las avionetas aparcan en la aviación general.
+
+### Lo que publica el AIP, leído el 26-11-2026
+
+Las mismas hojas que la H103, bajadas de ENAIRE ese día.
+
+- **AD 2-GCXO PDC 1.2 (WEF 06-AUG-26)**: del AG1 al AG7, salida «A», con su punto; el mayor avión, CN35 en el AG1, G150 en el AG2 y el
+  AG3, PA34 del AG4 al AG7. Observaciones: el AG1, «(7)», que la PDC 1.3 explica —«Maximum total length permitted for a jet engine on
+  AG1 is 20.22 m (Falcon 900 aircraft)»—; el AG7, «INCOMP. N5», y el N5, de helicóptero (EC35, «HEL. INCOMP. AG7»), lo mismo al revés, que la
+  casilla 20.3.2 del AD 2 repite en su tabla de puestos de helicóptero.
+  Ya estaban en `aip/gcxo.pdc.json`, que la H60f extrajo entero.
+- **AD 2-GCXO PDC 1.1 (WEF 29-OCT-26)**: la APN GA 1, del AG1 al AG3, y la APN GA 2, del AG4 al AG7 con el N5 y el N4, en la punta
+  oeste; la Y llega de la R a la primera por el Y1 y la W a la segunda por el W1.
+- **AD 2-GCXO, casilla 20.1.2 (AMDT 413/26, 26-NOV-26)**: C, «Manoeuvres in the autonomous exit parking positions (…) to TWY Y (PRKG
+  AG1, AG2 and AG3)»; I, «The exit from the parking positions of the General Aviation 1 (APN AG 1) apron shall be carried out via TWY Y
+  to access TWY R», y «between sunrise and during the application of LVP», así, con el «FOLLOW ME»; J, «The exit from the parking positions of the General Aviation 2 (APN
+  GA 2) apron shall be carried out by towing to the centre line of TWY W».
+- **Casilla 20.1.4**: «TWY W is limited to a MAX WINGSPAN of 26 m, MAX WINGSPAN 14 m for access to the Aeroclub hangar, and MAX
+  WINGSPAN 12 m for access to General Aviation parking stands AG4 to AG7»; «TWY Y is limited to a MAX SPAN 26 m up to PRKG AG1 and to a
+  MAX SPAN 17 m in the rest of its length». Y **la noche**: «The use of the General Aviation apron 2 shall be restricted from sunset
+  to sunrise, as well as when LVP are in force, with the exception of PRKG N4 and N5», que son los dos de helicóptero (20.3.2: «these
+  stands may be used during night operations or under Low Visibility Conditions»). De la GA 1 de noche no dice que se cierre; la 22.5,
+  la de los VFR nocturnos, pide que el avión que vaya a volar de noche esté en la plataforma comercial antes de que oscurezca, y que el
+  que llega de noche aparque en ella.
+- **AD 2.8**: la GA 1, de hormigón, PCN 70; la GA 2, de asfalto, PCN 6. La W, de 20 m de ancho, y la Y, de 15.
+
+### Decisión
+
+1. **Los siete, en la ficha, en su punto publicado** (`GENERAL_DE_LA_CARTA` en `scripts/puestos-del-aip.mjs`), de aviación general
+   (`uso`), con `manual`, y rehechos cada vez que se junta. Receta: `node scripts/puestos-del-aip.mjs juntar GCXO`, que sale igual se
+   junte las veces que se junte. Caen dentro de la plataforma que ya traía la ficha de OpenStreetMap, así que **no hay que hornear el
+   pavimento**: no cambia ninguna malla.
+2. **La GA 1 sale y llega por la Y** (`salePor` y `llegaPor`, como el 17 y el 19 por la F), y las líneas de sus tres puestos son la
+   raya blanca pintada en la losa, en la ortofoto PNOA de máxima actualidad (foto de 2024, vista el 26-11-2026 a 20 cm por píxel): nacen
+   donde la Y llega a la losa, que es donde acaba la Y de OpenStreetMap, y van a la parada. La del AG2 y la del AG3 siguen la pintada al
+   metro. **La del AG1, no del todo**: la pintada sigue hacia el oeste, da una vuelta de unos seis metros de radio y deja el avión
+   mirando al sureste, a la salida; aquí va por el camino corto, del Y1 a la parada. Al arrancar en él, el juego pone el avión con el morro
+   a la Y, como lo deja la pintada (rumbo 171, en la foto desde encima); el que llega aparca mirando al noroeste, por la raya, y da la
+   vuelta al salir, como en el 17 y el 19. Ver «Lo que queda».
+3. **La Y y la W, con su nombre** (`calles` de `GENERAL_DE_LA_CARTA`): en OpenStreetMap son calles sin nombre, tres trozos de la Y
+   —el tronco y las dos curvas a la R— y cuatro de la W, y se les pone por el primer punto de cada uno. Son **calles de plataforma**
+   (`callesDePlataforma`, con la F): solo rueda por ellas quien sale de un puesto que las nombra.
+4. **Y la raya de cada puesto de la GA 1, también como raya de la Y** (`conLasCalles`), solo pintada (`soloPintada`), como las de la
+   aviación general de Tenerife Sur (H97): se rueda por ella y no tiene asfalto ni balizas suyas. Sin ella, la ruta del tráfico
+   desde el AG3 iba recta por la losa hasta donde acaba la Y, setenta metros en diagonal y por encima del AG2: lo que no es calle
+   no se engancha, y la Y de OpenStreetMap acaba en el borde de la losa. Se vio en planta, sobre la ortofoto, antes de cerrar.
+5. **La GA 2, en la ficha y sin nadie** (`conTractorHasta`, `deAviacionGeneral`): se deja remolcado hasta el eje de la W, y el juego no
+   remolca avionetas. Ni el plan de quien juega ni el tráfico la eligen, ni para salir ni para llegar, ni con la GA 1 cogida. Van sin
+   línea: en la foto las dos avionetas del AG4 y el AG5 tienen el morro hacia la calle, metidas de espaldas, y una línea de entrar de
+   frente sería falsa.
+6. **El 17 y el 19 se quedan para los turbohélices** (`porSusMedios`): el JAZ 50 y el JAZ 60 de quien juega salen del 19 como en la
+   H103. El turbohélice y el reactor del tráfico, a los de la plataforma comercial, como estaban.
+
+### Metros, antes y después
+
+**Quien juega en Los Rodeos** —el puesto, lo que se rueda hasta la primera doble raya y, de ahí, lo que queda hasta el eje—:
+
+| Avión | Por la 12 | Por la 30 |
+|---|---|---|
+| JAZ 20, 25 y 40 | 19, 329 m a la R4 y 1.244 al eje → **AG1, 198 a la de la E2 y 771** | 19, 1.349 a la E4 y 745 → **AG1, 2.036** y 745 |
+| JAZ 50 y 60 | iguales: 19 | iguales: 19 |
+| JAZ 90, 110 y 120 | iguales: 24 y 25 | iguales: 12, 15 y 24 |
+
+Hasta el eje, por la 12 604 m menos y por la 30 687 más: la aviación general está en la punta oeste, a la vista de la cabecera 12, y
+la 30 empieza en la este. Es donde está, como en Tenerife Sur (H97).
+
+**El tráfico de Los Rodeos**, lo que se rueda hasta la doble raya al salir y del umbral al puesto al llegar:
+
+| | Por la 12 | Por la 30 |
+|---|---|---|
+| Avioneta y bimotor, saliendo | 19, 1.226 → **AG1, 405** | 19, 2.441 → **AG3, 3.213** |
+| y llegando, según dónde dejan de correr | 19, 810, 1.070 y 1.590 → **AG1**, 1.498, 520 y 2.278 | 19, 810, 871, 1.070 y 1.590 → **AG1**, 1.498, 1.558, 520 y 2.278 |
+| Turbohélice y reactor | iguales | iguales |
+
+De las 418 filas de `puesto-de-salida-de-cada-campo.json` cambian seis, todas de Los Rodeos: el JAZ 20, 25 y 40 por las dos cabeceras.
+
+### El barrido, el plan y los demás campos
+
+- **La mesa**, antes —be0fe04a— y después, con node y sin vitest: el puesto de salida y los metros de cada avión de quien juega y de
+  cada tipo del tráfico en los diecinueve campos y por las dos cabeceras, y las llegadas del tráfico dejando de correr cada 150 m:
+  2.188 casos. Cambian 90, todos de Los Rodeos: los seis de las tres avionetas de quien juega, los cuatro de la salida de la avioneta
+  y el bimotor y sus ochenta llegadas. Los turbohélices y los reactores, de quien juega y del tráfico, iguales.
+- **Los empujes de contacto**, en Los Rodeos, La Palma, Gran Canaria, Lanzarote, Tenerife Sur, Barajas, Pettirossi y Fuerteventura,
+  con los tres reactores y por las dos cabeceras: 1.048, iguales uno a uno, y los 48 del plan.
+- **Las salidas y las llegadas de la GA 1**, en planta sobre la ortofoto: la de quien juega, del AG1 por su raya y por la Y; las del
+  tráfico, del AG1 y del AG3 por la suya, y la llegada al AG1 por la suya. Ninguna pisa fuera del pavimento.
+- **Nadie llega a un AG que no lo admite**: quien juega, con los ocho aviones, por las dos cabeceras y desde cada doble raya, va al
+  AG1 con las tres avionetas y a ninguno con los demás; el tráfico, con los cuatro tipos, la avioneta y el bimotor a la GA 1 y el
+  turbohélice y el reactor a ninguno. A la GA 2 no va nadie, tampoco con la GA 1 cogida.
+- **La receta**: `juntar` de La Palma, Gran Canaria, Lanzarote, Tenerife Sur y El Hierro sale igual que estaba, y la de Los Rodeos
+  sale igual se junte las veces que se junte.
+
+### Lo medido
+
+- **Pruebas nuevas** (`aviacion-general-de-los-rodeos.test.ts`, 8): la ficha, con los siete en su punto publicado, su mayor avión, su
+  fuente, la Y y la W y las rayas de la GA 1 sobre pavimento; las tres avionetas de quien juega, de la GA 1 por la Y por las dos
+  cabeceras y sin pisar fuera; los turbohélices, del 19; quien juega no llega a un AG que no lo admite, ni a la GA 2; el tráfico, de
+  la GA 1 por la Y, y los demás tipos a ningún AG; la raya de los puestos sin rótulo de calle; y con la GA 1 cogida, a ninguno de la
+  GA 2. En `--pool=threads` y en `--pool=forks`. La del rótulo se vio fallar sin el arreglo. Cambian `salida-autonoma-de-los-rodeos`
+  —las avionetas y el tráfico se van de ella, quedan los turbohélices, y las calles de plataforma son tres—,
+  `empuja-con-quien-juega-en-su-puesto`, que solo cambia de nombre porque el JAZ 20 está en el AG1, y seis filas del puesto de salida
+  de cada campo. Y dos que el vitest entero vio caer y eran de esto: `lineas-de-entrada`, que pedía raya a todos los puestos de Los
+  Rodeos, y la GA 2 no la tiene (ver «Decisión»); y `trafico-en-tu-calle`, que con la avioneta del tráfico aparcada en el AG1 veía
+  pasar a diecisiete metros la ruta al AG3. Mide las rutas de un avión de veintiocho metros de ala, que no va al AG3, que es de G150:
+  ahora solo a los puestos que lo admiten.
+- **El rótulo de la Y** (`llevaRotulo` en `aerodrome.ts`): la raya del AG3 mide 105 m, y `letreros` le pintaba una Y a los cien,
+  junto a la parada, que en la ortofoto no está. Se vio en la foto desde encima. Ninguna calle `soloPintada` lleva rótulo ya; las de
+  Tenerife Sur no llegaban a los cien metros, y no cambian.
+- **Vitest entero, por partes** de 2 GB, en `--pool=threads`: `src/world` en cuatro, 207 ficheros, 4.559 en verde y 3 saltadas, con los
+  dos rojos de arriba arreglados y vueltos a correr; `src/flight` en tres, 277 ficheros, 5.247 en verde, 29 saltadas y una pendiente; y
+  lo demás, 127 ficheros, 2.498 en verde. Ninguno sin correr.
+- **El pavimento**: `OGA_PUERTO=5693 npm run pavimento -- --comprobar tenerife-norte`, igual byte a byte a la cuenta del navegador, y
+  el juego la usó al arrancar. No hay que hornear: los puestos caen en la plataforma que ya estaba, y las rayas solo pintadas no son
+  asfalto.
+- **Navegador**, con la Intel (ANGLE, Mesa Intel Iris Xe): `OGA_GPU=1 node scripts/verificar-vuelo-entero.mjs tenerife-norte guyrami 3
+  jaz-20`, 63 de 63 comprobaciones y 2 sin medir. La avioneta arranca en el AG1, rueda 183 m por su raya y por la Y hasta la doble raya
+  de la E2, en 44 s, despega por la 12, vuelve y aparca en el AG1, a un metro de su punto, con el señalero delante. Y desde encima, con
+  la cámara puesta sobre ella al arrancar: en el AG1, sobre su raya y con el morro a la Y, en la losa y lejos de los edificios; la raya
+  del AG2 y la del AG3, pintadas al lado. En esa foto salió la Y pintada junto al AG3 que se quitó (ver arriba), y en la de después ya
+  no está.
+  Y `tenerife-norte taguato 1 jaz-50`, que con esto no cambia de puesto: 59 de 59 y 3 sin medir, del 19 a la doble raya en 46 s y
+  325 m, y de vuelta al 19, a dos metros. `ver-remolque-del-trafico.mjs` no se corrió: el reactor del tráfico empuja como antes, y la
+  avioneta y el bimotor, que son lo que cambia, no llevan tractor.
+
+### Lo que queda
+
+**La GA 2 con tractor hasta la W** (casilla 20.1.2 J): el remolque de una avioneta, hacia delante y hasta el eje de la W, con la barra
+al tren de morro; con él, del AG4 al AG7 —PA34, que admiten el JAZ 20 y el JAZ 40, y no el JAZ 25, de 12,5 m, que la W tampoco deja
+pasar de 12— salen las avionetas de quien juega y del tráfico, y se les pone su línea. Hasta entonces la GA 2 está en la ficha, en su
+punto, y no va nadie. Con ella, **el «INCOMP. N5» del AG7** (PDC 1.2): no se maniobra en el AG7 con un helicóptero en el N5, ni al
+revés; hoy no va nadie a ninguno de los dos.
+
+**La noche**: la GA 2 se cierra de la puesta a la salida del sol, salvo el N4 y el N5 (20.1.4), y quien vuela VFR de noche sale de la
+plataforma comercial y llega a ella (22.5). El plan y el tráfico no saben de la hora: de noche, la avioneta sigue saliendo del AG1.
+
+**La vuelta del AG1**, pintada en la losa: la línea va por el camino corto, y el que llega aparca mirando al noroeste en vez de al
+sureste, y da la vuelta al salir. Lo mismo en la del AG2 y la del AG3, que en la pintada también acaban en una vuelta alrededor de la
+parada. Pide que el plan sepa salir hacia delante de un puesto cuya raya acaba mirando a la salida, como hace con los de paso (H97).
+
+**La Y más allá del AG1 hasta 17 m** (20.1.4): no la pisa nadie que no quepa, porque solo van a la GA 1 las avionetas, pero no está en
+`restriccionesDeRodaje`.
+
+**El tráfico en la GA 1, en el navegador**: la avioneta y el bimotor saliendo del AG1 y del AG3 y llegando al AG1 se han visto en planta
+y en las pruebas, no en el juego.
+
+**Del 28 al 38, los de salida autónoma a la R y a la Z** (casilla 20.1.2 C, F y G; PDC 1.2, observaciones (4), (5) y (6)): siguen sin
+estar en la ficha.
+
 ## Lo que queda
 
 **Barajas sin ruta, con voz paraguaya y aterrizando por la 36L** (H66): su despegue es una vuelta al campo y la torre
@@ -3640,7 +3794,8 @@ Barajas siguen saliendo mal el 330 y, en Gran Canaria, el N11, que no tienen lí
 **Qué puestos tienen pasarela**, en los cuatro campos cuyo AIP no lo dice, desde la H87. Las dos puntas de la plataforma de
 Tenerife Sur y su APROAR, desde la H88: ver su «Lo que queda». Por la primera puerta y la segunda línea por delante, y el tráfico al
 puesto al que menos se rueda, desde la H95; la aviación general, los de al lado de uno en uno y el asfalto de la T de Fuerteventura, desde la H97: ver el suyo. Los Rodeos por sus
-medios, del 17 y el 19 por la F, y el R45 por la D2, desde la H103; su aviación general, en el «Lo que queda» de la H103.
+medios, del 17 y el 19 por la F, y el R45 por la D2, desde la H103; su aviación general, en la ficha desde la H105, con la GA 2
+todavía sin nadie: ver su «Lo que queda».
 
 **Fuerteventura**, con los puestos del AIP desde la H85: ver su «Lo que queda». El T2 de Lanzarote por la C, sus restricciones de rodaje y el segundo
 tramo, hechos en ella; la plataforma de la T1–T3 de Barajas y el 584, en la H81.

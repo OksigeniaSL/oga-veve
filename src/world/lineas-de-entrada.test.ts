@@ -33,8 +33,15 @@ describe("las líneas de entrada de los puestos", async () => {
   const base = await conSuAerodromo(SCENARIOS.find((e) => e.id === "tenerife-norte")!);
   const aero = base.aerodrome!;
 
-  it("todos los puestos de Los Rodeos tienen la suya, y acaba en el punto del puesto", () => {
-    for (const p of aero.parkingPositions!) {
+  /*
+   * Menos los de la GA 2 (H105), del AG4 al AG7: se dejan remolcados hasta la W, no va nadie, y en la foto las avionetas
+   * están metidas de espaldas. Una raya de entrar de frente sería falsa. Ver `conTractorHasta`.
+   */
+  const aLosQueSeVa = aero.parkingPositions!.filter((p) => !p.aip?.conTractorHasta);
+
+  it("todos los puestos de Los Rodeos a los que se va tienen la suya, y acaba en el punto del puesto", () => {
+    expect(aero.parkingPositions!.length - aLosQueSeVa.length).toBe(4);
+    for (const p of aLosQueSeVa) {
       expect(p.entrada, `el ${p.ref ?? p.xy.join(",")}`).toBeDefined();
       expect(p.entrada!.at(-1)).toEqual(p.xy);
     }
@@ -91,7 +98,7 @@ describe("las líneas de entrada de los puestos", async () => {
 
   it("y el aeródromo desplazado la lleva con él", () => {
     const movido = desplazarAerodromo(aero, 1000, -500);
-    for (const p of movido.parkingPositions!) expect(p.entrada!.at(-1)).toEqual(p.xy);
+    for (const p of movido.parkingPositions!) if (!p.aip?.conTractorHasta) expect(p.entrada!.at(-1)).toEqual(p.xy);
   });
 });
 

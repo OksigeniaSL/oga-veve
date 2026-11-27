@@ -3988,8 +3988,417 @@ llegada, y en La Palma la mitad de las veces quien juega espera la verde casi me
   minutos por avión, y en `todaviaNo` y `puedeSalirSinEsperarte` sin los que esperan por quien ya
   tiene la pista; y la cadencia de H100 encima. Antes de meterlo habría que ver por qué en Gando, sin
   remontar, quien llega espera tanto más: el que espera alineado sin su salida cuenta con su carrera
-  entera, y puede que baste con contar solo al que ya tiene la salida.
+  entera, y puede que baste con contar solo al que ya tiene la salida. Mirado en H104, abajo: no es
+  eso, y sigue sin entrar.
 - **Sin la cesión, en Encarnación y sin nadie más, el que llega se va al aire** por el que remonta:
   la prueba nueva lo enseña en sus tres semillas, y en el buscador salió en ocho de ocho casos. Es lo
   2 visto desde el otro lado, y con radio pasa igual.
 
+## Enmienda H104 (27-11-2026): la salida que tiene la pista en el turno de los que llegan, medida otra vez, y sin entrar
+
+### El caso
+
+Lo 2 de H102 —que quien llega y todavía no ha girado a la base cuente en su turno a la salida que
+ya tiene la pista, hasta que pase su final, y la cadencia de H100 encima— bajaba las frustradas de
+los 2.820 vuelos con radio de 186 a 29, pero no entró: los que llegan esperaban más en nueve de los
+catorce campos —en Gando, de 64,5 a 95,0 s por llegada, sin remontar— y en La Palma la mediana de
+la roja de quien juega subía de 56 a 83 s. Quedaron dos preguntas: por qué Gando espera treinta
+segundos más, y si hay un arreglo que dé la vuelta de espera en vez de la ida al aire sin hacer
+esperar a nadie más de lo que pide la pista. Para que entrara se pidió, campo a campo: frustradas a
+menos, ningún encuentro a más, la espera por llegada no más de un 10 % peor y la mediana de la roja
+de quien juega no más de 10 s peor.
+
+La mesa es la de H102, fuera del repositorio como aquélla, con una traza más: cada vez que el
+tráfico decide si le toca su vuelta de espera (`retrasoPara`), se apunta quién se la impone —el
+último de la fila que le empuja la hora— y cuánto de ella es por las salidas que tienen la pista; y
+cada medio segundo de vuelta se carga a eso.
+
+### Por qué Gando espera treinta segundos más
+
+Gando, 60 vuelos (JAZ 20, 60 y 90, veinte semillas), segundos de vuelta de espera por llegada,
+según quién la impone:
+
+| quién impone la vuelta | antes | lo 2 de H102 | lo 2 sin el margen de 30 s |
+|---|---|---|---|
+| quien juega, en la fila por su circuito o su final | 34,7 | 50,8 | 35,0 |
+| tu salida: en tu raya, en la pista o recién en el aire | 12,1 | 11,8 | 14,4 |
+| otra llegada | 10,1 | 10,2 | 10,4 |
+| otra llegada en su vuelta | 7,5 | 7,0 | 4,7 |
+| **una salida que tiene la pista** | — | **15,2** | **5,7** |
+| — con su despegue | — | 6,9 | 0 |
+| — alineada sin su despegue | — | 4,1 | 1,4 |
+| — entrando en la pista | — | 4,2 | 4,3 |
+| **total** | **64,5** | **95,0** | **70,2** |
+| vueltas · frustradas | 40 · 6 | 51 · 0 | 40 · 3 |
+
+Son dos cosas, y casi a partes iguales:
+
+- **La vuelta es entera, y lo que hace falta es poco.** Hay once vueltas más, y catorce empiezan por
+  una salida que tiene la pista. A cada una le hacían falta de 5,6 a 34,6 s —y 90,4 en dos sucesos,
+  por uno que entraba en la pista y al que se le contaban 158 s para pasar el final—; una vuelta de
+  un reactor son de 77 a 93 s. Y treinta de esos segundos son `MARGEN_PARA_IRSE`, que se suma a lo
+  que le queda para pasar el final y está pensado para dejar rodar a uno hacia la pista, no para
+  quien ya está en ella: por una salida con su despegue empiezan cuatro vueltas, que piden 29,9 y
+  5,6 s, y sin el margen no empieza ninguna.
+- **Al cerrarla, ya no cabe delante de ti.** El que da la vuelta vuelve a mirar al cerrarla, y para
+  entonces quien juega ya está en la fila por su circuito: para ir delante le hacen falta 135 s
+  (los 120 entre llegadas y el colchón de 15) y le quedan menos. Espera detrás de todo tu circuito,
+  vuelta a vuelta. EC-BWN, semilla 14: le faltan 35 s por EC-GOK, que entra en la pista; da su
+  vuelta de 77, y al cerrarla tú estás a 202 s del umbral y le quedan 123 de los 135: da otras
+  tres, 313 s en total. Antes giraba a la base sin esperar, y EC-GOK se iba a tiempo.
+
+**La sospecha de H102, contada: no es eso.** El que espera alineado sin su despegue cuenta 4,1 s de
+los 30,5. Y contar solo a la salida que ya tiene el despegue, probado, deshace lo 2: en los siete
+campos de 60 vuelos las frustradas van de 34 a 34 —en La Palma, de 18 a 21— y vuelven las tres
+parejas de La Palma a menos de 300 m.
+
+### Lo probado
+
+En los siete campos de 60 vuelos (Gando, Tenerife Sur, Lanzarote, Fuerteventura, La Palma, Cuatro
+Vientos y Pettirossi: 420 vuelos), antes → con cada variante. Tenerife Sur, Lanzarote,
+Fuerteventura y Cuatro Vientos cumplen en todas:
+
+| variante | frustradas | encuentros a menos de 300 m | lo que no cumple |
+|---|---|---|---|
+| lo 2 de H102 (con la cadencia) | 34 → 0 | 0 → 0 | espera en Gando +47 %, en Pettirossi +16 %; mediana de la roja en La Palma 56 → 83 |
+| solo la salida con su despegue | 34 → 34 | 0 → 3 (La Palma) | frustradas; parejas; espera en Gando +20 %; La Palma 56 → 81 |
+| **sin el margen de 30 s** | **34 → 3** | 0 → 0 | **mediana de la roja en La Palma 56 → 92** |
+| lo 2 sin la cadencia | 34 → 0 | 0 → 0 | Gando +47 %, Pettirossi +18 %, La Palma 56 → 94,5 |
+| sin el margen y sin la cadencia | 34 → 3 | 0 → 0 | La Palma 56 → 94,5 |
+| sin el margen, y tu turno detrás de la salida que tiene la pista | 34 → 3 | 0 → 0 | Gando +12 %; La Palma 56 → 92 |
+| sin el margen, y los que todavía no se ven no la esperan (solo La Palma) | 18 → 0 | 0 → 0 | La Palma 56 → 81 |
+
+«Tu turno detrás de la salida»: el que llega da su vuelta por ti contigo en la raya
+(`tuTurnoDeSalir`) contando que no sales hasta que la que tiene la pista haya pasado su final. «Los
+que todavía no se ven»: `noCabeTodavia` sin las salidas, para que el que va a aparecer no espere
+fuera por ellas.
+
+La mejor es **sin el margen**: lo 2 de H102 con lo que le queda a la salida para pasar el final sin
+los 30 s de `MARGEN_PARA_IRSE`, y la cadencia. Medida entera, antes → ahora.
+
+**Con radio**, los 2.820 vuelos de H96 y H98. El antes de Los Rodeos se ha vuelto a correr, que H103
+le cambió las salidas; el de los demás es el de H102, comprobado: los 420 vuelos de los campos de 60
+y 200 de los que remontan salen iguales uno a uno con el juego de hoy, y en Encarnación, 350.
+
+| campo (vuelos) | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| Los Rodeos (600) | 40 → 17 | 742 → 740 | 659 → 657 | 35,8 (2) → 34,5 (2) | 63,1 → 65,0 | 0/0/0 | 0/0 |
+| Gando (60) | 6 → 3 | 78 → 77 | 93 | 49,0 (24,5) → 48,7 (24,5) | 64,5 → 70,2 | 0/0/0 | 0/0 |
+| Tenerife Sur (60) | 3 → 0 | 70 → 71 | 85 | 47,7 (36) → 44,1 (36) | 67,6 → 70,9 | 0/0/0 | 0/0 |
+| Lanzarote (60) | 0 | 65 | 63 | 18,5 (2) | 67,9 | 0/0/0 | 0/0 |
+| Fuerteventura (60) | 0 | 71 → 70 | 67 | 25,4 (2) | 71,3 → 74,8 | 0/0/0 | 0/0 |
+| La Palma (60) | 18 → 0 | 73 → 79 | 102 → 109 | 81,5 (56) → 88,6 (92) | 86,7 → 80,6 | 0/0/0 | 0/0 |
+| Cuatro Vientos (60) | 0 | 63 | 69 | 17,3 (2) | 64,6 → 66,6 | 0/0/0 | 0/0 |
+| Pettirossi (60) | 7 → 0 | 69 → 80 | 92 → 93 | 39,9 (12) → 40,3 (12) | 45,5 → 49,7 | 0/0/0 | 0/0 |
+| El Hierro, remontando (300) | 64 → 1 | 437 → 513 | 561 → 617 | 86,3 (94) → 70,0 (68,5) | 89,3 → 85,5 | 0/0/0 | 0/0 |
+| La Gomera, remontando (300) | 6 → 0 | 369 → 406 | 527 → 570 | 73,6 (52) → 62,7 (40,5) | 97,0 → 92,3 | 0/0/0 | 0/0 |
+| Pilar (300) | 2 → 1 | 456 → 477 | 576 → 654 | 39,1 (35,5) → 33,7 (15) | 56,3 → 61,3 | 0/0/0 | 0/0 |
+| Pedro Juan (300) | 0 | 426 → 459 | 561 → 613 | 25,3 (5) → 24,9 (3) | 69,7 → 59,9 | 0/0/1 | 0/0 |
+| Concepción (300) | 13 → 0 | 399 → 424 | 520 → 547 | 61,4 (31) → 64,8 (35) | 73,5 → 68,7 | 0/0/0 | 0/0 |
+| Estigarribia (300) | 27 | 403 → 435 | 540 → 579 | 45,0 (15,5) → 50,3 (22,5) | 72,1 → 70,1 | 0/0/1 | 0/0 |
+| **todos (2.820)** | **186 → 49** | **3.721 → 3.959** | **4.515 → 4.816** | **48,8 (23) → 46,0 (19,5)** | **72,4 → 71,0** | **0/0/2 → 0/0/2** | **0/0 → 0/0** |
+
+Cumple en trece de los catorce campos: las frustradas bajan de 186 a 49, ningún encuentro sube —las
+dos parejas del tráfico siguen siendo una en Estigarribia y otra en Pedro Juan—, la espera por
+llegada no empeora más de un 9,2 % en ninguno —Pettirossi, de 45,5 a 49,7; Gando, de 64,5 a 70,2, un 8,8 %— y
+la mediana de la roja de quien juega no sube más de 7 s en ninguno salvo en uno: **La Palma, de 56 a
+92 s.**
+
+**Encarnación sin radio**, JAZ 20, las dos cabeceras, por la línea y alargando:
+
+| | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | rojas a ti (por tu salida) |
+|---|---|---|---|---|---|---|---|
+| callada a los 20 s de despegar, obedeciendo cada roja (1.000) | 46 → 0 | 1.413 → 1.490 | 1.584 → 1.644 | 90,0 (54) → 83,6 (43,5) | 68,7 → 69,8 | 0/6/22 → 0/7/12 | 99 (78) → 76 (40) |
+| callada desde el principio (400) | 22 → 0 | 540 → 568 | 576 → 608 | 92,8 (58,5) → 87,7 (44,5) | 69,1 → 74,6 | 0/1/12 → 0/2/12 | 10 (0) → 7 (0) |
+
+Las rojas por tu salida bajan a la mitad, como con lo 2 de H102, y las parejas del tráfico de 22 a
+12. Pero **los encuentros con quien juega en la vuelta de otro suben**, de 6 a 7 y de 1 a 2: todos
+alargando —tres kilómetros más de viento en cola—, a 200–260 m y a su misma altura, de uno que da su
+vuelta en el viento en cola. Con más vueltas, en la mesa de mil salen seis donde no había y se van
+cinco. La vuelta se pone por donde no vas a pasar (H93), contando con tu circuito de siempre, y
+alargando tres kilómetros pasas por donde no se contaba. Con lo 2 de H102 tal cual, lo mismo —de 6 a
+7 y de 1 a 2—, y además la espera por llegada subía de 68,7 a 76,4 s y de 69,1 a 81,4: sin el margen
+queda en 69,8 y 74,6.
+
+**Sin radio desde el principio**, los 1.760 vuelos de los once campos con torre de H98 y H100 (el
+antes, el de H102; 40 comprobados, iguales): lo mismo que antes en lo que mira esa mesa —finales sin
+señal, 0; rojas, 2, las dos en Encarnación, y ninguna por tu salida—.
+
+### Por qué La Palma no llega
+
+Porque es lo que cuesta el arreglo, y no un efecto suyo de más. En La Palma (60 vuelos, sin el
+margen) la roja de quien juega sube más de 10 s en 15 vuelos y baja más de 10 s en 10; la media, de
+81,5 a 88,6. **De los 15 que suben, 12 tenían una frustrada del tráfico antes**: el reactor que se
+iba al aire con la salida delante dejaba la pista libre justo cuando llegabas a tu raya, y salías
+detrás de la salida. Ahora espera fuera o da su vuelta, aterriza, y la pista es suya mientras
+frena y rueda hasta el final —en la semilla 2, EC-DBJ toca a los 720 s y la deja a los 800—: la
+roja es esperar a que aterrice. Los otros tres son la cadencia, en la semilla 9: el de delante sale
+antes, EC-SCL llega a su raya a los 337,5 s —antes, a los 386,5, después que tú, que llegas a los
+379— y sale antes que tú, que es lo que toca (7.9.1); remontar, alinearse y correr le lleva 145 s.
+Y la mediana cae en un hueco de la tabla: antes, ordenadas, las esperas 31.ª a 34.ª son 56, 56, 58
+y 94,5, y mover tres semillas —tres vuelos cada una, con el mismo tráfico— la lleva de un lado al
+otro.
+
+Para ver si es el arreglo o la muestra, La Palma con sesenta semillas más (de la 21 a la 80, 180
+vuelos), fuera de la mesa de lo que se pide: la roja de quien juega **baja**, la media de 96,8 a
+75,2 s y la mediana de 87 a 65,5; con las ochenta juntas, la mediana se queda en 68,5 antes y
+después, y las frustradas van de 60 a 0. Lo de la mediana en la mesa de 60 lo deciden tres
+semillas. **Pero en esas 180 sale una pareja del tráfico donde no había**: semilla 70, EC-IMW y
+EC-FOS, los dos dando su vuelta de espera, a 279 m y 34 de altura. Con más vueltas, dos que se
+juntan.
+
+### Decisión
+
+**No entra.** Nada cambia en el juego. La variante sin el margen cumple todo menos dos cosas: la
+mediana de la roja de quien juega en La Palma —y lo que la sube es justo lo que se buscaba: que el
+que llega dé su vuelta y aterrice, en vez de irse al aire y dejarte la pista—, y un encuentro más en
+la vuelta de otro en cada mesa de Encarnación sin radio, alargando. Y fuera de la mesa, en La Palma
+con más semillas, sale una pareja de dos del tráfico en su vuelta. Si lo primero se da por bueno y
+lo otro se arregla, el arreglo está medido y es corto: lo 2 de H102 (`lasQueSalen` en la fila de
+`retrasoPara`, con la red de diez minutos por avión; en `todaviaNo` y `puedeSalirSinEsperarte`, sin
+los que esperan por quien ya tiene la pista; la cadencia de 7.9.3.4) y, en `lasQueSalen`, lo que le
+queda para pasar el final sin `MARGEN_PARA_IRSE`. En H104b, abajo, cumple en la mesa con las dos
+cosas de las vueltas arregladas y la mediana de La Palma fuera de los criterios; falta rehacer tres
+pruebas que pierden su caso y mirar una roja larga en Guaraní.
+
+### Lo que queda
+
+- **La regla de La Palma.** En la mesa de 60 vuelos, la mediana la deciden tres semillas; con
+  ochenta, no se mueve. Lo que el arreglo cuesta de verdad es esperar el aterrizaje del que antes se
+  iba al aire, y decidir si eso pesa más que la frustrada no es de la mesa.
+- **Lo que el margen tapaba.** Sin él quedan 17 frustradas de 40 en Los Rodeos —tres sucesos por
+  la 30 con los cinco aviones, y uno con dos de ellos— y 3 de 6 en Gando, donde lo 2 de H102 las
+  quitaba todas. Las de Gando son un mismo suceso, con los tres aviones: EC-VVJ, una avioneta,
+  despega por la 21 con EC-LNA, un reactor, en el viento en cola; sube despacio y a los 376 s sigue
+  sobre el asfalto, a 2.841 m del umbral —la pista tiene 3.104— y a 239 de altura, con EC-LNA a 774
+  m del umbral: al aire. Lo que le queda a la que sale para pasar el final
+  (`loQueLeFaltaParaDejarla`) no cuenta bien lo que tarda en el aire una avioneta sobre una pista de
+  tres kilómetros, y el margen de 30 s lo tapaba.
+- **Alargar el viento en cola.** El tráfico solo sabe dar la vuelta entera, de 77 a 93 s un reactor,
+  aunque le falten cinco; de verdad, quien llega da su vuelta o alarga lo que haga falta, que la
+  separación entre llegadas y salidas se hace en el circuito (Doc 4444, 7.7.1.2). Alargar no existe
+  en el modelo, y es lo que más espera ahorraría.
+- **Sin radio y alargando, la vuelta del tráfico en tu viento en cola.** Ya pasaba —seis en mil
+  vuelos, uno en cuatrocientos— y con más vueltas pasa en otros sitios. Dónde se pone la vuelta
+  (`vueltaSegura`) mira por dónde vas a volar con tu circuito de siempre, y no cuenta con que
+  alargues.
+- **Dos vueltas juntas.** La vuelta se aparta de quien juega y de los demás que vuelan
+  (`vueltaSegura`), pero en la esquina de la base, si no hay ninguna apartada, se da la que más se
+  aparta (`leTocaEsperar`). En La Palma, semilla 70, dos del tráfico la dan a 279 m uno de otro.
+  Antes de volver a lo 2 hay que mirar ese caso. Mirado en H104b: el segundo veía al primero
+  medio segundo atrasado.
+- **El que cierra su vuelta y ya no cabe delante de ti** espera todo tu circuito: 135 s delante,
+  contando el colchón de quien juega. Con lo 2 es la mitad de lo que crece la espera de Gando; sin
+  lo 2 ya son 34,7 s por llegada.
+
+## Enmienda H104b (27-11-2026): las vueltas de espera que se juntaban, y la salida que tiene la pista en el turno de los que llegan, medida y escrita, y todavía sin entrar
+
+### El caso
+
+H104 dejó medido el candidato **sin el margen** —lo 2 de H102 sin sumar `MARGEN_PARA_IRSE` a lo que le
+queda a la salida que tiene la pista para pasar su final, con la cadencia de H100— y lo dejó fuera por
+dos cosas. Una era la mediana de la roja de quien juega en La Palma, de 56 a 92 s en la mesa de 60
+vuelos. Esa **deja de ser criterio**, porque es lo de verdad: de los 15 vuelos que suben más de 10 s,
+12 son el reactor que antes se iba al aire contra tu salida y ahora aterriza, y esperas a que deje la
+pista; los otros 3, la cadencia, que deja salir antes al que estaba primero en la fila (Doc 4444,
+7.9.1). Con las 80 semillas, la mediana no se mueve: 68,5 antes y después. Irse al aire contra una
+salida no es lo que pasa; esperar a que el de delante aterrice y deje la pista, sí. Lo que se pide
+allí es que la roja más larga quede por debajo de lo que el banco permite: 170 s más lo de la fila.
+
+La otra era la separación, y esa sí bloqueaba:
+
+- en Encarnación sin radio, alargando tres kilómetros el viento en cola, un encuentro más con la
+  vuelta de otro en cada mesa: callada a los 20 s, de 6 a 7; desde el principio, de 1 a 2;
+- y en La Palma, con las ochenta semillas, una pareja nueva: semilla 70, dos del tráfico en su
+  vuelta de espera a 279 m.
+
+### Por qué se juntaban
+
+La mesa es la de H104, con dos trazas más: dónde se pone cada vuelta, con qué holgura y contra quién
+—las seis maneras de darla, por los dos lados y con los tres alabeos—, y dónde está de verdad cada uno
+mientras la da.
+
+**Encarnación, alargando.** Los nueve encuentros del candidato en las dos mesas —siete callada a los
+20 s, dos desde el principio; ocho de ellos nuevos— son el mismo suceso. Uno del tráfico va **por
+delante de ti en el mismo viento en cola**, con su esquina de la base más afuera que la tuya —una
+avioneta abriendo un poco más, o un bimotor—, y **espera por ti**: la traza dice en todos «TU», con
+medio minuto o un minuto y medio de ventaja cuando le hacen falta 135 o 154 s. Da su vuelta en su esquina, a entre 2.200 y
+2.960 m del umbral y a entre 1.150 y 1.490 de la pista. La torre la pone por donde no vas a pasar
+(H93), pero **con tu circuito de siempre**: giras a la base en tu esquina, más adentro, y no pasas por
+la suya. Alargando tres kilómetros sí pasas, y te encuentras con él cuando vuelve a su esquina:
+ZP-JKA, semilla 177, cierra una vuelta a los 804,5 s con holgura 1,33 contando con tu circuito, y a
+los 869 está otra vez en su esquina con tu viento en cola pasando por ella, a 263 m y 31 de altura;
+ZP-XOV, semilla 20, a 257 m y a tu altura; ZP-APL, semilla 21, a 203 m. Con radio la torre te diría
+dónde girar; **sin radio no te puede decir nada**, y tú puedes alargar para hacerte sitio, que es lo
+que se hace. El candidato no lo mete: con más vueltas, sale en otros vuelos —seis nuevos, cinco que se
+van—.
+
+**La Palma, semilla 70.** EC-FOS, un reactor, da su vuelta en su esquina desde los 782 s, esperando
+por ti; a los 945,5 llega EC-IMW a la suya, también por ti y detrás de EC-FOS, y la pone hacia fuera
+con el alabeo de siempre. Los dos círculos se cortan —1.235 y 843 m de radio, con los centros a
+1.374 m—, y EC-IMW lo mira: **cuenta 306 m** con EC-FOS, holgura 1,02, y le vale. **Fueron 279**, a
+los 967 s, con EC-FOS todavía en la vuelta que cuenta. Lo que se ve de EC-FOS es lo que la torre
+predice de él; la traza de dónde está de verdad da la diferencia: **medio segundo**. El tráfico se
+mueve de uno en uno en cada paso, y cuando EC-IMW decide su vuelta, EC-FOS —que va detrás en el
+bucle— todavía no se ha movido en ese paso: se le ve donde estaba medio segundo antes, y a 84 m/s son
+cuarenta metros por su vuelta. Contándolo, EC-IMW ve 279 m (0,93) y la pone hacia dentro, con
+holgura 3,95. En el juego, a sesenta pasos por segundo, es un metro; en la mesa, con medio segundo,
+cuarenta. Pero la cuenta no puede depender del orden en que se mueven.
+
+### Decisión
+
+**Cumple en la mesa, y no entra todavía**: el código está escrito y probado, pero en el vitest entero
+una roja de Guaraní pasa del límite y tres pruebas de `salida-tapada.test.ts` se quedan sin su caso
+(abajo, en «La prueba»). El juego no cambia hasta resolverlo. Lo que se mete, cuando se meta, es lo 2
+de H102 sin el margen (H104), con la cadencia de H100: `lasQueSalen` en la fila de `retrasoPara`, con
+lo que le queda a la salida para pasar el final sin `MARGEN_PARA_IRSE`
+(`loQueLeQuedaParaPasarElFinal`); en `todaviaNo` y `puedeSalirSinEsperarte`, sin los que esperan por
+quien ya tiene la pista; y la pista al que espera listo en su doble raya, sin el rato de una llamada
+(`enSuRaya`, OACI, Doc 4444, 7.9.3.4). Y con ello, las dos cosas de las vueltas, en `dondeVanAEstar`,
+que es lo que mira la torre antes de mandar a nadie a dar una vuelta:
+
+1. **Sin radio, también por derecho.** Con quien juega sin radio y en su viento en cola, la torre
+   cuenta además con que sigas por derecho hasta dos minutos (`ALARGAS_POR_DERECHO`, lo mismo que el
+   juego prevé de quien no vuela su circuito, `PREVER_POR_DERECHO`). Es lo que hace la vuelta
+   apartarse de donde puedes alargar. Con radio no cambia: te puede decir dónde girar.
+2. **Cada uno, desde donde está de verdad.** A los que todavía no se han movido en ese paso se les
+   cuenta lo que les falta por moverse (`movidoA`).
+
+**Lo que se probó y no entra**, con lo mismo que lo de arriba de base:
+
+- **Las vueltas que le quedan al otro.** Que el que llega cuente que el que ya da su vuelta seguirá
+  dándolas mientras le haga falta, y no que se va al cerrar ésta; y mirar lo más cerca que pasan
+  entre una mirada y la siguiente, cada dos segundos. Con las dos, La Palma 70 se arregla, pero en
+  Estigarribia sale una pareja de 166 m —dos en su vuelta en la misma esquina, sin ninguna manera de
+  darla que libre al otro, que se dan la menos mala una y otra vez hasta coincidir en ella— y en
+  Encarnación desde el principio los encuentros suben de 1 a 3.
+- **Por derecho, sola**, sin lo del paso: Encarnación, de 6 a 2 y de 1 a 1; pero La Palma 70 sigue.
+- **La vuelta quinientos pies por encima** cuando ninguna de las seis libra al otro: dos que esperan
+  en el mismo sitio se separan en altura, como en una espera de las de instrumentos. En los vuelos de
+  arriba quita los encuentros, pero no se ha medido entera: no hacía falta para cumplir, y subir y bajar en la vuelta
+  es más que poner dónde se da.
+
+### Lo medido
+
+Antes → ahora, con la mesa de H104 tal cual. El antes es el de H104 (el de H102 para Encarnación y los
+campos que no se han vuelto a correr; Los Rodeos, corrido otra vez en H104).
+
+**Con radio**, los 2.820 vuelos de H96 y H98:
+
+| campo (vuelos) | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| Los Rodeos (600) | 40 → 17 | 742 → 740 | 659 → 657 | 35,8 (2) → 34,5 (2) | 63,1 → 65,0 | 0/0/0 | 0/0 |
+| Gando (60) | 6 → 3 | 78 → 77 | 93 | 49,0 (24,5) → 48,7 (24,5) | 64,5 → 70,2 | 0/0/0 | 0/0 |
+| Tenerife Sur (60) | 3 → 0 | 70 → 71 | 85 | 47,7 (36) → 44,1 (36) | 67,6 → 70,9 | 0/0/0 | 0/0 |
+| Lanzarote (60) | 0 | 65 | 63 | 18,5 (2) | 67,9 | 0/0/0 | 0/0 |
+| Fuerteventura (60) | 0 | 71 → 70 | 67 | 25,4 (2) | 71,3 → 74,8 | 0/0/0 | 0/0 |
+| La Palma (60) | 18 → 0 | 73 → 79 | 102 → 109 | 81,5 (56) → 88,6 (92) | 86,7 → 80,6 | 0/0/0 | 0/0 |
+| Cuatro Vientos (60) | 0 | 63 | 69 | 17,3 (2) | 64,6 → 66,6 | 0/0/0 | 0/0 |
+| Pettirossi (60) | 7 → 0 | 69 → 80 | 92 → 93 | 39,9 (12) → 40,3 (12) | 45,5 → 49,7 | 0/0/0 | 0/0 |
+| El Hierro, remontando (300) | 64 → 1 | 437 → 513 | 561 → 617 | 86,3 (94) → 70,0 (68,5) | 89,3 → 85,5 | 0/0/0 | 0/0 |
+| La Gomera, remontando (300) | 6 → 0 | 369 → 406 | 527 → 570 | 73,6 (52) → 62,7 (40,5) | 97,0 → 92,3 | 0/0/0 | 0/0 |
+| Pilar (300) | 2 → 1 | 456 → 477 | 576 → 654 | 39,1 (35,5) → 33,7 (15) | 56,3 → 61,3 | 0/0/0 | 0/0 |
+| Pedro Juan (300) | 0 | 426 → 459 | 561 → 613 | 25,3 (5) → 24,9 (3) | 69,7 → 59,9 | 0/0/1 → 0/0/0 | 0/0 |
+| Concepción (300) | 13 → 0 | 399 → 424 | 520 → 547 | 61,4 (31) → 64,8 (35) | 73,5 → 68,7 | 0/0/0 | 0/0 |
+| Estigarribia (300) | 27 | 403 → 435 | 540 → 579 | 45,0 (15,5) → 50,3 (22,5) | 72,1 → 70,1 | 0/0/1 | 0/0 |
+| **todos (2.820)** | **186 → 49** | **3.721 → 3.959** | **4.515 → 4.816** | **48,8 (23) → 46,0 (19,5)** | **72,4 → 71,0** | **0/0/2 → 0/0/1** | **0/0 → 0/0** |
+
+Ningún encuentro sube —la pareja de Pedro Juan se va, y queda la de Estigarribia—; la espera por
+llegada no empeora más de un 9,2 % en ningún campo (Pettirossi, de 45,5 a 49,7; Gando, 8,8 %; Pilar,
+8,9 %); la mediana de la roja de quien juega no sube más de 7 s en ninguno salvo en La Palma, que ya
+no es criterio. Allí **la roja más larga no cambia**: 274,5 s en la semilla 11, con los tres aviones,
+antes y después. La mesa no apunta cuántos tenías delante en la fila, así que si cabe en lo que
+permite el banco no se puede decir desde aquí; lo que sí se ve es que no la trae el arreglo. La
+siguiente baja de 182,5 a 160,5 s, que cabe sin contar fila; y con las ochenta semillas, la más larga
+baja de 325,5 a 282 s. Frente al candidato de H104, las cifras de los 2.820 son las mismas menos la
+pareja de Pedro Juan.
+
+**Encarnación sin radio**, JAZ 20, las dos cabeceras, por la línea y alargando:
+
+| | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | rojas a ti (por tu salida) |
+|---|---|---|---|---|---|---|---|
+| callada a los 20 s de despegar, obedeciendo cada roja (1.000) | 46 → 0 | 1.413 → 1.490 | 1.584 → 1.644 | 90,0 (54) → 83,6 (43,5) | 68,7 → 69,8 | 0/6/22 → **0/2/12** | 99 (78) → 76 (40) |
+| callada desde el principio (400) | 22 → 0 | 540 → 568 | 576 → 608 | 92,8 (58,5) → 87,7 (44,5) | 69,1 → 74,3 | 0/1/12 → **0/1/12** | 10 (0) → 7 (0) |
+
+Con el candidato de H104 eran 0/7/12 y 0/2/12. De los dos que quedan callada, uno ya estaba antes
+(ZP-FNY, semilla 144, el mismo a 292 m) y el otro es ZP-XOV en la semilla 20, que sale en las dos mesas:
+ahí ninguna de las seis vueltas libra tu viento en cola ni contando con que alargues —la mejor, 0,61—,
+y se da la menos mala. Desde el principio, el que queda es ése mismo; el que había antes (ZP-DIM,
+semilla 70) se va.
+
+**La Palma con las ochenta semillas** (240 vuelos):
+
+| | frustradas | tomas | salidas | roja media, s (mediana) | espera por llegada, s | cerca de ti / en su vuelta / pares | tocar ocupada / sin acabar |
+|---|---|---|---|---|---|---|---|
+| La Palma (240) | 60 → 0 | 331 → 367 | 391 → 400 | 93,0 (68,5) → 78,6 (68,5) | 84,0 → 80,4 | 1/0/0 → **1/0/0** | 0/0 |
+
+Con el candidato de H104, 1/0/1.
+
+La pareja de la semilla 70 no sale. La roja más larga baja de 325,5 s a 282. El encuentro «cerca de
+ti» es otro vuelo: el de la semilla 21 (EC-VQP, a 124 m) se va con lo 2, y sale uno en la 60 (EC-IET,
+un reactor sin permiso en tu viento en cola, a 261 m), el mismo que con el candidato de H104.
+
+**Sin radio desde el principio**, los 1.760 vuelos de los once campos con torre de H98 y H100 (el
+antes, el de H102): lo que mira esa mesa, igual que antes —finales sin señal, 0; rojas, 2, las dos en
+Encarnación, y ninguna por tu salida—. Los encuentros, en el total, de 22/4/11 a 22/4/1 —con el
+candidato de H104, 22/9/5—; pero campo a campo, en La Palma la vuelta de otro a menos de 300 m de ti
+pasa de 0 a 2 —el mismo vuelo con las dos mitades del viento: EC-UKM, semilla 7, a 298 m y 63 de
+altura, alargando, con tu base por su esquina— y en Encarnación de 0 a 1 —ZP-XOV, el de la semilla 20
+de arriba—, y se van los de Cuatro Vientos y Tenerife Sur. La espera por llegada sube en Pettirossi
+un 10,1 % y en Encarnación un 11,7 %. Las dos cosas son las mismas con el candidato de H104: son de lo
+2, y esta mesa no es de las que se pedían; quedan abajo.
+
+La mesa con el juego del repositorio, y no con la copia de la mesa, sale igual uno a uno en 290
+vuelos (La Palma, Estigarribia, Pedro Juan y Encarnación callada y alargando).
+
+### La prueba
+
+`src/world/vuelta-de-espera-sin-radio.test.ts`, en la mesa de `mesa-del-circuito-de-prueba.ts`, que
+ahora sabe de otro campo, de volar sin radio y de alargar el viento en cola: en Los Rodeos, con el JAZ
+90 alargando tres kilómetros, con radio sale la vuelta de un turbohélice a 280 m de ti —el instrumento
+ve el caso—, y sin radio, en veinte semillas, nadie da su vuelta a menos de 300 m.
+
+`src/world/ceden-el-turno-sin-radio.test.ts`, rehecha: el caso de H102 —uno en la raya que no puede
+salir todavía y otro que aterrizaría dentro de su remontada— ya no se da en trescientas semillas, así
+que pide solo que el de la raya remonte. En las semillas 52, 54 y 78, que antes se iban al aire sin la
+cesión, el que llega da su vuelta con ella y sin ella. Y una nueva con lo 2 a secas: uno que ya remonta
+y otro en el viento en cola a menos de dos minutos y medio del suelo; en las semillas 5, 6 y 15 el que
+llega se iba al aire, y ahora no, y el que remonta se va. Pasan en `--pool=threads` y en
+`--pool=forks`.
+
+**Del navegador**, con el código puesto, una tirada de cada en el puerto 5692 y con
+`OGA_FILA_DE_SALIDA=1`: `verificar-vuelo-entero.mjs la-palma guyrami 12 jaz-20`, 65 de 65 —en H102
+fueron 63 de 65—; `pettirossi taguato 1 jaz-20`, 59 de 59; `gran-canaria taguato 1 jaz-90`, 63 de 63.
+
+**Lo que no deja entrarlo.** El vitest entero, en seis partes de 2 GB y con el código puesto: 611
+ficheros y 12.335 pruebas, con cuatro fallos. Uno es de verdad: en `src/flight/roja-de-verdad.test.ts`,
+en Guaraní, la roja más larga de ciento veinte frecuencias pasa a 178 s, y el límite es 170 —las
+siguientes, 157,5, 115, 113,5 y 109,5—. No se ha mirado de qué es: con radio solo cambian lo 2 y lo
+del paso. Los otros tres, en `src/flight/salida-tapada.test.ts` y los tres en El
+Hierro: «nadie parado en tu calle, llegas, salen, y lo que se pide es real», «si no das la vuelta» y
+«El Hierro como AFIS». Ninguno encuentra nada mal —las listas de lo que falla salen vacías—: lo que
+falla es la comprobación de que el instrumento ve el caso (se pidió alguna vuelta, se dio algún
+aviso). Con la cadencia y la salida que tiene la pista en el turno de los que llegan, los dos que
+salen por tu calle con esas horas ya no te la tapan cuando llegas, y no hay nada que pedir. Es lo que
+se buscaba, pero esas pruebas tienen que volver a ver su caso —otras horas de salida, otra semilla—
+antes de que el código entre: una prueba que no puede ver lo que mira no prueba nada.
+
+### Lo que queda
+
+- **La roja de 178 s en Guaraní** (`roja-de-verdad.test.ts`): ver de qué es y arreglarlo.
+- **Rehacer las tres de `salida-tapada.test.ts`** en El Hierro para que vean su caso con lo 2 y la
+  cadencia —en H41d hizo falta buscarlo en 192 tiradas—, correr el vitest entero y meter el código,
+  que está en 04b00f97 —revertido en 9abaf028— tal cual está medido aquí.
+- **Dos en su vuelta en la misma esquina.** Cuando ninguna de las seis maneras de darla libra al otro,
+  se da la que más se aparta (`leTocaEsperar`). De verdad, el segundo espera en otro sitio, alarga o
+  se separa en altura; el modelo solo sabe dar el tres sesenta en la esquina. Lo de quinientos pies
+  por encima está probado en los casos y sin medir entero.
+- **El que va por delante de ti y espera por ti** da su vuelta en tu mismo viento en cola. Con medio
+  minuto de ventaja, de verdad aterrizaría delante; aquí le hacen falta los 135 s de dos llegadas.
+- **Alargar el viento en cola**, para el tráfico: sigue sin existir (H104).
+- **Sin radio, alargando y girando a la base más afuera.** Lo que se cuenta por derecho es tu viento
+  en cola, no la base que das al final de él: en La Palma, semilla 7, la vuelta de EC-UKM queda a
+  298 m de tu base. Y en esa mesa sin radio, Pettirossi y Encarnación esperan por llegada un 10,1 y un
+  11,7 % más con lo 2: no es de las mesas que se pedían, pero ahí está.
+- **La vuelta del otro, solo hasta que la cierra.** Lo que se probó para contar las que le quedan no
+  entra (arriba); con dos en la misma esquina hace falta otra manera de esperar, no mejor cuenta.
