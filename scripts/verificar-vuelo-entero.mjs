@@ -247,6 +247,21 @@ const BAMBOLEO = (process.env.OGA_BAMBOLEO ?? "")
  * petición, no se pide nada y no se hace nada.
  */
 const OBEDIENTE = process.env.OGA_OBEDIENTE === "1";
+/**
+ * **Y una toma larga a propósito, si se pide**: `OGA_TOMA_LARGA=1`, en los
+ * reactores (H109).
+ *
+ * La ida al aire por pasarse la zona (H108) solo se volaba cuando el avión
+ * flotaba por su cuenta, siete tomas de cien en La Palma: en la ronda de la
+ * tanda 32 salió por primera vez, rozó la pista mientras los motores cogían
+ * empuje y el juego dijo «frená» tras «nos vamos al aire». Con esto, en la
+ * primera aproximación el punto de la senda y el de la recogida van cien
+ * metros más allá: el 787 en La Palma llega al final de la zona con las
+ * ruedas a un metro, como en esa ronda, y se va. Con doscientos llegaba a
+ * seis y se iba limpio, sin rozar: no se veía nada. La segunda se vuela como
+ * siempre. Lo que mide es lo que pasa en esa ida, no el piloto.
+ */
+const TOMA_LARGA = process.env.OGA_TOMA_LARGA === "1";
 if (OBEDIENTE && TRAMO !== "guyrami") {
   console.log(
     "\n  ✗ OGA_OBEDIENTE es para Guyrami: es el peldaño donde el gas lo lleva la ayuda\n" +
@@ -823,7 +838,7 @@ await page.addScriptTag({
   content: `globalThis.__alAirePorLarga = ${alAirePorLarga.toString()};`,
 });
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida, tomaLargaPedida]) => {
   const o = globalThis.__oga;
   /*
    * **Y con `OGA_FILA_DE_SALIDA=1`, uno de la frecuencia sale a rodar ya**,
@@ -1509,8 +1524,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           caida: recogida.caida,
           // Y desde dónde recoge: a ras de suelo, como mucho una toma firme (H34f).
           altura: recogida.altura,
-          // Y el punto, dentro de la zona de toma del juego (H108).
-          zona: recogida.zona,
+          // Y el punto, dentro de la zona de toma del juego (H108); con
+          // `OGA_TOMA_LARGA`, en la primera, más allá.
+          zona: recogida.zona + (forzandoLaLarga() ? TOMA_LARGA_DE_MAS : 0),
         });
       } catch {
         // Sin pista a la que medir: el perfil, como siempre.
@@ -4621,6 +4637,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let frustradasPorElJuego = 0;
   /** Y cuántas se fue por pasarse la zona de toma sin tocar (H108). */
   let frustradasPorLaToma = 0;
+  /**
+   * Lo que se lleva más allá el punto de toma en la primera aproximación con
+   * `OGA_TOMA_LARGA`, m. Ver `TOMA_LARGA`.
+   */
+  const TOMA_LARGA_DE_MAS = 100;
+  const forzandoLaLarga = () =>
+    !!tomaLargaPedida && RECOGIDA_DE_REACTOR && frustradasPorLaToma === 0;
   let yaTeLaDieron = false;
   /**
    * **Tus autorizaciones para aterrizar, con la fase en que sonaron.** Nada
@@ -8367,7 +8390,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * si es corta: en Yvytu Rape, con novecientos metros, son ciento
        * ochenta.
        */
-      const puntoDeToma = Math.min(250, (r.length - (r.desplazado ?? 0)) * 0.2);
+      const puntoDeToma =
+        Math.min(250, (r.length - (r.desplazado ?? 0)) * 0.2) +
+        (forzandoLaLarga() ? TOMA_LARGA_DE_MAS : 0);
       /*
        * **Y lo que va por la senda son las ruedas, no el centro del avión.**
        * La altura que se pedía era la del origen del modelo, que en el JAZ 120
@@ -9864,7 +9889,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO, OBEDIENTE, process.env.OGA_FILA_DE_SALIDA === "1", RUTA_PEDIDA]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO, OBEDIENTE, process.env.OGA_FILA_DE_SALIDA === "1", RUTA_PEDIDA, TOMA_LARGA]);
 fotografiando = false;
 await fotos;
 /** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
@@ -12379,11 +12404,13 @@ const NUMERO_EN_UNA_BOCA =
   }
   const contrarias = [];
   let idas = 0;
+  let rozando = 0;
   for (const p of oido.filter((x) => /^vuelo\.tomaLarga(?:SinPista)?$/.test(x.clave))) {
     const sube = hitos.find((h) => h.t >= p.t && h.fase === "en-vuelo");
     const sale = hitos.find((h) => h.t >= p.t && h.fase === "abandonando");
     if (!sube || (sale && sale.t < sube.t)) continue;
     idas++;
+    if (hitos.some((h) => h.t >= p.t && h.t <= sube.t && h.fase === "aterrizado")) rozando++;
     for (const x of oido)
       // Los hitos van en segundos enteros.
       if (x.clave === "vuelo.aterrizado" && x.t >= p.t && x.t <= sube.t + 0.5)
@@ -12405,8 +12432,19 @@ const NUMERO_EN_UNA_BOCA =
       contrarias.length === 0,
       contrarias.length
         ? contrarias.join(" · ")
-        : `${idas} al aire por la toma larga, sin «frená» antes de subir`,
+        : `${idas} al aire por la toma larga (${rozando} rozando la pista), sin «frená» antes de subir`,
       porque,
+    );
+  /*
+   * Y con `OGA_TOMA_LARGA`, que la toma larga pedida se dio: sin ella, lo de
+   * arriba no mide nada. Ver `TOMA_LARGA`.
+   */
+  if (TOMA_LARGA)
+    comprobar(
+      "OGA_TOMA_LARGA: la primera se pasa la zona y se va al aire",
+      (vuelo.frustradasPorLaToma ?? 0) >= 1,
+      `${vuelo.frustradasPorLaToma ?? 0} al aire por pasarse la zona · ${idas} con «así no, nos vamos al aire» · ${rozando} rozando la pista`,
+      "la ida al aire por toma larga, volada en el navegador",
     );
 }
 
