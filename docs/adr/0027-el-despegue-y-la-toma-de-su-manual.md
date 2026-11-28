@@ -11200,3 +11200,160 @@ En la mesa, de cien, 7 se pasan; esas, en el banco, se irían al aire. Una tirad
 - **La ida al aire por toma larga no se ha volado**: en las tres tiradas no hizo falta. Se irá desde unos pocos
   metros y con el gas al ralentí, y puede tocar antes de subir, que el juego cuenta como frustrada después de tocar
   (`idaTrasTocar`).
+
+## Enmienda H111 (28-11-2026): el circuito del 787 no es perderse, y la mesa que no veía lo que flota el banco
+
+En la tanda 33, con `la-palma taguato 1 jaz-110` y 035/10, dos cosas del vuelo del 787 en La Palma: «nos alejamos
+mucho del campo, tocá la flecha de casa» (`vuelo.perdido`) en un circuito normal, una vez tras el despegue y dos en
+cada vuelta tras irse al aire —siete en el vuelo de tres idas al aire, y la instructora no se repite—; y el piloto
+del banco que sigue tocando largo allí, tres de siete pasadas de los 500 m de la zona y otra en el filo, donde la
+mesa de H108 decía siete de cien.
+
+`flight/perdido.ts` no tiene ADR propio (el 0030 solo lo nombra); va aquí porque lo que lo arregla es el circuito de
+cada avión, que es de este ADR desde H13d2.
+
+### Lo 1: el circuito no es perderse
+
+**Qué saltaba: la distancia.** Las tres condiciones de perderse se cumplían de verdad: a más de `MAR_ADENTRO` (5 km
+del centro de la pista) sobre el mar, con la aguja —al umbral en uso— por detrás y sin apuntar a ningún campo. Lo
+que estaba mal es que esas distancias son las de la avioneta, y el circuito de un reactor no cabe en ellas: se mide
+en tiempo, no en metros (`escalaDelCircuitoDe`), y el del JAZ 110 es 2,24 veces el del entrenador. Medido con
+`verticesDelCircuito`, desde el centro de la pista:
+
+| Avión, campo | Esquina más lejana | Con su franja (`EN_EL_CIRCUITO` · escala) |
+|---|---|---|
+| JAZ 20, La Palma / Los Rodeos | 3,0 / 3,5 km | 4,2 / 4,7 km |
+| JAZ 60, Los Rodeos | 5,0 | 7,0 |
+| JAZ 90, La Palma | 5,1 | 7,4 |
+| JAZ 110, La Palma | 6,0 | 8,7 |
+| JAZ 120, La Palma | 5,9 | 8,5 |
+
+En La Palma el 787 pasaba de los cinco kilómetros al acabar el viento cruzado (5,0) y al final del viento en cola
+(6,0; 6,6 con la final a 4,6 km, como la del banco), con el campo detrás y el mar debajo; y al volver a menos de
+`CERCA` (4 km) en la final se rearmaba. Dos por vuelta.
+
+**Lo de verdad**: dar la vuelta al campo, irse al aire y volver, o alargar el viento en cola es lo que se enseña, no
+perderse. Y el tamaño de ese circuito lo dan el avión y su velocidad. Perderse es salirse de él y alejarse de casa.
+
+**El arreglo**, en la raíz y para todos: `alcanceDelCircuito` (`world/circuito.ts`) dice hasta dónde llega el
+circuito de este avión en ese campo —su esquina más lejana y la franja con la que el juego dice que se vuela en él,
+la misma de `loQueQuedaDeCircuito`—, y `Perdido` lo recibe (`suCircuito`): cerca es `max(CERCA, suCircuito)`, y lo
+que pase de `CERCA` se suma también a `MAR_ADENTRO` y a `LEJOS`. Lo lejos se cuenta desde donde acaba el circuito.
+Con la avioneta casi no cambia (161 m en La Palma, 729 en Los Rodeos, cuya pista es de 3,2 km); el helicóptero no
+vuela circuito y se queda con `CERCA`. El canto del banco dice ahora qué lo hizo saltar: el campo y a cuánto,
+hasta dónde llega su circuito, si es mar y dónde iba la aguja. Volado en el navegador (abajo), ni un aviso.
+
+**La flecha sigue saliendo donde tiene que salir** (`perdido.test.ts`): el reactor que pasa su circuito mar adentro y
+de espaldas, sí; la avioneta a nueve kilómetros al norte de Los Rodeos sobre el mar (el caso de `ver-perdido.mjs`),
+sí; quien cruza de isla a isla y se da la vuelta hacia un campo, no, como estaba; el vuelo libre, con la misma
+regla. Las cuatro pruebas nuevas vuelan circuitos enteros tramo a tramo con la figura de cada avión; con la regla de
+antes fallan tres: tres avisos en tres vueltas del JAZ 110 en La Palma, dos del JAZ 60 en Los Rodeos.
+
+### Lo 2: por qué la mesa no veía lo que flota el banco
+
+Con la traza del ala del navegador (`OGA_TRAZA_ALA`, el banco de arriba con el arreglo de Lo 1 y el piloto de H108):
+el JAZ 110 empezó a recoger a 12,7 m de ruedas, 12 m pasado el umbral, a 149 nudos y bajando 3,85 m/s, y tocó a
+**484 m** —dieciséis del final de la zona— tras 6,5 s en el aire. Cinco cosas, contra la mesa:
+
+- **El paso de tiempo, no**: los fotogramas del navegador iban a 20 ms. En la mesa, con pasos de 1/60 a 1/10 s, de
+  37 a 43 largas de trescientas, sin tendencia.
+- **Las rachas, no**: en esa recogida la de cara tuvo σ 0,08 m/s; casi calma. La mesa vuela con σ_w 1,05 (con 0,5,
+  una larga de cien; con 1,5, dieciséis; con 2, veinticuatro): sacude más que el navegador, no menos.
+- **El gas y lo que se pide al recoger, lo mismo**: el gas de la senda hasta los treinta pies y al ralentí, el motor
+  tardando dos segundos y medio en soltarlo, la zona de 500 m y el punto a 350. Es el mismo texto.
+- **La pista, sí.** La mesa tenía la 36 de La Palma subiendo, de 30 a 33 m, y el juego la pisa bajando: sus cabeceras
+  están a 31,7 (la 36) y 20,3 m (la 18) en `gcla.aero.json`, un 0,5 % (`cotaDeLaPista`). En la traza, la pista se le
+  fue por debajo al avión 2,37 m en los 471 m de la recogida, el 0,50 % justo. **En calma, la mesa tocaba a 420 m;
+  con la pista de verdad, a 490, y el navegador a 484.** Con rachas, de 26 a 132 largas de trescientas (del 9 al 44
+  %), como las tres o cuatro de siete del banco.
+- **Y desde H109 la mesa volaba sin el punto de toma del reactor**: `recoger` llama a `forzandoLaLarga`, que no
+  estaba en el trozo que monta la mesa, y el `catch` del punto —el que es para cuando no hay pista a la que medir— se
+  tragaba el ReferenceError. Treinta y una largas de cien, las de antes de H108, y `recogida-del-banco.test.mjs`
+  rojo en la rama («expected 31 to be less than or equal to 12»). La mesa lo define ahora, y dice en cuántas finales
+  llegó a mandar el punto (`sinElPunto`), para que la próxima vez se vea.
+
+Y una cosa que no es de la mesa: el juego le pone al avión la masa del vuelo (`masaDeAhora`, con su combustible) y
+le da la Vref de la ficha, que es la de la masa máxima al aterrizar (`vrefKt`); las de despegue sí van con la raíz de
+la masa (`velocidades-de-despegue.ts`). Con 165 t en vez de 192,8, la mesa pasa de 26 a 42 largas de trescientas
+(con la pista de antes). La masa del 787 del banco en ese vuelo no se ha medido. Es del juego y no se toca aquí;
+queda abajo.
+
+**Con la pista de verdad, lo de H108 en La Palma no se sostiene**: en cien finales, 33 largas sin el punto en la zona
+ni la mirada corta, 45 con ellos. Lo que la mesa midió entonces (de 29 a 7) era en una pista que sube.
+
+### El piloto del banco: al que flota no se le aguanta
+
+En la traza del navegador, bajo el punto de toma (desde 8 m de ruedas), el suelo del morro de H34h —el de al empezar
+a recoger más dos grados— le pedía al morro de 0,3 a 0,95° más durante cuatro segundos, mientras el punto le pedía
+bajar de 0,4 a 1,2 m/s más de lo que bajaba: la palanca fue de −0,07 a +0,12 y el morro de 2,4 a 3,8°. Esos dos grados
+son los de una recogida hecha, y esta no los había subido: empezó con 1,3° y llegó a 3,1°. Subirle el morro al que
+flota es aguantarlo en el aire, y el FCTM de Boeing dice lo contrario: «Do not allow the airplane to float or attempt
+to hold it off. Fly the airplane onto the runway at the desired touchdown point» (FCT 777/787 (TM), rev. 14, p. 6.10).
+
+**El arreglo** (`morroQueFaltaAlPunto`): mientras baja menos de lo que pide el punto (`flota`), el suelo es lo que ya
+subió recogiendo (`masAlto`), sin pasar de los dos grados ni bajar del de al empezar. Al que baja lo que se le pide,
+lo de siempre: es lo que H34h protegía, el 747 al que el punto le bajaba el morro por debajo de la recogida.
+
+En la mesa, trescientas finales de cada caso con la pista de verdad, largas / duras (más de 2 m/s):
+
+| Caso | Antes (H108) | Con H111 |
+|---|---|---|
+| JAZ 90, La Palma | 2 / 15 | 1 / 13 |
+| JAZ 90, Gran Canaria | 1 / 5 | 1 / 5 |
+| JAZ 90, Los Rodeos | 0 / 5 | 0 / 5 |
+| JAZ 110, La Palma (zona 500) | 132 / 9 | **88** / 12 |
+| JAZ 110, Gran Canaria | 26 / 14 | 15 / 14 |
+| JAZ 110, Los Rodeos | 35 / 16 | 31 / 16 |
+| JAZ 120, La Palma | 143 / 41 | 114 / 47 |
+| JAZ 120, Gran Canaria | 29 / 41 | 24 / 43 |
+| JAZ 120, Los Rodeos | 45 / 51 | 44 / 53 |
+
+Las largas bajan en todos los que flotaban; las duras se quedan en lo que da el azar de trescientas (la que más, el
+747 en La Palma, seis más, a una desviación). En calma en La Palma, de 490 a 469 m. `recogida-del-banco.test.mjs`
+vuela el JAZ 110 en La Palma contra el banco sin esto (`deH108`), de 45 a 31 de cien, y falla con la recogida de antes;
+y los tres reactores en los tres campos, ni más largas ni más de dos duras de más en ninguno.
+
+Probado y no puesto, trescientas finales:
+
+- **El suelo en la actitud de al empezar, sin los dos grados**: el 787 en La Palma, 58 largas pero 22 duras.
+- **El suelo en lo que subió, flote o no**: 88 largas, pero el 747 en La Palma de 41 a 52 duras.
+- **Sin el «a menos velocidad, más ángulo» ni lo acumulado bajo el punto**: 106 largas y 22 duras.
+- **El punto 50 o 100 m antes** (medido aún con la pista que subía): 37 y 40 de trescientas, por 41. No es el sitio,
+  es lo que se flota.
+- **El ritmo al tocar contra la pista** (`alSuelo` sin `pistaBaja`): con el arreglo, el 787 en La Palma de 88 a 58
+  largas, pero de 12 a 17 duras, y el JAZ 90 en Gran Canaria de 5 a 10. Ver abajo.
+
+**Y la otra mesa, la del arco** (`mesa-del-arco.mjs`), tampoco arrancaba desde H109: la final del banco llama a
+`forzandoLaLarga` fuera de todo `catch`, y las diez pruebas de `la-puerta-del-reactor.test.mjs` caían con el
+ReferenceError. Lo define ahora igual que la de la recogida.
+
+### Volado
+
+`verificar-vuelo-entero.mjs la-palma taguato 1 jaz-110`, 035/10, el 28-11-2026, con la traza del ala:
+
+| Vuelo | Piloto | Recoge desde | Toca | En el aire | Avisos de perdido | Comprobaciones |
+|---|---|---|---|---|---|---|
+| sin forzar | el de H108, con Lo 1 | 12,7 m, 12 m pasado el umbral, 149 kt | 484 m (zona, 500) | 6,5 s | 0 | 63 de 63 |
+| `OGA_TOMA_LARGA=1`, la primera | con H111 | 12,8 m, 146 m, 148 kt | al aire a 504 m, rozando | — | 0 | |
+| `OGA_TOMA_LARGA=1`, la segunda | con H111 | 12,8 m, 33 m, 149 kt | **453 m** | 5,8 s | 0 | 65 de 65 |
+
+Antes, el mismo vuelo daba un «nos alejamos mucho del campo» tras el despegue y dos por vuelta; ahora, ni uno en
+dos vueltas con una ida al aire. Una tirada no es una cifra: la cifra es la de la mesa.
+
+### Lo que queda
+
+- **La Vref del juego es la de la ficha, la de la masa máxima al aterrizar** (`vrefKt`), y el avión vuela con la masa
+  del vuelo (`masaDeAhora`); las velocidades de despegue sí van con la raíz de la masa. Un 787 de 165 t a la Vref de
+  192,8 lleva once o doce nudos de más sobre la suya, y flota: en la mesa, de 26 a 42 largas de trescientas (con la
+  pista de antes). Lo que se enseña es real, y la Vref de verdad sale del peso; pero es del juego, y la puerta, la
+  tarjeta y «rápida» la miran, así que es otra decisión.
+- **El ritmo al tocar del banco descuenta la pendiente** (`alSuelo = max(0,3, ritmoAlTocar + pistaBaja)`): pide el
+  ritmo de variómetro, que era lo que medía el juego antes de H63, y el juego mide contra la pista desde entonces. En
+  las pistas que bajan —la 36 de La Palma, la 03L de Gran Canaria, la 12 de Los Rodeos— pide acercarse al suelo más
+  despacio de lo que haría falta, y flota. Quitarlo cambia largas por duras (arriba); pide mirarlo con la recogida.
+- **La recogida a la altura del manual** sigue pendiente: el banco empieza a 12–13 m (42 pies) y el FCTM a 20.
+- **El 787 en La Palma con rachas de σ_w 1** sigue pasándose de la zona en la mesa en 88 de trescientas: en el banco
+  se va al aire, que es lo que se enseña, pero desde un par de metros y con el motor al ralentí puede rozar la pista.
+- `flight/perdido.ts`: **lo que rearma el aviso (`VUELTA`, 3 km) es el ancho de un viraje de avioneta**; el de un
+  reactor a 250 nudos tiene siete kilómetros de diámetro, y dando vueltas lejos de todo lo rearmaría a cada vuelta.
+  No es lo de este encargo ni se ha visto en un banco.

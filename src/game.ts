@@ -231,6 +231,7 @@ import {
 import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
 import { blancasEnLaSenda, crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
+  alcanceDelCircuito,
   crearCircuito,
   escalaDelCircuitoDe,
   formaDelCircuito,
@@ -1656,7 +1657,7 @@ import {
   rodaduraDeFrenada,
   type DiaDeDespegue,
 } from "./flight/carrera";
-import { TomaLarga } from "./flight/toma-larga";
+import { TomaLarga, frenarSeCalla } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import { GAS_AL_RALENTI, type PosicionDeLaPalanca } from "./flight/palanca-de-aerofrenos";
 import { REVERSA_HASTA } from "./flight/frenada";
@@ -5184,17 +5185,39 @@ export class Game {
     const mira = atiende && !s.onGround;
     const campos = mira ? this.camposDelVuelo() : [];
     let cercano = Infinity;
-    for (const c of campos) cercano = Math.min(cercano, Math.hypot(c.x - p.x, c.z - p.z));
+    let elCercano: CampoConNombre | null = null;
+    for (const c of campos) {
+      const d = Math.hypot(c.x - p.x, c.z - p.z);
+      if (d < cercano) [cercano, elCercano] = [d, c];
+    }
+    /*
+     * **Y hasta dónde llega allí el circuito de este avión** (H111): el del JAZ
+     * 110 en La Palma se va a seis kilómetros sobre el mar, y cada vuelta y
+     * cada ida al aire salía «nos alejamos mucho del campo». El helicóptero no
+     * vuela circuito: vuelve a su helipuerto. Ver `alcanceDelCircuito`.
+     */
+    const pista = elCercano && !this.aircraft.helicoptero ? this.pistaDelCircuito(this.elCampo(elCercano.id)) : null;
+    const suCircuito = pista ? alcanceDelCircuito(pista, escalaDelCircuitoDe(this.aircraft, pista)) : undefined;
+    const sobreElMar = mira && cercano > MAR_ADENTRO && this.terrain.sampleSurface(p.x, p.z) < 5;
     const e = this.perdido.paso({
       enElAire: !s.onGround,
       atiende,
       alCampoMasCercano: cercano,
+      ...(suCircuito !== undefined ? { suCircuito } : {}),
       relativo: aguja?.relativo ?? 0,
       haciaUnCampo: mira && apuntaAUnCampo({ x: p.x, z: p.z, rumbo: s.heading }, campos),
       // Solo se mira el mar cuando puede importar: es una muestra del relieve.
-      sobreElMar: mira && cercano > MAR_ADENTRO && this.terrain.sampleSurface(p.x, p.z) < 5,
+      sobreElMar,
     });
-    if (e.decirlo) this.avisarDeQueSePerdio();
+    /*
+     * Con lo que lo hizo saltar, para que el banco diga cuál de las tres cosas
+     * fue: a cuánto del campo, hasta dónde llega su circuito, si es mar y
+     * dónde iba la aguja.
+     */
+    if (e.decirlo)
+      this.avisarDeQueSePerdio(
+        `${elCercano?.id ?? "?"} a ${(cercano / 1000).toFixed(1)} km · su circuito ${((suCircuito ?? 0) / 1000).toFixed(1)} km · ${sobreElMar ? "mar" : "tierra"} · aguja ${Math.round(((aguja?.relativo ?? 0) * 180) / Math.PI)}°`,
+      );
     /*
      * Late mientras está perdido y nadie lo ha arreglado: tocada, el
      * automático ya vira y la flecha deja de llamar, que es la respuesta al
@@ -5299,7 +5322,7 @@ export class Game {
    * «ya lo sé» al lado mientras la flecha late. Se recupera en los ajustes.
    * Ver `flight/explicacion-al-abrir.ts`.
    */
-  private avisarDeQueSePerdio(): void {
+  private avisarDeQueSePerdio(porque = ""): void {
     const vez = this.explicacionDeVolverACasa.alAbrir();
     const conAutomatico = this.puedeVolverAlCampo;
     const clave: TranslationKey = conAutomatico ? "vuelo.perdido" : "vuelo.perdidoSinAutomatico";
@@ -5311,7 +5334,9 @@ export class Game {
       explica &&
       (conAutomatico ? this.decirLoGrabado("vuelo.perdido") : this.decirLoGrabado("vuelo.perdidoSinAutomatico"));
     this.yaLoSeDeVolver = dicha && vez.ofrecerQuitarla ? canales.texto : null;
-    this.apuntarCanto(`perdido: ${clave} → ${dicha ? "dicha" : explica ? "sin voz" : "sin explicar"}`);
+    this.apuntarCanto(
+      `perdido: ${clave} → ${dicha ? "dicha" : explica ? "sin voz" : "sin explicar"}${porque ? ` (${porque})` : ""}`,
+    );
   }
 
   /** **«Ya lo sé» de la flecha de casa**: no se explica más en este perfil. */
@@ -32462,11 +32487,19 @@ export class Game {
        * haya otra final. Ver `flight/la-final-tras-irse.ts`.
        */
       const trasIrse = this.laFinalTrasIrse.alCambiar(antes, vista.fase, !this.flight.state.onGround);
+      /*
+       * **Ni «aterrizado» con la toma larga propuesta y todavía a tiempo**: su
+       * tarjeta y su voz son «frená», y acaban de decirle «nos vamos al
+       * aire». Se apunta y se calla; si se acaba parando, la tarjeta del
+       * freno sale en cuanto ya no se puede ir, con su voz. Ver
+       * `frenarSeCalla` en `flight/toma-larga.ts`.
+       */
       const callada =
         this.elSenaleroLlevaLaLlegada(vista) ||
         this.elRemolqueLlevaLaSalida(vista) ||
         this.loQueCalla.laFase ||
-        trasIrse === "nada";
+        trasIrse === "nada" ||
+        (vista.fase === "aterrizado" && frenarSeCalla(this.tomaLarga, this.tier.avisos));
       const soloLaTarjetaTrasIrse = trasIrse === "solo la tarjeta";
       /*
        * **Y alineado en la pista, su número.**
@@ -32841,7 +32874,7 @@ export class Game {
        * «frená» y «nos vamos al aire» a la vez son dos órdenes contrarias. Ver
        * `flight/toma-larga.ts`.
        */
-      !(this.tomaLarga.propuestaAbierta && this.tier.avisos !== "cabina") &&
+      !frenarSeCalla(this.tomaLarga, this.tier.avisos) &&
       hayQueFrenarEnLaPista({
         fase: vista.fase,
         enLaPista: this.flight.state.onRunway,

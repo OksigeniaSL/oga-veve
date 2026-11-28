@@ -10,6 +10,7 @@
  * el automático, las rachas y el suelo del juego en Los Rodeos, Gran Canaria
  * y La Palma. Lo de antes es el mismo texto sin el arreglo.
  */
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { finDeLaZonaDeToma, TomaLarga } from "../src/flight/toma-larga";
 import { alAirePorLarga } from "./al-aire-por-larga.mjs";
@@ -22,8 +23,20 @@ const deAntes = banco
   .replace("          zona: recogida.zona,\n", "")
   .replace("const MIRADA_AL_RECOGER = 120;", "const MIRADA_AL_RECOGER = 0;");
 
-/** La 36 de La Palma —2.058 m para aterrizar— y la 03L de Gran Canaria, que baja un 0,4 %. */
-const LA_PALMA = { cabecera: 30, otraPunta: 33, largo: 2058, grados: 22 };
+/**
+ * Sin lo de H111: al que flota, el suelo del morro le sigue pidiendo los dos
+ * grados de la recogida. Ver `morroQueFaltaAlPunto`.
+ */
+const deH108 = banco.replace("flota: falta < 0,", "flota: false,");
+/**
+ * **La 36 de La Palma —2.058 m para aterrizar— baja un 0,5 %**, de 31,0 m en su
+ * umbral desplazado a 20,6 en el de la 18 (H111): sus dos cabeceras están a
+ * 31,7 y 20,3 m en `gcla.aero.json`, que es lo que pisa el juego
+ * (`cotaDeLaPista`). La mesa la tenía subiendo tres metros, de 30 a 33, y el
+ * 787 que en ella tocaba a 431 m tocaba en el navegador a 484: la pista se le
+ * iba por debajo 2,4 m en la recogida. La 03L de Gran Canaria baja un 0,4 %.
+ */
+const LA_PALMA = { cabecera: 31.0, otraPunta: 20.6, largo: 2058, grados: 22 };
 const GRAN_CANARIA = { cabecera: 24, otraPunta: 11.6, largo: 3100, grados: 23 };
 /** Los vientos de los bancos: 035/10 contra la 36, 025/20 contra la 03L y el alisio de casa en Los Rodeos. */
 const CAMPOS = {
@@ -112,14 +125,36 @@ describe("el punto de toma de un reactor, dentro de la zona del juego", () => {
   });
 });
 
+describe("la mesa vuela lo que vuela el banco (H111)", () => {
+  it("la pista de La Palma, la del juego: baja por la 36 lo que bajan sus cabeceras", () => {
+    const gcla = JSON.parse(readFileSync("data/aerodromes/gcla.aero.json", "utf8"));
+    const { 18: norte, 36: sur } = gcla.runways[0].thresholds;
+    const entre = Math.hypot(norte.xy[0] - sur.xy[0], norte.xy[1] - sur.xy[1]);
+    const delJuego = (norte.elevM - sur.elevM) / entre;
+    const deLaMesa = (LA_PALMA.otraPunta - LA_PALMA.cabecera) / LA_PALMA.largo;
+    // Un 0,5 % hacia abajo, y no un 0,15 % hacia arriba.
+    expect(delJuego).toBeLessThan(-0.004);
+    expect(deLaMesa).toBeCloseTo(delJuego, 3);
+  });
+
+  it("y con el punto de toma del reactor: no se lo traga el `catch` de la recogida", () => {
+    // Con la mesa de antes, `forzandoLaLarga` (H109) no estaba, y el punto no mandaba en ninguna.
+    expect(vuela(banco, "jaz-110", "La Palma").sinElPunto).toBe(0);
+  });
+});
+
 describe("con el modelo del juego, la recogida del banco", () => {
-  it("el JAZ 110 en La Palma deja de flotar pasada la zona, sin tocar más duro", () => {
-    const antes = vuela(deAntes, "jaz-110", "La Palma");
+  it("el JAZ 110 en La Palma flota menos con el punto en la zona (H108), y menos aún si no se le aguanta (H111)", () => {
+    const conH108 = vuela(deH108, "jaz-110", "La Palma");
     const ahora = vuela(banco, "jaz-110", "La Palma");
-    // Medido: de 29 a 7 pasadas de los 500 m en cien finales, y de 9 a 7 duras.
-    expect(antes.largas).toBeGreaterThanOrEqual(20);
-    expect(ahora.largas).toBeLessThanOrEqual(12);
-    expect(ahora.duras).toBeLessThanOrEqual(antes.duras + 1);
+    /*
+     * Medido con la pista que baja: de 45 a 31 pasadas de los 500 m en cien
+     * finales, y 4 duras las dos. Sin el punto en la zona ni la mirada corta
+     * (`deAntes`) salen 33: en la pista de verdad, H108 sola flotaba más.
+     */
+    expect(conH108.largas).toBeGreaterThanOrEqual(40);
+    expect(ahora.largas).toBeLessThanOrEqual(conH108.largas - 10);
+    expect(ahora.duras).toBeLessThanOrEqual(conH108.duras + 1);
   });
 
   it("y ningún reactor toca a más de nueve metros del eje tantas veces como antes, ni más duro", () => {
@@ -131,14 +166,16 @@ describe("con el modelo del juego, la recogida del banco", () => {
       for (const donde of Object.keys(CAMPOS)) {
         if (donde === "La Palma" && avion !== "jaz-110") continue;
         const antes = vuela(deAntes, avion, donde);
+        // Y lo de H111, contra el banco de justo antes: el morro del que flota.
+        const conH108 = vuela(deH108, avion, donde);
         const ahora = vuela(banco, avion, donde);
         antesAbiertas += abiertas(antes);
         ahoraAbiertas += abiertas(ahora);
-        antesDuras += antes.duras;
+        antesDuras += conH108.duras;
         ahoraDuras += ahora.duras;
-        // Y nada a peor en ninguno: ni más largas ni más duras que una de más.
-        expect(ahora.largas, `${avion} en ${donde}`).toBeLessThanOrEqual(antes.largas);
-        expect(ahora.duras, `${avion} en ${donde}`).toBeLessThanOrEqual(antes.duras + 1);
+        // Y nada a peor en ninguno: ni más largas ni más duras que dos de más.
+        expect(ahora.largas, `${avion} en ${donde}`).toBeLessThanOrEqual(conH108.largas);
+        expect(ahora.duras, `${avion} en ${donde}`).toBeLessThanOrEqual(conH108.duras + 2);
       }
     // Medido: de 14 a 6 de setecientas finales.
     expect(antesAbiertas).toBeGreaterThanOrEqual(12);

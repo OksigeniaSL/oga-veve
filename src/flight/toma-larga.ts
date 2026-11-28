@@ -35,6 +35,8 @@
  * pone la tarjeta. Unidades del modelo: metros y m/s.
  */
 
+import type { Peldano } from "./escalera";
+
 /** Por qué se propone irse al aire en la toma. */
 export type PorQueIrseEnLaToma = "largo" | "noPara";
 
@@ -204,4 +206,24 @@ export class TomaLarga {
     this.propuesta = false;
     this.sePuede = false;
   }
+}
+
+/**
+ * **Si «frená» se calla por la toma larga**: con la frustrada propuesta y
+ * todavía a tiempo, «frená» y «nos vamos al aire» serían dos órdenes
+ * contrarias. En el peldaño de cabina no se propone nada —decide quien vuela,
+ * como en la puerta de los quinientos— y «frená» no se calla.
+ *
+ * Lo dicen dos sitios, y el cerrojo lo tenía solo uno: la tarjeta del freno
+ * se callaba, pero la fase «aterrizado» se anunciaba con su «frená». El 787
+ * del banco en La Palma se pasó la zona, se fue al aire, rozó la pista a 535
+ * m con los motores a fondo y oyó «frená» un segundo después de «así no, nos
+ * vamos al aire». Por eso la regla vive aquí, una vez, y la miran los dos
+ * en `game.ts`: la tarjeta del freno y el anuncio de la fase.
+ */
+export function frenarSeCalla(
+  toma: Pick<TomaLarga, "propuestaAbierta">,
+  avisos: Peldano,
+): boolean {
+  return toma.propuestaAbierta && avisos !== "cabina";
 }

@@ -21,7 +21,8 @@
  * - **Lejos de todo campo del vuelo**: a más de `LEJOS` del más cercano, o a
  *   más de `MAR_ADENTRO` si debajo hay mar. Sobre tierra hay pueblos, ríos y
  *   cerros que te devuelven; sobre el agua no hay nada que mirar ni donde
- *   posarse, y por eso allí se avisa antes.
+ *   posarse, y por eso allí se avisa antes. Son las de la avioneta: el avión
+ *   de circuito más grande las lleva más lejos, ver abajo.
  * - **Alejándose de donde señala la aguja**: la flecha apunta hacia atrás,
  *   más de noventa grados a un lado. Con la aguja delante se vuelve, aunque
  *   se esté lejos; que es lo que hace quien cruza de una isla a otra.
@@ -45,6 +46,23 @@
  * vuelva a perder; o que se haya vuelto hasta el campo, o se haya aterrizado.
  * Dar vueltas en círculo lejos de todo no acerca a nada, y así la instructora
  * no lo repite a cada vuelta.
+ *
+ * ## Y el circuito no es perderse (H111)
+ *
+ * Las distancias de aquí son las de la avioneta, cuyo circuito cabe entero en
+ * `CERCA`. El de un reactor no cabe: un circuito se mide en tiempo, no en
+ * metros, y el del JAZ 110 es más del doble de grande —ver
+ * `escalaDelCircuitoDe`—. En La Palma su esquina de la base cae a seis
+ * kilómetros del centro de la pista, sobre el mar, así que el banco oía «nos
+ * alejamos mucho del campo» en la subida y al final del viento en cola de cada
+ * vuelta, siete veces en un vuelo con tres idas al aire. Dar la vuelta al
+ * campo, irse al aire y volver es justo lo que se enseña, no perderse.
+ *
+ * Así que **lo lejos se cuenta desde donde acaba el circuito de este avión**:
+ * cerca es dentro de él y de su franja —`suCircuito`, ver
+ * `alcanceDelCircuito`—, y lo que pasa de `CERCA` se suma también a
+ * `MAR_ADENTRO` y a `LEJOS`. Con la avioneta casi no cambia nada; con el
+ * reactor, perderse sigue siendo salirse de su circuito y alejarse de casa.
  */
 
 /** A partir de cuánto se está lejos, sobre tierra, m: diez kilómetros. */
@@ -65,11 +83,20 @@ export const VUELTA = 3_000;
 
 /**
  * **Y cerca de un campo ya no hay nada perdido**, m: cuatro kilómetros, que es
- * donde está el circuito. Vale igual sobre tierra que sobre el mar: si
- * dependiera de lo que hay debajo, volar por la costa lo rearmaría a cada
- * entrante.
+ * donde está el circuito de la avioneta. Vale igual sobre tierra que sobre el
+ * mar: si dependiera de lo que hay debajo, volar por la costa lo rearmaría a
+ * cada entrante. El avión con un circuito más grande lo lleva más lejos: ver
+ * `LoQueVeLaVuelta.suCircuito`.
  */
 export const CERCA = 4_000;
+
+/**
+ * **Lo cerca de un campo para este avión**, m: `CERCA`, o hasta donde llega su
+ * circuito si llega más lejos. Ver la cabecera.
+ */
+export function cercaDeUnCampo(suCircuito = 0): number {
+  return Math.max(CERCA, suCircuito);
+}
 
 /** La aguja detrás: más de noventa grados a un lado, rad. */
 export const DETRAS = Math.PI / 2;
@@ -92,8 +119,15 @@ export interface LoQueVeLaVuelta {
    * pasaje ni el vuelo largo, que llevan su propio guion.
    */
   readonly atiende: boolean;
-  /** A cuánto queda el campo del vuelo más cercano, m. */
+  /** A cuánto queda el campo del vuelo más cercano, m: el centro de su pista. */
   readonly alCampoMasCercano: number;
+  /**
+   * **Hasta dónde llega en ese campo el circuito de este avión**, m desde el
+   * centro de su pista, con su franja: ver `alcanceDelCircuito` en
+   * `world/circuito.ts`. Sin él, o en el que no vuela circuito, el de la
+   * avioneta, que cabe en `CERCA`.
+   */
+  readonly suCircuito?: number;
   /** Hacia dónde señala la aguja respecto al morro, rad: 0 de frente. */
   readonly relativo: number;
   /** Si el morro apunta a algún campo del vuelo. Ver `apuntaAUnCampo`. */
@@ -168,7 +202,9 @@ export class Perdido {
       return { perdido: false, decirlo: false };
     }
     const lejos = v.alCampoMasCercano;
-    if (lejos < CERCA) {
+    // Su circuito, entero: lo que pasa de `CERCA` empuja también lo de más allá.
+    const cerca = cercaDeUnCampo(v.suCircuito);
+    if (lejos < cerca) {
       this.olvidar();
       return { perdido: false, decirlo: false };
     }
@@ -186,7 +222,7 @@ export class Perdido {
       if (giro < DELANTE || v.haciaUnCampo) this.perdidoAhora = false;
       return { perdido: this.perdidoAhora, decirlo: false };
     }
-    const umbral = v.sobreElMar ? MAR_ADENTRO : LEJOS;
+    const umbral = (v.sobreElMar ? MAR_ADENTRO : LEJOS) + cerca - CERCA;
     if (lejos <= umbral || giro <= DETRAS || v.haciaUnCampo)
       return { perdido: false, decirlo: false };
     this.perdidoAhora = true;

@@ -7,7 +7,9 @@ import {
   ALTURA_DE_LA_RECOGIDA,
   MARGEN_PARA_PARAR,
   TomaLarga,
+  VELOCIDAD_PARA_IRSE,
   finDeLaZonaDeToma,
+  frenarSeCalla,
   puntoDeVisada,
   type EnLaToma,
 } from "./toma-larga";
@@ -136,5 +138,46 @@ describe("y si se va, se felicita como cualquier frustrada", () => {
     for (let h = 1; h < 60 && !contada; h += 2)
       contada = f.paso({ enFinal: true, sobreElSuelo: h, vertical: 4, enElSuelo: false });
     expect(contada).toBe(false);
+  });
+});
+
+describe("«frená» se calla mientras se puede ir", () => {
+  /*
+   * El 787 del banco en La Palma: flotando pasada la zona, «así no, nos vamos
+   * al aire»; mete gas, roza la pista a 535 m y la fase «aterrizado» decía
+   * «frená» un segundo después. Aquí, el mismo camino con Los Rodeos.
+   */
+  const suelo = { enElSuelo: true, enLaPista: true, sobreLaPista: 0 };
+
+  it("propuesta en el aire y tocando con velocidad: se calla, salvo en cabina", () => {
+    const t = new TomaLarga();
+    expect(frenarSeCalla(t, "palabra")).toBe(false);
+    expect(t.paso(en(700, { sobreLaPista: 2 }))).toBe("largo");
+    expect(t.paso(en(735, suelo))).toBeNull();
+    expect(frenarSeCalla(t, "dibujo")).toBe(true);
+    expect(frenarSeCalla(t, "palabra")).toBe(true);
+    expect(frenarSeCalla(t, "cifra")).toBe(true);
+    // En cabina no se propone nada: decide quien vuela, y «frená» se dice.
+    expect(frenarSeCalla(t, "cabina")).toBe(false);
+  });
+
+  it("y si se acaba parando, vuelve en cuanto ya no se puede ir", () => {
+    const t = new TomaLarga();
+    t.paso(en(700, { sobreLaPista: 2 }));
+    t.paso(en(735, { ...suelo, porElSuelo: VREF }));
+    expect(frenarSeCalla(t, "palabra")).toBe(true);
+    t.paso(en(900, { ...suelo, porElSuelo: VREF * VELOCIDAD_PARA_IRSE * 0.95 }));
+    expect(frenarSeCalla(t, "palabra")).toBe(false);
+    // Y con la reversa puesta, igual: la toma se termina parando.
+    const r = new TomaLarga();
+    r.paso(en(700, { sobreLaPista: 2 }));
+    r.paso(en(735, { ...suelo, reversa: true }));
+    expect(frenarSeCalla(r, "palabra")).toBe(false);
+  });
+
+  it("y en una toma buena no se calla nada", () => {
+    const t = new TomaLarga();
+    t.paso(en(450, suelo));
+    expect(frenarSeCalla(t, "palabra")).toBe(false);
   });
 });

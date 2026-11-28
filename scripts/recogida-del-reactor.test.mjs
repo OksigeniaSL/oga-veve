@@ -441,6 +441,20 @@ describe("la recogida de un reactor va a la pista en su punto", () => {
     // Y la página lo recibe como texto: no toca nada de fuera.
     const enLaPagina = new Function(`${morroQueFaltaAlPunto.toString()}\nreturn morroQueFaltaAlPunto;`)();
     expect(enLaPagina({ cabeceo: 0, alEmpezar: 0 })).toBeCloseTo(2 * grado, 12);
+    /*
+     * **Y al que flota no se le sube para sostenerlo** (H111): el suelo es lo
+     * que ya subió recogiendo, sin pasar de los dos grados. El JAZ 110 del
+     * navegador en La Palma: empezó con 1,3°, llegó a 3,1° y a 2,4° el suelo le
+     * pedía 0,9° más.
+     */
+    const flotando = { cabeceo: 2.4 * grado, alEmpezar: 1.3 * grado, masAlto: 3.1 * grado };
+    expect(morroQueFaltaAlPunto({ ...flotando, flota: false })).toBeCloseTo(0.9 * grado, 12);
+    expect(morroQueFaltaAlPunto({ ...flotando, flota: true })).toBeCloseTo(0.7 * grado, 12);
+    expect(morroQueFaltaAlPunto({ ...flotando, cabeceo: 3.1 * grado, flota: true })).toBe(0);
+    // Lo que subió de más de los dos grados no se pide, y del de al empezar no baja.
+    expect(morroQueFaltaAlPunto({ ...flotando, masAlto: 5 * grado, cabeceo: 3 * grado, flota: true })).toBeCloseTo(0.3 * grado, 12);
+    expect(morroQueFaltaAlPunto({ ...flotando, masAlto: 0.5 * grado, cabeceo: 1 * grado, flota: true })).toBeCloseTo(0.3 * grado, 12);
+    expect(enLaPagina({ ...flotando, cabeceo: 3.1 * grado, flota: true })).toBe(0);
     // En la ley: sin punto no cuenta; con él, suma el morro que falta pasado a palanca.
     const base = { ruedas: 2.5, vertical: -0.2, verdadera: 76, ritmoDeCabeceo: 0, carga: 1, porAngulo: 1.8, envergadura: 59.64, dt: 1 / 60 };
     const rec = () => ({ altura: 13, caida: 3.8, palanca: -0.2, acumulado: 0, velocidad: 78, picadoDeLaPalanca: 0, ultimo: -0.1, morroAlEmpezar: 0.25 * grado });
