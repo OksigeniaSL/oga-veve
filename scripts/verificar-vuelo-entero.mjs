@@ -4879,6 +4879,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const trazaIda = [];
   const vocesEnFinal = [];
   /*
+   * Y «toma larga» y «frená» con el reloj del banco, que es el de los hitos:
+   * `habladas` cuenta desde su primera frase y, con tope, esa primera cambia.
+   * Ver «y la toma que se deja volando no dice “frená”».
+   */
+  const vocesDeLaToma = [];
+  /*
    * **Y la vuelta que te pide la torre por tu salida, cuándo empieza y cuándo
    * acaba**, con la fase y la altura. Mientras dura, la torre no te autoriza:
    * en Pettirossi sonó «orbit», el piloto del banco siguió su circuito, se oyó
@@ -6423,6 +6429,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         }
       }
       for (const x of nuevas) {
+        {
+          const clave = x.replace(/^[\d.]+s /, "").replace(/@.*$/, "").split("~")[0];
+          if (/^vuelo\.(?:tomaLarga(?:SinPista)?|aterrizado)$/.test(clave)) {
+            vocesDeLaToma.push({ t: +t.toFixed(1), clave });
+            if (vocesDeLaToma.length > 40) vocesDeLaToma.shift();
+          }
+        }
         /*
          * Y lo que suena bajando hacia la pista, con su altura y con quién la
          * tenía: es lo que dice qué retrasó un permiso que salió tarde. Las
@@ -9688,6 +9701,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     idaComoPideElJuego: Math.round(idaComoPideElJuego),
     trazaIda,
     vocesEnFinal,
+    vocesDeLaToma,
     vueltaPedida,
     trazaRoja,
     vuelta: +tiempoDeRodajeVuelta.toFixed(0),
@@ -12044,7 +12058,9 @@ comprobarSiVolo(
    * **Y en la pista, una vez cada cosa por toma.** «Salí de la pista, que
    * viene otro, una y otra vez: es una pesada.» Lo de arriba deja pasar hasta
    * cuatro; aquí, con una toma por vuelo, «frená» y «salí de la pista» se
-   * dicen una vez como mucho. Ver `flight/lo-dicho-en-la-pista.ts`.
+   * dicen una vez como mucho. La que se deja volando por la toma larga no
+   * cuenta, porque no dice «frená»: ver «y la toma que se deja volando no
+   * dice “frená”», más abajo, y `flight/lo-dicho-en-la-pista.ts`.
    */
   const deLaPista = dichas.filter(
     (c) => c === "vuelo.aterrizado" || String(c).startsWith("vuelo.abandonando"),
@@ -12342,6 +12358,56 @@ const NUMERO_EN_UNA_BOCA =
       : `${frenas.length} «frená», ninguno antes del último número ni antes de «quitá el gas» o «ya podés tocar»`,
     "«cuando estoy ya en tierra rodando y frenando me dice 5. ¿Cinco, qué?»",
   );
+}
+
+/*
+ * **Y la toma que se deja volando no dice «frená».** Con la toma larga
+ * propuesta, quien mete gas puede rozar la pista mientras los motores cogen
+ * empuje —el *go-around after touchdown* del FCTM—, y el juego le decía
+ * «frená» un segundo después de «así no, nos vamos al aire»: el 787 del banco
+ * en La Palma, a 535 m, en la ronda de la tanda 32. Dos órdenes contrarias
+ * para un suceso. Se mira entre la propuesta y la subida siguiente; sin una
+ * toma así en el vuelo, no se midió. Ver `frenarSeCalla` en
+ * `flight/toma-larga.ts`.
+ */
+{
+  const oido = vuelo.vocesDeLaToma ?? [];
+  const hitos = [];
+  for (const h of vuelo.hitos ?? []) {
+    const m = /^(-?[\d.]+)s → (\S+)/.exec(String(h));
+    if (m) hitos.push({ t: +m[1], fase: m[2] });
+  }
+  const contrarias = [];
+  let idas = 0;
+  for (const p of oido.filter((x) => /^vuelo\.tomaLarga(?:SinPista)?$/.test(x.clave))) {
+    const sube = hitos.find((h) => h.t >= p.t && h.fase === "en-vuelo");
+    const sale = hitos.find((h) => h.t >= p.t && h.fase === "abandonando");
+    if (!sube || (sale && sale.t < sube.t)) continue;
+    idas++;
+    for (const x of oido)
+      // Los hitos van en segundos enteros.
+      if (x.clave === "vuelo.aterrizado" && x.t >= p.t && x.t <= sube.t + 0.5)
+        contrarias.push(`${p.t}s ${p.clave}, ${x.t}s «frená» y al aire a los ${sube.t}s`);
+  }
+  const nombre = "y la toma que se deja volando no dice «frená»";
+  const porque = "«frená» y «nos vamos al aire», un segundo una detrás de otra";
+  if (idas === 0)
+    resultados.push({
+      nombre,
+      ok: true,
+      sinMedir: true,
+      detalle: "no se midió: en este vuelo nadie se fue al aire por la toma larga",
+      porque,
+    });
+  else
+    comprobar(
+      nombre,
+      contrarias.length === 0,
+      contrarias.length
+        ? contrarias.join(" · ")
+        : `${idas} al aire por la toma larga, sin «frená» antes de subir`,
+      porque,
+    );
 }
 
 /*

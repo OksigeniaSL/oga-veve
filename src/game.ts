@@ -1656,7 +1656,7 @@ import {
   rodaduraDeFrenada,
   type DiaDeDespegue,
 } from "./flight/carrera";
-import { TomaLarga } from "./flight/toma-larga";
+import { TomaLarga, frenarSeCalla } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import { GAS_AL_RALENTI, type PosicionDeLaPalanca } from "./flight/palanca-de-aerofrenos";
 import { REVERSA_HASTA } from "./flight/frenada";
@@ -32462,11 +32462,19 @@ export class Game {
        * haya otra final. Ver `flight/la-final-tras-irse.ts`.
        */
       const trasIrse = this.laFinalTrasIrse.alCambiar(antes, vista.fase, !this.flight.state.onGround);
+      /*
+       * **Ni «aterrizado» con la toma larga propuesta y todavía a tiempo**: su
+       * tarjeta y su voz son «frená», y acaban de decirle «nos vamos al
+       * aire». Se apunta y se calla; si se acaba parando, la tarjeta del
+       * freno sale en cuanto ya no se puede ir, con su voz. Ver
+       * `frenarSeCalla` en `flight/toma-larga.ts`.
+       */
       const callada =
         this.elSenaleroLlevaLaLlegada(vista) ||
         this.elRemolqueLlevaLaSalida(vista) ||
         this.loQueCalla.laFase ||
-        trasIrse === "nada";
+        trasIrse === "nada" ||
+        (vista.fase === "aterrizado" && frenarSeCalla(this.tomaLarga, this.tier.avisos));
       const soloLaTarjetaTrasIrse = trasIrse === "solo la tarjeta";
       /*
        * **Y alineado en la pista, su número.**
@@ -32841,7 +32849,7 @@ export class Game {
        * «frená» y «nos vamos al aire» a la vez son dos órdenes contrarias. Ver
        * `flight/toma-larga.ts`.
        */
-      !(this.tomaLarga.propuestaAbierta && this.tier.avisos !== "cabina") &&
+      !frenarSeCalla(this.tomaLarga, this.tier.avisos) &&
       hayQueFrenarEnLaPista({
         fase: vista.fase,
         enLaPista: this.flight.state.onRunway,
