@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import {
   apuntaAUnCampo,
   CERCA,
+  cercaDeUnCampo,
   LEJOS,
   MAR_ADENTRO,
   Perdido,
@@ -16,6 +17,9 @@ import {
   type LoQueVeLaVuelta,
 } from "./perdido";
 import { mandosPara, memoriaNueva, porElLadoCorto } from "./piloto-automatico";
+import { aircraftById } from "./aircraft";
+import { alcanceDelCircuito, escalaDelCircuitoDe, verticesDelCircuito } from "../world/circuito";
+import { scenarioById } from "../world/scenarios";
 
 const GRADO = Math.PI / 180;
 
@@ -132,6 +136,105 @@ describe("el aviso no vuelve por reloj", () => {
     tierra.paso(lejosYDeEspaldas());
     tierra.paso(lejosYDeEspaldas({ enElAire: false }));
     expect(tierra.paso(lejosYDeEspaldas()).decirlo).toBe(true);
+  });
+});
+
+/**
+ * **Un circuito entero, tramo a tramo**, como lo vuela el banco: de la
+ * cabecera por la subida, el viento cruzado, el viento en cola alargado
+ * `alargado` metros, la base y la final, y otra vez a la pista, que es irse al
+ * aire. Cada `PASO_DEL_CIRCUITO` metros, con el rumbo del tramo y la aguja al
+ * umbral, que es a donde señala en una vuelta al campo. Todo sobre el mar: lo
+ * peor que le puede tocar.
+ */
+const PASO_DEL_CIRCUITO = 50;
+function vueltasAlCampo(
+  avionId: string,
+  campoId: string,
+  vueltas: number,
+  alargado = 0,
+): { vistas: LoQueVeLaVuelta[]; suCircuito: number; lejos: number } {
+  const pista = scenarioById(campoId).runway;
+  // Con la senda de tres grados, que es la de estos campos.
+  const escala = escalaDelCircuitoDe(aircraftById(avionId));
+  const [cabecera, fin, allá, base, entrada] = verticesDelCircuito(pista, 0, "izquierda", escala);
+  // La base y la entrada en final, más allá por lo que se alargue el viento en cola.
+  const h = (pista.heading * Math.PI) / 180;
+  const atras = (p: { x: number; z: number }) => ({ x: p.x - Math.sin(h) * alargado, z: p.z + Math.cos(h) * alargado });
+  const linea = [cabecera!, fin!, allá!, atras(base!), atras(entrada!), cabecera!];
+  const vistas: LoQueVeLaVuelta[] = [];
+  let lejos = 0;
+  for (let v = 0; v < vueltas; v++)
+    for (let i = 1; i < linea.length; i++) {
+      const a = linea[i - 1]!;
+      const b = linea[i]!;
+      const largo = Math.hypot(b.x - a.x, b.z - a.z);
+      const rumbo = Math.atan2(b.x - a.x, -(b.z - a.z));
+      for (let s = 0; s < largo; s += PASO_DEL_CIRCUITO) {
+        const x = a.x + ((b.x - a.x) * s) / largo;
+        const z = a.z + ((b.z - a.z) * s) / largo;
+        const d = Math.hypot(x - pista.x, z - pista.z);
+        lejos = Math.max(lejos, d);
+        vistas.push({
+          enElAire: true,
+          atiende: true,
+          alCampoMasCercano: d,
+          relativo: porElLadoCorto(rumbo, rumboDeVuelta({ x, z }, cabecera!)),
+          haciaUnCampo: apuntaAUnCampo({ x, z, rumbo }, [pista]),
+          sobreElMar: true,
+        });
+      }
+    }
+  return { vistas, suCircuito: alcanceDelCircuito(pista, escala), lejos };
+}
+
+describe("el circuito no es perderse (H111)", () => {
+  /** Las veces que se diría «nos alejamos mucho del campo» volando esto. */
+  const dichas = (vistas: readonly LoQueVeLaVuelta[], suCircuito?: number): number => {
+    const p = new Perdido();
+    let n = 0;
+    for (const v of vistas) if (p.paso(suCircuito === undefined ? v : { ...v, suCircuito }).decirlo) n++;
+    return n;
+  };
+
+  it("el JAZ 110 en La Palma: tres vueltas, con la final a 4,6 km como la del banco, y ni una vez", () => {
+    // La base del banco entró en final a 4,6 km del umbral: seiscientos metros más allá que la figura.
+    const { vistas, suCircuito, lejos } = vueltasAlCampo("jaz-110", "la-palma", 3, 600);
+    // Su circuito se va más allá de lo que era mar adentro para la avioneta…
+    expect(lejos).toBeGreaterThan(MAR_ADENTRO);
+    // …y contado con el de la avioneta, sonaba en cada vuelta, como en el banco.
+    expect(dichas(vistas)).toBeGreaterThanOrEqual(3);
+    expect(dichas(vistas, suCircuito)).toBe(0);
+  });
+
+  it("y lo mismo los demás reactores y los campos largos, en cualquier campo", () => {
+    for (const avion of ["jaz-60", "jaz-90", "jaz-110", "jaz-120"])
+      for (const campo of ["la-palma", "tenerife-norte", "gran-canaria", "pettirossi"]) {
+        const { vistas, suCircuito } = vueltasAlCampo(avion, campo, 2, 600);
+        expect(dichas(vistas, suCircuito), `${avion} en ${campo}`).toBe(0);
+      }
+  });
+
+  it("pero pasado su circuito, mar adentro y de espaldas al campo, el reactor sí se ha perdido", () => {
+    const { suCircuito } = vueltasAlCampo("jaz-110", "la-palma", 1);
+    const p = new Perdido();
+    const fuera = cercaDeUnCampo(suCircuito) + MAR_ADENTRO - CERCA;
+    expect(p.paso(lejosYDeEspaldas({ alCampoMasCercano: fuera - 500, sobreElMar: true, suCircuito })).perdido).toBe(false);
+    expect(p.paso(lejosYDeEspaldas({ alCampoMasCercano: fuera + 500, sobreElMar: true, suCircuito }))).toEqual({
+      perdido: true,
+      decirlo: true,
+    });
+  });
+
+  it("la avioneta, como estaba: su circuito cabe en CERCA casi entero, y a nueve km al norte de Los Rodeos se pierde", () => {
+    const { suCircuito, vistas } = vueltasAlCampo("jaz-20", "tenerife-norte", 2);
+    // Con la pista más larga de las islas, lo cerca crece menos de un kilómetro.
+    expect(cercaDeUnCampo(suCircuito) - CERCA).toBeLessThan(1_000);
+    expect(dichas(vistas, suCircuito)).toBe(0);
+    // El caso de `scripts/ver-perdido.mjs`: nueve kilómetros mar adentro, de espaldas.
+    expect(
+      new Perdido().paso(lejosYDeEspaldas({ alCampoMasCercano: 9_000, sobreElMar: true, suCircuito })),
+    ).toEqual({ perdido: true, decirlo: true });
   });
 });
 
