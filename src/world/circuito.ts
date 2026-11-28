@@ -727,6 +727,25 @@ export function verticesDelCircuito(
 }
 
 /**
+ * **Hasta dónde llega el circuito de este avión**, m desde el centro de la
+ * pista: su esquina más lejana y, por fuera de ella, la franja en la que se
+ * cuenta que se vuela en él (`EN_EL_CIRCUITO`, a su escala), que es la misma
+ * con la que se dice en qué tramo vas.
+ *
+ * Es lo que se aleja del campo quien le da la vuelta, quien se va al aire y
+ * vuelve o quien alarga un poco el viento en cola, y nada de eso es irse. La
+ * mano no lo cambia, que la figura es la misma por el otro lado. En La Palma:
+ * 4,2 km con la avioneta y 8,7 con el JAZ 110, cuya esquina de la base ya cae a
+ * seis. Ver `flight/perdido.ts`.
+ */
+export function alcanceDelCircuito(runway: Pista, escala = 1): number {
+  let lejos = 0;
+  for (const v of verticesDelCircuito(runway, 0, "izquierda", escala))
+    lejos = Math.max(lejos, Math.hypot(v.x - runway.x, v.z - runway.z));
+  return lejos + EN_EL_CIRCUITO * escala;
+}
+
+/**
  * **Dónde se empieza a bajar en el viento en cola**, o `null` si se vuela a
  * nivel hasta la esquina de la base, que es lo de siempre.
  *

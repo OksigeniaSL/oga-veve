@@ -75,6 +75,9 @@ export function elPilotoDelBanco(texto, { antesDeH89 = false } = {}) {
     const obediente = { nariz: null };
     let recogida = null, palancaMedia = null, empezoLaRecogida = null;
     const LO_QUE_TARDA_EL_MOTOR = 5, RECOGIDA_DE_REACTOR = true;
+    // La toma larga a propósito de \`OGA_TOMA_LARGA\` (H109), que aquí no se vuela: sin ella, la final no arranca (H111).
+    const forzandoLaLarga = () => false;
+    ${constante(t, "TOMA_LARGA_DE_MAS")}
     const pistaAhora = () => o.pistaDeAhora();
     const finalAhora = (d) => o.puntoDeFinalDe(d);
     const velocidadesDeFinal = [], bajadaReciente = [], trazaDeLaFinal = [];

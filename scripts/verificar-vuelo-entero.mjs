@@ -1802,12 +1802,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const morro = o.actitud?.().cabeceo;
     if (recogida.morroAlEmpezar === undefined && typeof morro === "number")
       recogida.morroAlEmpezar = morro;
+    // Y lo más arriba que lo ha llevado recogiendo (H111): ver `morroQueFaltaAlPunto`.
+    if (typeof morro === "number")
+      recogida.morroMasAlto = Math.max(recogida.morroMasAlto ?? morro, morro);
     recogida.morroQueFalta =
       RECOGIDA_DE_REACTOR &&
       alPunto !== null &&
       typeof morro === "number" &&
       recogida.morroAlEmpezar !== undefined
-        ? globalThis.__morroQueFaltaAlPunto({ cabeceo: morro, alEmpezar: recogida.morroAlEmpezar })
+        ? globalThis.__morroQueFaltaAlPunto({
+            cabeceo: morro,
+            alEmpezar: recogida.morroAlEmpezar,
+            masAlto: recogida.morroMasAlto,
+            // Si baja menos de lo que le pide el punto: al que flota no se le aguanta (H111).
+            flota: falta < 0,
+          })
         : 0;
     const conElMorro = Math.min(0.8, calculado + (recogida.porAngulo ?? 0) * recogida.morroQueFalta);
     /*

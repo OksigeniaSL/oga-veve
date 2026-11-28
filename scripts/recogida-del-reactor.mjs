@@ -242,16 +242,34 @@ export function flotaElReactor(p) {
  * duras por largas (de 56 y 7 a 51 y 15). Con tres grados en vez de dos, menos
  * duras y más largas todavía. Sin nada de fuera: el banco lo copia a la página.
  *
+ * **Y al que flota no se le sube el morro para sostenerlo** (H111). Esos dos
+ * grados son los de una recogida que ya se hizo, y el suelo los pedía aunque
+ * no se hubieran subido: el JAZ 110 del banco en La Palma empezó a recoger con
+ * 1,3° y llegó a 3,1°, y con el punto pidiéndole bajar —la pista de la 36 cae
+ * un 0,5 % por delante— el suelo le seguía subiendo el morro hacia 3,3°: de 2,0
+ * a 0,4 m de ruedas en dos segundos y medio y 484 m, a dieciséis del final de la
+ * zona. Eso es aguantarlo en el aire, lo que el mismo manual dice que no se
+ * hace: «Do not allow the airplane to float or attempt to hold it off». Así que,
+ * mientras baja menos de lo que pide el punto (`flota`), el suelo es lo que ya
+ * subió recogiendo (`masAlto`), sin pasar de los dos grados ni bajar del de al
+ * empezar. Al que baja lo que se le pide, lo de siempre.
+ *
  * @param {{
  *   cabeceo: number,   // el morro sobre el horizonte, rad
  *   alEmpezar: number, // el de al empezar a recoger, rad
+ *   masAlto?: number,  // lo más arriba que ha llevado el morro recogiendo, rad
+ *   flota?: boolean,   // si baja menos de lo que pide el punto de toma
  * }} p
  * @returns {number}
  */
 export function morroQueFaltaAlPunto(p) {
   // Los dos grados de la recogida del manual, aquí porque esto viaja como texto.
   const recoge = (2 * Math.PI) / 180;
-  return Math.max(0, p.alEmpezar + recoge - p.cabeceo);
+  const hasta =
+    p.flota && p.masAlto !== undefined
+      ? Math.min(p.alEmpezar + recoge, Math.max(p.alEmpezar, p.masAlto))
+      : p.alEmpezar + recoge;
+  return Math.max(0, hasta - p.cabeceo);
 }
 
 /**

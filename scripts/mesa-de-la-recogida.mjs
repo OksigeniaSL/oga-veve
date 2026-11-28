@@ -66,6 +66,16 @@ export function laRecogidaDelBanco(texto, { antesDeH72 = false } = {}) {
     `
     const { o, suyas, alto, alUmbral, porElSuelo, enVerdadera, SENDA, c, avionPorId, zonaDeTomaDeAhora } = e;
     const SENCILLO = false, CON_EL_AUTOMATICO = true, obedienteEnElBanco = false, vref = 0;
+    /*
+     * **Y lo que la recogida mira de fuera de su trozo** (H111): la toma larga
+     * a propósito de \`OGA_TOMA_LARGA\` (H109), que aquí no se vuela. Sin esto, el
+     * punto de toma del reactor lanzaba un ReferenceError que el \`catch\` de la
+     * recogida se tragaba —el que es para cuando no hay pista a la que medir—,
+     * y la mesa volaba sin punto: 31 largas de cien en La Palma, las de antes de
+     * H108, sin que nada lo dijera. Ver \`conElPunto\`.
+     */
+    const forzandoLaLarga = () => false;
+    ${constante(t, "TOMA_LARGA_DE_MAS")}
     ${constante(t, "RITMO_AL_TOCAR")}
     ${constante(t, "SEGUNDOS_DE_RECOGIDA")}
     ${constante(t, "RECOGIDA_DE_REACTOR")}
@@ -127,7 +137,6 @@ const LOS_RODEOS = { cabecera: 628.5, otraPunta: 611.7, largo: 3168, grados: 21 
 const NUDO = 0.514444;
 const SENDA = Math.tan((3 * Math.PI) / 180);
 const GRADO = Math.PI / 180;
-const DT = 1 / 60;
 
 /**
  * **Una final hasta tocar**, en la 12 de Los Rodeos: 628,5 m en el umbral y
@@ -143,9 +152,16 @@ const DT = 1 / 60;
  *   `ki`; `conTraza`, fotograma a fotograma; `campo`, otra pista
  *   —`{ cabecera, otraPunta, largo, grados }`, m y °C— y `vientoDesde`, de
  *   dónde sopla en grados a la derecha de su rumbo; `mano`, la del alerón
- *   del banco en la final, de `laManoDelBanco` (H108).
+ *   del banco en la final, de `laManoDelBanco` (H108); `paso`, s, lo que dura
+ *   un fotograma (H111).
  */
 export function vuelaLaFinal(p) {
+  /*
+   * **Un fotograma**, s: un sesentavo si no se dice otro. En el navegador del
+   * banco, con la tarjeta emulada, son de cuatro a diez centésimas, y los
+   * mandos se mueven una vez por fotograma (H111).
+   */
+  const DT = p.paso ?? 1 / 60;
   const ficha = aircraftById(p.avion);
   const a = p.ficha ? { ...ficha, ...p.ficha } : ficha;
   // El campo: la 12 de Los Rodeos si no se dice otro (H108).
@@ -245,7 +261,9 @@ export function vuelaLaFinal(p) {
   let empezo = null;
   let caida = 0;
   const traza = [];
-  for (let i = 0; i < 60 * 240; i++) {
+  // Y si el punto de toma del reactor llegó a mandar (H111): ver `laRecogidaDelBanco`.
+  let conElPunto = false;
+  for (let i = 0; i < 240 / DT; i++) {
     const s = m.state;
     const ruedas = alto(s) - tren;
     const r = rafagas.paso(DT, {
@@ -271,6 +289,7 @@ export function vuelaLaFinal(p) {
         segundos: reloj - (empezo?.t ?? reloj),
         nudos: indicadaDe(s, aire) / NUDO,
         eje: s.position.x,
+        conElPunto,
         traza,
       };
     caida = -(s.velocity.y + cae * porElSuelo(s));
@@ -368,6 +387,7 @@ export function vuelaLaFinal(p) {
         palancaMedia === null ? sinElSuelo : palancaMedia + ((sinElSuelo - palancaMedia) * DT) / 2;
     }
     mano.recoger(mandos);
+    conElPunto ||= !!mano.recogida?.alPunto;
     const pedida = mandos.elevator;
     mano.limitar(mandos);
     if (p.conTraza)
@@ -403,7 +423,7 @@ export function vuelaLaFinal(p) {
     m.step(DT, mandos);
     reloj += DT;
   }
-  return { metros: Infinity, caida, ultima: caida, empezo, segundos: Infinity, traza };
+  return { metros: Infinity, caida, ultima: caida, empezo, segundos: Infinity, conElPunto, traza };
 }
 
 /** Muchas finales, y su cuenta. */
@@ -423,6 +443,8 @@ export function mesa(p, semillas) {
     caida90: q(caidas, 0.9),
     // Pasadas de la zona de toma, la del juego en esa pista (H108); era seiscientos metros en todas.
     largas: r.filter((x) => x.metros > finDeLaZonaDeToma((p.campo ?? LOS_RODEOS).largo)).length,
+    // Las que recogieron sin que el punto de toma llegara a mandar (H111).
+    sinElPunto: r.filter((x) => !x.conElPunto).length,
     cortas: r.filter((x) => x.metros < 150).length,
     metrosMediana: q(metros, 0.5),
     laMasLarga: metros[metros.length - 1],
