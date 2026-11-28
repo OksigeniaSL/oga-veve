@@ -80,6 +80,7 @@ import {
 import { elEjeDeLaCarrera } from "./el-eje-de-la-carrera.mjs";
 import { LEY_DEL_REACTOR, palancaDeLaFrustrada } from "./la-frustrada.mjs";
 import { alAirePorLarga } from "./al-aire-por-larga.mjs";
+import { laTomaQueSeDejaVolando } from "./la-toma-que-se-deja-volando.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
@@ -12411,20 +12412,8 @@ const NUMERO_EN_UNA_BOCA =
     const m = /^(-?[\d.]+)s → (\S+)/.exec(String(h));
     if (m) hitos.push({ t: +m[1], fase: m[2] });
   }
-  const contrarias = [];
-  let idas = 0;
-  let rozando = 0;
-  for (const p of oido.filter((x) => /^vuelo\.tomaLarga(?:SinPista)?$/.test(x.clave))) {
-    const sube = hitos.find((h) => h.t >= p.t && h.fase === "en-vuelo");
-    const sale = hitos.find((h) => h.t >= p.t && h.fase === "abandonando");
-    if (!sube || (sale && sale.t < sube.t)) continue;
-    idas++;
-    if (hitos.some((h) => h.t >= p.t && h.t <= sube.t && h.fase === "aterrizado")) rozando++;
-    for (const x of oido)
-      // Los hitos van en segundos enteros.
-      if (x.clave === "vuelo.aterrizado" && x.t >= p.t && x.t <= sube.t + 0.5)
-        contrarias.push(`${p.t}s ${p.clave}, ${x.t}s «frená» y al aire a los ${sube.t}s`);
-  }
+  // Ver `la-toma-que-se-deja-volando.mjs`: la ida al aire puede pasar por «abandonando».
+  const { idas, rozando, porLaSalida, contrarias } = laTomaQueSeDejaVolando(oido, hitos);
   const nombre = "y la toma que se deja volando no dice «frená»";
   const porque = "«frená» y «nos vamos al aire», un segundo una detrás de otra";
   if (idas === 0)
@@ -12441,7 +12430,7 @@ const NUMERO_EN_UNA_BOCA =
       contrarias.length === 0,
       contrarias.length
         ? contrarias.join(" · ")
-        : `${idas} al aire por la toma larga (${rozando} rozando la pista), sin «frená» antes de subir`,
+        : `${idas} al aire por la toma larga (${rozando} rozando la pista${porLaSalida ? `, ${porLaSalida} pasando por «abandonando»` : ""}), sin «frená» antes de subir`,
       porque,
     );
   /*
