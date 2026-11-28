@@ -4572,6 +4572,19 @@ export function crearTrafico(
   const tuTurnoDeSalir = (sin: Volando | null): EnLaFila[] => {
     const sale = tuQueEsperas();
     if (!sale) return [];
+    /*
+     * **Y si eres tú el siguiente**: con otro listo en su doble raya desde
+     * antes que tú, la vuelta no es por ti (H107c). Se daba igual, y al de
+     * delante no le valía —para él el que la da sigue en la fila, a uno o dos
+     * minutos del umbral—: en Gando, EC-SHC daba vuelta tras vuelta por tu
+     * turno, EC-LIO no se alineaba, y a los tres minutos la paciencia de la
+     * fila te daba la verde antes que a él. Sin la vuelta, el que llega
+     * aterriza, el de delante sale detrás de él y tú detrás del de delante,
+     * en el orden en que estabais listos (Doc 4444, 7.9).
+     */
+    if (tuEsperasDesde !== null)
+      for (const q of aviones.values())
+        if (q !== sin && q.listoDesde !== null && q.listoDesde <= tuEsperasDesde) return [];
     for (const b of aviones.values()) {
       const c = b.caminos;
       if (b === sin || !c || b.tresSesenta || metrosAlUmbral(b) === null) continue;
@@ -4816,9 +4829,58 @@ export function crearTrafico(
      */
     const tuyo = tu ? (tu.alUmbral ?? vienes) : null;
     if (tuyo !== null && tuyo - (alineado ? 0 : antesDeTuPermiso(tu?.velocidad)) < hueco) return true;
+    /*
+     * **Y el que viene por el viento en cola**, para alinearse: ver
+     * `vieneDelTraficoAntesDe`. Lo que tarda en irse el alineado lleva la
+     * espera de la radio hasta su salida, `ESPERA_MAXIMA`, **menos contigo
+     * esperando en tu doble raya**: entonces la radio se la da en cuanto
+     * puede —ver `alineadoConFila` en `flight/radio.ts`— y lo que tarda es
+     * alinearse y correr su despegue. Contándola también entonces, en
+     * Tenerife Sur se dejaba en su doble raya a un turbohélice con un reactor
+     * a 125 s del umbral, que con su salida en 85 s cabía de sobra; tú
+     * esperabas detrás tres minutos, la fila te soltaba por
+     * `PACIENCIA_EN_LA_FILA` y salías antes que él (H107b).
+     */
+    if (clave === "torre.lineUpWait" && remonta <= 0) {
+      const conPrisa = !!tu?.enTierra?.esperandoLaPista;
+      if (vieneDelTraficoAntesDe(conPrisa ? hueco - ESPERA_MAXIMA : hueco)) return true;
+    }
     return laFila(null, contigo, sinLosQueEsperan).some(
       (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,
     );
+  };
+
+  /**
+   * **Si uno del tráfico que viene a aterrizar cruzaría el umbral antes de
+   * `hueco` segundos**, aunque todavía no haya girado a la base y no esté en la
+   * fila. Es lo mismo que contigo por el circuito, más arriba, con los demás.
+   *
+   * Solo para «line up and wait». La fila empieza en la esquina de la base, y
+   * el que gira no cuenta con la salida que ya tiene la pista: la torre alineaba
+   * a uno sin nadie en la fila, con otro en el viento en cola a minuto y medio
+   * del umbral; en la base ése ya no le dejaba despegar —no habría pasado el
+   * final antes— ni lo contaba para esperar, bajaba hasta la decisión con el
+   * otro alineado y se iba al aire. En Los Rodeos por la 12, desde que la
+   * avioneta sale de la GA 1 por la E2 (H105), en la misma cabecera y sin
+   * remontar: alineada 63 s con un turbohélice en final, y al aire (H107). Una
+   * torre de verdad ve al del viento en cola y no alinea a quien no se va a
+   * haber ido antes de que cruce el umbral (OACI, Doc 4444, 7.10.1.2): espera
+   * en su doble raya, fuera de la pista, y sale detrás.
+   *
+   * La salida directa, sin alinearse a esperar, sigue como estaba: mirándolo
+   * también para ella, se retenía a uno por el que iba a irse al aire por guion y
+   * después despegaba detrás de su frustrada, a 264 m (H107). Y el que entra a
+   * remontar, también: ése ya cuenta su remonte en el hueco, y sin radio los que
+   * llegan le ceden el turno (H102); mirándolo, en Encarnación ya no se daba el
+   * caso de `ceden-el-turno-sin-radio.test.ts`.
+   */
+  const vieneDelTraficoAntesDe = (hueco: number): boolean => {
+    for (const b of aviones.values()) {
+      if (horaDeUmbral(b) !== null) continue;
+      const metros = metrosAlUmbral(b);
+      if (metros !== null && metros / Math.max(1, b.marca.velocidad) < hueco) return true;
+    }
+    return false;
   };
 
   /** Lo que se aparta un avión que aparece de los que ya se ven, m. */

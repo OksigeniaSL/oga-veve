@@ -11073,3 +11073,130 @@ con el cambio (ahora).
 Con el JAZ 20 en Taguató, lo más lento queda tres nudos por encima de la Vref, que es donde tiene que estar: lo más
 lento de un circuito es la final corta, a la Vref y algo. Las tomas siguen en su zona y a uno o dos metros por
 segundo; lo que cambia de una tirada a otra es lo de siempre de una tirada a otra.
+
+## Enmienda H108 (27-11-2026): la zona de toma del banco era otra, el 787 flotaba en La Palma y el JAZ 90 se abría del eje al recoger
+
+En la ronda de cierre de la tanda 31, dos rojos del piloto del banco:
+
+- `verificar-vuelo-entero.mjs la-palma taguato 1 jaz-110`, 61 de 62: el JAZ 110 empezó a recoger a 12,8 m de ruedas,
+  22 m pasado el umbral y bajando 3,2 m/s a 149 nudos, flotó y tocó a 560 m a 1,02 m/s. El juego dio la toma por
+  larga y no hubo gafas. **El banco, en «se toca en la zona de toma», la dio por buena**: su zona acababa en
+  `min(600, LDA/3)`, 600 m en La Palma, y la del juego en 500. Dos definiciones de «largo».
+- `gran-canaria taguato 1 jaz-90`, 63 de 64: con 025/20, casi de cara, iba a −4,5 m del eje a quinientos pies, empezó
+  a recoger a 14,4 m y tocó a 10,1 m del eje, a 0,2 m/s y 396 m. El tope es 9.
+
+### La zona de verdad
+
+- **AC 91-79A Chg 2** (FAA, 20-2-2018), ap. 1, 1.i, citando las PTS de ATP (FAA-S-8081-5): «the TDZ is referred to as
+  a point 500-3,000 ft beyond the runway threshold not to exceed the first one-third of the runway». De 152 m a
+  `min(914, LDA/3)`. En 1.h, el punto de toma objetivo, «approximately 1,000 ft down the runway»; en 3.f, «The
+  typical operational touchdown point is in the first third of the runway, and it may be farther down the runway
+  than the 1,000-ft. aiming point»; en 4.a, una recogida alargada que saca la toma de la zona «is not impressive,
+  desirable, or consistent with safety». La 91-79A la canceló la 91-79B el 28-8-2023; el texto de la B no se ha
+  leído.
+- **Anexo 14, vol. I**: el punto de visada a 150, 250, 300 o 400 m según la LDA, como `puntoDeVisada`; las señales de
+  zona de toma, por pares cada 150 m, de un par por debajo de 900 m de LDA a seis —hasta 900 m— desde 2.400. En las
+  ediciones recientes la tabla del punto de visada es la 5-1 y la 5-2 es la de los pares; el juego cita la
+  numeración de antes.
+- **FSF**: los criterios de aproximación estabilizada (ALAR, nota 7.1) ponen la puerta, no el sitio de la toma. No
+  se ha leído aquí.
+
+`finDeLaZonaDeToma` —la visada y doscientos metros, sin pasar del tercio— no es la TDZ de la AC: es más estricta (500 m
+en La Palma donde la AC da 705; 600 en las pistas de 2.400 o más donde da de 800 a 914). Es defendible —es tocar poco
+después de la visada, y cae dentro de los 1.000 a 2.000 pies del FCTM de Boeing— y es la que enseña el juego. **El
+juego no se toca**; queda dicho abajo.
+
+La del banco y la del juego solo difieren con LDA entre 1.500 y 2.400 m. En los logs de las rondas de la semana (c50
+a c57, 76 tomas medidas), con la zona del juego caería **una**: la del JAZ 110 en La Palma. En las otras pistas de
+esa franja —Encarnación, Pedro Juan, La Palma y Lanzarote con avionetas— se tocó a 217–340 m. Con el principio del
+juego, que es el umbral, no cambia ninguna: la más corta fue a 166 m.
+
+### Por qué flotaba el 787
+
+En la mesa de la recogida (`mesa-de-la-recogida.mjs`: el modelo, el automático en la senda, las rachas y el suelo del
+juego, y `recoger` y el trozo que la empieza leídos del banco), ahora con La Palma —2.058 m, 035/10— el JAZ 110 recoge
+desde 12,3–15,0 m, seis segundos y medio en el aire, y en cien finales 29 pasan de los 500 m. La traza de una de 548 m:
+a 2,4 m de ruedas y 350 m pasado el umbral bajaba 0,8 m/s con el punto de toma pidiendo 1,7; una racha de cara de 3 a
+4,5 m/s lo tenía a 150–152 nudos con la Vref en 144, el colchón del suelo lo sostenía y el morro no bajaba de la
+actitud de recoger más dos grados (H34h). Ciento noventa metros flotando a metro y medio. El punto de toma de H53
+estaba a 1.500 pies, 457 m: a 43 m del final de la zona del juego.
+
+### Por qué se abría el JAZ 90
+
+No es la deriva: con 025/20 contra la 03L casi no hay que quitar, y el banco no la quita con el pie en el aire (el
+timón lo lleva la ayuda del juego, `autoRudder`). Es el tiempo. Pasado el umbral, la mirada del eje en la final es
+120 m por la velocidad entre 33: 222 m al JAZ 90, 270 al 787, tres segundos y medio por delante, en una recogida de
+seis o siete. En la mesa, las que se abren lo hacen así: en Los Rodeos, una racha de alabeo y otra de lado al empezar
+a recoger llevaron al JAZ 90 a +4° con el alerón en su tope de 0,48 segundo y medio; la corrección llegó tarde, se
+fue de 2 a 10,9 m del eje y tocó con el ala a −7,8°.
+
+La mesa volaba el eje con 0,35 de alerón y ganancia 4 para todos; ahora puede volarlo con los del banco
+(`laManoDelBanco`: `topeDeAleronEnVuelo` y `gananciaEnLaFinal`, leídos del fichero). Con los de la avioneta, el 787 se
+abría en La Palma hasta 15,3 m; con los suyos, 9,6.
+
+### Lo que se cambia, en el banco
+
+- **«Se toca en la zona de toma» acaba en `finDeLaZonaDeToma`**, cargada del juego con el servidor del banco
+  (`ssrLoadModule`). El principio sigue siendo `min(150, LDA/10)`: el juego no tiene otro que el umbral, que mira
+  «y se toca pasado el umbral de aterrizaje», y 150 m son los 500 pies de la AC.
+- **El punto de toma de un reactor, 150 m dentro de esa zona** (`pideAlPuntoDeToma`, con `zona`): 350 m en La Palma,
+  cincuenta pasada la visada; 450 en las pistas de 2.400 o más, siete menos que antes.
+- **Pasada la zona sin tocar, al aire** (`al-aire-por-larga.mjs`): volando, por debajo de los quince metros, pasada la
+  zona y con más de 400 m por delante, que es la regla con la que el juego lo propone (`TomaLarga`); la prueba las
+  ata. Cuenta como `frustradasPorLaToma` y la línea de la zona lo dice.
+- **Recogiendo, el eje se mira a 120 m** (`MIRADA_AL_RECOGER`), el suelo de la mirada sin estirarlo con la velocidad.
+
+### La mesa
+
+Cien finales de cada caso con la mano del banco; «antes» es el mismo texto sin el punto en la zona ni la mirada corta.
+Largas, pasadas de la zona del juego; duras, de más de 2 m/s; abiertas, a más de 9 m del eje:
+
+| Caso | Largas | Duras | Abiertas |
+|---|---|---|---|
+| JAZ 110, La Palma (zona 500) | 29 → **7** | 9 → 7 | 1 → 1 |
+| JAZ 110, Gran Canaria | 9 → 9 | 4 → 4 | 0 → 0 |
+| JAZ 110, Los Rodeos | 11 → 9 | 3 → 3 | 5 → **0** |
+| JAZ 90, Gran Canaria | 0 → 0 | 2 → 3 | 1 → 1 |
+| JAZ 90, Los Rodeos | 0 → 0 | 2 → 2 | 3 → 1 |
+| JAZ 120, Gran Canaria | 13 → 10 | 12 → 13 | 2 → 2 |
+| JAZ 120, Los Rodeos | 16 → 13 | 18 → 19 | 2 → 1 |
+
+En la mesa no hay ida al aire: las largas que quedan son las que en el banco se irían. `recogida-del-banco.test.mjs`
+vuela esto, y con el banco de antes falla en cuatro de sus siete pruebas: la zona, el punto y las dos de la mesa.
+
+Probado y no puesto (cuarenta finales, con la mano de la avioneta):
+
+- **La recogida a 30 pies en todos los reactores**, que es donde la empieza el FCTM: el 787 en La Palma, de 11 a 5
+  largas pero de 2 a 5 duras, la peor a 3,98; el 747 en Los Rodeos, de 4 a 18 duras. A 25 y a 20 pies, peor. La
+  recogida del banco está hecha para tres segundos y pico de senda, y desde 9 m no le da.
+- **El gas quitado poco a poco hasta tocar** («smoothly retard the thrust levers to idle»): flota más, de 10 a 24
+  largas de cuarenta en La Palma con la mano del banco.
+- **Todo el alerón al recoger, o la inclinación topada a 3 o 5°**: nada o peor. La racha de alabeo no la gana el tope;
+  la gana mirar más cerca.
+- **El punto a 1.200 pies en todas las pistas**: en La Palma, como el de la zona (5 largas de cuarenta, por 4); en
+  Gran Canaria y Los Rodeos cambia lo que no hacía falta, de 5 a 10 duras con el JAZ 90 y el 787.
+
+### Volado
+
+`verificar-vuelo-entero.mjs` con el cambio, una tirada de cada, el 27-11-2026, sobre la rama de la tanda 32:
+
+| Vuelo | Recoge desde | Toca | Del eje | Caída | Gafas | Comprobaciones |
+|---|---|---|---|---|---|---|
+| `la-palma taguato 1 jaz-110` | 12,9 m, 62 m pasado el umbral | 492 m (zona, 500) | 0,5 m | 1,13 m/s | sí | 62 de 62 |
+| `gran-canaria taguato 1 jaz-90` (5 GB) | 11,2 m, 84 m | 434 m (600) | 1,2 m | 0,79 m/s | sí | 64 de 64 |
+| `tenerife-norte taguato 1 jaz-90` | 11,0 m, 19 m | 450 m (600) | 1,5 m | 0,26 m/s | sí | 64 de 64 |
+
+Ninguno se fue al aire por toma larga. El 787 tocó en La Palma a ocho metros del final de la zona: dentro, y justo.
+En la mesa, de cien, 7 se pasan; esas, en el banco, se irían al aire. Una tirada no es una cifra.
+
+### Lo que queda
+
+- **La zona del juego es más corta que la TDZ de la AC 91-79A**: 500 m en La Palma frente a 705, y 600 en las largas
+  frente a 800–914. Es del juego, y defendible; si se quiere la de la AC, es otra decisión y otro ADR.
+- **El JAZ 120 flota y toca duro en la mesa** más que los otros —de 10 a 13 largas y de 13 a 19 duras de cien—, con o
+  sin este cambio. Ningún banco de la semana lo ha volado; con este cambio, cuando flote se irá al aire.
+- **La recogida a la altura del manual**, de 20 a 30 pies, pide otra ley de recogida, no otro número. Los reactores
+  del banco siguen recogiendo desde 11–15 m y tocando suave, de 0,3 a 1,1 m/s: lo que flotan sale de ahí.
+- **La ida al aire por toma larga no se ha volado**: en las tres tiradas no hizo falta. Se irá desde unos pocos
+  metros y con el gas al ralentí, y puede tocar antes de subir, que el juego cuenta como frustrada después de tocar
+  (`idaTrasTocar`).

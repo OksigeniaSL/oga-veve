@@ -309,8 +309,20 @@ export type PorQueEsperas = "aterriza" | "despega" | "fila" | "estela";
  * paciencia de quien espera. Pasados, la torre te da la salida a ti, como
  * cambiaría el orden una de verdad con uno que no está listo (Doc 4444,
  * 7.9.1).
+ *
+ * Son tres minutos **de la fila sola**: lo que el de delante y tú esperáis
+ * por lo mismo —la pista ocupada, una estela, uno que llega, el canal
+ * ocupado— no cuenta (H107c). Ver `contarLaFila`.
  */
 export const PACIENCIA_EN_LA_FILA = 180;
+
+/**
+ * **Las piezas de la roja que son la fila misma**, para `PACIENCIA_EN_LA_FILA`:
+ * la fila, y la calle única, que en una sola calle es el de delante esperando
+ * en ella. Con cualquier otra, el de delante y tú esperáis lo mismo, y eso no
+ * gasta la paciencia (H107c). Ver `piezasDeLaPistaDeOtros`.
+ */
+const SOLO_LA_FILA: ReadonlySet<string> = new Set(["fila", "calle"]);
 
 /**
  * **Lo más que se espera en la roja por los que llegan**, s, sin contar lo que
@@ -817,16 +829,34 @@ export class TurnoDePista {
     this.sueltaSinSonar = 0;
   }
 
-  /** Lo que se lleva esperando detrás de cada uno, en cada paso. */
-  private contarLaFila(dt: number, fase: string): void {
-    if (fase !== "esperando") {
+  /**
+   * Lo que se lleva esperando detrás de cada uno, en cada paso. **Solo cuenta
+   * el rato en que lo único que te tiene en la roja es la fila** —ni la pista
+   * ocupada, ni la estela, ni uno que llega— **y el canal está libre** (H107c).
+   *
+   * La red es para el de delante al que la frecuencia no da su salida
+   * pudiendo dársela. Contaba también lo que esperabais los dos por lo mismo:
+   * en Encarnación, uno remontando la pista doscientos cuarenta segundos con
+   * el de delante y tú detrás, y al dejarla libre la paciencia ya se había
+   * gastado y la verde era para ti, antes que él. Y con el canal ocupado la
+   * frecuencia no le puede decir nada a nadie: en el banco de La Palma, a
+   * ×12, de los 182 s de roja 144 fueron con voz sonando.
+   */
+  private contarLaFila(dt: number, ahora: Omit<Momento, "esperandoLaPista">): void {
+    if (ahora.fase !== "esperando") {
       this.esperandoTrasDe.clear();
       return;
     }
     const fila = this.enLaFila;
     for (const m of [...this.esperandoTrasDe.keys()])
       if (!fila.includes(m)) this.esperandoTrasDe.delete(m);
-    for (const m of fila) this.esperandoTrasDe.set(m, (this.esperandoTrasDe.get(m) ?? 0) + dt);
+    if (!fila.length) return;
+    const cuenta =
+      !ahora.instructorHablando &&
+      !ahora.canalOcupado &&
+      this.piezasDeLaPistaDeOtros.every((p) => SOLO_LA_FILA.has(p));
+    for (const m of fila)
+      this.esperandoTrasDe.set(m, (this.esperandoTrasDe.get(m) ?? 0) + (cuenta ? dt : 0));
   }
 
   /**
@@ -1035,7 +1065,7 @@ export class TurnoDePista {
     ahora: Omit<Momento, "esperandoLaPista">,
   ): Transmision | null {
     this.reloj += dt;
-    this.contarLaFila(dt, ahora.fase);
+    this.contarLaFila(dt, ahora);
     this.contarLosQueLlegan(dt, ahora.fase);
     this.soltarLoQueNoSuena(dt, ahora.fase);
     const momento: Momento = {
