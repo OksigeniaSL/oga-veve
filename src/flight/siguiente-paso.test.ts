@@ -20,6 +20,7 @@ import {
   vrefKt,
 } from "./escalera-de-velocidades";
 import {
+  CARRERA_ACABADA,
   CadenaDelVuelo,
   comoSeDice,
   consejoDelPaso,
@@ -384,6 +385,47 @@ describe("la cadena del «¿y ahora qué?»", () => {
     // Lo de la salida no: subir y el crucero ya se vivieron.
     expect(cadena.yaDicho("subida")).toBe(true);
     expect(cadena.yaDicho("crucero")).toBe(true);
+  });
+
+  it("y tocar a velocidad de volar no acaba el tramo; parar, sí (H110)", () => {
+    // El 787 del banco en La Palma: roza la pista a 546 m yéndose al aire por
+    // la toma larga. De vuelta arriba, la llegada se vuelve a configurar y
+    // subir no se repite, como en la ida al aire sin rozar.
+    const a = de("jaz-90");
+    const cadena = new CadenaDelVuelo();
+    volar(a, VUELO, cadena);
+    expect(cadena.yaDicho("flaps:3")).toBe(true);
+    const enLaPista: LecturaDelPaso = {
+      enTierra: true,
+      conPlan: true,
+      sobreElSuelo: 0,
+      pies: 100,
+      vertical: 0,
+      kt: 140,
+      marca: 140,
+      peldano: "final",
+      hasta: 2000,
+      crucero: 15000,
+      bajando: true,
+      enLaFinal: true,
+      flaps: 3,
+      flapsQuePide: 3,
+      vfe: a.vfePorMuesca,
+      tren: true,
+      trenQuePide: true,
+      dt: 0.1,
+    };
+    expect(cadena.paso(enLaPista)).toBeNull();
+    expect(cadena.yaDicho("flaps:3")).toBe(false);
+    expect(cadena.yaDicho("final")).toBe(false);
+    expect(cadena.yaDicho("subida")).toBe(true);
+    expect(cadena.yaDicho("crucero")).toBe(true);
+    // Y frenando hasta rodar, el tramo acaba: el siguiente despegue, de cero.
+    cadena.paso({ ...enLaPista, kt: CARRERA_ACABADA + 1 });
+    expect(cadena.yaDicho("subida")).toBe(true);
+    cadena.paso({ ...enLaPista, kt: CARRERA_ACABADA - 1 });
+    expect(cadena.yaDicho("subida")).toBe(false);
+    expect(cadena.yaDicho("crucero")).toBe(false);
   });
 
   it("en los de hélice, sin el peldaño de en medio, y en la avioneta, sin tren que sacar", () => {

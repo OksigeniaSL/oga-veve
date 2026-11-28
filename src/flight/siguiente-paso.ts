@@ -116,6 +116,15 @@ export interface Paso {
   readonly objetivo: ObjetivoDelPaso;
 }
 
+/**
+ * **Por debajo de esto, en tierra, la carrera ha acabado**, nudos de
+ * indicada: sin otra carrera de despegue ya no se vuelve a volar, y el tramo
+ * acaba con ella. Queda por debajo de lo que vale irse después de tocar en el
+ * más lento de la flota —`VELOCIDAD_PARA_IRSE`, en `toma-larga.ts`, de sus
+ * 56 kt de aproximación: 45— y por encima de lo que se rueda. Ver `paso`.
+ */
+export const CARRERA_ACABADA = 40;
+
 /** Lo que la cadena necesita ver del vuelo en cada fotograma. */
 export interface LecturaDelPaso {
   readonly enTierra: boolean;
@@ -345,12 +354,20 @@ export class CadenaDelVuelo {
   paso(l: LecturaDelPaso): Paso | null {
     this.desdeElUltimo += l.dt;
     /*
-     * **En tierra, el tramo acaba.** Lo alcanzado se olvida al tocar, y el
-     * siguiente despegue empieza de cero. Un rebote en la toma también es
-     * tocar: la frustrada de después vuelve a configurarse desde el principio.
+     * **En tierra, el tramo acaba cuando acaba la carrera.** Lo alcanzado se
+     * olvida y el siguiente despegue empieza de cero.
+     *
+     * Un toque a velocidad de volar no acaba nada: un rebote, o tocar y irse
+     * al aire con la toma larga —el *go-around after touchdown* del FCTM—, es
+     * otra aproximación, y la llegada se vuelve a configurar desde el
+     * principio; lo de la salida, no, como tras cualquier frustrada (H110).
+     * Se olvidaba todo al primer contacto: el 787 del banco en La Palma rozó
+     * la pista a 546 m yéndose al aire y, ya arriba, la cadena le volvía a
+     * decir «subí», que en la ida al aire sin rozar no decía.
      */
     if (l.enTierra) {
-      if (this.dichos.size || this.lista.length) this.reiniciar();
+      if (l.kt >= CARRERA_ACABADA) this.otraAproximacion();
+      else if (this.dichos.size || this.lista.length) this.reiniciar();
       return null;
     }
     if (!l.conPlan) return null;
